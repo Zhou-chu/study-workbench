@@ -355,6 +355,14 @@ def test_public_examples_are_explicit_synthetic_data_with_utc_timestamp():
     assert citation.reference_validity == "unverified"
     for path in FIXTURES.glob("*.json"):
         text = path.read_text()
+        if path.name == "auth-session-created.json":
+            # Native auth schema necessarily names token fields. Permit only
+            # these exact zero-entropy fixtures, never real/random credentials.
+            synthetic = json.loads(text)
+            assert synthetic.pop("access_token") == "swa1_" + "A" * 43
+            assert synthetic.pop("refresh_token") == "swr1_" + "A" * 43
+            assert synthetic["session_id"] == "00000000-0000-4000-8000-000000000000"
+            text = json.dumps(synthetic)
         assert not any(
             value in text
             for value in (

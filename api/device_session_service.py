@@ -157,6 +157,11 @@ class DeviceSessionService:
         row = AccessRecord(self._digest(access, "swa1_"), session_id, scope.now, expiry)
         return envelope, row, self._digest(refresh, "swr1_")
 
+    async def check_ready(self) -> None:
+        """Observe credential barriers and verify authoritative storage readiness."""
+        async with self._operation() as scope:
+            await self._store.list_sessions(scope)
+
     async def create_session(
         self, password: str, device_name: str, *, client_address: str = "shared-peer"
     ) -> TokenEnvelope:

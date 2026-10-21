@@ -105,3 +105,30 @@ reconciliation, not an automatic retry. Related project locks are acquired in
 sorted order only after the note mutation barrier; export/read project locks never
 acquire that barrier. Archive import uses fresh identities in its existing single
 transaction; no live guards or runtime concurrency state are imported.
+
+## Gated device-session backend (T4b)
+
+Auth routes are under `/api/auth`, not `/api/personal`. The compatibility default
+is `STUDY_WORKBENCH_AUTH_MODE=legacy_password`; session issuance is unavailable
+there. Explicit `device_sessions` selects the strict provider/store with no
+password Bearer fallback. Do not activate before the matching Web migration and
+real ingress tests pass. One API process; restart invalidates sessions.
+
+- GET `/status`: legacy `{auth_enabled,message}` retained. Device mode returns
+  `{auth_enabled:true,auth_mode:"device_sessions",protocol_version:1}` or 503.
+- POST `/sessions`: `{password,device_name}` → 201 native token envelope.
+- POST `/sessions/refresh`: `{session_id,refresh_token}` → 200 replacement pair;
+  one use, no retry on uncertain outcome, no replay-based revocation of winner.
+- GET `/sessions`: access Bearer → `{sessions:[metadata...]}`.
+- DELETE `/sessions/{session_id}` and DELETE `/sessions`: access Bearer → 204
+  after acknowledged revocation; no body.
+
+Exact envelopes, expiry, error codes and limits are frozen in
+`DEVICE_SESSION_PROTOCOL.md`; actual app schema and synthetic fixture checks
+are in `contracts/v1`. Auth dates use UTC `Z`, bodies ≤8192 bytes, validation
+errors sanitized 400, all auth results no-store/nosniff. Auth tables never enter
+personal portable archives. Supplied Origin must exactly match
+`STUDY_WORKBENCH_AUTH_ORIGINS` (no request Host inference); absent Origin remains
+allowed for explicit native requests. API never authenticates cookies; app
+cookies/mixed credentials are rejected. BFF CSRF and browser token hiding remain
+separate required gates, not guarantees supplied by this API implementation.

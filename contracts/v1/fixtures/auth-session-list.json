@@ -1,0 +1,13 @@
+{
+  "sessions": [
+    {
+      "session_id": "00000000-0000-4000-8000-000000000000",
+      "device_name": "Test",
+      "created_at": "2026-01-01T00:00:00Z",
+      "last_used_at": "2026-01-01T00:00:00Z",
+      "expires_at": "2026-01-31T00:00:00Z",
+      "revoked_at": null,
+      "is_current": true
+    }
+  ]
+}

@@ -219,6 +219,9 @@ async def lifespan(app: FastAPI):
         # Fail fast - don't start the API with an outdated database schema
         raise RuntimeError(f"Failed to run database migrations: {str(e)}") from e
 
+    from api.device_session_runtime import initialize_device_auth
+
+    await initialize_device_auth(app)
     logger.success("API initialization completed successfully")
 
     async def dispatch_personal_jobs():
@@ -251,6 +254,10 @@ app = FastAPI(
     description="API for Open Notebook - Research Assistant",
     lifespan=lifespan,
 )
+
+from api.device_session_runtime import install_auth_handlers
+
+install_auth_handlers(app)
 
 if CORS_IS_DEFAULT_WILDCARD:
     logger.warning(

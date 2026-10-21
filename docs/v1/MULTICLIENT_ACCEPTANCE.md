@@ -11,7 +11,7 @@ Updated 2026-10-21 UTC. Planned work is not accepted functionality.
 | Docker deployment | d773de0; 61 final focused tests; independent fix re-review approved | Static PASS. No Docker runtime; build/Compose/restore NOT RUN |
 | API contract foundation | 47d0134; 84 regression tests passed / 1 skipped before final test-only addition; final 15 contract tests passed; independent review approved | Integrated locally; current generic response-schema gaps remain explicit |
 | Note revision backend | dc96f38 reviewed; 77 isolated note/portable checks; integrated 1499 passed / 19 gated skips | Backend integrated; reviewed Web conflict UX integrated below; legacy compatibility still default |
-| Device sessions | Reviewed pure core b3f18b0 integrated; real adapter/HTTP correction under review | Not activated; Web migration and coordinated acceptance pending |
+| Device sessions | Reviewed core and real adapter/HTTP 56b43f4 integrated; 1597 combined backend tests passed / 37 gated skips | Not activated; Web migration and coordinated acceptance pending |
 | Native private ingress | No verified supported dot tunnel registration/native HTTP path | BLOCKED/UNKNOWN, not declared unsupported |
 | Android | No client build | Not started; SDK/device evidence pending |
 | iPadOS | No client build | Not started; macOS/Xcode/device evidence pending |
@@ -62,4 +62,15 @@ Independent RED reproduction exposed buffered inline-title loss during a pending
 
 Revision-aware archives now write format 2; exact-integer format 1/2 reading remains supported. Reviewed `7265593` passed 106 focused tests (one gated skip), its branch suite 1560 tests (19 skips), and a separate actual database export revision 7 → restore 7 → save 8 check. Old readers reject format 2 instead of silently discarding revisions. This is not a full deployment migration drill.
 
-Pure device-session core `b3f18b0` passed 28 focused tests and independent contention/mutation review before integration. Real database/HTTP extension is not yet accepted: its independent review found a damaged-schema readiness gap, now being corrected. No browser cookie migration, native client or actual user session is claimed.
+Pure device-session core `b3f18b0` passed 28 focused tests and independent contention/mutation review before integration. At that checkpoint the real database/HTTP extension still required correction for a damaged-schema readiness gap; final evidence follows below. No browser cookie migration, native client or actual user session is claimed.
+
+
+## Device-session backend checkpoint (2026-10-21 18:53 UTC)
+
+Source `56b43f43526f2fdca83171717472d8e9c10245c7` passed independent re-review and was integrated at `b241b43e932c56402c5118c5935de24c9b2132a6`. The combined canonical suite passed **1597 tests, 37 gated skips, 2 existing warnings in 96.35 seconds**. Whole-repository Ruff/format, mypy **239 source files**, and actual-app OpenAPI equality passed. Frontend bytes remain identical to the independently tested `ae9e81c6` note-recovery build; no auth Web implementation is claimed.
+
+Dedicated real SurrealDB 2.3.10 tests passed **33 checks** including 17 damaged-schema cases. Independent review reran **55 repository/HTTP tests**, healthy actual app migrations 1–28 and login/rotation/overlap/revocation, then the original missing-table restart failure. Missing/incompatible auth tables, fields or unique index definitions now fail closed without implicit table recreation. Generic auth-only 404/405 envelopes preserve status and Allow headers.
+
+Schema metadata is checked without caching before every store operation on the same connection, intentionally adding query overhead. Concurrent administrative DDL/restore between metadata validation and the transaction remains unsupported; no atomic DDL defense is claimed. Accepted new deployment definitions pin 2.3.10; older root Docker configurations are not this deployment's accepted path. Actual container execution remains NOT RUN.
+
+Legacy password mode remains the default, empty/unknown modes fail closed, and no user credentials/sessions were created or activated. Browser migration, protected in-place reauthentication, private ingress, Docker runtime and each native platform still need their own acceptance.

@@ -91,3 +91,26 @@ note writes, explicit compatibility handling, and T4 authentication; regenerate
 this owner-controlled snapshot. Do not infer conditional-write capability or
 multi-device safety from the `v1` directory name. Real-model/Google acceptance
 remains a separate gate; offline fixtures do not claim provider compatibility.
+
+## Gated device-session auth
+
+The actual-app schema includes the additive native session routes. Issuance is
+unavailable under default `legacy_password`; `device_sessions` must be explicitly
+configured, and deployment remains gated on the Web/ingress migration. Status
+keeps its legacy `{auth_enabled,message}` response; device mode instead returns
+`{auth_enabled:true,auth_mode:"device_sessions",protocol_version:1}` or 503.
+
+Auth requests are JSON objects with no extra fields, capped at 8 KiB before
+parsing. Validation errors are sanitized 400, never FastAPI's input-bearing 422.
+Auth responses/errors are no-store/nosniff; 401 includes Bearer challenge, 429 an
+integer Retry-After. Token dates are canonical UTC `Z`. Examples under `fixtures`
+are synthetic, never usable credentials. Protocol and limitations are specified
+in `docs/v1/DEVICE_SESSION_PROTOCOL.md` and ADR-015. These local contracts do not
+prove native-vs-browser classification at the private ingress.
+
+Device-mode auth-only routing misses retain HTTP404/405 (including Allow on405)
+with `{error:{code:"AUTH_INVALID_REQUEST",message:"Invalid authentication request."}}`.
+This matches the auth router's default error schema; resource routing errors
+remain unchanged. Auth schema integrity is checked on every store operation;
+missing tables/fields/index constraints fail closed, never trigger implicit
+SCHEMALESS table recreation. Stop the API before administrative DDL or restore.

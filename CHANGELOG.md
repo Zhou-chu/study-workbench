@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Opt-in device-session backend (2026-10-21).** Add digest-only device sessions, one-use refresh, revocation, strict credential-file observation, transactional SurrealDB storage and fail-closed schema validation. Existing legacy authentication remains the default; browser migration and runtime activation are not included.
 - **Atomic editorial note revisions (2026-10-21).** Add conditional note writes across personal, legacy and domain paths, transactional snapshot consistency, deletion-race guards, strict archive revision preservation and explicit capability status. Legacy compatibility remains the default until both clients and session activation pass acceptance.
 - **Multi-client foundations (2026-10-21).** Add static four-service deployment definitions with file-fed secrets and explicit public-Origin checks; deterministic actual OpenAPI snapshots and offline fixtures; and exact-tree canonical private-branch export with implicit Git fetching disabled. Docker runtime and native-client acceptance remain pending.
 - **Multi-client architecture proposal (2026-10-21).** Document the selected native-oriented React Native and HarmonyOS client route, four-service Docker portability, device-session boundaries, staged private branches and platform-specific acceptance. Design is approved and reviewed implementation is underway; no clients or running containers are claimed delivered.
