@@ -9,25 +9,174 @@ from __future__ import annotations
 import argparse
 import os
 import signal
+import socket
+import stat
 import subprocess
 import time
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
+import httpx
 from dotenv import dotenv_values
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
+# Deliberately not a denylist: unknown provider credentials, *_FILE, proxy,
+# interpreter injection and database auth switches must not enter from the host.
+SAFE_INHERITED_ENV = frozenset({"PATH", "LANG", "LC_ALL", "LC_CTYPE", "TZ", "TERM"})
+PORTS = (18000, 5055, 13000)
+
+
 def build_runtime_environment(
     config: Path, inherited_env: Mapping[str, str]
 ) -> dict[str, str]:
-    """Load only the explicitly selected config, not a child-discovered .env."""
+    """Only selected config may supply credentials; no ambient interpolation."""
     return {
-        **inherited_env,
-        **{k: v for k, v in dotenv_values(config).items() if v},
+        **{k: v for k, v in inherited_env.items() if k in SAFE_INHERITED_ENV},
+        **{
+            k: v
+            for k, v in dotenv_values(config, interpolate=False).items()
+            if v is not None
+        },
         "PYTHON_DOTENV_DISABLED": "1",
+        "LOGURU_DIAGNOSE": "NO",
+        "SURREAL_UNAUTHENTICATED": "false",
     }
+
+
+def apply_runtime_defaults(env: dict[str, str], source_root: Path = ROOT) -> Path:
+    """Default only known noncredential options, before any storage mutation."""
+    defaults = {
+        "SURREAL_USER": "root",
+        "SURREAL_URL": "ws://127.0.0.1:18000/rpc",
+        "SURREAL_NAMESPACE": "study_workbench",
+        "SURREAL_DATABASE": "study_workbench",
+        "STUDY_WORKBENCH_DATA_DIR": str(source_root / ".runtime/data/personal"),
+        "STUDY_WORKBENCH_RUNTIME_DIR": str(source_root / ".runtime/data"),
+        "INTERNAL_API_URL": "http://127.0.0.1:5055",
+        "API_URL": "http://127.0.0.1:13000",
+        "CORS_ORIGINS": "http://127.0.0.1:13000",
+    }
+    for key, default in defaults.items():
+        if not env.get(key, "").strip():
+            env[key] = default
+    runtime = Path(env["STUDY_WORKBENCH_RUNTIME_DIR"]).resolve()
+    if source_root.resolve().is_relative_to(runtime):
+        raise ValueError("Runtime directory must not be the source root or ancestor")
+    env["STUDY_WORKBENCH_RUNTIME_DIR"] = str(runtime)
+    if not env.get("OPEN_NOTEBOOK_DATA_DIR", "").strip():
+        env["OPEN_NOTEBOOK_DATA_DIR"] = str(runtime / "upstream-data")
+    return runtime
+
+
+def validate_private_config(config: Path, source_root: Path = ROOT) -> Path:
+    """Reject links and source-tree secrets before reading any configuration."""
+    config = config.absolute()
+    if any(part.is_symlink() for part in (config, *config.parents)):
+        raise ValueError("Private runtime config must not use symlinks")
+    resolved = config.resolve()
+    if resolved.is_relative_to(source_root.resolve()):
+        raise ValueError("Private runtime config must be outside the source tree")
+    info = resolved.stat()
+    if (
+        not stat.S_ISREG(info.st_mode)
+        or info.st_uid != os.getuid()
+        or stat.S_IMODE(info.st_mode) != 0o600
+    ):
+        raise ValueError(
+            "Private runtime config must be owner-owned, regular and mode 0600"
+        )
+    return resolved
+
+
+def open_private_log(path: Path):
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW, 0o600)
+    try:
+        info = os.fstat(fd)
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_uid != os.getuid()
+            or info.st_nlink != 1
+        ):
+            raise ValueError("Private runtime log must be an owner-owned regular file")
+        os.fchmod(fd, 0o600)
+        return os.fdopen(fd, "a")
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def wait_for_service(name: str, proc, probe: Callable[[], bool], timeout: float = 120):
+    deadline = time.monotonic() + timeout
+    while True:
+        if proc.poll() is not None:
+            raise RuntimeError(f"{name} exited before readiness; inspect private logs")
+        if probe():
+            return
+        if time.monotonic() >= deadline:
+            raise RuntimeError(f"{name} readiness timed out; inspect private logs")
+        time.sleep(min(0.25, max(0, deadline - time.monotonic())))
+
+
+def http_ready(url: str) -> bool:
+    try:
+        # Never send credentials to a probe or inherit a host proxy.
+        return httpx.get(url, timeout=1, trust_env=False).status_code == 200
+    except httpx.HTTPError:
+        return False
+
+
+def worker_startup_observed(log: Path, offset: int) -> bool:
+    with log.open("rb") as handle:
+        handle.seek(offset)
+        return b"Starting LIVE query listener" in handle.read()
+
+
+def require_free_ports():
+    for port in PORTS:
+        with socket.socket() as sock:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            try:
+                sock.bind(("127.0.0.1", port))
+            except OSError:
+                raise RuntimeError(
+                    "Required loopback port is occupied; no services started"
+                ) from None
+
+
+def verify_loopback_listeners():
+    """Linux native runbook: reject wildcard/non-loopback listeners on our ports."""
+    for filename, allowed in (
+        ("tcp", "0100007F"),
+        ("tcp6", "00000000000000000000000001000000"),
+    ):
+        for line in Path("/proc/net", filename).read_text().splitlines()[1:]:
+            fields = line.split()
+            address, port = fields[1].split(":")
+            if fields[3] == "0A" and int(port, 16) in PORTS and address != allowed:
+                raise RuntimeError(
+                    "Runtime port has a non-loopback listener; stopping owned services"
+                )
+
+
+def stop_processes(processes):
+    # A dead npm leader can still have live descendants in its dedicated session.
+    for proc in reversed(processes):
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+    for proc in reversed(processes):
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            pass
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        proc.wait()
 
 
 def main():
@@ -35,11 +184,13 @@ def main():
     p.add_argument("--config", required=True)
     p.add_argument("--frontend-dev", action="store_true")
     args = p.parse_args()
-    config = Path(args.config).resolve()
-    if config.stat().st_mode & 0o077:
+    os.umask(0o077)
+    try:
+        config = validate_private_config(Path(args.config))
+    except (ValueError, OSError):
         raise SystemExit(
-            "Private runtime config must not be readable by other users (mode0600)"
-        )
+            "Private config must be an owner-owned mode-0600 regular file outside source, without symlinks"
+        ) from None
     env = build_runtime_environment(config, os.environ)
     for key in (
         "OPEN_NOTEBOOK_PASSWORD",
@@ -50,20 +201,17 @@ def main():
             raise SystemExit(
                 "Configure authorized private runtime credentials before starting"
             )
-    env.setdefault("SURREAL_USER", "root")
     env["SURREAL_PASS"] = env["SURREAL_PASSWORD"]
-    env.setdefault("SURREAL_URL", "ws://127.0.0.1:18000/rpc")
-    env.setdefault("SURREAL_NAMESPACE", "study_workbench")
-    env.setdefault("SURREAL_DATABASE", "study_workbench")
-    env.setdefault("STUDY_WORKBENCH_DATA_DIR", str(ROOT / ".runtime/data/personal"))
-    env.setdefault("INTERNAL_API_URL", "http://127.0.0.1:5055")
-    env.setdefault("API_URL", "http://127.0.0.1:13000")
-    env.setdefault("CORS_ORIGINS", "http://127.0.0.1:13000")
-    runtime = Path(
-        env.get("STUDY_WORKBENCH_RUNTIME_DIR", ROOT / ".runtime/data")
-    ).resolve()
-    runtime.mkdir(parents=True, exist_ok=True)
-    env.setdefault("OPEN_NOTEBOOK_DATA_DIR", str(runtime / "upstream-data"))
+    try:
+        runtime = apply_runtime_defaults(env)
+    except ValueError:
+        raise SystemExit(
+            "Runtime directory must not be the source root or ancestor"
+        ) from None
+    runtime.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if runtime.stat().st_uid != os.getuid():
+        raise SystemExit("Runtime directory must be owned by the current user")
+    runtime.chmod(0o700)
     env["STUDY_WORKBENCH_PRIVATE_MODE"] = "1"
     env["PORT"] = "13000"
     env["HOSTNAME"] = "127.0.0.1"
@@ -136,6 +284,7 @@ def main():
             ROOT / "frontend",
         ),
     ]
+    require_free_ports()
     processes = []
     logs = []
 
@@ -145,16 +294,39 @@ def main():
     signal.signal(signal.SIGTERM, stop)
     try:
         for name, cmd, cwd in commands:
-            output = (runtime / (name + ".log")).open("a")
+            log = runtime / (name + ".log")
+            output = open_private_log(log)
+            offset = log.stat().st_size
             logs.append(output)
             processes.append(
                 subprocess.Popen(
-                    cmd, cwd=cwd, env=env, stdout=output, stderr=subprocess.STDOUT
+                    cmd,
+                    cwd=cwd,
+                    env=env,
+                    stdout=output,
+                    stderr=subprocess.STDOUT,
+                    start_new_session=True,
+                    umask=0o077,
                 )
             )
-            time.sleep(2)
+            urls = {
+                "database": "http://127.0.0.1:18000/health",
+                "api": "http://127.0.0.1:5055/health",
+                "frontend": "http://127.0.0.1:13000/login",
+            }
+            probe = (
+                (lambda: worker_startup_observed(log, offset))
+                if name == "worker"
+                else (lambda: http_ready(urls[name]))
+            )
+            wait_for_service(name, processes[-1], probe)
+            if any(proc.poll() is not None for proc in processes):
+                raise RuntimeError(
+                    "A service exited during startup; inspect private logs"
+                )
+            verify_loopback_listeners()
         print(
-            "Private native services started on loopback only. Frontend http://127.0.0.1:13000 is local to this process environment, not an external delivery URL.",
+            "Database, API and frontend HTTP checks passed on loopback; worker startup observed (job execution not yet verified). Frontend http://127.0.0.1:13000 is local to this process environment, not an external delivery URL.",
             flush=True,
         )
         while all(proc.poll() is None for proc in processes):
@@ -164,14 +336,12 @@ def main():
         )
     except KeyboardInterrupt:
         pass
+    except (RuntimeError, OSError):
+        raise SystemExit(
+            "Private runtime startup/health check failed; inspect owner-only logs. No credential values are printed."
+        ) from None
     finally:
-        for proc in reversed(processes):
-            if proc.poll() is None:
-                proc.terminate()
-                try:
-                    proc.wait(10)
-                except subprocess.TimeoutExpired:
-                    proc.kill()
+        stop_processes(processes)
         for output in logs:
             output.close()
 

@@ -1,0 +1,43 @@
+{
+  "credentials_created": 3,
+  "config_mode": "0600",
+  "directory_mode": "0700",
+  "secret_values_reported": false,
+  "public_access_enabled": false,
+  "google_profile_present": false,
+  "runs": [
+    {
+      "restart": false,
+      "anonymous_api_and_frontend_proxy": 401,
+      "wrong_password_api_and_frontend_proxy": 401,
+      "authenticated_api_and_frontend_proxy": 200,
+      "loopback_ports": [
+        18000,
+        5055,
+        13000
+      ],
+      "worker_public_fixture_succeeded": true,
+      "original_bytes_preserved": true
+    },
+    {
+      "restart": true,
+      "anonymous_api_and_frontend_proxy": 401,
+      "wrong_password_api_and_frontend_proxy": 401,
+      "authenticated_api_and_frontend_proxy": 200,
+      "loopback_ports": [
+        18000,
+        5055,
+        13000
+      ],
+      "worker_public_fixture_succeeded": true,
+      "original_bytes_preserved": true
+    }
+  ],
+  "database_authenticated_read_verified": true,
+  "database_anonymous_read_rejected": true,
+  "status": "passed",
+  "encryption_round_trip": true,
+  "services_stopped_after_verification": true,
+  "credentials_and_data_retained": true,
+  "synthetic_fixture_workspace_retained": true
+}

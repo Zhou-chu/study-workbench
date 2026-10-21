@@ -27,7 +27,7 @@ cd frontend
 npm run test
 npx tsc --noEmit
 npm run lint
-npm run build
+INTERNAL_API_URL=http://127.0.0.1:5055 npm run build
 cd ..
 UV_CACHE_DIR=/tmp/sw-uv-cache uv run python scripts/v1/local_check.py
 ```
@@ -47,7 +47,7 @@ STUDY_WORKBENCH_BROWSER_PYTHON="$(command -v python)" \
 
 The orchestrator invokes `STUDY_WORKBENCH_BROWSER_PYTHON` (default `python`) for the browser script. The command above captures the pre-uv Python where Playwright was installed. If Playwright is installed only in a separate Python environment, place its interpreter on PATH or install the official Playwright package in your chosen test environment. The test uses public fixtures, isolated loopback services, and clean temporary browser configuration. It asserts ten known citations across two PDF versions, nonblank canvas pixels, correct physical-page controls, an explicit malformed-PDF fallback, restored unverified references and Chinese 390px content widths/no horizontal overflow. No user desktop or existing browser profile is touched.
 
-## Private runtime (approval required before credential provisioning)
+## Private runtime (credentials remain external to source)
 
 `.env.v1.example` lists configuration names only. The native launcher does not generate or distribute credentials. An authorized operator must provide a dedicated runtime environment file outside exported source, readable only by its owner (mode 0600), containing at least:
 
@@ -55,15 +55,15 @@ The orchestrator invokes `STUDY_WORKBENCH_BROWSER_PYTHON` (default `python`) for
 - `OPEN_NOTEBOOK_ENCRYPTION_KEY`: upstream provider-credential encryption key
 - `SURREAL_PASSWORD`: native database password
 
-Use strong independent values; never paste them into chat, commit them, or include them in project exports. The launcher's checks reject empty and test-only placeholder values. Empty optional settings are ignored by the native launcher.
+Use strong independent values; never paste them into chat, commit them, or include them in project exports. The launcher's checks reject empty and test-only placeholder values. Explicit blank credentials remain blank (required credentials fail closed); known optional data paths, database identity/URL and API/CORS settings use launcher defaults when blank. Runtime storage cannot be the source root or an ancestor; ambient provider credentials, credential-file variables, proxies and interpreter overrides are not inherited. Only PATH, locale, timezone and terminal settings are inherited. Config interpolation is disabled, so use literal values rather than `${VARIABLE}` references. Config must be a current-owner mode-0600 regular file outside the source tree, with no symlink components. The launcher forces database authentication, disables implicit dotenv loading and exception-frame diagnostics, and uses umask 077 with owner-only logs.
 
 ```sh
 UV_CACHE_DIR=/tmp/sw-uv-cache uv run python scripts/v1/run_native.py --config /path/to/authorized-runtime.env
 ```
 
-Next.js rewrites are compiled at build time; keep the upstream API port5055 used by this launcher, or rebuild with a matching INTERNAL_API_URL. Runtime API_URL alone does not change the compiled proxy.
+Next.js rewrites are compiled at build time; keep the upstream API port5055 used by this launcher, or rebuild with a matching INTERNAL_API_URL. Runtime API_URL alone does not change the compiled proxy. Build with `INTERNAL_API_URL=http://127.0.0.1:5055` to avoid IPv6 localhost mismatch.
 
-This binds only to loopback: frontend 13000, API 5055, SurrealDB 18000. The frontend address is local to the process environment and is not an external user-accessible URL. A separately authorized protected HTTPS ingress is needed for external browser use. Do not expose database/API ports directly. Private mode is enabled by default across legacy and V1 `/api/*` routes, and the launcher forces it on. Missing application password fails closed. The test-only `STUDY_WORKBENCH_PRIVATE_MODE=0` compatibility setting is not a deployment recommendation.
+Startup refuses occupied ports, waits for database/API/frontend HTTP health and worker database-listener startup evidence, and checks Linux listener addresses. Worker startup evidence is not a successful job-execution test; verify a public-fixture upload separately before relying on processing. Failed readiness stops all owned process groups, including npm descendants; shutdown does the same. This binds only to loopback: frontend 13000, API 5055, SurrealDB 18000. The frontend address is local to the process environment and is not an external user-accessible URL. A separately authorized protected HTTPS ingress is needed for external browser use. Do not expose database/API ports directly. Private mode is enabled by default across legacy and V1 `/api/*` routes, and the launcher forces it on. Missing application password fails closed. The test-only `STUDY_WORKBENCH_PRIVATE_MODE=0` compatibility setting is not a deployment recommendation.
 
 ## Persistence and backup
 
@@ -127,3 +127,9 @@ This checks API-driven maintenance recovery, not host reboot, filesystem deletio
 After building the frontend, run `PYTHON_DOTENV_DISABLED=1 PLAYWRIGHT_BROWSERS_PATH="$PWD/.runtime/browsers" python scripts/v1/audio_playback_check.py --out .runtime/audio-check` using the interpreter with Playwright/httpx installed. This uses synthetic audio and two isolated native environments, verifies authenticated playback/download before and after reload, exports and restores the project, and repeats the checks with remapped IDs. It does not require or test Google generation. Generated media and browser images stay in the local output directory.
 
 Prepare subsequent committed, verified repository updates using [PRIVATE_SNAPSHOT.md](PRIVATE_SNAPSHOT.md). That offline helper never pushes or authenticates. The developer checkout's existing origin is upstream; do not push project snapshots there. The verified private progress repository is `Zhou-chu/study-workbench`, with snapshot publication on `main`; published commit IDs differ from source-development commit IDs, which are recorded in each manifest.
+
+### Authorized runtime verification checkpoint (2026-10-21)
+
+Dedicated application/database/encryption credentials were provisioned outside the source repository under owner-only permissions, not copied into this repository. Real protected verification passed on the final launcher: direct API and frontend proxy reject missing/wrong credentials (401) and accept configured credentials (200); database anonymous reads are rejected and authenticated reads pass; a public synthetic local worker fixture parses; full stop/restart preserves original bytes; encryption/decryption round trip passes. Only IPv4 loopback ports 18000/5055/13000 listen, and all close after shutdown.
+
+The verification intentionally stopped services afterward. Credentials and data remain in the private runtime location, with one labeled public verification workspace. This is not an externally reachable deployment or a guarantee of cloud workspace lifetime. No Google session, model credential or remote generation was configured. The committed verification JSON contains statuses only; private configuration and raw runtime logs are not published.

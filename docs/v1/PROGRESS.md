@@ -2,12 +2,12 @@
 
 Original checkpoint: 2026-10-18 UTC. Continuation updated: 2026-10-21 UTC. Branch: `feature/study-workbench-v1`. Baseline: Open Notebook 1.15.0 at `a0f6f3081ae06328f0a451b3a3ef2959ca25721d`. Exact handoff commit and archive hashes are recorded in the accompanying delivery manifest; use `git rev-parse HEAD` in the Git bundle checkout.
 
-This is a reproducible development delivery with a working local document workflow, **not a fully accepted personal NotebookLM deployment**. No real Google login, model call, NotebookLM write or paid resource was used. Production credentials remain awaiting approval.
+This is a reproducible development delivery with a working local document workflow, **not a fully accepted personal NotebookLM deployment**. No real Google login, model call, NotebookLM write or paid resource was used. Dedicated private runtime credentials were authorized and provisioned on 2026-10-21; values remain outside source. Protected external access remains pending.
 
 | Stage | Result at handoff |
 |---|---|
 | T00 | Complete: upstream pinned, environment evidence, 1000-test upstream baseline, official registry and native SurrealDB provenance |
-| T01 | Native SurrealDB/API/worker and migration 26 integrated; default-on fail-closed private access verified. Production credentials and protected external HTTPS pending |
+| T01 | Native SurrealDB/API/worker and migration 26 integrated; default-on fail-closed private access verified. Authorized private credentials and protected loopback startup verified; external HTTPS pending |
 | T02 | Immutable originals/versions and CPU PDF/MD/TXT evidence implemented; real upload, worker parse, exact download and restart verified |
 | T03 | Three-panel workbench, persistent source choices and PDF.js reader implemented. Real Firefox login, desktop and Chinese 390px mobile checks passed; mobile drawer and no-overflow assertions included |
 | T04 | Scoped lexical retrieval implemented; 20 Chinese retrieval gold cases and exact locator tests pass without a model |
@@ -33,7 +33,7 @@ Coverage baseline and targeted follow-up are retained in `COVERAGE.md`. The foll
 
 ## Remaining gates and next practical action
 
-1. Obtain targeted authorization for private application/encryption/database credentials and provision them outside source/export
+1. Completed 2026-10-21: authorized private application/encryption/database credentials provisioned outside source/export; do not copy them into GitHub or portable project archives
 2. Establish a protected HTTPS ingress and known storage lifecycle; this environment offers no verified external address
 3. Authorize application-runtime Google login plus a read-only account check
 4. Resolve the published SDK strict-history isolation blocker before enabling real scoped NotebookLM Q&A
@@ -77,3 +77,15 @@ Final integrated validation: **1281 backend tests passed, 1 opt-in native skippe
 Offline publication helper: `scripts/v1/prepare_private_snapshot.py` verifies tracked commit bytes/modes, rejects unsafe archive/output shapes, excludes runtime/credential paths and upstream workflows, writes deterministic inventory and full-tree SHA, and calculates incremental changes against the previous published inventory. It never authenticates or pushes; publication still verifies the private destination, branch lease and complete tree. Path filtering is not a guarantee that tracked content contains no secrets.
 
 Remaining gates are unchanged: private runtime credential provisioning has been requested but not approved; no real app Google login, safe strict Google history isolation, real model/audio generation or protected external HTTPS has passed. Next external-capability step is approved private credential provisioning and application-runtime login, not bypassing scope isolation. No credentials, public listeners, paid resources or automated remote generation were added in this iteration.
+
+## 2026-10-21 private runtime checkpoint (c)
+
+Credential-generation gate is complete: three independent high-entropy credentials are stored in an owner-only configuration outside source (directory 0700, file 0600), never printed or published. No previous secrets were overwritten and no Google profile was created.
+
+Launcher hardening: explicit config only for credentials; ambient provider keys, secret-file overrides, proxies and interpreter injection are not inherited; dotenv interpolation is disabled; Loguru diagnostic frame values are disabled; config/log ownership and modes are checked. HTTP services must become ready, worker startup is honestly distinguished from completed work, listener addresses remain loopback, and owned process groups are stopped. Empty optional config values fall back safely, while required empty credentials fail closed and source-root/ancestor runtime paths are rejected.
+
+Actual final-code verification passed: missing/wrong password 401 and configured password 200 through both direct API and frontend proxy; database anonymous read rejected/authenticated read accepted; genuine public-fixture worker parsing; full restart retained original bytes; encryption round trip succeeded; all three listeners were 127.0.0.1 and disappeared after shutdown. Services were stopped intentionally after verification; private configuration/data and one synthetic verification workspace remain. Only a sanitized status JSON is included in source evidence.
+
+Full backend **1295 passed, 1 opt-in skip, 2 existing warnings**; mypy **209 files passed**, Ruff check/format passed; frontend rebuilt with explicit IPv4 API rewrite. Frontend application code is unchanged from the 313-test checkpoint. Evidence: `evidence/continuation-2026-10-21c/`.
+
+Next live-capability gates: protected external HTTPS/runtime lifecycle and separately authorized application-runtime Google login. Google strict-history isolation remains unsupported; real model and remote audio generation remain unverified. Provisioning these local secrets does not authorize Google access, public ingress or paid services.
