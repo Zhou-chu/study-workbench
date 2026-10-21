@@ -280,9 +280,35 @@ async def turn_events(turn_id: str):
     async def events():
         previous = None
         for _ in range(120):
+            # Cancellation ends this wait even if a late canonical turn exists.
+            jobs = await get_store().list("job", turn_id=turn_id)
+            cancelled = next(
+                (job for job in jobs if job["state"] == "cancelled_local"), None
+            )
+            if cancelled:
+                yield (
+                    "event: stage\ndata: "
+                    + json.dumps(
+                        {
+                            "turn_id": turn_id,
+                            "state": "cancelled_local",
+                            "error": cancelled.get("error"),
+                            **(
+                                {
+                                    "remote_may_continue": cancelled[
+                                        "remote_may_continue"
+                                    ]
+                                }
+                                if "remote_may_continue" in cancelled
+                                else {}
+                            ),
+                        }
+                    )
+                    + "\n\n"
+                )
+                return
             turn = await get_store().get("turn", turn_id)
             if not turn:
-                jobs = await get_store().list("job", turn_id=turn_id)
                 if jobs:
                     job = jobs[0]
                     yield (

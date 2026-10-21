@@ -1,0 +1,98 @@
+{
+  "baseline": "a0f6f3081ae06328f0a451b3a3ef2959ca25721d",
+  "scope": "All production TS/TSX, excluding tests, src/test, declarations; untouched files included in all-source denominator",
+  "all": {
+    "lines": {
+      "total": 5451,
+      "covered": 1489,
+      "skipped": 0,
+      "pct": 27.31
+    },
+    "statements": {
+      "total": 5933,
+      "covered": 1648,
+      "skipped": 0,
+      "pct": 27.77
+    },
+    "functions": {
+      "total": 1911,
+      "covered": 462,
+      "skipped": 0,
+      "pct": 24.17
+    },
+    "branches": {
+      "total": 4663,
+      "covered": 1501,
+      "skipped": 0,
+      "pct": 32.18
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "v1": {
+    "lines": {
+      "covered": 480,
+      "total": 562,
+      "pct": 85.41
+    },
+    "branches": {
+      "covered": 651,
+      "total": 881,
+      "pct": 73.89
+    },
+    "functions": {
+      "covered": 190,
+      "total": 289,
+      "pct": 65.74
+    },
+    "statements": {
+      "covered": 606,
+      "total": 764,
+      "pct": 79.32
+    }
+  },
+  "v1_files": [
+    "frontend/src/app/(dashboard)/notebooks/[id]/study/page.tsx",
+    "frontend/src/app/(dashboard)/notebooks/components/NotebookHeader.tsx",
+    "frontend/src/components/evidence/EvidenceMaintenance.tsx",
+    "frontend/src/components/evidence/EvidenceReader.tsx",
+    "frontend/src/components/evidence/PdfCanvas.tsx",
+    "frontend/src/components/integrations/NotebookLMPanel.tsx",
+    "frontend/src/components/layout/AppShell.tsx",
+    "frontend/src/components/workbench/JobsPanel.tsx",
+    "frontend/src/components/workbench/PortableControls.tsx",
+    "frontend/src/components/workbench/StudyWorkbench.tsx",
+    "frontend/src/components/workbench/TurnCoverage.tsx",
+    "frontend/src/lib/api/client.ts",
+    "frontend/src/lib/api/evidence.ts",
+    "frontend/src/lib/api/notebooklm.ts",
+    "frontend/src/lib/api/portable.ts",
+    "frontend/src/lib/api/query-client.ts",
+    "frontend/src/lib/api/workbench.ts",
+    "frontend/src/lib/hooks/use-notebooklm.ts",
+    "frontend/src/lib/hooks/use-workbench.ts",
+    "frontend/src/lib/locales/bn-IN/index.ts",
+    "frontend/src/lib/locales/ca-ES/index.ts",
+    "frontend/src/lib/locales/de-DE/index.ts",
+    "frontend/src/lib/locales/en-US/index.ts",
+    "frontend/src/lib/locales/es-ES/index.ts",
+    "frontend/src/lib/locales/fr-FR/index.ts",
+    "frontend/src/lib/locales/it-IT/index.ts",
+    "frontend/src/lib/locales/ja-JP/index.ts",
+    "frontend/src/lib/locales/pl-PL/index.ts",
+    "frontend/src/lib/locales/pt-BR/index.ts",
+    "frontend/src/lib/locales/ru-RU/index.ts",
+    "frontend/src/lib/locales/tr-TR/index.ts",
+    "frontend/src/lib/locales/workbench.ts",
+    "frontend/src/lib/locales/zh-CN/index.ts",
+    "frontend/src/lib/locales/zh-TW/index.ts",
+    "frontend/src/lib/types/personal.ts",
+    "frontend/src/lib/utils/evidence.ts",
+    "frontend/src/lib/utils/workbench.ts"
+  ],
+  "unreported_v1_files": []
+}

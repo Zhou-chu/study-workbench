@@ -1,0 +1,16 @@
+{
+  "scope": "Offline helper parity check of historical source commit, not publication or current feature acceptance",
+  "source_commit": "d1a6c224b32546c5bf800b9a5391f3e7c8d52538",
+  "total_files": 886,
+  "expected_tree_sha": "1ad3c7cc8ef944ef32dcab01a54d56b029b9b73c",
+  "independently_computed_git_write_tree": "1ad3c7cc8ef944ef32dcab01a54d56b029b9b73c",
+  "changes_vs_initial_inventory": {
+    "added": [],
+    "deleted": [],
+    "modified": [
+      "PUBLISH_MANIFEST.json",
+      "README.md"
+    ]
+  },
+  "note": "Independent Git staging used git add -f --all to include ignored-but-tracked assets. Full-suite integration owned by parent; initial concurrent run was not green."
+}

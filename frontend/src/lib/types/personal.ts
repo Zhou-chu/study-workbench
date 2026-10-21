@@ -93,6 +93,7 @@ export interface TurnRequest extends WorkbenchSelection {
   idempotency_key: string
 }
 export interface BridgeJob {
+  provider?: string
   job_id: string
   operation: string
   state: JobState

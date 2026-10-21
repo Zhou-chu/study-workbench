@@ -1,0 +1,74 @@
+{
+  "status": "passed",
+  "fixture": "Public-domain deterministic 2-second 440Hz PCM WAV; synthetic saved asset, NOT generated Google/model audio",
+  "sha256": "902c947de824dbb2997d88492321ae54bb3d38b6bd86c99c53e6dab3b70bf58b",
+  "byte_size": 64044,
+  "cases": [
+    {
+      "phase": "imported-fixture",
+      "notebook_id": "notebook:5bf9f9fbbd8c48aea943b45a30870089",
+      "artifact_id": "artifact_02550773b1c64916b44d2524a918b750",
+      "anonymous_status": 401,
+      "api_sha256": "902c947de824dbb2997d88492321ae54bb3d38b6bd86c99c53e6dab3b70bf58b",
+      "historical_job_replay_disabled": true,
+      "playback": [
+        {
+          "after_reload": false,
+          "start": 0,
+          "progressed": 0.316411,
+          "duration": 2,
+          "ended": true,
+          "readyState": 2,
+          "error": null,
+          "source": "blob:"
+        },
+        {
+          "after_reload": true,
+          "start": 0,
+          "progressed": 0.318135,
+          "duration": 2,
+          "ended": true,
+          "readyState": 2,
+          "error": null,
+          "source": "blob:"
+        }
+      ],
+      "browser_download_sha256": "902c947de824dbb2997d88492321ae54bb3d38b6bd86c99c53e6dab3b70bf58b",
+      "page_errors": [],
+      "export_sha256": "95b04fdc1cafa50c01eff4e2e171f074b3511ebc7cce51d8461db9ad037106b5"
+    },
+    {
+      "phase": "fresh-restored-export",
+      "notebook_id": "notebook:be32e78d0a414f90a1d324b30dc31875",
+      "artifact_id": "artifact_6fffbb4bb57a435797294bec57c114b1",
+      "anonymous_status": 401,
+      "api_sha256": "902c947de824dbb2997d88492321ae54bb3d38b6bd86c99c53e6dab3b70bf58b",
+      "historical_job_replay_disabled": true,
+      "playback": [
+        {
+          "after_reload": false,
+          "start": 0,
+          "progressed": 0.282029,
+          "duration": 2,
+          "ended": true,
+          "readyState": 2,
+          "error": null,
+          "source": "blob:"
+        },
+        {
+          "after_reload": true,
+          "start": 0,
+          "progressed": 0.309467,
+          "duration": 2,
+          "ended": true,
+          "readyState": 2,
+          "error": null,
+          "source": "blob:"
+        }
+      ],
+      "browser_download_sha256": "902c947de824dbb2997d88492321ae54bb3d38b6bd86c99c53e6dab3b70bf58b",
+      "page_errors": []
+    }
+  ],
+  "limits": "No Google login, remote generation, model inference, paid resources, host reboot, or external deployment."
+}

@@ -1,0 +1,228 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.0.3, pluggy-1.6.0
+rootdir: /workspace/scratch/7ae04dc66900/study-workbench
+configfile: pyproject.toml
+plugins: asyncio-1.3.0, anyio-4.14.2, cov-7.1.0, langsmith-0.9.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 1282 items
+
+tests/test_add_insight_failure_propagation.py ........                   [  0%]
+tests/test_anthropic_compatible_provider.py ...............              [  1%]
+tests/test_ask_graph.py ..............                                   [  2%]
+tests/test_auth.py .....                                                 [  3%]
+tests/test_background_retry_visibility.py ......                         [  3%]
+tests/test_capabilities_api.py .........                                 [  4%]
+tests/test_chat_routers_characterization.py .............                [  5%]
+tests/test_chunking.py ..................................                [  8%]
+tests/test_clear_description.py ........                                 [  8%]
+tests/test_config_endpoint_no_leak.py ....                               [  9%]
+tests/test_connection_test_classification.py ..........................  [ 11%]
+tests/test_content_core_errors.py ......................                 [ 12%]
+tests/test_content_core_integration.py ..                                [ 12%]
+tests/test_context_endpoint_characterization.py ......                   [ 13%]
+tests/test_context_length_no_retry.py .........                          [ 14%]
+tests/test_cors_credentials.py ........                                  [ 14%]
+tests/test_create_insight_empty_source.py ......                         [ 15%]
+tests/test_credential_provider_validation.py ........................... [ 17%]
+...................                                                      [ 18%]
+tests/test_credentials_api.py .......................................... [ 22%]
+.                                                                        [ 22%]
+tests/test_crud_404.py ............                                      [ 23%]
+tests/test_database_url.py ......                                        [ 23%]
+tests/test_domain.py ....................................                [ 26%]
+tests/test_embed_source_partial_cleanup.py ...                           [ 26%]
+tests/test_embedding.py ..................                               [ 28%]
+tests/test_empty_model_reply.py .................                        [ 29%]
+tests/test_encryption.py .......................                         [ 31%]
+tests/test_error_classifier.py .......                                   [ 31%]
+tests/test_error_message_sanitization.py ...............                 [ 32%]
+tests/test_graphs.py .........................                           [ 34%]
+tests/test_insight_timestamps.py ......                                  [ 35%]
+tests/test_llm_timeout_default.py ......                                 [ 35%]
+tests/test_max_body_size_middleware.py ................                  [ 36%]
+tests/test_model_discovery.py .........................                  [ 38%]
+tests/test_models_api.py .......................                         [ 40%]
+tests/test_note_save_embed_resilience.py .......                         [ 41%]
+tests/test_notes_api.py ....                                             [ 41%]
+tests/test_order_by_validation.py ........................               [ 43%]
+tests/test_podcast_anthropic_compatible.py ...................           [ 44%]
+tests/test_podcast_audio_containment.py ..................               [ 46%]
+tests/test_podcast_audio_paths.py ............                           [ 47%]
+tests/test_podcast_episode_model_resolution.py ............              [ 48%]
+tests/test_podcast_error_hints.py ........                               [ 48%]
+tests/test_podcast_job_status_batching.py ..........                     [ 49%]
+tests/test_podcast_legacy_field_removal.py ........                      [ 50%]
+tests/test_podcast_path.py ...........                                   [ 51%]
+tests/test_podcast_prompt_templates.py ................................. [ 53%]
+...................                                                      [ 55%]
+tests/test_podcast_speaker_profile.py .............                      [ 56%]
+tests/test_podcast_templates.py ...                                      [ 56%]
+tests/test_prepare_private_snapshot.py ................................. [ 58%]
+.......                                                                  [ 59%]
+tests/test_proxy.py ..............                                       [ 60%]
+tests/test_recently_viewed_api.py ......                                 [ 61%]
+tests/test_repository_config.py .....                                    [ 61%]
+tests/test_repository_insert.py .......                                  [ 62%]
+tests/test_runtime_capabilities.py .........                             [ 62%]
+tests/test_search_api.py ..................................              [ 65%]
+tests/test_source_create_array_limits.py ..........                      [ 66%]
+tests/test_source_deleted_before_processing.py ........                  [ 66%]
+tests/test_source_path_containment.py .........                          [ 67%]
+tests/test_sources_api.py .........                                      [ 68%]
+tests/test_ssl_config.py ........                                        [ 68%]
+tests/test_startup_migration_retry.py ....                               [ 69%]
+tests/test_text_search_parent.py ....                                    [ 69%]
+tests/test_transformation_output.py ...........................          [ 71%]
+tests/test_transformations_api.py ......                                 [ 71%]
+tests/test_typed_exceptions_reach_handlers.py ....................       [ 73%]
+tests/test_upload_toctou_race.py ......                                  [ 74%]
+tests/test_upload_type_mitigations.py ......                             [ 74%]
+tests/test_url_validation.py ..................................          [ 77%]
+tests/test_utils.py ..........................................           [ 80%]
+tests/test_v1_access_control.py ........                                 [ 81%]
+tests/test_v1_artifact_jobs.py ..............                            [ 82%]
+tests/test_v1_evidence_commands.py ......                                [ 82%]
+tests/test_v1_evidence_ingest.py .............                           [ 83%]
+tests/test_v1_evidence_maintenance.py ......                             [ 84%]
+tests/test_v1_evidence_pdf.py ....                                       [ 84%]
+tests/test_v1_evidence_revalidation.py ..........                        [ 85%]
+tests/test_v1_evidence_routes.py ..........................              [ 87%]
+tests/test_v1_grounded_chat.py ..........                                [ 87%]
+tests/test_v1_job_cancellation.py .................                      [ 89%]
+tests/test_v1_launcher_environment.py ....                               [ 89%]
+tests/test_v1_notebooklm_auth.py .......                                 [ 90%]
+tests/test_v1_notebooklm_chat.py ................                        [ 91%]
+tests/test_v1_notebooklm_commands.py .                                   [ 91%]
+tests/test_v1_notebooklm_download.py ...                                 [ 91%]
+tests/test_v1_notebooklm_routes.py .......                               [ 92%]
+tests/test_v1_notebooklm_sdk.py .................                        [ 93%]
+tests/test_v1_notebooklm_sources.py .......                              [ 94%]
+tests/test_v1_personal_service.py ...........                            [ 95%]
+tests/test_v1_personal_store.py ...                                      [ 95%]
+tests/test_v1_portable_roundtrip.py ........................s........... [ 98%]
+....                                                                     [ 98%]
+tests/test_v1_reader_history.py ..                                       [ 98%]
+tests/test_v1_scoped_retrieval.py ..........                             [ 99%]
+tests/test_vertex_credentials_file_oracle.py .........                   [100%]
+
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/surreal_commands/core/retry.py:41
+  /workspace/scratch/7ae04dc66900/study-workbench/.venv/lib/python3.12/site-packages/surreal_commands/core/retry.py:41: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class RetryConfig(BaseModel):
+
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /workspace/scratch/7ae04dc66900/study-workbench/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: /workspace/scratch/7ae04dc66900/study-workbench/docs/v1/evidence/continuation-2026-10-21b/backend/junit.xml -
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.14-final-0 _______________
+
+Name                                                    Stmts   Miss Branch BrPart  Cover
+-----------------------------------------------------------------------------------------
+api/__init__.py                                             0      0      0      0   100%
+api/auth.py                                                32      5     12      3    82%
+api/command_service.py                                     40     28      2      0    29%
+api/credentials_service.py                                513    221    178     36    56%
+api/evidence_maintenance.py                               112     12     40     11    85%
+api/evidence_service.py                                   338     54    122     18    81%
+api/main.py                                               181     29     18      4    83%
+api/middleware.py                                          57      0     16      2    97%
+api/models.py                                             412      8     20      2    97%
+api/notebooklm_service.py                                 576    103    234     53    78%
+api/personal_security.py                                   21      0      6      0   100%
+api/personal_service.py                                   159     23     58     15    82%
+api/personal_store.py                                      59     15      6      1    72%
+api/podcast_service.py                                    103     33     14      4    65%
+api/portable_service.py                                   683    152    336     60    76%
+api/routers/__init__.py                                     0      0      0      0   100%
+api/routers/_chat_shared.py                                40      2      8      2    92%
+api/routers/auth.py                                         7      2      0      0    71%
+api/routers/capabilities.py                                 9      0      0      0   100%
+api/routers/chat.py                                       198     81     18      1    57%
+api/routers/commands.py                                    94     55      6      0    39%
+api/routers/config.py                                      72     14      8      2    80%
+api/routers/credentials.py                                282    163     62     13    43%
+api/routers/embedding.py                                   54     21     14      4    60%
+api/routers/embedding_rebuild.py                           79     57     36      2    21%
+api/routers/episode_profiles.py                           141     91     18      0    31%
+api/routers/evidence.py                                   185     13     50      7    91%
+api/routers/insights.py                                    55     35      6      1    34%
+api/routers/languages.py                                   48     35     16      0    20%
+api/routers/models.py                                     340    144     78     14    57%
+api/routers/notebooklm.py                                 186     52     44     14    68%
+api/routers/notebooks.py                                  181     81     16      4    56%
+api/routers/notes.py                                      111     55     18      5    50%
+api/routers/podcasts.py                                   211     74     44      4    68%
+api/routers/portable.py                                    20      7      0      0    65%
+api/routers/providers.py                                    9      0      0      0   100%
+api/routers/search.py                                     110     72     38      1    28%
+api/routers/settings.py                                    53     38     16      0    22%
+api/routers/source_chat.py                                189     70     26      6    59%
+api/routers/sources.py                                    520    218    138     31    56%
+api/routers/speaker_profiles.py                           107     71     10      0    31%
+api/routers/transformations.py                            150     78     32     11    50%
+commands/__init__.py                                       12      0      0      0   100%
+commands/embedding_commands.py                            240    119     40      5    45%
+commands/evidence_commands.py                              68     12     20      4    77%
+commands/notebooklm_commands.py                            15      0      0      0   100%
+commands/personal_commands.py                              11      3      0      0    73%
+commands/podcast_commands.py                              171     42     52     11    75%
+commands/portable_commands.py                              13      2      0      0    85%
+commands/source_commands.py                               112     20     10      3    80%
+open_notebook/__init__.py                                   0      0      0      0   100%
+open_notebook/ai/__init__.py                                0      0      0      0   100%
+open_notebook/ai/connection_tester.py                     299    194    110      8    34%
+open_notebook/ai/key_provider.py                          138     81     58     13    36%
+open_notebook/ai/model_discovery.py                       419    231    128      6    41%
+open_notebook/ai/models.py                                188     75     66      9    57%
+open_notebook/ai/provider_registry.py                      37      0     10      0   100%
+open_notebook/ai/provision.py                              27     20      8      0    20%
+open_notebook/config.py                                    17      0      2      0   100%
+open_notebook/database/async_migrate.py                    94     56     18      0    38%
+open_notebook/database/repository.py                      153     76     48      3    51%
+open_notebook/domain/__init__.py                            1      0      0      0   100%
+open_notebook/domain/base.py                              204     99     82      7    46%
+open_notebook/domain/content_settings.py                   13      0      0      0   100%
+open_notebook/domain/credential.py                        158     66     72     10    57%
+open_notebook/domain/evidence.py                           61      0      0      0   100%
+open_notebook/domain/notebook.py                          430    175    104     18    58%
+open_notebook/domain/provider_config.py                   142    117     64      0    12%
+open_notebook/domain/transformation.py                     21      4      2      0    74%
+open_notebook/exceptions.py                                28      0      0      0   100%
+open_notebook/graphs/ask.py                               100     11      8      0    90%
+open_notebook/graphs/chat.py                               62     13      2      0    80%
+open_notebook/graphs/grounded_chat.py                     180     25     70     20    82%
+open_notebook/graphs/prompt.py                             26      7      0      0    73%
+open_notebook/graphs/source.py                            160     22     58      4    85%
+open_notebook/graphs/source_chat.py                       107     28     14      4    70%
+open_notebook/graphs/tools.py                               5      0      0      0   100%
+open_notebook/graphs/transformation.py                     59      4     14      2    92%
+open_notebook/integrations/__init__.py                      0      0      0      0   100%
+open_notebook/integrations/notebooklm/__init__.py           0      0      0      0   100%
+open_notebook/integrations/notebooklm/contracts.py        104      0      0      0   100%
+open_notebook/integrations/notebooklm/fake_adapter.py      44     14      8      3    67%
+open_notebook/integrations/notebooklm/sdk_adapter.py      263     50     86     22    77%
+open_notebook/podcasts/__init__.py                          0      0      0      0   100%
+open_notebook/podcasts/audio_paths.py                      29      0     12      0   100%
+open_notebook/podcasts/models.py                          167     49     62      4    66%
+open_notebook/utils/__init__.py                             8      0      0      0   100%
+open_notebook/utils/chunking.py                           204     50     88     12    75%
+open_notebook/utils/context_builder.py                    227     23     88     11    89%
+open_notebook/utils/embedding.py                           96     17     32      6    79%
+open_notebook/utils/encryption.py                          90     21     24      3    75%
+open_notebook/utils/error_classifier.py                    18      3      8      2    81%
+open_notebook/utils/graph_utils.py                         32     10      8      2    65%
+open_notebook/utils/model_utils.py                          9      1      6      1    87%
+open_notebook/utils/proxy.py                               44      2     22      0    97%
+open_notebook/utils/runtime_capabilities.py                53     25     12      1    54%
+open_notebook/utils/ssl_config.py                          15      0      6      0   100%
+open_notebook/utils/text_utils.py                          50      9     22      1    75%
+open_notebook/utils/token_utils.py                         15      1      0      0    93%
+open_notebook/utils/url_validation.py                      96     10     34      7    87%
+open_notebook/utils/version_utils.py                       62     17     12      3    73%
+-----------------------------------------------------------------------------------------
+TOTAL                                                   12134   4016   3354    536    65%
+Coverage JSON written to file docs/v1/evidence/continuation-2026-10-21b/backend/coverage.json
+============ 1281 passed, 1 skipped, 2 warnings in 78.54s (0:01:18) ============

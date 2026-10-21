@@ -15,6 +15,8 @@ function JobCard({ job, onChanged }: { job: BridgeJob; onChanged: () => void }) 
   const [audioUrl, setAudioUrl] = useState<string>()
   const status = useQuery({ queryKey: QUERY_KEYS.personalJob(job.job_id), queryFn: () => workbenchApi.job(job.job_id), initialData: job, enabled: activeJob(job.state), retry: false, refetchInterval: query => activeJob(query.state.data?.state) ? 2000 : false })
   const current = status.data || job
+  const remoteWork = current.provider === 'notebooklm' || current.operation === 'chat'
+  const canCancel = current.state === 'queued' || (current.state === 'running' && current.operation === 'chat') || (activeJob(current.state) && current.provider === 'notebooklm')
   const cancel = useMutation({ mutationFn: () => workbenchApi.cancelJob(job.job_id), retry: false, onSuccess: () => { status.refetch(); onChanged() } })
   const artifact = current.result?.artifact as { artifact_id?: string; mime_type?: string } | undefined
   const downloadUrl = current.result?.download_url || (artifact?.artifact_id && current.result?.downloaded ? `/personal/artifacts/${encodeURIComponent(artifact.artifact_id)}/download` : undefined)
@@ -36,8 +38,8 @@ function JobCard({ job, onChanged }: { job: BridgeJob; onChanged: () => void }) 
     {typeof current.result?.download_error === 'string' && <p className="text-muted-foreground">{current.result.download_error}</p>}
     {current.result?.import_report != null && <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words">{JSON.stringify(current.result.import_report, null, 2)}</pre>}
     {(status.isError || cancel.isError || download.isError) && <p role="alert" className="text-destructive">{requestError(status.error || cancel.error || download.error) || t('workbench.error')}</p>}
-    {(activeJob(current.state) || current.remote_may_continue || current.state === 'cancelled_local') && <p className="text-muted-foreground">{t('workbench.remoteMayContinue')}</p>}
-    {activeJob(current.state) && <Button size="sm" variant="outline" disabled={cancel.isPending} onClick={() => cancel.mutate()}>{t('workbench.cancelWaiting')}</Button>}
+    {(current.remote_may_continue || (['running', 'waiting_remote'].includes(current.state) && remoteWork)) && <p className="text-muted-foreground">{t('workbench.remoteMayContinue')}</p>}
+    {canCancel && <Button size="sm" variant="outline" disabled={cancel.isPending} onClick={() => cancel.mutate()}>{t('workbench.cancelWaiting')}</Button>}
     {downloadUrl && <div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={download.isPending} onClick={() => download.mutate(false)}>{t('workbench.downloadResult')}</Button>{artifact?.mime_type?.startsWith('audio/') && <Button size="sm" variant="outline" disabled={download.isPending} onClick={() => download.mutate(true)}>{t('workbench.playAudio')}</Button>}</div>}
     {audioUrl && <audio className="w-full" controls src={audioUrl} />}
   </article>

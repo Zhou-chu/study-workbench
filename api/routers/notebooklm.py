@@ -317,18 +317,24 @@ async def cancel_job(job_id: str, service=Depends(get_notebooklm_service)):
         raise NotFoundError("Job not found")
     if job.get("provider") == "notebooklm":
         return await service.cancel_job(job_id)
-    if job["state"] == "queued":
-        async with service.store.project_lock(job["notebook_id"]):
-            current = await service.store.get("job", job_id)
-            if current["state"] == "queued":
-                current.update(
-                    state="cancelled_local",
-                    cancel_requested=True,
-                    remote_may_continue=False,
-                )
-                await service.store.put("job", job_id, current)
-            job = current
-    return job
+    async with service.store.project_lock(job["notebook_id"]):
+        current = await service.store.get("job", job_id)
+        if not current:
+            raise NotFoundError("Job not found")
+        if current["state"] == "running" and current.get("operation") != "chat":
+            raise InvalidInputError(
+                "CANCELLATION_UNSUPPORTED: this local operation cannot be stopped once running"
+            )
+        if current["state"] in ("queued", "running"):
+            # Stop local waiting only: an in-flight model call may still finish.
+            remote_may_continue = current["state"] == "running"
+            current.update(
+                state="cancelled_local",
+                cancel_requested=True,
+                remote_may_continue=remote_may_continue,
+            )
+            await service.store.put("job", job_id, current)
+        return current
 
 
 class SourceMappingRequest(LinkRequest):

@@ -109,3 +109,11 @@ Raw coverage, JUnit and denominator summary: `evidence/continuation-2026-10-21/b
 ### Final frontend continuation
 
 **292 tests passed, 48 test files**, with an explicit all-production-source coverage denominator, including files not loaded by tests. V1 new/changed files: **460 / 552 lines (83.33%)**, **589 / 864 branches (68.17%)**. All frontend production source: **1469 / 5441 lines (26.99%)**, **1439 / 4646 branches (30.97%)**. This is Vitest coverage, not screenshot coverage or evidence of real model calls. Raw JSON and summary: `evidence/continuation-2026-10-21/frontend/`.
+
+## 2026-10-21 reliability follow-up (checkpoint b)
+
+Full pytest coverage run: **1281 passed, 1 opt-in native skipped**, 2 existing warnings. V1 production Python files: **2780 / 3402 lines (81.72%)**, **780 / 1118 branches (69.77%)**. All production Python: **66.90% lines / 56.53% branches**. The offline exporter is tested but is developer tooling, not included in the API/commands/open_notebook production denominator.
+
+Vitest: **313 passed across 49 files**, using the same explicit full-production-source denominator as the earlier checkpoint (tests, src/test and declarations excluded). V1 files: **480 / 562 lines (85.41%)**, **651 / 881 branches (73.89%)**. All frontend production: **27.31% lines / 32.18% branches**. No V1 production files were unreported.
+
+Evidence: `evidence/continuation-2026-10-21b/backend/` and `frontend/`. Native audio/browser checks are separate, uninstrumented acceptance evidence, not merged into coverage or counted as real Google/model generation.

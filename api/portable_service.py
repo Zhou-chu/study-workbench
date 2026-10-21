@@ -1308,12 +1308,16 @@ class PortableService:
         notebook_id = job["notebook_id"]
         # Separate export lock prevents duplicate workers without blocking project writes.
         async with _export_job_lock(self.root, job_id):
-            job = await self.store.get("job", job_id)
-            if job is None:
-                raise NotFoundError("Export job not found")
-            if job.get("state") == "succeeded":
-                return job
             async with self.store.project_lock(notebook_id):
+                job = await self.store.get("job", job_id)
+                if job is None:
+                    raise NotFoundError("Export job not found")
+                if job.get("replay_allowed") is False:
+                    raise InvalidInputError(
+                        "Restored historical jobs cannot be replayed"
+                    )
+                if job.get("state") in ("succeeded", "cancelled_local"):
+                    return job
                 job.update(
                     state="running",
                     attempts=job.get("attempts", 0) + 1,

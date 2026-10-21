@@ -1,0 +1,306 @@
+
+ RUN  v4.1.9 /workspace/scratch/7ae04dc66900/study-workbench/frontend
+      Coverage enabled with v8
+
+ ✓ src/app/(dashboard)/transformations/components/TransformationEditorDialog.test.tsx (1 test) 448ms
+     ✓ sends an empty description when the description is cleared  442ms
+ ✓ src/components/integrations/NotebookLMPanel.test.tsx (3 tests) 1027ms
+     ✓ confirms the exact target and explicit version snapshot before syncing  584ms
+ ✓ src/components/layout/AppSidebar.test.tsx (5 tests) 877ms
+ ✓ src/components/evidence/EvidenceReader.test.tsx (29 tests) 1423ms
+ ✓ src/app/(dashboard)/settings/components/SettingsForm.test.tsx (4 tests) 1927ms
+     ✓ disables OCR and shows env hints when the runtimes are unavailable  529ms
+     ✓ enables OCR and hides the hints when the runtimes are available  374ms
+     ✓ treats runtimes as available while the capability probe is still loading  578ms
+     ✓ fails closed when the capability probe errors  439ms
+stderr | src/components/ui/markdown-editor.test.tsx > MarkdownEditor theme > follows theme changes without remounting
+An update to MarkdownEditor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to MarkdownEditor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/ui/markdown-editor.test.tsx > MarkdownEditor theme > waits for persisted theme hydration before rendering
+An update to MarkdownEditor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to MarkdownEditor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/ui/markdown-editor.test.tsx > MarkdownEditor theme > renders after persisted theme hydration fails
+An update to MarkdownEditor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to MarkdownEditor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/ui/markdown-editor.test.tsx (15 tests) 680ms
+ ✓ src/components/workbench/JobsPanel.audio.test.tsx (3 tests) 559ms
+     ✓ loads restored audio through protected download, creates a local player and releases its blob  366ms
+ ✓ src/app/(dashboard)/search/page.test.tsx (1 test) 496ms
+     ✓ opens the record that matched instead of its parent source  489ms
+ ✓ src/components/sources/SourceInsightDialog.test.tsx (4 tests) 674ms
+     ✓ shows the shared not-found state when the insight returns 404  377ms
+ ✓ src/components/workbench/PortableControls.test.tsx (2 tests) 652ms
+     ✓ keeps backup actions and export scope in an accessible compact disclosure  343ms
+     ✓ validates only after the selected package is confirmed and links the restored notebook  302ms
+ ✓ src/components/common/ConfirmDialog.test.tsx (4 tests) 532ms
+     ✓ should render correct titles and descriptions  376ms
+ ✓ src/components/search/NotebookScopeSelector.test.tsx (4 tests) 573ms
+ ✓ src/components/podcasts/EpisodeCard.test.tsx (3 tests) 437ms
+stderr | src/components/sources/SourceDetailContent.test.tsx > SourceDetailContent > shows the backend error when insight generation fails
+An update to SourceDetailContentInner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to SourceDetailContentInner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/sources/AddExistingSourceDialog.test.tsx (1 test) 521ms
+     ✓ shows a source only once when several search hits have the same parent  511ms
+stderr | src/components/sources/SourceDetailContent.test.tsx > SourceDetailContent > does not apply terminal effects when unmounted during the final refresh
+An update to SourceDetailContentInner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to SourceDetailContentInner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/sources/SourceDetailContent.test.tsx (7 tests) 1088ms
+ ✓ src/components/settings/CredentialFormDialog.test.tsx (2 tests) 340ms
+stderr | src/app/(dashboard)/notebooks/components/NoteEditorDialog.test.tsx > NoteEditorDialog > closes the dialog from the not-found state close button
+An update to NoteEditorDialog inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NoteEditorDialog inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/app/(dashboard)/notebooks/components/NoteEditorDialog.test.tsx (4 tests) 341ms
+stderr | src/components/workbench/JobsPanel.test.tsx > persistent jobs > does not offer impossible running reparse cancellation
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["personal","jobs","cpu"]
+
+stderr | src/components/workbench/JobsPanel.test.tsx > persistent jobs > does not offer impossible running revalidate cancellation
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["personal","jobs","cpu"]
+
+stderr | src/components/workbench/JobsPanel.test.tsx > persistent jobs > does not offer impossible running portable_export cancellation
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["personal","jobs","cpu"]
+
+stderr | src/components/workbench/JobsPanel.test.tsx > persistent jobs > offers running chat local-wait cancellation
+Query data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["personal","jobs","chat"]
+
+ ✓ src/components/workbench/JobsPanel.test.tsx (7 tests) 361ms
+ ✓ src/components/layout/AppShell.test.tsx (3 tests) 599ms
+ ✓ src/components/evidence/PdfCanvas.test.tsx (4 tests) 348ms
+ ✓ src/components/workbench/StudyWorkbench.test.tsx (40 tests) 13558ms
+     ✓ does not retarget the new draft when an earlier save completes  1839ms
+     ✓ does not retarget the edit draft when an earlier save completes  1074ms
+     ✓ preserves 'new' changes during pending outline 'submission'  548ms
+     ✓ preserves 'edit' changes during pending outline 'submission'  596ms
+     ✓ preserves 'content' changes during pending outline 'submission'  567ms
+     ✓ preserves 'title' changes during pending outline 'submission'  467ms
+     ✓ preserves 'new' changes during pending outline 'history'  500ms
+     ✓ preserves 'edit' changes during pending outline 'history'  482ms
+     ✓ preserves 'content' changes during pending outline 'history'  430ms
+     ✓ preserves 'title' changes during pending outline 'history'  432ms
+     ✓ does not attach a pending note save to a newly generated outline draft  516ms
+     ✓ preserves search-hit validity unverified without upgrading archive claims  302ms
+     ✓ preserves search-hit validity verified without upgrading archive claims  305ms
+     ✓ unblocks composer when durable job is cancelled_local before a turn exists  303ms
+     ✓ unblocks composer when durable job is submission_unknown before a turn exists  376ms
+     ✓ unblocks composer when durable job is failed before a turn exists  370ms
+ ✓ src/lib/api/insights.test.ts (5 tests) 297ms
+ ✓ src/components/ui/markdown-renderer.test.tsx (4 tests) 215ms
+ ✓ src/components/settings/ProviderSection.test.tsx (3 tests) 230ms
+ ✓ src/app/(dashboard)/transformations/components/TransformationsList.test.tsx (2 tests) 173ms
+ ✓ src/app/(dashboard)/notebooks/[id]/study/page.test.tsx (4 tests) 219ms
+ ✓ src/app/(dashboard)/notebooks/components/NotesColumn.test.tsx (3 tests) 595ms
+     ✓ opens, closes, and reopens the editor in create mode with loaded notes  429ms
+ ✓ src/components/sources/ChatPanel.test.tsx (4 tests) 650ms
+     ✓ sends the typed message and clears the input on send-button click  485ms
+ ✓ src/app/(dashboard)/settings/models/page.test.tsx (4 tests) 266ms
+ ✓ src/app/(dashboard)/notebooks/components/ChatColumn.test.tsx (2 tests) 142ms
+ ✓ src/lib/hooks/use-source-chat.test.tsx (1 test) 268ms
+stderr | src/lib/hooks/use-ask.test.tsx > useAsk under React StrictMode > surfaces an in-band error event instead of loading forever
+Ask error: Error: The AI provider is temporarily unavailable.
+    at Object.sendAsk (/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/hooks/use-ask.ts:202:23)
+    at /workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/hooks/use-ask.test.tsx:78:7
+
+ ✓ src/lib/providers.test.tsx (5 tests) 91ms
+ ✓ src/lib/locales/index.test.ts (27 tests) 21403ms
+     ✓ all en-US leaf keys should be referenced in source files  21049ms
+ ✓ src/lib/hooks/use-ask.test.tsx (4 tests) 102ms
+ ✓ src/lib/hooks/use-modal-manager.test.ts (4 tests) 68ms
+ ✓ src/components/workbench/TurnCoverage.test.tsx (3 tests) 85ms
+ ✓ src/lib/api/personal-transport.test.ts (17 tests) 132ms
+ ✓ src/app/(dashboard)/notebooks/components/NotebookHeader.test.tsx (1 test) 210ms
+ ✓ src/lib/utils/source-context.test.ts (20 tests) 22ms
+stdout | src/app/config/route.test.ts > GET /config > auto-detects from a well-formed Host header
+[runtime-config] Auto-detected API URL: https://notebook.example.com:5055 (proto=https, host=notebook.example.com)
+
+stdout | src/app/config/route.test.ts > GET /config > strips the port from the Host header before rebuilding the URL
+[runtime-config] Auto-detected API URL: http://notebook.example.com:5055 (proto=http, host=notebook.example.com:3000)
+
+stdout | src/app/config/route.test.ts > GET /config > accepts a bare IPv4 Host header
+[runtime-config] Auto-detected API URL: http://192.168.1.50:5055 (proto=http, host=192.168.1.50)
+
+stdout | src/app/config/route.test.ts > GET /config > accepts a bracketed IPv6 literal Host header
+[runtime-config] Auto-detected API URL: http://[2001:db8::1]:5055 (proto=http, host=[2001:db8::1])
+
+stdout | src/app/config/route.test.ts > GET /config > strips the port from a bracketed IPv6 Host header and keeps the brackets
+[runtime-config] Auto-detected API URL: http://[::1]:5055 (proto=http, host=[::1]:3000)
+
+stdout | src/app/config/route.test.ts > GET /config > falls back to localhost for a bracketed IPv6 literal with trailing junk
+[runtime-config] Using fallback: http://localhost:5055
+
+stderr | src/app/config/route.test.ts > GET /config > falls back to localhost for a bracketed IPv6 literal with trailing junk
+[runtime-config] Rejected malformed Host header, falling back to localhost: [::1]@evil.example.com
+
+stdout | src/app/config/route.test.ts > GET /config > falls back to localhost for an unclosed IPv6 bracket
+[runtime-config] Using fallback: http://localhost:5055
+
+stderr | src/app/config/route.test.ts > GET /config > falls back to localhost for an unclosed IPv6 bracket
+[runtime-config] Rejected malformed Host header, falling back to localhost: [::1
+
+stdout | src/app/config/route.test.ts > GET /config > falls back to localhost for a path-like payload inside IPv6 brackets
+[runtime-config] Using fallback: http://localhost:5055
+
+stderr | src/app/config/route.test.ts > GET /config > falls back to localhost for a path-like payload inside IPv6 brackets
+[runtime-config] Rejected malformed Host header, falling back to localhost: [::1]/../../attacker
+
+stdout | src/app/config/route.test.ts > GET /config > falls back to localhost for a Host header containing a path-like payload
+[runtime-config] Using fallback: http://localhost:5055
+
+stderr | src/app/config/route.test.ts > GET /config > falls back to localhost for a Host header containing a path-like payload
+[runtime-config] Rejected malformed Host header, falling back to localhost: evil.example.com/../../attacker
+
+stdout | src/app/config/route.test.ts > GET /config > falls back to localhost for a Host header containing an @ (userinfo confusion)
+[runtime-config] Using fallback: http://localhost:5055
+
+stderr | src/app/config/route.test.ts > GET /config > falls back to localhost for a Host header containing an @ (userinfo confusion)
+[runtime-config] Rejected malformed Host header, falling back to localhost: legit.example.com@evil.example.com
+
+stdout | src/app/config/route.test.ts > GET /config > falls back to localhost for a Host header with embedded whitespace
+[runtime-config] Using fallback: http://localhost:5055
+
+stderr | src/app/config/route.test.ts > GET /config > falls back to localhost for a Host header with embedded whitespace
+[runtime-config] Rejected malformed Host header, falling back to localhost: evil.example.com foo
+
+stdout | src/app/config/route.test.ts > GET /config > never trusts an X-Forwarded-Proto value other than http/https
+[runtime-config] Auto-detected API URL: http://notebook.example.com:5055 (proto=http, host=notebook.example.com)
+
+stdout | src/app/config/route.test.ts > GET /config > falls back to localhost when no Host header is present
+[runtime-config] Using fallback: http://localhost:5055
+
+ ✓ src/app/config/route.test.ts (14 tests) 75ms
+ ✓ src/lib/locales/interpolation.test.ts (5 tests) 26ms
+ ✓ src/lib/hooks/use-translation.test.ts (2 tests) 51ms
+ ✓ src/lib/api/portable.test.ts (2 tests) 19ms
+ ✓ src/lib/api/client.test.ts (2 tests) 50ms
+ ✓ src/lib/utils/evidence.test.ts (13 tests) 14ms
+ ✓ src/lib/config.test.ts (4 tests) 11ms
+ ✓ src/lib/credential-update-payload.test.ts (5 tests) 6ms
+ ✓ src/lib/utils/error-handler.test.ts (4 tests) 10ms
+ ✓ src/lib/utils/date-locale.test.ts (3 tests) 15ms
+
+ Test Files  49 passed (49)
+      Tests  313 passed (313)
+   Start at  13:16:18
+   Duration  30.80s (transform 8.58s, setup 9.48s, import 75.37s, tests 52.91s, environment 43.49s)
+
+JSON report written to /workspace/scratch/7ae04dc66900/study-workbench/docs/v1/evidence/continuation-2026-10-21b/frontend/tests.json
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 27.77% ( 1648/5933 )
+Branches     : 32.18% ( 1501/4663 )
+Functions    : 24.17% ( 462/1911 )
+Lines        : 27.31% ( 1489/5451 )
+================================================================================

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Repeatable private-repository snapshots (2026-10-21).** An offline exporter preserves tracked source bytes/modes and licenses, produces deterministic inventories and incremental changes, excludes automation/runtime paths, and verifies the complete Git tree before publication.
 - **StudyWorkbench local evidence maintenance (2026-10-20).** Durable authenticated reparse and historical-citation revalidation endpoints and reader controls compare retained originals with a fresh CPU extraction. Historical IDs and locators remain stable; mismatches stay unverified, and imported revalidation claims are discarded.
 
 ### Changed
@@ -19,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Development:** `architecture.md`, `testing.md`, `api-reference.md` and `code-standards.md` are rewritten from the code. A new playbook covers adding an AI provider. Dev setup lives on one page. The AGENTS files agree with the docs. Contributor conventions (Conventional Commits, CHANGELOG sections, pre-PR checks that match CI) are documented
 
 ### Fixed
+- **Delayed note/outline results preserve newer drafts (2026-10-21).** Save completion is bound to its editor session; outline submissions capture both session and text revision, retaining later New/Edit/typing changes and keeping skipped generated outlines in history.
+- **Local chat cancellation is effective and honest (2026-10-21).** Running chats can stop local waiting without claiming remote termination; SSE ends promptly, late answers cannot revive cancelled jobs, queued exports stay cancelled, and running CPU operations reject unsupported cancellation explicitly.
 - **V1 launcher configuration isolation (2026-10-21).** Test children no longer reload ambient repository dotenv files, and the native runner honors its explicitly selected configuration without an implicit second dotenv load. Typed V1 fixtures also participate in the full repository type check.
 - **NotebookLM capability health (2026-10-21).** Keep historical verification timestamps separate from current connection availability after SDK failures or a missing runtime profile; strict scoped chat remains blocked until safe isolation is established.
 - **StudyWorkbench recovery and scope boundaries (2026-10-20).** Local maintenance status polling recovers the same stale job under locks without replaying restored history; failed/restarted reparse preserves the last ready extraction. Reader badges preserve invalid/out-of-scope turn decisions. Google ask is gated on connection/capability and rechecked inside the call lock; unsupported strict isolation stays disabled. Cancellation/failure before turn creation no longer leaves the composer waiting indefinitely.

@@ -29,6 +29,7 @@ const workspaceTabs = ['sources', 'conversation', 'notes'] as const
 const panelLabels = { sources: 'workbench.sources', conversation: 'workbench.conversation', notes: 'workbench.notes' }
 const panelIcons = { sources: Files, conversation: MessageSquare, notes: NotebookPen }
 const emptySelection: WorkbenchSelection = { engine: 'notebooklm', selection_origin: 'local', source_version_ids: [], remote_source_ids: [] }
+interface NoteEditorSnapshot { session: number; revision: number }
 interface UploadItem { id: string; name: string; state: 'uploading' | 'uploadAccepted' | 'uploadFailed'; error?: string | null }
 export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const { t } = useTranslation()
@@ -51,6 +52,9 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const [citation, setCitation] = useState<EvidenceCitation | null>(null)
   const [question, setQuestion] = useState('')
   const [uploads, setUploads] = useState<UploadItem[]>([])
+  // A save may finish after New, Edit, or an outline replaced the draft.
+  const noteEditorSession = useRef(0)
+  const noteEditorRevision = useRef(0)
   const [noteTitle, setNoteTitle] = useState('')
   const [noteContent, setNoteContent] = useState('')
   const [editingNote, setEditingNote] = useState<WorkbenchNote | null>(null)
@@ -58,7 +62,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const [pendingJob, setPendingJob] = useState<string | null>(null)
   const [lastJobOutcome, setLastJobOutcome] = useState<BridgeJob | null>(null)
   const [pendingTurn, setPendingTurn] = useState<string | null>(null)
-  const [outlineTurn, setOutlineTurn] = useState<string | null>(null)
+  const [outlineTurn, setOutlineTurn] = useState<({ turnId: string } & NoteEditorSnapshot) | null>(null)
   const sessionId = `v1_${notebookId}`
   const refresh = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.workbench(notebookId) })
   const history = useQuery({ queryKey: QUERY_KEYS.personalTurns(sessionId), queryFn: () => workbenchApi.turns(sessionId), enabled: !!pendingTurn, retry: false, refetchInterval: pendingTurn ? 2000 : false })
@@ -83,19 +87,29 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   }
   const search = useMutation({ mutationFn: () => evidenceApi.search(searchText, [...selection.source_version_ids]), retry: false })
   const ask = useMutation({
-    mutationFn: ({ message, outline }: { message: string; outline?: boolean }) => workbenchApi.turn(sessionId, {
+    mutationFn: ({ message, outline }: { message: string; outline?: boolean; editorSnapshot?: NoteEditorSnapshot }) => workbenchApi.turn(sessionId, {
       task: outline ? 'outline' : 'question', notebook_id: notebookId, engine: selection.engine, selection_origin: selection.selection_origin,
       source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [],
       remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [],
       remote_notebook_id: data?.link?.remote_notebook_id || null, message, idempotency_key: crypto.randomUUID(),
     }), retry: false,
-    onSuccess: (turn, variables) => { setQuestion(''); setLastJobOutcome(null); setPendingJob('job_id' in turn ? turn.job_id : null); setPendingTurn(turn.turn_id); if (variables.outline) setOutlineTurn(turn.turn_id); refresh() },
+    onSuccess: (turn, variables) => { setQuestion(''); setLastJobOutcome(null); setPendingJob('job_id' in turn ? turn.job_id : null); setPendingTurn(turn.turn_id); if (variables.outline && variables.editorSnapshot) setOutlineTurn({ turnId: turn.turn_id, ...variables.editorSnapshot }); refresh() },
   })
   useEffect(() => {
     const result = history.data?.find(turn => turn.turn_id === pendingTurn)
     if (result && (!activeJob(result.state || result.status) || result.answer)) { setPendingTurn(null); setPendingJob(null) }
-    const outline = history.data?.find(turn => turn.turn_id === outlineTurn)
-    if (outline?.answer) { setNoteTitle(t('workbench.outline')); setNoteContent(outline.answer); setNoteScope(outline.scope_snapshot); setEditingNote({ id: '', title: '', content: '', citations: outline.citations, scope_snapshot: outline.scope_snapshot }); setOutlineTurn(null); setTab('notes') }
+    const outline = history.data?.find(turn => turn.turn_id === outlineTurn?.turnId)
+    if (outline?.answer && outlineTurn) {
+      // Keep late outlines in history (including Save Answer) instead of replacing
+      // a draft the user changed after submitting the outline request.
+      if (outlineTurn.session === noteEditorSession.current && outlineTurn.revision === noteEditorRevision.current) {
+        noteEditorSession.current++
+        setNoteTitle(t('workbench.outline')); setNoteContent(outline.answer); setNoteScope(outline.scope_snapshot)
+        setEditingNote({ id: '', title: '', content: '', citations: outline.citations, scope_snapshot: outline.scope_snapshot })
+        setTab('notes')
+      }
+      setOutlineTurn(null)
+    }
   }, [history.data, pendingTurn, outlineTurn, t])
   useEffect(() => {
     const job = pendingStatus.data
@@ -107,11 +121,11 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.workbench(notebookId) })
   }, [pendingStatus.data, pendingJob, queryClient, notebookId])
   const note = useMutation({
-    mutationFn: (value: Omit<WorkbenchNote, 'id'> & { noteId?: string; editor?: boolean }) => {
+    mutationFn: (value: Omit<WorkbenchNote, 'id'> & { noteId?: string; editorSession?: number }) => {
       const payload = { title: value.title, content: value.content, citations: value.citations, scope_snapshot: value.scope_snapshot }
       return value.noteId ? workbenchApi.updateNote(notebookId, value.noteId, payload) : workbenchApi.saveNote(notebookId, payload)
     }, retry: false,
-    onSuccess: (saved, value) => { refresh(); if (value.editor) setEditingNote(saved); toast({ title: t('workbench.saved') }) },
+    onSuccess: (saved, value) => { refresh(); if (value.editorSession !== undefined && value.editorSession === noteEditorSession.current) setEditingNote(saved); toast({ title: t('workbench.saved') }) },
     onError: error => toast({ title: requestError(error) || t('workbench.error'), variant: 'destructive' }),
   })
   const upload = async (files: FileList | null, sourceId?: string) => {
@@ -194,7 +208,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
         <section className="space-y-4 border-t pt-5" aria-label={t('workbench.conversation')}>
           <div className="rounded-lg border bg-card p-4 space-y-3"><label className="block text-sm font-semibold" htmlFor="workbench-question">{t('workbench.question')}</label><Textarea id="workbench-question" value={question} onChange={event => setQuestion(event.target.value)} rows={3} />
           {!canAsk && <p className="text-xs text-muted-foreground">{googleBlocked || t(modelMissing ? 'workbench.notConfigured' : selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
-          <div className="flex flex-wrap gap-2"><Button disabled={!canAsk || !question.trim() || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: question.trim() })}>{t('workbench.ask')}</Button><Button variant="outline" disabled={!canAsk || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: t('workbench.outlinePrompt'), outline: true })}>{t('workbench.outline')}</Button></div></div>
+          <div className="flex flex-wrap gap-2"><Button disabled={!canAsk || !question.trim() || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: question.trim() })}>{t('workbench.ask')}</Button><Button variant="outline" disabled={!canAsk || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: t('workbench.outlinePrompt'), outline: true, editorSnapshot: { session: noteEditorSession.current, revision: noteEditorRevision.current } })}>{t('workbench.outline')}</Button></div></div>
           {(ask.isPending || pendingTurn) && <p role="status" className="text-sm text-teal">{t('workbench.asking')}</p>}
           {ask.isError && <div role="alert"><p className="text-destructive">{t('workbench.answerFailure')}</p><p className="text-xs">{requestError(ask.error) || t('workbench.unknownSubmission')}</p></div>}
           {pendingStatus.isError && <div role="alert"><p className="text-xs text-destructive">{t('workbench.jobStatusUnavailable')}</p><Button size="sm" variant="outline" onClick={() => pendingStatus.refetch()}>{t('workbench.refreshJob')}</Button></div>}
@@ -206,12 +220,12 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
         </section>
       </main>
       <aside id="workbench-panel-notes" aria-label={t('workbench.notes')} className={cn('min-h-0 overflow-auto border-l bg-card px-4 pb-5 space-y-4 w-full xl:block xl:w-72 2xl:w-80 xl:min-w-56 xl:max-w-[32vw] xl:shrink-0 xl:resize-x', tab !== 'notes' && 'hidden')}>
-        <div className="sticky top-0 z-10 flex justify-between items-center gap-2 border-b bg-card py-3"><h2 className="flex items-center gap-2 text-sm font-semibold"><NotebookPen className="size-4 text-muted-foreground" aria-hidden="true" />{t('workbench.notes')}</h2><Button size="sm" variant="ghost" onClick={() => { setEditingNote(null); setNoteContent(''); setNoteTitle(''); setNoteScope(undefined) }}>{t('common.new')}</Button></div>
-        <label className="text-xs block" htmlFor="note-title">{t('workbench.noteTitle')}</label><Input id="note-title" value={noteTitle} onChange={event => setNoteTitle(event.target.value)} />
-        <label className="text-xs block" htmlFor="note-content">{t('workbench.noteContent')}</label><Textarea id="note-content" className="bg-background leading-6" rows={8} value={noteContent} onChange={event => setNoteContent(event.target.value)} />
-        <Button size="sm" disabled={!noteContent.trim() || note.isPending} onClick={() => note.mutate({ editor: true, noteId: editingNote?.id || undefined, title: noteTitle || t('common.note'), content: noteContent, citations: editingNote?.citations || [], scope_snapshot: noteScope || { engine: selection.engine, source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [], remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [], selection_origin: selection.selection_origin } })}>{t('workbench.saveNote')}</Button>
+        <div className="sticky top-0 z-10 flex justify-between items-center gap-2 border-b bg-card py-3"><h2 className="flex items-center gap-2 text-sm font-semibold"><NotebookPen className="size-4 text-muted-foreground" aria-hidden="true" />{t('workbench.notes')}</h2><Button size="sm" variant="ghost" onClick={() => { noteEditorSession.current++; setEditingNote(null); setNoteContent(''); setNoteTitle(''); setNoteScope(undefined) }}>{t('common.new')}</Button></div>
+        <label className="text-xs block" htmlFor="note-title">{t('workbench.noteTitle')}</label><Input id="note-title" value={noteTitle} onChange={event => { noteEditorRevision.current++; setNoteTitle(event.target.value) }} />
+        <label className="text-xs block" htmlFor="note-content">{t('workbench.noteContent')}</label><Textarea id="note-content" className="bg-background leading-6" rows={8} value={noteContent} onChange={event => { noteEditorRevision.current++; setNoteContent(event.target.value) }} />
+        <Button size="sm" disabled={!noteContent.trim() || note.isPending} onClick={() => note.mutate({ editorSession: noteEditorSession.current, noteId: editingNote?.id || undefined, title: noteTitle || t('common.note'), content: noteContent, citations: editingNote?.citations || [], scope_snapshot: noteScope || { engine: selection.engine, source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [], remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [], selection_origin: selection.selection_origin } })}>{t('workbench.saveNote')}</Button>
         {!data.notes.length && <p className="text-sm text-muted-foreground">{t('workbench.noNotes')}</p>}
-        {data.notes.map(saved => <article key={saved.id} className="rounded-md border p-3 space-y-2"><h3 className="font-medium">{saved.title}</h3><MarkdownRenderer>{saved.content || ''}</MarkdownRenderer>{saved.citations?.map(reference => <Button key={reference.citation_id} size="sm" variant="ghost" onClick={() => openCitation(reference)}>{reference.source_title} · {reference.citation_id}</Button>)}{saved.scope_snapshot && <Button size="sm" variant="outline" onClick={() => { setEditingNote(saved); setNoteTitle(saved.title || ''); setNoteContent(saved.content || ''); setNoteScope(saved.scope_snapshot) }}>{t('common.edit')}</Button>}</article>)}
+        {data.notes.map(saved => <article key={saved.id} className="rounded-md border p-3 space-y-2"><h3 className="font-medium">{saved.title}</h3><MarkdownRenderer>{saved.content || ''}</MarkdownRenderer>{saved.citations?.map(reference => <Button key={reference.citation_id} size="sm" variant="ghost" onClick={() => openCitation(reference)}>{reference.source_title} · {reference.citation_id}</Button>)}{saved.scope_snapshot && <Button size="sm" variant="outline" onClick={() => { noteEditorSession.current++; setEditingNote(saved); setNoteTitle(saved.title || ''); setNoteContent(saved.content || ''); setNoteScope(saved.scope_snapshot) }}>{t('common.edit')}</Button>}</article>)}
         <JobsPanel jobs={data.jobs || []} onChanged={refresh} />
       </aside>
     </div>

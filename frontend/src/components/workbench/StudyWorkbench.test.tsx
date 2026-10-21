@@ -1,14 +1,14 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Workspace, TurnRecord, EvidenceCitation } from '@/lib/types/personal'
+import type { Workspace, TurnRecord, EvidenceCitation, WorkbenchNote } from '@/lib/types/personal'
 import { StudyWorkbench } from './StudyWorkbench'
 import { useNotebookLMStatus, useNotebookLMCapabilities } from '@/lib/hooks/use-notebooklm'
 import { useModelDefaults } from '@/lib/hooks/use-models'
 import { evidenceApi } from '@/lib/api/evidence'
 import { workbenchApi } from '@/lib/api/workbench'
 vi.mock('@/lib/api/evidence', () => ({ evidenceApi: { evidence: vi.fn(), search: vi.fn() } }))
-vi.mock('@/lib/api/workbench', () => ({ workbenchApi: { workspace: vi.fn(), saveSelection: vi.fn(), turn: vi.fn(), saveNote: vi.fn(), upload: vi.fn(), turns: vi.fn(), job: vi.fn() } }))
+vi.mock('@/lib/api/workbench', () => ({ workbenchApi: { workspace: vi.fn(), saveSelection: vi.fn(), turn: vi.fn(), saveNote: vi.fn(), updateNote: vi.fn(), upload: vi.fn(), turns: vi.fn(), job: vi.fn() } }))
 vi.mock('@/lib/hooks/use-models', () => ({ useModelDefaults: vi.fn(() => ({ data: { default_chat_model: 'model:test' } })) }))
 vi.mock('@/lib/hooks/use-notebooklm', () => ({ useNotebookLMStatus: vi.fn(() => ({ data: { state: 'disconnected' } })), useNotebookLMCapabilities: vi.fn(() => ({ data: { operations: [{ name: 'ask', support: 'unsupported' }] } })) }))
 vi.mock('@/components/integrations/NotebookLMPanel', () => ({ NotebookLMPanel: () => <div /> }))
@@ -35,6 +35,111 @@ describe('StudyWorkbench source snapshots', () => {
     vi.mocked(workbenchApi.workspace).mockResolvedValue(structuredClone(fixture))
     vi.mocked(workbenchApi.turns).mockResolvedValue([])
     vi.mocked(workbenchApi.turn).mockResolvedValue({ turn_id: 'new_turn', job_id: 'j1' })
+  })
+  it.each(['new', 'edit'] as const)('does not retarget the %s draft when an earlier save completes', async action => {
+    const savedA: WorkbenchNote = { id: 'note:a', title: 'A', content: 'Draft A', citations: [], scope_snapshot: oldTurn.scope_snapshot }
+    const existingC: WorkbenchNote = { ...savedA, id: 'note:c', title: 'C', content: 'Draft C' }
+    let resolveSave!: (note: WorkbenchNote) => void
+    vi.mocked(workbenchApi.saveNote).mockImplementationOnce(() => new Promise(resolve => { resolveSave = resolve }))
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [existingC] })
+    show()
+    await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Draft A' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1))
+    fireEvent.click(screen.getByRole('button', { name: action === 'new' ? 'common.new' : 'common.edit' }))
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Current draft' } })
+    await act(async () => resolveSave(savedA))
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Current draft')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'workbench.saveNote' })).not.toBeDisabled())
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    if (action === 'new') {
+      await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledTimes(2))
+      expect(workbenchApi.updateNote).not.toHaveBeenCalled()
+      expect(workbenchApi.saveNote).toHaveBeenLastCalledWith('notebook:1', expect.objectContaining({ content: 'Current draft' }))
+    } else {
+      await waitFor(() => expect(workbenchApi.updateNote).toHaveBeenCalledWith('notebook:1', 'note:c', expect.objectContaining({ content: 'Current draft' })))
+    }
+  })
+  it.each((['submission', 'history'] as const).flatMap(phase => (['new', 'edit', 'content', 'title'] as const).map(action => ({ phase, action }))))('preserves $action changes during pending outline $phase', async ({ phase, action }) => {
+    const existing: WorkbenchNote = { id: 'note:c', title: 'Existing title', content: 'Existing content', citations: [], scope_snapshot: oldTurn.scope_snapshot }
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [existing] })
+    let resolveSubmission!: (value: { turn_id: string; job_id: string }) => void
+    let resolveHistory!: (value: TurnRecord[]) => void
+    const submission = new Promise<{ turn_id: string; job_id: string }>(resolve => { resolveSubmission = resolve })
+    const history = new Promise<TurnRecord[]>(resolve => { resolveHistory = resolve })
+    vi.mocked(workbenchApi.turn).mockReturnValueOnce(submission)
+    vi.mocked(workbenchApi.turns).mockReturnValue(history)
+    const { unmount } = show()
+    await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Starting content' } })
+    fireEvent.change(screen.getByLabelText('workbench.noteTitle'), { target: { value: 'Starting title' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.outline' }))
+    await waitFor(() => expect(workbenchApi.turn).toHaveBeenCalledTimes(1))
+    if (phase === 'history') await act(async () => resolveSubmission({ turn_id: 'new_turn', job_id: 'j1' }))
+    if (action === 'new' || action === 'edit') fireEvent.click(screen.getByRole('button', { name: action === 'new' ? 'common.new' : 'common.edit' }))
+    else fireEvent.change(screen.getByLabelText(action === 'content' ? 'workbench.noteContent' : 'workbench.noteTitle'), { target: { value: 'New unsaved text' } })
+    const expectedContent = (screen.getByLabelText('workbench.noteContent') as HTMLTextAreaElement).value
+    const expectedTitle = (screen.getByLabelText('workbench.noteTitle') as HTMLInputElement).value
+    await act(async () => {
+      resolveSubmission({ turn_id: 'new_turn', job_id: 'j1' })
+      resolveHistory([{ ...oldTurn, turn_id: 'new_turn', answer: 'Generated outline' }])
+    })
+    await screen.findByText('Generated outline')
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue(expectedContent)
+    expect(screen.getByLabelText('workbench.noteTitle')).toHaveValue(expectedTitle)
+    expect(screen.getByRole('button', { name: 'workbench.saveAnswer' })).toBeEnabled()
+    unmount()
+  })
+  it('does not attach a pending note save to a newly generated outline draft', async () => {
+    let resolveSave!: (note: WorkbenchNote) => void
+    vi.mocked(workbenchApi.saveNote).mockImplementationOnce(() => new Promise(resolve => { resolveSave = resolve }))
+    vi.mocked(workbenchApi.turns).mockResolvedValue([{ ...oldTurn, turn_id: 'new_turn', answer: 'Generated outline' }])
+    show()
+    await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Earlier draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.outline' }))
+    await waitFor(() => expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Generated outline'))
+    await act(async () => resolveSave({ id: 'note:a', title: 'A', content: 'Earlier draft', citations: [] }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'workbench.saveNote' })).not.toBeDisabled())
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenLastCalledWith('notebook:1', expect.objectContaining({ content: 'Generated outline', citations: oldTurn.citations })))
+    expect(workbenchApi.updateNote).not.toHaveBeenCalled()
+  })
+  it('keeps edits typed during creation and attaches the saved identity to that same draft', async () => {
+    let resolveSave!: (note: WorkbenchNote) => void
+    vi.mocked(workbenchApi.saveNote).mockImplementationOnce(() => new Promise(resolve => { resolveSave = resolve }))
+    show()
+    await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'First version' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1))
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Newer version' } })
+    await act(async () => resolveSave({ id: 'note:a', title: 'Saved title', content: 'First version', citations: [] }))
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Newer version')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'workbench.saveNote' })).not.toBeDisabled())
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await waitFor(() => expect(workbenchApi.updateNote).toHaveBeenCalledWith('notebook:1', 'note:a', expect.objectContaining({ content: 'Newer version' })))
+  })
+  it('does not attach an old notebook save to the editor after a keyed notebook switch', async () => {
+    let resolveSave!: (note: WorkbenchNote) => void
+    vi.mocked(workbenchApi.saveNote).mockImplementationOnce(() => new Promise(resolve => { resolveSave = resolve }))
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const view = (id: string) => <QueryClientProvider client={client}><StudyWorkbench key={id} notebookId={id} /></QueryClientProvider>
+    const { rerender } = render(view('notebook:1'))
+    await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Old notebook draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1))
+    rerender(view('notebook:2'))
+    await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'New notebook draft' } })
+    await act(async () => resolveSave({ id: 'note:a', title: 'A', content: 'Old notebook draft', citations: [] }))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenLastCalledWith('notebook:2', expect.objectContaining({ content: 'New notebook draft' })))
+    expect(workbenchApi.updateNote).not.toHaveBeenCalled()
   })
   it('supports arrow and Home/End navigation across mobile workspace tabs', async () => {
     show()
