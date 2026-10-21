@@ -1,3 +1,5 @@
+import { SessionRecovery } from '@/components/auth/SessionRecovery'
+import { useAuthStore } from '@/lib/stores/auth-store'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, expect, it, vi } from 'vitest'
@@ -53,4 +55,55 @@ it('Escape still cancels a live buffered title instead of committing it to the f
   await waitFor(() => expect(notesApi.update).toHaveBeenLastCalledWith('note:a', expect.objectContaining({ title: 'Original', expected_revision: 4 })))
   fireEvent.keyDown(screen.getByLabelText('Body'), { key: 'Escape' })
   expect(onClose).toHaveBeenCalledWith(false)
+})
+
+it('keeps the real focused title buffer editable through outage/expiry and a late save acknowledgement', async () => {
+  let resolve!: (value: typeof original) => void
+  vi.mocked(notesApi.update).mockReturnValueOnce(new Promise(done => { resolve = done }))
+  useAuthStore.setState({ phase: 'authenticated', isAuthenticated: true, isLoading: false, hasHydrated: true, signedOutLocally: false, error: null })
+  const onClose = vi.fn(); const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={client}><NoteEditorDialog open onOpenChange={onClose} notebookId="notebook:1" note={original} /><SessionRecovery /></QueryClientProvider>)
+  await screen.findByLabelText('Body')
+  fireEvent.click(screen.getByRole('button', { name: 'sources.saveNote' }))
+  await waitFor(() => expect(notesApi.update).toHaveBeenCalledTimes(1))
+  fireEvent.click(screen.getByRole('button', { name: 'Original' }))
+  const title = screen.getByPlaceholderText('sources.addTitle')
+  fireEvent.change(title, { target: { value: 'Buffered before outage' } })
+  await act(async () => useAuthStore.setState({ phase: 'unavailable', isAuthenticated: false }))
+  expect(title).toHaveFocus(); expect(title).toHaveValue('Buffered before outage')
+  fireEvent.change(title, { target: { value: 'Still editable offline' } })
+  await act(async () => resolve({ ...original, revision: 4 }))
+  expect(onClose).not.toHaveBeenCalled(); expect(title).toHaveFocus(); expect(title).toHaveValue('Still editable offline')
+  await act(async () => useAuthStore.setState({ phase: 'reauth-required' }))
+  expect(title).toHaveFocus()
+  await act(async () => useAuthStore.setState({ phase: 'authenticated', isAuthenticated: true }))
+  fireEvent.keyDown(title, { key: 'Enter' }); await screen.findByRole('button', { name: 'Still editable offline' })
+  fireEvent.click(screen.getByRole('button', { name: 'sources.saveNote' }))
+  await waitFor(() => expect(notesApi.update).toHaveBeenLastCalledWith('note:a', expect.objectContaining({ expected_revision: 4, title: 'Still editable offline' })))
+})
+
+it.each(['Close', 'Escape', 'success', 'Close while loading', 'Escape while loading'])('restores keyboard focus inside the retained editor after recovery %s', async action => {
+  useAuthStore.setState({ phase: 'authenticated', isAuthenticated: true, isLoading: false, hasHydrated: true, signedOutLocally: false, error: null })
+  const onClose = vi.fn(); const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={client}><NoteEditorDialog open onOpenChange={onClose} notebookId="notebook:1" note={original} /><SessionRecovery /></QueryClientProvider>)
+  const body = await screen.findByLabelText('Body'); const editorDialog = screen.getByRole('dialog')
+  fireEvent.click(screen.getByRole('button', { name: 'Original' }))
+  const title = screen.getByPlaceholderText('sources.addTitle')
+  fireEvent.change(title, { target: { value: 'Retained typed title' } }); fireEvent.keyDown(title, { key: 'Enter' })
+  await screen.findByRole('button', { name: 'Retained typed title' })
+  act(() => body.focus())
+  await act(async () => useAuthStore.setState({ phase: 'reauth-required', isAuthenticated: false }))
+  const trigger = screen.getByRole('button', { name: 'auth.signIn' })
+  expect(trigger.closest('[role=dialog]')).toBe(editorDialog)
+  act(() => trigger.focus()); fireEvent.click(trigger)
+  const password = screen.getByLabelText('auth.passwordPlaceholder')
+  await waitFor(() => expect(password).toHaveFocus())
+  if (action.endsWith('while loading')) await act(async () => useAuthStore.setState({ isLoading: true }))
+  if (action.startsWith('Close')) fireEvent.click(screen.getByRole('button', { name: 'common.close' }))
+  else if (action.startsWith('Escape')) fireEvent.keyDown(password, { key: 'Escape' })
+  else await act(async () => useAuthStore.setState({ phase: 'authenticated', isAuthenticated: true }))
+  await waitFor(() => expect(screen.queryByLabelText('auth.passwordPlaceholder')).not.toBeInTheDocument())
+  await waitFor(() => expect(document.activeElement?.closest('[role=dialog]')).toBe(editorDialog))
+  expect(screen.getByLabelText('Body')).toBe(body); expect(screen.getByRole('button', { name: 'Retained typed title' })).toBeInTheDocument()
+  expect(onClose).not.toHaveBeenCalled(); expect(notesApi.update).not.toHaveBeenCalled()
 })

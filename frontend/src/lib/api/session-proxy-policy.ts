@@ -10,6 +10,15 @@ export interface WebSessionConfig {
   webSessionProtocol: typeof WEB_SESSION_PROTOCOL | null
 }
 
+/** Safe reads may omit Origin; any supplied origin/site must be acceptable.
+ * This examines no Cookie or Authorization and grants no session authority. */
+export function isAllowedWebRead(headers: Headers, publicOrigin: string | null): boolean {
+  const origin = headers.get('origin')
+  const site = headers.get('sec-fetch-site')
+  return (origin === null || origin === publicOrigin)
+    && (site === null || ['none', 'same-origin', 'same-site'].includes(site))
+}
+
 function unavailable(): never {
   // Never include the invalid configuration value in errors or logs.
   throw new Error('AUTH_UNAVAILABLE')

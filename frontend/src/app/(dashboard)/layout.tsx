@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/lib/hooks/use-auth'
+import { useAuth, safeReturnPath } from '@/lib/hooks/use-auth'
 import { useVersionCheck } from '@/lib/hooks/use-version-check'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -9,55 +9,30 @@ import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { ModalProvider } from '@/components/providers/ModalProvider'
 import { CreateDialogsProvider } from '@/lib/hooks/use-create-dialogs'
 import { CommandPalette } from '@/components/common/CommandPalette'
+import { SessionRecovery } from '@/components/auth/SessionRecovery'
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const { isAuthenticated, isLoading } = useAuth()
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, phase, signedOutLocally } = useAuth()
   const router = useRouter()
-  const [hasCheckedAuth, setHasCheckedAuth] = useState(false)
-
-  // Check for version updates once per session
+  const [hasMountedWork, setHasMountedWork] = useState(false)
   useVersionCheck()
-
   useEffect(() => {
-    // Mark that we've completed the initial auth check
-    if (!isLoading) {
-      setHasCheckedAuth(true)
-
-      // Redirect to login if not authenticated
-      if (!isAuthenticated) {
-        // Store the current path to redirect back after login
-        const currentPath = window.location.pathname + window.location.search
-        sessionStorage.setItem('redirectAfterLogin', currentPath)
-        router.push('/login')
-      }
+    if (isAuthenticated) setHasMountedWork(true)
+    else if (!hasMountedWork && !isLoading && (phase === 'anonymous' || phase === 'reauth-required')) {
+      try { sessionStorage.setItem('redirectAfterLogin', safeReturnPath(window.location.pathname + window.location.search)) } catch { /* optional storage */ }
+      router.replace('/login')
     }
-  }, [isAuthenticated, isLoading, router])
-
-  // Show loading spinner during initial auth check or while loading
-  if (isLoading || !hasCheckedAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    )
+  }, [hasMountedWork, isAuthenticated, isLoading, phase, router])
+  if (!hasMountedWork && !isAuthenticated) {
+    if (isLoading) return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner /></div>
+    return <SessionRecovery />
   }
-
-  // Don't render anything if not authenticated (during redirect)
-  if (!isAuthenticated) {
-    return null
-  }
-
-  return (
-    <ErrorBoundary>
-      <CreateDialogsProvider>
-        {children}
-        <ModalProvider />
-        <CommandPalette />
-      </CreateDialogsProvider>
-    </ErrorBoundary>
-  )
+  // Once mounted, neither auth changes nor a background recheck replace the
+  // editor, query cache, modal, upload File objects or operation identities.
+  return <ErrorBoundary>
+    <CreateDialogsProvider>
+      <div inert={signedOutLocally} aria-hidden={signedOutLocally || undefined}>{children}<ModalProvider /><CommandPalette /></div>
+      <SessionRecovery />
+    </CreateDialogsProvider>
+  </ErrorBoundary>
 }

@@ -123,7 +123,7 @@ describe('Session configuration bootstrap', () => {
     expect(Object.keys(config).sort()).toEqual(['apiUrl', 'authMode', 'buildTime', 'dbStatus', 'hasUpdate', 'latestVersion', 'version', 'webSessionProtocol'].sort())
     expect(fetchMock.mock.calls.map(call => call[0])).toEqual(['/config', '/api/config'])
     for (const [, init] of fetchMock.mock.calls) {
-      expect(init).toEqual({ cache: 'no-store', credentials: 'omit', redirect: 'error' })
+      expect(init).toEqual({ cache: 'no-store', credentials: 'same-origin', redirect: 'error' })
     }
   })
 
@@ -147,7 +147,7 @@ describe('Session configuration bootstrap', () => {
     if (kind === 'http') fetchMock.mockResolvedValueOnce({ ok: false, status: 503 })
     if (kind === 'malformed') fetchMock.mockResolvedValueOnce({ ok: true, json: async () => { throw new Error('invalid JSON') } })
     await expect(getApiUrl()).rejects.toThrow('Web session configuration unavailable')
-    expect(fetchMock).toHaveBeenCalledExactlyOnceWith('/config', { cache: 'no-store', credentials: 'omit', redirect: 'error' })
+    expect(fetchMock).toHaveBeenCalledExactlyOnceWith('/config', { cache: 'no-store', credentials: 'same-origin', redirect: 'error' })
     expect(storedPasswordRead).not.toHaveBeenCalled()
     expect(JSON.stringify(fetchMock.mock.calls)).not.toContain('old-password')
     localStorage.removeItem('auth-storage')
@@ -159,4 +159,66 @@ describe('Session configuration bootstrap', () => {
     expect(await getConfig()).toMatchObject({ apiUrl: 'https://legacy.example', authMode: 'legacy_password', webSessionProtocol: null })
     expect(fetchMock.mock.calls[1][0]).toBe('https://legacy.example/api/config')
   })
+})
+
+it('purges old browser password immediately on validated device discovery, before backend config settles', async () => {
+  resetConfig()
+  localStorage.setItem('auth-storage', JSON.stringify({ state: { token: 'synthetic-old-password' } }))
+  let finish!: (response: Response) => void
+  const request = vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(new Response(JSON.stringify({ apiUrl: '', auth_mode: 'device_sessions', web_session_protocol: 'bff-memory-v1' }), { status: 200 }))
+    .mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+  vi.stubGlobal('fetch', request)
+  const pending = getConfig().catch(error => error)
+  await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2))
+  expect(localStorage.getItem('auth-storage')).toBeNull()
+  finish(new Response('{}', { status: 503 }))
+  expect(await pending).toBeInstanceOf(Error)
+  expect(request.mock.calls.map(([url]) => url)).toEqual(['/config', '/api/config'])
+  vi.unstubAllGlobals(); resetConfig(); localStorage.clear()
+})
+
+it('synthetic owner-private ingress permits metadata only with same-origin ambient-cookie policy', async () => {
+  resetConfig()
+  const request = vi.fn(async (input: string, init?: RequestInit) => {
+    const req = new Request(new URL(input, window.location.origin), init)
+    expect(req.credentials).toBe('same-origin'); expect(req.redirect).toBe('error')
+    expect(req.headers.has('Authorization')).toBe(false); expect(req.headers.has('Cookie')).toBe(false)
+    // Synthetic ingress gate: browser cookie eligibility, not a real cookie jar.
+    if (req.credentials !== 'same-origin' || new URL(req.url).origin !== window.location.origin) return new Response(null, { status: 401 })
+    return Response.json(input === '/config' ? { apiUrl: '', auth_mode: 'device_sessions', web_session_protocol: 'bff-memory-v1' } : { version: 'fixture' })
+  })
+  vi.stubGlobal('fetch', request)
+  try { expect(await getConfig()).toMatchObject({ authMode: 'device_sessions', version: 'fixture' }); expect(request.mock.calls.map(([url]) => url)).toEqual(['/config', '/api/config']) }
+  finally { vi.unstubAllGlobals(); resetConfig() }
+})
+it('cross-origin legacy metadata never opts into cross-origin cookies or explicit credentials', async () => {
+  resetConfig()
+  const requests: Request[] = []
+  vi.stubGlobal('fetch', vi.fn(async (input: string, init?: RequestInit) => {
+    const req = new Request(new URL(input, window.location.origin), init); requests.push(req)
+    return Response.json(input === '/config' ? { apiUrl: 'https://legacy-metadata.example', auth_mode: 'legacy_password' } : { version: 'fixture' })
+  }))
+  try {
+    await getConfig()
+    expect(requests[0].url).toBe(new URL('/config', window.location.origin).href)
+    expect(new URL(requests[1].url).origin).not.toBe(window.location.origin)
+    for (const req of requests) {
+      expect(req.credentials).toBe('same-origin'); expect(req.redirect).toBe('error')
+      expect(req.headers.has('Authorization')).toBe(false); expect(req.headers.has('Cookie')).toBe(false)
+    }
+  } finally { vi.unstubAllGlobals(); resetConfig() }
+})
+it.each(['/config', '/api/config'])('does not follow a synthetic ingress redirect from %s', async redirectAt => {
+  resetConfig()
+  const request = vi.fn(async (input: string, init?: RequestInit) => {
+    expect(init?.redirect).toBe('error'); expect(init?.credentials).toBe('same-origin')
+    if (input === redirectAt) throw new TypeError('synthetic cross-origin redirect blocked')
+    return Response.json({ apiUrl: '', auth_mode: 'device_sessions', web_session_protocol: 'bff-memory-v1' })
+  })
+  vi.stubGlobal('fetch', request)
+  try {
+    await expect(getConfig()).rejects.toThrow()
+    expect(request.mock.calls.map(([url]) => url)).toEqual(redirectAt === '/config' ? ['/config'] : ['/config', '/api/config'])
+  } finally { vi.unstubAllGlobals(); resetConfig() }
 })

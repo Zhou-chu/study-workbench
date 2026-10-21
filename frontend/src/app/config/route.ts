@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getWebSessionConfig } from '@/lib/api/session-proxy-policy'
+import { getWebSessionConfig, isAllowedWebRead } from '@/lib/api/session-proxy-policy'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -9,6 +9,10 @@ const PUBLIC_CONFIG_HEADERS = { 'Cache-Control': 'no-store', 'X-Content-Type-Opt
 export async function GET(request: NextRequest) {
   try {
     const config = getWebSessionConfig()
+    if (config.mode === 'device_sessions' && !isAllowedWebRead(request.headers, config.publicOrigin)) {
+      return NextResponse.json({ error: { code: 'CROSS_SITE_REQUEST', message: 'Cross-site request rejected.' } },
+        { status: 403, headers: PUBLIC_CONFIG_HEADERS })
+    }
     return NextResponse.json({
       apiUrl: config.mode === 'device_sessions' ? '' : await getLegacyApiUrl(request),
       auth_mode: config.mode,

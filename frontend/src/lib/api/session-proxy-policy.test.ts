@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import ts from 'typescript'
 import schema from '../../../../contracts/v1/openapi.json'
-import { getWebSessionConfig, matchApiRoute } from './session-proxy-policy'
+import { getWebSessionConfig, isAllowedWebRead, matchApiRoute } from './session-proxy-policy'
 
 const WEB_ORIGIN = 'https://workbench.example'
 const deviceEnv = () => {
@@ -20,6 +20,20 @@ beforeEach(() => {
   }
 })
 afterEach(() => vi.unstubAllEnvs())
+
+describe('metadata safe-read boundary', () => {
+  const allowedHeaders: Record<string, string>[] = [{}, { origin: WEB_ORIGIN }, { 'sec-fetch-site': 'same-origin' },
+    { origin: WEB_ORIGIN, 'sec-fetch-site': 'same-site' }, { 'sec-fetch-site': 'none' }]
+  it.each(allowedHeaders)('allows absent/exact origin and safe metadata %j', headers => {
+    expect(isAllowedWebRead(new Headers(headers), WEB_ORIGIN)).toBe(true)
+  })
+  const rejectedHeaders: Record<string, string>[] = [{ origin: 'https://foreign.example' }, { origin: 'null' }, { origin: '' },
+    { origin: `${WEB_ORIGIN}/` }, { origin: `${WEB_ORIGIN}, ${WEB_ORIGIN}` },
+    { 'sec-fetch-site': 'cross-site' }, { 'sec-fetch-site': '' }, { 'sec-fetch-site': 'SAME-ORIGIN' }]
+  it.each(rejectedHeaders)('rejects foreign/ambiguous origin or metadata %j', headers => {
+    expect(isAllowedWebRead(new Headers(headers), WEB_ORIGIN)).toBe(false)
+  })
+})
 
 describe('getWebSessionConfig', () => {
   it('defaults only absent mode to legacy with native passthrough disabled', () => {

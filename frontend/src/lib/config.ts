@@ -1,10 +1,11 @@
-/** Runtime configuration, discovered without sending any browser credentials. */
+/** Runtime configuration without application-supplied credentials. */
+import { purgeLegacyAuth } from '@/lib/auth-token'
 import { AppConfig, BackendConfigResponse, WEB_SESSION_PROTOCOL, type WebSessionMode } from '@/lib/types/config'
 
 const BUILD_TIME = new Date().toISOString()
 let config: AppConfig | null = null
 let configPromise: Promise<AppConfig> | null = null
-const PUBLIC_CONFIG_FETCH = { cache: 'no-store', credentials: 'omit', redirect: 'error' } as const
+const PUBLIC_CONFIG_FETCH = { cache: 'no-store', credentials: 'same-origin', redirect: 'error' } as const
 
 export async function getApiUrl(): Promise<string> {
   return (await getConfig()).apiUrl
@@ -51,13 +52,17 @@ async function fetchConfig(): Promise<AppConfig> {
     const response = await fetch('/config', PUBLIC_CONFIG_FETCH)
     if (!response.ok) return unavailable()
     metadata = runtimeMetadata(await response.json())
+    // Device discovery is sufficient to retire browser password persistence,
+    // even if the later public API readiness/config request fails or hangs.
+    if (metadata.authMode === 'device_sessions') purgeLegacyAuth()
   } catch {
     return unavailable()
   }
 
-  // Device apiUrl:'' is authoritative. Public metadata calls omit ALL cookies
-  // and never follow redirects, even when the browser has a session cookie.
-  // The BFF public dispatcher verifies the actual backend auth-mode/version.
+  // Device apiUrl:'' is authoritative. Ambient same-origin cookies can satisfy
+  // an owner-private ingress; no application Authorization/password is supplied.
+  // Never include cross-origin cookies or follow redirects. The BFF metadata
+  // dispatcher strips Cookie/Authorization before contacting the backend.
   const response = await fetch(`${metadata.apiUrl}/api/config`, PUBLIC_CONFIG_FETCH)
   if (!response.ok) throw new Error(`API config endpoint returned status ${response.status}`)
   const data: BackendConfigResponse = await response.json()

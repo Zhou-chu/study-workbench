@@ -1,5 +1,5 @@
 import apiClient from './client'
-import { getAuthToken } from '@/lib/auth-token'
+import { browserFetch } from './browser-transport'
 import { SearchRequest, SearchResponse, AskRequest } from '@/lib/types/search'
 
 export const searchApi = {
@@ -11,19 +11,15 @@ export const searchApi = {
 
   // Ask with streaming (uses relative URL for Docker compatibility)
   askKnowledgeBase: async (params: AskRequest, signal?: AbortSignal) => {
-    // Get auth token using the same logic as apiClient interceptor
-    const token = getAuthToken()
-
     // Use relative URL to leverage Next.js rewrites
     // This works both in dev (Next.js proxy) and production (Docker network)
     const url = '/api/search/ask'
 
     // Use fetch with ReadableStream for SSE
-    const response = await fetch(url, {
+    const response = await browserFetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` })
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(params),
       signal

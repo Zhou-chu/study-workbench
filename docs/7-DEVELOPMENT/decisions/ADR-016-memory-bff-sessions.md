@@ -160,3 +160,8 @@ configuration, private-ingress/native approval, Docker host/toolchain installati
 or publication authority follows from this ADR. Device Web activation waits for
 actual Next/browser headers, loss-hop/concurrency tests, mounted-draft and no-retry
 regressions, verified coupled lifecycle and independent security review.
+
+
+## Metadata ingress clarification (2026-10-21)
+
+Preserve ambient same-origin hosting credentials for browser metadata requests, while omitting app-supplied Authorization/password and rejecting redirects. Cookie-free means BFF-to-API, not browser-to-an-authenticated-private-ingress. Exact GET `/api/config` ignores app-cookie parsing/authority without authenticating anyone; retain safe-read and mode checks and strip all credentials upstream. `/api/auth/status` and protected/unsafe routes keep their original boundaries. This is compatibility hardening with synthetic tests, not a claim about undocumented Sites cookie mechanics or a passed private-ingress gate.

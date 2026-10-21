@@ -1,3 +1,4 @@
+import { isAuthRecoveryError } from '@/lib/api/browser-transport'
 import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -46,6 +47,7 @@ export function usePodcastEpisodes(options?: { autoRefresh?: boolean }) {
     queryKey: QUERY_KEYS.podcastEpisodes,
     queryFn: podcastsApi.listEpisodes,
     refetchInterval: (current) => {
+      if (isAuthRecoveryError(current.state.error)) return false
       if (!autoRefresh) {
         return false
       }

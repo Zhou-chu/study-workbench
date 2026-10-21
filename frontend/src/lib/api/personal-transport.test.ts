@@ -7,7 +7,7 @@ import { workbenchApi } from './workbench'
 import { notebooklmApi } from './notebooklm'
 import type { TurnRequest, WorkbenchSelection } from '@/lib/types/personal'
 
-vi.mock('@/lib/config', () => ({ getApiUrl: async () => 'http://127.0.0.1:5055' }))
+vi.mock('@/lib/config', () => ({ getApiUrl: async () => 'http://127.0.0.1:5055', getConfig: async () => ({ authMode: 'legacy_password', apiUrl: 'http://127.0.0.1:5055' }) }))
 vi.mock('@/lib/auth-token', () => ({ getAuthToken: () => 'unit-test-token-not-a-credential' }))
 
 // Keep the real shared Axios client, interceptors and JSON/FormData transforms.

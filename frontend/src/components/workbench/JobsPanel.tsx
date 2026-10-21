@@ -1,4 +1,5 @@
 'use client'
+import { isAuthRecoveryError } from '@/lib/api/browser-transport'
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { workbenchApi } from '@/lib/api/workbench'
@@ -31,7 +32,7 @@ const operationKeys: Record<string, string> = {
 function JobCard({ job, onChanged }: { job: BridgeJob; onChanged: () => void }) {
   const { t } = useTranslation()
   const [audioUrl, setAudioUrl] = useState<string>()
-  const status = useQuery({ queryKey: QUERY_KEYS.personalJob(job.job_id), queryFn: () => workbenchApi.job(job.job_id), initialData: job, enabled: activeJob(job.state), retry: false, refetchInterval: query => activeJob(query.state.data?.state) ? 2000 : false })
+  const status = useQuery({ queryKey: QUERY_KEYS.personalJob(job.job_id), queryFn: () => workbenchApi.job(job.job_id), initialData: job, enabled: activeJob(job.state), retry: false, refetchInterval: query => !isAuthRecoveryError(query.state.error) && activeJob(query.state.data?.state) ? 2000 : false })
   const current = status.data || job
   const remoteWork = current.provider === 'notebooklm' || current.operation === 'chat'
   const canCancel = current.state === 'queued' || (current.state === 'running' && current.operation === 'chat') || (activeJob(current.state) && current.provider === 'notebooklm')

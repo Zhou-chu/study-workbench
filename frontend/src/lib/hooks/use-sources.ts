@@ -1,3 +1,4 @@
+import { isAuthRecoveryError } from '@/lib/api/browser-transport'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
 import { sourcesApi } from '@/lib/api/sources'
@@ -237,6 +238,7 @@ export function useSourceStatus(sourceId: string, enabled = true) {
     queryFn: () => sourcesApi.status(sourceId),
     enabled: !!sourceId && enabled,
     refetchInterval: (query) => {
+      if (isAuthRecoveryError(query.state.error)) return false
       // Auto-refresh every 2 seconds if processing
       // The query.state.data contains the SourceStatusResponse
       const data = query.state.data as SourceStatusResponse | undefined
@@ -247,14 +249,7 @@ export function useSourceStatus(sourceId: string, enabled = true) {
       return false
     },
     staleTime: 0, // Always consider status data stale for real-time updates
-    retry: (failureCount, error) => {
-      // Don't retry on 404 (source not found)
-      const axiosError = error as { response?: { status?: number } }
-      if (axiosError?.response?.status === 404) {
-        return false
-      }
-      return failureCount < 3
-    },
+    retry: false,
   })
 }
 

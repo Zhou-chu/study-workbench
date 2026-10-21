@@ -6,7 +6,7 @@ import {
   type AccessSnapshot, type AuthOutcome, type BffSessionOptions, type NativeCalls,
   type RecordRef,
 } from './bff-session-store'
-import { getWebSessionConfig, matchApiRoute, type RoutePolicy, type WebSessionConfig } from './session-proxy-policy'
+import { getWebSessionConfig, isAllowedWebRead, matchApiRoute, type RoutePolicy, type WebSessionConfig } from './session-proxy-policy'
 
 const AUTH_BYTES = 8192
 const LIST_BYTES = 262_144
@@ -135,8 +135,7 @@ function webBoundary(req: Request, config: WebSessionConfig, cookie: CookieState
   const origin = req.headers.get('origin')
   const metadata = [...req.headers.keys()].some(name => name.startsWith('sec-fetch-'))
   const native = config.nativePassthrough && origin === null && !metadata && !cookie.ambient
-  const site = req.headers.get('sec-fetch-site')
-  if (origin !== null && origin !== config.publicOrigin || site !== null && !['none', 'same-origin', 'same-site'].includes(site)) throw new ProxyFailure('CROSS_SITE_REQUEST')
+  if (!isAllowedWebRead(req.headers, config.publicOrigin)) throw new ProxyFailure('CROSS_SITE_REQUEST')
   if (!native && !SAFE.has(req.method) && (origin !== config.publicOrigin || req.headers.get('x-studyworkbench-csrf') !== '1')) throw new ProxyFailure('CROSS_SITE_REQUEST')
   if (!native && req.headers.has('authorization')) throw new ProxyFailure('AUTH_MIXED_CREDENTIALS')
   const headers = new Headers()
@@ -460,10 +459,39 @@ export function createSessionProxy(config: WebSessionConfig, options: ProxyOptio
     if (!response.ok) throw await upstreamError(response)
     return new Response([204, 205, 304].includes(response.status) ? null : response.body, { status: response.status, headers: responseHeaders(response, route) })
   }
+  async function publicConfig(req: Request, path: string): Promise<Response> {
+    if (config.mode === 'device_sessions' && !isAllowedWebRead(req.headers, config.publicOrigin)) throw new ProxyFailure('CROSS_SITE_REQUEST')
+    // Ambient cookies may authenticate the browser at its private ingress, but
+    // never authenticate this metadata request. Do not parse app cookies, look
+    // up records or classify this as native transport. Both API calls receive
+    // only fixed metadata headers, not caller Cookie/Authorization/identity.
+    return context.run({ headers: new Headers() }, async () => {
+      const readinessSignal = AbortSignal.any([req.signal, AbortSignal.timeout(10_000)])
+      if (config.mode === 'legacy_password') await legacyReadiness(readinessSignal)
+      else await readiness(readinessSignal)
+      // Preserve the existing resource cancellation/time budget: the API's
+      // version lookup and DB check may outlast an auth operation's deadline.
+      const response = await nativeFetch(path, 'GET', req.signal)
+      if (response.status !== 200) throw await upstreamError(response)
+      const body = await nativeJson(response)
+      if (typeof body.version !== 'string'
+        || Object.hasOwn(body, 'latestVersion') && body.latestVersion !== null && typeof body.latestVersion !== 'string'
+        || Object.hasOwn(body, 'hasUpdate') && typeof body.hasUpdate !== 'boolean'
+        || Object.hasOwn(body, 'dbStatus') && !['online', 'offline'].includes(body.dbStatus as string)) throw new ProxyFailure('AUTH_UNAVAILABLE')
+      // Rebuild the existing public shape; extra upstream fields cannot turn
+      // bootstrap into an authenticated claim or a native token response.
+      return json(Object.fromEntries(['version', 'latestVersion', 'hasUpdate', 'dbStatus']
+        .filter(key => Object.hasOwn(body, key)).map(key => [key, body[key]])))
+    })
+  }
   async function dispatch(req: Request, legacyPath?: string, expected?: RoutePolicy): Promise<Response> {
     try {
       const path = rawPath(req)
       const route = matchApiRoute(req.method, path)
+      if (route?.method === 'GET' && route.template === '/api/config'
+        && (!expected || expected.method === route.method && expected.template === route.template && expected.kind === route.kind)) {
+        return await publicConfig(req, path)
+      }
       if (config.mode === 'legacy_password') {
         // Keep legacy's broad API surface and password Bearer, not a device-mode
         // fallback. Filesystem handlers replace rewrites without a size cap.

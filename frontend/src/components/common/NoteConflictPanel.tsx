@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useTranslation } from '@/lib/hooks/use-translation'
-import { noteProblemKeys, type NoteWriteProblem } from '@/lib/utils/note-conflict'
+import { noteProblemKeys, canRetryNoteWrite, type NoteWriteProblem } from '@/lib/utils/note-conflict'
 import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 
@@ -13,6 +13,7 @@ export function NoteConflictPanel({ problem, baseRevision, draft, latest, loadin
   const { t } = useTranslation()
   const [confirm, setConfirm] = useState(false)
   const snapshot = (value: NoteComparison) => <><h4 className="font-medium break-words">{value.title}</h4><p className="whitespace-pre-wrap break-words text-sm">{value.content}</p>{value.revision != null && <p className="text-xs text-muted-foreground">{t('noteConflict.serverRevision')}: {value.revision}</p>}{(value.citations || value.scope_snapshot) && <details className="text-xs"><summary>{t('noteConflict.references')}</summary><pre className="whitespace-pre-wrap break-all">{JSON.stringify({ citations: value.citations, scope: value.scope_snapshot }, null, 2)}</pre></details>}</>
+  if (canRetryNoteWrite(problem)) return <p role="alert" className="text-sm text-muted-foreground">{t(noteProblemKeys[problem.kind])}</p>
   return <section className="space-y-3 rounded-md border p-3" aria-label={t('noteConflict.review')}>
     <p role="alert" className="text-sm text-muted-foreground">{t(noteProblemKeys[problem.kind])}</p>
     {baseRevision != null && <p className="text-xs text-muted-foreground">{t('noteConflict.baseRevision')}: {baseRevision}{problem.currentRevision != null && <> · {t('noteConflict.serverRevision')}: {problem.currentRevision}</>}</p>}

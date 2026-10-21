@@ -1,6 +1,6 @@
 import axios, { AxiosResponse } from 'axios'
-import { getApiUrl } from '@/lib/config'
-import { getAuthToken } from '@/lib/auth-token'
+import { prepareBrowserRequest, classifyAuthFailure, protectedApiPath, assertResourceDispatch, rememberAuthRecoveryError, RequestNotDispatchedError } from './browser-transport'
+import { sessionCoordinator } from '@/lib/auth/session-coordinator'
 
 // API client with runtime-configurable base URL
 // The base URL is fetched from the API config endpoint on first request
@@ -28,47 +28,51 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: false,
+  adapter: 'fetch',
+  fetchOptions: { redirect: 'error' },
 })
 
-// Request interceptor to add base URL and auth header
+const requestGenerations = new WeakMap<object, number>()
+
 apiClient.interceptors.request.use(async (config) => {
-  // Set the base URL dynamically from runtime config
-  if (!config.baseURL) {
-    const apiUrl = await getApiUrl()
-    config.baseURL = `${apiUrl}/api`
-  }
-
-  const token = getAuthToken()
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-
-  // Handle FormData vs JSON content types
+  assertResourceDispatch()
+  // Never let per-call URL/base/auth overrides redirect credential custody.
+  if (config.adapter !== 'fetch' && typeof config.adapter !== 'function') throw new RequestNotDispatchedError('destination')
+  if (config.baseURL || config.auth) throw new RequestNotDispatchedError('destination')
+  const path = protectedApiPath(config.url || '')
+  const policy = await prepareBrowserRequest(config.method || 'GET', path)
+  assertResourceDispatch()
+  config.baseURL = policy.url.slice(0, policy.url.length - path.length)
+  config.url = path
+  config.headers.delete('Authorization')
+  config.headers.delete('X-StudyWorkbench-CSRF')
+  Object.entries(policy.headers).forEach(([name, value]) => config.headers.set(name, value))
+  // The installed fetch adapter defaults undefined to same-origin; false means
+  // omit (legacy). Force both policies after all per-call options are merged.
+  config.withCredentials = policy.mode === 'device_sessions' ? undefined : false
+  config.fetchOptions = { ...config.fetchOptions, redirect: 'error' }
+  config.maxRedirects = undefined
+  requestGenerations.set(config, sessionCoordinator.current())
   if (config.data instanceof FormData) {
-    // Remove any Content-Type header to let browser set multipart boundary
-    delete config.headers['Content-Type']
+    config.headers.delete('Content-Type')
   } else if (config.method && ['post', 'put', 'patch'].includes(config.method.toLowerCase())) {
-    config.headers['Content-Type'] = 'application/json'
+    config.headers.set('Content-Type', 'application/json')
   }
-
   return config
 })
 
-// Response interceptor for error handling
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
-  (error) => {
-    // Google session expiry is an integration error, not a failure of the
-    // separate local application password. Keep local reading/export available.
-    const googleNeedsReauth = error.response?.data?.error?.code === 'NEEDS_REAUTH'
-    if (error.response?.status === 401 && !googleNeedsReauth) {
-      // Clear auth and redirect to login
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth-storage')
-        window.location.href = '/login'
-      }
+  async (error) => {
+    const generation = error.config && requestGenerations.get(error.config)
+    if (generation !== undefined) {
+      const phase = error.response
+        ? await classifyAuthFailure(error.response.status, error.response.data)
+        : axios.isCancel(error) ? null : 'unavailable'
+      if (phase) { rememberAuthRecoveryError(error); sessionCoordinator.report(phase, generation) }
     }
+    // Preserve note conflicts, Blob details and integration errors verbatim.
+    // Never redirect, clear cookies, log credentials or replay the operation.
     return Promise.reject(error)
   }
 )

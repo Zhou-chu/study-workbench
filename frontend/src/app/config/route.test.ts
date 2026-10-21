@@ -184,6 +184,26 @@ describe('GET /config session mode', () => {
     expect(response.headers.get('set-cookie')).toBeNull()
   })
 
+  const rejectedReadHeaders: Record<string, string>[] = [{ origin: 'https://foreign.example' }, { origin: 'null' }, { origin: '' },
+    { 'sec-fetch-site': 'cross-site' }, { 'sec-fetch-site': 'same-origin, same-origin' }]
+  it.each(rejectedReadHeaders)('rejects device metadata unsafe read boundary %j', async headers => {
+    const response = await GET(new NextRequest('https://workbench.example/config', { headers }))
+    expect(response.status).toBe(403)
+    expect((await response.json()).error.code).toBe('CROSS_SITE_REQUEST')
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(response.headers.get('set-cookie')).toBeNull()
+  })
+
+  it('accepts same-origin ingress cookies without parsing stale app credentials or making auth claims', async () => {
+    const response = await GET(new NextRequest('https://workbench.example/config', { headers: {
+      origin: 'https://workbench.example', 'sec-fetch-site': 'same-origin',
+      cookie: 'private_ingress=synthetic; __Host-sw-session=x; __Host-sw-session=y', authorization: 'Bearer synthetic-token',
+    } }))
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ apiUrl: '', auth_mode: 'device_sessions', web_session_protocol: 'bff-memory-v1' })
+    expect(response.headers.get('set-cookie')).toBeNull()
+  })
+
   it.each(['', 'device-session', 'unknown'])('fails closed for explicit mode %j without exposing config values', async mode => {
     process.env.STUDY_WORKBENCH_AUTH_MODE = mode
     const response = await GET(new NextRequest('https://workbench.example/config'))

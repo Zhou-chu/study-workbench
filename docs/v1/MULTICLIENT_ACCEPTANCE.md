@@ -105,3 +105,23 @@ Task 3 source `ed080f38b67f07c06e885331d32aa5806c8f4450` passed independent revi
 Review fixed three issues: legacy frontend/backend mode mismatch now rejects every dispatch before credentials/body forwarding; a known readiness failure during due refresh preserves sanitized 503 rather than falsely reporting authentication rejection; maintenance cleanup diagnostics cannot contaminate an unrelated request's result. Legacy mode adds one fresh credential-free status check per dispatch, deliberately not cached across backend replacement.
 
 Auth input/upstream envelopes/status/error bodies are bounded at 8 KiB; session lists/probes at 256 KiB, without assuming only 32 historical rows or silently truncating. A larger history yields unavailable. Resource JSON/SSE/upload/download bodies remain streams under the API's existing declared/chunked input limits; portable import keeps its separate budget. Actual browser, HTTP loss-hop, production HTTPS/private ingress, coupled restart and activation are still unverified. Tasks 4/5 remain in an isolated branch under corrective review.
+
+
+## Browser transport and recovery checkpoint (2026-10-21 20:43 UTC)
+
+Task 4/5 source `5aebd705bda888908e38f533490c4ada90f671ef` passed independent review and merged without conflicts at `336ece64072d53e9952490ccb27f83e9971c599b`. Its final branch suite passed **886 tests / 67 files**, production build including TypeScript, and full lint with **0 errors / 7 existing warnings**; all explicit process exit markers were zero. Independent immutable-source review passed **148 focused tests / 12 files** and closed all eleven findings. These are branch results, not yet combined server/browser acceptance.
+
+The browser uses the existing single Axios client with its installed fetch adapter and redirect rejection; device mode never reads/sends a password Bearer and purges legacy storage before backend metadata availability. Explicit legacy compatibility remains separate. Generations fence late resource/auth completions; safe status confirmation, not login acknowledgement alone, unlocks explicit signout. Recovery retains mounted drafts and selected files, provides modal-reachable connection retry and restores focus safely. Only locally proven undispatched or exactly rejected auth writes permit manual note save retry; uncertain commits and conflicts still require reconciliation and mutations never automatically replay.
+
+Metadata bootstrap permits same-origin ambient ingress cookies without application Authorization. Its narrow server companion remains under independent review; actual Sites cookie mechanics, browser pointer/focus behavior, real HTTP loss hops, coupled frontend/API restart, native clients and activation remain unverified. Legacy remains the default.
+
+
+## Combined Web session checkpoint (2026-10-21 20:56 UTC)
+
+Narrow metadata companion `000de35c62ca4845d77981a6f9dd6e2efe043f4b` passed independent review (463 existing and 26 added synthetic checks). Exact GET `/api/config` ignores app-cookie authority but retains mode/readiness and supplied Origin/Fetch-Metadata checks; fixed upstream headers strip all Cookie/Authorization, and bounded output retains only the existing four public fields. Device `/config` gains the same safe-read guard. Status/protected routes remain cookie-aware and strict. This is compatibility hardening, not actual Sites acceptance.
+
+The initial combined build caught three TypeScript errors in heterogeneous test-header tables despite 1076 passing runtime tests. Test-only follow-up `366180f7767a6dc9299b1176baf0ed4d4f949b11` supplied explicit table types without casts/suppressions or changed cases; independent narrow review approved it. Cherry-picked canonical `656fb667e2a7e413645a7070b0a1142bd9f2fb11` subsequently passed the complete **1076 tests / 70 files in 90.28 seconds**, full lint with **0 errors / 7 existing warnings**, and production build including TypeScript. All final exit markers were zero. An intervening interrupted run had no terminal result and is not counted.
+
+Actual synthetic local-browser acceptance is now starting against that immutable SHA. No production activation, deployment, real credentials, providers, native-client acceptance or coupled-restart claim follows these checks.
+
+Private Sites connectivity remains **unknown/blocked on a documented connection contract**, not proven unsupported: the deployment schema consumes already-registered private HTTP tunnel IDs, but current tools/docs do not establish dot-hosted registration/client setup or native-client onboarding. No token, Site, tunnel, public fallback or platform security change was created.

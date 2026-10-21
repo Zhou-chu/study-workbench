@@ -1,4 +1,5 @@
 'use client'
+import { isAuthRecoveryError } from '@/lib/api/browser-transport'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, BookOpen, Files, MessageSquare, NotebookPen, Search, Upload, CircleCheck, Layers } from 'lucide-react'
@@ -25,7 +26,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { NoteConflictPanel } from '@/components/common/NoteConflictPanel'
-import { noteWriteProblem, type NoteWriteProblem } from '@/lib/utils/note-conflict'
+import { noteWriteProblem, canRetryNoteWrite, type NoteWriteProblem } from '@/lib/utils/note-conflict'
 import { cn } from '@/lib/utils'
 
 const workspaceTabs = ['sources', 'conversation', 'notes'] as const
@@ -92,8 +93,8 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const sessionId = `v1_${notebookId}`
   const refresh = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.workbench(notebookId) })
   const { uploads, upload, retryUpload, dismissUpload } = useWorkbenchUploads(notebookId, refresh)
-  const history = useQuery({ queryKey: QUERY_KEYS.personalTurns(sessionId), queryFn: () => workbenchApi.turns(sessionId), enabled: !!pendingTurn, retry: false, refetchInterval: pendingTurn ? 2000 : false })
-  const pendingStatus = useQuery({ queryKey: QUERY_KEYS.personalJob(pendingJob || ''), queryFn: ({ signal }) => workbenchApi.job(pendingJob!, signal), enabled: !!pendingJob, retry: false, refetchInterval: query => activeJob(query.state.data?.state) ? 2000 : false })
+  const history = useQuery({ queryKey: QUERY_KEYS.personalTurns(sessionId), queryFn: () => workbenchApi.turns(sessionId), enabled: !!pendingTurn, retry: false, refetchInterval: query => !isAuthRecoveryError(query.state.error) && pendingTurn ? 2000 : false })
+  const pendingStatus = useQuery({ queryKey: QUERY_KEYS.personalJob(pendingJob || ''), queryFn: ({ signal }) => workbenchApi.job(pendingJob!, signal), enabled: !!pendingJob, retry: false, refetchInterval: query => !isAuthRecoveryError(query.state.error) && activeJob(query.state.data?.state) ? 2000 : false })
   const turns = [...new Map([...(data?.turns || []), ...(history.data || [])].map(turn => [turn.turn_id, turn])).values()]
   const selectedCount = selection.selection_origin === 'local' ? selection.source_version_ids.length : selection.remote_source_ids.length
   // Configuration availability is not an inference or credential health check.
@@ -319,7 +320,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
         <div className="sticky top-0 z-10 flex justify-between items-center gap-2 border-b bg-card py-3"><h2 className="flex items-center gap-2 text-sm font-semibold"><NotebookPen className="size-4 text-muted-foreground" aria-hidden="true" />{t('workbench.notes')}</h2><Button size="sm" variant="ghost" onClick={() => { noteEditorSession.current++; setBaseRevision(null); resetNoteReview(); setEditingNote(null); setNoteContent(''); setNoteTitle(''); setNoteScope(undefined) }}>{t('common.new')}</Button></div>
         <label className="text-xs block" htmlFor="note-title">{t('workbench.noteTitle')}</label><Input id="note-title" value={noteTitle} onChange={event => { noteEditorRevision.current++; setNoteTitle(event.target.value) }} />
         <label className="text-xs block" htmlFor="note-content">{t('workbench.noteContent')}</label><Textarea id="note-content" className="bg-background leading-6" rows={8} value={noteContent} onChange={event => { noteEditorRevision.current++; setNoteContent(event.target.value) }} />
-        <Button size="sm" disabled={!noteContent.trim() || note.isPending || !!noteProblem || (!!editingNote?.id && baseRevision == null)} onClick={() => submitNote({ editorSession: noteEditorSession.current, baseRevision, noteId: editingNote?.id || undefined, title: noteTitle || t('common.note'), content: noteContent, citations: editingNote?.citations || [], scope_snapshot: noteScope || { engine: selection.engine, source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [], remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [], selection_origin: selection.selection_origin } })}>{t('workbench.saveNote')}</Button>
+        <Button size="sm" disabled={!noteContent.trim() || note.isPending || !canRetryNoteWrite(noteProblem) || (!!editingNote?.id && baseRevision == null)} onClick={() => submitNote({ editorSession: noteEditorSession.current, baseRevision, noteId: editingNote?.id || undefined, title: noteTitle || t('common.note'), content: noteContent, citations: editingNote?.citations || [], scope_snapshot: noteScope || { engine: selection.engine, source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [], remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [], selection_origin: selection.selection_origin } })}>{t('workbench.saveNote')}</Button>
         {noteProblem && <NoteConflictPanel problem={noteProblem} baseRevision={baseRevision} draft={{ title: noteTitle, content: noteContent, citations: editingNote?.citations, scope_snapshot: noteScope }} latest={latestNotes} loading={comparing} readFailed={compareFailed} onCompare={compareNote} onReload={editingNote?.id ? reloadNote : undefined} />}
         {!data.notes.length && <p className="text-sm text-muted-foreground">{t('workbench.noNotes')}</p>}
         {data.notes.map(saved => <article key={saved.id} className="rounded-md border p-3 space-y-2"><h3 className="font-medium">{saved.title}</h3><MarkdownRenderer>{saved.content || ''}</MarkdownRenderer>{saved.citations?.map(reference => <Button key={reference.citation_id} size="sm" variant="ghost" onClick={() => openCitation(reference)}>{reference.source_title} · {reference.citation_id}</Button>)}{saved.scope_snapshot && <Button size="sm" variant="outline" onClick={() => { noteEditorSession.current++; setBaseRevision(saved.revision); resetNoteReview(); setEditingNote(saved); setNoteTitle(saved.title || ''); setNoteContent(saved.content || ''); setNoteScope(saved.scope_snapshot) }}>{t('common.edit')}</Button>}</article>)}

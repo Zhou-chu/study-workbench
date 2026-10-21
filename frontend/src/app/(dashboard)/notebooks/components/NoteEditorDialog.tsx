@@ -14,7 +14,7 @@ import { InlineEdit } from '@/components/common/InlineEdit'
 import { cn } from "@/lib/utils";
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { NoteConflictPanel } from '@/components/common/NoteConflictPanel'
-import { noteWriteProblem, type NoteWriteProblem } from '@/lib/utils/note-conflict'
+import { noteWriteProblem, canRetryNoteWrite, type NoteWriteProblem } from '@/lib/utils/note-conflict'
 import { notesApi } from '@/lib/api/notes'
 import type { NoteResponse } from '@/lib/types/api'
 import { ContentUnavailable } from '@/components/common/ContentUnavailable'
@@ -149,7 +149,7 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
 
   const onSubmit = async (data: CreateNoteFormData) => {
     const id = savedId || noteIdWithPrefix
-    if (pending.current || problem || (id && baseRevision == null) || !initialized.current) return
+    if (pending.current || !canRetryNoteWrite(problem) || (id && baseRevision == null) || !initialized.current) return
     const currentSession = session.current
     const currentGeneration = generation.current
     pending.current = true
@@ -157,6 +157,7 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
       const saved = id ? await updateNote.mutateAsync({ id, data: { title: data.title || '', content: data.content, expected_revision: baseRevision! } }) :
         notebookId ? await createNote.mutateAsync({ title: data.title || undefined, content: data.content, note_type: 'human', notebook_id: notebookId }) : null
       if (!saved || currentSession !== session.current) return
+      setProblem(null)
       setBaseRevision(saved.revision); setSavedId(saved.id)
       if (notebookId) queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes(notebookId) })
       if (currentGeneration === generation.current) { reset(); onOpenChange(false) }
@@ -248,7 +249,7 @@ export function NoteEditorDialog({ open, onOpenChange, notebookId, note }: NoteE
             </Button>
             <Button
               type="submit"
-              disabled={isSaving || !!problem || (isEditing && (noteLoading || baseRevision == null))}
+              disabled={isSaving || !canRetryNoteWrite(problem) || (isEditing && (noteLoading || baseRevision == null))}
             >
               {isSaving
                 ? hasSavedIdentity ? `${t('common.saving')}...` : `${t('common.creating')}...`

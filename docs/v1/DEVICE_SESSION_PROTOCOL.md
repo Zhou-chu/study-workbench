@@ -180,3 +180,8 @@ Native protocol above, access overlap, strict provider, 32 live sessions, 10 ref
 Lost **native/API→BFF** refresh acknowledgement requires login without replay. Lost **BFF→browser** acknowledgement after swap recovers through stable-cookie metadata. Duplicate rejection is not theft detection when an attacker wins first. API restart invalidates prior sessions; frontend memory loss additionally requires the coupled lifecycle above.
 
 HTTP rate identity remains the conservative constant `shared-peer` bucket: five failed login attempts/minute shared across Web/native callers, global30 upper bound. ASGI client may already be proxy-rewritten; ignore X-Forwarded-For/X-Real-IP for identity. Verified per-peer attribution is deferred. This Web design introduces no identity header or backend contract change.
+
+
+### Public bootstrap transport clarification (2026-10-21)
+
+Browser-to-own-origin metadata requests may carry ambient same-origin hosting credentials; they use `credentials: same-origin`, no application Authorization/password and no redirect following. This is distinct from the mandatory cookie-free BFF-to-API boundary. Only exact GET `/api/config` ignores app-cookie parsing/authority as non-authenticating metadata, with route/mode/readiness/Origin/Fetch-Metadata checks and no upstream Cookie/Authorization or outgoing cookies. `/api/auth/status` remains cookie-aware and authoritative. Device `/config` also validates supplied Origin/Fetch-Metadata. Neither clarification proves actual Sites ingress behavior or authorizes activation.

@@ -90,7 +90,7 @@ export function AppSidebar() {
   const { t } = useTranslation()
   const navigation = getNavigation(t)
   const pathname = usePathname()
-  const { logout } = useAuth()
+  const { logout, isLoading: authBusy } = useAuth()
   const { isCollapsed, toggleCollapse } = useSidebarStore()
   const { openSourceDialog, openNotebookDialog, openPodcastDialog } = useCreateDialogs()
 
@@ -369,7 +369,8 @@ export function AppSidebar() {
                 <Button
                   variant="outline"
                   className="w-full justify-center sidebar-menu-item"
-                  onClick={logout}
+                  onClick={() => void logout()}
+                  disabled={authBusy}
                   aria-label={t('common.signOut')}
                 >
                   <LogOut className="h-4 w-4" />
@@ -381,7 +382,8 @@ export function AppSidebar() {
             <Button
               variant="outline"
               className="w-full justify-start gap-2 sidebar-menu-item"
-              onClick={logout}
+              onClick={() => void logout()}
+                  disabled={authBusy}
               aria-label={t('common.signOut')}
              >
               <LogOut className="h-4 w-4" />

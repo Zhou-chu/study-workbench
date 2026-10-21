@@ -8,6 +8,7 @@ const id = '12345678-1234-1234-1234-123456789abc'
 const token = (prefix: string, byte = 1) => `${prefix}${Buffer.alloc(32, byte).toString('base64url')}`
 const envelope = () => ({ session_id: id, access_token: token('swa1_'), refresh_token: token('swr1_'), access_expires_at: new Date(Date.now() + 600_000).toISOString(), refresh_expires_at: new Date(Date.now() + 86_400_000).toISOString() })
 const ready = () => Response.json({ auth_enabled: true, auth_mode: 'device_sessions', protocol_version: 1 })
+const publicMetadata = { version: '1.0.0', latestVersion: null, hasUpdate: false, dbStatus: 'online' }
 function request(path: string, method = 'GET', headers: Record<string, string> = {}, body?: string) {
   return new Request(`${origin}${path}`, { method, headers: { ...(method !== 'GET' && method !== 'HEAD' ? { origin, 'x-studyworkbench-csrf': '1', 'content-type': 'application/json' } : {}), ...headers }, body })
 }
@@ -16,6 +17,7 @@ function fixture(overrides: Partial<WebSessionConfig> = {}) {
     if (url.endsWith('/auth/status')) return ready()
     if (url.endsWith('/auth/sessions') && options?.method === 'POST') return Response.json(envelope(), { status: 201 })
     if (url.endsWith('/auth/sessions') && options?.method === 'GET') return Response.json({ sessions: [] })
+    if (url.endsWith('/api/config')) return Response.json(publicMetadata)
     return Response.json({ ok: true })
   })
   return { fetchMock, proxy: createSessionProxy({ ...config, ...overrides }, { fetch: fetchMock }) }
@@ -73,6 +75,134 @@ describe('Web BFF request boundary', () => {
     const req = new Request(`${origin}/api/auth/sessions`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-client-kind': 'native' }, body: '{}' })
     expect((await proxy.dispatch(req)).status).toBe(403)
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('metadata-only private-ingress bootstrap', () => {
+  it.each([
+    'private_ingress=synthetic',
+    'private_ingress=synthetic; __Host-sw-session=malformed',
+    'private_ingress=synthetic; __Host-sw-session=x; __Host-sw-session=y',
+    '__Host-sw-session=x; sw-session=y; sw-access=obsolete; sw-refresh=obsolete',
+    '__Host-sw-session=x, __Host-sw-session=y',
+    `__Host-sw-session=${'x'.repeat(17000)}`,
+  ])('ignores ambient app/ingress credentials only for exact public config (%s)', async cookie => {
+    const { proxy, fetchMock } = fixture({ nativePassthrough: true })
+    const response = await proxy.dispatch(request('/api/config', 'GET', {
+      cookie, authorization: 'Bearer synthetic-native', origin, 'sec-fetch-site': 'same-origin',
+      'x-studyworkbench-csrf': '1', 'x-forwarded-user': 'synthetic-owner',
+    }))
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual(publicMetadata)
+    expect(response.headers.get('set-cookie')).toBeNull()
+    expect(response.headers.get('clear-site-data')).toBeNull()
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(response.headers.get('x-content-type-options')).toBe('nosniff')
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(['http://internal:5055/api/auth/status', 'http://internal:5055/api/config'])
+    for (const [, init] of fetchMock.mock.calls) {
+      expect(init?.method).toBe('GET')
+      expect(init?.redirect).toBe('manual')
+      expect(init?.body).toBeUndefined()
+      expect([...new Headers(init?.headers).entries()]).toEqual([['accept', 'application/json'], ['accept-encoding', 'identity']])
+    }
+  })
+
+  const rejectedReadHeaders: Record<string, string>[] = [{ origin: 'https://foreign.example' }, { origin: 'null' }, { origin: '' },
+    { 'sec-fetch-site': 'cross-site' }, { 'sec-fetch-site': 'same-origin, same-origin' }]
+  it.each(rejectedReadHeaders)('retains public config safe-read guards %j before upstream', async headers => {
+    const { proxy, fetchMock } = fixture()
+    const response = await proxy.dispatch(request('/api/config', 'GET', { ...headers, cookie: '__Host-sw-session=x; __Host-sw-session=y' }))
+    expect(response.status).toBe(403)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it.each(['/api/auth/status', '/api/notes', '/api/auth/sessions'])('never ignores ambiguous cookies for %s', async path => {
+    const { proxy, fetchMock } = fixture()
+    expect((await proxy.dispatch(request(path, 'GET', { cookie: '__Host-sw-session=x; __Host-sw-session=y' }))).status).toBe(400)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it.each([['HEAD', '/api/config'], ['POST', '/api/config'], ['GET', '/api/%63onfig'], ['GET', '/api/config/extra']])('does not widen metadata exception to %s %s', async (method, path) => {
+    const { proxy, fetchMock } = fixture()
+    expect((await proxy.dispatch(request(path, method, { cookie: '__Host-sw-session=x; __Host-sw-session=y' }))).status).toBe(400)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('preserves credential-free legacy metadata compatibility and rejects backend replacement', async () => {
+    const { proxy, fetchMock } = fixture({ mode: 'legacy_password', publicOrigin: null, webSessionProtocol: null })
+    fetchMock.mockResolvedValueOnce(Response.json({ auth_enabled: true, message: 'Authentication required' }))
+    const headers = { cookie: 'private_ingress=synthetic; __Host-sw-session=x; __Host-sw-session=y', authorization: 'Bearer synthetic-password' }
+    expect(await (await proxy.dispatch(request('/api/config', 'GET', headers))).json()).toEqual(publicMetadata)
+    expect(new Headers(fetchMock.mock.calls[1][1]?.headers).has('authorization')).toBe(false)
+    expect(new Headers(fetchMock.mock.calls[1][1]?.headers).has('cookie')).toBe(false)
+    fetchMock.mockClear()
+    expect((await proxy.dispatch(request('/api/config', 'GET', headers))).status).toBe(503)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('still fails backend mode mismatch before config dispatch despite stale app credentials', async () => {
+    const { proxy, fetchMock } = fixture()
+    fetchMock.mockResolvedValueOnce(Response.json({ auth_enabled: true, message: 'Authentication required' }))
+    const response = await proxy.dispatch(request('/api/config', 'GET', { cookie: '__Host-sw-session=x; __Host-sw-session=y' }))
+    expect(response.status).toBe(503)
+    expect((await response.json()).error.code).toBe('AUTH_UNAVAILABLE')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not confirm or alter a pending app session during metadata bootstrap', async () => {
+    const { proxy, fetchMock } = fixture()
+    const { cookie } = await login(proxy)
+    fetchMock.mockClear()
+    expect((await proxy.dispatch(request('/api/config', 'GET', { cookie }))).status).toBe(200)
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(['http://internal:5055/api/auth/status', 'http://internal:5055/api/config'])
+    expect((await proxy.dispatch(request('/api/notes', 'GET', { cookie }))).status).toBe(401)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it.each(['online', 'offline'])('returns only documented metadata, retaining dbStatus %s', async dbStatus => {
+    const { proxy, fetchMock } = fixture()
+    fetchMock.mockResolvedValueOnce(ready()).mockResolvedValueOnce(Response.json({
+      ...publicMetadata, dbStatus, authenticated: true, web: { phase: 'authenticated' }, access_token: 'synthetic-secret',
+    }, { headers: { 'Set-Cookie': '__Host-sw-session=forged', 'Clear-Site-Data': '"cookies"' } }))
+    const response = await proxy.dispatch(request('/api/config'))
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ ...publicMetadata, dbStatus })
+    expect(response.headers.get('set-cookie')).toBeNull()
+    expect(response.headers.get('clear-site-data')).toBeNull()
+  })
+
+  it.each([{ version: '1.0.0' }, { ...publicMetadata, latestVersion: '1.0.1' }])('preserves documented optional metadata compatibility %j', async metadata => {
+    const { proxy, fetchMock } = fixture()
+    fetchMock.mockResolvedValueOnce(ready()).mockResolvedValueOnce(Response.json(metadata))
+    expect(await (await proxy.dispatch(request('/api/config'))).json()).toEqual(metadata)
+  })
+
+  it.each([{}, { ...publicMetadata, version: 7 }, { ...publicMetadata, latestVersion: {} },
+    { ...publicMetadata, hasUpdate: 'yes' }, { ...publicMetadata, dbStatus: 'unknown' },
+    { ...publicMetadata, version: 'x'.repeat(8193) }])('fails malformed/oversized metadata unavailable %j', async metadata => {
+    const { proxy, fetchMock } = fixture()
+    fetchMock.mockResolvedValueOnce(ready()).mockResolvedValueOnce(Response.json(metadata))
+    const response = await proxy.dispatch(request('/api/config'))
+    expect(response.status).toBe(503)
+    expect((await response.json()).error.code).toBe('AUTH_UNAVAILABLE')
+  })
+
+  it('does not follow metadata redirects or reflect token-bearing error bytes', async () => {
+    const { proxy, fetchMock } = fixture()
+    fetchMock.mockResolvedValueOnce(ready()).mockResolvedValueOnce(new Response('synthetic-secret', { status: 307, headers: { location: 'https://foreign.example/token', 'set-cookie': 'forged=1' } }))
+    const response = await proxy.dispatch(request('/api/config'))
+    expect(response.status).toBe(502)
+    expect(await response.text()).not.toMatch(/synthetic-secret|foreign.example/)
+    expect(response.headers.get('location')).toBeNull()
+    expect(response.headers.get('set-cookie')).toBeNull()
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('preserves the metadata request signal instead of imposing the auth operation timeout', async () => {
+    const { proxy, fetchMock } = fixture()
+    const req = request('/api/config')
+    expect((await proxy.dispatch(req)).status).toBe(200)
+    expect(fetchMock.mock.calls[1][1]?.signal).toBe(req.signal)
   })
 })
 

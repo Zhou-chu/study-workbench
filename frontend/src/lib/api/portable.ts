@@ -1,4 +1,5 @@
 import apiClient from './client'
+import { protectedApiPath } from './browser-transport'
 import type { BridgeJob, PortableLimits } from '@/lib/types/personal'
 export const portableApi = {
   limits: async () => (await apiClient.get<PortableLimits>('/personal/portable/limits')).data,
@@ -10,8 +11,9 @@ export const portableApi = {
   },
   // Never attach the application bearer token to a server-supplied external URL.
   download: async (url: string, signal?: AbortSignal) => {
-    const path = url.startsWith('/api/personal/') ? url.slice(4) : url
-    if (!path.startsWith('/personal/') || path.includes('..') || path.includes('\\')) throw new Error('Invalid protected download path')
+    let path: string
+    try { path = protectedApiPath(url) } catch { throw new Error('Invalid protected download path') }
+    if (!/^\/personal\/(?:exports|artifacts)\/[^/?#]+\/download$/.test(path)) throw new Error('Invalid protected download path')
     return (await apiClient.get<Blob>(path, { responseType: 'blob', signal })).data
   },
 }

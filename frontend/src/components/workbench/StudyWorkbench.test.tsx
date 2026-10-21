@@ -2,6 +2,9 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Workspace, TurnRecord, EvidenceCitation, WorkbenchNote } from '@/lib/types/personal'
+import DashboardLayout from '@/app/(dashboard)/layout'
+import { useAuthStore } from '@/lib/stores/auth-store'
+import { RequestNotDispatchedError } from '@/lib/api/browser-transport'
 import { StudyWorkbench } from './StudyWorkbench'
 import { useNotebookLMStatus, useNotebookLMCapabilities } from '@/lib/hooks/use-notebooklm'
 import { useModelDefaults } from '@/lib/hooks/use-models'
@@ -578,4 +581,104 @@ describe('StudyWorkbench source snapshots', () => {
     if (state === 'submission_unknown') expect(screen.getByText('workbench.unknownSubmission')).toBeInTheDocument()
   })
 
+})
+
+// Real dashboard retention boundary, existing integrated note protocol unchanged.
+vi.mock('@/lib/hooks/use-auth', () => ({ useAuth: () => useAuthStore(), safeReturnPath: (path: string) => path }))
+vi.mock('@/lib/hooks/use-version-check', () => ({ useVersionCheck: () => {} }))
+vi.mock('@/lib/hooks/use-create-dialogs', () => ({ CreateDialogsProvider: ({ children }: { children: React.ReactNode }) => children }))
+vi.mock('@/components/providers/ModalProvider', () => ({ ModalProvider: () => null }))
+vi.mock('@/components/common/CommandPalette', () => ({ CommandPalette: () => null }))
+function showRecoverable() {
+  useAuthStore.setState({ phase: 'authenticated', isAuthenticated: true, isLoading: false, hasHydrated: true, signedOutLocally: false, authRequired: true, error: null })
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+  return render(<QueryClientProvider client={client}><DashboardLayout><StudyWorkbench notebookId="notebook:1" /></DashboardLayout></QueryClientProvider>)
+}
+async function recoverWorkbench() {
+  useAuthStore.setState({ login: async () => { useAuthStore.setState({ phase: 'authenticated', isAuthenticated: true }); return true } })
+  fireEvent.click(screen.getByRole('button', { name: 'auth.signIn' }))
+  fireEvent.change(screen.getByLabelText('auth.passwordPlaceholder'), { target: { value: 'synthetic-password' } })
+  fireEvent.click(screen.getByRole('button', { name: 'auth.signIn' }))
+  await waitFor(() => expect(screen.queryByTestId('session-recovery')).not.toBeInTheDocument())
+}
+describe('workbench session recovery preserves authoritative note state', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(useModelDefaults).mockReturnValue({ data: { default_chat_model: 'model:test' } } as never)
+    vi.mocked(workbenchApi.workspace).mockResolvedValue(structuredClone(fixture))
+    vi.mocked(workbenchApi.turns).mockResolvedValue([])
+    vi.mocked(workbenchApi.job).mockResolvedValue({ job_id: 'j1', state: 'queued', operation: 'ask' })
+    vi.mocked(workbenchApi.turn).mockResolvedValue({ turn_id: 'new_turn', job_id: 'j1' })
+  })
+  it('preserves conflict comparison, revision, citations, scope and exact editor through reauthentication', async () => {
+    const original = { id: 'note:a', revision: 3, title: 'Original recovery note', content: 'Original recovery body', citations: oldTurn.citations, scope_snapshot: oldTurn.scope_snapshot }
+    const latest = { ...original, revision: 4, content: 'Remote comparison body' }
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [original] })
+    vi.mocked(workbenchApi.updateNote).mockRejectedValue({ response: { status: 409, data: { detail: { code: 'NOTE_REVISION_CONFLICT', current_revision: 4 } } } })
+    showRecoverable(); await screen.findByText(original.content)
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }))
+    const body = screen.getByLabelText('workbench.noteContent')
+    fireEvent.change(body, { target: { value: 'Private retained draft' } })
+    fireEvent.change(screen.getByLabelText('workbench.noteTitle'), { target: { value: 'Private retained title' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await screen.findByText('noteConflict.conflict')
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [latest] })
+    fireEvent.click(screen.getByRole('button', { name: 'noteConflict.compare' })); await screen.findByText(latest.content)
+    await act(async () => useAuthStore.setState({ phase: 'reauth-required', isAuthenticated: false }))
+    expect(screen.getByLabelText('workbench.noteContent')).toBe(body)
+    await recoverWorkbench()
+    expect(body).toHaveValue('Private retained draft'); expect(screen.getByLabelText('workbench.noteTitle')).toHaveValue('Private retained title')
+    expect(screen.getByText(latest.content)).toBeInTheDocument(); expect(screen.getByText(/noteConflict.baseRevision/)).toHaveTextContent('3')
+    expect(screen.getByRole('button', { name: 'workbench.saveNote' })).toBeDisabled()
+    expect(workbenchApi.updateNote).toHaveBeenCalledTimes(1)
+    expect(workbenchApi.updateNote).toHaveBeenCalledWith('notebook:1', 'note:a', expect.objectContaining({ expected_revision: 3, citations: original.citations, scope_snapshot: original.scope_snapshot }))
+  })
+  it('keeps uncertain saves, selected File and upload ID, question, scope and pending turn identity', async () => {
+    vi.mocked(workbenchApi.upload).mockRejectedValue(new Error('upload response lost'))
+    vi.mocked(workbenchApi.saveNote).mockRejectedValue(new Error('save response lost'))
+    showRecoverable(); await screen.findByText('Lecture notes')
+    const file = new File(['private fixture'], 'pending.txt')
+    fireEvent.change(screen.getByLabelText('workbench.upload'), { target: { files: [file] } })
+    await screen.findByText('workbench.uploadRecoveryHint')
+    const uploaded = vi.mocked(workbenchApi.upload).mock.calls[0]
+    fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'Submitted question' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.ask' }))
+    await waitFor(() => expect(workbenchApi.turn).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(screen.getByLabelText('workbench.question')).toHaveValue(''))
+    fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'New unsent question' } })
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Unknown-save draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' })); await screen.findByText('noteConflict.unknown')
+    await act(async () => useAuthStore.setState({ phase: 'unavailable', isAuthenticated: false }))
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Newer local draft during outage' } })
+    await act(async () => useAuthStore.setState({ phase: 'reauth-required' })); await recoverWorkbench()
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Newer local draft during outage')
+    expect(screen.getByLabelText('workbench.question')).toHaveValue('New unsent question')
+    expect(screen.getByLabelText('My PDF · sv_old')).toBeChecked()
+    expect(screen.getByText('noteConflict.unknown')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'workbench.saveNote' })).toBeDisabled()
+    expect(screen.getByText('workbench.asking')).toBeInTheDocument()
+    expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1); expect(workbenchApi.turn).toHaveBeenCalledTimes(1); expect(workbenchApi.upload).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.retryUpload' }))
+    await waitFor(() => expect(workbenchApi.upload).toHaveBeenCalledTimes(2))
+    expect(vi.mocked(workbenchApi.upload).mock.calls[1]).toEqual(uploaded)
+    expect(vi.mocked(workbenchApi.upload).mock.calls[1][1]).toBe(file)
+  })
+  it.each(['not-sent', 'auth-rejected'] as const)('a known %s save permits only a manual retry with the same predecessor after recovery', async kind => {
+    const original = { id: 'note:a', revision: 3, title: 'Retry note', content: 'Retry body', citations: oldTurn.citations, scope_snapshot: oldTurn.scope_snapshot }
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [original] })
+    vi.mocked(workbenchApi.updateNote).mockRejectedValueOnce(kind === 'not-sent' ? new RequestNotDispatchedError('authentication') : { response: { status: 401, data: { error: { code: 'ACCESS_EXPIRED' } } } })
+    showRecoverable(); await screen.findByText(original.content)
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' })); fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Retained retry draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await screen.findByText(kind === 'not-sent' ? 'noteConflict.notSent' : 'noteConflict.authRejected')
+    await act(async () => useAuthStore.setState({ phase: 'reauth-required', isAuthenticated: false })); await recoverWorkbench()
+    expect(workbenchApi.updateNote).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button', { name: 'workbench.saveNote' })).toBeEnabled()
+    // Another device changed the note while we signed in. Never rebase silently.
+    vi.mocked(workbenchApi.updateNote).mockRejectedValueOnce({ response: { status: 409, data: { detail: { code: 'NOTE_REVISION_CONFLICT', current_revision: 4 } } } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await screen.findByText('noteConflict.conflict')
+    expect(workbenchApi.updateNote).toHaveBeenLastCalledWith('notebook:1', 'note:a', expect.objectContaining({ expected_revision: 3, content: 'Retained retry draft', citations: original.citations, scope_snapshot: original.scope_snapshot }))
+    expect(screen.getByRole('button', { name: 'workbench.saveNote' })).toBeDisabled()
+  })
 })

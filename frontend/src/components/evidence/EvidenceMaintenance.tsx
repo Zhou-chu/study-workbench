@@ -1,5 +1,6 @@
 'use client'
 
+import { isAuthRecoveryError } from '@/lib/api/browser-transport'
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { evidenceApi } from '@/lib/api/evidence'
@@ -46,7 +47,7 @@ export function EvidenceMaintenance({ versionId, extractionId, restored, onCompl
     queryFn: ({ signal }) => workbenchApi.job(job!.job_id, signal),
     enabled: !!job && activeJob(job.state),
     retry: false,
-    refetchInterval: query => activeJob(query.state.data?.state) ? 1000 : false,
+    refetchInterval: query => !isAuthRecoveryError(query.state.error) && activeJob(query.state.data?.state) ? 1000 : false,
   })
   const current = status.data || job
   useEffect(() => {
