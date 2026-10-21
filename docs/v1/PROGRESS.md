@@ -147,3 +147,11 @@ The new Docker and Android/HarmonyOS 6/iPadOS scope is at architecture planning:
 ## 2026-10-21 multi-client architecture proposal
 
 The user selected native-oriented clients: shared React Native Android/iPadOS core and an ArkTS/ArkUI HarmonyOS 6 client, retaining Web. The [written architecture and phased branch roadmap](MULTICLIENT_ARCHITECTURE.md) is ready for review before detailed implementation planning and branch creation. It includes four-service Docker migration, revocable device sessions, shared contracts, protected local draft recovery, canonical private Git baseline normalization and distinct build/simulator/device/signed-package evidence. Sites native access and dot tunnel registration are explicit separate feasibility gates. This is documentation only; existing runtime acceptance remains checkpoint g.
+
+## 2026-10-21 multi-client construction foundations
+
+The architecture is approved; the user explicitly requested self-reviewed plans followed by direct execution, without another review pause. The canonical private Git baseline is normalized and isolated branches now contain real work. See [implementation plan](MULTICLIENT_IMPLEMENTATION_PLAN.md), [baseline audit](MULTICLIENT_BASELINE.md), and [current multiclient acceptance](MULTICLIENT_ACCEPTANCE.md).
+
+Reviewed local foundation batches: actual API schema snapshot/drift guard (including isolated dotenv regression), static four-service deployment (including public-Origin import regression), and offline exact-tree publication helper (including no implicit Git fetch and shallow-parent metadata regressions). No deployed containers or native clients are claimed. Conditional note revisions must cover legacy/domain writers, deletes and archives, not only personal PATCH; that implementation continues separately.
+
+Final integrated foundation regression: **1473 backend tests passed, 1 opt-in skipped, 2 existing deprecation warnings**. Canonical frontend baseline remains **390 tests**, typecheck, lint (7 existing warnings) and production build passed; no frontend production code changed in these foundation batches. No live model calls are claimed. Reviewed API and Docker feature branches are published with exact-tree verification; this is progress delivery, not completed container/native/Sites acceptance.

@@ -1,6 +1,7 @@
 """Tests for the sources API endpoint."""
 
 import os
+import socket
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -46,7 +47,16 @@ class TestAsyncSourceAssetPersistence:
             self_source.id = "source:fake"
             self_source.command = None
 
-        with patch.object(Source, "save", autospec=True, side_effect=capture_save):
+        with (
+            patch.object(Source, "save", autospec=True, side_effect=capture_save),
+            # Exercise real source URL validation with deterministic public DNS.
+            patch(
+                "open_notebook.utils.url_validation.socket.getaddrinfo",
+                return_value=[
+                    (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0)),
+                ],
+            ),
+        ):
             response = client.post(
                 "/api/sources",
                 data={

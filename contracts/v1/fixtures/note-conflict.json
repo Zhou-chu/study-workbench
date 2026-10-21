@@ -1,0 +1,5 @@
+{
+  "http_response": null,
+  "implemented": false,
+  "limitation": "Current note PATCH has no expected_revision check and no NOTE_REVISION_CONFLICT response. This is a gap record, not a wire response or a promised 409 contract."
+}
