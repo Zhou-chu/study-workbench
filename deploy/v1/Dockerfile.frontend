@@ -1,0 +1,19 @@
+# Candidate exact tag; validate and record digest at T11, not a verified build yet.
+FROM node:22.19.0-bookworm-slim AS builder
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+# Next rewrites are compiled here. Runtime alone does not change the manifest.
+ENV INTERNAL_API_URL=http://api:5055 NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+FROM node:22.19.0-bookworm-slim AS frontend
+WORKDIR /app/frontend
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000 INTERNAL_API_URL=http://api:5055
+COPY --from=builder --chown=node:node /app/frontend/.next/standalone ./
+COPY --from=builder --chown=node:node /app/frontend/.next/static ./.next/static
+COPY --from=builder --chown=node:node /app/frontend/public ./public
+USER node
+EXPOSE 3000
+CMD ["node", "server.js"]

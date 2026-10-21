@@ -1,0 +1,40 @@
+# Candidate exact tags; T11 must validate builds and record immutable digests.
+FROM ghcr.io/astral-sh/uv:0.8.22 AS uv
+FROM surrealdb/surrealdb:v2.3.10 AS surreal
+FROM python:3.12.11-slim-bookworm AS python-base
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHON_DOTENV_DISABLED=1
+WORKDIR /app
+RUN groupadd --gid 10001 workbench && useradd --uid 10001 --gid 10001 --create-home workbench
+COPY deploy/v1/entrypoint.py /app/deploy/v1/entrypoint.py
+
+# Minimal DB wrapper: no application source, Python dependencies or app secrets.
+FROM python-base AS db
+COPY --from=surreal /surreal /usr/local/bin/surreal
+RUN mkdir -p /app/data/db && chown 10001:10001 /app/data/db
+USER 10001:10001
+ENTRYPOINT ["/usr/local/bin/python", "/app/deploy/v1/entrypoint.py"]
+CMD ["db"]
+
+FROM python-base AS builder
+COPY --from=uv /uv /usr/local/bin/uv
+ENV UV_LINK_MODE=copy TIKTOKEN_CACHE_DIR=/app/tiktoken-cache
+COPY pyproject.toml uv.lock README.md ./
+COPY open_notebook/ ./open_notebook/
+RUN uv sync --frozen --no-dev --no-editable
+RUN .venv/bin/python -c "import tiktoken; tiktoken.get_encoding('o200k_base')"
+
+FROM python-base AS backend
+COPY pyproject.toml ./pyproject.toml
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/tiktoken-cache /app/tiktoken-cache
+COPY open_notebook/ ./open_notebook/
+COPY api/ ./api/
+COPY commands/ ./commands/
+COPY prompts/ ./prompts/
+ENV PATH=/app/.venv/bin:$PATH TIKTOKEN_CACHE_DIR=/app/tiktoken-cache
+ENV STUDY_WORKBENCH_DATA_DIR=/app/data/personal OPEN_NOTEBOOK_DATA_DIR=/app/data/upstream-data
+RUN mkdir -p /app/data/personal /app/data/upstream-data && chown -R 10001:10001 /app/data
+USER 10001:10001
+ENTRYPOINT ["/usr/local/bin/python", "/app/deploy/v1/entrypoint.py"]
+CMD ["api"]
