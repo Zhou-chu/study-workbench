@@ -131,10 +131,30 @@ def valid_env(tmp_path):
 
 
 @pytest.mark.parametrize("role", ["api", "worker", "db"])
-def test_file_secrets_and_exec_command(entry, valid_env, role):
+@pytest.mark.parametrize("auth_mode", [None, "legacy_password", "device_sessions"])
+def test_file_secrets_and_exec_command(entry, valid_env, role, auth_mode):
+    if auth_mode is not None:
+        valid_env["STUDY_WORKBENCH_AUTH_MODE"] = auth_mode
+    original = dict(valid_env)
     command, env = entry.prepare(role, valid_env)
+    assert valid_env == original
     assert env["SURREAL_PASSWORD"] == "a-secure-test-password"
-    assert not any(key.endswith("_FILE") for key in env)
+    if role == "api" and auth_mode == "device_sessions":
+        assert (
+            env["OPEN_NOTEBOOK_PASSWORD_FILE"]
+            == original["OPEN_NOTEBOOK_PASSWORD_FILE"]
+        )
+        assert "OPEN_NOTEBOOK_PASSWORD" not in env
+        assert {key for key in env if key.endswith("_FILE")} == {
+            "OPEN_NOTEBOOK_PASSWORD_FILE"
+        }
+    else:
+        assert not any(key.endswith("_FILE") for key in env)
+        if role != "db":
+            assert env["OPEN_NOTEBOOK_PASSWORD"] == "a-secure-test-access-password"
+    if role != "db":
+        assert env["OPEN_NOTEBOOK_ENCRYPTION_KEY"] == "a-secure-test-encryption-key"
+        assert env["PYTHON_DOTENV_DISABLED"] == "1"
     assert not any("a-secure-test" in arg for arg in command)
     assert command[0].startswith("/")
     if role == "api":
@@ -151,6 +171,59 @@ def test_file_secrets_and_exec_command(entry, valid_env, role):
         ]
 
 
+@pytest.mark.parametrize("auth_mode", ["", "unknown", " DEVICE_SESSIONS "])
+def test_api_rejects_explicit_invalid_auth_mode(entry, valid_env, auth_mode):
+    valid_env["STUDY_WORKBENCH_AUTH_MODE"] = auth_mode
+    with pytest.raises(ValueError, match="STUDY_WORKBENCH_AUTH_MODE") as exc:
+        entry.prepare("api", valid_env)
+    assert "a-secure-test" not in str(exc.value)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("change", ["replace", "remove", "empty", "invalid_utf8"])
+async def test_device_api_provider_observes_password_file_changes(
+    entry, valid_env, tmp_path, change
+):
+    from api.device_session_credentials import StrictPasswordProvider
+    from api.device_session_models import AuthError
+
+    valid_env["STUDY_WORKBENCH_AUTH_MODE"] = "device_sessions"
+    _, env = entry.prepare("api", valid_env)
+    provider = StrictPasswordProvider.from_environment(env)
+    original = "a-secure-test-access-password"
+    assert await provider.read() == original
+    secret = Path(valid_env["OPEN_NOTEBOOK_PASSWORD_FILE"])
+    if change == "replace":
+        replacement = tmp_path / "replacement-password"
+        replacement.write_text("changed-test-access-password\n")
+        replacement.replace(secret)
+        assert await provider.read() == "changed-test-access-password"
+    else:
+        if change == "remove":
+            secret.unlink()
+        elif change == "empty":
+            secret.write_text(" \n")
+        else:
+            secret.write_bytes(b"\xff")
+        with pytest.raises(AuthError) as exc:
+            await provider.read()
+        assert exc.value.code == "AUTH_UNAVAILABLE"
+        assert original not in str(exc.value)
+    secret.write_text(original + "\n")
+    assert await provider.read() == original
+
+
+@pytest.mark.parametrize("password", ["", "do-not-print-me"])
+def test_device_api_rejects_plaintext_password_even_with_file(
+    entry, valid_env, password
+):
+    valid_env["STUDY_WORKBENCH_AUTH_MODE"] = "device_sessions"
+    valid_env["OPEN_NOTEBOOK_PASSWORD"] = password
+    with pytest.raises(ValueError, match="require file-only configuration") as exc:
+        entry.prepare("api", valid_env)
+    assert "do-not-print-me" not in str(exc.value)
+
+
 @pytest.mark.parametrize(
     "case",
     [
@@ -161,6 +234,7 @@ def test_file_secrets_and_exec_command(entry, valid_env, role):
         "conflict",
         "placeholder",
         "nul",
+        "invalid_utf8",
         "oversized",
         "bad_url",
         "bad_data",
@@ -168,24 +242,36 @@ def test_file_secrets_and_exec_command(entry, valid_env, role):
         "runtime_download",
     ],
 )
+@pytest.mark.parametrize(
+    "role,auth_mode,secret_name",
+    [
+        ("worker", None, "SURREAL_PASSWORD"),
+        ("api", "device_sessions", "OPEN_NOTEBOOK_PASSWORD"),
+    ],
+)
 def test_entrypoint_fail_closed_without_secret_disclosure(
-    entry, valid_env, tmp_path, case
+    entry, valid_env, tmp_path, case, role, auth_mode, secret_name
 ):
-    secret = Path(valid_env["SURREAL_PASSWORD_FILE"])
+    if auth_mode is not None:
+        valid_env["STUDY_WORKBENCH_AUTH_MODE"] = auth_mode
+    file_key = secret_name + "_FILE"
+    secret = Path(valid_env[file_key])
     if case == "missing":
-        del valid_env["SURREAL_PASSWORD_FILE"]
+        del valid_env[file_key]
     elif case == "empty":
         secret.write_text(" \n")
     elif case == "directory":
-        valid_env["SURREAL_PASSWORD_FILE"] = str(tmp_path)
+        valid_env[file_key] = str(tmp_path)
     elif case == "nonexistent":
         secret.unlink()
     elif case == "conflict":
-        valid_env["SURREAL_PASSWORD"] = "do-not-print-me"
+        valid_env[secret_name] = "do-not-print-me"
     elif case == "placeholder":
         secret.write_text("root")
     elif case == "nul":
         secret.write_bytes(b"secret\x00value")
+    elif case == "invalid_utf8":
+        secret.write_bytes(b"\xff")
     elif case == "oversized":
         secret.write_text("x" * 65537)
     elif case == "bad_url":
@@ -197,7 +283,7 @@ def test_entrypoint_fail_closed_without_secret_disclosure(
     elif case == "runtime_download":
         valid_env["OPEN_NOTEBOOK_ENABLE_DOCLING"] = "true"
     with pytest.raises(ValueError) as exc:
-        entry.prepare("worker", valid_env)
+        entry.prepare(role, valid_env)
     assert "do-not-print-me" not in str(exc.value)
     assert "a-secure-test" not in str(exc.value)
 
@@ -207,13 +293,21 @@ def test_invalid_role_is_rejected(entry, valid_env):
         entry.prepare("shell", valid_env)
 
 
-def test_main_execs_without_shell(entry, valid_env, monkeypatch):
+@pytest.mark.parametrize("auth_mode", ["legacy_password", "device_sessions"])
+def test_main_execs_without_shell(entry, valid_env, monkeypatch, auth_mode):
+    valid_env["STUDY_WORKBENCH_AUTH_MODE"] = auth_mode
     captured = []
     monkeypatch.setattr(entry.os, "environ", valid_env)
     monkeypatch.setattr(entry.os, "execve", lambda *args: captured.append(args))
     assert entry.main(["api"]) == 0
     assert captured[0][0] == captured[0][1][0]
     assert captured[0][2]["SURREAL_USER"] == "operator"
+    if auth_mode == "device_sessions":
+        assert "OPEN_NOTEBOOK_PASSWORD" not in captured[0][2]
+        assert (
+            captured[0][2]["OPEN_NOTEBOOK_PASSWORD_FILE"]
+            == valid_env["OPEN_NOTEBOOK_PASSWORD_FILE"]
+        )
 
 
 def test_cli_failure_is_sanitized(entry):

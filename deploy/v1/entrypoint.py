@@ -25,6 +25,9 @@ def prepare(role, source):
     if role not in {"api", "worker", "db"}:
         raise ValueError("role must be api, worker or db")
     env = dict(source)
+    auth_mode = env.get("STUDY_WORKBENCH_AUTH_MODE", "legacy_password")
+    if role == "api" and auth_mode not in {"legacy_password", "device_sessions"}:
+        raise ValueError("STUDY_WORKBENCH_AUTH_MODE: invalid authentication mode")
     names = SECRET_NAMES[:2] if role == "db" else SECRET_NAMES
     for name in names:
         file_key = name + "_FILE"
@@ -48,6 +51,14 @@ def prepare(role, source):
             or (name != "SURREAL_USER" and value.strip().lower() in PLACEHOLDERS)
         ):
             raise ValueError(f"{name}: invalid secret file")
+        if (
+            role == "api"
+            and auth_mode == "device_sessions"
+            and name == "OPEN_NOTEBOOK_PASSWORD"
+        ):
+            # Device auth must reread this exclusive source on every operation.
+            # Do not replace it with a startup-only plaintext environment value.
+            continue
         env[name] = value
         del env[file_key]
     # Reject rather than silently installing opt-in packages at container startup.

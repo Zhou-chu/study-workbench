@@ -125,3 +125,19 @@ The initial combined build caught three TypeScript errors in heterogeneous test-
 Actual synthetic local-browser acceptance is now starting against that immutable SHA. No production activation, deployment, real credentials, providers, native-client acceptance or coupled-restart claim follows these checks.
 
 Private Sites connectivity remains **unknown/blocked on a documented connection contract**, not proven unsupported: the deployment schema consumes already-registered private HTTP tunnel IDs, but current tools/docs do not establish dot-hosted registration/client setup or native-client onboarding. No token, Site, tunnel, public fallback or platform security change was created.
+
+
+## Device container launch-boundary correction (2026-10-21 21:22 UTC)
+
+Deployment design review found the file-only container launcher materialized the application password and removed its `_FILE` configuration, defeating the device provider's required per-operation reread. Reviewed source `a63f813755e92693df4c9a5e2413acdcda4ab652` preserves only the device API password-file path after initial validation, supplies no plaintext child password, and rejects explicit empty/unknown API modes. Absent-only legacy defaults and legacy API/worker/DB/encryption behavior remain unchanged. Integrated at `ffbcb138d3cf63871ab7857f30dd14c65e072c9a`; backend/deployment/test bytes match the tested source.
+
+Before implementation, nine regressions failed as expected. Guarded offline full backend suite: **1627 passed, 37 skipped, 2 existing warnings**. Guarded focused suite: **156 passed, 18 skipped**. Independent review repeated those focused checks and added **27 passing checks**, including baseline differential compatibility, same-mtime atomic replacement, fail-closed missing/invalid files and restoration that cannot revive old service sessions. Ruff/format/diff checks passed. An earlier inadequately guarded full run was stopped with exit 130 and is excluded from acceptance.
+
+This is launcher/provider/service unit evidence, not actual container mounts, Docker startup or lifecycle acceptance. No runtime activation, credentials, image build or platform setting was changed. Actual browser QA continues on the independently frozen pre-launcher-change source `656fb667`; its application frontend/API bytes are unchanged by this patch.
+
+
+## Coupled lifecycle plan (2026-10-21 21:25 UTC)
+
+`COUPLED_RESTART_PLAN.md` adopts the independently re-reviewed smaller one-shot recovery design: per-launch frontend gate, no independent device frontend/API restart, remove old exact instances, initialize a fresh API, then release the exact frontend attempt. It protects against serving with the historical pre-loss API epoch; it does not promise atomic API liveness or autonomous recovery. Crash recovery is deliberately explicit for phase one.
+
+Review corrected password-file launch semantics, absent-only legacy defaults, production HTTPS requirements, final-probe/release races, process/environment constraints and Docker ownership/target pinning. Only the password-file source prerequisite is implemented. Gate/host transaction code and all actual Docker cases remain NOT RUN/NOT IMPLEMENTED. Docker CLI/socket are absent in the current environment; no installation, service or system change is implied by adopting this plan.
