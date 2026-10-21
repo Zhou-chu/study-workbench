@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { evidenceApi } from '@/lib/api/evidence'
 import { useModelDefaults } from '@/lib/hooks/use-models'
 import { useNotebookLMStatus, useNotebookLMCapabilities } from '@/lib/hooks/use-notebooklm'
+import { useWorkbenchUploads } from '@/lib/hooks/use-workbench-uploads'
 import { workbenchApi } from '@/lib/api/workbench'
 import { QUERY_KEYS } from '@/lib/api/query-client'
 import { activeJob, useSaveWorkbenchSelection, useWorkbench } from '@/lib/hooks/use-workbench'
@@ -26,11 +27,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 
 const workspaceTabs = ['sources', 'conversation', 'notes'] as const
-const panelLabels = { sources: 'workbench.sources', conversation: 'workbench.conversation', notes: 'workbench.notes' }
+const panelLabels = { sources: 'workbench.sources', conversation: 'workbench.readingAndQuestions', notes: 'workbench.notes' }
 const panelIcons = { sources: Files, conversation: MessageSquare, notes: NotebookPen }
 const emptySelection: WorkbenchSelection = { engine: 'notebooklm', selection_origin: 'local', source_version_ids: [], remote_source_ids: [] }
 interface NoteEditorSnapshot { session: number; revision: number }
-interface UploadItem { id: string; name: string; state: 'uploading' | 'uploadAccepted' | 'uploadFailed'; error?: string | null }
 export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const { t } = useTranslation()
   const { toast } = useToast()
@@ -48,10 +48,18 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const citationRequest = useRef(0)
   useEffect(() => { selectionRef.current = selection }, [selection])
   const [tab, setTab] = useState('conversation')
+  const uploadInput = useRef<HTMLInputElement>(null)
+  const [focusUpload, setFocusUpload] = useState(false)
+  const googleDisclosure = useRef<HTMLDetailsElement>(null)
+  useEffect(() => {
+    if (focusUpload && tab === 'sources') { uploadInput.current?.focus(); setFocusUpload(false) }
+  }, [focusUpload, tab])
+  useEffect(() => {
+    if (selection.selection_origin === 'remote' && googleDisclosure.current) googleDisclosure.current.open = true
+  }, [selection.selection_origin])
   const [readerOpen, setReaderOpen] = useState(true)
   const [citation, setCitation] = useState<EvidenceCitation | null>(null)
   const [question, setQuestion] = useState('')
-  const [uploads, setUploads] = useState<UploadItem[]>([])
   // A save may finish after New, Edit, or an outline replaced the draft.
   const noteEditorSession = useRef(0)
   const noteEditorRevision = useRef(0)
@@ -65,11 +73,21 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const [outlineTurn, setOutlineTurn] = useState<({ turnId: string } & NoteEditorSnapshot) | null>(null)
   const sessionId = `v1_${notebookId}`
   const refresh = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.workbench(notebookId) })
+  const { uploads, upload, retryUpload, dismissUpload } = useWorkbenchUploads(notebookId, refresh)
   const history = useQuery({ queryKey: QUERY_KEYS.personalTurns(sessionId), queryFn: () => workbenchApi.turns(sessionId), enabled: !!pendingTurn, retry: false, refetchInterval: pendingTurn ? 2000 : false })
   const pendingStatus = useQuery({ queryKey: QUERY_KEYS.personalJob(pendingJob || ''), queryFn: ({ signal }) => workbenchApi.job(pendingJob!, signal), enabled: !!pendingJob, retry: false, refetchInterval: query => activeJob(query.state.data?.state) ? 2000 : false })
   const turns = [...new Map([...(data?.turns || []), ...(history.data || [])].map(turn => [turn.turn_id, turn])).values()]
   const selectedCount = selection.selection_origin === 'local' ? selection.source_version_ids.length : selection.remote_source_ids.length
-  const modelMissing = selection.engine === 'independent' && !!modelDefaults.data && !modelDefaults.data.default_chat_model
+  // Configuration availability is not an inference or credential health check.
+  // A failed refresh must not authorize a turn using stale cached defaults.
+  const modelState = modelDefaults.isFetching || modelDefaults.isLoading ? 'loading' :
+    modelDefaults.isError ? 'error' : !modelDefaults.data ? 'loading' :
+    !modelDefaults.data.default_chat_model ? 'notConfigured' : 'ready'
+  const modelStatusKey = { loading: 'workbench.modelChecking', error: 'workbench.modelCheckFailed', notConfigured: 'workbench.notConfigured', ready: 'workbench.modelConfigured' }[modelState]
+  const modelBlocked = selection.engine === 'independent' && modelState !== 'ready'
+  const connectionStatusKey = connection.isError ? 'workbench.googleCheckFailed' :
+    connection.isFetching || connection.isLoading || !connection.data ? 'workbench.googleChecking' :
+    connectionKeys[connection.data.state] || 'workbench.googleChecking'
   const askCapability = capabilities.data?.operations.find(operation => operation.name === 'ask')
   const googleBlocked = selection.engine === 'notebooklm' ? (
     connection.isError || capabilities.isError ? t('workbench.googleCheckFailed') :
@@ -78,7 +96,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     askCapability?.support !== 'available' ? askCapability?.reason || t('workbench.googleAskUnavailable') :
     !data?.link?.remote_notebook_id ? t('workbench.googleLinkRequired') : null
   ) : null
-  const canAsk = selectedCount > 0 && !modelMissing && !googleBlocked && !(selection.engine === 'independent' && selection.selection_origin === 'remote')
+  const canAsk = selectedCount > 0 && !modelBlocked && !googleBlocked && !(selection.engine === 'independent' && selection.selection_origin === 'remote')
   const updateSelection = (patch: Partial<WorkbenchSelection>) => {
     const next = { ...selectionRef.current, ...patch }
     selectionRef.current = next
@@ -128,15 +146,6 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     onSuccess: (saved, value) => { refresh(); if (value.editorSession !== undefined && value.editorSession === noteEditorSession.current) setEditingNote(saved); toast({ title: t('workbench.saved') }) },
     onError: error => toast({ title: requestError(error) || t('workbench.error'), variant: 'destructive' }),
   })
-  const upload = async (files: FileList | null, sourceId?: string) => {
-    if (!files) return
-    const batch = Array.from(files).map(file => ({ file, id: crypto.randomUUID() }))
-    setUploads(previous => [...previous, ...batch.map(({ file, id }) => ({ id, name: file.name, state: 'uploading' as const }))])
-    await Promise.all(batch.map(async ({ file, id }) => {
-      try { await workbenchApi.upload(notebookId, file, id, sourceId); setUploads(previous => previous.map(item => item.id === id ? { ...item, state: 'uploadAccepted' } : item)); refresh() }
-      catch (error) { setUploads(previous => previous.map(item => item.id === id ? { ...item, state: 'uploadFailed', error: requestError(error) } : item)) }
-    }))
-  }
   const openCitation = async (reference: EvidenceCitation) => {
     const request = ++citationRequest.current
     setCitation(reference); setReaderOpen(true); setTab('conversation')
@@ -158,6 +167,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   if (workspace.isLoading) return <p className="p-6" role="status">{t('common.loading')}</p>
   if (!data) return <div className="p-6 space-y-3"><p role="alert">{requestError(workspace.error) || t('workbench.serviceError')}</p><Button onClick={() => workspace.refetch()}>{t('workbench.retry')}</Button></div>
   const readVersion = citation?.kind === 'remote_unmapped' ? undefined : selection.reading?.source_version_id
+  const hasRemoteContext = Boolean(data.link?.remote_notebook_id) || (selection.selection_origin === 'remote' && selection.remote_source_ids.length > 0)
   return <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
     <header className="shrink-0 border-b bg-card px-4 pt-4 pb-3 lg:px-6 space-y-3">
       <div className="flex flex-wrap justify-between items-center gap-3">
@@ -173,7 +183,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
           <select id="workbench-engine" className="min-w-0 max-w-full rounded-md border bg-background px-2 py-1.5 text-xs focus-visible:ring-2 focus-visible:ring-ring" value={selection.engine} onChange={event => updateSelection({ engine: event.target.value as WorkbenchSelection['engine'] })}><option value="notebooklm">{t('workbench.notebooklm')}</option><option value="independent">{t('workbench.independent')}</option></select>
         </div>
         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary"><Layers className="size-3.5" aria-hidden="true" />{t('workbench.selectedCount', { count: selectedCount })}</span>
-        <span className="text-xs text-muted-foreground">{t(connectionKeys[connection.data?.state || 'disconnected'])}</span><Link href="/settings/models" className="text-xs text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring rounded-sm lg:ml-auto">{t('workbench.modelSettings')}</Link>
+        {selection.engine === 'notebooklm' && <span className="text-xs text-muted-foreground">{t(connectionStatusKey)}</span>}<Link href="/settings/models" className="text-xs text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring rounded-sm lg:ml-auto">{t('workbench.modelSettings')}</Link>
       </div>
       <div role="tablist" aria-label={t('workbench.title')} className="grid grid-cols-3 gap-1 rounded-md bg-muted p-1 xl:hidden">{workspaceTabs.map(name => {
         const Icon = panelIcons[name]
@@ -190,25 +200,39 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     <div className="flex min-h-0 flex-1 overflow-hidden">
       <aside id="workbench-panel-sources" aria-label={t('workbench.sources')} className={cn('min-h-0 overflow-auto border-r bg-card px-4 pb-5 space-y-4 w-full xl:block xl:w-72 xl:min-w-56 xl:max-w-[32vw] xl:shrink-0 xl:resize-x', tab !== 'sources' && 'hidden')}>
         <h2 className="sticky top-0 z-10 flex items-center gap-2 border-b bg-card py-4 text-sm font-semibold"><Files className="size-4 text-muted-foreground" aria-hidden="true" />{t('workbench.sources')}<span className="ml-auto font-normal text-muted-foreground tabular-nums">{data.sources.length}</span></h2>
-        <label className="relative flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-primary/40 bg-fern-tint px-3 py-4 text-sm font-medium text-primary focus-within:ring-2 focus-within:ring-ring"><Upload className="size-4" aria-hidden="true" /><span>{t('workbench.upload')}</span><input className="sr-only" type="file" accept=".pdf,.md,.markdown,.txt" multiple onChange={event => { void upload(event.target.files); event.target.value = '' }} /></label>
-        {uploads.map(item => <p key={item.id} className="break-all text-xs" role="status">{item.name}: {t({ uploading: 'workbench.uploading', uploadAccepted: 'workbench.uploadAccepted', uploadFailed: 'workbench.uploadFailed' }[item.state])}{item.error && ` · ${item.error}`}</p>)}
+        <label className="relative flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-primary/40 bg-fern-tint px-3 py-4 text-sm font-medium text-primary focus-within:ring-2 focus-within:ring-ring"><Upload className="size-4" aria-hidden="true" /><span>{t('workbench.upload')}</span><input ref={uploadInput} className="sr-only" type="file" accept=".pdf,.md,.markdown,.txt" multiple onChange={event => { void upload(event.target.files); event.target.value = '' }} /></label>
+        {uploads.map(item => <div key={item.id} className="space-y-1 text-xs"><p className="break-all" role="status">{item.name}: {t({ uploading: 'workbench.uploading', uploadAccepted: 'workbench.uploadAccepted', uploadFailed: 'workbench.uploadFailed', uploadUncertain: 'workbench.uploadUncertain' }[item.state])}{item.error && ` · ${item.error}`}</p>{item.state !== 'uploading' && <div className="flex flex-wrap gap-2">{item.state !== 'uploadAccepted' && <Button size="sm" variant="outline" onClick={() => { void retryUpload(item.id) }}>{t('workbench.retryUpload')}</Button>}<Button size="sm" variant="ghost" onClick={() => dismissUpload(item.id)}>{t('workbench.dismissUpload')}</Button></div>}{item.state === 'uploadUncertain' && <p className="text-muted-foreground">{t('workbench.uploadRecoveryHint')}</p>}</div>)}
         <label htmlFor="workbench-scope" className="block text-xs">{t('workbench.scope')}</label><select id="workbench-scope" className="w-full rounded-md border bg-background p-2 text-sm" value={selection.selection_origin} onChange={event => updateSelection({ selection_origin: event.target.value as 'local' | 'remote' })}><option value="local">{t('workbench.localScope')}</option><option value="remote">{t('workbench.remoteScope')}</option></select>
         {selection.selection_origin === 'remote' && <p className="text-xs text-muted-foreground">{t('workbench.remoteOriginalWarning')}</p>}
+        <p className="text-xs text-muted-foreground">{t('workbench.readingScopeHint')}</p>
         <div className="flex flex-wrap gap-1"><Button size="sm" variant="ghost" onClick={() => updateSelection({ source_version_ids: data.sources.flatMap(source => source.versions.length ? [[...source.versions].sort((a, b) => b.created_at.localeCompare(a.created_at))[0].source_version_id] : []), selection_origin: 'local' })}>{t('workbench.selectAll')}</Button><Button size="sm" variant="ghost" onClick={() => updateSelection({ source_version_ids: [], remote_source_ids: [] })}>{t('workbench.clearSelection')}</Button></div>
         <label htmlFor="workspace-search" className="text-xs flex items-center gap-1.5"><Search className="size-3.5" aria-hidden="true" />{t('workbench.searchEvidence')}</label><Input id="workspace-search" value={searchText} onChange={event => setSearchText(event.target.value)} /><Button size="sm" variant="outline" disabled={!searchText.trim() || !selection.source_version_ids.length || search.isPending} onClick={() => search.mutate()}>{t('workbench.search')}</Button>
         {search.isError && <p role="alert" className="text-xs text-destructive">{requestError(search.error) || t('workbench.error')}</p>}
         {search.data?.hits.map(hit => <button key={hit.evidence_id} className="w-full rounded border p-2 text-left text-xs hover:bg-muted" onClick={() => openCitation({ citation_id: hit.evidence_id, evidence_id: hit.evidence_id, source_version_id: hit.source_version_id, source_title: hit.source_title || hit.source_version_id, kind: hit.evidence_kind === 'remote_text_snapshot' ? 'remote_text_snapshot' : 'local_evidence', locator: hit.locator, quote: hit.quote, reference_validity: hit.reference_validity || 'unverified' })}>{hit.quote}</button>)}
         {!data.sources.length && <p className="text-sm text-muted-foreground">{t('workbench.noSources')}</p>}
         {data.sources.map(source => <div className="space-y-2 border-b pb-4" key={source.source_id}><p className="font-medium text-sm break-words">{source.title}</p><label className="relative block cursor-pointer text-xs text-primary focus-within:ring-2 focus-within:ring-ring">{t('workbench.uploadVersion')}<input className="sr-only" type="file" accept=".pdf,.md,.markdown,.txt" onChange={event => { void upload(event.target.files, source.source_id); event.target.value = '' }} /></label>{source.versions.map(version => <div key={version.source_version_id} className={cn("space-y-1 rounded-md p-2", selection.source_version_ids.includes(version.source_version_id) ? "bg-fern-tint" : "bg-muted/40")}><label className="flex gap-2 items-start text-xs"><input aria-label={`${source.title} · ${version.source_version_id}`} type="checkbox" checked={selection.source_version_ids.includes(version.source_version_id)} onChange={event => updateSelection({ source_version_ids: event.target.checked ? [...selection.source_version_ids, version.source_version_id] : selection.source_version_ids.filter(id => id !== version.source_version_id) })} /><span className="min-w-0"><span className="block font-medium">{version.created_at.slice(0, 10)}</span><span className="block truncate text-[10px] text-muted-foreground" title={version.source_version_id}>{version.source_version_id}</span></span></label><div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-muted-foreground">{t(stateKeys[version.status || version.extraction_status || 'pending'] || 'workbench.unavailable')}</span><Button size="sm" variant="ghost" onClick={() => { citationRequest.current++; setCitation(null); setReaderOpen(true); setTab('conversation'); updateSelection({ reading: { source_version_id: version.source_version_id, page_index: 0 } }) }}>{t('workbench.read')}</Button></div>{version.original_status !== 'available' && <p className="text-xs text-muted-foreground">{t('workbench.originalMissing')}</p>}</div>)}</div>)}
-        <NotebookLMPanel notebookId={notebookId} selectedVersionIds={selection.source_version_ids} remoteSourceIds={selection.remote_source_ids} selectionOrigin={selection.selection_origin} link={data.link} onRemoteSelection={ids => updateSelection({ remote_source_ids: ids })} onChanged={refresh} />
+        <details ref={googleDisclosure} className="rounded-md border p-3">
+          <summary className="cursor-pointer text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring rounded-sm"><span>{t('workbench.optionalGoogle')}</span><span className="mt-1 block text-xs font-normal text-muted-foreground">{t(connectionStatusKey)}</span></summary>
+          <div className="mt-3"><NotebookLMPanel notebookId={notebookId} selectedVersionIds={selection.source_version_ids} remoteSourceIds={selection.remote_source_ids} selectionOrigin={selection.selection_origin} link={data.link} onRemoteSelection={ids => updateSelection({ remote_source_ids: ids })} onChanged={refresh} /></div>
+        </details>
       </aside>
       <main id="workbench-panel-conversation" className={cn('min-w-0 min-h-0 overflow-auto flex-1 px-4 pb-6 space-y-5 lg:px-6 xl:block', tab !== 'conversation' && 'hidden')}>
         <div className="sticky top-0 z-10 flex gap-2 border-b bg-background py-3"><Button size="sm" variant={readerOpen ? 'default' : 'outline'} onClick={() => setReaderOpen(true)}><BookOpen className="size-4" aria-hidden="true" />{t('workbench.reader')}</Button><Button size="sm" variant={!readerOpen ? 'default' : 'outline'} onClick={() => setReaderOpen(false)}><MessageSquare className="size-4" aria-hidden="true" />{t('workbench.conversation')}</Button></div>
-        {readerOpen && <EvidenceReader sourceVersionId={readVersion} evidenceId={selection.reading?.evidence_id} citation={citation} initialPage={selection.reading?.page_index || 0} onPositionChange={reading => updateSelection({ reading })} onChanged={refresh} />}
+        {!data.sources.length && !hasRemoteContext && !readVersion && !citation && <div className="space-y-2 py-2">
+          <h2 className="text-base font-semibold">{t('workbench.startLocalTitle')}</h2>
+          <p className="text-sm text-muted-foreground">{t('workbench.localToolsHint')}</p>
+          <Button size="sm" onClick={() => { setTab('sources'); setFocusUpload(true) }}><Upload className="size-4" aria-hidden="true" />{t('workbench.addStudyMaterials')}</Button>
+        </div>}
+        {readerOpen && (data.sources.length > 0 || readVersion || citation) && <EvidenceReader sourceVersionId={readVersion} evidenceId={selection.reading?.evidence_id} citation={citation} initialPage={selection.reading?.page_index || 0} onPositionChange={reading => updateSelection({ reading })} onChanged={refresh} />}
         <section className="space-y-4 border-t pt-5" aria-label={t('workbench.conversation')}>
           <div className="rounded-lg border bg-card p-4 space-y-3"><label className="block text-sm font-semibold" htmlFor="workbench-question">{t('workbench.question')}</label><Textarea id="workbench-question" value={question} onChange={event => setQuestion(event.target.value)} rows={3} />
-          {!canAsk && <p className="text-xs text-muted-foreground">{googleBlocked || t(modelMissing ? 'workbench.notConfigured' : selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
-          <div className="flex flex-wrap gap-2"><Button disabled={!canAsk || !question.trim() || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: question.trim() })}>{t('workbench.ask')}</Button><Button variant="outline" disabled={!canAsk || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: t('workbench.outlinePrompt'), outline: true, editorSnapshot: { session: noteEditorSession.current, revision: noteEditorRevision.current } })}>{t('workbench.outline')}</Button></div></div>
+          {selection.engine === 'independent' && <div className="space-y-2">
+            <p id="workbench-model-status" role={modelState === 'error' ? 'alert' : 'status'} className="text-xs text-muted-foreground">{t(modelStatusKey)}</p>
+            {modelState === 'error' && <Button size="sm" variant="outline" onClick={() => { void modelDefaults.refetch() }}>{t('workbench.retryModelCheck')}</Button>}
+            {modelState === 'notConfigured' && <Link href="/settings/models" className="inline-block text-xs text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring rounded-sm">{t('workbench.modelSettings')}</Link>}
+          </div>}
+          {!canAsk && !modelBlocked && <p className="text-xs text-muted-foreground">{googleBlocked || t(selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
+          <div className="flex flex-wrap gap-2"><Button aria-describedby={selection.engine === 'independent' ? 'workbench-model-status' : undefined} disabled={!canAsk || !question.trim() || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: question.trim() })}>{t('workbench.ask')}</Button><Button aria-describedby={selection.engine === 'independent' ? 'workbench-model-status' : undefined} variant="outline" disabled={!canAsk || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: t('workbench.outlinePrompt'), outline: true, editorSnapshot: { session: noteEditorSession.current, revision: noteEditorRevision.current } })}>{t('workbench.outline')}</Button></div></div>
           {(ask.isPending || pendingTurn) && <p role="status" className="text-sm text-teal">{t('workbench.asking')}</p>}
           {ask.isError && <div role="alert"><p className="text-destructive">{t('workbench.answerFailure')}</p><p className="text-xs">{requestError(ask.error) || t('workbench.unknownSubmission')}</p></div>}
           {pendingStatus.isError && <div role="alert"><p className="text-xs text-destructive">{t('workbench.jobStatusUnavailable')}</p><Button size="sm" variant="outline" onClick={() => pendingStatus.refetch()}>{t('workbench.refreshJob')}</Button></div>}

@@ -27,7 +27,9 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null)
   const [page, setPage] = useState(initialPage)
   const [search, setSearch] = useState('')
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<'load' | 'pdf' | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [downloadError, setDownloadError] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const isLocalCitation = citation?.kind !== 'remote_unmapped' && citation?.source_version_id === sourceVersionId
   // Archived verification is historical. Matching immutable evidence lets us
@@ -50,24 +52,40 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
   useEffect(() => { setPage(initialPage) }, [sourceVersionId, initialPage])
   useEffect(() => { if (citedPage != null) setPage(citedPage) }, [sourceVersionId, citation?.citation_id, citedPage])
   useEffect(() => {
-    if (!sourceVersionId) return
+    if (!sourceVersionId) {
+      loadedSelection.current = ''
+      setDetail(null)
+      setPdfBlob(null)
+      setError(null)
+      setLoading(false)
+      setDownloadError(false)
+      setDownloading(false)
+      return
+    }
     const controller = new AbortController()
     const identity = `${sourceVersionId}:${evidenceId || ''}`
     if (loadedSelection.current !== identity) {
       setDetail(null)
       setPdfBlob(null)
+      setError(null)
+      setDownloadError(false)
+      setDownloading(false)
       loadedSelection.current = identity
     }
-    setError(false)
+    setLoading(true)
+    let stage: 'load' | 'pdf' = 'load'
     evidenceApi.version(sourceVersionId, controller.signal, evidenceId).then(async result => {
       if (controller.signal.aborted) return
       setDetail(result)
       if (result.version.mime_type === 'application/pdf' && result.version.original_status === 'available') {
+        stage = 'pdf'
         const blob = await evidenceApi.download(sourceVersionId, controller.signal)
         if (controller.signal.aborted) return
         setPdfBlob(blob)
       }
-    }).catch(() => { if (!controller.signal.aborted) setError(true) })
+      setError(null)
+    }).catch(() => { if (!controller.signal.aborted) setError(stage) })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => { controller.abort() }
   }, [sourceVersionId, evidenceId, revision])
 
@@ -79,10 +97,12 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
   }
   const download = async () => {
     if (!sourceVersionId) return
+    const identity = loadedSelection.current
     setDownloading(true)
+    setDownloadError(false)
     try { saveBlob(await evidenceApi.download(sourceVersionId), detail?.version.source_title || detail?.version.title || sourceVersionId) }
-    catch { setError(true) }
-    finally { setDownloading(false) }
+    catch { if (loadedSelection.current === identity) setDownloadError(true) }
+    finally { if (loadedSelection.current === identity) setDownloading(false) }
   }
   const blocks = detail?.extraction?.blocks ?? (detail?.extraction?.text ? [{ block_id: 'document', page_index: null, text: detail.extraction.text }] : [])
   const matchingBlocks = blocks.filter(block => !search || block.text.toLocaleLowerCase().includes(search.toLocaleLowerCase()))
@@ -101,7 +121,8 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
       {citation.locator?.page_label && <p>{t('workbench.printPage', { label: citation.locator.page_label })}</p>}
     </div>}
     {!sourceVersionId && !citation && <p className="text-muted-foreground">{t('workbench.chooseSource')}</p>}
-    {error && <p role="alert" className="text-destructive">{t('workbench.error')}</p>}
+    {error && <div className="space-y-2"><p role="alert" className="text-destructive">{t(error === 'load' ? 'workbench.readerLoadFailed' : 'workbench.readerPdfFailed')}</p><Button size="sm" variant="outline" disabled={loading} onClick={() => { if (!loading) { setLoading(true); setRevision(value => value + 1) } }}>{t('workbench.retry')}</Button></div>}
+    {downloadError && <p role="alert" className="text-destructive">{t('workbench.readerDownloadFailed')}</p>}
     {sourceVersionId && !detail && !error && <p role="status">{t('common.loading')}</p>}
     {detail && <>
       <div className="flex flex-wrap items-center gap-2">

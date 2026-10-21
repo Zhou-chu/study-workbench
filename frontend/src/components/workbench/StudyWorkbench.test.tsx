@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Workspace, TurnRecord, EvidenceCitation, WorkbenchNote } from '@/lib/types/personal'
@@ -11,7 +11,7 @@ vi.mock('@/lib/api/evidence', () => ({ evidenceApi: { evidence: vi.fn(), search:
 vi.mock('@/lib/api/workbench', () => ({ workbenchApi: { workspace: vi.fn(), saveSelection: vi.fn(), turn: vi.fn(), saveNote: vi.fn(), updateNote: vi.fn(), upload: vi.fn(), turns: vi.fn(), job: vi.fn() } }))
 vi.mock('@/lib/hooks/use-models', () => ({ useModelDefaults: vi.fn(() => ({ data: { default_chat_model: 'model:test' } })) }))
 vi.mock('@/lib/hooks/use-notebooklm', () => ({ useNotebookLMStatus: vi.fn(() => ({ data: { state: 'disconnected' } })), useNotebookLMCapabilities: vi.fn(() => ({ data: { operations: [{ name: 'ask', support: 'unsupported' }] } })) }))
-vi.mock('@/components/integrations/NotebookLMPanel', () => ({ NotebookLMPanel: () => <div /> }))
+vi.mock('@/components/integrations/NotebookLMPanel', () => ({ NotebookLMPanel: () => <button>Google integration controls</button> }))
 vi.mock('@/components/workbench/JobsPanel', () => ({ JobsPanel: () => <div /> }))
 vi.mock('@/components/workbench/PortableControls', () => ({ PortableControls: () => <div /> }))
 vi.mock('@/components/evidence/EvidenceReader', () => ({ EvidenceReader: ({ sourceVersionId, initialPage, citation }: { sourceVersionId?: string; initialPage?: number; citation?: EvidenceCitation | null }) => <><div data-testid="reader-position">{sourceVersionId}:{initialPage}</div><p data-testid="reader-validity">{citation?.reference_validity}</p></> }))
@@ -35,6 +35,86 @@ describe('StudyWorkbench source snapshots', () => {
     vi.mocked(workbenchApi.workspace).mockResolvedValue(structuredClone(fixture))
     vi.mocked(workbenchApi.turns).mockResolvedValue([])
     vi.mocked(workbenchApi.turn).mockResolvedValue({ turn_id: 'new_turn', job_id: 'j1' })
+  })
+  it.each([true, false])('guides empty reader/conversation to upload without changing scope (reader=%s)', async reader => {
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), sources: [], selection: { engine: 'notebooklm', selection_origin: 'local', source_version_ids: [], remote_source_ids: [] } })
+    show()
+    await screen.findByText('Lecture notes')
+    if (!reader) fireEvent.click(screen.getByRole('button', { name: 'workbench.conversation' }))
+    expect(screen.getByRole('heading', { name: 'workbench.startLocalTitle' })).toBeInTheDocument()
+    expect(screen.getByText('workbench.localToolsHint')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.addStudyMaterials' }))
+    expect(screen.getByRole('tab', { name: 'workbench.sources' })).toHaveAttribute('aria-selected', 'true')
+    await waitFor(() => expect(screen.getByLabelText('workbench.upload')).toHaveFocus())
+    expect(workbenchApi.saveSelection).not.toHaveBeenCalled()
+    expect(workbenchApi.upload).not.toHaveBeenCalled()
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+  })
+  it.each(['linked', 'remoteSelection'] as const)('does not label an existing %s project as a first-use workspace', async context => {
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), sources: [], link: context === 'linked' ? { remote_notebook_id: 'remote1' } : null, selection: { engine: 'notebooklm', selection_origin: context === 'linked' ? 'local' : 'remote', source_version_ids: [], remote_source_ids: context === 'remoteSelection' ? ['remote-source1'] : [] } })
+    show()
+    await screen.findByText('Lecture notes')
+    expect(screen.queryByRole('heading', { name: 'workbench.startLocalTitle' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'workbench.addStudyMaterials' })).not.toBeInTheDocument()
+    expect(screen.getByLabelText('workbench.upload')).toBeInTheDocument()
+    expect(workbenchApi.saveSelection).not.toHaveBeenCalled()
+  })
+  it.each([
+    ['loading', { isLoading: true }, 'workbench.googleChecking'],
+    ['error', { isError: true, data: { state: 'connected' } }, 'workbench.googleCheckFailed'],
+  ])('does not mislabel Google connection while %s', async (_state, connection, label) => {
+    vi.mocked(useNotebookLMStatus).mockReturnValue(connection as never)
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), selection: { ...fixture.selection, engine: 'notebooklm' } })
+    show()
+    await screen.findByText('Lecture notes')
+    const summary = screen.getByText('workbench.optionalGoogle').closest('summary')!
+    expect(summary).toHaveTextContent(label)
+    expect(summary).not.toHaveTextContent('workbench.connectionStates.connected')
+    expect(summary).not.toHaveTextContent('workbench.connectionStates.disconnected')
+    expect(within(screen.getByRole('banner')).getByText(label)).toBeInTheDocument()
+  })
+  it('preserves Google controls behind a closed local disclosure', async () => {
+    show()
+    await screen.findByText('Lecture notes')
+    const summary = screen.getByText('workbench.optionalGoogle')
+    const disclosure = summary.closest('details')!
+    expect(disclosure).not.toHaveAttribute('open')
+    expect(screen.getByText('Google integration controls')).toBeInTheDocument()
+    fireEvent.click(summary)
+    expect(disclosure).toHaveAttribute('open')
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+  })
+  it('opens optional Google controls for a restored remote scope', async () => {
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), selection: { ...fixture.selection, selection_origin: 'remote' } })
+    show()
+    await screen.findByText('Lecture notes')
+    await waitFor(() => expect(screen.getByText('workbench.optionalGoogle').closest('details')).toHaveAttribute('open'))
+    expect(workbenchApi.saveSelection).not.toHaveBeenCalled()
+  })
+  it('opens Google controls for remote scope without selecting sources', async () => {
+    show()
+    await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.scope'), { target: { value: 'remote' } })
+    await waitFor(() => expect(screen.getByText('workbench.optionalGoogle').closest('details')).toHaveAttribute('open'))
+    expect(workbenchApi.saveSelection).toHaveBeenLastCalledWith('notebook:1', expect.objectContaining({ selection_origin: 'remote', source_version_ids: ['sv_old'], remote_source_ids: [] }))
+  })
+  it.each([false, true])('recovers a lost upload response with the original file and target (version=%s)', async version => {
+    vi.mocked(workbenchApi.upload).mockRejectedValueOnce(new Error('response lost')).mockResolvedValueOnce({ source_id: 'source:1', source_version_id: 'sv_recovered', job_id: 'job:upload' })
+    show()
+    await screen.findByText('Lecture notes')
+    const file = new File(['notes'], 'notes.txt', { type: 'text/plain' })
+    fireEvent.change(screen.getByLabelText(version ? 'workbench.uploadVersion' : 'workbench.upload'), { target: { files: [file] } })
+    await screen.findByText(/workbench.uploadUncertain/)
+    const first = vi.mocked(workbenchApi.upload).mock.calls[0]
+    expect(first[1]).toBe(file)
+    expect(first[3]).toBe(version ? 'source:1' : undefined)
+    expect(workbenchApi.upload).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.retryUpload' }))
+    await screen.findByText(/workbench.uploadAccepted/)
+    expect(vi.mocked(workbenchApi.upload).mock.calls[1]).toEqual(first)
+    expect(screen.queryByRole('button', { name: 'workbench.retryUpload' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.dismissUpload' }))
+    expect(screen.queryByText(/workbench.uploadAccepted/)).not.toBeInTheDocument()
   })
   it.each(['new', 'edit'] as const)('does not retarget the %s draft when an earlier save completes', async action => {
     const savedA: WorkbenchNote = { id: 'note:a', title: 'A', content: 'Draft A', citations: [], scope_snapshot: oldTurn.scope_snapshot }
@@ -144,7 +224,7 @@ describe('StudyWorkbench source snapshots', () => {
   it('supports arrow and Home/End navigation across mobile workspace tabs', async () => {
     show()
     await screen.findByText('Lecture notes')
-    const conversation = screen.getByRole('tab', { name: 'workbench.conversation' })
+    const conversation = screen.getByRole('tab', { name: 'workbench.readingAndQuestions' })
     const sources = screen.getByRole('tab', { name: 'workbench.sources' })
     const notes = screen.getByRole('tab', { name: 'workbench.notes' })
     expect(conversation).toHaveAttribute('tabindex', '0')
@@ -222,7 +302,7 @@ describe('StudyWorkbench source snapshots', () => {
     expect(workbenchApi.turn).toHaveBeenCalledTimes(1)
   })
   it('keeps each upload independent when one file fails', async () => {
-    vi.mocked(workbenchApi.upload).mockRejectedValueOnce(new Error('bad PDF')).mockResolvedValueOnce({ source_id: 'source:2', source_version_id: 'sv2', job_id: 'job2' })
+    vi.mocked(workbenchApi.upload).mockRejectedValueOnce({ isAxiosError: true, response: { status: 422, data: { detail: 'Unsupported PDF' } } }).mockResolvedValueOnce({ source_id: 'source:2', source_version_id: 'sv2', job_id: 'job2' })
     show()
     await screen.findByText('Lecture notes')
     fireEvent.change(screen.getByLabelText('workbench.upload'), { target: { files: [new File(['bad'], 'bad.pdf'), new File(['good'], 'good.txt')] } })
@@ -271,11 +351,62 @@ describe('StudyWorkbench source snapshots', () => {
     await waitFor(() => expect(workbenchApi.turn).toHaveBeenCalledWith('v1_notebook:1', expect.objectContaining({ task: 'outline', source_version_ids: ['sv_old'] })))
   })
 
+  it.each([
+    ['loading', { isLoading: true }, 'workbench.modelChecking'],
+    ['unknown', {}, 'workbench.modelChecking'],
+    ['error', { isError: true }, 'workbench.modelCheckFailed'],
+    ['stale error', { isError: true, data: { default_chat_model: 'model:test' } }, 'workbench.modelCheckFailed'],
+    ['refetching', { isFetching: true, data: { default_chat_model: 'model:test' } }, 'workbench.modelChecking'],
+  ])('blocks independent ask and outline while defaults are %s', async (_name, defaults, reason) => {
+    vi.mocked(useModelDefaults).mockReturnValue({ ...defaults, refetch: vi.fn() } as never)
+    show(); await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'Question' } })
+    expect(screen.getByRole('button', { name: 'workbench.ask' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'workbench.outline' })).toBeDisabled()
+    expect(screen.getByText(reason)).toHaveAttribute('role', reason === 'workbench.modelCheckFailed' ? 'alert' : 'status')
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+  })
+  it('rechecks failed model configuration only on explicit retry without submitting', async () => {
+    const refetch = vi.fn()
+    vi.mocked(useModelDefaults).mockReturnValue({ isError: true, refetch } as never)
+    show(); await screen.findByText('Lecture notes')
+    expect(refetch).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.retryModelCheck' }))
+    expect(refetch).toHaveBeenCalledTimes(1)
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+  })
+  it('keeps Google connection status out of the independent model header', async () => {
+    show(); await screen.findByText('Lecture notes')
+    expect(within(screen.getByRole('banner')).queryByText('workbench.connectionStates.disconnected')).not.toBeInTheDocument()
+  })
+  it('keeps retry disabled while the explicit configuration recheck is in flight', async () => {
+    const refetch = vi.fn()
+    vi.mocked(useModelDefaults).mockReturnValue({ isError: true, refetch } as never)
+    show(); await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'Keep my question' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.retryModelCheck' }))
+    vi.mocked(useModelDefaults).mockReturnValue({ isFetching: true, refetch } as never)
+    fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'Still my question' } })
+    expect(screen.queryByRole('button', { name: 'workbench.retryModelCheck' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'workbench.ask' })).toBeDisabled()
+    vi.mocked(useModelDefaults).mockReturnValue({ data: { default_chat_model: 'model:test' }, refetch } as never)
+    fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'Preserved question' } })
+    expect(screen.getByRole('button', { name: 'workbench.ask' })).toBeEnabled()
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+  })
+
+  it('describes configured defaults without claiming inference was tested', async () => {
+    show(); await screen.findByText('Lecture notes')
+    expect(screen.getByText('workbench.modelConfigured')).toHaveAttribute('role', 'status')
+    expect(screen.getByRole('button', { name: 'workbench.outline' })).toBeEnabled()
+  })
+
   it('explains an unconfigured independent model before submitting a question', async () => {
     vi.mocked(useModelDefaults).mockReturnValue({ data: { default_chat_model: null } } as never)
     show()
     await screen.findByText('Lecture notes')
-    expect(screen.getByText('workbench.notConfigured')).toBeInTheDocument()
+    expect(screen.getByText('workbench.notConfigured')).toHaveAttribute('role', 'status')
+    expect(screen.getByRole('button', { name: 'workbench.outline' })).toBeDisabled()
     fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'Explain this' } })
     expect(screen.getByRole('button', { name: 'workbench.ask' })).toBeDisabled()
     expect(workbenchApi.turn).not.toHaveBeenCalled()
@@ -296,11 +427,12 @@ describe('StudyWorkbench source snapshots', () => {
     fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'Question' } })
     expect(screen.getByRole('button', { name: 'workbench.ask' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'workbench.outline' })).toBeDisabled()
-    expect(screen.getByText(reason)).toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: 'workbench.conversation' })).getByText(reason)).toBeInTheDocument()
     expect(screen.getByLabelText('workbench.engine')).toHaveValue('notebooklm')
     expect(workbenchApi.turn).not.toHaveBeenCalled()
   })
   it('allows Google ask only with connected status and available ask capability', async () => {
+    vi.mocked(useModelDefaults).mockReturnValue({ isError: true } as never)
     vi.mocked(useNotebookLMStatus).mockReturnValue({ data: { state: 'connected' } } as never)
     vi.mocked(useNotebookLMCapabilities).mockReturnValue({ data: { operations: [{ name: 'ask', support: 'available' }] } } as never)
     vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), selection: { ...fixture.selection, engine: 'notebooklm' }, link: { remote_notebook_id: 'remote1' } })

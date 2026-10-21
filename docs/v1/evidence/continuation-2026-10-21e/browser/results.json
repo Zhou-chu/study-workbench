@@ -1,0 +1,77 @@
+{
+  "scope": "Disposable native DB/API/worker and production Next build; public fixture; controlled network faults, not real-user research. No private configuration, Google operations or model calls.",
+  "browser": "Firefox",
+  "locale": "zh-CN",
+  "cases": [
+    {
+      "case": "notebook_list_direct_study_entry",
+      "clicked_visible_link": true
+    },
+    {
+      "case": "empty_mobile_first_use_cta",
+      "sources_tab_selected": true,
+      "upload_input_focused": true,
+      "google_disclosure_keyboard": true,
+      "scope_unchanged_zero": true,
+      "no_upload_request": true
+    },
+    {
+      "case": "committed_upload_lost_response_manual_keyboard_retry",
+      "backend_committed_before_abort": true,
+      "same_key_file_bytes_and_response": true,
+      "sources": 1,
+      "versions": 1,
+      "unsaved_note_retained": true
+    },
+    {
+      "case": "reader_503_explicit_keyboard_retry",
+      "unsent_question_retained": true,
+      "requests": 2,
+      "no_reload": true,
+      "unsaved_note_retained": true
+    },
+    {
+      "case": "real_model_defaults_unconfigured",
+      "ask_disabled": true,
+      "outline_disabled": true
+    },
+    {
+      "case": "model_defaults_error_loading_explicit_retry",
+      "ask_disabled": true,
+      "outline_disabled": true,
+      "returned_real_unconfigured": true,
+      "unsaved_note_retained": true
+    },
+    {
+      "case": "friendly_task_label_collapsed_keyboard_diagnostics",
+      "friendly_label": "提取资料文字",
+      "raw_operation_hidden_by_default": true
+    }
+  ],
+  "page_errors": [],
+  "mobile": [
+    {
+      "panel": "资料",
+      "width": 390,
+      "documentWidth": 390,
+      "height": 844,
+      "documentHeight": 844
+    },
+    {
+      "panel": "阅读与提问",
+      "width": 390,
+      "documentWidth": 390,
+      "height": 844,
+      "documentHeight": 844
+    },
+    {
+      "panel": "笔记与成果",
+      "width": 390,
+      "documentWidth": 390,
+      "height": 844,
+      "documentHeight": 844
+    }
+  ],
+  "blocked_requests": [],
+  "status": "passed"
+}

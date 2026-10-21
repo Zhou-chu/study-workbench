@@ -1,4 +1,4 @@
-import { fireEvent, render as rtlRender, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render as rtlRender, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import type { EvidenceCitation } from '@/lib/types/personal'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -22,6 +22,91 @@ describe('EvidenceReader', () => {
     vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:authenticated-pdf'), revokeObjectURL: vi.fn() })
   })
   afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks() })
+  it('recovers an initial read failure manually without changing historical identity or page', async () => {
+    vi.mocked(evidenceApi.version).mockRejectedValueOnce(new Error('offline'))
+    render(<EvidenceReader sourceVersionId="sv_old" evidenceId="ev_old" initialPage={7} onPositionChange={vi.fn()} />)
+    expect(await screen.findByText('workbench.readerLoadFailed')).toBeInTheDocument()
+    expect(evidenceApi.version).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.retry' }))
+    expect(await screen.findByTitle('workbench.pdfReader')).toHaveAttribute('data-page-number', '8')
+    expect(evidenceApi.version).toHaveBeenLastCalledWith('sv_old', expect.anything(), 'ev_old')
+    expect(evidenceApi.version).toHaveBeenCalledTimes(2)
+    expect(screen.queryByText('workbench.readerLoadFailed')).not.toBeInTheDocument()
+  })
+  it('retries PDF loading explicitly while retaining the quote and current page', async () => {
+    vi.mocked(evidenceApi.download).mockRejectedValueOnce(new Error('offline'))
+    let finish!: (blob: Blob) => void
+    render(<EvidenceReader sourceVersionId="sv_old" citation={citation} initialPage={7} onPositionChange={vi.fn()} />)
+    await screen.findByText('workbench.readerPdfFailed')
+    expect(evidenceApi.download).toHaveBeenCalledTimes(1)
+    fireEvent.change(screen.getByLabelText('workbench.pdfPage'), { target: { value: '9' } })
+    vi.mocked(evidenceApi.download).mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.retry' }))
+    await waitFor(() => expect(evidenceApi.download).toHaveBeenCalledTimes(2))
+    expect(screen.getByRole('button', { name: 'workbench.retry' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.retry' }))
+    expect(evidenceApi.download).toHaveBeenCalledTimes(2)
+    await act(async () => finish(new Blob(['pdf'])))
+    expect(screen.getByTitle('workbench.pdfReader')).toHaveAttribute('data-page-number', '9')
+    expect(screen.getByText(citation.quote)).toBeInTheDocument()
+    expect(evidenceApi.version).toHaveBeenLastCalledWith('sv_old', expect.anything(), 'ev1')
+  })
+  it('ignores a delayed retry after switching to another source', async () => {
+    vi.mocked(evidenceApi.version).mockRejectedValueOnce(new Error('offline'))
+    const props = { sourceVersionId: 'sv_old', onPositionChange: vi.fn() }
+    const { rerender } = render(<EvidenceReader {...props} />)
+    await screen.findByText('workbench.readerLoadFailed')
+    let finish!: (value: Awaited<ReturnType<typeof evidenceApi.version>>) => void
+    vi.mocked(evidenceApi.version).mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.retry' }))
+    vi.mocked(evidenceApi.version).mockResolvedValueOnce({ version: { ...version, source_version_id: 'sv_new', title: 'New source' }, extraction: null, evidence: [] })
+    rerender(<EvidenceReader {...props} sourceVersionId="sv_new" />)
+    await screen.findByText('New source')
+    await act(async () => finish({ version: { ...version, title: 'Stale source' }, extraction: null, evidence: [] }))
+    expect(screen.getByText('New source')).toBeInTheDocument()
+    expect(screen.queryByText('Stale source')).not.toBeInTheDocument()
+    expect(evidenceApi.download).toHaveBeenCalledTimes(1)
+    expect(evidenceApi.download).toHaveBeenLastCalledWith('sv_new', expect.anything())
+  })
+  it('does not show an old original download failure on a newly selected document', async () => {
+    const { rerender } = render(<EvidenceReader sourceVersionId="sv_old" onPositionChange={vi.fn()} />)
+    await screen.findByTitle('workbench.pdfReader')
+    let reject!: (error: Error) => void
+    vi.mocked(evidenceApi.download).mockReturnValueOnce(new Promise((_, rejectPromise) => { reject = rejectPromise }))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.downloadOriginal' }))
+    expect(screen.getByRole('button', { name: 'workbench.downloadOriginal' })).toBeDisabled()
+    vi.mocked(evidenceApi.version).mockResolvedValueOnce({ version: { ...version, source_version_id: 'sv_new', title: 'New source' }, extraction: null, evidence: [] })
+    rerender(<EvidenceReader sourceVersionId="sv_new" onPositionChange={vi.fn()} />)
+    await screen.findByText('New source')
+    expect(screen.getByRole('button', { name: 'workbench.downloadOriginal' })).toBeEnabled()
+    vi.mocked(evidenceApi.download).mockReturnValueOnce(new Promise(() => {}))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.downloadOriginal' }))
+    await act(async () => reject(new Error('Old download disconnected')))
+    expect(screen.getByRole('button', { name: 'workbench.downloadOriginal' })).toBeDisabled()
+    expect(screen.queryByText('workbench.readerDownloadFailed')).not.toBeInTheDocument()
+    expect(screen.getByText('New source')).toBeInTheDocument()
+  })
+  it('clears the previous local document when opening an unmapped remote citation', async () => {
+    const { rerender } = render(<EvidenceReader sourceVersionId="sv_old" onPositionChange={vi.fn()} />)
+    await screen.findByTitle('workbench.pdfReader')
+    let reject!: (error: Error) => void
+    vi.mocked(evidenceApi.download).mockReturnValueOnce(new Promise((_, rejectPromise) => { reject = rejectPromise }))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.downloadOriginal' }))
+    rerender(<EvidenceReader citation={{ ...citation, kind: 'remote_unmapped', source_version_id: null, evidence_id: null, locator: null, reference_validity: 'unverified' }} onPositionChange={vi.fn()} />)
+    expect(screen.getByText('workbench.remoteUnmapped')).toBeInTheDocument()
+    expect(screen.queryByTitle('workbench.pdfReader')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'workbench.downloadOriginal' })).not.toBeInTheDocument()
+    await act(async () => reject(new Error('Old download disconnected')))
+    expect(screen.queryByText('workbench.readerDownloadFailed')).not.toBeInTheDocument()
+    expect(screen.getByText(citation.quote)).toBeInTheDocument()
+  })
+  it('does not offer network retry for an original known to be missing', async () => {
+    vi.mocked(evidenceApi.version).mockResolvedValueOnce({ version: { ...version, original_status: 'missing' }, extraction: null, evidence: [] })
+    render(<EvidenceReader sourceVersionId="sv_old" onPositionChange={vi.fn()} />)
+    await screen.findByText('workbench.originalMissing')
+    expect(screen.queryByRole('button', { name: 'workbench.retry' })).not.toBeInTheDocument()
+    expect(evidenceApi.download).not.toHaveBeenCalled()
+  })
   it('keeps maintenance secondary to reading without hiding archived verification actions', async () => {
     render(<EvidenceReader sourceVersionId="sv_old" onPositionChange={vi.fn()} />)
     await screen.findByTitle('workbench.pdfReader')

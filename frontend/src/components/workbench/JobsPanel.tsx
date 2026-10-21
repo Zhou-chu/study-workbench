@@ -10,6 +10,24 @@ import { requestError, stateKeys } from '@/lib/utils/workbench'
 import type { BridgeJob } from '@/lib/types/personal'
 import { Button } from '@/components/ui/button'
 
+const operationKeys: Record<string, string> = {
+  extract_evidence: 'workbench.jobOperations.extract',
+  read: 'workbench.jobOperations.read',
+  reparse: 'workbench.jobOperations.reparse',
+  revalidate: 'workbench.jobOperations.revalidate',
+  portable_export: 'workbench.jobOperations.export',
+  portable_import: 'workbench.jobOperations.import',
+  import: 'workbench.jobOperations.import',
+  chat: 'workbench.jobOperations.question',
+  ask: 'workbench.jobOperations.question',
+  question: 'workbench.jobOperations.question',
+  outline: 'workbench.jobOperations.outline',
+  audio: 'workbench.jobOperations.audio',
+  sync: 'workbench.jobOperations.sync',
+  create_notebook: 'workbench.jobOperations.createNotebook',
+  download: 'workbench.jobOperations.download',
+}
+
 function JobCard({ job, onChanged }: { job: BridgeJob; onChanged: () => void }) {
   const { t } = useTranslation()
   const [audioUrl, setAudioUrl] = useState<string>()
@@ -29,9 +47,8 @@ function JobCard({ job, onChanged }: { job: BridgeJob; onChanged: () => void }) 
   useEffect(() => () => { if (audioUrl) URL.revokeObjectURL(audioUrl) }, [audioUrl])
   const errorText = typeof current.error === 'string' ? current.error : (current.error as { message?: string } | null)?.message
   return <article className="rounded-md border p-3 space-y-2 text-xs">
-    <p className="font-medium break-all">{current.operation} · {current.job_id}</p>
+    <p className="font-medium">{t(Object.hasOwn(operationKeys, current.operation) ? operationKeys[current.operation] : 'workbench.jobOperations.other')}</p>
     <p role="status">{t(stateKeys[current.state] || 'workbench.unavailable')}</p>
-    {current.submission_state && <p>{t('workbench.submissionStatus', { status: current.submission_state })}</p>}
     {current.state === 'submission_unknown' && <p className="text-muted-foreground">{t('workbench.unknownSubmission')}</p>}
     {errorText && <p className="text-destructive">{errorText}</p>}
     {current.result?.downloaded === false && <p className="text-muted-foreground">{t('workbench.artifactNotSaved')}</p>}
@@ -41,6 +58,14 @@ function JobCard({ job, onChanged }: { job: BridgeJob; onChanged: () => void }) 
     {(current.remote_may_continue || (['running', 'waiting_remote'].includes(current.state) && remoteWork)) && <p className="text-muted-foreground">{t('workbench.remoteMayContinue')}</p>}
     {canCancel && <Button size="sm" variant="outline" disabled={cancel.isPending} onClick={() => cancel.mutate()}>{t('workbench.cancelWaiting')}</Button>}
     {downloadUrl && <div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={download.isPending} onClick={() => download.mutate(false)}>{t('workbench.downloadResult')}</Button>{artifact?.mime_type?.startsWith('audio/') && <Button size="sm" variant="outline" disabled={download.isPending} onClick={() => download.mutate(true)}>{t('workbench.playAudio')}</Button>}</div>}
+    <details className="text-muted-foreground">
+      <summary className="cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">{t('workbench.jobTechnicalDetails')}</summary>
+      <dl className="mt-2 space-y-1 break-all">
+        <div><dt>{t('workbench.jobId')}</dt><dd>{current.job_id}</dd></div>
+        <div><dt>{t('workbench.jobOperation')}</dt><dd>{current.operation}</dd></div>
+      </dl>
+      {current.submission_state && <p>{t('workbench.submissionStatus', { status: current.submission_state })}</p>}
+    </details>
     {audioUrl && <audio className="w-full" controls src={audioUrl} />}
   </article>
 }

@@ -82,6 +82,9 @@ export function useModelDefaults() {
   return useQuery({
     queryKey: MODEL_QUERY_KEYS.defaults,
     queryFn: () => modelsApi.getDefaults(),
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   })
 }
 

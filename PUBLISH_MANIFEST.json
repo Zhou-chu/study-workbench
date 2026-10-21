@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_commit": "b913f13efd06e08985f6b5ea09fb5abe322e7b35",
+  "source_commit": "58d2a55833933be8486d19a314dfe78508edb370",
   "method": "git archive; byte/mode parity verified; no history or network",
   "presentation_only_changes": [
     "README.md",
@@ -229,6 +229,86 @@
       "bytes": 166419
     },
     {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/00-empty-desktop.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 148453
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/00-empty-mobile.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 60704
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/00-first-upload-mobile.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 65066
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/01-upload-uncertain-desktop.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 181245
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/01-upload-uncertain-mobile.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 74649
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/02-reader-recovered-desktop.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 178471
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/02-reader-recovered-mobile.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 64800
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/02-reader-retry-desktop.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 166997
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/02-reader-retry-mobile.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 60180
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/03-model-unconfigured-desktop.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 162158
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/04-model-error-desktop.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 151084
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/05-model-checking-desktop.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 146315
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/06-friendly-task-mobile.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 54374
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/mobile-1.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 61032
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/mobile-2.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 49923
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21e/browser/mobile-3.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 54622
+    },
+    {
       "path": "docs/v1/evidence/coverage/backend/baseline/coverage.json",
       "reason": "raw coverage omitted; summaries retained",
       "bytes": 1004286
@@ -252,6 +332,66 @@
       "path": "docs/v1/evidence/coverage/frontend/transport-pass/coverage-final.json",
       "reason": "raw coverage omitted; summaries retained",
       "bytes": 1736258
+    },
+    {
+      "path": "docs/v1/evidence/ux-red-team-2026-10-21/browser/01-entry.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 64639
+    },
+    {
+      "path": "docs/v1/evidence/ux-red-team-2026-10-21/browser/02-created-zh.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 72120
+    },
+    {
+      "path": "docs/v1/evidence/ux-red-team-2026-10-21/browser/03-notebook-zh.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 107558
+    },
+    {
+      "path": "docs/v1/evidence/ux-red-team-2026-10-21/browser/05-empty-mobile-zh.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 48736
+    },
+    {
+      "path": "docs/v1/evidence/ux-red-team-2026-10-21/browser/06-upload-mobile-zh.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 58590
+    },
+    {
+      "path": "docs/v1/evidence/ux-red-team-2026-10-21/browser/07-read-mobile-zh.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 55125
+    },
+    {
+      "path": "docs/v1/evidence/ux-red-team-2026-10-21/browser/08-model-unconfigured-mobile-zh.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 45111
+    },
+    {
+      "path": "docs/v1/evidence/ux-red-team-2026-10-21/browser/09-saved-note-mobile-zh.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 63680
+    },
+    {
+      "path": "docs/v1/evidence/ux-red-team-2026-10-21/browser/10-desktop-zh.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 177508
+    },
+    {
+      "path": "docs/v1/evidence/ux-red-team-2026-10-21/browser/11-export-desktop-zh.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 188456
+    },
+    {
+      "path": "docs/v1/evidence/ux-red-team-2026-10-21/browser/12-restored-desktop-zh.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 190051
+    },
+    {
+      "path": "docs/v1/evidence/ux-red-team-2026-10-21/browser/13-restored-content-desktop-zh.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 195631
     }
   ]
 }

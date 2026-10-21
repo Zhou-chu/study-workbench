@@ -1,0 +1,19 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> frontend@0.1.0 test
+> vitest run --maxWorkers=2
+
+
+ RUN  v4.1.9 /workspace/scratch/7ae04dc66900/study-workbench/frontend
+
+
+ Test Files  53 passed (53)
+      Tests  381 passed (381)
+   Start at  15:16:10
+   Duration  62.18s (transform 3.51s, setup 4.10s, import 41.58s, tests 33.21s, environment 27.41s)
+
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

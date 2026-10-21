@@ -1,0 +1,27 @@
+{
+  "type": "PM expert walkthrough, not user study",
+  "viewport": [
+    "1440x1000",
+    "390x844"
+  ],
+  "locale": "zh-CN",
+  "actual": [
+    "Chinese first entry",
+    "create notebook via UI",
+    "open legacy notebook then study",
+    "empty mobile default conversation",
+    "upload synthetic Markdown",
+    "read locally without model",
+    "switch independent engine, missing model blocks ask",
+    "save manual note",
+    "export download",
+    "restore new notebook and verify note/original reader"
+  ],
+  "not_performed": [
+    "Google login",
+    "model call",
+    "public deployment",
+    "screen reader audit",
+    "new-session empty desktop screenshot"
+  ]
+}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { NotebookResponse } from '@/lib/types/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -112,6 +113,10 @@ export function NotebookCard({ notebook }: NotebookCardProps) {
                 locale: getDateLocale(language)
               }) })}
             </div>
+
+            <Button asChild variant="outline" size="sm" className="mt-3 max-w-full">
+              <Link href={`/notebooks/${encodeURIComponent(notebook.id)}/study`} onClick={event => event.stopPropagation()}>{t('workbench.open')}</Link>
+            </Button>
 
             {/* Item counts footer */}
             <div className="mt-3 flex items-center gap-3 border-t pt-3 text-xs text-muted-foreground">

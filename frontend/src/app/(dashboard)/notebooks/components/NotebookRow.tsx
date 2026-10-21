@@ -71,6 +71,7 @@ export function NotebookRow({ notebook }: NotebookRowProps) {
               {notebook.description}
             </p>
           )}
+          <Link href={`/notebooks/${encodeURIComponent(notebook.id)}/study`} onClick={event => event.stopPropagation()} className="mt-1 inline-flex rounded-sm text-xs font-medium text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring">{t('workbench.open')}</Link>
         </div>
 
         <div className="flex items-center gap-3 shrink-0 text-xs text-muted-foreground">

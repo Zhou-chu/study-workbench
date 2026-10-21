@@ -1,13 +1,51 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, expect, it, vi } from 'vitest'
 import { JobsPanel } from './JobsPanel'
 import { workbenchApi } from '@/lib/api/workbench'
 vi.mock('@/lib/api/workbench', () => ({ workbenchApi: { job: vi.fn(), cancelJob: vi.fn() } }))
 describe('persistent jobs', () => {
+  it('leads local success with a friendly task name and keeps raw fields in a closed native disclosure', () => {
+    const { container } = render(<QueryClientProvider client={new QueryClient()}><JobsPanel jobs={[{ job_id: 'local-job-hash', operation: 'extract_evidence', state: 'succeeded', submission_state: 'not_submitted' }]} onChanged={vi.fn()} /></QueryClientProvider>)
+    expect(screen.getByText('workbench.jobOperations.extract')).toBeVisible()
+    expect(screen.getByRole('status')).toHaveTextContent('workbench.states.succeeded')
+    const details = container.querySelector('details')
+    expect(details).not.toBeNull()
+    expect(details).not.toHaveAttribute('open')
+    expect(screen.getByText('local-job-hash')).not.toBeVisible()
+    expect(screen.getByText('extract_evidence')).not.toBeVisible()
+    expect(screen.getByText('workbench.submissionStatus')).not.toBeVisible()
+    const summary = screen.getByText('workbench.jobTechnicalDetails')
+    expect(summary.tagName).toBe('SUMMARY')
+    fireEvent.click(summary)
+    expect(details).toHaveAttribute('open')
+    expect(screen.getByText('local-job-hash')).toBeVisible()
+    expect(screen.getByText('extract_evidence')).toBeVisible()
+    expect(screen.getByText('workbench.submissionStatus')).toBeVisible()
+  })
+  it.each([
+    ['read', 'read'], ['reparse', 'reparse'], ['revalidate', 'revalidate'],
+    ['portable_export', 'export'], ['portable_import', 'import'], ['import', 'import'],
+    ['chat', 'question'], ['ask', 'question'], ['question', 'question'], ['outline', 'outline'],
+    ['audio', 'audio'], ['sync', 'sync'], ['create_notebook', 'createNotebook'],
+    ['download', 'download'], ['future_operation', 'other'], ['toString', 'other'],
+  ])('gives %s a localized friendly title', (operation, key) => {
+    render(<QueryClientProvider client={new QueryClient()}><JobsPanel jobs={[{ job_id: 'label', operation, state: 'succeeded' }]} onChanged={vi.fn()} /></QueryClientProvider>)
+    expect(screen.getByText('workbench.jobOperations.' + key)).toBeVisible()
+  })
+  it('still cancels queued work using its original job ID', async () => {
+    vi.mocked(workbenchApi.cancelJob).mockResolvedValue({} as never)
+    vi.mocked(workbenchApi.job).mockResolvedValue({ job_id: 'queued-action', operation: 'extract_evidence', state: 'cancelled_local' })
+    const onChanged = vi.fn()
+    render(<QueryClientProvider client={new QueryClient()}><JobsPanel jobs={[{ job_id: 'queued-action', operation: 'extract_evidence', state: 'queued' }]} onChanged={onChanged} /></QueryClientProvider>)
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.cancelWaiting' }))
+    await waitFor(() => expect(workbenchApi.cancelJob).toHaveBeenCalledWith('queued-action'))
+    await waitFor(() => expect(onChanged).toHaveBeenCalled())
+    vi.clearAllMocks()
+  })
   it('warns on unknown submission and never exposes an automatic retry', () => {
     render(<QueryClientProvider client={new QueryClient()}><JobsPanel jobs={[{ job_id: 'j1', operation: 'audio', state: 'submission_unknown', submission_state: 'unknown' }]} onChanged={vi.fn()} /></QueryClientProvider>)
-    expect(screen.getByText('workbench.unknownSubmission')).toBeInTheDocument()
+    expect(screen.getByText('workbench.unknownSubmission')).toBeVisible()
     expect(screen.queryByRole('button', { name: /retry/i })).not.toBeInTheDocument()
     expect(workbenchApi.cancelJob).not.toHaveBeenCalled()
   })

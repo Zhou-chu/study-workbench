@@ -94,3 +94,16 @@ A22 remains partial: no externally accessible URL or durable hosting lifecycle g
 - Native and production-frontend/Firefox evidence is under `evidence/continuation-2026-10-21d/portable/`; all source data is synthetic and local. No Google/model, external ingress or real generated-audio acceptance is inferred.
 
 Final checkpoint d totals: backend **1341 passed / 1 opt-in skipped**, frontend **328 passed / 50 files**, mypy **213 files**; static checks and production build passed. Real production-Next upload plus Firefox fresh-database restore of the 113 MB worker export passed with matching hashes and origin rejection.
+
+## 2026-10-21 product-experience/recovery follow-up (checkpoint e)
+
+- A01/A03/A16: product-manager expert walkthrough uses actual Chinese desktop/mobile operation, not a user interview or conversion study. Its baseline and prioritized findings are in `UX_RED_TEAM_2026-10-21.md`. Source changes add direct workbench entry, local-first upload guidance, explicit reading/selection semantics and optional Google controls without implicit engine/scope changes.
+- A01/A19: local task titles/status are readable without protocol knowledge; full diagnostics remain in an accessible disclosure and remote uncertainty/cancellation warnings remain visible.
+- A03: upload recovery holds the original request identity and target for explicit manual retry within the mounted workspace. Browser reload recovery is not promised; removing a notification does not undo a server-accepted upload. Component/hook tests cover lost responses, double activation, target preservation, notebook changes and cleanup.
+- A06/A16: document/PDF retry preserves reading identity and parent editor state; old fetch/download completions cannot overwrite new reader errors, and unmapped remote references do not retain the preceding local document.
+- A09: model configuration loading/error/stale-error blocks asking/outline. Configuration inspection and explicit retry are not model inference acceptance.
+- Integrated automated gates: backend **1341 passed / 1 opt-in skipped**, frontend **381 passed / 53 files**, mypy **214 files**; types/lint/build pass. The locale source-scan test hit a 30 s timeout under the initial parallel run; the complete final run passed with two workers (no assertion or timeout limit relaxed).
+
+Evidence under `evidence/continuation-2026-10-21e/`; actual controlled-fault browser results are separate from unit tests. No real Google/model or external-hosting claim is added.
+
+Final actual e/browser acceptance: all seven controlled scenarios passed, including same-key recovery after a real server commit with lost browser response (one source/version), no-reload reader retry retaining both drafts, model readiness fail-closed, direct entry and keyboard disclosures. The three 390×844 panels had no document overflow; page errors and blocked external/question requests were empty. See `evidence/continuation-2026-10-21e/browser/results.json` and its README. This is not screen-reader/WCAG certification, an actual model call, or a study of real users.
