@@ -47,7 +47,7 @@ export const sourceChatApi = {
   },
 
   // Messaging with streaming
-  sendMessage: (sourceId: string, sessionId: string, data: SendMessageRequest) => {
+  sendMessage: (sourceId: string, sessionId: string, data: SendMessageRequest, signal?: AbortSignal) => {
     // Use relative URL to leverage Next.js rewrites
     // This works both in dev (Next.js proxy) and production (Docker network)
     const url = `/api/sources/${sourceId}/chat/sessions/${sessionId}/messages`
@@ -58,7 +58,8 @@ export const sourceChatApi = {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
+      signal
     }).then(response => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)

@@ -141,3 +141,12 @@ This is launcher/provider/service unit evidence, not actual container mounts, Do
 `COUPLED_RESTART_PLAN.md` adopts the independently re-reviewed smaller one-shot recovery design: per-launch frontend gate, no independent device frontend/API restart, remove old exact instances, initialize a fresh API, then release the exact frontend attempt. It protects against serving with the historical pre-loss API epoch; it does not promise atomic API liveness or autonomous recovery. Crash recovery is deliberately explicit for phase one.
 
 Review corrected password-file launch semantics, absent-only legacy defaults, production HTTPS requirements, final-probe/release races, process/environment constraints and Docker ownership/target pinning. Only the password-file source prerequisite is implemented. Gate/host transaction code and all actual Docker cases remain NOT RUN/NOT IMPLEMENTED. Docker CLI/socket are absent in the current environment; no installation, service or system change is implied by adopting this plan.
+
+
+## Actual browser and Source Chat closure (2026-10-21 22:23 UTC)
+
+See `WEB_SESSION_BROWSER_ACCEPTANCE.md` for reconciled scope, limitations and cleanup. The broad local browser run on `656fb667` established actual 900-second default expiry with two dirty tabs, nonempty selected sources, one explicit native refresh, stable cookie and no mutation replay. Auth/BFF/backend bytes remain unchanged by the later Source Chat correction.
+
+Actual Source Chat navigation exposed missing cancellation. Initial fix `a7e4f28b` was superseded after browser evidence caught production-cache reuse instead of the claimed fresh completion GET. Reviewed follow-up `89b4232bdab40650430ffd70c5cb575391daca49` is integrated as `bb0fb5ea87be8a0e914046f3b95de930b1166b34`; frontend bytes match. Final aggregate **1100 tests / 71 files**, production build/TypeScript and full lint **0 errors / 7 existing warnings** passed; independent **72 checks** use production query defaults. Exact actual RED replay is now GREEN, with navigation abort observed before the fixture watchdog and no provider dispatch. Local abort does not prove remote model termination.
+
+No production activation, main update, actual Docker build/lifecycle, native application delivery or Sites deployment follows from this local evidence. Private connectivity registration/native onboarding contracts and a Docker-capable authorized test runtime remain unresolved. Migration preflight remains unmerged behind its separate safety-review block.
