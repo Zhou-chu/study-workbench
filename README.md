@@ -16,7 +16,7 @@
 
 ## 快照来源与发布边界
 
-源提交：`4fa4fcbf4f5438cf31b10d93eec133dda571e432`。仅以 `git archive` 导出该提交的已跟踪文件，无 Git 历史或未跟踪文件。
+源提交：`29431e2a46e02b95aa8d82b5d91c5cbdd390fcaa`。仅以 `git archive` 导出该提交的已跟踪文件，无 Git 历史或未跟踪文件。
 保留的源码、许可证、锁文件、静态资源、测试夹具及合成示例 ZIP 逐字节一致。
 仅替换本首页，并将原 README 保存为 `README_UPSTREAM.md`。
 
