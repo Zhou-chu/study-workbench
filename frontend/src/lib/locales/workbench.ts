@@ -1,4 +1,18 @@
 export const workbenchEn = {
+  exportPreparing: "Preparing your project backup… No file has been downloaded yet.",
+  exportReady: "Your project package is ready. Download it below to keep a copy.",
+  exportFailed: "The backup could not be prepared. You can try exporting again.",
+  exportCancelled: "This backup was cancelled. You can start a new export.",
+  exportUnavailable: "The backup is not ready to download. Check its status or the task history.",
+  exportStatusError: "We couldn’t check this backup’s status. Refresh the status; do not start another export.",
+  refreshExportStatus: "Refresh backup status",
+  downloadProject: "Download project package",
+  exportDownloading: "Downloading your project package…",
+  exportDownloadError: "The download did not finish. Choose Download project package again; no new export is needed.",
+  exportDownloadStarted: "The download was handed to your browser. Check your downloads to confirm the file was saved.",
+  exportHistoryHint: "After leaving or reloading this page, find this export under Notes & artifacts → Jobs.",
+  exportRequestUncertain: "We couldn’t confirm the export request. Check Notes & artifacts → Jobs before deciding whether to export again.",
+
   jobTechnicalDetails: 'Technical details', jobId: 'Task ID', jobOperation: 'Operation code',
   jobOperations: { extract: 'Extract source text', read: 'Read source', reparse: 'Re-extract source text', revalidate: 'Check source evidence', export: 'Export backup', import: 'Import materials', question: 'Answer question', outline: 'Create outline', audio: 'Create audio', sync: 'Sync sources', createNotebook: 'Create linked notebook', download: 'Save result locally', other: 'Background task' },
 
@@ -55,6 +69,20 @@ export const workbenchEn = {
   states: { queued: 'Queued', running: 'Running', waiting_remote: 'Waiting for Google', succeeded: 'Succeeded', failed: 'Failed', needs_reauth: 'Sign-in required', submission_unknown: 'Submission uncertain', cancelled_local: 'Local waiting stopped', ready: 'Searchable', completed: 'Searchable', pending: 'Waiting', extracting: 'Extracting', needs_ocr: 'OCR needed', partial: 'Partially extracted', unsupported: 'Unsupported file', available: 'Available', missing: 'Missing', unverified: 'Unverified' },
 }
 export const workbenchZh: typeof workbenchEn = {
+  exportPreparing: "正在准备项目备份，尚未下载文件。",
+  exportReady: "项目包已生成，点击下方下载以保留副本。",
+  exportFailed: "项目备份生成失败，可重新发起导出。",
+  exportCancelled: "本次备份已取消，可重新发起导出。",
+  exportUnavailable: "项目备份暂不可下载，请刷新状态或查看任务记录。",
+  exportStatusError: "暂时无法确认备份状态，请刷新状态，不要重复导出。",
+  refreshExportStatus: "刷新备份状态",
+  downloadProject: "下载项目包",
+  exportDownloading: "正在下载项目包…",
+  exportDownloadError: "下载未完成，请再次点击“下载项目包”，无需重新导出。",
+  exportDownloadStarted: "已交给浏览器下载，请在浏览器下载记录中确认文件已保存。",
+  exportHistoryHint: "离开或刷新页面后，可到“笔记与成果 → 任务”找到本次导出。",
+  exportRequestUncertain: "未能确认导出请求，请先检查“笔记与成果 → 任务”，再决定是否重新导出。",
+
   jobTechnicalDetails: '技术详情', jobId: '任务编号', jobOperation: '操作代码',
   jobOperations: { extract: '提取资料文字', read: '阅读资料', reparse: '重新提取资料文字', revalidate: '检查资料证据', export: '导出备份', import: '导入资料', question: '回答问题', outline: '生成提纲', audio: '生成音频', sync: '同步资料', createNotebook: '创建关联笔记本', download: '保存结果到本地', other: '后台任务' },
 

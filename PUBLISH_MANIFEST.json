@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_commit": "58d2a55833933be8486d19a314dfe78508edb370",
+  "source_commit": "4fa4fcbf4f5438cf31b10d93eec133dda571e432",
   "method": "git archive; byte/mode parity verified; no history or network",
   "presentation_only_changes": [
     "README.md",
@@ -307,6 +307,31 @@
       "path": "docs/v1/evidence/continuation-2026-10-21e/browser/mobile-3.png",
       "reason": "browser screenshot evidence omitted",
       "bytes": 54622
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21f/browser/01-queued-mobile.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 69342
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21f/browser/02-status-error-mobile.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 73721
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21f/browser/03-ready-mobile.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 70916
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21f/browser/04-download-error-mobile.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 75841
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21f/browser/05-download-started-mobile.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 76043
     },
     {
       "path": "docs/v1/evidence/coverage/backend/baseline/coverage.json",

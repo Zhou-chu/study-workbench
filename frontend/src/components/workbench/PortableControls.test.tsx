@@ -1,14 +1,18 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { PortableControls } from './PortableControls'
+import { workbenchApi } from '@/lib/api/workbench'
+import { saveBlob } from '@/lib/api/portable'
+import type { BridgeJob } from '@/lib/types/personal'
 import { portableApi } from '@/lib/api/portable'
 vi.mock('@/lib/hooks/use-translation', async () => {
   const { workbenchEn } = await import('@/lib/locales/workbench')
   return { useTranslation: () => ({ t: (key: string, values?: Record<string, string>) => key === 'workbench.packageTooLarge'
     ? workbenchEn.packageTooLarge.replace('{{bytes}}', values?.bytes || '').replace('{{limit}}', values?.limit || '') : key }) }
 })
-vi.mock('@/lib/api/portable', () => ({ portableApi: { limits: vi.fn(), restore: vi.fn(async () => ({ notebook_id: 'notebook:restored' })), export: vi.fn() } }))
+vi.mock('@/lib/api/portable', () => ({ portableApi: { limits: vi.fn(), restore: vi.fn(async () => ({ notebook_id: 'notebook:restored' })), export: vi.fn(), download: vi.fn() }, saveBlob: vi.fn() }))
+vi.mock('@/lib/api/workbench', () => ({ workbenchApi: { job: vi.fn() } }))
 const limits = { max_archive_bytes: 10, max_manifest_bytes: 50, multipart_overhead_bytes: 10, max_expanded_bytes: 100, max_entity_bytes: 80, max_request_bytes: 20, max_entries: 100, max_compression_ratio: 200 }
 function setup(client = new QueryClient()) {
   render(<QueryClientProvider client={client}><PortableControls notebookId="notebook:1" onChanged={vi.fn()} /></QueryClientProvider>)
@@ -107,5 +111,121 @@ describe('portable restore confirmation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'common.confirm' }))
     await waitFor(() => expect(portableApi.restore).toHaveBeenCalledWith(file))
     expect(await screen.findByRole('link', { name: 'workbench.restoredNotebook' })).toHaveAttribute('href', '/notebooks/notebook%3Arestored/study')
+  })
+})
+
+const exportJob = (state: BridgeJob['state'], result?: BridgeJob['result']): BridgeJob => ({ job_id: 'job_export', operation: 'portable_export', state, result })
+const exportButton = () => screen.getByRole('button', { name: 'workbench.exportProject' })
+describe('portable export progress at the starting point', () => {
+  beforeEach(() => { vi.clearAllMocks(); vi.mocked(portableApi.export).mockResolvedValue(exportJob('queued')); vi.mocked(workbenchApi.job).mockReturnValue(new Promise(() => {})) })
+  it('tracks only the clicked export, prevents duplicates, and exposes download only after success', async () => {
+    const client = new QueryClient()
+    setup(client)
+    expect(workbenchApi.job).not.toHaveBeenCalled()
+    fireEvent.click(exportButton())
+    expect(await screen.findByText('workbench.exportPreparing')).toBeVisible()
+    expect(exportButton()).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'workbench.downloadProject' })).not.toBeInTheDocument()
+    expect(portableApi.download).not.toHaveBeenCalled()
+    vi.mocked(workbenchApi.job).mockResolvedValue(exportJob('succeeded', { download_url: '/personal/exports/package/download' }))
+    await client.cancelQueries()
+    await client.invalidateQueries()
+    expect(await screen.findByText('workbench.exportReady')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'workbench.downloadProject' })).toBeVisible()
+    expect(portableApi.export).toHaveBeenCalledTimes(1)
+    expect(portableApi.download).not.toHaveBeenCalled()
+  })
+  it('stops on status errors and refreshes only on explicit action without resubmitting', async () => {
+    vi.mocked(workbenchApi.job).mockRejectedValueOnce(new Error('offline')).mockResolvedValue(exportJob('succeeded', { download_url: '/personal/exports/package/download' }))
+    setup(new QueryClient({ defaultOptions: { queries: { retry: 3 } } }))
+    fireEvent.click(exportButton())
+    expect(await screen.findByText('workbench.exportStatusError')).toBeVisible()
+    expect(exportButton()).toBeDisabled()
+    await new Promise(resolve => setTimeout(resolve, 2200))
+    expect(workbenchApi.job).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.refreshExportStatus' }))
+    expect(await screen.findByText('workbench.exportReady')).toBeVisible()
+    expect(portableApi.export).toHaveBeenCalledTimes(1)
+  })
+  it.each(['failed', 'cancelled_local'] as const)('does not offer a misleading download for %s', async state => {
+    vi.mocked(workbenchApi.job).mockResolvedValue(exportJob(state, { download_url: '/personal/stale/download' }))
+    setup()
+    fireEvent.click(exportButton())
+    expect(await screen.findByText(state === 'failed' ? 'workbench.exportFailed' : 'workbench.exportCancelled')).toBeVisible()
+    expect(screen.queryByText('workbench.exportReady')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'workbench.downloadProject' })).not.toBeInTheDocument()
+    expect(exportButton()).toBeEnabled()
+  })
+  it('does not resubmit or check a job on rerender, and forgets old notebook progress', async () => {
+    const client = new QueryClient()
+    const onChanged = vi.fn()
+    const view = (id: string) => <QueryClientProvider client={client}><PortableControls notebookId={id} onChanged={onChanged} /></QueryClientProvider>
+    const { rerender } = render(view('notebook:1'))
+    fireEvent.click(screen.getByText('workbench.exportDetails'))
+    fireEvent.click(exportButton())
+    expect(await screen.findByText('workbench.exportPreparing')).toBeVisible()
+    rerender(view('notebook:1'))
+    expect(portableApi.export).toHaveBeenCalledTimes(1)
+    rerender(view('notebook:2'))
+    expect(screen.queryByText('workbench.exportPreparing')).not.toBeInTheDocument()
+    // Going back is a fresh view; task history remains the recovery source.
+    rerender(view('notebook:1'))
+    expect(screen.queryByText('workbench.exportPreparing')).not.toBeInTheDocument()
+    expect(portableApi.export).toHaveBeenCalledTimes(1)
+  })
+  it('ignores a late export response after changing notebooks', async () => {
+    let finish!: (job: BridgeJob) => void
+    vi.mocked(portableApi.export).mockReturnValue(new Promise(resolve => { finish = resolve }))
+    const client = new QueryClient()
+    const view = (id: string) => <QueryClientProvider client={client}><PortableControls notebookId={id} onChanged={vi.fn()} /></QueryClientProvider>
+    const { rerender } = render(view('notebook:1'))
+    fireEvent.click(screen.getByText('workbench.exportDetails'))
+    fireEvent.click(exportButton())
+    await waitFor(() => expect(portableApi.export).toHaveBeenCalledTimes(1))
+    rerender(view('notebook:2'))
+    await act(async () => { finish(exportJob('succeeded', { download_url: '/personal/old/download' })) })
+    expect(screen.queryByText('workbench.exportReady')).not.toBeInTheDocument()
+    expect(workbenchApi.job).not.toHaveBeenCalled()
+    expect(portableApi.download).not.toHaveBeenCalled()
+  })
+  it('does not carry late download feedback into another notebook', async () => {
+    let finish!: (blob: Blob) => void
+    vi.mocked(workbenchApi.job).mockResolvedValue(exportJob('succeeded', { download_url: '/personal/package/download' }))
+    vi.mocked(portableApi.download).mockReturnValue(new Promise(resolve => { finish = resolve }))
+    const client = new QueryClient()
+    const view = (id: string) => <QueryClientProvider client={client}><PortableControls notebookId={id} onChanged={vi.fn()} /></QueryClientProvider>
+    const { rerender } = render(view('notebook:1'))
+    fireEvent.click(screen.getByText('workbench.exportDetails'))
+    fireEvent.click(exportButton())
+    fireEvent.click(await screen.findByRole('button', { name: 'workbench.downloadProject' }))
+    await waitFor(() => expect(portableApi.download).toHaveBeenCalledTimes(1))
+    rerender(view('notebook:2'))
+    await act(async () => { finish(new Blob(['zip'])) })
+    expect(screen.queryByText('workbench.exportDownloadStarted')).not.toBeInTheDocument()
+    expect(portableApi.export).toHaveBeenCalledTimes(1)
+  })
+  it('does not claim a rejected request means the server export failed', async () => {
+    vi.mocked(portableApi.export).mockRejectedValue(new Error('offline'))
+    setup()
+    fireEvent.click(exportButton())
+    expect(await screen.findByText('workbench.exportRequestUncertain')).toBeVisible()
+    expect(screen.queryByText('workbench.exportFailed')).not.toBeInTheDocument()
+    expect(workbenchApi.job).not.toHaveBeenCalled()
+    expect(portableApi.export).toHaveBeenCalledTimes(1)
+  })
+  it('retries a failed download using the same artifact without exporting again', async () => {
+    const url = '/personal/exports/package/download'
+    vi.mocked(workbenchApi.job).mockResolvedValue(exportJob('succeeded', { download_url: url }))
+    vi.mocked(portableApi.download).mockRejectedValueOnce(new Error('offline')).mockResolvedValue(new Blob(['zip']))
+    setup()
+    fireEvent.click(exportButton())
+    fireEvent.click(await screen.findByRole('button', { name: 'workbench.downloadProject' }))
+    expect(await screen.findByText('workbench.exportDownloadError')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.downloadProject' }))
+    await waitFor(() => expect(saveBlob).toHaveBeenCalledWith(expect.any(Blob), 'study-workbench-project.zip'))
+    expect(portableApi.download).toHaveBeenNthCalledWith(1, url)
+    expect(portableApi.download).toHaveBeenNthCalledWith(2, url)
+    expect(portableApi.export).toHaveBeenCalledTimes(1)
+    expect(screen.getByText('workbench.exportDownloadStarted')).toBeVisible()
   })
 })

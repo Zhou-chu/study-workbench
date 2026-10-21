@@ -107,3 +107,9 @@ Final checkpoint d totals: backend **1341 passed / 1 opt-in skipped**, frontend 
 Evidence under `evidence/continuation-2026-10-21e/`; actual controlled-fault browser results are separate from unit tests. No real Google/model or external-hosting claim is added.
 
 Final actual e/browser acceptance: all seven controlled scenarios passed, including same-key recovery after a real server commit with lost browser response (one source/version), no-reload reader retry retaining both drafts, model readiness fail-closed, direct entry and keyboard disclosures. The three 390×844 panels had no document overflow; page errors and blocked external/question requests were empty. See `evidence/continuation-2026-10-21e/browser/results.json` and its README. This is not screen-reader/WCAG certification, an actual model call, or a study of real users.
+
+## 2026-10-21 export delivery closure (checkpoint f)
+
+The remaining PM export-to-download path is now verified in the same backup disclosure. Final production-build Chinese Firefox exercised real queued/native-worker completion, explicit recovery from a controlled job-read failure, and a controlled first-download failure followed by keyboard retry of the same artifact. Exactly one export submission/job and two download requests; note/original bytes and ZIP v1 manifest hashes passed. No Notes-tab detour or automatic re-export occurred.
+
+Frontend **390 passed / 53 files**, type/lint/build passed; focused unchanged backend portability contracts **101 passed / 1 opt-in skip**; mypy **215 files**, Ruff passed. Full backend checkpoint e result is retained as historical evidence, not relabeled as rerun here. Source/runtime scopes and Google/model/hosting gates are unchanged. See `evidence/continuation-2026-10-21f/browser/results.json`.

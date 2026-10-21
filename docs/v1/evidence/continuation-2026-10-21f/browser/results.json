@@ -1,0 +1,57 @@
+{
+  "scope": "Disposable native DB/API/worker + production Next; authored public fixture; browser-intercepted network faults, not real outages or user research; no Google or model calls.",
+  "browser": "Firefox",
+  "locale": "zh-CN",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "cases": [
+    {
+      "case": "keyboard_export_from_backup_disclosure",
+      "native_state": "queued",
+      "export_posts": 1,
+      "export_jobs": 1
+    },
+    {
+      "case": "manual_status_refresh_then_native_worker_completion",
+      "status_polling_scope": "Backup query pause covered by component tests; mounted task history may independently poll the same endpoint",
+      "same_disclosure_download": true,
+      "notes_tab_never_selected": true,
+      "export_posts": 1
+    },
+    {
+      "case": "keyboard_download_fault_and_retry",
+      "same_artifact": true,
+      "download_requests": 2,
+      "export_posts": 1,
+      "backend_export_jobs": 1,
+      "zip_format_version": 1,
+      "original_bytes_verified": true,
+      "saved_note_verified": true,
+      "manifest_hashes_verified": true,
+      "archive_bytes": 8112,
+      "archive_sha256": "0d5f3f600067e96063dae548463cb24295e5d63be465574b76e30361ac9752dd",
+      "saved_claim": "Playwright received and saved ZIP in this disposable test; UI starts a download, not proof of user-device persistence."
+    }
+  ],
+  "page_errors": [],
+  "status": "passed",
+  "export_posts": 1,
+  "status_requests": [
+    "fault",
+    "fault",
+    "fault",
+    "fault",
+    "fault",
+    "native",
+    "native",
+    "native",
+    "native",
+    "native",
+    "native",
+    "native",
+    "native"
+  ],
+  "blocked_requests": []
+}
