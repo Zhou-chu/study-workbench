@@ -1,0 +1,155 @@
+{
+  "upstream_base_commit": "a0f6f3081ae06328f0a451b3a3ef2959ca25721d",
+  "before": {
+    "whole_frontend": {
+      "files": 233,
+      "lines": {
+        "total": 5354,
+        "covered": 1337,
+        "skipped": 0,
+        "pct": 24.97
+      },
+      "branches": {
+        "total": 4482,
+        "covered": 1262,
+        "skipped": 0,
+        "pct": 28.15
+      },
+      "functions": {
+        "total": 1887,
+        "covered": 395,
+        "skipped": 0,
+        "pct": 20.93
+      },
+      "statements": {
+        "total": 5816,
+        "covered": 1453,
+        "skipped": 0,
+        "pct": 24.98
+      }
+    },
+    "v1_all": {
+      "files": 36,
+      "lines": {
+        "covered": 328,
+        "total": 465,
+        "pct": 70.54
+      },
+      "branches": {
+        "covered": 412,
+        "total": 700,
+        "pct": 58.86
+      },
+      "functions": {
+        "covered": 123,
+        "total": 265,
+        "pct": 46.42
+      },
+      "statements": {
+        "covered": 411,
+        "total": 647,
+        "pct": 63.52
+      }
+    },
+    "v1_functional": {
+      "files": 20,
+      "lines": {
+        "covered": 312,
+        "total": 449,
+        "pct": 69.49
+      },
+      "branches": {
+        "covered": 412,
+        "total": 700,
+        "pct": 58.86
+      },
+      "functions": {
+        "covered": 123,
+        "total": 265,
+        "pct": 46.42
+      },
+      "statements": {
+        "covered": 395,
+        "total": 631,
+        "pct": 62.6
+      }
+    }
+  },
+  "after": {
+    "whole_frontend": {
+      "files": 233,
+      "lines": {
+        "total": 5354,
+        "covered": 1380,
+        "skipped": 0,
+        "pct": 25.77
+      },
+      "branches": {
+        "total": 4482,
+        "covered": 1269,
+        "skipped": 0,
+        "pct": 28.31
+      },
+      "functions": {
+        "total": 1887,
+        "covered": 425,
+        "skipped": 0,
+        "pct": 22.52
+      },
+      "statements": {
+        "total": 5816,
+        "covered": 1497,
+        "skipped": 0,
+        "pct": 25.73
+      }
+    },
+    "v1_all": {
+      "files": 36,
+      "lines": {
+        "covered": 371,
+        "total": 465,
+        "pct": 79.78
+      },
+      "branches": {
+        "covered": 419,
+        "total": 700,
+        "pct": 59.86
+      },
+      "functions": {
+        "covered": 153,
+        "total": 265,
+        "pct": 57.74
+      },
+      "statements": {
+        "covered": 455,
+        "total": 647,
+        "pct": 70.32
+      }
+    },
+    "v1_functional": {
+      "files": 20,
+      "lines": {
+        "covered": 355,
+        "total": 449,
+        "pct": 79.06
+      },
+      "branches": {
+        "covered": 419,
+        "total": 700,
+        "pct": 59.86
+      },
+      "functions": {
+        "covered": 153,
+        "total": 265,
+        "pct": 57.74
+      },
+      "statements": {
+        "covered": 439,
+        "total": 631,
+        "pct": 69.57
+      }
+    }
+  },
+  "new_tests": 16,
+  "production_code_changed": false
+}

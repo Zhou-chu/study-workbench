@@ -1,0 +1,7 @@
+Working directory: frontend/
+Vitest: 4.1.9; @vitest/coverage-v8: 4.1.9; Node: 24.19.0
+No dependency installation or registry access.
+
+node ./node_modules/vitest/vitest.mjs run --coverage --coverage.include='src/**/*.{ts,tsx}' --coverage.exclude='src/**/*.test.{ts,tsx}' --coverage.exclude='src/test/**' --coverage.exclude='src/**/*.d.ts' --coverage.reporter=text --coverage.reporter=json --coverage.reporter=json-summary --coverage.reportsDirectory=../docs/v1/evidence/coverage/frontend --coverage.clean=false --reporter=default --reporter=json --outputFile.json=../docs/v1/evidence/coverage/frontend/tests.json
+
+Exit code: 0

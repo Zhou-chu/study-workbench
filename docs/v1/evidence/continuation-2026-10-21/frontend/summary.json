@@ -1,0 +1,118 @@
+{
+  "scope": "Production files changed from pinned upstream, including unimported files in full source denominator",
+  "files": [
+    "frontend/src/app/(dashboard)/notebooks/[id]/study/page.tsx",
+    "frontend/src/app/(dashboard)/notebooks/components/NotebookHeader.tsx",
+    "frontend/src/components/evidence/EvidenceMaintenance.tsx",
+    "frontend/src/components/evidence/EvidenceReader.tsx",
+    "frontend/src/components/evidence/PdfCanvas.tsx",
+    "frontend/src/components/integrations/NotebookLMPanel.tsx",
+    "frontend/src/components/layout/AppShell.tsx",
+    "frontend/src/components/workbench/JobsPanel.tsx",
+    "frontend/src/components/workbench/PortableControls.tsx",
+    "frontend/src/components/workbench/StudyWorkbench.tsx",
+    "frontend/src/components/workbench/TurnCoverage.tsx",
+    "frontend/src/lib/api/client.ts",
+    "frontend/src/lib/api/evidence.ts",
+    "frontend/src/lib/api/notebooklm.ts",
+    "frontend/src/lib/api/portable.ts",
+    "frontend/src/lib/api/query-client.ts",
+    "frontend/src/lib/api/workbench.ts",
+    "frontend/src/lib/hooks/use-notebooklm.ts",
+    "frontend/src/lib/hooks/use-workbench.ts",
+    "frontend/src/lib/locales/bn-IN/index.ts",
+    "frontend/src/lib/locales/ca-ES/index.ts",
+    "frontend/src/lib/locales/de-DE/index.ts",
+    "frontend/src/lib/locales/en-US/index.ts",
+    "frontend/src/lib/locales/es-ES/index.ts",
+    "frontend/src/lib/locales/fr-FR/index.ts",
+    "frontend/src/lib/locales/it-IT/index.ts",
+    "frontend/src/lib/locales/ja-JP/index.ts",
+    "frontend/src/lib/locales/pl-PL/index.ts",
+    "frontend/src/lib/locales/pt-BR/index.ts",
+    "frontend/src/lib/locales/ru-RU/index.ts",
+    "frontend/src/lib/locales/tr-TR/index.ts",
+    "frontend/src/lib/locales/workbench.ts",
+    "frontend/src/lib/locales/zh-CN/index.ts",
+    "frontend/src/lib/locales/zh-TW/index.ts",
+    "frontend/src/lib/types/personal.ts",
+    "frontend/src/lib/utils/evidence.ts",
+    "frontend/src/lib/utils/workbench.ts"
+  ],
+  "all": {
+    "lines": {
+      "total": 5441,
+      "covered": 1469,
+      "skipped": 0,
+      "pct": 26.99
+    },
+    "statements": {
+      "total": 5923,
+      "covered": 1606,
+      "skipped": 0,
+      "pct": 27.11
+    },
+    "functions": {
+      "total": 1911,
+      "covered": 450,
+      "skipped": 0,
+      "pct": 23.54
+    },
+    "branches": {
+      "total": 4646,
+      "covered": 1439,
+      "skipped": 0,
+      "pct": 30.97
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "v1": {
+    "lines": {
+      "covered": 460,
+      "total": 552,
+      "pct": 83.33
+    },
+    "branches": {
+      "covered": 589,
+      "total": 864,
+      "pct": 68.17
+    },
+    "functions": {
+      "covered": 178,
+      "total": 289,
+      "pct": 61.59
+    },
+    "statements": {
+      "covered": 564,
+      "total": 754,
+      "pct": 74.8
+    }
+  },
+  "v1_functional": {
+    "lines": {
+      "covered": 444,
+      "total": 536,
+      "pct": 82.84
+    },
+    "branches": {
+      "covered": 589,
+      "total": 864,
+      "pct": 68.17
+    },
+    "functions": {
+      "covered": 178,
+      "total": 289,
+      "pct": 61.59
+    },
+    "statements": {
+      "covered": 548,
+      "total": 738,
+      "pct": 74.25
+    }
+  }
+}

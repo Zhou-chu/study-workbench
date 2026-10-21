@@ -1,0 +1,73 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+________ test_recovered_failed_reparse_restores_durable_previous_status ________
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-16/test_recovered_failed_reparse_0')
+
+    @pytest.mark.asyncio
+    async def test_recovered_failed_reparse_restores_durable_previous_status(tmp_path):
+        service = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(service)
+        current = await service._version(version['source_version_id'])
+        current['status'] = 'extracting'
+        await service.store.put('version', version['source_version_id'], current)
+        interrupted = {**old, 'extraction_id': 'ex_interrupted', 'status': 'running'}
+        await service.store.put('extraction', 'ex_interrupted', interrupted)
+        path = await service.resolve_file(version['source_version_id'])
+        path.write_bytes(b'broken')
+        with pytest.raises(InvalidInputError):
+            await service.extract(version['source_version_id'], extraction_id='ex_interrupted')
+        current = await service.version(version['source_version_id'])
+>       assert current['status'] == 'ready'
+E       AssertionError: assert 'extracting' == 'ready'
+E         
+E         - ready
+E         + extracting
+
+tests/test_v1_evidence_revalidation.py:158: AssertionError
+__ test_poll_dispatch_resumes_stale_maintenance_with_same_job_and_extraction ___
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-16/test_poll_dispatch_resumes_sta0')
+
+    @pytest.mark.asyncio
+    async def test_poll_dispatch_resumes_stale_maintenance_with_same_job_and_extraction(tmp_path):
+        evidence = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(evidence)
+        queue = []
+        async def submit(command, args):
+            queue.append((command, args))
+            return f'command:{len(queue)}'
+        service = maintenance(evidence, submit)
+        job = await service.submit(version['source_version_id'], 'reparse', 'once')
+        assert len(queue) == 1
+>       await service.dispatch(job['job_id'])
+              ^^^^^^^^^^^^^^^^
+E       AttributeError: 'EvidenceMaintenanceService' object has no attribute 'dispatch'
+
+tests/test_v1_evidence_maintenance.py:124: AttributeError
+----------------------------- Captured stderr call -----------------------------
+2026-10-20 18:35:39.628 | DEBUG    | open_notebook.utils.chunking:<module>:121 - Chunking configuration: CHUNK_SIZE=400, CHUNK_OVERLAP=60, MIN_CHUNK_SIZE=5
+________ test_maintenance_never_dispatches_or_executes_restored_history ________
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-16/test_maintenance_never_dispatc0')
+
+    @pytest.mark.asyncio
+    async def test_maintenance_never_dispatches_or_executes_restored_history(tmp_path):
+        evidence = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(evidence)
+        queue = []
+        async def submit(*args): queue.append(args); return 'command:x'
+        service = maintenance(evidence, submit)
+        job = await service.submit(version['source_version_id'], 'reparse', 'once')
+        job.update(state='queued', restored_history=True, replay_allowed=False, next_dispatch_at='2000-01-01T00:00:00+00:00')
+        await evidence.store.put('job', job['job_id'], job)
+>       await service.dispatch(job['job_id'])
+              ^^^^^^^^^^^^^^^^
+E       AttributeError: 'EvidenceMaintenanceService' object has no attribute 'dispatch'
+
+tests/test_v1_evidence_maintenance.py:148: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_v1_evidence_revalidation.py::test_recovered_failed_reparse_restores_durable_previous_status
+FAILED tests/test_v1_evidence_maintenance.py::test_poll_dispatch_resumes_stale_maintenance_with_same_job_and_extraction
+FAILED tests/test_v1_evidence_maintenance.py::test_maintenance_never_dispatches_or_executes_restored_history
+3 failed in 1.20s

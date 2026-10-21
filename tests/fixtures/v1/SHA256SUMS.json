@@ -1,0 +1,10 @@
+{
+  "fixture_a.pdf": "9d0cd69bbcc02c806f065d2e456b5a08f38c5822c342226d964125077b982032",
+  "fixture_b.pdf": "d94cea49810b0e3c132428b612ca886001fb5337cb13664e5f61323c10bc258c",
+  "fixture_course.md": "20e21965df9711d91e8e2b03dd890a453f0a71bc5092c7eb251c43e4c664effa",
+  "fixture_invalid.pdf": "5b0adf3ef9de941dc47f9afc757ebe7fc1ba14999a0e7eb53efbd593725d5f8a",
+  "fixture_scanned.pdf": "ddad283b2bdbca47e163e7f69b5a87a9a4cd10f99ab1007e1b0e15146e83d300",
+  "fixture_untrusted.md": "325412df026e59033883aaf47981666c6d3cfb747a70db38ab22d8eb071318fb",
+  "guide_zh.md": "34083352c8f75bcd137fb861c1b17dc745e5c6e907b9aff23556603256a649a0",
+  "retrieval_gold.json": "b56701d8ac60ae8058d7e360619c56d460439f4eef1e4fa446b15796d1aa7ea8"
+}

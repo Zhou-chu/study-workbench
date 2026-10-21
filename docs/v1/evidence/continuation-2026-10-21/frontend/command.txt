@@ -1,0 +1,9 @@
+Working directory: frontend/
+Vitest 4.1.9, existing installed dependencies; no registry installation.
+node ./node_modules/vitest/vitest.mjs run --coverage --coverage.include='src/**/*.{ts,tsx}' --coverage.exclude='src/**/*.test.{ts,tsx}' --coverage.exclude='src/test/**' --coverage.exclude='src/**/*.d.ts' --coverage.reporter=text --coverage.reporter=json --coverage.reporter=json-summary --coverage.reportsDirectory=../docs/v1/evidence/continuation-2026-10-21/frontend --coverage.clean=false --reporter=default --reporter=json --outputFile.json=../docs/v1/evidence/continuation-2026-10-21/frontend/tests.json
+npx tsc --noEmit
+npm run lint
+npm run build
+
+Full source denominator includes unimported production TS/TSX at 0%; ordinary npm run test:coverage has only loaded-source denominator and is NOT the reported project total.
+summary.json lists all V1 production files changed from pinned upstream a0f6f3081ae06328f0a451b3a3ef2959ca25721d. V1 metrics aggregate exact covered/total counts from coverage-summary.json; locales/types excluded only in separately labelled functional subtotal.

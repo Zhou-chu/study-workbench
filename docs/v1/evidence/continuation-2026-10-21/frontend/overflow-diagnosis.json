@@ -1,0 +1,67 @@
+{
+  "viewport": 1000,
+  "html": 1562,
+  "body": 1000,
+  "offenders": [
+    {
+      "tag": "INPUT",
+      "class": "sr-only",
+      "rect": {
+        "x": 387.01666259765625,
+        "y": 1062,
+        "width": 1,
+        "height": 1,
+        "top": 1062,
+        "right": 388.01666259765625,
+        "bottom": 1063,
+        "left": 387.01666259765625
+      },
+      "position": "absolute"
+    },
+    {
+      "tag": "INPUT",
+      "class": "sr-only",
+      "rect": {
+        "x": 387.01666259765625,
+        "y": 1228.3333740234375,
+        "width": 1,
+        "height": 1,
+        "top": 1228.3333740234375,
+        "right": 388.01666259765625,
+        "bottom": 1229.3333740234375,
+        "left": 387.01666259765625
+      },
+      "position": "absolute"
+    },
+    {
+      "tag": "INPUT",
+      "class": "sr-only",
+      "rect": {
+        "x": 387.01666259765625,
+        "y": 1394.6666259765625,
+        "width": 1,
+        "height": 1,
+        "top": 1394.6666259765625,
+        "right": 388.01666259765625,
+        "bottom": 1395.6666259765625,
+        "left": 387.01666259765625
+      },
+      "position": "absolute"
+    },
+    {
+      "tag": "INPUT",
+      "class": "sr-only",
+      "rect": {
+        "x": 387.01666259765625,
+        "y": 1561,
+        "width": 1,
+        "height": 1,
+        "top": 1561,
+        "right": 388.01666259765625,
+        "bottom": 1562,
+        "left": 387.01666259765625
+      },
+      "position": "absolute"
+    }
+  ]
+}

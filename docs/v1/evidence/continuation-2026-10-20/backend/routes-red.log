@@ -1,0 +1,48 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+___________ test_reparse_and_revalidation_http_contracts_are_durable ___________
+
+routes = namespace(client=<httpx.AsyncClient object at 0x7f3c15af5e20>, store=<test_v1_evidence_ingest.MemoryStore object at 0x... module=<module 'api.routers.evidence' from '/workspace/scratch/7ae04dc66900/study-workbench/api/routers/evidence.py'>)
+
+    @pytest.mark.asyncio
+    async def test_reparse_and_revalidation_http_contracts_are_durable(routes):
+        from api.evidence_maintenance import EvidenceMaintenanceService
+        response = await upload(routes)
+        version_id = response.json()['source_version_id']
+        original = await routes.evidence.extract(version_id)
+        original['verification_origin'] = 'restored_archive'
+        await routes.store.put('extraction', original['extraction_id'], original)
+        response = await routes.client.post(f'/api/personal/source-versions/{version_id}/revalidate', json={
+            'extraction_id': original['extraction_id'], 'idempotency_key': 'validate-once',
+        })
+>       assert response.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests/test_v1_evidence_routes.py:485: AssertionError
+---------------------------- Captured stderr setup -----------------------------
+2026-10-20 18:31:06.338 | INFO     | api.main:<module>:129 - Commands imported in API process
+2026-10-20 18:31:06.339 | WARNING  | api.main:<module>:249 - CORS_ORIGINS is not set — API accepts cross-origin requests from any origin (default: '*'). For production deployments, set CORS_ORIGINS to your frontend origin(s), e.g. CORS_ORIGINS=https://notebook.example.com
+2026-10-20 18:31:06.339 | INFO     | api.main:<module>:276 - Max request body size: 100MB (set OPEN_NOTEBOOK_MAX_UPLOAD_SIZE_MB to change)
+________________ test_maintenance_worker_runs_durable_operation ________________
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-10/test_maintenance_worker_runs_d0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3c15132f90>
+
+    @pytest.mark.asyncio
+    async def test_maintenance_worker_runs_durable_operation(tmp_path, monkeypatch):
+        from api.evidence_maintenance import EvidenceMaintenanceService
+>       from commands.evidence_commands import EvidenceMaintenanceInput, maintain_evidence_command
+E       ImportError: cannot import name 'EvidenceMaintenanceInput' from 'commands.evidence_commands' (/workspace/scratch/7ae04dc66900/study-workbench/commands/evidence_commands.py)
+
+tests/test_v1_evidence_commands.py:180: ImportError
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/surreal_commands/core/retry.py:41
+  /workspace/scratch/7ae04dc66900/study-workbench/.venv/lib/python3.12/site-packages/surreal_commands/core/retry.py:41: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class RetryConfig(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_v1_evidence_routes.py::test_reparse_and_revalidation_http_contracts_are_durable
+FAILED tests/test_v1_evidence_commands.py::test_maintenance_worker_runs_durable_operation
+2 failed, 1 warning in 1.59s

@@ -1,0 +1,30 @@
+[
+  {
+    "view": "desktop-zh-CN",
+    "viewport": 1000,
+    "document_height": 1000,
+    "body_height": 1000,
+    "header_height": 178
+  },
+  {
+    "view": "tablet-zh-CN",
+    "viewport": 900,
+    "document_height": 900,
+    "body_height": 900,
+    "header_height": 218
+  },
+  {
+    "view": "sources-zh-CN",
+    "viewport": 844,
+    "document_height": 844,
+    "body_height": 844,
+    "header_height": 242
+  },
+  {
+    "view": "reader-zh-CN",
+    "viewport": 844,
+    "document_height": 844,
+    "body_height": 844,
+    "header_height": 242
+  }
+]

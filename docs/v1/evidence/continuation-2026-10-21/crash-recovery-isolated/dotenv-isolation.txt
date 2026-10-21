@@ -1,0 +1,1 @@
+Explicit dotenv disable: passed with synthetic temporary .env canary

@@ -1,0 +1,72 @@
+[
+  {
+    "source_title": "fixture_a.pdf",
+    "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+    "citation_id": "LOC_a_1",
+    "physical_page": 1,
+    "quote": "课程 A：太阳能\n光伏效应是半导体吸收光子后产生电势差的现象。\n实验 A 的转换效率为百分之二十。"
+  },
+  {
+    "source_title": "fixture_a.pdf",
+    "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+    "citation_id": "LOC_a_2",
+    "physical_page": 2,
+    "quote": "课程 A：储能\n共同短语：可靠证据来自原件。\n电池储存的是化学能。"
+  },
+  {
+    "source_title": "fixture_a.pdf",
+    "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+    "citation_id": "LOC_a_3",
+    "physical_page": 3,
+    "quote": "课程 A：参数\n实验 A 的标准温度为二十五摄氏度。\n不要将物理页码与印刷页码混淆。"
+  },
+  {
+    "source_title": "fixture_a.pdf",
+    "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+    "citation_id": "LOC_a_4",
+    "physical_page": 1,
+    "quote": "课程 A：太阳能"
+  },
+  {
+    "source_title": "fixture_a.pdf",
+    "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+    "citation_id": "LOC_a_5",
+    "physical_page": 2,
+    "quote": "课程 A：储能"
+  },
+  {
+    "source_title": "fixture_b.pdf",
+    "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+    "citation_id": "LOC_b_1",
+    "physical_page": 1,
+    "quote": "课程 B：风能\n风力发电机将风的动能转化为电能。"
+  },
+  {
+    "source_title": "fixture_b.pdf",
+    "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+    "citation_id": "LOC_b_2",
+    "physical_page": 2,
+    "quote": "课程 B：参数\n共同短语：可靠证据来自原件。\n实验 B 的转换效率为百分之三十五。"
+  },
+  {
+    "source_title": "fixture_b.pdf",
+    "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+    "citation_id": "LOC_b_3",
+    "physical_page": 3,
+    "quote": "课程 B：限制\n共同短语：可靠证据来自原件。\n此材料没有描述光伏效应。"
+  },
+  {
+    "source_title": "fixture_b.pdf",
+    "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+    "citation_id": "LOC_b_4",
+    "physical_page": 4,
+    "quote": "课程 B：结论\n实验 B 的标准温度为十五摄氏度。"
+  },
+  {
+    "source_title": "fixture_b.pdf",
+    "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+    "citation_id": "LOC_b_5",
+    "physical_page": 1,
+    "quote": "课程 B：风能"
+  }
+]

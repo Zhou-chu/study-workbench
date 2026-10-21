@@ -1,0 +1,25 @@
+2026-10-21 03:14:46.801 | DEBUG    | surreal_commands.core.registry:__new__:24 - Creating CommandRegistry singleton instance
+2026-10-21 03:14:46.801 | DEBUG    | surreal_commands.core.registry:__init__:31 - Initializing CommandRegistry
+2026-10-21 03:14:46.965 | INFO     | surreal_commands.core.worker:configure_logging:85 - Debug mode disabled - showing only INFO level and above
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ Surreal Commands Worker                                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+2026-10-21 03:14:46.966 | INFO     | surreal_commands.core.worker:run_worker:187 - Starting Surreal Commands worker
+Importing command modules: commands, crash_pause
+2026-10-21 03:14:47.797 | INFO     | podcast_creator.graph:<module>:21 - Creating podcast generation graph
+  ✅ Imported: commands
+  ✅ Imported: crash_pause
+Successfully imported 2/2 modules
+Using 14 registered commands
+Worker configured to handle up to 1 concurrent tasks
+[03:14:48] Checking for existing commands...                       worker.py:109
+           Found 1 existing command(s) to process                  worker.py:115
+─ ⏱ Processing existing command: open_notebook.maintain_evidence command:2w4o… ─
+           Arguments:                                              worker.py:124
+           {                                                       worker.py:125
+             "job_id":                                                          
+           "job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85              
+           ce15068e87257e"                                                      
+           }                                                                    
+
+           Starting LIVE query listener for new commands...        worker.py:142

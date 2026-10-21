@@ -1,0 +1,68 @@
+2026-10-18 16:20:41.439 | DEBUG    | open_notebook.utils.chunking:<module>:121 - Chunking configuration: CHUNK_SIZE=400, CHUNK_OVERLAP=60, MIN_CHUNK_SIZE=5
+2026-10-18 16:20:41.602 | DEBUG    | surreal_commands.core.registry:__new__:24 - Creating CommandRegistry singleton instance
+2026-10-18 16:20:41.602 | DEBUG    | surreal_commands.core.registry:__init__:31 - Initializing CommandRegistry
+2026-10-18 16:20:41.801 | INFO     | open_notebook.database.async_migrate:run_migration_up:232 - Current version before migration: 0
+2026-10-18 16:20:41.849 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 1
+2026-10-18 16:20:41.934 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 2
+2026-10-18 16:20:41.999 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 3
+2026-10-18 16:20:42.067 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 4
+2026-10-18 16:20:42.129 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 5
+2026-10-18 16:20:42.196 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 6
+2026-10-18 16:20:42.266 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 7
+2026-10-18 16:20:42.348 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 8
+2026-10-18 16:20:42.414 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 9
+2026-10-18 16:20:42.485 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 10
+2026-10-18 16:20:42.555 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 11
+2026-10-18 16:20:42.625 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 12
+2026-10-18 16:20:42.700 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 13
+2026-10-18 16:20:42.774 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 14
+2026-10-18 16:20:42.845 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 15
+2026-10-18 16:20:42.915 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 16
+2026-10-18 16:20:42.983 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 17
+2026-10-18 16:20:43.060 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 18
+2026-10-18 16:20:43.140 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 19
+2026-10-18 16:20:43.211 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 20
+2026-10-18 16:20:43.282 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 21
+2026-10-18 16:20:43.347 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 22
+2026-10-18 16:20:43.422 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 23
+2026-10-18 16:20:43.497 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 24
+2026-10-18 16:20:43.574 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 25
+2026-10-18 16:20:43.639 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 26
+2026-10-18 16:20:43.738 | INFO     | open_notebook.database.async_migrate:run_migration_up:238 - Migration successful. New version: 26
+Warning: .env file not found at /workspace/scratch/7ae04dc66900/study-workbench/.env
+2026-10-18 16:20:44.817 | INFO     | open_notebook.database.async_migrate:run_migration_up:232 - Current version before migration: 0
+2026-10-18 16:20:44.863 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 1
+2026-10-18 16:20:44.961 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 2
+2026-10-18 16:20:45.034 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 3
+2026-10-18 16:20:45.109 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 4
+2026-10-18 16:20:45.184 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 5
+2026-10-18 16:20:45.266 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 6
+2026-10-18 16:20:45.338 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 7
+2026-10-18 16:20:45.430 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 8
+2026-10-18 16:20:45.575 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 9
+2026-10-18 16:20:45.654 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 10
+2026-10-18 16:20:45.732 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 11
+2026-10-18 16:20:45.866 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 12
+2026-10-18 16:20:45.942 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 13
+2026-10-18 16:20:46.015 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 14
+2026-10-18 16:20:46.091 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 15
+2026-10-18 16:20:46.160 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 16
+2026-10-18 16:20:46.235 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 17
+2026-10-18 16:20:46.316 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 18
+2026-10-18 16:20:46.404 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 19
+2026-10-18 16:20:46.477 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 20
+2026-10-18 16:20:46.549 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 21
+2026-10-18 16:20:46.621 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 22
+2026-10-18 16:20:46.698 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 23
+2026-10-18 16:20:46.765 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 24
+2026-10-18 16:20:46.836 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 25
+2026-10-18 16:20:46.904 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 26
+2026-10-18 16:20:47.016 | INFO     | open_notebook.database.async_migrate:run_migration_up:238 - Migration successful. New version: 26
+.
+=============================== warnings summary ===============================
+tests/test_v1_portable_roundtrip.py::test_real_surreal_sqlite_and_originals_restore_into_fresh_environment
+  /workspace/scratch/7ae04dc66900/study-workbench/.venv/lib/python3.12/site-packages/surreal_commands/core/retry.py:41: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class RetryConfig(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 passed, 22 deselected, 1 warning in 6.52s

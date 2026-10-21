@@ -1,0 +1,15 @@
+-- Isolated test databases only; contains V1 data.
+REMOVE TABLE IF EXISTS v1_legacy_chat;
+REMOVE TABLE IF EXISTS v1_export;
+REMOVE TABLE IF EXISTS v1_note_snapshot;
+REMOVE TABLE IF EXISTS v1_connection;
+REMOVE TABLE IF EXISTS v1_import_report;
+REMOVE TABLE IF EXISTS v1_selection;
+REMOVE TABLE IF EXISTS v1_artifact;
+REMOVE TABLE IF EXISTS v1_source_link;
+REMOVE TABLE IF EXISTS v1_link;
+REMOVE TABLE IF EXISTS v1_job;
+REMOVE TABLE IF EXISTS v1_turn;
+REMOVE TABLE IF EXISTS v1_evidence;
+REMOVE TABLE IF EXISTS v1_extraction;
+REMOVE TABLE IF EXISTS v1_version;

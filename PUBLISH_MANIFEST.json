@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "source_commit": "d1a6c224b32546c5bf800b9a5391f3e7c8d52538",
+  "method": "git archive tracked snapshot only; no history or runtime/untracked data",
+  "presentation_only_changes": {
+    "README.md": "Chinese progress-first landing page",
+    "README_UPSTREAM.md": "Original README.md bytes preserved",
+    "PUBLISH_MANIFEST.json": "Snapshot publication metadata"
+  },
+  "excluded_files": [
+    {
+      "path": ".github/dependabot.yml",
+      "reason": "upstream automation deliberately disabled for initial private snapshot",
+      "bytes": 2202
+    },
+    {
+      "path": ".github/workflows/build-and-release.yml",
+      "reason": "upstream automation deliberately disabled for initial private snapshot",
+      "bytes": 12679
+    },
+    {
+      "path": ".github/workflows/build-dev.yml",
+      "reason": "upstream automation deliberately disabled for initial private snapshot",
+      "bytes": 13195
+    },
+    {
+      "path": ".github/workflows/docs-links.yml",
+      "reason": "upstream automation deliberately disabled for initial private snapshot",
+      "bytes": 414
+    },
+    {
+      "path": ".github/workflows/test.yml",
+      "reason": "upstream automation deliberately disabled for initial private snapshot",
+      "bytes": 4107
+    },
+    {
+      "path": "docs/v1/evidence/browser/01-private-login.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 23352
+    },
+    {
+      "path": "docs/v1/evidence/browser/02-desktop-workbench.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 235514
+    },
+    {
+      "path": "docs/v1/evidence/browser/03-mobile-sources.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 64726
+    },
+    {
+      "path": "docs/v1/evidence/browser/04-restored-reference.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 241060
+    },
+    {
+      "path": "docs/v1/evidence/browser/04a-restored-subquote.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 216895
+    },
+    {
+      "path": "docs/v1/evidence/browser/05-desktop-zh-CN.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 237125
+    },
+    {
+      "path": "docs/v1/evidence/browser/06-mobile-sources-zh-CN.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 62740
+    },
+    {
+      "path": "docs/v1/evidence/browser/07-mobile-reader-zh-CN.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 83233
+    },
+    {
+      "path": "docs/v1/evidence/browser/08-mobile-pdf-zh-CN.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 43179
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-20/backend/coverage.json",
+      "reason": "raw coverage data omitted; summaries and test logs retained",
+      "bytes": 1020235
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-20/browser/01-private-login.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 23341
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-20/browser/02-desktop-workbench.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 255534
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-20/browser/03-mobile-sources.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 66004
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-20/browser/04-restored-reference.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 256560
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-20/browser/04a-restored-subquote.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 233108
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-20/browser/04b-revalidated-reference.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 260499
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-20/browser/05-desktop-zh-CN.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 256184
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-20/browser/06-mobile-sources-zh-CN.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 62649
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-20/browser/07-mobile-reader-zh-CN.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 90288
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-20/browser/08-mobile-pdf-zh-CN.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 43183
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-20/frontend/coverage-final.json",
+      "reason": "raw coverage data omitted; summaries and test logs retained",
+      "bytes": 1772438
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21/backend/coverage.json",
+      "reason": "raw coverage data omitted; summaries and test logs retained",
+      "bytes": 1020931
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21/frontend/browser/01-private-login.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 23352
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21/frontend/browser/02-desktop-workbench.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 232868
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21/frontend/browser/03-mobile-sources.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 63330
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21/frontend/browser/04-restored-reference.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 229439
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21/frontend/browser/04a-restored-subquote.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 210482
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21/frontend/browser/04b-revalidated-reference.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 233397
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21/frontend/browser/05-desktop-zh-CN.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 224333
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21/frontend/browser/05b-desktop-dark-zh-CN.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 225275
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21/frontend/browser/05c-tablet-zh-CN.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 134160
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21/frontend/browser/06-mobile-sources-zh-CN.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 53930
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21/frontend/browser/07-mobile-reader-zh-CN.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 88380
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21/frontend/browser/08-mobile-pdf-zh-CN.png",
+      "reason": "browser screenshot evidence omitted from progress repository",
+      "bytes": 37246
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21/frontend/coverage-final.json",
+      "reason": "raw coverage data omitted; summaries and test logs retained",
+      "bytes": 1776454
+    },
+    {
+      "path": "docs/v1/evidence/coverage/backend/baseline/coverage.json",
+      "reason": "raw coverage data omitted; summaries and test logs retained",
+      "bytes": 1004286
+    },
+    {
+      "path": "docs/v1/evidence/coverage/backend/coverage.json",
+      "reason": "raw coverage data omitted; summaries and test logs retained",
+      "bytes": 1004500
+    },
+    {
+      "path": "docs/v1/evidence/coverage/frontend/baseline/coverage-final.json",
+      "reason": "raw coverage data omitted; summaries and test logs retained",
+      "bytes": 1736238
+    },
+    {
+      "path": "docs/v1/evidence/coverage/frontend/coverage-final.json",
+      "reason": "raw coverage data omitted; summaries and test logs retained",
+      "bytes": 1741604
+    },
+    {
+      "path": "docs/v1/evidence/coverage/frontend/transport-pass/coverage-final.json",
+      "reason": "raw coverage data omitted; summaries and test logs retained",
+      "bytes": 1736258
+    }
+  ],
+  "automation_enabled": false,
+  "hosted_external_url": null,
+  "tests": "Historical evidence retained; no tests rerun during snapshot packaging"
+}

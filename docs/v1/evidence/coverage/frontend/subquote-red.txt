@@ -1,0 +1,320 @@
+
+ RUN  v4.1.9 /workspace/scratch/7ae04dc66900/study-workbench/frontend
+
+ ❯ src/components/evidence/EvidenceReader.test.tsx (16 tests | 1 failed) 1194ms
+     × opens a restored exact subquote on canonical physical page two without trusting its archived page 1030ms
+ ❯ src/components/workbench/StudyWorkbench.test.tsx (16 tests | 1 failed) 1867ms
+     × restores a locator-bounded subquote to canonical physical page two without upgrading its label 1046ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/evidence/EvidenceReader.test.tsx > EvidenceReader > opens a restored exact subquote on canonical physical page two without trusting its archived page
+Error: expect(element).toHaveAttribute("data-page-number", "2") // element.getAttribute("data-page-number") === "2"
+
+Expected the element to have attribute:
+  data-page-number="2"
+Received:
+  data-page-number="1"
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<section[39m
+        [33maria-label[39m=[32m"workbench.reader"[39m
+        [33mclass[39m=[32m"space-y-3"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rounded-md border p-3 space-y-2"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"font-medium"[39m
+          [36m>[39m
+            [0mOld PDF[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+          [36m>[39m
+            [0mworkbench.validity: unverified[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+          [36m>[39m
+            [0mworkbench.verificationMeaning[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs font-medium"[39m
+          [36m>[39m
+            [0mworkbench.quote[0m
+          [36m</p>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"whitespace-pre-wrap"[39m
+          [36m>[39m
+            [0m证据[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"min-w-0"[39m
+          [36m>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-sm font-medium truncate"[39m
+            [36m/>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"text-xs text-muted-foreground truncate max-w-48"[39m
+              [33mtitle[39m=[32m"sv_old"[39m
+            [36m>[39m
+              [0msv_old[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-transparent hover:bg-accent hover:text-accent-foreground h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5"[39m
+            [33mdata-slot[39m=[32m"button"[39m
+          [36m>[39m
+            [0mworkbench.downloadOriginal[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex items-center gap-2"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mfor[39m=[32m"physical-page"[39m
+          [36m>[39m
+            [0mworkbench.pdfPage[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-input flex h-9 min-w-0 rounded-md border bg-popover px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive w-20"[39m
+            [33mdata-slot[39m=[32m"input"[39m
+            [33mid[39m=[32m"physical-page"[39m
+            [33mmax[39m=[32m"3"[39m
+            [33mmin[39m=[32m"1"[39m
+            [33mtype[39m=[32m"number"[39m
+            [33mvalue[39m=[32m"1"[39m
+          [36m/>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-xs"[39m
+          [36m>[39m
+            [0mworkbench.pageOf[0m
+          [36m</span>[39m
+        [36m</div>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0mworkbench.highlightUnavailable[0m
+        [36m</p>[39m
+        [36m<canvas[39m
+          [33mdata-page-number[39m=[32m"1"[39m
+          [33mtitle[39m=[32m"workbench.pdfReader"[39m
+        [36m/>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"block text-sm"[39m
+          [33mfor[39m=[32m"evidence-search"[39m
+        [36m>[39m
+          [0mworkbench.searchEvidence[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-input flex h-9 w-full min-w-0 rounded-md border bg-popover px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"[39m
+          [33mdata-slot[39m=[32m"input"[39m
+          [33mid[39m=[32m"evidence-search"[39m
+          [33mvalue[39m=[32m""[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"max-h-[55vh] overflow-y-auto space-y-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rounded-md border p-3"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5"[39m
+              [33mdata-slot[39m=[32m"button"[39m
+            [36m>[39m
+              [0mworkbench.pageOf[0m
+            [36m</button>[39m
+            [36m<pre[39m
+              [33mclass[39m=[32m"whitespace-pre-wrap break-words font-sans text-sm leading-7"[39m
+            [36m>[39m
+              [0m外层😀前文证据后文尾[0m
+            [36m</pre>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</section>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ src/components/evidence/EvidenceReader.test.tsx:38:74
+
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/components/workbench/StudyWorkbench.test.tsx > StudyWorkbench source snapshots > restores a locator-bounded subquote to canonical physical page two without upgrading its label
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  sv_old:1
+Received:
+  sv_old:0
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex min-h-0 flex-1 flex-col"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"border-b p-4 space-y-3"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-wrap justify-between items-center gap-2"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<a[39m
+                [33mclass[39m=[32m"text-xs text-muted-foreground hover:underline"[39m
+                [33mhref[39m=[32m"/notebooks/notebook%3A1"[39m
+              [36m>[39m
+                [0mworkbench.back[0m
+              [36m</a>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"font-display text-2xl"[39m
+              [36m>[39m
+                [0mLecture notes[0m
+              [36m</h1>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+              [36m>[39m
+                [0mworkbench.title[0m
+                [0m · [0m
+                [0mworkbench.serviceOnline[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<div />[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex flex-wrap items-center gap-3"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"text-sm"[39m
+              [33mfor[39m=[32m"workbench-engine"[39m
+            [36m>[39m
+              [0mworkbench.engine[0m
+            [36m</label>[39m
+            [36m<select[39m
+              [33mclass[39m=[32m"rounded-md border bg-background p-2 text-sm"[39m
+              [33mid[39m=[32m"workbench-engine"[39m
+            [36m>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"notebooklm"[39m
+              [36m>[39m
+                [0mworkbench.notebooklm[0m
+              [36m</option>[39m
+              [36m<option[39m
+                [33mvalue[39m=[32m"independent"[39m
+              [36m>[39m
+                [0mworkbench.independent[0m
+              [36m</option>[39m
+            [36m</select>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-sm"[39m
+            [36m>[39m
+              [0mworkbench.selectedCount[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-xs"[39m
+            [36m>[39m
+              [0mworkbench.connectionStates.disconnected[0m
+            [36m</span>[39m
+            [36m<a[39m
+              [33mclass[39m=[32m"text-xs text-primary hover:underline"[39m
+              [33mhref[39m=[32m"/settings/models"[39m
+            [36m>[39m
+              [0mworkbench.modelSettings[0m
+            [36m</a>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex gap-2 lg:hidden"[39m
+            [33mrole[39m=[32m"tablist"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-transparent hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 has-[>svg]:px-3"[39m
+              [33mdata-slot[39m=[32m"button"[39m
+              [33mrole[39m=[32m"tab"[39m
+            [36m>[39m
+              [0mworkbench.sources[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-selected[39m=[32m"true"[39m
+              [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-primary text-primary-foreground hover:bg-primary-hover h-9 px-4 py-2 has-[>svg]:px-3"[39m
+              [33mdata-slot[39m=[32m"button"[39m
+              [33mrole[39m=[32m"tab"[39m
+            [36m>[39m
+              [0mworkbench.conversation[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-transparent hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 has-[>svg]:px-3"[39m
+              [33mdata-slot[39m=[32m"button"[39m
+              [33mrole[39m=[32m"tab"[39m
+            [36m>[39m
+              [0mworkbench.notes[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex min-h-0 flex-1 overflow-hidden"[39m
+        [36m>[39m
+          [36m<aside[39m
+            [33mclass[39m=[32m"min-h-0 overflow-auto border-r p-4 space-y-4 w-full lg:block lg:w-72 lg:min-w-56 lg:max-w-[40vw] lg:resize-x hidden"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"font-semibold"[39m
+            [36m>[39m
+              [0mworkbench.sources[0m
+            [36m</h2>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"block text-sm space-y-2"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mworkbench.upload[0m
+              [36m</span>[39m
+              [36m<input[39m
+                [33maccept[39m=[32m".pdf,.md,.markdown,.txt"[39m
+                [33mclass[39m=[32m"block w-full text-xs"[39m
+                [33mmultiple[39m=[32m""[39m
+                [33mtype[39m=[32m"file"[39m
+              [36m/>[39m
+            [36m</label>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"block text-xs"[39m
+              [33mfor[39m=[32m"workbench-scope"[39m
+            [36m>[39m
+              [0mworkbench.scope[0m
+            [36m</label>[39m
+            [36m<select[39m
+      ...
+ ❯ src/components/workbench/StudyWorkbench.test.tsx:123:71
+    121|     await screen.findByText('Old answer')
+    122|     fireEvent.click(screen.getByRole('button', { name: 'Old PDF · LOC_…
+    123|     await waitFor(() => expect(screen.getByTestId('reader-position')).…
+       |                                                                       ^
+    124|     expect(screen.getByTestId('reader-validity')).toHaveTextContent('u…
+    125|   })
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 30 passed (32)
+   Start at  17:09:00
+   Duration  3.15s (transform 483ms, setup 132ms, import 1.11s, tests 3.06s, environment 569ms)
+

@@ -1,0 +1,482 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+ RUN  v4.1.9 /workspace/scratch/7ae04dc66900/study-workbench/frontend
+
+ ❯ src/components/evidence/EvidenceReader.test.tsx (28 tests | 3 failed) 637ms
+     × preserves frozen citation invalid even when canonical evidence is verified 19ms
+     × preserves frozen citation out_of_scope even when canonical evidence is verified 12ms
+     × does not upgrade an unverified citation outside restored archive revalidation 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/evidence/EvidenceReader.test.tsx > Reader maintenance > preserves frozen citation invalid even when canonical evidence is verified
+TestingLibraryElementError: Unable to find an element with the text: workbench.validity: workbench.referenceInvalid. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"workbench.reader"[39m
+      [33mclass[39m=[32m"space-y-3"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md border p-3 space-y-2"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0mOld PDF[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0mworkbench.validity: verified[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0mworkbench.verificationMeaning[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs font-medium"[39m
+        [36m>[39m
+          [0mworkbench.quote[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"whitespace-pre-wrap"[39m
+        [36m>[39m
+          [0mActual quoted text[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium truncate"[39m
+          [36m/>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs text-muted-foreground truncate max-w-48"[39m
+            [33mtitle[39m=[32m"sv_old"[39m
+          [36m>[39m
+            [0msv_old[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-transparent hover:bg-accent hover:text-accent-foreground h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5"[39m
+          [33mdata-slot[39m=[32m"button"[39m
+        [36m>[39m
+          [0mworkbench.downloadOriginal[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-2 rounded-md border p-3 text-xs"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-muted-foreground"[39m
+        [36m>[39m
+          [0mworkbench.maintenanceMeaning[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-transparent hover:bg-accent hover:text-accent-foreground h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5"[39m
+            [33mdata-slot[39m=[32m"button"[39m
+          [36m>[39m
+            [0mworkbench.reparse[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-transparent hover:bg-accent hover:text-accent-foreground h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5"[39m
+            [33mdata-slot[39m=[32m"button"[39m
+          [36m>[39m
+            [0mworkbench.revalidate[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"physical-page"[39m
+        [36m>[39m
+          [0mworkbench.pdfPage[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-input flex h-9 min-w-0 rounded-md border bg-popover px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive w-20"[39m
+          [33mdata-slot[39m=[32m"input"[39m
+          [33mid[39m=[32m"physical-page"[39m
+          [33mmax[39m=[32m"10"[39m
+          [33mmin[39m=[32m"1"[39m
+          [33mtype[39m=[32m"number"[39m
+          [33mvalue[39m=[32m"8"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-xs"[39m
+        [36m>[39m
+          [0mworkbench.pageOf[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+      [36m>[39m
+        [0mworkbench.highlightUnavailable[0m
+      [36m</p>[39m
+      [36m<canvas[39m
+        [33mdata-page-number[39m=[32m"8"[39m
+        [33mtitle[39m=[32m"workbench.pdfReader"[39m
+      [36m/>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+        [33mfor[39m=[32m"evidence-search"[39m
+      [36m>[39m
+        [0mworkbench.searchEvidence[0m
+      [36m</label>[39m
+      [36m<input[39m
+        [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-input flex h-9 w-full min-w-0 rounded-md border bg-popover px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"[39m
+        [33mdata-slot[39m=[32m"input"[39m
+        [33mid[39m=[32m"evidence-search"[39m
+        [33mvalue[39m=[32m""[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"max-h-[55vh] overflow-y-auto space-y-3"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0mworkbench.noEvidence[0m
+        [36m</p>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/evidence/EvidenceReader.test.tsx:130:19
+    128|     render(<EvidenceReader sourceVersionId="sv_old" citation={{ ...cit…
+    129|     await screen.findByTitle('workbench.pdfReader')
+    130|     expect(screen.getByText(`workbench.validity: ${reference_validity …
+       |                   ^
+    131|     expect(screen.queryByText('workbench.validity: verified')).not.toB…
+    132|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/components/evidence/EvidenceReader.test.tsx > Reader maintenance > preserves frozen citation out_of_scope even when canonical evidence is verified
+TestingLibraryElementError: Unable to find an element with the text: workbench.validity: workbench.referenceOutOfScope. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"workbench.reader"[39m
+      [33mclass[39m=[32m"space-y-3"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md border p-3 space-y-2"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0mOld PDF[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0mworkbench.validity: verified[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0mworkbench.verificationMeaning[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs font-medium"[39m
+        [36m>[39m
+          [0mworkbench.quote[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"whitespace-pre-wrap"[39m
+        [36m>[39m
+          [0mActual quoted text[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium truncate"[39m
+          [36m/>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs text-muted-foreground truncate max-w-48"[39m
+            [33mtitle[39m=[32m"sv_old"[39m
+          [36m>[39m
+            [0msv_old[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-transparent hover:bg-accent hover:text-accent-foreground h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5"[39m
+          [33mdata-slot[39m=[32m"button"[39m
+        [36m>[39m
+          [0mworkbench.downloadOriginal[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-2 rounded-md border p-3 text-xs"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-muted-foreground"[39m
+        [36m>[39m
+          [0mworkbench.maintenanceMeaning[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-transparent hover:bg-accent hover:text-accent-foreground h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5"[39m
+            [33mdata-slot[39m=[32m"button"[39m
+          [36m>[39m
+            [0mworkbench.reparse[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-transparent hover:bg-accent hover:text-accent-foreground h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5"[39m
+            [33mdata-slot[39m=[32m"button"[39m
+          [36m>[39m
+            [0mworkbench.revalidate[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"physical-page"[39m
+        [36m>[39m
+          [0mworkbench.pdfPage[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-input flex h-9 min-w-0 rounded-md border bg-popover px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive w-20"[39m
+          [33mdata-slot[39m=[32m"input"[39m
+          [33mid[39m=[32m"physical-page"[39m
+          [33mmax[39m=[32m"10"[39m
+          [33mmin[39m=[32m"1"[39m
+          [33mtype[39m=[32m"number"[39m
+          [33mvalue[39m=[32m"8"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-xs"[39m
+        [36m>[39m
+          [0mworkbench.pageOf[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+      [36m>[39m
+        [0mworkbench.highlightUnavailable[0m
+      [36m</p>[39m
+      [36m<canvas[39m
+        [33mdata-page-number[39m=[32m"8"[39m
+        [33mtitle[39m=[32m"workbench.pdfReader"[39m
+      [36m/>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+        [33mfor[39m=[32m"evidence-search"[39m
+      [36m>[39m
+        [0mworkbench.searchEvidence[0m
+      [36m</label>[39m
+      [36m<input[39m
+        [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-input flex h-9 w-full min-w-0 rounded-md border bg-popover px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"[39m
+        [33mdata-slot[39m=[32m"input"[39m
+        [33mid[39m=[32m"evidence-search"[39m
+        [33mvalue[39m=[32m""[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"max-h-[55vh] overflow-y-auto space-y-3"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0mworkbench.noEvidence[0m
+        [36m</p>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/evidence/EvidenceReader.test.tsx:130:19
+    128|     render(<EvidenceReader sourceVersionId="sv_old" citation={{ ...cit…
+    129|     await screen.findByTitle('workbench.pdfReader')
+    130|     expect(screen.getByText(`workbench.validity: ${reference_validity …
+       |                   ^
+    131|     expect(screen.queryByText('workbench.validity: verified')).not.toB…
+    132|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/components/evidence/EvidenceReader.test.tsx > Reader maintenance > does not upgrade an unverified citation outside restored archive revalidation
+TestingLibraryElementError: Unable to find an element with the text: workbench.validity: unverified. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"workbench.reader"[39m
+      [33mclass[39m=[32m"space-y-3"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rounded-md border p-3 space-y-2"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"font-medium"[39m
+        [36m>[39m
+          [0mOld PDF[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0mworkbench.validity: verified[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+        [36m>[39m
+          [0mworkbench.verificationMeaning[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-xs font-medium"[39m
+        [36m>[39m
+          [0mworkbench.quote[0m
+        [36m</p>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"whitespace-pre-wrap"[39m
+        [36m>[39m
+          [0mActual quoted text[0m
+        [36m</p>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap items-center gap-2"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-w-0"[39m
+        [36m>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm font-medium truncate"[39m
+          [36m/>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-xs text-muted-foreground truncate max-w-48"[39m
+            [33mtitle[39m=[32m"sv_old"[39m
+          [36m>[39m
+            [0msv_old[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-transparent hover:bg-accent hover:text-accent-foreground h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5"[39m
+          [33mdata-slot[39m=[32m"button"[39m
+        [36m>[39m
+          [0mworkbench.downloadOriginal[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"space-y-2 rounded-md border p-3 text-xs"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-muted-foreground"[39m
+        [36m>[39m
+          [0mworkbench.maintenanceMeaning[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap gap-2"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-transparent hover:bg-accent hover:text-accent-foreground h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5"[39m
+            [33mdata-slot[39m=[32m"button"[39m
+          [36m>[39m
+            [0mworkbench.reparse[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex items-center gap-2"[39m
+      [36m>[39m
+        [36m<label[39m
+          [33mfor[39m=[32m"physical-page"[39m
+        [36m>[39m
+          [0mworkbench.pdfPage[0m
+        [36m</label>[39m
+        [36m<input[39m
+          [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-input flex h-9 min-w-0 rounded-md border bg-popover px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive w-20"[39m
+          [33mdata-slot[39m=[32m"input"[39m
+          [33mid[39m=[32m"physical-page"[39m
+          [33mmax[39m=[32m"10"[39m
+          [33mmin[39m=[32m"1"[39m
+          [33mtype[39m=[32m"number"[39m
+          [33mvalue[39m=[32m"8"[39m
+        [36m/>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-xs"[39m
+        [36m>[39m
+          [0mworkbench.pageOf[0m
+        [36m</span>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+      [36m>[39m
+        [0mworkbench.highlightUnavailable[0m
+      [36m</p>[39m
+      [36m<canvas[39m
+        [33mdata-page-number[39m=[32m"8"[39m
+        [33mtitle[39m=[32m"workbench.pdfReader"[39m
+      [36m/>[39m
+      [36m<label[39m
+        [33mclass[39m=[32m"block text-sm"[39m
+        [33mfor[39m=[32m"evidence-search"[39m
+      [36m>[39m
+        [0mworkbench.searchEvidence[0m
+      [36m</label>[39m
+      [36m<input[39m
+        [33mclass[39m=[32m"file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground border-input flex h-9 w-full min-w-0 rounded-md border bg-popover px-3 py-1 text-base transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"[39m
+        [33mdata-slot[39m=[32m"input"[39m
+        [33mid[39m=[32m"evidence-search"[39m
+        [33mvalue[39m=[32m""[39m
+      [36m/>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"max-h-[55vh] overflow-y-auto space-y-3"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-sm text-muted-foreground"[39m
+        [36m>[39m
+          [0mworkbench.noEvidence[0m
+        [36m</p>[39m
+      [36m</div>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/evidence/EvidenceReader.test.tsx:137:19
+    135|     render(<EvidenceReader sourceVersionId="sv_old" citation={{ ...cit…
+    136|     await screen.findByTitle('workbench.pdfReader')
+    137|     expect(screen.getByText('workbench.validity: unverified')).toBeInT…
+       |                   ^
+    138|   })
+    139|   it('revalidates exact historical extraction then refreshes a matchin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 25 passed (28)
+   Start at  18:35:32
+   Duration  1.66s (transform 232ms, setup 90ms, import 428ms, tests 637ms, environment 330ms)
+

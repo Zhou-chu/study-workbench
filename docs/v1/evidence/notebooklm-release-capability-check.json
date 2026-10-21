@@ -1,0 +1,65 @@
+{
+  "checked_at": "2026-10-18T08:35:11.753346+00:00",
+  "scope": "Official PyPI/project release metadata and published v0.8.5 public chat contract only. No Google account/authentication/network calls.",
+  "pinned_version": "0.8.5",
+  "pypi": {
+    "url": "https://pypi.org/pypi/notebooklm-py/json",
+    "latest_version": "0.8.5",
+    "published_versions_later_than_pin": [],
+    "pinned_release_files": [
+      {
+        "filename": "notebooklm_py-0.8.5-py3-none-any.whl",
+        "upload_time": "2026-10-13T00:11:05.694183Z",
+        "yanked": false,
+        "sha256": "18c96d31ad0ea538c1811f177dcfe86cc9c5319c8bdc4c99e5298c520b86d011"
+      },
+      {
+        "filename": "notebooklm_py-0.8.5.tar.gz",
+        "upload_time": "2026-10-13T00:11:08.799840Z",
+        "yanked": false,
+        "sha256": "965e0ad77dfd3f93714b6a304f5c66f70248c88979d5dfbfd9d73a0270b7a46a"
+      }
+    ]
+  },
+  "github_latest": {
+    "tag_name": "v0.8.5",
+    "published_at": "2026-10-12T22:20:11Z",
+    "prerelease": false,
+    "draft": false,
+    "html_url": "https://github.com/teng-lin/notebooklm-py/releases/tag/v0.8.5"
+  },
+  "public_contract_sources": [
+    "https://github.com/teng-lin/notebooklm-py/blob/v0.8.5/src/notebooklm/_chat.py#L280-L318",
+    "https://github.com/teng-lin/notebooklm-py/blob/v0.8.5/src/notebooklm/cli/chat_cmd.py#L373-L418",
+    "https://github.com/teng-lin/notebooklm-py/blob/v0.8.5/docs/python-api.md"
+  ],
+  "finding": "No later published release exists. The published ask contract continues the current server conversation for omitted/None conversation_id. Documented forced-fresh path deletes existing conversation. clear_cache only clears local cache. No supported non-destructive fresh-conversation public API is established.",
+  "decision": "Retain 0.8.5 pin/lock and fail-closed production Q&A. T08/default Google Q&A remains incomplete. Do not replace source isolation with invented conversation IDs, private RPCs, local cache clearing, or destructive reset.",
+  "tagged_source_checks": [
+    {
+      "url": "https://raw.githubusercontent.com/teng-lin/notebooklm-py/v0.8.5/src/notebooklm/_chat.py",
+      "sha256": "5afd8f32d9121ed92e69378ee7ea69f4632a0bd20569f1c87afc7bf415ea814a",
+      "matches_installed_wheel": true
+    },
+    {
+      "url": "https://raw.githubusercontent.com/teng-lin/notebooklm-py/v0.8.5/src/notebooklm/cli/chat_cmd.py",
+      "sha256": "24b048470e419de69950a7e77f41bcdf19acb9f3e8dcd9a05ea5390fb6c91189",
+      "matches_installed_wheel": true
+    }
+  ],
+  "rechecks": [
+    {
+      "checked_at": "2026-10-21T02:52:00+00:00",
+      "method": "Read-only public web retrieval of official PyPI project metadata, GitHub releases and tagged public chat source. No Google calls.",
+      "sources": [
+        "https://pypi.org/project/notebooklm-py/",
+        "https://pypi.org/pypi/notebooklm-py/json",
+        "https://github.com/teng-lin/notebooklm-py/releases",
+        "https://github.com/teng-lin/notebooklm-py/blob/v0.8.5/src/notebooklm/_chat.py"
+      ],
+      "latest_github_release": "v0.8.5",
+      "finding": "The latest GitHub release remains v0.8.5. The published tagged ask contract still continues current server history when conversation_id is omitted and documents deletion to force fresh context. No supported safe strict-context implementation established.",
+      "limitations": "A direct local urllib metadata fetch returned HTTP 403. No new distribution or tagged-source hashes are claimed; prior hash evidence remains dated October 18."
+    }
+  ]
+}

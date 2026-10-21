@@ -1,0 +1,157 @@
+FFFFFFFFF                                                                [100%]
+=================================== FAILURES ===================================
+___ test_revalidate_preserves_historical_evidence_and_checks_fresh_original ____
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-2/test_revalidate_preserves_hist0')
+
+    @pytest.mark.asyncio
+    async def test_revalidate_preserves_historical_evidence_and_checks_fresh_original(tmp_path):
+        service = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(service)
+        before = await service.list_evidence(version["source_version_id"])
+>       report = await service.revalidate(version["source_version_id"], old["extraction_id"], "ex_fresh")
+                       ^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'EvidenceService' object has no attribute 'revalidate'
+
+tests/test_v1_evidence_revalidation.py:28: AttributeError
+__ test_self_consistent_forged_archive_remains_unverified_after_revalidation ___
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-2/test_self_consistent_forged_ar0')
+
+    @pytest.mark.asyncio
+    async def test_self_consistent_forged_archive_remains_unverified_after_revalidation(tmp_path):
+        service = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(service, b"Original evidence.")
+        record = (await service.list_evidence(version["source_version_id"]))[0]
+        record["quote"] = "Invented evidence."
+        record["quote_hash"] = hashlib.sha256(record["quote"].encode()).hexdigest()
+        old["blocks"][0]["text"] = record["quote"]
+        record["locator"]["end_offset"] = len(record["quote"])
+        await service.store.put("extraction", old["extraction_id"], old)
+        await service.store.put("evidence", record["evidence_id"], record)
+>       report = await service.revalidate(version["source_version_id"], old["extraction_id"], "ex_fresh")
+                       ^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'EvidenceService' object has no attribute 'revalidate'
+
+tests/test_v1_evidence_revalidation.py:51: AttributeError
+_ test_revalidation_certificate_cannot_bypass_fresh_locator_checks[restored_fresh] _
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-2/test_revalidation_certificate_0')
+change = 'restored_fresh'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("change", ["restored_fresh", "wrong_page", "wrong_bbox", "wrong_label", "wrong_version"])
+    async def test_revalidation_certificate_cannot_bypass_fresh_locator_checks(tmp_path, change):
+        service = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(service)
+>       await service.revalidate(version["source_version_id"], old["extraction_id"], "ex_fresh")
+              ^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'EvidenceService' object has no attribute 'revalidate'
+
+tests/test_v1_evidence_revalidation.py:63: AttributeError
+_ test_revalidation_certificate_cannot_bypass_fresh_locator_checks[wrong_page] _
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-2/test_revalidation_certificate_1')
+change = 'wrong_page'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("change", ["restored_fresh", "wrong_page", "wrong_bbox", "wrong_label", "wrong_version"])
+    async def test_revalidation_certificate_cannot_bypass_fresh_locator_checks(tmp_path, change):
+        service = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(service)
+>       await service.revalidate(version["source_version_id"], old["extraction_id"], "ex_fresh")
+              ^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'EvidenceService' object has no attribute 'revalidate'
+
+tests/test_v1_evidence_revalidation.py:63: AttributeError
+_ test_revalidation_certificate_cannot_bypass_fresh_locator_checks[wrong_bbox] _
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-2/test_revalidation_certificate_2')
+change = 'wrong_bbox'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("change", ["restored_fresh", "wrong_page", "wrong_bbox", "wrong_label", "wrong_version"])
+    async def test_revalidation_certificate_cannot_bypass_fresh_locator_checks(tmp_path, change):
+        service = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(service)
+>       await service.revalidate(version["source_version_id"], old["extraction_id"], "ex_fresh")
+              ^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'EvidenceService' object has no attribute 'revalidate'
+
+tests/test_v1_evidence_revalidation.py:63: AttributeError
+_ test_revalidation_certificate_cannot_bypass_fresh_locator_checks[wrong_label] _
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-2/test_revalidation_certificate_3')
+change = 'wrong_label'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("change", ["restored_fresh", "wrong_page", "wrong_bbox", "wrong_label", "wrong_version"])
+    async def test_revalidation_certificate_cannot_bypass_fresh_locator_checks(tmp_path, change):
+        service = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(service)
+>       await service.revalidate(version["source_version_id"], old["extraction_id"], "ex_fresh")
+              ^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'EvidenceService' object has no attribute 'revalidate'
+
+tests/test_v1_evidence_revalidation.py:63: AttributeError
+_ test_revalidation_certificate_cannot_bypass_fresh_locator_checks[wrong_version] _
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-2/test_revalidation_certificate_4')
+change = 'wrong_version'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("change", ["restored_fresh", "wrong_page", "wrong_bbox", "wrong_label", "wrong_version"])
+    async def test_revalidation_certificate_cannot_bypass_fresh_locator_checks(tmp_path, change):
+        service = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(service)
+>       await service.revalidate(version["source_version_id"], old["extraction_id"], "ex_fresh")
+              ^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'EvidenceService' object has no attribute 'revalidate'
+
+tests/test_v1_evidence_revalidation.py:63: AttributeError
+_______ test_revalidation_rejects_missing_original_and_wrong_extraction ________
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-2/test_revalidation_rejects_miss0')
+
+    @pytest.mark.asyncio
+    async def test_revalidation_rejects_missing_original_and_wrong_extraction(tmp_path):
+        service = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(service)
+        other, other_ex = await archive(service)
+        with pytest.raises(InvalidInputError, match="EXTRACTION_VERSION_MISMATCH"):
+>           await service.revalidate(version["source_version_id"], other_ex["extraction_id"], "ex_fresh")
+                  ^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'EvidenceService' object has no attribute 'revalidate'
+
+tests/test_v1_evidence_revalidation.py:88: AttributeError
+____________ test_reparse_failure_retains_prior_readable_extraction ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-2/test_reparse_failure_retains_p0')
+
+    @pytest.mark.asyncio
+    async def test_reparse_failure_retains_prior_readable_extraction(tmp_path):
+        service = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(service)
+        path = await service.resolve_file(version["source_version_id"])
+        path.write_bytes(b"tampered")
+        with pytest.raises(InvalidInputError, match="integrity"):
+            await service.extract(version["source_version_id"], extraction_id="ex_retry")
+        current = await service.version(version["source_version_id"])
+>       assert current["current_extraction_id"] == old["extraction_id"]
+E       AssertionError: assert 'ex_retry' == 'ex_d1e921aa1...63477452a09a8'
+E         
+E         - ex_d1e921aa1efe4af195c63477452a09a8
+E         + ex_retry
+
+tests/test_v1_evidence_revalidation.py:104: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_v1_evidence_revalidation.py::test_revalidate_preserves_historical_evidence_and_checks_fresh_original
+FAILED tests/test_v1_evidence_revalidation.py::test_self_consistent_forged_archive_remains_unverified_after_revalidation
+FAILED tests/test_v1_evidence_revalidation.py::test_revalidation_certificate_cannot_bypass_fresh_locator_checks[restored_fresh]
+FAILED tests/test_v1_evidence_revalidation.py::test_revalidation_certificate_cannot_bypass_fresh_locator_checks[wrong_page]
+FAILED tests/test_v1_evidence_revalidation.py::test_revalidation_certificate_cannot_bypass_fresh_locator_checks[wrong_bbox]
+FAILED tests/test_v1_evidence_revalidation.py::test_revalidation_certificate_cannot_bypass_fresh_locator_checks[wrong_label]
+FAILED tests/test_v1_evidence_revalidation.py::test_revalidation_certificate_cannot_bypass_fresh_locator_checks[wrong_version]
+FAILED tests/test_v1_evidence_revalidation.py::test_revalidation_rejects_missing_original_and_wrong_extraction
+FAILED tests/test_v1_evidence_revalidation.py::test_reparse_failure_retains_prior_readable_extraction
+9 failed in 2.48s

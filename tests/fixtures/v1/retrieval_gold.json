@@ -1,0 +1,31 @@
+{
+  "sources": [
+    {"key": "solar", "title": "太阳能讲义", "text": "太阳能电池通过光伏效应将光能转化为电能。\n\n阴天发电通常减少，因为到达太阳能电池表面的光照较弱。\n\n逆变器把太阳能面板输出的直流电转换为交流电。\n\n遮挡损失来自树木或建筑物挡住面板的入射光。"},
+    {"key": "wind", "title": "风力课程", "text": "风轮叶片利用流动空气产生的升力带动转子旋转。\n\n风机切入风速指设备开始有效发电所需的最低风速。\n\n风机切出风速是为了保护设备而停止发电的高风速门槛。\n\n海上风电常利用海面较稳定的风能资源。"},
+    {"key": "storage", "title": "储能资料", "text": "电池容量通常用千瓦时衡量，表示能够储存的能量。\n\n电池功率通常用千瓦衡量，表示单位时间输出能量的能力。\n\n充放电效率是输出能量与充入能量的比值。\n\n抽水蓄能通过把水提升到高处储存重力势能。"},
+    {"key": "hydro", "title": "水电笔记", "text": "水轮机把水流的机械能传递给发电机。\n\n水头高度表示上下游水位之间的垂直高度差。\n\n鱼道为鱼类提供绕过水坝的迁移通道。\n\n枯水季节来水减少，可能降低水电站可用的发电能力。"},
+    {"key": "efficiency", "title": "节能手册", "text": "建筑保温通过减缓室内外热量传递降低供暖和制冷需求。\n\n热泵通过搬运环境中的热量提供供暖或制冷。\n\n需求响应鼓励用户把部分用电转移到电网负荷较低的时段。\n\n待机能耗是设备在未主动使用但仍通电时消耗的电能。"}
+  ],
+  "questions": [
+    {"question": "太阳能电池利用什么光伏效应？", "source_key": "solar", "expected": "光伏效应将光能"},
+    {"question": "阴天发电为什么通常减少？", "source_key": "solar", "expected": "光照较弱"},
+    {"question": "逆变器怎样转换直流电？", "source_key": "solar", "expected": "直流电转换为交流电"},
+    {"question": "遮挡损失与哪些障碍有关？", "source_key": "solar", "expected": "树木或建筑物"},
+    {"question": "风轮叶片怎样利用升力？", "source_key": "wind", "expected": "带动转子旋转"},
+    {"question": "风机切入风速的含义是什么？", "source_key": "wind", "expected": "最低风速"},
+    {"question": "风机切出风速为什么保护设备？", "source_key": "wind", "expected": "高风速门槛"},
+    {"question": "海上风电利用什么风能资源？", "source_key": "wind", "expected": "海面较稳定"},
+    {"question": "电池容量用什么单位衡量？", "source_key": "storage", "expected": "电池容量通常用千瓦时"},
+    {"question": "电池功率表示什么能力？", "source_key": "storage", "expected": "电池功率通常用千瓦"},
+    {"question": "充放电效率是哪两个能量的比值？", "source_key": "storage", "expected": "输出能量与充入能量"},
+    {"question": "抽水蓄能怎样储存重力势能？", "source_key": "storage", "expected": "把水提升到高处"},
+    {"question": "水轮机把机械能传递给谁？", "source_key": "hydro", "expected": "机械能传递给发电机"},
+    {"question": "水头高度如何定义？", "source_key": "hydro", "expected": "垂直高度差"},
+    {"question": "鱼道提供什么迁移通道？", "source_key": "hydro", "expected": "绕过水坝"},
+    {"question": "枯水季节来水减少有什么影响？", "source_key": "hydro", "expected": "降低水电站"},
+    {"question": "建筑保温怎样减少热量传递？", "source_key": "efficiency", "expected": "降低供暖和制冷需求"},
+    {"question": "热泵怎样搬运环境中的热量？", "source_key": "efficiency", "expected": "提供供暖或制冷"},
+    {"question": "需求响应如何转移用电时段？", "source_key": "efficiency", "expected": "电网负荷较低"},
+    {"question": "待机能耗在什么时候发生？", "source_key": "efficiency", "expected": "未主动使用但仍通电"}
+  ]
+}

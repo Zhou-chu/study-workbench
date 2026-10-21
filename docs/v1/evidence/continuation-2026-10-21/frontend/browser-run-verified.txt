@@ -1,0 +1,13 @@
+Browser checks passed; screenshots: /workspace/scratch/7ae04dc66900/study-workbench/.runtime/check-p0903s7f/screenshots
+{
+  "status": "passed",
+  "run_dir": "/workspace/scratch/7ae04dc66900/study-workbench/.runtime/check-p0903s7f",
+  "results": [
+    "Anonymous API, original, task and export requests rejected with 401",
+    "Real native DB/API/worker upload, CPU extraction, idempotency and original hash verified",
+    "Real lexical search, note save and persistent selection verified without a model",
+    "Real Chinese PDF (3+4 pages), TXT, image-only PDF needs_ocr and malformed PDF failed states verified; all original bytes preserved",
+    "API process restart retains original bytes, evidence, note and selection in real native DB",
+    "Real Playwright login, source reader, search, note, refresh persistence, export and responsive tabs passed"
+  ]
+}

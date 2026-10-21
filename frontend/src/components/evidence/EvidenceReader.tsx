@@ -1,0 +1,133 @@
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+import { evidenceApi } from '@/lib/api/evidence'
+import { saveBlob } from '@/lib/api/portable'
+import type { EvidenceCitation, ReadingPosition, VersionDetail } from '@/lib/types/personal'
+import { canonicalCitationLocator, verifiedQuoteRange } from '@/lib/utils/evidence'
+import { useTranslation } from '@/lib/hooks/use-translation'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { EvidenceMaintenance } from './EvidenceMaintenance'
+import { PdfCanvas, PdfTextFallback } from './PdfCanvas'
+
+interface Props {
+  sourceVersionId?: string
+  evidenceId?: string
+  citation?: EvidenceCitation | null
+  initialPage?: number
+  onChanged?: () => void
+  onPositionChange: (position: ReadingPosition) => void
+}
+export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, citation, initialPage = 0, onPositionChange, onChanged }: Props) {
+  const { t } = useTranslation()
+  const loadedSelection = useRef('')
+  const [revision, setRevision] = useState(0)
+  const [detail, setDetail] = useState<VersionDetail | null>(null)
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null)
+  const [page, setPage] = useState(initialPage)
+  const [search, setSearch] = useState('')
+  const [error, setError] = useState(false)
+  const [downloading, setDownloading] = useState(false)
+  const isLocalCitation = citation?.kind !== 'remote_unmapped' && citation?.source_version_id === sourceVersionId
+  // Archived verification is historical. Matching immutable evidence lets us
+  // locate its quote without promoting the citation's verification label.
+  const canonicalEvidence = isLocalCitation ? detail?.evidence.find(record =>
+    record.evidence_id === citation?.evidence_id && record.source_version_id === sourceVersionId &&
+    (!detail.extraction?.extraction_id || record.extraction_id === detail.extraction.extraction_id)
+  ) : undefined
+  const canonicalLocator = citation && canonicalEvidence ? canonicalCitationLocator(citation, canonicalEvidence) : null
+  // Fresh evidence validates quote/location, never the frozen turn's source scope.
+  // Only restored unverified local references may gain a current reader badge.
+  const canRefreshValidity = isLocalCitation && citation?.reference_validity === 'unverified' &&
+    detail?.extraction?.verification_origin === 'restored_archive' && canonicalLocator
+  const currentValidity = canRefreshValidity && canonicalEvidence?.reference_validity
+    ? canonicalEvidence.reference_validity : citation?.reference_validity
+  const locator = isLocalCitation ? canonicalLocator ?? (citation?.reference_validity === 'verified' ? citation.locator : undefined) : undefined
+  const evidenceId = citation?.source_version_id === sourceVersionId ? citation?.evidence_id || savedEvidenceId : savedEvidenceId
+  const citedPage = locator?.page_index
+
+  useEffect(() => { setPage(initialPage) }, [sourceVersionId, initialPage])
+  useEffect(() => { if (citedPage != null) setPage(citedPage) }, [sourceVersionId, citation?.citation_id, citedPage])
+  useEffect(() => {
+    if (!sourceVersionId) return
+    const controller = new AbortController()
+    const identity = `${sourceVersionId}:${evidenceId || ''}`
+    if (loadedSelection.current !== identity) {
+      setDetail(null)
+      setPdfBlob(null)
+      loadedSelection.current = identity
+    }
+    setError(false)
+    evidenceApi.version(sourceVersionId, controller.signal, evidenceId).then(async result => {
+      if (controller.signal.aborted) return
+      setDetail(result)
+      if (result.version.mime_type === 'application/pdf' && result.version.original_status === 'available') {
+        const blob = await evidenceApi.download(sourceVersionId, controller.signal)
+        if (controller.signal.aborted) return
+        setPdfBlob(blob)
+      }
+    }).catch(() => { if (!controller.signal.aborted) setError(true) })
+    return () => { controller.abort() }
+  }, [sourceVersionId, evidenceId, revision])
+
+  const changePage = (value: number) => {
+    if (!sourceVersionId || !Number.isFinite(value)) return
+    const pageIndex = Math.max(0, Math.min(value - 1, (detail?.extraction?.page_count ?? 1) - 1))
+    setPage(pageIndex)
+    onPositionChange({ source_version_id: sourceVersionId, page_index: pageIndex, ...(evidenceId ? { evidence_id: evidenceId } : {}) })
+  }
+  const download = async () => {
+    if (!sourceVersionId) return
+    setDownloading(true)
+    try { saveBlob(await evidenceApi.download(sourceVersionId), detail?.version.source_title || detail?.version.title || sourceVersionId) }
+    catch { setError(true) }
+    finally { setDownloading(false) }
+  }
+  const blocks = detail?.extraction?.blocks ?? (detail?.extraction?.text ? [{ block_id: 'document', page_index: null, text: detail.extraction.text }] : [])
+  const matchingBlocks = blocks.filter(block => !search || block.text.toLocaleLowerCase().includes(search.toLocaleLowerCase()))
+  const quoteBlock = blocks.find(block => block.block_id === locator?.block_id)
+  const range = citation && quoteBlock && locator?.start_offset != null && locator.end_offset != null
+    ? verifiedQuoteRange(quoteBlock.text, locator.start_offset, locator.end_offset, citation.quote) : null
+
+  return <section className="space-y-3" aria-label={t('workbench.reader')}>
+    {citation && <div className="border-l-2 border-teal pl-4 py-1 space-y-2">
+      <p className="font-medium">{citation.source_title}</p>
+      <p className="text-xs text-muted-foreground">{t('workbench.validity', { status: t(currentValidity === 'verified' ? 'workbench.referenceVerified' : currentValidity === 'out_of_scope' ? 'workbench.referenceOutOfScope' : currentValidity === 'invalid' ? 'workbench.referenceInvalid' : 'workbench.referenceUnverified') })}</p>
+      <p className="text-xs text-muted-foreground">{t('workbench.verificationMeaning')}</p>
+      <p className="text-xs font-medium">{t('workbench.quote')}</p>
+      <p className="whitespace-pre-wrap text-sm leading-7">{citation.quote}</p>
+      {citation.kind === 'remote_unmapped' && <p className="text-sm text-muted-foreground">{t('workbench.remoteUnmapped')}</p>}
+      {citation.locator?.page_label && <p>{t('workbench.printPage', { label: citation.locator.page_label })}</p>}
+    </div>}
+    {!sourceVersionId && !citation && <p className="text-muted-foreground">{t('workbench.chooseSource')}</p>}
+    {error && <p role="alert" className="text-destructive">{t('workbench.error')}</p>}
+    {sourceVersionId && !detail && !error && <p role="status">{t('common.loading')}</p>}
+    {detail && <>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-0"><p className="text-sm font-medium truncate">{detail.version.source_title || detail.version.title}</p><p className="text-xs text-muted-foreground truncate max-w-48" title={detail.version.source_version_id}>{detail.version.source_version_id}</p></div>
+        {detail.version.original_status === 'available' ? <Button size="sm" variant="outline" onClick={download} disabled={downloading}>{t('workbench.downloadOriginal')}</Button> : <p className="text-sm text-muted-foreground">{t('workbench.originalMissing')}</p>}
+      </div>
+      {detail.version.original_status === 'available' && <details key={`${sourceVersionId}:${evidenceId || ''}`} open={detail.extraction?.verification_origin === 'restored_archive'} className="border-b pb-3 text-xs"><summary className="cursor-pointer py-1 text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring rounded-sm">{t('workbench.documentTools')}</summary><EvidenceMaintenance key={`${sourceVersionId}:${evidenceId || ''}`} versionId={detail.version.source_version_id} extractionId={detail.extraction?.extraction_id} restored={detail.extraction?.verification_origin === 'restored_archive'} onComplete={() => { setRevision(value => value + 1); onChanged?.() }} /></details>}
+      {detail.extraction?.warnings?.map((warning, index) => <p className="text-sm text-muted-foreground" key={index}>{warning}</p>)}
+      {detail.version.mime_type === 'application/pdf' && <>
+        <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor="physical-page">{t('workbench.pdfPage')}</label>
+          <Input id="physical-page" className="w-20" type="number" min={1} max={detail.extraction?.page_count || 1} value={page + 1} onChange={event => changePage(Number(event.target.value))} />
+          <span className="text-xs">{t('workbench.pageOf', { page: page + 1, count: detail.extraction?.page_count ?? undefined })}</span>
+        </div>
+        <p className="text-xs text-muted-foreground">{t('workbench.highlightUnavailable')}</p>
+        {pdfBlob ? <PdfCanvas blob={pdfBlob} pageIndex={page} fallbackText={blocks.filter(block => block.page_index === page).map(block => block.text).join('\n\n')} /> : error || detail.version.original_status !== 'available' ? <PdfTextFallback text={blocks.filter(block => block.page_index === page).map(block => block.text).join('\n\n')} /> : <p role="status" className="text-sm text-muted-foreground">{t('workbench.pdfRendering')}</p>}
+      </>}
+      <label className="block text-sm" htmlFor="evidence-search">{t('workbench.searchEvidence')}</label>
+      <Input id="evidence-search" value={search} onChange={event => setSearch(event.target.value)} />
+      {citation && !range && detail.version.mime_type !== 'application/pdf' && <p className="text-xs text-muted-foreground">{t('workbench.quoteMismatch')}</p>}
+      <div className="max-h-[55vh] overflow-y-auto space-y-3">
+        {matchingBlocks.length ? matchingBlocks.map(block => <div key={block.block_id} className="rounded-md border p-3">
+          {block.page_index != null && <Button size="sm" variant="ghost" onClick={() => changePage(block.page_index! + 1)}>{t('workbench.pageOf', { page: block.page_index + 1, count: detail.extraction?.page_count ?? undefined })}</Button>}
+          <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-7">{range && block === quoteBlock ? <>{range.before}<mark className="bg-warn-tint text-foreground">{range.quote}</mark>{range.after}</> : block.text}</pre>
+        </div>) : <p className="text-sm text-muted-foreground">{t('workbench.noEvidence')}</p>}
+      </div>
+    </>}
+  </section>
+}

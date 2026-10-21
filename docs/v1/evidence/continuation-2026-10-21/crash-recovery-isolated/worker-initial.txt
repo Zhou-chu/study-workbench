@@ -1,0 +1,28 @@
+2026-10-21 03:13:04.497 | DEBUG    | surreal_commands.core.registry:__new__:24 - Creating CommandRegistry singleton instance
+2026-10-21 03:13:04.497 | DEBUG    | surreal_commands.core.registry:__init__:31 - Initializing CommandRegistry
+2026-10-21 03:13:04.647 | INFO     | surreal_commands.core.worker:configure_logging:85 - Debug mode disabled - showing only INFO level and above
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ Surreal Commands Worker                                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+2026-10-21 03:13:04.648 | INFO     | surreal_commands.core.worker:run_worker:187 - Starting Surreal Commands worker
+Importing command modules: commands
+2026-10-21 03:13:05.203 | INFO     | podcast_creator.graph:<module>:21 - Creating podcast generation graph
+  ✅ Imported: commands
+Successfully imported 1/1 modules
+Using 14 registered commands
+Worker configured to handle up to 1 concurrent tasks
+[03:13:05] Checking for existing commands...                       worker.py:109
+           Found 1 existing command(s) to process                  worker.py:115
+─ ⏱ Processing existing command: open_notebook.extract_evidence command:tjac8… ─
+           Arguments:                                              worker.py:124
+           {                                                       worker.py:125
+             "job_id":                                                          
+           "job_d0919ac6292bd3b9b6506ad81fcd876945f1419a3f9c96e5b1              
+           d4043b41a636ab",                                                     
+             "source_version_id":                                               
+           "sv_f30c441db4f34df48c34fbf96492818c"                                
+           }                                                                    
+
+           Starting LIVE query listener for new commands...        worker.py:142
+2026-10-21 03:13:06.839 | DEBUG    | surreal_commands.core.registry:__new__:24 - Creating CommandRegistry singleton instance
+2026-10-21 03:13:06.840 | DEBUG    | surreal_commands.core.registry:__init__:31 - Initializing CommandRegistry

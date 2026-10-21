@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "run_dir": "/workspace/scratch/7ae04dc66900/study-workbench/.runtime/check-5ddih6z8",
+  "results": [
+    "Anonymous API, original, task and export requests rejected with 401",
+    "Real native DB/API/worker upload, CPU extraction, idempotency and original hash verified",
+    "Real lexical search, note save and persistent selection verified without a model",
+    "API process restart retains original bytes, evidence, note and selection in real native DB"
+  ]
+}

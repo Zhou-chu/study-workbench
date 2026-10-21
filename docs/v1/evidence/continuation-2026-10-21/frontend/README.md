@@ -1,0 +1,12 @@
+# Final frontend verification — 2026-10-21 UTC
+
+- 292 tests across 48 files passed on final product code. TypeScript, production build and lint passed; lint retains 7 existing upstream warnings.
+- `coverage-full.txt`, `coverage-final.json`, `coverage-summary.json`, `tests.json`, `summary.json` use all production files, including unimported 0% files. V1 lines 460/552 = 83.33%; branches 589/864 = 68.17%. All frontend lines 1469/5441 = 26.99%; branches 1439/4646 = 30.97%.
+- `red.txt` records missing keyboard tab traversal and maintenance disclosure before implementation. `portable-red.txt` records missing compact backup disclosure. Their green focused results are retained; full suite is authoritative for final code.
+- `overflow-diagnosis.json` is deliberately PRE-FIX evidence: invisible upload inputs escaped their containing source pane and enlarged the document from viewport 1000 to scroll height 1562.
+- `browser-run-verified.txt` and `browser/` are the only final browser evidence. Fresh isolated native SurrealDB/API/worker and Firefox passed all upload, extraction, exact download, search, notes, restart, export/restore, historical citation, reparse/revalidation and responsive tests. No Google or model calls were made.
+- `browser/viewport-checks.json` proves document and body match viewport height at 1440x1000, 1024x900 and 390x844. Mobile header is 242px, plus the 49px global navigation row. Full-page screenshots have no surplus blank document area. Earlier intermediate browser logs are excluded.
+- Final Chinese desktop, dark theme, tablet and phone images were inspected as pixels. Default backup disclosure is collapsed and menus closed. The restored-citation maintenance disclosure is intentionally open so the verification action remains discoverable. Dark capture waits for existing theme transitions; white PDF paper remains faithful to the original.
+- Desktop three-pane layout retains native column resizing. Below 1280px, only the selected workbench panel displays, avoiding a cramped center beside the global sidebar. Keyboard tabs support left/right/Home/End and roving tab stops. Native backup disclosure opens/closes via keyboard, and import remains confirmed before mutation.
+
+Design provenance and reviewed skill guidance: `frontend/design-skills/README.md` from repository root. Final static checks: `git diff --check`, Ruff check and Ruff format check for `scripts/v1/browser_check.py` passed. No external publication or new production credentials were created.

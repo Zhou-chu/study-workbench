@@ -1,0 +1,106 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+______ test_revalidation_job_idempotency_worker_replay_and_reader_status _______
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-6/test_revalidation_job_idempote0')
+
+    @pytest.mark.asyncio
+    async def test_revalidation_job_idempotency_worker_replay_and_reader_status(tmp_path):
+        evidence = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(evidence)
+        queue = []
+        async def submit(command, args):
+            queue.append((command, args))
+            return 'command:one'
+>       service = maintenance(evidence, submit)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_v1_evidence_maintenance.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+service = <api.evidence_service.EvidenceService object at 0x7fc57d6a6780>
+submit = <function test_revalidation_job_idempotency_worker_replay_and_reader_status.<locals>.submit at 0x7fc57d53e160>
+
+    def maintenance(service, submit):
+>       from api.evidence_maintenance import EvidenceMaintenanceService
+E       ModuleNotFoundError: No module named 'api.evidence_maintenance'
+
+tests/test_v1_evidence_maintenance.py:13: ModuleNotFoundError
+_______ test_reparse_creates_new_extraction_and_does_not_mutate_history ________
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-6/test_reparse_creates_new_extra0')
+
+    @pytest.mark.asyncio
+    async def test_reparse_creates_new_extraction_and_does_not_mutate_history(tmp_path):
+        evidence = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(evidence)
+        async def submit(*_): return 'command:one'
+>       service = maintenance(evidence, submit)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_v1_evidence_maintenance.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+service = <api.evidence_service.EvidenceService object at 0x7fc57d66d9a0>
+submit = <function test_reparse_creates_new_extraction_and_does_not_mutate_history.<locals>.submit at 0x7fc57d5aac00>
+
+    def maintenance(service, submit):
+>       from api.evidence_maintenance import EvidenceMaintenanceService
+E       ModuleNotFoundError: No module named 'api.evidence_maintenance'
+
+tests/test_v1_evidence_maintenance.py:13: ModuleNotFoundError
+__ test_cancelled_job_never_parses_and_failed_queue_can_be_explicitly_retried __
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-6/test_cancelled_job_never_parse0')
+
+    @pytest.mark.asyncio
+    async def test_cancelled_job_never_parses_and_failed_queue_can_be_explicitly_retried(tmp_path):
+        evidence = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(evidence)
+        async def fail(*_): raise RuntimeError('worker unavailable')
+>       service = maintenance(evidence, fail)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_v1_evidence_maintenance.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+service = <api.evidence_service.EvidenceService object at 0x7fc57d62af60>
+submit = <function test_cancelled_job_never_parses_and_failed_queue_can_be_explicitly_retried.<locals>.fail at 0x7fc57d53dd00>
+
+    def maintenance(service, submit):
+>       from api.evidence_maintenance import EvidenceMaintenanceService
+E       ModuleNotFoundError: No module named 'api.evidence_maintenance'
+
+tests/test_v1_evidence_maintenance.py:13: ModuleNotFoundError
+___________ test_failed_parse_records_failure_and_new_key_can_retry ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-6/test_failed_parse_records_fail0')
+
+    @pytest.mark.asyncio
+    async def test_failed_parse_records_failure_and_new_key_can_retry(tmp_path):
+        evidence = EvidenceService(MemoryStore(), tmp_path)
+        version, old = await archive(evidence)
+        original = await evidence.resolve_file(version['source_version_id'])
+        data = original.read_bytes()
+        original.write_bytes(b'bad')
+        async def submit(*_): return 'command:one'
+>       service = maintenance(evidence, submit)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_v1_evidence_maintenance.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+service = <api.evidence_service.EvidenceService object at 0x7fc57d6afcb0>
+submit = <function test_failed_parse_records_failure_and_new_key_can_retry.<locals>.submit at 0x7fc57d5ab380>
+
+    def maintenance(service, submit):
+>       from api.evidence_maintenance import EvidenceMaintenanceService
+E       ModuleNotFoundError: No module named 'api.evidence_maintenance'
+
+tests/test_v1_evidence_maintenance.py:13: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/test_v1_evidence_maintenance.py::test_revalidation_job_idempotency_worker_replay_and_reader_status
+FAILED tests/test_v1_evidence_maintenance.py::test_reparse_creates_new_extraction_and_does_not_mutate_history
+FAILED tests/test_v1_evidence_maintenance.py::test_cancelled_job_never_parses_and_failed_queue_can_be_explicitly_retried
+FAILED tests/test_v1_evidence_maintenance.py::test_failed_parse_records_failure_and_new_key_can_retry
+4 failed in 0.92s

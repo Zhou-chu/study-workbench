@@ -1,0 +1,70 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> frontend@0.1.0 test
+> vitest run src/components/workbench/PortableControls.test.tsx
+
+
+ RUN  v4.1.9 /workspace/scratch/7ae04dc66900/study-workbench/frontend
+
+ ❯ src/components/workbench/PortableControls.test.tsx (2 tests | 1 failed) 243ms
+     × keeps export scope available in a compact disclosure without hiding export actions 125ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/workbench/PortableControls.test.tsx > portable restore confirmation > keeps export scope available in a compact disclosure without hiding export actions
+TestingLibraryElementError: Unable to find an element with the text: workbench.exportDetails. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"max-w-lg space-y-2"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-wrap gap-2 items-center"[39m
+      [36m>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border bg-transparent hover:bg-accent hover:text-accent-foreground h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5"[39m
+          [33mdata-slot[39m=[32m"button"[39m
+        [36m>[39m
+          [0mworkbench.exportProject[0m
+        [36m</button>[39m
+        [36m<label[39m
+          [33mclass[39m=[32m"cursor-pointer rounded-md border px-3 py-2 text-sm"[39m
+        [36m>[39m
+          [0mworkbench.restoreProject[0m
+          [36m<input[39m
+            [33maccept[39m=[32m".zip,application/zip"[39m
+            [33mclass[39m=[32m"sr-only"[39m
+            [33mtype[39m=[32m"file"[39m
+          [36m/>[39m
+        [36m</label>[39m
+      [36m</div>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+      [36m>[39m
+        [0mworkbench.exportCoverage[0m
+      [36m</p>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/components/workbench/PortableControls.test.tsx:11:31
+      9|     render(<QueryClientProvider client={new QueryClient()}><PortableCo…
+     10|     expect(screen.getByRole('button', { name: 'workbench.exportProject…
+     11|     const disclosure = screen.getByText('workbench.exportDetails').clo…
+       |                               ^
+     12|     expect(disclosure).not.toHaveAttribute('open')
+     13|     fireEvent.click(screen.getByText('workbench.exportDetails'))
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  11:17:04
+   Duration  1.41s (transform 143ms, setup 105ms, import 454ms, tests 243ms, environment 402ms)
+

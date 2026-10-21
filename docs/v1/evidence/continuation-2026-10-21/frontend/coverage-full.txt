@@ -1,0 +1,507 @@
+
+ RUN  v4.1.9 /workspace/scratch/7ae04dc66900/study-workbench/frontend
+      Coverage enabled with v8
+
+ ✓ src/components/integrations/NotebookLMPanel.test.tsx (3 tests) 653ms
+     ✓ confirms the exact target and explicit version snapshot before syncing  324ms
+stderr | src/components/ui/markdown-editor.test.tsx > MarkdownEditor theme > follows theme changes without remounting
+An update to MarkdownEditor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to MarkdownEditor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/ui/markdown-editor.test.tsx > MarkdownEditor theme > waits for persisted theme hydration before rendering
+An update to MarkdownEditor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to MarkdownEditor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/ui/markdown-editor.test.tsx > MarkdownEditor theme > renders after persisted theme hydration fails
+An update to MarkdownEditor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to MarkdownEditor inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/evidence/EvidenceReader.test.tsx (29 tests) 1010ms
+ ✓ src/components/layout/AppSidebar.test.tsx (5 tests) 778ms
+ ✓ src/components/ui/markdown-editor.test.tsx (15 tests) 594ms
+ ✓ src/app/(dashboard)/settings/components/SettingsForm.test.tsx (4 tests) 1070ms
+     ✓ disables OCR and shows env hints when the runtimes are unavailable  525ms
+ ✓ src/app/(dashboard)/search/page.test.tsx (1 test) 354ms
+     ✓ opens the record that matched instead of its parent source  348ms
+ ✓ src/app/(dashboard)/transformations/components/TransformationEditorDialog.test.tsx (1 test) 570ms
+     ✓ sends an empty description when the description is cleared  562ms
+ ✓ src/components/sources/SourceInsightDialog.test.tsx (4 tests) 466ms
+stderr | src/app/(dashboard)/notebooks/components/NoteEditorDialog.test.tsx > NoteEditorDialog > closes the dialog from the not-found state close button
+An update to NoteEditorDialog inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NoteEditorDialog inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/sources/AddExistingSourceDialog.test.tsx (1 test) 553ms
+     ✓ shows a source only once when several search hits have the same parent  547ms
+ ✓ src/app/(dashboard)/notebooks/components/NoteEditorDialog.test.tsx (4 tests) 472ms
+ ✓ src/components/search/NotebookScopeSelector.test.tsx (4 tests) 495ms
+ ✓ src/components/workbench/StudyWorkbench.test.tsx (27 tests) 6223ms
+     ✓ supports arrow and Home/End navigation across mobile workspace tabs  660ms
+     ✓ submits the exact selected version snapshot and selected engine  309ms
+     ✓ preserves search-hit validity unverified without upgrading archive claims  374ms
+     ✓ resolves archived unverified citations against their immutable evidence before restoring page navigation  322ms
+     ✓ unblocks composer when durable job is cancelled_local before a turn exists  335ms
+     ✓ unblocks composer when durable job is submission_unknown before a turn exists  391ms
+     ✓ unblocks composer when durable job is failed before a turn exists  308ms
+stderr | src/components/sources/SourceDetailContent.test.tsx > SourceDetailContent > shows the backend error when insight generation fails
+An update to SourceDetailContentInner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to SourceDetailContentInner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/sources/SourceDetailContent.test.tsx > SourceDetailContent > does not apply terminal effects when unmounted during the final refresh
+An update to SourceDetailContentInner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to SourceDetailContentInner inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/sources/SourceDetailContent.test.tsx (7 tests) 1129ms
+     ✓ does not start polling when creation finishes after unmount  355ms
+ ✓ src/components/settings/CredentialFormDialog.test.tsx (2 tests) 418ms
+     ✓ shows the version-path hint for OpenAI-compatible providers  350ms
+ ✓ src/components/podcasts/EpisodeCard.test.tsx (3 tests) 636ms
+     ✓ renders API-resolved model display fields for new episodes  393ms
+ ✓ src/components/common/ConfirmDialog.test.tsx (4 tests) 356ms
+ ✓ src/components/layout/AppShell.test.tsx (3 tests) 488ms
+ ✓ src/components/sources/ChatPanel.test.tsx (4 tests) 547ms
+     ✓ sends the typed message and clears the input on send-button click  400ms
+ ✓ src/components/evidence/PdfCanvas.test.tsx (4 tests) 353ms
+ ✓ src/components/ui/markdown-renderer.test.tsx (4 tests) 151ms
+ ✓ src/app/(dashboard)/settings/models/page.test.tsx (4 tests) 96ms
+ ✓ src/lib/api/personal-transport.test.ts (17 tests) 112ms
+ ✓ src/components/workbench/PortableControls.test.tsx (2 tests) 489ms
+stderr | src/lib/hooks/use-ask.test.tsx > useAsk under React StrictMode > surfaces an in-band error event instead of loading forever
+Ask error: Error: The AI provider is temporarily unavailable.
+    at Object.sendAsk (/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/hooks/use-ask.ts:202:23)
+    at /workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/hooks/use-ask.test.tsx:78:7
+
+ ✓ src/lib/hooks/use-ask.test.tsx (4 tests) 99ms
+ ✓ src/lib/api/insights.test.ts (5 tests) 196ms
+ ✓ src/components/settings/ProviderSection.test.tsx (3 tests) 246ms
+stdout | src/app/config/route.test.ts > GET /config > auto-detects from a well-formed Host header
+[runtime-config] Auto-detected API URL: https://notebook.example.com:5055 (proto=https, host=notebook.example.com)
+
+stdout | src/app/config/route.test.ts > GET /config > strips the port from the Host header before rebuilding the URL
+[runtime-config] Auto-detected API URL: http://notebook.example.com:5055 (proto=http, host=notebook.example.com:3000)
+
+stdout | src/app/config/route.test.ts > GET /config > accepts a bare IPv4 Host header
+[runtime-config] Auto-detected API URL: http://192.168.1.50:5055 (proto=http, host=192.168.1.50)
+
+stdout | src/app/config/route.test.ts > GET /config > accepts a bracketed IPv6 literal Host header
+[runtime-config] Auto-detected API URL: http://[2001:db8::1]:5055 (proto=http, host=[2001:db8::1])
+
+stdout | src/app/config/route.test.ts > GET /config > strips the port from a bracketed IPv6 Host header and keeps the brackets
+[runtime-config] Auto-detected API URL: http://[::1]:5055 (proto=http, host=[::1]:3000)
+
+stdout | src/app/config/route.test.ts > GET /config > falls back to localhost for a bracketed IPv6 literal with trailing junk
+[runtime-config] Using fallback: http://localhost:5055
+
+stderr | src/app/config/route.test.ts > GET /config > falls back to localhost for a bracketed IPv6 literal with trailing junk
+[runtime-config] Rejected malformed Host header, falling back to localhost: [::1]@evil.example.com
+
+stdout | src/app/config/route.test.ts > GET /config > falls back to localhost for an unclosed IPv6 bracket
+[runtime-config] Using fallback: http://localhost:5055
+
+stderr | src/app/config/route.test.ts > GET /config > falls back to localhost for an unclosed IPv6 bracket
+[runtime-config] Rejected malformed Host header, falling back to localhost: [::1
+
+stdout | src/app/config/route.test.ts > GET /config > falls back to localhost for a path-like payload inside IPv6 brackets
+[runtime-config] Using fallback: http://localhost:5055
+
+stderr | src/app/config/route.test.ts > GET /config > falls back to localhost for a path-like payload inside IPv6 brackets
+[runtime-config] Rejected malformed Host header, falling back to localhost: [::1]/../../attacker
+
+stdout | src/app/config/route.test.ts > GET /config > falls back to localhost for a Host header containing a path-like payload
+[runtime-config] Using fallback: http://localhost:5055
+
+stderr | src/app/config/route.test.ts > GET /config > falls back to localhost for a Host header containing a path-like payload
+[runtime-config] Rejected malformed Host header, falling back to localhost: evil.example.com/../../attacker
+
+stdout | src/app/config/route.test.ts > GET /config > falls back to localhost for a Host header containing an @ (userinfo confusion)
+[runtime-config] Using fallback: http://localhost:5055
+
+stderr | src/app/config/route.test.ts > GET /config > falls back to localhost for a Host header containing an @ (userinfo confusion)
+[runtime-config] Rejected malformed Host header, falling back to localhost: legit.example.com@evil.example.com
+
+stdout | src/app/config/route.test.ts > GET /config > falls back to localhost for a Host header with embedded whitespace
+[runtime-config] Using fallback: http://localhost:5055
+
+stderr | src/app/config/route.test.ts > GET /config > falls back to localhost for a Host header with embedded whitespace
+[runtime-config] Rejected malformed Host header, falling back to localhost: evil.example.com foo
+
+stdout | src/app/config/route.test.ts > GET /config > never trusts an X-Forwarded-Proto value other than http/https
+[runtime-config] Auto-detected API URL: http://notebook.example.com:5055 (proto=http, host=notebook.example.com)
+
+stdout | src/app/config/route.test.ts > GET /config > falls back to localhost when no Host header is present
+[runtime-config] Using fallback: http://localhost:5055
+
+ ✓ src/app/(dashboard)/transformations/components/TransformationsList.test.tsx (2 tests) 193ms
+ ✓ src/app/config/route.test.ts (14 tests) 86ms
+ ✓ src/lib/hooks/use-source-chat.test.tsx (1 test) 167ms
+ ✓ src/lib/hooks/use-translation.test.ts (2 tests) 75ms
+ ✓ src/components/workbench/TurnCoverage.test.tsx (3 tests) 125ms
+ ✓ src/app/(dashboard)/notebooks/[id]/study/page.test.tsx (4 tests) 84ms
+ ✓ src/lib/providers.test.tsx (5 tests) 82ms
+ ✓ src/app/(dashboard)/notebooks/components/ChatColumn.test.tsx (2 tests) 108ms
+ ✓ src/components/workbench/JobsPanel.test.tsx (2 tests) 186ms
+ ✓ src/lib/hooks/use-modal-manager.test.ts (4 tests) 75ms
+ ✓ src/lib/utils/source-context.test.ts (20 tests) 17ms
+ ✓ src/lib/api/portable.test.ts (2 tests) 19ms
+ ✓ src/lib/locales/interpolation.test.ts (5 tests) 32ms
+ ✓ src/lib/utils/evidence.test.ts (13 tests) 15ms
+ ✓ src/app/(dashboard)/notebooks/components/NotesColumn.test.tsx (3 tests) 248ms
+ ✓ src/app/(dashboard)/notebooks/components/NotebookHeader.test.tsx (1 test) 225ms
+ ✓ src/lib/config.test.ts (4 tests) 15ms
+ ✓ src/lib/credential-update-payload.test.ts (5 tests) 10ms
+ ✓ src/lib/api/client.test.ts (2 tests) 23ms
+ ✓ src/lib/utils/error-handler.test.ts (4 tests) 6ms
+ ✓ src/lib/utils/date-locale.test.ts (3 tests) 10ms
+ ✓ src/lib/locales/index.test.ts (27 tests) 20308ms
+     ✓ all en-US leaf keys should be referenced in source files  20009ms
+
+ Test Files  48 passed (48)
+      Tests  292 passed (292)
+   Start at  11:19:15
+   Duration  25.12s (transform 8.26s, setup 6.89s, import 63.78s, tests 40.66s, environment 35.35s)
+
+JSON report written to /workspace/scratch/7ae04dc66900/study-workbench/docs/v1/evidence/continuation-2026-10-21/frontend/tests.json
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   27.11 |    30.97 |   23.54 |   26.99 |                   
+ src               |       0 |        0 |       0 |       0 |                   
+  proxy.ts         |       0 |        0 |       0 |       0 | 5-15              
+ src/app           |       0 |      100 |       0 |       0 |                   
+  layout.tsx       |       0 |      100 |       0 |       0 | 17-43             
+  page.tsx         |       0 |      100 |       0 |       0 | 4                 
+ ...p/(auth)/login |       0 |      100 |       0 |       0 |                   
+  page.tsx         |       0 |      100 |       0 |       0 | 5                 
+ ...pp/(dashboard) |       0 |        0 |       0 |       0 |                   
+  layout.tsx       |       0 |        0 |       0 |       0 | 18-54             
+  page.tsx         |       0 |      100 |       0 |       0 | 4                 
+ ...oard)/advanced |       0 |      100 |       0 |       0 |                   
+  page.tsx         |       0 |      100 |       0 |       0 | 9-10              
+ ...ced/components |       0 |        0 |       0 |       0 |                   
+  ...mbeddings.tsx |       0 |        0 |       0 |       0 | 24-181            
+  SystemInfo.tsx   |       0 |        0 |       0 |       0 | 10-44             
+ ...ard)/notebooks |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 17-114            
+ ...notebooks/[id] |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 36-166            
+ ...oks/components |   28.67 |    27.82 |   20.73 |   29.72 |                   
+  ChatColumn.tsx   |   51.85 |    45.45 |      25 |   51.85 | ...-55,81,101-108 
+  ...torDialog.tsx |   68.08 |    57.14 |   66.66 |   68.88 | ...,89,96-122,158 
+  NotebookCard.tsx |       0 |        0 |       0 |       0 | 26-92             
+  ...eteDialog.tsx |       0 |        0 |       0 |       0 | 36-125            
+  ...ookHeader.tsx |    62.5 |    33.33 |      40 |   71.42 | 28-30,46,93       
+  NotebookList.tsx |       0 |        0 |       0 |       0 | 35-93             
+  NotebookRow.tsx  |       0 |        0 |       0 |       0 | 27-123            
+  NotesColumn.tsx  |   57.89 |       56 |   46.66 |   59.45 | ...09-112,168-193 
+  ...tlyViewed.tsx |       0 |        0 |       0 |       0 | 26-95             
+  ...cesColumn.tsx |       0 |        0 |       0 |       0 | 55-238            
+ ...oard)/podcasts |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 17-50             
+ ...hboard)/search |   52.32 |    38.93 |   28.57 |      55 |                   
+  page.tsx         |   52.32 |    38.93 |   28.57 |      55 | ...58,169-439,497 
+ ...oard)/settings |       0 |      100 |       0 |       0 |                   
+  page.tsx         |       0 |      100 |       0 |       0 | 11-21             
+ ...ngs/components |      75 |    83.82 |   56.25 |   77.14 |                   
+  SettingsForm.tsx |      75 |    83.82 |   56.25 |   77.14 | ...53,250,295,339 
+ ...ettings/models |   88.88 |    71.42 |     100 |   94.11 |                   
+  page.tsx         |   88.88 |    71.42 |     100 |   94.11 | 60-61             
+ ...board)/sources |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 22-476            
+ ...)/sources/[id] |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 13-70             
+ ...ransformations |       0 |      100 |       0 |       0 |                   
+  page.tsx         |       0 |      100 |       0 |       0 | 16-33             
+ ...ons/components |   46.78 |    35.08 |    37.5 |   47.22 |                   
+  ...mptEditor.tsx |       0 |        0 |       0 |       0 | 14-64             
+  ...ationCard.tsx |       0 |        0 |       0 |       0 | 22-74             
+  ...torDialog.tsx |   80.43 |    53.12 |   66.66 |   82.22 | ...45,218-232,251 
+  ...layground.tsx |       0 |        0 |       0 |       0 | 27-143            
+  ...tionsList.tsx |      70 |       60 |    62.5 |      70 | 31,42-44,86-87    
+ src/app/api       |       0 |        0 |       0 |       0 |                   
+  _sse-proxy.ts    |       0 |        0 |       0 |       0 | 3-27              
+ ...api/search/ask |       0 |      100 |       0 |       0 |                   
+  route.ts         |       0 |      100 |       0 |       0 | 4-8               
+ ...onId]/messages |       0 |      100 |       0 |       0 |                   
+  route.ts         |       0 |      100 |       0 |       0 | 4-12              
+ src/app/config    |   96.55 |    96.29 |     100 |   96.29 |                   
+  route.ts         |   96.55 |    96.29 |     100 |   96.29 | 107               
+ ...app/dev/design |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 66-501            
+ ...omponents/auth |       0 |        0 |       0 |       0 |                   
+  LoginForm.tsx    |       0 |        0 |       0 |       0 | 16-156            
+ ...ponents/common |   19.21 |    29.04 |   17.44 |   20.39 |                   
+  ...ndPalette.tsx |       0 |        0 |       0 |       0 | 35-258            
+  ...tionGuard.tsx |       0 |        0 |       0 |       0 | 13-107            
+  ...Indicator.tsx |       0 |        0 |       0 |       0 | 19-46             
+  ...extToggle.tsx |       0 |        0 |       0 |       0 | 31-70             
+  ...rBoundary.tsx |       0 |        0 |       0 |       0 | 10-103            
+  InlineEdit.tsx   |   63.46 |       50 |   63.63 |   63.46 | ...,76-81,114-142 
+  ...ngOverlay.tsx |       0 |        0 |       0 |       0 | 21-80             
+  ...ageToggle.tsx |      90 |    95.83 |      75 |    87.5 | 49                
+  ...lSelector.tsx |       0 |        0 |       0 |       0 | 29-54             
+  ThemeToggle.tsx  |      50 |       80 |      25 |      50 | 40-54             
+ ...ponents/errors |       0 |        0 |       0 |       0 |                   
+  ...orOverlay.tsx |       0 |        0 |       0 |       0 | 24-28             
+ ...nents/evidence |   89.38 |    85.52 |   82.97 |   93.79 |                   
+  ...intenance.tsx |   97.77 |    90.16 |     100 |     100 | 41,49,61,71,79,82 
+  ...nceReader.tsx |   79.74 |    85.71 |   69.56 |   85.24 | ...85,112,123,127 
+  PdfCanvas.tsx    |   96.36 |    76.47 |    90.9 |     100 | 31-37,48,54-60    
+ ...s/integrations |   49.51 |    56.16 |   28.57 |   61.76 |                   
+  ...okLMPanel.tsx |   49.51 |    56.16 |   28.57 |   61.76 | ...97,101-123,126 
+ ...ponents/layout |   48.38 |    65.15 |   57.89 |   47.45 |                   
+  AppShell.tsx     |     100 |       50 |     100 |     100 | 29                
+  AppSidebar.tsx   |    62.5 |     87.5 |      60 |   61.53 | 115-122,191-245   
+  SetupBanner.tsx  |       0 |        0 |       0 |       0 | 12-58             
+ ...ents/notebooks |   19.04 |     8.33 |   28.57 |      20 |                   
+  ...bleColumn.tsx |   57.14 |       25 |   66.66 |   57.14 | 27,79-80          
+  ...ookDialog.tsx |       0 |        0 |       0 |       0 | 23-66             
+ ...nents/podcasts |    8.39 |    10.58 |    7.57 |    8.16 |                   
+  ...tionPanel.tsx |       0 |        0 |       0 |       0 | 60-272            
+  EpisodeCard.tsx  |   60.71 |    42.22 |    62.5 |   59.25 | ...20-221,329-383 
+  ...ilesPanel.tsx |       0 |        0 |       0 |       0 | 51-292            
+  EpisodesTab.tsx  |       0 |        0 |       0 |       0 | 16-162            
+  ...astDialog.tsx |       0 |        0 |       0 |       0 | 39-593            
+  ...ilesPanel.tsx |       0 |        0 |       0 |       0 | 51-255            
+  TemplatesTab.tsx |       0 |        0 |       0 |       0 | 13-30             
+  ...-selection.ts |       0 |        0 |       0 |       0 | 26-88             
+ ...podcasts/forms |       0 |        0 |       0 |       0 |                   
+  ...ormDialog.tsx |       0 |        0 |       0 |       0 | 38-384            
+  ...ormDialog.tsx |       0 |        0 |       0 |       0 | 32-343            
+ ...ents/providers |       0 |        0 |       0 |       0 |                   
+  I18nProvider.tsx |       0 |        0 |       0 |       0 | 8-19              
+  ...lProvider.tsx |       0 |        0 |       0 |       0 | 20-47             
+  ...yProvider.tsx |       0 |      100 |       0 |       0 | 11                
+  ...eProvider.tsx |       0 |        0 |       0 |       0 | 11-43             
+ ...ponents/search |   17.91 |    26.78 |    23.8 |   15.87 |                   
+  ...elsDialog.tsx |       0 |      100 |       0 |       0 | 37-95             
+  ...eSelector.tsx |    92.3 |    88.23 |     100 |     100 | 27,34             
+  ...oksDialog.tsx |       0 |        0 |       0 |       0 | 33-103            
+  ...gResponse.tsx |       0 |        0 |       0 |       0 | 33-174            
+ ...nents/settings |   14.46 |    14.15 |    4.38 |    16.2 |                   
+  ...ormDialog.tsx |   54.28 |    40.42 |      20 |   55.07 | ...92-120,150-285 
+  ...ntialItem.tsx |       0 |        0 |       0 |       0 | 48-240            
+  ...Selectors.tsx |       0 |        0 |       0 |       0 | 29-259            
+  ...ialDialog.tsx |       0 |        0 |       0 |       0 | 34-99             
+  ...elsDialog.tsx |       0 |        0 |       0 |       0 | 35-266            
+  ...ngeDialog.tsx |       0 |        0 |       0 |       0 | 34-54             
+  ...ionBanner.tsx |       0 |        0 |       0 |       0 | 14-34             
+  ...ultDialog.tsx |       0 |        0 |       0 |       0 | 26-56             
+  ...erSection.tsx |   64.28 |       50 |   28.57 |      75 | 47,87-99          
+ ...onents/sources |   23.23 |    19.32 |   20.31 |   23.88 |                   
+  ...rceDialog.tsx |   69.62 |    58.53 |   63.15 |   71.05 | ...73,182,241-288 
+  ...rceButton.tsx |       0 |        0 |       0 |       0 | 23-28             
+  ...rceDialog.tsx |       0 |        0 |       0 |       0 | 28-613            
+  ChatPanel.tsx    |   62.79 |    47.82 |      40 |   62.79 | ...19-157,330-393 
+  ...geActions.tsx |       0 |        0 |       0 |       0 | 17-71             
+  ...lSelector.tsx |       0 |        0 |       0 |       0 | 38-153            
+  ...ociations.tsx |       0 |        0 |       0 |       0 | 23-165            
+  ...onManager.tsx |       0 |        0 |       0 |       0 | 53-252            
+  SourceCard.tsx   |       0 |        0 |       0 |       0 | 48-467            
+  ...ilContent.tsx |    41.9 |    36.02 |   42.85 |   43.25 | ...06-416,650-854 
+  SourceDialog.tsx |       0 |        0 |       0 |       0 | 21-43             
+  ...ghtDialog.tsx |   53.84 |    52.77 |      50 |      56 | ...1,56-63,70,111 
+ .../sources/steps |       0 |        0 |       0 |       0 |                   
+  ...booksStep.tsx |       0 |        0 |       0 |       0 | 21-28             
+  ...ssingStep.tsx |       0 |        0 |       0 |       0 | 40-72             
+  ...eTypeStep.tsx |       0 |        0 |       0 |       0 | 29-263            
+ src/components/ui |   54.85 |    53.33 |   52.71 |   55.81 |                   
+  accordion.tsx    |       0 |      100 |       0 |       0 | 8-80              
+  badge.tsx        |     100 |    66.66 |     100 |     100 | 35                
+  card.tsx         |   71.42 |      100 |   71.42 |   71.42 | 52,75             
+  ...kbox-list.tsx |    62.5 |       75 |      75 |    62.5 | 30-34,48          
+  command.tsx      |       0 |        0 |       0 |       0 | 20-162            
+  dialog.tsx       |   91.66 |      100 |      90 |   91.66 | 31                
+  ...down-menu.tsx |      20 |       50 |      20 |      20 | 18,57-229         
+  form-section.tsx |       0 |        0 |       0 |       0 | 22                
+  ...wn-editor.tsx |   77.77 |    83.33 |   33.33 |    87.5 | 14                
+  ...-renderer.tsx |      44 |    81.81 |   22.22 |      44 | 71-88             
+  popover.tsx      |       0 |        0 |       0 |       0 | 11-45             
+  progress.tsx     |       0 |        0 |       0 |       0 | 13                
+  scroll-area.tsx  |     100 |       80 |     100 |     100 | 44                
+  select.tsx       |      70 |      100 |      70 |      70 | 18,92,129         
+  sonner.tsx       |       0 |        0 |       0 |       0 | 6-11              
+  ...container.tsx |       0 |        0 |       0 |       0 | 25-87             
+ ...ents/workbench |   72.86 |    62.73 |      62 |   85.89 |                   
+  JobsPanel.tsx    |   54.83 |    46.03 |   46.15 |   68.42 | 22-25,40-41       
+  ...eControls.tsx |   70.58 |     40.9 |   55.55 |    87.5 | 18                
+  ...Workbench.tsx |   74.87 |    66.54 |   64.47 |    87.8 | ...00-204,209-214 
+ src/lib           |   62.96 |    56.36 |   83.33 |    67.7 |                   
+  auth-token.ts    |       0 |        0 |       0 |       0 | 6-20              
+  config.ts        |   59.01 |    46.55 |      75 |   66.66 | ...07-108,134-138 
+  ...te-payload.ts |   84.21 |     72.5 |     100 |   92.85 | 32                
+  i18n.ts          |       0 |      100 |     100 |       0 | 6                 
+  theme-script.ts  |       0 |      100 |     100 |       0 | 2                 
+ src/lib/api       |   28.46 |    39.62 |   26.87 |   28.19 |                   
+  capabilities.ts  |       0 |      100 |       0 |       0 | 4-11              
+  chat.ts          |    7.14 |      100 |       0 |    7.14 | 16-67             
+  client.ts        |     100 |    70.83 |     100 |     100 | 17-43,67          
+  credentials.ts   |       0 |        0 |       0 |       0 | 119-243           
+  embedding.ts     |       0 |        0 |       0 |       0 | 60-77             
+  insights.ts      |   71.79 |    81.25 |   44.44 |   72.97 | 34-52,89,101-102  
+  models.ts        |    3.57 |      100 |       0 |    3.57 | 17-104            
+  notebooks.ts     |       0 |        0 |       0 |       0 | 11-60             
+  notes.ts         |      10 |      100 |       0 |      10 | 6-26              
+  podcasts.ts      |       0 |        0 |       0 |       0 | 16-124            
+  portable.ts      |   31.25 |      100 |      20 |   28.57 | 4-8,18-23         
+  providers.ts     |       0 |      100 |       0 |       0 | 12-19             
+  query-client.ts  |   35.29 |        0 |   26.66 |   35.29 | 11,26-30,33-38    
+  search.ts        |       0 |        0 |       0 |       0 | 5-49              
+  settings.ts      |       0 |      100 |       0 |       0 | 4-12              
+  source-chat.ts   |       0 |        0 |       0 |       0 | 11-70             
+  sources.ts       |       0 |        0 |       0 |       0 | 15-106            
+  ...formations.ts |       0 |      100 |       0 |       0 | 11-48             
+ src/lib/hooks     |   16.47 |    23.72 |   10.78 |   16.48 |                   
+  use-ask.ts       |   78.64 |    64.86 |   73.33 |    80.2 | ...23,239,245-250 
+  use-auth.ts      |       0 |        0 |       0 |       0 | 8-61              
+  ...pabilities.ts |       0 |      100 |       0 |       0 | 4-16              
+  ...e-dialogs.tsx |       0 |        0 |       0 |       0 | 14-46             
+  ...redentials.ts |       0 |        0 |       0 |       0 | 15-379            
+  use-insights.ts  |       0 |        0 |       0 |       0 | 5-7               
+  ...edia-query.ts |       0 |      100 |       0 |       0 | 10-31             
+  ...al-manager.ts |     100 |    83.33 |     100 |     100 | 36                
+  use-models.ts    |    1.42 |        0 |       0 |    1.42 | 11-194            
+  ...navigation.ts |       0 |      100 |       0 |       0 | 4-6               
+  ...ebook-chat.ts |       0 |        0 |       0 |       0 | 27-305            
+  ...notebooklm.ts |   53.84 |    41.66 |   53.84 |     100 | 6-10              
+  use-notebooks.ts |       0 |        0 |       0 |       0 | 10-105            
+  use-notes.ts     |       0 |        0 |       0 |       0 | 10-94             
+  use-podcasts.ts  |       0 |        0 |       0 |       0 | 20-408            
+  use-providers.ts |       0 |      100 |       0 |       0 | 4-16              
+  use-search.ts    |       0 |        0 |       0 |       0 | 9-29              
+  use-settings.ts  |       0 |      100 |       0 |       0 | 10-33             
+  ...ource-chat.ts |      24 |    19.29 |   18.75 |   26.54 | ...27,232,237,242 
+  use-sources.ts   |    9.16 |        0 |     7.4 |     9.4 | ...56-169,182-379 
+  use-toast.ts     |      80 |    42.85 |     100 |      80 | 16                
+  ...formations.ts |       0 |        0 |       0 |       0 | 13-149            
+  ...ranslation.ts |    90.9 |       50 |     100 |      90 | 14                
+  ...sion-check.ts |       0 |        0 |       0 |       0 | 15-37             
+  use-workbench.ts |      60 |    66.66 |   61.53 |   56.25 | 24-33             
+ src/lib/stores    |    15.9 |    12.72 |      25 |   15.62 |                   
+  auth-store.ts    |       0 |        0 |       0 |       0 | 23-218            
+  ...tion-store.ts |       0 |        0 |       0 |       0 | 20-90             
+  ...umns-store.ts |       0 |      100 |       0 |       0 | 13-21             
+  ...view-store.ts |       0 |      100 |       0 |       0 | 11-15             
+  sidebar-store.ts |       0 |      100 |       0 |       0 | 10-15             
+  theme-store.ts   |   95.45 |       70 |     100 |   95.23 | 45                
+ src/lib/types     |    6.25 |        0 |       0 |    6.25 |                   
+  podcasts.ts      |    6.25 |        0 |       0 |    6.25 | 125-187           
+ src/lib/utils     |      30 |    38.74 |   51.61 |   27.63 |                   
+  error-handler.ts |   48.14 |    37.03 |      75 |   45.45 | ...,97-98,101-104 
+  ...eferences.tsx |       0 |        0 |       0 |       0 | 53-494            
+  workbench.ts     |   53.33 |       30 |      50 |   66.66 | 7-9               
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 27.11% ( 1606/5923 )
+Branches     : 30.97% ( 1439/4646 )
+Functions    : 23.54% ( 450/1911 )
+Lines        : 26.99% ( 1469/5441 )
+================================================================================

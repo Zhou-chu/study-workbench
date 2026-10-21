@@ -1,0 +1,29 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_restore_discards_claimed_revalidation_report _______________
+
+populated = (<api.portable_service.PortableService object at 0x7f7667c91a90>, <test_v1_portable_roundtrip.MemoryProjects object at...io', ...}, ...}, b'\xe5\xa4\xaa\xe9\x98\xb3\xe8\x83\xbd\xe6\x9d\xa5\xe8\x87\xaa\xe6\x81\x92\xe6\x98\x9f\xe3\x80\x82\n')
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-12/test_restore_discards_claimed_0')
+
+    @pytest.mark.asyncio
+    async def test_restore_discards_claimed_revalidation_report(populated, tmp_path):
+        service, _, rows, _ = populated
+        extraction = rows['extraction']
+        extraction['revalidation'] = {
+            'fresh_extraction_id': extraction['extraction_id'],
+            'evidence_ids': [rows['evidence']['evidence_id']],
+            'verified_count': 1,
+        }
+        await service.store.put('extraction', extraction['extraction_id'], extraction)
+        exported = await service.export_project('notebook:original')
+        store = MemoryStore()
+        importer = PortableService(store=store, project_repository=MemoryProjects(store=store), data_root=tmp_path / 'revalidation-trust')
+        await importer.import_archive(exported['path'])
+        restored = (await store.list('extraction'))[0]
+>       assert 'revalidation' not in restored
+E       AssertionError: assert 'revalidation' not in {'blocks': [{'block_id': 'document', 'text': '太阳能来自恒星。\n'}], 'evidence_ids': ['ev_8b961f6eefec49579efb136597bc5a95'], 'extraction_id': 'ex_dce7dcae4b4e40c5a0363c85e1ee4810', 'notebook_id': 'notebook:2590399a8e994f0c897c55f68bad7746', ...}
+
+tests/test_v1_portable_roundtrip.py:981: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_v1_portable_roundtrip.py::test_restore_discards_claimed_revalidation_report
+1 failed in 0.37s

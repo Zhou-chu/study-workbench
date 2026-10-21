@@ -1,0 +1,18 @@
+$ .venv/bin/python -m pytest tests/test_v1_evidence* tests/test_v1_scoped* tests/test_v1_grounded* -q
+.........................                                                [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/surreal_commands/core/retry.py:41
+  /workspace/scratch/7ae04dc66900/study-workbench/.venv/lib/python3.12/site-packages/surreal_commands/core/retry.py:41: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class RetryConfig(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+25 passed, 1 warning in 5.87s
+
+$ .venv/bin/python -m mypy api/evidence_service.py open_notebook/domain/evidence.py open_notebook/graphs/grounded_chat.py commands/evidence_commands.py --follow-imports=skip --ignore-missing-imports
+Success: no issues found in 4 source files
+
+$ .venv/bin/ruff check api/evidence_service.py open_notebook/domain/evidence.py open_notebook/graphs/grounded_chat.py commands/evidence_commands.py tests/test_v1_evidence* tests/test_v1_scoped* tests/test_v1_grounded*
+All checks passed!
+
+$ .venv/bin/ruff format --check api/evidence_service.py open_notebook/domain/evidence.py open_notebook/graphs/grounded_chat.py commands/evidence_commands.py tests/test_v1_evidence* tests/test_v1_scoped* tests/test_v1_grounded*
+9 files already formatted

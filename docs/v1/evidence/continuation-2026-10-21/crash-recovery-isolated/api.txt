@@ -1,0 +1,404 @@
+2026-10-21 03:12:56.788 | DEBUG    | open_notebook.utils.chunking:<module>:121 - Chunking configuration: CHUNK_SIZE=400, CHUNK_OVERLAP=60, MIN_CHUNK_SIZE=5
+2026-10-21 03:12:57.663 | DEBUG    | surreal_commands.core.registry:__new__:24 - Creating CommandRegistry singleton instance
+2026-10-21 03:12:57.663 | DEBUG    | surreal_commands.core.registry:__init__:31 - Initializing CommandRegistry
+2026-10-21 03:12:58.593 | DEBUG    | surreal_commands.decorators:decorator:76 - Retry config parsed for command open_notebook.embed_note: enabled=True max_attempts=5 wait_strategy=<RetryStrategy.EXPONENTIAL_JITTER: 'exponential_jitter'> wait_time=1.0 wait_min=1.0 wait_max=60.0 wait_multiplier=2.0 retry_on=None stop_on=[<class 'ValueError'>, <class 'open_notebook.exceptions.ConfigurationError'>, <class 'open_notebook.exceptions.ContextLengthExceededError'>] retry_log_level=<RetryLogLevel.WARNING: 'warning'>
+2026-10-21 03:12:58.593 | DEBUG    | surreal_commands.core.registry:register:78 - Registered command open_notebook.embed_note
+2026-10-21 03:12:58.593 | DEBUG    | surreal_commands.decorators:decorator:76 - Retry config parsed for command open_notebook.embed_insight: enabled=True max_attempts=5 wait_strategy=<RetryStrategy.EXPONENTIAL_JITTER: 'exponential_jitter'> wait_time=1.0 wait_min=1.0 wait_max=60.0 wait_multiplier=2.0 retry_on=None stop_on=[<class 'ValueError'>, <class 'open_notebook.exceptions.ConfigurationError'>, <class 'open_notebook.exceptions.ContextLengthExceededError'>] retry_log_level=<RetryLogLevel.WARNING: 'warning'>
+2026-10-21 03:12:58.594 | DEBUG    | surreal_commands.core.registry:register:78 - Registered command open_notebook.embed_insight
+2026-10-21 03:12:58.594 | DEBUG    | surreal_commands.decorators:decorator:76 - Retry config parsed for command open_notebook.embed_source: enabled=True max_attempts=5 wait_strategy=<RetryStrategy.EXPONENTIAL_JITTER: 'exponential_jitter'> wait_time=1.0 wait_min=1.0 wait_max=60.0 wait_multiplier=2.0 retry_on=None stop_on=[<class 'ValueError'>, <class 'open_notebook.exceptions.ConfigurationError'>, <class 'open_notebook.exceptions.ContextLengthExceededError'>] retry_log_level=<RetryLogLevel.WARNING: 'warning'>
+2026-10-21 03:12:58.594 | DEBUG    | surreal_commands.core.registry:register:78 - Registered command open_notebook.embed_source
+2026-10-21 03:12:58.594 | DEBUG    | surreal_commands.decorators:decorator:76 - Retry config parsed for command open_notebook.create_insight: enabled=True max_attempts=5 wait_strategy=<RetryStrategy.EXPONENTIAL_JITTER: 'exponential_jitter'> wait_time=1.0 wait_min=1.0 wait_max=60.0 wait_multiplier=2.0 retry_on=None stop_on=[<class 'ValueError'>, <class 'open_notebook.exceptions.ConfigurationError'>, <class 'open_notebook.exceptions.ContextLengthExceededError'>] retry_log_level=<RetryLogLevel.WARNING: 'warning'>
+2026-10-21 03:12:58.594 | DEBUG    | surreal_commands.core.registry:register:78 - Registered command open_notebook.create_insight
+2026-10-21 03:12:58.594 | DEBUG    | surreal_commands.core.registry:register:78 - Registered command open_notebook.rebuild_embeddings
+2026-10-21 03:12:58.611 | DEBUG    | podcast_creator.config:get_template_prompter:249 - Using template from current directory: /workspace/scratch/7ae04dc66900/study-workbench/prompts/podcast/outline.jinja
+2026-10-21 03:12:58.618 | DEBUG    | podcast_creator.config:get_template_prompter:249 - Using template from current directory: /workspace/scratch/7ae04dc66900/study-workbench/prompts/podcast/transcript.jinja
+2026-10-21 03:12:58.631 | INFO     | podcast_creator.graph:<module>:21 - Creating podcast generation graph
+2026-10-21 03:12:58.645 | DEBUG    | surreal_commands.decorators:decorator:76 - Retry config parsed for command open_notebook.generate_podcast: enabled=True max_attempts=1 wait_strategy=<RetryStrategy.EXPONENTIAL: 'exponential'> wait_time=1.0 wait_min=1.0 wait_max=60.0 wait_multiplier=2.0 retry_on=None stop_on=None retry_log_level=<RetryLogLevel.INFO: 'info'>
+2026-10-21 03:12:58.645 | DEBUG    | surreal_commands.core.registry:register:78 - Registered command open_notebook.generate_podcast
+2026-10-21 03:12:58.664 | DEBUG    | surreal_commands.decorators:decorator:76 - Retry config parsed for command open_notebook.process_source: enabled=True max_attempts=15 wait_strategy=<RetryStrategy.EXPONENTIAL_JITTER: 'exponential_jitter'> wait_time=1.0 wait_min=1.0 wait_max=120.0 wait_multiplier=2.0 retry_on=None stop_on=[<class 'ValueError'>, <class 'open_notebook.exceptions.ConfigurationError'>, <class 'open_notebook.exceptions.ContextLengthExceededError'>, <class 'open_notebook.exceptions.IncompleteGenerationError'>, <class 'open_notebook.exceptions.NotFoundError'>] retry_log_level=<RetryLogLevel.DEBUG: 'debug'>
+2026-10-21 03:12:58.664 | DEBUG    | surreal_commands.core.registry:register:78 - Registered command open_notebook.process_source
+2026-10-21 03:12:58.666 | DEBUG    | surreal_commands.decorators:decorator:76 - Retry config parsed for command open_notebook.run_transformation: enabled=True max_attempts=5 wait_strategy=<RetryStrategy.EXPONENTIAL_JITTER: 'exponential_jitter'> wait_time=1.0 wait_min=1.0 wait_max=60.0 wait_multiplier=2.0 retry_on=None stop_on=[<class 'ValueError'>, <class 'open_notebook.exceptions.ConfigurationError'>, <class 'open_notebook.exceptions.ContextLengthExceededError'>, <class 'open_notebook.exceptions.IncompleteGenerationError'>, <class 'open_notebook.exceptions.InvalidInputError'>, <class 'open_notebook.exceptions.NotFoundError'>] retry_log_level=<RetryLogLevel.WARNING: 'warning'>
+2026-10-21 03:12:58.666 | DEBUG    | surreal_commands.core.registry:register:78 - Registered command open_notebook.run_transformation
+2026-10-21 03:12:58.677 | DEBUG    | surreal_commands.decorators:decorator:76 - Retry config parsed for command open_notebook.extract_evidence: enabled=True max_attempts=3 wait_strategy=<RetryStrategy.EXPONENTIAL_JITTER: 'exponential_jitter'> wait_time=1.0 wait_min=1.0 wait_max=10.0 wait_multiplier=2.0 retry_on=None stop_on=[<class 'open_notebook.exceptions.InvalidInputError'>, <class 'open_notebook.exceptions.NotFoundError'>, <class 'ValueError'>] retry_log_level=<RetryLogLevel.INFO: 'info'>
+2026-10-21 03:12:58.677 | DEBUG    | surreal_commands.core.registry:register:78 - Registered command open_notebook.extract_evidence
+2026-10-21 03:12:58.679 | DEBUG    | surreal_commands.decorators:decorator:76 - Retry config parsed for command open_notebook.maintain_evidence: enabled=True max_attempts=1 wait_strategy=<RetryStrategy.EXPONENTIAL: 'exponential'> wait_time=1.0 wait_min=1.0 wait_max=60.0 wait_multiplier=2.0 retry_on=None stop_on=None retry_log_level=<RetryLogLevel.INFO: 'info'>
+2026-10-21 03:12:58.679 | DEBUG    | surreal_commands.core.registry:register:78 - Registered command open_notebook.maintain_evidence
+2026-10-21 03:12:58.682 | DEBUG    | surreal_commands.decorators:decorator:76 - Retry config parsed for command open_notebook.personal_turn: enabled=True max_attempts=1 wait_strategy=<RetryStrategy.EXPONENTIAL: 'exponential'> wait_time=1.0 wait_min=1.0 wait_max=60.0 wait_multiplier=2.0 retry_on=None stop_on=None retry_log_level=<RetryLogLevel.INFO: 'info'>
+2026-10-21 03:12:58.682 | DEBUG    | surreal_commands.core.registry:register:78 - Registered command open_notebook.personal_turn
+2026-10-21 03:12:58.699 | DEBUG    | surreal_commands.decorators:decorator:72 - Retry explicitly disabled for command open_notebook.notebooklm_execute
+2026-10-21 03:12:58.700 | DEBUG    | surreal_commands.core.registry:register:78 - Registered command open_notebook.notebooklm_execute
+2026-10-21 03:12:58.700 | DEBUG    | surreal_commands.decorators:decorator:72 - Retry explicitly disabled for command open_notebook.notebooklm_poll
+2026-10-21 03:12:58.700 | DEBUG    | surreal_commands.core.registry:register:78 - Registered command open_notebook.notebooklm_poll
+2026-10-21 03:12:58.703 | DEBUG    | surreal_commands.decorators:decorator:76 - Retry config parsed for command open_notebook.export_portable: enabled=True max_attempts=2 wait_strategy=<RetryStrategy.EXPONENTIAL_JITTER: 'exponential_jitter'> wait_time=1.0 wait_min=1.0 wait_max=5.0 wait_multiplier=2.0 retry_on=None stop_on=[<class 'open_notebook.exceptions.InvalidInputError'>, <class 'open_notebook.exceptions.NotFoundError'>, <class 'ValueError'>] retry_log_level=<RetryLogLevel.INFO: 'info'>
+2026-10-21 03:12:58.703 | DEBUG    | surreal_commands.core.registry:register:78 - Registered command open_notebook.export_portable
+2026-10-21 03:12:58.788 | INFO     | api.main:<module>:129 - Commands imported in API process
+2026-10-21 03:12:58.789 | WARNING  | api.main:<module>:249 - CORS_ORIGINS is not set — API accepts cross-origin requests from any origin (default: '*'). For production deployments, set CORS_ORIGINS to your frontend origin(s), e.g. CORS_ORIGINS=https://notebook.example.com
+2026-10-21 03:12:58.789 | INFO     | api.main:<module>:276 - Max request body size: 100MB (set OPEN_NOTEBOOK_MAX_UPLOAD_SIZE_MB to change)
+INFO:     Started server process [70]
+INFO:     Waiting for application startup.
+2026-10-21 03:12:58.928 | INFO     | api.main:lifespan:195 - Starting API initialization...
+2026-10-21 03:12:59.061 | INFO     | api.main:_run_database_migrations:175 - Current database version: 0
+2026-10-21 03:12:59.108 | WARNING  | api.main:_run_database_migrations:178 - Database migrations are pending. Running migrations...
+2026-10-21 03:12:59.145 | INFO     | open_notebook.database.async_migrate:run_migration_up:232 - Current version before migration: 0
+2026-10-21 03:12:59.223 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 1
+2026-10-21 03:12:59.431 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 2
+2026-10-21 03:12:59.566 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 3
+2026-10-21 03:12:59.729 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 4
+2026-10-21 03:12:59.888 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 5
+2026-10-21 03:13:00.062 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 6
+2026-10-21 03:13:00.224 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 7
+2026-10-21 03:13:00.426 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 8
+2026-10-21 03:13:00.558 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 9
+2026-10-21 03:13:00.729 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 10
+2026-10-21 03:13:00.904 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 11
+2026-10-21 03:13:01.076 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 12
+2026-10-21 03:13:01.290 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 13
+2026-10-21 03:13:01.448 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 14
+2026-10-21 03:13:01.578 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 15
+2026-10-21 03:13:01.712 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 16
+2026-10-21 03:13:01.878 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 17
+2026-10-21 03:13:02.023 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 18
+2026-10-21 03:13:02.175 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 19
+2026-10-21 03:13:02.329 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 20
+2026-10-21 03:13:02.479 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 21
+2026-10-21 03:13:02.631 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 22
+2026-10-21 03:13:02.804 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 23
+2026-10-21 03:13:02.950 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 24
+2026-10-21 03:13:03.104 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 25
+2026-10-21 03:13:03.282 | INFO     | open_notebook.database.async_migrate:run_all:71 - Running migration 26
+2026-10-21 03:13:03.706 | INFO     | open_notebook.database.async_migrate:run_migration_up:238 - Migration successful. New version: 26
+2026-10-21 03:13:03.743 | SUCCESS  | api.main:_run_database_migrations:181 - Migrations completed successfully. Database is now at version 26
+2026-10-21 03:13:03.743 | SUCCESS  | api.main:lifespan:215 - API initialization completed successfully
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:41403 (Press CTRL+C to quit)
+INFO:     127.0.0.1:46302 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "POST /api/notebooks HTTP/1.1" 200 OK
+2026-10-21 03:13:04.272 | DEBUG    | surreal_commands.core.service:submit_command:126 - Submitted command to queue: command:tjac8n1w271l4uxxuttk
+INFO:     127.0.0.1:46308 - "POST /api/personal/notebooks/notebook%3Ajiu6x6chwe8e0bzu27eq/sources/upload HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_d0919ac6292bd3b9b6506ad81fcd876945f1419a3f9c96e5b1d4043b41a636ab HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_d0919ac6292bd3b9b6506ad81fcd876945f1419a3f9c96e5b1d4043b41a636ab HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_d0919ac6292bd3b9b6506ad81fcd876945f1419a3f9c96e5b1d4043b41a636ab HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_d0919ac6292bd3b9b6506ad81fcd876945f1419a3f9c96e5b1d4043b41a636ab HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_d0919ac6292bd3b9b6506ad81fcd876945f1419a3f9c96e5b1d4043b41a636ab HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_d0919ac6292bd3b9b6506ad81fcd876945f1419a3f9c96e5b1d4043b41a636ab HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_d0919ac6292bd3b9b6506ad81fcd876945f1419a3f9c96e5b1d4043b41a636ab HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c HTTP/1.1" 200 OK
+2026-10-21 03:13:09.094 | DEBUG    | surreal_commands.core.service:submit_command:126 - Submitted command to queue: command:rimuil5m78l9n14kkmou
+INFO:     127.0.0.1:46308 - "POST /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c/reparse HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+2026-10-21 03:14:41.669 | DEBUG    | surreal_commands.core.service:submit_command:126 - Submitted command to queue: command:8raeqqax5q53n88h6jf0
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_4737debb69544114e6fe8c8739bd54308c36a87d50fac1e5e8bc6293dab6da90 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c?extraction_id=ex_1a0d07b3e52b4da1bcccbddce6f03793 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "POST /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c/reparse HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c HTTP/1.1" 200 OK
+2026-10-21 03:14:46.285 | DEBUG    | surreal_commands.core.service:submit_command:126 - Submitted command to queue: command:2w4o9mqs1iyg81tkp3za
+INFO:     127.0.0.1:46308 - "POST /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c/revalidate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+2026-10-21 03:16:19.755 | DEBUG    | surreal_commands.core.service:submit_command:126 - Submitted command to queue: command:tj41i28n3jg1395wxli4
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/jobs/job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85ce15068e87257e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "GET /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c?extraction_id=ex_1a0d07b3e52b4da1bcccbddce6f03793 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46308 - "POST /api/personal/source-versions/sv_f30c441db4f34df48c34fbf96492818c/revalidate HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-10-21 03:16:25.042 | INFO     | api.main:lifespan:239 - API shutdown complete
+INFO:     Application shutdown complete.
+INFO:     Finished server process [70]

@@ -1,0 +1,26 @@
+2026-10-21 03:14:51.360 | DEBUG    | surreal_commands.core.registry:__new__:24 - Creating CommandRegistry singleton instance
+2026-10-21 03:14:51.360 | DEBUG    | surreal_commands.core.registry:__init__:31 - Initializing CommandRegistry
+2026-10-21 03:14:51.505 | INFO     | surreal_commands.core.worker:configure_logging:85 - Debug mode disabled - showing only INFO level and above
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ Surreal Commands Worker                                                      │
+╰──────────────────────────────────────────────────────────────────────────────╯
+2026-10-21 03:14:51.505 | INFO     | surreal_commands.core.worker:run_worker:187 - Starting Surreal Commands worker
+Importing command modules: commands
+2026-10-21 03:14:52.129 | INFO     | podcast_creator.graph:<module>:21 - Creating podcast generation graph
+  ✅ Imported: commands
+Successfully imported 1/1 modules
+Using 14 registered commands
+Worker configured to handle up to 1 concurrent tasks
+[03:14:52] Checking for existing commands...                       worker.py:109
+           No existing commands found                              worker.py:139
+           Starting LIVE query listener for new commands...        worker.py:142
+─ ⏱ Started command: open_notebook.maintain_evidence command:tj41i28n3jg1395w… ─
+[03:16:19] Arguments:                                              worker.py:153
+           {                                                       worker.py:154
+             "job_id":                                                          
+           "job_b80ebea551e390e8827663af86c5fe62c07c2d0d464064bf85              
+           ce15068e87257e"                                                      
+           }                                                                    
+
+2026-10-21 03:16:21.143 | DEBUG    | surreal_commands.core.registry:__new__:24 - Creating CommandRegistry singleton instance
+2026-10-21 03:16:21.143 | DEBUG    | surreal_commands.core.registry:__init__:31 - Initializing CommandRegistry

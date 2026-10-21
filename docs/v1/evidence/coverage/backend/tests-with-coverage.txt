@@ -1,0 +1,137 @@
+........................................................................ [  6%]
+........................................................................ [ 12%]
+........................................................................ [ 18%]
+........................................................................ [ 24%]
+........................................................................ [ 30%]
+........................................................................ [ 36%]
+........................................................................ [ 42%]
+........................................................................ [ 48%]
+........................................................................ [ 54%]
+........................................................................ [ 60%]
+........................................................................ [ 66%]
+........................................................................ [ 73%]
+........................................................................ [ 79%]
+........................................................................ [ 85%]
+........................................................................ [ 91%]
+...................................................................s.... [ 97%]
+...............................                                          [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/surreal_commands/core/retry.py:41
+  /workspace/scratch/7ae04dc66900/study-workbench/.venv/lib/python3.12/site-packages/surreal_commands/core/retry.py:41: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class RetryConfig(BaseModel):
+
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /workspace/scratch/7ae04dc66900/study-workbench/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.14-final-0 _______________
+
+Name                                                    Stmts   Miss Branch BrPart  Cover
+-----------------------------------------------------------------------------------------
+api/__init__.py                                             0      0      0      0   100%
+api/auth.py                                                32      5     12      3    82%
+api/command_service.py                                     40     28      2      0    29%
+api/credentials_service.py                                513    221    178     36    56%
+api/evidence_service.py                                   298     51    106     15    80%
+api/main.py                                               181     29     18      4    83%
+api/middleware.py                                          57      0     16      2    97%
+api/models.py                                             412      8     20      2    97%
+api/notebooklm_service.py                                 572    105    232     55    77%
+api/personal_security.py                                   21      0      6      0   100%
+api/personal_service.py                                   159     27     58     20    78%
+api/personal_store.py                                      59     15      6      1    72%
+api/podcast_service.py                                    103     33     14      4    65%
+api/portable_service.py                                   680    151    334     59    77%
+api/routers/__init__.py                                     0      0      0      0   100%
+api/routers/_chat_shared.py                                40      2      8      2    92%
+api/routers/auth.py                                         7      2      0      0    71%
+api/routers/capabilities.py                                 9      0      0      0   100%
+api/routers/chat.py                                       198     81     18      1    57%
+api/routers/commands.py                                    94     55      6      0    39%
+api/routers/config.py                                      72     14      8      2    80%
+api/routers/credentials.py                                282    163     62     13    43%
+api/routers/embedding.py                                   54     21     14      4    60%
+api/routers/embedding_rebuild.py                           79     57     36      2    21%
+api/routers/episode_profiles.py                           141     91     18      0    31%
+api/routers/evidence.py                                   162     13     46      7    90%
+api/routers/insights.py                                    55     35      6      1    34%
+api/routers/languages.py                                   48     35     16      0    20%
+api/routers/models.py                                     340    144     78     14    57%
+api/routers/notebooklm.py                                 180     62     40     11    60%
+api/routers/notebooks.py                                  181     81     16      4    56%
+api/routers/notes.py                                      111     55     18      5    50%
+api/routers/podcasts.py                                   211     74     44      4    68%
+api/routers/portable.py                                    20      7      0      0    65%
+api/routers/providers.py                                    9      0      0      0   100%
+api/routers/search.py                                     110     72     38      1    28%
+api/routers/settings.py                                    53     38     16      0    22%
+api/routers/source_chat.py                                189     70     26      6    59%
+api/routers/sources.py                                    520    218    138     31    56%
+api/routers/speaker_profiles.py                           107     71     10      0    31%
+api/routers/transformations.py                            150     78     32     11    50%
+commands/__init__.py                                       12      0      0      0   100%
+commands/embedding_commands.py                            240    119     40      5    45%
+commands/evidence_commands.py                              58     12     20      4    74%
+commands/notebooklm_commands.py                            15      0      0      0   100%
+commands/personal_commands.py                              11      3      0      0    73%
+commands/podcast_commands.py                              171     42     52     11    75%
+commands/portable_commands.py                              13      2      0      0    85%
+commands/source_commands.py                               112     20     10      3    80%
+open_notebook/__init__.py                                   0      0      0      0   100%
+open_notebook/ai/__init__.py                                0      0      0      0   100%
+open_notebook/ai/connection_tester.py                     299    194    110      8    34%
+open_notebook/ai/key_provider.py                          138     81     58     13    36%
+open_notebook/ai/model_discovery.py                       419    231    128      6    41%
+open_notebook/ai/models.py                                188     75     66      9    57%
+open_notebook/ai/provider_registry.py                      37      0     10      0   100%
+open_notebook/ai/provision.py                              27     20      8      0    20%
+open_notebook/config.py                                    17      0      2      0   100%
+open_notebook/database/async_migrate.py                    94     56     18      0    38%
+open_notebook/database/repository.py                      153     76     48      3    51%
+open_notebook/domain/__init__.py                            1      0      0      0   100%
+open_notebook/domain/base.py                              204     99     82      7    46%
+open_notebook/domain/content_settings.py                   13      0      0      0   100%
+open_notebook/domain/credential.py                        158     66     72     10    57%
+open_notebook/domain/evidence.py                           61      0      0      0   100%
+open_notebook/domain/notebook.py                          430    175    104     18    58%
+open_notebook/domain/provider_config.py                   142    117     64      0    12%
+open_notebook/domain/transformation.py                     21      4      2      0    74%
+open_notebook/exceptions.py                                28      0      0      0   100%
+open_notebook/graphs/ask.py                               100     11      8      0    90%
+open_notebook/graphs/chat.py                               62     13      2      0    80%
+open_notebook/graphs/grounded_chat.py                     180     25     70     20    82%
+open_notebook/graphs/prompt.py                             26      7      0      0    73%
+open_notebook/graphs/source.py                            160     22     58      4    85%
+open_notebook/graphs/source_chat.py                       107     28     14      4    70%
+open_notebook/graphs/tools.py                               5      0      0      0   100%
+open_notebook/graphs/transformation.py                     59      4     14      2    92%
+open_notebook/integrations/__init__.py                      0      0      0      0   100%
+open_notebook/integrations/notebooklm/__init__.py           0      0      0      0   100%
+open_notebook/integrations/notebooklm/contracts.py        104      0      0      0   100%
+open_notebook/integrations/notebooklm/fake_adapter.py      44     14      8      3    67%
+open_notebook/integrations/notebooklm/sdk_adapter.py      258     56     84     26    73%
+open_notebook/podcasts/__init__.py                          0      0      0      0   100%
+open_notebook/podcasts/audio_paths.py                      29      0     12      0   100%
+open_notebook/podcasts/models.py                          167     49     62      4    66%
+open_notebook/utils/__init__.py                             8      0      0      0   100%
+open_notebook/utils/chunking.py                           204     50     88     12    75%
+open_notebook/utils/context_builder.py                    227     23     88     11    89%
+open_notebook/utils/embedding.py                           96     17     32      6    79%
+open_notebook/utils/encryption.py                          90     21     24      3    75%
+open_notebook/utils/error_classifier.py                    18      3      8      2    81%
+open_notebook/utils/graph_utils.py                         32     10      8      2    65%
+open_notebook/utils/model_utils.py                          9      1      6      1    87%
+open_notebook/utils/proxy.py                               44      2     22      0    97%
+open_notebook/utils/runtime_capabilities.py                53     25     12      1    54%
+open_notebook/utils/ssl_config.py                          15      0      6      0   100%
+open_notebook/utils/text_utils.py                          50      9     22      1    75%
+open_notebook/utils/token_utils.py                         15      1      0      0    93%
+open_notebook/utils/url_validation.py                      96     10     34      7    87%
+open_notebook/utils/version_utils.py                       62     17     12      3    73%
+-----------------------------------------------------------------------------------------
+TOTAL                                                   11931   4022   3284    529    64%
+Coverage XML written to file docs/v1/evidence/coverage/backend/coverage.xml
+Coverage JSON written to file docs/v1/evidence/coverage/backend/coverage.json
+1182 passed, 1 skipped, 2 warnings in 42.27s

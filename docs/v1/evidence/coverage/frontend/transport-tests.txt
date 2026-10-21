@@ -1,0 +1,9 @@
+
+ RUN  v4.1.9 /workspace/scratch/7ae04dc66900/study-workbench/frontend
+
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  17:05:28
+   Duration  658ms (transform 74ms, setup 78ms, import 112ms, tests 24ms, environment 284ms)
+

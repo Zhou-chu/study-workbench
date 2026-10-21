@@ -1,0 +1,14 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> frontend@0.1.0 test
+> vitest run src/components/workbench/StudyWorkbench.test.tsx src/components/evidence/EvidenceReader.test.tsx
+
+
+ RUN  v4.1.9 /workspace/scratch/7ae04dc66900/study-workbench/frontend
+
+
+ Test Files  2 passed (2)
+      Tests  56 passed (56)
+   Start at  11:11:45
+   Duration  6.11s (transform 976ms, setup 212ms, import 2.18s, tests 4.51s, environment 1.01s)
+

@@ -1,0 +1,349 @@
+{
+  "status": "passed",
+  "browser_engine": "firefox",
+  "actions": [
+    "Anonymous page redirected to login",
+    "Password login via form",
+    "Real original reader opened",
+    "Lexical search via UI",
+    "Note saved through UI",
+    "Selection and note survived refresh",
+    "Ten known references across two PDFs opened their exact immutable version, quote and physical page with nonblank PDF.js raster",
+    "PDF.js rendered nonblank raster for physical page 3 and page 2 after manual navigation",
+    "Malformed PDF displays explicit text/download fallback instead of blank preview",
+    "Export queued via UI",
+    "Export completed and ZIP downloaded through authenticated UI",
+    "390px sources, notes and reader use full width without horizontal overflow; mobile navigation drawer opens and closes via Escape",
+    "Visible locale menu switched to Chinese; desktop/mobile labels and layouts verified",
+    "Downloaded ZIP restored through UI; ten archived whole-quote/subquote references open remapped versions and correct physical pages while remaining unverified"
+  ],
+  "page_errors": [],
+  "pdf_raster_checks": [
+    {
+      "physical_page": 1,
+      "nonwhite_pixels": 2447
+    },
+    {
+      "physical_page": 2,
+      "nonwhite_pixels": 1771
+    },
+    {
+      "physical_page": 3,
+      "nonwhite_pixels": 2227
+    },
+    {
+      "physical_page": 1,
+      "nonwhite_pixels": 2447
+    },
+    {
+      "physical_page": 2,
+      "nonwhite_pixels": 1771
+    },
+    {
+      "physical_page": 1,
+      "nonwhite_pixels": 1307
+    },
+    {
+      "physical_page": 2,
+      "nonwhite_pixels": 2007
+    },
+    {
+      "physical_page": 3,
+      "nonwhite_pixels": 1908
+    },
+    {
+      "physical_page": 4,
+      "nonwhite_pixels": 1256
+    },
+    {
+      "physical_page": 1,
+      "nonwhite_pixels": 1307
+    },
+    {
+      "physical_page": 3,
+      "nonwhite_pixels": 2227
+    },
+    {
+      "physical_page": 2,
+      "nonwhite_pixels": 1771
+    },
+    {
+      "physical_page": 1,
+      "nonwhite_pixels": 2447
+    },
+    {
+      "physical_page": 2,
+      "nonwhite_pixels": 1771
+    },
+    {
+      "physical_page": 3,
+      "nonwhite_pixels": 2227
+    },
+    {
+      "physical_page": 1,
+      "nonwhite_pixels": 2447
+    },
+    {
+      "physical_page": 2,
+      "nonwhite_pixels": 1771
+    },
+    {
+      "physical_page": 1,
+      "nonwhite_pixels": 1307
+    },
+    {
+      "physical_page": 2,
+      "nonwhite_pixels": 2007
+    },
+    {
+      "physical_page": 3,
+      "nonwhite_pixels": 1908
+    },
+    {
+      "physical_page": 4,
+      "nonwhite_pixels": 1256
+    },
+    {
+      "physical_page": 1,
+      "nonwhite_pixels": 1307
+    },
+    {
+      "physical_page": 3,
+      "nonwhite_pixels": 2227
+    },
+    {
+      "physical_page": 3,
+      "nonwhite_pixels": 2227
+    }
+  ],
+  "mobile_layout_checks": [
+    {
+      "view": "sources-en-US",
+      "viewport": 390,
+      "document_width": 390,
+      "main_width": 390,
+      "panels": [
+        {
+          "width": 390,
+          "content_width": 389,
+          "client_width": 389
+        }
+      ],
+      "canvas": null
+    },
+    {
+      "view": "navigation-closed-en-US",
+      "viewport": 390,
+      "document_width": 390,
+      "main_width": 390,
+      "panels": [
+        {
+          "width": 390,
+          "content_width": 389,
+          "client_width": 389
+        }
+      ],
+      "canvas": null
+    },
+    {
+      "view": "notes-en-US",
+      "viewport": 390,
+      "document_width": 390,
+      "main_width": 390,
+      "panels": [
+        {
+          "width": 390,
+          "content_width": 389,
+          "client_width": 389
+        }
+      ],
+      "canvas": null
+    },
+    {
+      "view": "sources-zh-CN",
+      "viewport": 390,
+      "document_width": 390,
+      "main_width": 390,
+      "panels": [
+        {
+          "width": 390,
+          "content_width": 389,
+          "client_width": 389
+        }
+      ],
+      "canvas": null
+    },
+    {
+      "view": "reader-zh-CN",
+      "viewport": 390,
+      "document_width": 390,
+      "main_width": 390,
+      "panels": [
+        {
+          "width": 390,
+          "content_width": 390,
+          "client_width": 390
+        }
+      ],
+      "canvas": {
+        "width": 358,
+        "left": 16,
+        "right": 374
+      }
+    }
+  ],
+  "known_reference_checks": [
+    {
+      "source_title": "fixture_a.pdf",
+      "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+      "citation_id": "LOC_a_1",
+      "physical_page": 1,
+      "quote": "\u8bfe\u7a0b A\uff1a\u592a\u9633\u80fd\n\u5149\u4f0f\u6548\u5e94\u662f\u534a\u5bfc\u4f53\u5438\u6536\u5149\u5b50\u540e\u4ea7\u751f\u7535\u52bf\u5dee\u7684\u73b0\u8c61\u3002\n\u5b9e\u9a8c A \u7684\u8f6c\u6362\u6548\u7387\u4e3a\u767e\u5206\u4e4b\u4e8c\u5341\u3002"
+    },
+    {
+      "source_title": "fixture_a.pdf",
+      "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+      "citation_id": "LOC_a_2",
+      "physical_page": 2,
+      "quote": "\u8bfe\u7a0b A\uff1a\u50a8\u80fd\n\u5171\u540c\u77ed\u8bed\uff1a\u53ef\u9760\u8bc1\u636e\u6765\u81ea\u539f\u4ef6\u3002\n\u7535\u6c60\u50a8\u5b58\u7684\u662f\u5316\u5b66\u80fd\u3002"
+    },
+    {
+      "source_title": "fixture_a.pdf",
+      "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+      "citation_id": "LOC_a_3",
+      "physical_page": 3,
+      "quote": "\u8bfe\u7a0b A\uff1a\u53c2\u6570\n\u5b9e\u9a8c A \u7684\u6807\u51c6\u6e29\u5ea6\u4e3a\u4e8c\u5341\u4e94\u6444\u6c0f\u5ea6\u3002\n\u4e0d\u8981\u5c06\u7269\u7406\u9875\u7801\u4e0e\u5370\u5237\u9875\u7801\u6df7\u6dc6\u3002"
+    },
+    {
+      "source_title": "fixture_a.pdf",
+      "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+      "citation_id": "LOC_a_4",
+      "physical_page": 1,
+      "quote": "\u8bfe\u7a0b A\uff1a\u592a\u9633\u80fd"
+    },
+    {
+      "source_title": "fixture_a.pdf",
+      "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+      "citation_id": "LOC_a_5",
+      "physical_page": 2,
+      "quote": "\u8bfe\u7a0b A\uff1a\u50a8\u80fd"
+    },
+    {
+      "source_title": "fixture_b.pdf",
+      "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+      "citation_id": "LOC_b_1",
+      "physical_page": 1,
+      "quote": "\u8bfe\u7a0b B\uff1a\u98ce\u80fd\n\u98ce\u529b\u53d1\u7535\u673a\u5c06\u98ce\u7684\u52a8\u80fd\u8f6c\u5316\u4e3a\u7535\u80fd\u3002"
+    },
+    {
+      "source_title": "fixture_b.pdf",
+      "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+      "citation_id": "LOC_b_2",
+      "physical_page": 2,
+      "quote": "\u8bfe\u7a0b B\uff1a\u53c2\u6570\n\u5171\u540c\u77ed\u8bed\uff1a\u53ef\u9760\u8bc1\u636e\u6765\u81ea\u539f\u4ef6\u3002\n\u5b9e\u9a8c B \u7684\u8f6c\u6362\u6548\u7387\u4e3a\u767e\u5206\u4e4b\u4e09\u5341\u4e94\u3002"
+    },
+    {
+      "source_title": "fixture_b.pdf",
+      "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+      "citation_id": "LOC_b_3",
+      "physical_page": 3,
+      "quote": "\u8bfe\u7a0b B\uff1a\u9650\u5236\n\u5171\u540c\u77ed\u8bed\uff1a\u53ef\u9760\u8bc1\u636e\u6765\u81ea\u539f\u4ef6\u3002\n\u6b64\u6750\u6599\u6ca1\u6709\u63cf\u8ff0\u5149\u4f0f\u6548\u5e94\u3002"
+    },
+    {
+      "source_title": "fixture_b.pdf",
+      "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+      "citation_id": "LOC_b_4",
+      "physical_page": 4,
+      "quote": "\u8bfe\u7a0b B\uff1a\u7ed3\u8bba\n\u5b9e\u9a8c B \u7684\u6807\u51c6\u6e29\u5ea6\u4e3a\u5341\u4e94\u6444\u6c0f\u5ea6\u3002"
+    },
+    {
+      "source_title": "fixture_b.pdf",
+      "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+      "citation_id": "LOC_b_5",
+      "physical_page": 1,
+      "quote": "\u8bfe\u7a0b B\uff1a\u98ce\u80fd"
+    }
+  ],
+  "restored_reference_checks": [
+    {
+      "source_title": "fixture_a.pdf",
+      "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+      "citation_id": "LOC_a_1",
+      "physical_page": 1,
+      "quote": "\u8bfe\u7a0b A\uff1a\u592a\u9633\u80fd\n\u5149\u4f0f\u6548\u5e94\u662f\u534a\u5bfc\u4f53\u5438\u6536\u5149\u5b50\u540e\u4ea7\u751f\u7535\u52bf\u5dee\u7684\u73b0\u8c61\u3002\n\u5b9e\u9a8c A \u7684\u8f6c\u6362\u6548\u7387\u4e3a\u767e\u5206\u4e4b\u4e8c\u5341\u3002",
+      "restored_source_version_id": "sv_7ac1ec4176ec4445b45c2f59cad163f3"
+    },
+    {
+      "source_title": "fixture_a.pdf",
+      "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+      "citation_id": "LOC_a_2",
+      "physical_page": 2,
+      "quote": "\u8bfe\u7a0b A\uff1a\u50a8\u80fd\n\u5171\u540c\u77ed\u8bed\uff1a\u53ef\u9760\u8bc1\u636e\u6765\u81ea\u539f\u4ef6\u3002\n\u7535\u6c60\u50a8\u5b58\u7684\u662f\u5316\u5b66\u80fd\u3002",
+      "restored_source_version_id": "sv_7ac1ec4176ec4445b45c2f59cad163f3"
+    },
+    {
+      "source_title": "fixture_a.pdf",
+      "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+      "citation_id": "LOC_a_3",
+      "physical_page": 3,
+      "quote": "\u8bfe\u7a0b A\uff1a\u53c2\u6570\n\u5b9e\u9a8c A \u7684\u6807\u51c6\u6e29\u5ea6\u4e3a\u4e8c\u5341\u4e94\u6444\u6c0f\u5ea6\u3002\n\u4e0d\u8981\u5c06\u7269\u7406\u9875\u7801\u4e0e\u5370\u5237\u9875\u7801\u6df7\u6dc6\u3002",
+      "restored_source_version_id": "sv_7ac1ec4176ec4445b45c2f59cad163f3"
+    },
+    {
+      "source_title": "fixture_a.pdf",
+      "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+      "citation_id": "LOC_a_4",
+      "physical_page": 1,
+      "quote": "\u8bfe\u7a0b A\uff1a\u592a\u9633\u80fd",
+      "restored_source_version_id": "sv_7ac1ec4176ec4445b45c2f59cad163f3"
+    },
+    {
+      "source_title": "fixture_a.pdf",
+      "source_version_id": "sv_68394dbb6e734f27bb3290baba8ed661",
+      "citation_id": "LOC_a_5",
+      "physical_page": 2,
+      "quote": "\u8bfe\u7a0b A\uff1a\u50a8\u80fd",
+      "restored_source_version_id": "sv_7ac1ec4176ec4445b45c2f59cad163f3"
+    },
+    {
+      "source_title": "fixture_b.pdf",
+      "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+      "citation_id": "LOC_b_1",
+      "physical_page": 1,
+      "quote": "\u8bfe\u7a0b B\uff1a\u98ce\u80fd\n\u98ce\u529b\u53d1\u7535\u673a\u5c06\u98ce\u7684\u52a8\u80fd\u8f6c\u5316\u4e3a\u7535\u80fd\u3002",
+      "restored_source_version_id": "sv_f34a7433e48d4e2a8a744639c0656478"
+    },
+    {
+      "source_title": "fixture_b.pdf",
+      "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+      "citation_id": "LOC_b_2",
+      "physical_page": 2,
+      "quote": "\u8bfe\u7a0b B\uff1a\u53c2\u6570\n\u5171\u540c\u77ed\u8bed\uff1a\u53ef\u9760\u8bc1\u636e\u6765\u81ea\u539f\u4ef6\u3002\n\u5b9e\u9a8c B \u7684\u8f6c\u6362\u6548\u7387\u4e3a\u767e\u5206\u4e4b\u4e09\u5341\u4e94\u3002",
+      "restored_source_version_id": "sv_f34a7433e48d4e2a8a744639c0656478"
+    },
+    {
+      "source_title": "fixture_b.pdf",
+      "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+      "citation_id": "LOC_b_3",
+      "physical_page": 3,
+      "quote": "\u8bfe\u7a0b B\uff1a\u9650\u5236\n\u5171\u540c\u77ed\u8bed\uff1a\u53ef\u9760\u8bc1\u636e\u6765\u81ea\u539f\u4ef6\u3002\n\u6b64\u6750\u6599\u6ca1\u6709\u63cf\u8ff0\u5149\u4f0f\u6548\u5e94\u3002",
+      "restored_source_version_id": "sv_f34a7433e48d4e2a8a744639c0656478"
+    },
+    {
+      "source_title": "fixture_b.pdf",
+      "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+      "citation_id": "LOC_b_4",
+      "physical_page": 4,
+      "quote": "\u8bfe\u7a0b B\uff1a\u7ed3\u8bba\n\u5b9e\u9a8c B \u7684\u6807\u51c6\u6e29\u5ea6\u4e3a\u5341\u4e94\u6444\u6c0f\u5ea6\u3002",
+      "restored_source_version_id": "sv_f34a7433e48d4e2a8a744639c0656478"
+    },
+    {
+      "source_title": "fixture_b.pdf",
+      "source_version_id": "sv_a17a66e524fc4ad0ab3e0794901e3f7e",
+      "citation_id": "LOC_b_5",
+      "physical_page": 1,
+      "quote": "\u8bfe\u7a0b B\uff1a\u98ce\u80fd",
+      "restored_source_version_id": "sv_f34a7433e48d4e2a8a744639c0656478"
+    }
+  ]
+}

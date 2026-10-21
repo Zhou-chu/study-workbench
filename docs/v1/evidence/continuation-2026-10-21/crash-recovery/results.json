@@ -1,0 +1,37 @@
+{
+  "status": "passed",
+  "started_at": "2026-10-21T03:10:29.798602+00:00",
+  "method": "Native RocksDB SurrealDB + authenticated HTTP API + real surreal-commands worker. SIGKILL at parser boundary; unchanged recovery deadlines and HTTP polling.",
+  "limits": "No browser interaction, host reboot, DB corruption, remote Google/model calls, or restored-archive trust checks in this test.",
+  "cases": [
+    {
+      "operation": "reparse",
+      "passed": true,
+      "job_id": "job_58f8d819fbc535f7ebde4e77603d7f63d6bc125cd6761808e83bd4f8864f51f8",
+      "attempts": 2,
+      "old_worker_id": "command:k3zsr8ls903kppmz50ev",
+      "recovery_worker_id": "command:kaqrkpx5xe52tlv2jog1",
+      "fresh_extraction_id": "ex_04d856dc601180a8a60d1414e2032496",
+      "old_ready_content_preserved_during_kill": true,
+      "historical_evidence_preserved": true,
+      "same_job_and_extraction_recovered": true,
+      "idempotent_resubmission": true,
+      "recovery_seconds": 92.35
+    },
+    {
+      "operation": "revalidate",
+      "passed": true,
+      "job_id": "job_49236438ace46807bb45da03cfe043e263386cab407e714719f5f3a1b0b338b1",
+      "attempts": 2,
+      "old_worker_id": "command:bp1tbrybi8klewwf44j6",
+      "recovery_worker_id": "command:qyf2rl7y55jct2sa2pu6",
+      "fresh_extraction_id": "ex_ea4298ee1738a5cee80c2134c4185b7c",
+      "old_ready_content_preserved_during_kill": true,
+      "historical_evidence_preserved": true,
+      "same_job_and_extraction_recovered": true,
+      "idempotent_resubmission": true,
+      "recovery_seconds": 93.27
+    }
+  ],
+  "finished_at": "2026-10-21T03:14:00.137951+00:00"
+}

@@ -1,0 +1,132 @@
+{
+  "all": {
+    "lines": {
+      "total": 5431,
+      "covered": 1459,
+      "skipped": 0,
+      "pct": 26.86
+    },
+    "statements": {
+      "total": 5912,
+      "covered": 1596,
+      "skipped": 0,
+      "pct": 26.99
+    },
+    "functions": {
+      "total": 1910,
+      "covered": 449,
+      "skipped": 0,
+      "pct": 23.5
+    },
+    "branches": {
+      "total": 4630,
+      "covered": 1424,
+      "skipped": 0,
+      "pct": 30.75
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "v1": {
+    "lines": {
+      "total": 542,
+      "covered": 450
+    },
+    "branches": {
+      "total": 848,
+      "covered": 574
+    },
+    "statements": {
+      "total": 743,
+      "covered": 554
+    },
+    "functions": {
+      "total": 288,
+      "covered": 177
+    },
+    "files": [
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/app/(dashboard)/notebooks/[id]/study/page.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/app/(dashboard)/notebooks/components/NotebookHeader.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/evidence/EvidenceMaintenance.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/evidence/EvidenceReader.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/evidence/PdfCanvas.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/integrations/NotebookLMPanel.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/layout/AppShell.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/workbench/JobsPanel.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/workbench/PortableControls.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/workbench/StudyWorkbench.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/workbench/TurnCoverage.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/api/client.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/api/evidence.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/api/notebooklm.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/api/portable.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/api/query-client.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/api/workbench.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/hooks/use-notebooklm.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/hooks/use-workbench.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/workbench.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/bn-IN/index.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/ca-ES/index.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/de-DE/index.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/en-US/index.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/es-ES/index.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/fr-FR/index.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/it-IT/index.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/ja-JP/index.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/pl-PL/index.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/pt-BR/index.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/ru-RU/index.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/tr-TR/index.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/zh-CN/index.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/locales/zh-TW/index.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/types/personal.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/utils/evidence.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/utils/workbench.ts"
+    ]
+  },
+  "v1_functional": {
+    "lines": {
+      "total": 526,
+      "covered": 434
+    },
+    "branches": {
+      "total": 848,
+      "covered": 574
+    },
+    "statements": {
+      "total": 727,
+      "covered": 538
+    },
+    "functions": {
+      "total": 288,
+      "covered": 177
+    },
+    "files": [
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/app/(dashboard)/notebooks/[id]/study/page.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/app/(dashboard)/notebooks/components/NotebookHeader.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/evidence/EvidenceMaintenance.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/evidence/EvidenceReader.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/evidence/PdfCanvas.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/integrations/NotebookLMPanel.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/layout/AppShell.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/workbench/JobsPanel.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/workbench/PortableControls.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/workbench/StudyWorkbench.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/workbench/TurnCoverage.tsx",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/api/client.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/api/evidence.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/api/notebooklm.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/api/portable.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/api/query-client.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/api/workbench.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/hooks/use-notebooklm.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/hooks/use-workbench.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/utils/evidence.ts",
+      "/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/utils/workbench.ts"
+    ]
+  }
+}
