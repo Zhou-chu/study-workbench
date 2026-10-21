@@ -16,8 +16,8 @@ SurrealDB transaction. This prevents snapshot write skew across cap checks,
 create, rotation and revoke-all. Guard absence fails closed. Read/CAS failure
 cannot insert access rows. Raw SDK result envelopes are checked because the
 SDK convenience query method returns only the first statement result. Any
-transaction conflict, missing/malformed acknowledgement or lost response is
-unavailable; never retry internally. A later explicit login is recovery.
+transaction conflict, missing/malformed API-storage acknowledgement or lost
+API-storage response is unavailable; never retry internally. A later explicit login is recovery.
 
 The service observes credential content and outage barriers on every auth
 operation. Legacy PersonalSecurityMiddleware must not independently read the
@@ -45,9 +45,10 @@ attribution is deferred; no launch configuration changes are required.
 ## Consequences and limits
 
 Access overlaps for its original 15-minute TTL, subject to authoritative
-revocation/epochs. Refresh is one-use, maximum absolute 30 days. Lost response
-requires relogin; duplicate rejection does not revoke the winner. This does not
-detect theft when an attacker wins first. Revocation cannot undo already
+revocation/epochs. Refresh is one-use, maximum absolute 30 days. Lost native/API-to-BFF
+refresh acknowledgement requires relogin; a browser response lost after an acknowledged BFF swap instead
+uses the metadata recovery specified in [ADR-016](ADR-016-memory-bff-sessions.md).
+Duplicate rejection does not revoke the winner. This does not detect theft when an attacker wins first. Revocation cannot undo already
 authorized writes or end existing streams. Session rows are retained; expired
 access rows are pruned before issuance. Operational retention can be a later
 bounded maintenance task, never part of archive export/import.

@@ -31,7 +31,7 @@ Proceed with authorized local code/test work after self-review. Do not infer per
 
 ## Review Focus
 
-1. Lost refresh response must trigger explicit safe re-login without lost drafts; simultaneous requests must be coordinated and old refresh tokens must not remain usable (T4/T5).
+1. Native/API→BFF lost refresh acknowledgement requires safe re-login without lost drafts; BFF→browser loss after acknowledged swap recovers metadata through its stable cookie. Coordinate simultaneous requests without reusing spent tokens or replaying writes (T4/T5, ADR-016).
 2. A platform login redirect to another host must never receive the application Bearer token (T2/T6/T8).
 3. A delayed save from one device must not overwrite a newer note from another (T3/T7).
 4. Process death during upload/export or background suspension must preserve operation identity without duplicate writes (T7–T10).
@@ -149,12 +149,12 @@ Maintain `docs/v1/MULTICLIENT_ACCEPTANCE.md` with commit, contract hash, command
 
 **Owner:** auth/backend. **Dependencies:** T3. Code/tests may use synthetic credentials; activating changed live auth configuration requires the corresponding authorization.
 
-**Files:** Modify `api/auth.py`, `api/routers/auth.py`, `api/main.py`, `api/personal_security.py`; create `api/device_session_service.py`, `api/device_session_store.py`, `api/device_session_models.py`, `tests/test_v1_device_sessions.py`, `tests/test_v1_device_session_security.py`, `contracts/v1/fixtures/auth.json`, `docs/7-DEVELOPMENT/decisions/ADR-014-device-sessions.md` (use next unused ADR number if 014 exists). Contract owner regenerates `contracts/v1/openapi.json`.
+**Files:** Modify `api/auth.py`, `api/routers/auth.py`, `api/main.py`, `api/personal_security.py`; create `api/device_session_service.py`, `api/device_session_store.py`, `api/device_session_models.py`, `tests/test_v1_device_sessions.py`, `tests/test_v1_device_session_security.py`, `contracts/v1/fixtures/auth.json`, `docs/7-DEVELOPMENT/decisions/ADR-015-device-session-backend.md`. Contract owner regenerates `contracts/v1/openapi.json`.
 
-**Proposed HTTP interface — freeze after bounded auth security design review, before client implementation:**
+**Native HTTP interface — now frozen in DEVICE_SESSION_PROTOCOL.md / ADR-015; this T4 checklist is the backend scope, not a replacement for the corrected T5 Web handoff:**
 
 - `POST /api/auth/sessions`: `{password, device_name}` → `{session_id, access_token, refresh_token, access_expires_at, refresh_expires_at}`.
-- `POST /api/auth/sessions/refresh`: `{session_id, refresh_token}` → new token envelope. Initial implementation uses strictly one-use refresh; a lost success response requires fresh login, with protected drafts retained. No custom deterministic token/replay recovery protocol is frozen by this plan.
+- `POST /api/auth/sessions/refresh`: `{session_id, refresh_token}` → new token envelope. Native implementation uses strictly one-use refresh; a lost native/API→BFF success acknowledgement requires fresh login, with protected drafts retained. Web delivery loss after an acknowledged BFF swap instead follows ADR-016 metadata recovery. No custom deterministic token/replay recovery protocol is frozen by this plan.
 - `GET /api/auth/sessions`: authenticated metadata only; `DELETE /api/auth/sessions/{session_id}` and `DELETE /api/auth/sessions` revoke one/all, including current session.
 - Access TTL 15 minutes; absolute refresh/session lifetime 30 days, not extended by rotation. Tokens opaque random 256-bit or greater, server stores only digests. All endpoints no-store; no plaintext tokens/password/auth headers in logs/errors.
 
@@ -173,21 +173,20 @@ Maintain `docs/v1/MULTICLIENT_ACCEPTANCE.md` with commit, contract hash, command
 
 ### T5 — Web migration without long-lived password persistence
 
-**Owner:** auth/Web. **Dependencies:** T3/T4.
+**Owner:** auth/Web; root integrates shared editor files and owns activation. **Dependencies:** integrated T3/T4 and note-UI revision/conflict/unknown-save behavior; deployment owner separately proves coupled frontend/API restart.
 
-**Files:** Modify `frontend/src/lib/api/client.ts`, `frontend/src/lib/auth-token.ts`, `frontend/src/lib/stores/auth-store.ts`, `frontend/src/lib/hooks/use-auth.ts`, `frontend/src/lib/types/auth.ts`, `frontend/src/app/api/_sse-proxy.ts`, `frontend/src/app/api/personal/imports/portable/route.ts`; create `frontend/src/app/api/auth/[...path]/route.ts`, `frontend/src/lib/api/session-proxy.ts`, `frontend/src/lib/api/session-proxy.test.ts`, `frontend/src/lib/stores/auth-store.test.ts`. Add all new UI keys to each existing locale. Also modify `frontend/src/lib/api/search.ts`, `frontend/src/lib/api/source-chat.ts`, `frontend/next.config.ts`, `frontend/src/lib/api/workbench.ts`, `frontend/src/components/workbench/StudyWorkbench.tsx` and their existing tests; direct fetch consumers must not retain password Bearer.
+**Executable handoff:** [WEB_SESSION_IMPLEMENTATION_PLAN](WEB_SESSION_IMPLEMENTATION_PLAN.md) is the corrected six-task plan with complete path audit, interfaces, file ownership and test cases. [ADR-016](../7-DEVELOPMENT/decisions/ADR-016-memory-bff-sessions.md) and [protocol Web sections 5–6](DEVICE_SESSION_PROTOCOL.md#5-web-bff-boundary-and-transport-rules) freeze the adopted design. Native protocol v1 is unchanged.
 
-**Interface:** Browser uses same-origin HttpOnly Secure SameSite cookies managed by a constrained Next auth proxy; browser JS never sees refresh tokens. Proxy supplies API Bearer server-side, never to a user-selected URL. Keep existing `apiClient` as browser entry. Cookies are not a substitute for CSRF/Origin validation.
+**Interface:** Keep existing `apiClient`. One stable opaque HttpOnly Secure SameSite cookie identifies a bounded single-process BFF memory record holding only the current native access/refresh pair. Browser never receives those tokens. Only new login sets the cookie; refresh/status/resources/logout do not. Exact Origin+CSRF, fixed upstream and no browser/platform Cookie forwarding remain mandatory. This is current credential custody, not raw refresh-result replay storage.
 
-- [ ] Write tests for migration deleting `auth-storage` password/token remnants, cold reload, single-flight refresh, logout/revocation, duplicate refresh and no sensitive value in localStorage/HTML/logs.
-- [ ] Implement cross-tab/server-side single-flight for refresh; strict one-use lost response causes re-login with protected drafts preserved, not grace replay or automatic writes. No pending plaintext token persistence or bespoke cryptographic recovery protocol in this batch.
-- [ ] Treat cookie migration as one atomic activation: current personal middleware allows missing Origin, SSE proxy strips Origin, portable proxy strips Cookie, axios has `withCredentials: false`, and search/chat direct fetches read the password. Write actual-header integration tests for every route. Cookie-auth mutations reject missing/null/foreign Origin and require CSRF defense; native explicit Bearer requests can omit Origin, but mixed credentials are rejected. Forward validated Origin and only intended cookies; do not trust fabricated identity headers.
-- [ ] Write proxy tests for allowlisted API paths, login/refresh responses with no token JSON leakage to browser, forbidden Origin/CSRF, no arbitrary upstream host, streaming and portable ZIP limits. Confirm multi-cookie forwarding and deletion paths.
-- [ ] Implement the cookie/Bearer bridge for **all** existing browser API paths, including explicit streaming/portable routes; replace catch-all rewrite only after equivalence tests pass. Do not leave any raw-password fetch path bypassing `apiClient` unexamined.
-- [ ] Update note saves to send expected revision and preserve editable local content on 409; show explicit reload/compare action rather than overwrite. Block multiclient mode if compatibility omission remains.
-- [ ] Run `cd frontend && npm run lint && npm run test && npm run build`; run existing `scripts/v1/browser_check.py` with its documented supported invocation against a synthetic instance. Verify direct API/native Bearer remains supported independently of Web cookies; commit `feat(web): migrate browser login to protected device sessions`.
+- [ ] Implement validated runtime mode/same-origin config and explicit method/path policy, including `/config`, absolute Axios overrides, both direct SSE consumers, portable streams and protected audio/download URLs.
+- [ ] Implement bounded server singleflight with terminal-deadline refresh suppression and expiry-aware `AUTH_REQUIRED` handling. API→BFF ambiguous refresh retires/requires login; BFF→browser loss after acknowledged swap recovers metadata without another rotation. No resource replay.
+- [ ] Implement admission-order login fencing, post-await identity/deadline checks, one-shot bounded known-orphan cleanup and captured target/fence boundaries. Cross-session effects require fresh authority; own local retirement works offline. Unknown create commits/unseen login requests are not claimed canceled.
+- [ ] Remove device-mode password persistence, browser Bearer paths and global mutation retries. Keep mounted drafts/files/revisions/conflicts/unknown-save IDs on expiry; preserve integrated note UI rather than replacing it. Logout emits no delayed deletion cookie and distinguishes local retirement from confirmed remote revocation.
+- [ ] Run actual Next/browser cookie-ordering and loss-hop cases plus all existing JSON/upload/download/PDF/SSE/portable flows; test no token leakage, exact Origin/CSRF and native mixed-source rejection. Run frontend lint/tests/build and supported synthetic browser harness; follow the six task commit/review boundaries.
+- [ ] Before activation, prove coupled frontend/API restart on the supported deployment, including unclean frontend failure at backend cap32. Another valid client or an authorized coupled restart recovers stranded slots; no new password-admin endpoint, durable token store or cap increase.
 
-**Gate:** Existing Web flow/login/upload/download/event/import remain functional; old persisted global password removed and legacy password Bearer disabled for trial. Cookie approach must pass Origin security review before deployment.
+**Gate:** Defaults stay `legacy_password`; implementation does not authorize activation. Matched Web/backend mode/version, actual-browser security/draft evidence, independently reviewed implementation and executable lifecycle evidence are required. Private-ingress/native, Docker/toolchain and actual-secret gates remain separate; no mixed old/new Web deployment claim.
 
 ### T6 — Platform-free typed SDK and transport contract
 
@@ -292,7 +291,7 @@ Maintain `docs/v1/MULTICLIENT_ACCEPTANCE.md` with commit, contract hash, command
 
 - Coverage checked against architecture sections 1–12: deployment T1/T11; two ingress gates T2; auth T4/T5; contracts/concurrency T3; SDK/adapters/MVP T6–T10; backup T11; baseline/ownership T0; platform/release/live capability gates T12.
 - Corrected sequencing: device auth, Web migration and native ingress precede connected clients; Docker static work and ingress research remain parallel. Runtime verification is separate from source scaffolding.
-- Corrected token replay ambiguity after independent auth review: initial strict one-use refresh deliberately requires re-login on lost response, protects drafts and does not retry writes; advanced recoverable protocols are deferred to explicit security review. Restart invalidates sessions conservatively.
+- Corrected token replay ambiguity after independent auth review: strict one-use native/API→BFF ambiguity requires re-login, protects drafts and does not retry writes. ADR-016 separately recovers browser delivery loss after acknowledged BFF swap through current memory custody, not token replay. API restart invalidates sessions; Web activation also requires coupled frontend/API restart.
 - Corrected multi-device data loss: conditional note writes are a prerequisite, with missing revision rejected in multiclient mode and existing Web migrated first.
 - Corrected authorization conflation: no approval pause for this plan; new external/network/credential/toolchain/distribution actions still require their specific authority.
 - Remaining environmental uncertainties are explicit gates, not unassigned implementation details: supported dot tunnel/native auth, Docker host, macOS/Xcode, HarmonyOS SDK/device and actual model/Google proof.

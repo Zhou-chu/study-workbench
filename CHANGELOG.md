@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Memory-only Web session core (2026-10-21).** Add bounded server-side session custody, single-flight refresh, pending-login fences, explicit retirement and one-shot orphan cleanup behind the unactivated Web-session plan. This core is not yet wired to HTTP routes or deployed.
+- **Gated Web session policy (2026-10-21).** Define validated same-origin device-mode configuration and an exact reviewed API route/method policy. Bootstrap is credentialless and redirect-rejecting; legacy mode remains the default. This does not yet wire or activate the browser session proxy.
 - **Opt-in device-session backend (2026-10-21).** Add digest-only device sessions, one-use refresh, revocation, strict credential-file observation, transactional SurrealDB storage and fail-closed schema validation. Existing legacy authentication remains the default; browser migration and runtime activation are not included.
 - **Atomic editorial note revisions (2026-10-21).** Add conditional note writes across personal, legacy and domain paths, transactional snapshot consistency, deletion-race guards, strict archive revision preservation and explicit capability status. Legacy compatibility remains the default until both clients and session activation pass acceptance.
 - **Multi-client foundations (2026-10-21).** Add static four-service deployment definitions with file-fed secrets and explicit public-Origin checks; deterministic actual OpenAPI snapshots and offline fixtures; and exact-tree canonical private-branch export with implicit Git fetching disabled. Docker runtime and native-client acceptance remain pending.

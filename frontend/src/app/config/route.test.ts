@@ -156,3 +156,52 @@ describe('GET /config', () => {
     expect(body.apiUrl).toBe('http://localhost:5055')
   })
 })
+
+describe('GET /config session mode', () => {
+  const originalEnv = process.env
+  beforeEach(() => {
+    process.env = { ...originalEnv,
+      STUDY_WORKBENCH_AUTH_MODE: 'device_sessions',
+      STUDY_WORKBENCH_WEB_ORIGIN: 'https://workbench.example',
+      STUDY_WORKBENCH_AUTH_ORIGINS: 'https://workbench.example',
+      INTERNAL_API_URL: 'http://private-api:5055',
+      API_URL: 'https://untrusted-api.example',
+      NEXT_PUBLIC_API_URL: 'https://untrusted-build-api.example',
+    }
+    delete process.env.STUDY_WORKBENCH_WEB_NATIVE_PASSTHROUGH
+    delete process.env.STUDY_WORKBENCH_WEB_ALLOW_INSECURE_LOOPBACK
+  })
+  afterEach(() => { process.env = originalEnv })
+
+  it('publishes only relative browser API and nonsecret Web mode/version metadata', async () => {
+    const response = await GET(new NextRequest('https://attacker.example/config', {
+      headers: { host: 'attacker.example', 'x-forwarded-proto': 'http', cookie: 'platform=secret', authorization: 'Bearer secret' },
+    }))
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ apiUrl: '', auth_mode: 'device_sessions', web_session_protocol: 'bff-memory-v1' })
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(response.headers.get('x-content-type-options')).toBe('nosniff')
+    expect(response.headers.get('set-cookie')).toBeNull()
+  })
+
+  it.each(['', 'device-session', 'unknown'])('fails closed for explicit mode %j without exposing config values', async mode => {
+    process.env.STUDY_WORKBENCH_AUTH_MODE = mode
+    const response = await GET(new NextRequest('https://workbench.example/config'))
+    expect(response.status).toBe(503)
+    expect(await response.json()).toEqual({ error: { code: 'AUTH_UNAVAILABLE', message: 'Web session configuration unavailable' } })
+    expect(response.headers.get('cache-control')).toBe('no-store')
+  })
+
+  it('fails closed for invalid origins, not falling back to legacy URL detection', async () => {
+    process.env.STUDY_WORKBENCH_WEB_ORIGIN = 'https://wrong.example'
+    const response = await GET(new NextRequest('https://workbench.example/config', { headers: { host: 'fallback.example' } }))
+    expect(response.status).toBe(503)
+    expect(await response.text()).not.toContain('fallback.example')
+  })
+
+  it('adds explicit legacy metadata without changing the legacy URL selection', async () => {
+    process.env.STUDY_WORKBENCH_AUTH_MODE = 'legacy_password'
+    const response = await GET(new NextRequest('https://workbench.example/config'))
+    expect(await response.json()).toEqual({ apiUrl: 'https://untrusted-api.example', auth_mode: 'legacy_password', web_session_protocol: null })
+  })
+})

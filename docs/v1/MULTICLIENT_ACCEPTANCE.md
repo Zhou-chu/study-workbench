@@ -74,3 +74,25 @@ Dedicated real SurrealDB 2.3.10 tests passed **33 checks** including 17 damaged-
 Schema metadata is checked without caching before every store operation on the same connection, intentionally adding query overhead. Concurrent administrative DDL/restore between metadata validation and the transaction remains unsupported; no atomic DDL defense is claimed. Accepted new deployment definitions pin 2.3.10; older root Docker configurations are not this deployment's accepted path. Actual container execution remains NOT RUN.
 
 Legacy password mode remains the default, empty/unknown modes fail closed, and no user credentials/sessions were created or activated. Browser migration, protected in-place reauthentication, private ingress, Docker runtime and each native platform still need their own acceptance.
+
+
+## Web policy preparation checkpoint (2026-10-21 19:26 UTC)
+
+ADR-016 and the standalone Web implementation plan adopt a stable opaque HttpOnly BFF handle with bounded current native-token custody in process memory. Independent design review corrected terminal-deadline refresh storms, pruned-access recovery, login admission ordering, orphan cleanup and authority before cross-session effects. This supersedes earlier three-cookie rotation proposals; native protocol version 1 is unchanged. Coupled frontend/API restart is an additional activation requirement, not yet implemented or verified.
+
+Reviewed Task 1 commit `428ab5270a04cd8424fd3d84151842fc85c71c0f` is integrated at `6829f49ef3530b1aa0b70ce1beaf39c835fd734a`. Its branch passed **681 frontend tests / 56 files**, production build, installed local TypeScript and focused ESLint; independent review reran **285 focused tests**, checked **146 route/method entries**, and found no server configuration references in **49 browser bundles**. The shared test-only server-marker alias is present in integration but was not required by that branch. Combined frontend acceptance will rerun after the memory-core merge; branch results are not relabeled as a new combined suite.
+
+An `npx tsc` attempt was denied because it could resolve/download a package. No retry of package resolution or installation occurred; the already-installed TypeScript CLI was verified and executed directly with Node. Existing public Google font assets were permitted only for the normal build, which passed without source/vendor/dependency changes.
+
+The existing `modelsApi.get(id)` has no actual `GET /api/models/{id}` backend contract and remains deliberately denied by device policy. Backend mode readiness enforcement, actual cookie proxy/store wiring, browser migration and activation are still pending. The memory-core implementation is isolated and under test, not yet accepted.
+
+The full-service migration preflight branch is unmerged and unaccepted: its independent review was blocked by safety review. Restricted probing was not retried through another route; this does not block unrelated Web work. Its passing focused tests alone do not satisfy the independent review or actual restore gate.
+
+
+## Memory BFF core checkpoint (2026-10-21 19:34 UTC)
+
+Reviewed source `0d72b971da910971e9dcd860ab75f787c6696b3d` was cherry-picked as `855358f93025146958e5e4ad59bb5ede7a77e428`; the branch's separate shared test-alias commit was not duplicated. Independent review reran **43 focused tests** and approved the core. Branch evidence: **457 tests / 56 files**, installed local TypeScript and focused ESLint passed. Combined canonical policy/core evidence: **724 tests / 57 files in 73.89 seconds**, installed local TypeScript and focused core/policy ESLint passed. No production-build claim is added for the unwired core; actual route bundling will be checked with Task 3.
+
+The bounded core keeps physical capacity occupied when an adapter ignores abort, instead of accumulating hidden outstanding requests after logical timeout. Captured native revocation deliberately does not auto-clean the caller first; the one-use proof retains request-local authority for the single management call. These are synthetic state-machine properties, not actual browser-cookie, backend-hop, Docker restart or deployment evidence.
+
+Tasks 3 and 4/5 now proceed in isolated server-proxy and browser-recovery branches against the frozen Web-only response contract in the implementation plan. Legacy remains the default. No actual credentials, sessions or mode changes occurred.

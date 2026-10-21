@@ -17,7 +17,10 @@ export default defineConfig({
     css: false,
     setupFiles: ['./src/test/setup.ts'],
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': path.resolve(__dirname, './src'),
+      // Tests may exercise server modules; Next still enforces the production
+      // server-only import boundary. This alias is scoped to Vitest only.
+      'server-only': path.resolve(__dirname, './node_modules/next/dist/compiled/server-only/empty.js')
     },
     coverage: {
       provider: 'v8',
