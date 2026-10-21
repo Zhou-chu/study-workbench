@@ -1,0 +1,1 @@
+{"status": "offline_contract_ready", "cases": 30, "distribution": {"single": 12, "multi": 6, "no_evidence": 6, "scope_injection": 6}, "live_verified": false, "external_calls": 0, "reason": "CLI validates public fixtures only; provider budget/retry and authorization gates remain open"}

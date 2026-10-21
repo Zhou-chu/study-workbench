@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Offline model acceptance preparation (2026-10-21).** Add 30 public synthetic grounding cases, an opt-in simulation runner with call/reservation limits and fail-closed live mode, and real grounded-service contract tests. Semantic review remains manual; no real model quality or billing guarantee is claimed.
 - **StudyWorkbench gap-closure plan (2026-10-21).** Document phased acceptance for a dot-hosted private test deployment, real model and Google integration, strict-history isolation, and later deep-reading work. This is planning only, not a new runtime capability.
 - **Repeatable private-repository snapshots (2026-10-21).** An offline exporter preserves tracked source bytes/modes and licenses, produces deterministic inventories and incremental changes, excludes automation/runtime paths, and verifies the complete Git tree before publication.
 - **StudyWorkbench local evidence maintenance (2026-10-20).** Durable authenticated reparse and historical-citation revalidation endpoints and reader controls compare retained originals with a fresh CPU extraction. Historical IDs and locators remain stable; mismatches stay unverified, and imported revalidation claims are discarded.

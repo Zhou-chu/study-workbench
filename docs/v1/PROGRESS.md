@@ -133,3 +133,13 @@ Actual Chinese Firefox at 390×844 passed genuine queued export (worker delibera
 ## 2026-10-21 gap-closure planning checkpoint
 
 The user-requested [gap-closure plan](GAP_CLOSURE_PLAN.md) prioritizes the current dot cloud computer as the full-stack single-user test server, with an owner-private Sites ingress through supported private connectivity. Tunnel registration for this exact runtime remains an unresolved setup gate; no deployment or new credentials were created. The plan separates real independent-model evaluation, application Google login, remote migration/audio, strict-history isolation, and V1.1 deep-reading scope. This is documentation only, not additional runtime acceptance.
+
+## 2026-10-21 offline model acceptance checkpoint (g)
+
+Implemented the offline portion of gap-plan Tasks 0/2: a fixed CC0 synthetic corpus with 30 questions (12 single-source, 6 multi-source, 6 insufficient-evidence, 6 scope/injection), exact expected evidence, and a simulation-only acceptance runner. Its default is non-executing; the CLI validates fixtures without credentials or network and explicitly rejects live mode. Integer call/reservation gates include primers and failures, stop on errors or malformed turns, and never claim actual provider cost bounds. Semantic review remains pending even when structural citations validate.
+
+Tests include the real GroundedChatService with memory storage, actual local extraction and an injected fake model; all four changed-scope cases keep old questions/evidence out of the new scope. This is not real inference. See [live acceptance specification](LIVE_ACCEPTANCE_SPEC.md). Real provider binding, retry/cost enforcement, account authorization, PDF/scanned-document evaluation and human semantic scoring remain open.
+
+Independent review passed the focused 28-test set. Final full backend: **1359 passed, 1 opt-in skip, 2 existing warnings**; mypy **217 source files**, Ruff check/format passed. Evidence is recorded under `evidence/continuation-2026-10-21g/backend/`; no frontend production code changed, so prior frontend counts remain historical rather than a new run. No services, Google session, model credentials, paid resources or public listener were started in this checkpoint.
+
+The new Docker and Android/HarmonyOS 6/iPadOS scope is at architecture planning: the current Docker/Compose definitions are not yet a verified StudyWorkbench deployment; per-platform client branches have not been created. Sites can bind private HTTP tunnels, but the current surface still lacks a discovered supported registration procedure for this exact dot cloud. Neither a private URL nor completed clients are claimed.
