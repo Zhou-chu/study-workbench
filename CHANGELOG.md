@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Constrained Web session proxy (2026-10-21).** Add gated cookie-to-Bearer auth/resource handlers with exact Origin/CSRF policy, backend-mode checks, bounded auth messages and streamed uploads/downloads/events. Legacy remains the default; browser-client migration, actual browser acceptance and activation are still pending.
 - **Memory-only Web session core (2026-10-21).** Add bounded server-side session custody, single-flight refresh, pending-login fences, explicit retirement and one-shot orphan cleanup behind the unactivated Web-session plan. This core is not yet wired to HTTP routes or deployed.
 - **Gated Web session policy (2026-10-21).** Define validated same-origin device-mode configuration and an exact reviewed API route/method policy. Bootstrap is credentialless and redirect-rejecting; legacy mode remains the default. This does not yet wire or activate the browser session proxy.
 - **Opt-in device-session backend (2026-10-21).** Add digest-only device sessions, one-use refresh, revocation, strict credential-file observation, transactional SurrealDB storage and fail-closed schema validation. Existing legacy authentication remains the default; browser migration and runtime activation are not included.

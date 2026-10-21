@@ -96,3 +96,12 @@ Reviewed source `0d72b971da910971e9dcd860ab75f787c6696b3d` was cherry-picked as 
 The bounded core keeps physical capacity occupied when an adapter ignores abort, instead of accumulating hidden outstanding requests after logical timeout. Captured native revocation deliberately does not auto-clean the caller first; the one-use proof retains request-local authority for the single management call. These are synthetic state-machine properties, not actual browser-cookie, backend-hop, Docker restart or deployment evidence.
 
 Tasks 3 and 4/5 now proceed in isolated server-proxy and browser-recovery branches against the frozen Web-only response contract in the implementation plan. Legacy remains the default. No actual credentials, sessions or mode changes occurred.
+
+
+## Web server proxy checkpoint (2026-10-21 20:09 UTC)
+
+Task 3 source `ed080f38b67f07c06e885331d32aa5806c8f4450` passed independent review and was integrated at `da0bde23f23fa7801f7ff09c5ca1a0893a2ef16c`. Integration's frontend tree is byte-identical to that tested source. Final branch checks: **862 tests / 60 files in 75.81 seconds**, installed TypeScript, full ESLint with **0 errors / 7 unchanged warnings**, and production Next build passed. Four independent narrow regressions verified the review fixes on the final commit. Earlier pre-fix 853-test evidence is historical, not the accepted final result.
+
+Review fixed three issues: legacy frontend/backend mode mismatch now rejects every dispatch before credentials/body forwarding; a known readiness failure during due refresh preserves sanitized 503 rather than falsely reporting authentication rejection; maintenance cleanup diagnostics cannot contaminate an unrelated request's result. Legacy mode adds one fresh credential-free status check per dispatch, deliberately not cached across backend replacement.
+
+Auth input/upstream envelopes/status/error bodies are bounded at 8 KiB; session lists/probes at 256 KiB, without assuming only 32 historical rows or silently truncating. A larger history yields unavailable. Resource JSON/SSE/upload/download bodies remain streams under the API's existing declared/chunked input limits; portable import keeps its separate budget. Actual browser, HTTP loss-hop, production HTTPS/private ingress, coupled restart and activation are still unverified. Tasks 4/5 remain in an isolated branch under corrective review.
