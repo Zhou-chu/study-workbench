@@ -1,0 +1,61 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> frontend@0.1.0 prebuild
+> node scripts/prepare-pdf-assets.mjs
+
+Prepared local PDF.js 6.4.299 worker and assets
+
+> frontend@0.1.0 build
+> next build
+
+▲ Next.js 16.3.8 (Turbopack)
+✓ Running next.config.ts took 87ms
+[Next.js Rewrites] Proxying /api/* to http://127.0.0.1:5055/api/*
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "100mb"
+
+[Next.js Rewrites] Proxying /api/* to http://127.0.0.1:5055/api/*
+  Creating an optimized production build ...
+✓ Compiled successfully in 1145ms
+  Running TypeScript ...
+  Finished TypeScript in 5.0s ...
+  Collecting page data using 8 workers ...
+  Generating static pages using 8 workers (0/15) ...
+  Generating static pages using 8 workers (3/15)
+  Generating static pages using 8 workers (7/15)
+  Generating static pages using 8 workers (11/15)
+✓ Generating static pages using 8 workers (15/15) in 1060ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /advanced
+├ ƒ /api/personal/imports/portable
+├ ƒ /api/search/ask
+├ ƒ /api/sources/[sourceId]/chat/sessions/[sessionId]/messages
+├ ƒ /config
+├ ○ /dev/design
+├ ○ /login
+├ ○ /notebooks
+├ ƒ /notebooks/[id]
+├ ƒ /notebooks/[id]/study
+├ ○ /podcasts
+├ ○ /search
+├ ○ /settings
+├ ○ /settings/models
+├ ○ /sources
+├ ƒ /sources/[id]
+└ ○ /transformations
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

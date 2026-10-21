@@ -23,6 +23,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from api.auth import PasswordAuthMiddleware
 from api.middleware import MaxBodySizeMiddleware, get_max_upload_size_bytes
 from api.personal_security import PersonalSecurityMiddleware
+from api.portable_limits import get_portable_limits
 from api.routers import (
     auth,
     capabilities,
@@ -255,8 +256,13 @@ if CORS_IS_DEFAULT_WILDCARD:
 else:
     logger.info(f"CORS allowed origins: {CORS_ALLOWED_ORIGINS}")
 
-# Add password authentication middleware first
-# Exclude /api/auth/status and /api/config from authentication
+# Body limits run after password authentication but before multipart parsing.
+# Only the authenticated portable import route gets the portable ZIP budget.
+app.add_middleware(
+    MaxBodySizeMiddleware,
+    max_body_size=MAX_UPLOAD_SIZE_BYTES,
+    portable_body_size=get_portable_limits().max_request_bytes,
+)
 app.add_middleware(
     PasswordAuthMiddleware,
     excluded_paths=[
@@ -269,15 +275,6 @@ app.add_middleware(
         "/api/config",
     ],
 )
-
-# Reject oversized request bodies before they reach auth or routing - added
-# after PasswordAuthMiddleware (so it wraps around it) so a too-large request
-# is rejected before spending any work checking credentials.
-logger.info(
-    f"Max request body size: {MAX_UPLOAD_SIZE_BYTES / (1024 * 1024):g}MB "
-    "(set OPEN_NOTEBOOK_MAX_UPLOAD_SIZE_MB to change)"
-)
-app.add_middleware(MaxBodySizeMiddleware, max_body_size=MAX_UPLOAD_SIZE_BYTES)
 
 app.add_middleware(PersonalSecurityMiddleware)
 

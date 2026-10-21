@@ -1,4 +1,9 @@
 export const workbenchEn = {
+  portableLimitsHint: 'Restore checks the current server size limit before upload. Export and archive contents remain subject to server limits.',
+  portableLimitsLoading: 'Checking the current server limits…',
+  portableLimitsError: 'Server limits could not be verified. Retry before restoring; no file has been uploaded.',
+  packageTooLarge: 'This package is {{bytes}} bytes; the server limit is {{limit}} bytes. Choose a smaller package or ask the server administrator to increase the limit.',
+
   documentTools: 'Document tools', exportDetails: 'Project backup',
   googleChecking: 'Checking Google connection and strict source-scope capability…',
   googleCheckFailed: 'Google connection or capability could not be checked. Refresh the connection before asking.',
@@ -29,6 +34,11 @@ export const workbenchEn = {
   states: { queued: 'Queued', running: 'Running', waiting_remote: 'Waiting for Google', succeeded: 'Succeeded', failed: 'Failed', needs_reauth: 'Sign-in required', submission_unknown: 'Submission uncertain', cancelled_local: 'Local waiting stopped', ready: 'Searchable', completed: 'Searchable', pending: 'Waiting', extracting: 'Extracting', needs_ocr: 'OCR needed', partial: 'Partially extracted', unsupported: 'Unsupported file', available: 'Available', missing: 'Missing', unverified: 'Unverified' },
 }
 export const workbenchZh: typeof workbenchEn = {
+  portableLimitsHint: '恢复前会检查服务端当前的大小限制。导出及项目包内容仍受服务端限制。',
+  portableLimitsLoading: '正在检查服务端当前限制…',
+  portableLimitsError: '无法确认服务端限制。请重试后再恢复；尚未上传文件。',
+  packageTooLarge: '此项目包为 {{bytes}} 字节，服务端上限为 {{limit}} 字节。请选择更小的项目包，或请管理员提高上限。',
+
   documentTools: '原件与引用维护', exportDetails: '项目备份',
   googleChecking: '正在检查 Google 连接与严格选源问答能力…',
   googleCheckFailed: '无法检查 Google 连接或操作能力，请先刷新连接状态再提问。',

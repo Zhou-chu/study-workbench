@@ -120,11 +120,16 @@ Import discards all supplied extraction revalidation reports, even after a prior
 
 Defaults, tunable through environment variables:
 
-- `STUDY_WORKBENCH_PORTABLE_MAX_BYTES=1073741824` expanded bytes
+- `STUDY_WORKBENCH_PORTABLE_MAX_BYTES=1073741824` bounds both physical ZIP bytes and total expanded member bytes (including `manifest.json`)
 - `STUDY_WORKBENCH_PORTABLE_MAX_ENTRIES=10000`
 - `STUDY_WORKBENCH_PORTABLE_MAX_RATIO=200`, with a 1 MiB small-member allowance
 - Manifest maximum 8 MiB; each entity metadata member maximum 32 MiB
-- The existing HTTP request-body/upload cap may impose a lower input limit
+- Exact authenticated `POST /api/personal/imports/portable` accepts that ZIP budget plus 1 MiB bounded multipart overhead; all other routes retain `OPEN_NOTEBOOK_MAX_UPLOAD_SIZE_MB` (100 MiB default).
+- `GET /api/personal/portable/limits` requires authentication and returns numeric `max_archive_bytes`, `max_expanded_bytes`, `max_entity_bytes`, `max_manifest_bytes`, `max_request_bytes`, `multipart_overhead_bytes`, `max_entries`, and `max_compression_ratio`. Frontend preflight uses the archive-byte limit; server validation remains authoritative.
+
+Export and import enforce the same entity, manifest, inventory and size limits. ZIP headers count toward the physical ZIP limit, so an expanded payload at the full budget may still be too large to export. Oversized exports fail the durable job with an actionable error and publish no download; reduce project content or increase the shared budget (the entity metadata cap remains 32 MiB). ZIP_STORED export avoids compression-ratio rejection even for repetitive text. Configuration changes require API and worker restart; configure both identically. Nonpositive, malformed or JSON-unsafe numeric settings fail startup rather than silently disabling bounds.
+
+Authentication precedes body reads. Both declared Content-Length and streamed bytes are bounded. Before constructing `ZipFile`, a bounded central-directory preflight counts actual directory records (not only the declared count), including ZIP64 archives, so excessive entries cannot allocate unbounded `ZipInfo` objects first. The isolated preflight relies on stdlib ZIP end-record helpers and is covered by ZIP64/compatibility tests; retain those tests when upgrading Python. The portable parser rejects non-multipart content before reading the body and accepts exactly one file part named `file` and no text fields; rejected multipart uploads close their temporary files. A dedicated Next.js POST route streams portable imports to the internal API without buffering or using the general 100 MiB rewrite-clone path. External reverse proxies can still impose lower limits; configure the protected portable import path with sufficient body allowance before relying on large browser restores. The application limits endpoint cannot discover external proxy limits.
 
 ## Fresh restore and failure handling
 

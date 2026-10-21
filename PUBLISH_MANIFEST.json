@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_commit": "0f740fdae29e6d35c4d12ba7fc8c173c8adeb1eb",
+  "source_commit": "b913f13efd06e08985f6b5ea09fb5abe322e7b35",
   "method": "git archive; byte/mode parity verified; no history or network",
   "presentation_only_changes": [
     "README.md",
@@ -217,6 +217,16 @@
       "path": "docs/v1/evidence/continuation-2026-10-21b/frontend/coverage-final.json",
       "reason": "raw coverage omitted; summaries retained",
       "bytes": 1780141
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21d/portable/next/browser/next-browser-restore-complete.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 164296
+    },
+    {
+      "path": "docs/v1/evidence/continuation-2026-10-21d/portable/next/browser/next-browser-restore-confirm.png",
+      "reason": "browser screenshot evidence omitted",
+      "bytes": 166419
     },
     {
       "path": "docs/v1/evidence/coverage/backend/baseline/coverage.json",

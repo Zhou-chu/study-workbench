@@ -18,6 +18,7 @@ export const queryClient = new QueryClient({
 })
 
 export const QUERY_KEYS = {
+  portableLimits: ['personal', 'portable', 'limits'] as const,
   workbench: (id: string) => ['personal', 'workspace', id] as const,
   personalTurns: (id: string) => ['personal', 'turns', id] as const,
   notebooklm: ['personal', 'notebooklm'] as const,

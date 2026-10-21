@@ -1,0 +1,39 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________ test_import_entry_preflight_precedes_zipfile_allocation ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-60/test_import_entry_preflight_pr0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f27f92e58b0>
+
+    def test_import_entry_preflight_precedes_zipfile_allocation(tmp_path, monkeypatch):
+        archive = io.BytesIO()
+        with zipfile.ZipFile(archive, "w") as package:
+            for index in range(3):
+                package.writestr(f"member-{index}", b"")
+        service = PortableService(store=MemoryStore(), data_root=tmp_path)
+        service.max_entries = 2
+
+        def forbidden_constructor(*args, **kwargs):
+            raise AssertionError("Oversized directory must fail before ZipFile allocation")
+
+        monkeypatch.setattr(zipfile, "ZipFile", forbidden_constructor)
+        with pytest.raises(InvalidInputError, match="entry count"):
+>           service._read_archive(archive, tmp_path / "stage")
+
+tests/test_v1_portable_roundtrip.py:1108:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+api/portable_service.py:957: in _read_archive
+    package = zipfile.ZipFile(archive)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (<_io.BytesIO object at 0x7f27f918eac0>,), kwargs = {}
+
+    def forbidden_constructor(*args, **kwargs):
+>       raise AssertionError("Oversized directory must fail before ZipFile allocation")
+E       AssertionError: Oversized directory must fail before ZipFile allocation
+
+tests/test_v1_portable_roundtrip.py:1104: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_v1_portable_roundtrip.py::test_import_entry_preflight_precedes_zipfile_allocation
+1 failed in 0.67s

@@ -12,3 +12,10 @@ describe('protected download boundary', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/personal/exports/test/download', { responseType: 'blob', signal: undefined })
   })
 })
+
+it('fetches limits through the authenticated API client', async () => {
+  const data = { max_archive_bytes: 123 }
+  vi.mocked(apiClient.get).mockResolvedValueOnce({ data })
+  expect(await portableApi.limits()).toEqual(data)
+  expect(apiClient.get).toHaveBeenCalledWith('/personal/portable/limits')
+})

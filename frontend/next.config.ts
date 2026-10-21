@@ -15,10 +15,9 @@ const nextConfig: NextConfig = {
   ...(allowedDevOrigins && allowedDevOrigins.length > 0 ? { allowedDevOrigins } : {}),
 
   // Experimental features
-  // Type assertion needed: proxyClientMaxBodySize is valid in Next.js 15 but types lag behind
   experimental: {
-    // Increase proxy body size limit for file uploads (default is 10MB)
-    // This allows larger files to be uploaded through the /api/* rewrite proxy to FastAPI
+    // Bound Next.js request-body cloning for external rewrites (default is 10MB).
+    // Portable restores use a dedicated streaming App Route, not this buffered proxy.
     proxyClientMaxBodySize: '100mb',
   } as NextConfig['experimental'],
 

@@ -129,3 +129,14 @@ export interface RemoteSource { id: string; title: string; status?: string; orig
 export interface RemotePage<T> { items: T[]; next_cursor?: string | null; listing_complete?: boolean; completeness_note?: string | null }
 
 export interface RemoteArtifact { id: string; title: string; kind: string; status: string; remote_source_ids: string[] }
+
+export interface PortableLimits {
+  max_archive_bytes: number
+  max_expanded_bytes: number
+  max_entity_bytes: number
+  max_manifest_bytes: number
+  max_request_bytes: number
+  multipart_overhead_bytes: number
+  max_entries: number
+  max_compression_ratio: number
+}

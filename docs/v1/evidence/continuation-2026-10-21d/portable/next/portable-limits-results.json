@@ -1,0 +1,85 @@
+{
+  "status": "passed",
+  "transport": "next-standalone",
+  "fixture": "Public-domain deterministic 108 MiB of zero PCM samples plus valid WAV header; synthetic saved asset, NOT Google/model-generated audio",
+  "artifact_sha256": "9d0ed41a932905e2e4de7ec1515248920f7722edecb9772dc8589bec7e034602",
+  "artifact_bytes": 113246252,
+  "old_global_body_cap_bytes": 104857600,
+  "initial_archive": {
+    "archive_bytes": 113257860,
+    "archive_sha256": "bcb3effec3b50781c9967e832c1f8900d16af3aff38cea9406aa418b2ad4b5bd",
+    "manifest_members_verified": 21,
+    "expanded_bytes": 113255242,
+    "all_members_stored": true
+  },
+  "cases": [
+    {
+      "phase": "initial-import",
+      "import_http_status": 201,
+      "browser_restore": null,
+      "untrusted_origin_http_status": 403,
+      "import_archive_bytes": 113257860,
+      "headers_only_probe_transport": "direct-api",
+      "anonymous_headers_only_status": 401,
+      "global_source_upload_headers_only_status": 413,
+      "portable_over_budget_headers_only_status": 413,
+      "download_sha256": "9d0ed41a932905e2e4de7ec1515248920f7722edecb9772dc8589bec7e034602",
+      "download_bytes": 113246252,
+      "history_replay_disabled": true,
+      "limits": {
+        "max_archive_bytes": 1073741824,
+        "max_expanded_bytes": 1073741824,
+        "max_entity_bytes": 33554432,
+        "max_manifest_bytes": 8388608,
+        "multipart_overhead_bytes": 1048576,
+        "max_entries": 10000,
+        "max_compression_ratio": 200,
+        "max_request_bytes": 1074790400
+      },
+      "notebook_id": "notebook:5b550ae476cc488891bdde8e263fcbd5",
+      "artifact_id": "artifact_99f45f4ce51c4182b13b318334714957",
+      "worker_export": {
+        "archive_bytes": 113258240,
+        "archive_sha256": "13f5e690487129e33f0937cc3a03c4c703b16b3932c28d18918af8c74c1285b9",
+        "manifest_members_verified": 21,
+        "expanded_bytes": 113255622,
+        "all_members_stored": true
+      }
+    },
+    {
+      "phase": "fresh-db-restore",
+      "import_http_status": 201,
+      "browser_restore": {
+        "browser": "Firefox",
+        "real_ui_file_input": true,
+        "limits_http_status": 200,
+        "confirm_enabled_after_limits": true,
+        "import_http_status": 201,
+        "restored_link_visible": true,
+        "page_errors": []
+      },
+      "untrusted_origin_http_status": 403,
+      "import_archive_bytes": 113258240,
+      "headers_only_probe_transport": "direct-api",
+      "anonymous_headers_only_status": 401,
+      "global_source_upload_headers_only_status": 413,
+      "portable_over_budget_headers_only_status": 413,
+      "download_sha256": "9d0ed41a932905e2e4de7ec1515248920f7722edecb9772dc8589bec7e034602",
+      "download_bytes": 113246252,
+      "history_replay_disabled": true,
+      "limits": {
+        "max_archive_bytes": 1073741824,
+        "max_expanded_bytes": 1073741824,
+        "max_entity_bytes": 33554432,
+        "max_manifest_bytes": 8388608,
+        "multipart_overhead_bytes": 1048576,
+        "max_entries": 10000,
+        "max_compression_ratio": 200,
+        "max_request_bytes": 1074790400
+      },
+      "notebook_id": "notebook:2d301c38c324405898af7b41310b4dc7",
+      "artifact_id": "artifact_e4b8670f7dd04f908f0ed87f62eb824a"
+    }
+  ],
+  "scope": "Fresh native SurrealDB/API/worker, loopback ports (API5055 for production rewrites, otherwise random), public test-only credentials, allowlisted environment, dotenv disabled; no private files, model calls or external deployment."
+}

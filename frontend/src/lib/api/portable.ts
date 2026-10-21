@@ -1,6 +1,7 @@
 import apiClient from './client'
-import type { BridgeJob } from '@/lib/types/personal'
+import type { BridgeJob, PortableLimits } from '@/lib/types/personal'
 export const portableApi = {
+  limits: async () => (await apiClient.get<PortableLimits>('/personal/portable/limits')).data,
   export: async (notebookId: string) => (await apiClient.post<BridgeJob>(`/personal/notebooks/${encodeURIComponent(notebookId)}/exports`, { idempotency_key: crypto.randomUUID() })).data,
   restore: async (file: File) => {
     const form = new FormData()

@@ -2,6 +2,7 @@ import os
 
 from loguru import logger
 from starlette.datastructures import Headers
+from starlette.formparsers import MultiPartException
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 # Matches the file-size guidance already documented in
@@ -31,7 +32,7 @@ def get_max_upload_size_bytes() -> int:
     return int(mb * 1024 * 1024)
 
 
-class _RequestBodyTooLarge(Exception):
+class _RequestBodyTooLarge(MultiPartException):
     pass
 
 
@@ -50,24 +51,34 @@ class MaxBodySizeMiddleware:
     transfer-encoding.
     """
 
-    def __init__(self, app: ASGIApp, max_body_size: int) -> None:
+    def __init__(
+        self, app: ASGIApp, max_body_size: int, portable_body_size: int | None = None
+    ) -> None:
         self.app = app
         self.max_body_size = max_body_size
+        self.portable_body_size = portable_body_size
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
+        max_body_size = self.max_body_size
+        if (
+            self.portable_body_size is not None
+            and scope.get("method") == "POST"
+            and scope.get("path") == "/api/personal/imports/portable"
+        ):
+            max_body_size = self.portable_body_size
         headers = Headers(scope=scope)
         content_length = headers.get("content-length")
         if content_length is not None:
             try:
-                if int(content_length) > self.max_body_size:
+                if int(content_length) > max_body_size:
                     logger.warning(
                         f"Rejected {scope.get('method', '?')} {scope.get('path', '?')}: "
                         f"declared body of {content_length} bytes exceeds the "
-                        f"{self.max_body_size}-byte limit"
+                        f"{max_body_size}-byte limit"
                     )
                     await _send_413(send)
                     return
@@ -76,20 +87,29 @@ class MaxBodySizeMiddleware:
 
         total_size = 0
         response_started = False
+        body_exceeded = False
 
         async def send_wrapper(message: Message) -> None:
             nonlocal response_started
+            # Multipart parsing converts MultiPartException to 400 after closing
+            # spooled files. Preserve that cleanup, but report the actual 413.
+            if body_exceeded:
+                if not response_started:
+                    response_started = True
+                    await _send_413(send)
+                return
             if message["type"] == "http.response.start":
                 response_started = True
             await send(message)
 
         async def receive_wrapper() -> Message:
-            nonlocal total_size
+            nonlocal total_size, body_exceeded
             message = await receive()
             if message["type"] == "http.request":
                 total_size += len(message.get("body") or b"")
-                if total_size > self.max_body_size:
-                    raise _RequestBodyTooLarge()
+                if total_size > max_body_size:
+                    body_exceeded = True
+                    raise _RequestBodyTooLarge("Request body exceeds upload limit")
             return message
 
         try:
@@ -97,7 +117,7 @@ class MaxBodySizeMiddleware:
         except _RequestBodyTooLarge:
             logger.warning(
                 f"Rejected {scope.get('method', '?')} {scope.get('path', '?')}: "
-                f"streamed body exceeded the {self.max_body_size}-byte limit"
+                f"streamed body exceeded the {max_body_size}-byte limit"
             )
             if not response_started:
                 await _send_413(send)

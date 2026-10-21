@@ -1,0 +1,41 @@
+Portable size-contract second-pass review (2026-10-21)
+
+Reviewed writer and reader against shared defaults and configured boundaries:
+- ZIP_STORED gives compression ratio 1; positive integer ratio configuration
+  cannot reject successful writer output. Executed ratio=1 roundtrip.
+- Both sides count inventory plus manifest against max_entries. Executed
+  exact-boundary roundtrip and one-entry-over rejection on both sides.
+- Both sides cap entity JSON/JSONL at 32 MiB and manifest at 8 MiB.
+  Executed real 32 MiB note content regression: serialization exceeds cap,
+  durable job fails, no export record/result/ZIP download is published.
+- Expanded-byte sum includes manifest bytes on both sides. Executed exact
+  boundary and one-byte-over checks for writer and reader.
+- Physical ZIP size is checked before publication and before import central
+  directory parsing; ZIP headers count against physical budget. Executed
+  physical ZIP exact boundary and one-byte-over checks.
+- Writer removes .partial files on ZIP-size failure; temporary stage context
+  removes staged members. No completed artifact is published on size failure.
+- Exact POST import path has ZIP budget + 1 MiB body allowance. Other methods,
+  trailing-slash path and unrelated routes retain ordinary body limits.
+- Password auth precedes request reads. Anonymous declared-huge and chunked
+  requests return 401 without consuming a body message.
+- Declared and streamed request sizes are enforced. Multipart overflow uses
+  parser cleanup, closes a verified-open spool, and returns 413 rather than 400.
+- Independent review identified generic multipart defaults could keep 1000
+  small file parts in RAM. The portable route now explicitly parses at most
+  one file and zero text fields, validates the file field name, and closes
+  spools on rejection and success; real multipart regression tests cover it.
+  Non-multipart content types are rejected before any body read, preventing
+  the URL-encoded parser from bypassing multipart-specific resource limits.
+- Central-directory preflight now counts actual records before constructing
+  ZipFile, preventing excessive-entry ZipInfo allocation; it validates bounds
+  and framing, supports ZIP64, and preserves caller stream position. Declared
+  low counts cannot bypass the actual-record check. The stdlib private-helper
+  coupling is isolated and covered by compatibility tests.
+- Same configured application size contract found consistent. Operators must
+  restart API and worker with identical settings; external ingress limits
+  remain outside the application contract and must also accommodate requests.
+
+Focused and full test/type/lint outputs are sibling files in this directory.
+Native >100 MiB and production Next.js forwarding checks are separate evidence;
+this review does not substitute for those runtime checks.

@@ -1,0 +1,30 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> frontend@0.1.0 lint
+> eslint src/
+
+
+/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/app/(dashboard)/notebooks/components/SourcesColumn.tsx
+  73:5   warning  React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array                                      react-hooks/exhaustive-deps
+  73:21  warning  React Hook useMemo has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked  react-hooks/exhaustive-deps
+
+/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/podcasts/GeneratePodcastDialog.tsx
+  124:6  warning  React Hook useMemo has a missing dependency: 'sourcesQueries'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/settings/CredentialFormDialog.tsx
+  89:6  warning  React Hook useEffect has a missing dependency: 'isOmlx'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/components/sources/ModelSelector.tsx
+  71:6   warning  React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array                                      react-hooks/exhaustive-deps
+  71:51  warning  React Hook useMemo has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked  react-hooks/exhaustive-deps
+
+/workspace/scratch/7ae04dc66900/study-workbench/frontend/src/lib/hooks/use-credentials.ts
+  214:33  warning  '_removed' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 7 problems (0 errors, 7 warnings)
+
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

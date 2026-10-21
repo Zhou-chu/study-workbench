@@ -26,6 +26,8 @@ from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from api.personal_store import data_root as get_data_root
 from api.personal_store import get_store, record_key
+from api.portable_limits import get_portable_limits
+from api.portable_zip import validate_zip_directory
 from open_notebook.exceptions import (
     DatabaseOperationError,
     InvalidInputError,
@@ -632,13 +634,10 @@ class PortableService:
         self.store = store or get_store()
         self.root = Path(data_root or get_data_root()).resolve()
         self.projects = project_repository or SurrealProjectRepository(self.store)
-        self.max_bytes = int(
-            os.getenv("STUDY_WORKBENCH_PORTABLE_MAX_BYTES", str(1024 * 1024 * 1024))
-        )
-        self.max_entries = int(
-            os.getenv("STUDY_WORKBENCH_PORTABLE_MAX_ENTRIES", "10000")
-        )
-        self.max_ratio = int(os.getenv("STUDY_WORKBENCH_PORTABLE_MAX_RATIO", "200"))
+        self.limits = get_portable_limits()
+        self.max_bytes = self.limits.max_expanded_bytes
+        self.max_entries = self.limits.max_entries
+        self.max_ratio = self.limits.max_compression_ratio
 
     async def _snapshot(self, notebook_id, stage):
         async with self.store.project_lock(notebook_id):
@@ -818,6 +817,11 @@ class PortableService:
                 if filename.endswith(".jsonl")
                 else _json(value)
             )
+            if len(raw) > self.limits.max_entity_bytes:
+                raise InvalidInputError(
+                    f"Portable entity metadata {filename} exceeds the "
+                    f"{self.limits.max_entity_bytes}-byte limit; reduce project content"
+                )
             (stage / filename).write_bytes(raw)
             files[filename] = {"sha256": _sha(raw), "byte_size": len(raw)}
         by_id = {row["evidence_id"]: row for row in project["evidence"]}
@@ -893,9 +897,13 @@ class PortableService:
                 "Rebuild embeddings if desired",
             ],
         }
-        (stage / "manifest.json").write_bytes(_json(manifest))
+        manifest_raw = _json(manifest)
+        if len(manifest_raw) > self.limits.max_manifest_bytes:
+            raise InvalidInputError("Portable manifest exceeds size limit")
+        (stage / "manifest.json").write_bytes(manifest_raw)
         if (
-            sum(item["byte_size"] for item in files.values()) > self.max_bytes
+            sum(item["byte_size"] for item in files.values()) + len(manifest_raw)
+            > self.max_bytes
             or len(files) + 1 > self.max_entries
         ):
             raise InvalidInputError(
@@ -912,6 +920,10 @@ class PortableService:
                 for file in sorted(files):
                     package.write(stage / file, file)
                 package.write(stage / "manifest.json", "manifest.json")
+            if temporary.stat().st_size > self.limits.max_archive_bytes:
+                raise InvalidInputError(
+                    "Portable ZIP exceeds configured archive size limit"
+                )
             temporary.replace(target)
         finally:
             temporary.unlink(missing_ok=True)
@@ -931,6 +943,19 @@ class PortableService:
 
     def _read_archive(self, archive, stage):
         try:
+            # Check physical ZIP bytes before reading its central directory. This
+            # also bounds trailing junk and compressed archives, not just expansion.
+            if isinstance(archive, (str, os.PathLike)):
+                archive_size = Path(archive).stat().st_size
+            else:
+                archive.seek(0, os.SEEK_END)
+                archive_size = archive.tell()
+                archive.seek(0)
+            if archive_size > self.limits.max_archive_bytes:
+                raise InvalidInputError(
+                    "Portable ZIP exceeds configured archive size limit"
+                )
+            validate_zip_directory(archive, self.max_entries)
             package = zipfile.ZipFile(archive)
         except (zipfile.BadZipFile, OSError, ValueError) as exc:
             raise InvalidInputError("Invalid portable ZIP archive") from exc
@@ -971,7 +996,10 @@ class PortableService:
                     )
             if "manifest.json" not in names:
                 raise InvalidInputError("Portable archive is missing manifest.json")
-            if package.getinfo("manifest.json").file_size > 8 * 1024 * 1024:
+            if (
+                package.getinfo("manifest.json").file_size
+                > self.limits.max_manifest_bytes
+            ):
                 raise InvalidInputError("Portable manifest exceeds size limit")
             try:
                 manifest = json.loads(package.read("manifest.json"))
@@ -997,7 +1025,7 @@ class PortableService:
                 _safe_member(name)
                 if (
                     name in FILES.values()
-                    and package.getinfo(name).file_size > 32 * 1024 * 1024
+                    and package.getinfo(name).file_size > self.limits.max_entity_bytes
                 ):
                     raise InvalidInputError(
                         "Portable entity metadata exceeds size limit"
@@ -1350,13 +1378,18 @@ class PortableService:
                         updated_at=_now(),
                     )
                     await self.store.put("job", job_id, job)
-            except Exception:
+            except Exception as exc:
                 async with self.store.project_lock(notebook_id):
+                    job.pop("result", None)
                     job.update(
                         state="failed",
                         error={
                             "code": "EXPORT_FAILED",
-                            "message": "Export failed consistency, integrity or storage checks; no download was published",
+                            "message": (
+                                str(exc)
+                                if isinstance(exc, InvalidInputError)
+                                else "Export failed consistency, integrity or storage checks; no download was published"
+                            ),
                         },
                         updated_at=_now(),
                     )

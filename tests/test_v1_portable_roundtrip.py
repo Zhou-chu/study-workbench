@@ -989,3 +989,120 @@ async def test_restore_discards_claimed_revalidation_report(populated, tmp_path)
         {"evidence_id": record["evidence_id"]}, [record["source_version_id"]]
     )
     assert checked["reference_validity"] == "unverified"
+
+
+@pytest.mark.asyncio
+async def test_export_metadata_32mib_regression_fails_durably(populated, monkeypatch):
+    import surreal_commands
+
+    service, projects, _, _ = populated
+    projects.snapshot["notes"][0]["content"] = "x" * (32 * 1024 * 1024)
+    monkeypatch.setattr(
+        surreal_commands, "submit_command", lambda *args: "command:test"
+    )
+    job = await service.request_export("notebook:original", "oversized-metadata")
+    with pytest.raises(InvalidInputError, match="metadata notes.json"):
+        await service.run_export(job["job_id"])
+    failed = await service.store.get("job", job["job_id"])
+    assert failed["state"] == "failed"
+    assert "33554432-byte" in failed["error"]["message"]
+    assert not failed.get("result")
+    assert not await service.store.list("export")
+    assert not list(service.root.glob("exports/*.zip"))
+
+
+@pytest.mark.asyncio
+async def test_shared_archive_expansion_and_manifest_boundaries(populated, tmp_path):
+    from dataclasses import replace
+
+    service, _, _, _ = populated
+    baseline = await service.export_project("notebook:original")
+    wire_size = baseline["path"].stat().st_size
+    with zipfile.ZipFile(baseline["path"]) as package:
+        expanded = sum(row.file_size for row in package.infolist())
+        manifest_size = package.getinfo("manifest.json").file_size
+    service.limits = replace(service.limits, max_archive_bytes=wire_size)
+    service.max_bytes = expanded
+    exact = await service.export_project("notebook:original")
+    stage = tmp_path / "read-exact"
+    stage.mkdir()
+    service._read_archive(exact["path"], stage)
+    service.max_bytes = expanded - 1
+    with pytest.raises(InvalidInputError, match="size or entry"):
+        await service.export_project("notebook:original")
+    with pytest.raises(InvalidInputError, match="expanded size"):
+        service._read_archive(exact["path"], tmp_path / "read-over")
+    service.max_bytes = expanded
+    service.limits = replace(service.limits, max_archive_bytes=wire_size - 1)
+    with pytest.raises(InvalidInputError, match="ZIP exceeds"):
+        await service.export_project("notebook:original")
+    with pytest.raises(InvalidInputError, match="ZIP exceeds"):
+        service._read_archive(exact["path"], tmp_path / "wire-over")
+    service.limits = replace(
+        service.limits,
+        max_archive_bytes=wire_size,
+        max_manifest_bytes=manifest_size - 1,
+    )
+    with pytest.raises(InvalidInputError, match="manifest exceeds"):
+        await service.export_project("notebook:original")
+    with pytest.raises(InvalidInputError, match="manifest exceeds"):
+        service._read_archive(exact["path"], tmp_path / "manifest-over")
+
+
+@pytest.mark.asyncio
+async def test_entity_exact_limit_roundtrips_and_one_byte_over_fails(
+    populated, tmp_path
+):
+    from dataclasses import replace
+
+    from api.portable_service import _json
+
+    service, projects, _, _ = populated
+    projects.snapshot["notes"][0]["content"] = "x" * 5000
+    size = len(_json(projects.snapshot["notes"]))
+    service.limits = replace(service.limits, max_entity_bytes=size)
+    exported = await service.export_project("notebook:original")
+    stage = tmp_path / "entity-exact"
+    stage.mkdir()
+    service._read_archive(exported["path"], stage)
+    service.limits = replace(service.limits, max_entity_bytes=size - 1)
+    with pytest.raises(InvalidInputError, match="metadata notes.json"):
+        await service.export_project("notebook:original")
+    with pytest.raises(InvalidInputError, match="metadata exceeds"):
+        service._read_archive(exported["path"], tmp_path / "entity-over")
+
+
+@pytest.mark.asyncio
+async def test_export_entry_boundary_and_minimum_ratio_roundtrip(populated, tmp_path):
+    service, _, _, _ = populated
+    service.max_ratio = 1
+    baseline = await service.export_project("notebook:original")
+    with zipfile.ZipFile(baseline["path"]) as package:
+        service.max_entries = len(package.infolist())
+        assert all(row.compress_size == row.file_size for row in package.infolist())
+    exact = await service.export_project("notebook:original")
+    stage = tmp_path / "entries-exact"
+    stage.mkdir()
+    service._read_archive(exact["path"], stage)
+    service.max_entries -= 1
+    with pytest.raises(InvalidInputError, match="size or entry"):
+        await service.export_project("notebook:original")
+    with pytest.raises(InvalidInputError, match="entry count"):
+        service._read_archive(exact["path"], tmp_path / "entries-over")
+    assert not list(service.root.glob("exports/*.partial"))
+
+
+def test_import_entry_preflight_precedes_zipfile_allocation(tmp_path, monkeypatch):
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w") as package:
+        for index in range(3):
+            package.writestr(f"member-{index}", b"")
+    service = PortableService(store=MemoryStore(), data_root=tmp_path)
+    service.max_entries = 2
+
+    def forbidden_constructor(*args, **kwargs):
+        raise AssertionError("Oversized directory must fail before ZipFile allocation")
+
+    monkeypatch.setattr(zipfile, "ZipFile", forbidden_constructor)
+    with pytest.raises(InvalidInputError, match="entry count"):
+        service._read_archive(archive, tmp_path / "stage")

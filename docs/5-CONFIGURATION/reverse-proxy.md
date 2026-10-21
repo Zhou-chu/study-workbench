@@ -228,10 +228,13 @@ Three limits apply to uploads from the UI, and the smallest wins:
 | Limit | Default | Where to change it |
 |-------|---------|--------------------|
 | Your reverse proxy | nginx: 1 MB | `client_max_body_size`, Caddy `request_body max_size`, Traefik buffering middleware |
-| Next.js proxy for `/api/*` | 100 MB | Fixed in the frontend build |
-| API | 100 MB | `OPEN_NOTEBOOK_MAX_UPLOAD_SIZE_MB` |
+| Next.js general proxy for `/api/*` | 100 MB | Fixed in the frontend build; portable import uses a dedicated streaming POST route |
+| API (ordinary uploads) | 100 MB | `OPEN_NOTEBOOK_MAX_UPLOAD_SIZE_MB` |
+| API (authenticated portable import only) | 1 GiB ZIP + 1 MiB multipart allowance | `STUDY_WORKBENCH_PORTABLE_MAX_BYTES` |
 
 When the proxy rejects a file, the response doesn't come from Open Notebook, so it has no CORS headers and the browser reports a CORS error with status 413. When the API rejects it, the message is `Request body exceeds the maximum allowed upload size`. To upload files larger than 100 MB, raise `OPEN_NOTEBOOK_MAX_UPLOAD_SIZE_MB` and send them to the API directly (port 5055, or a `/api/` location routed to 5055 as above).
+
+Portable project restore uses a separate authenticated API route: `POST /api/personal/imports/portable`. Its default request budget is 1,074,790,400 bytes (1 GiB ZIP plus 1 MiB multipart allowance). If allowing large backups, configure that exact proxy location to pass sufficient bytes to port 5055; do not increase unrelated upload routes merely for backups. The dedicated Next.js portable-import POST route streams to the internal API and avoids the general 100 MB rewrite-clone cap; other routes keep that cap. The authenticated `/api/personal/portable/limits` endpoint reports application limits, not limits imposed by your proxy. See [portable format](../v1/PORTABLE_FORMAT.md).
 
 Traefik example (dynamic file configuration):
 
