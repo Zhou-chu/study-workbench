@@ -10,6 +10,7 @@ export interface NotebookResponse {
 }
 
 export interface NoteResponse {
+  revision: number
   id: string
   title: string | null
   content: string | null
@@ -121,6 +122,7 @@ export interface CreateSourceRequest {
 }
 
 export interface UpdateNoteRequest {
+  expected_revision: number
   title?: string
   content?: string
   note_type?: string

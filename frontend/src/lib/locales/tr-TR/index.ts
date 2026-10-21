@@ -2,6 +2,26 @@ import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const trTR = {
+  noteConflict: {
+    candidates: "İncelenecek sunucu notları",
+    inspectCandidate: "Sunucu notunu incele",
+    conflict: "Bu not başka bir yerde değiştirildi. Taslağınız korundu. Değiştirmeden önce karşılaştırın.",
+    unknown: "Kaydın tamamlandığı doğrulanamadı. Taslağınız korundu. Sunucuyla karşılaştırın ve tekrar göndermeyin.",
+    rejected: "Kayıt reddedildi. Taslağınız korundu. Yeniden yüklemeden önce sunucu kopyasını inceleyin.",
+    compare: "Sunucuyla karşılaştır",
+    reload: "Sunucu kopyasını yeniden yükle",
+    discard: "Taslağı sil ve yeniden yükle",
+    discardTitle: "Taslak silinsin mi?",
+    discardDescription: "Başlık, içerik ve referanslar gösterilen sunucu kopyasıyla değiştirilecek. Bu işlem geri alınamaz.",
+    baseRevision: "Taslağın temel revizyonu",
+    serverRevision: "Sunucu revizyonu",
+    yourDraft: "Değişmemiş taslağınız",
+    latest: "En son sunucu kopyası",
+    references: "Alıntılar ve kapsam",
+    review: "Not kaydını incele",
+    readFailed: "Sunucu kopyası yüklenemedi. Taslağınız değişmedi.",
+    notFound: "Sunucuda eşleşen not bulunamadı. Taslağınızı koruyun; kaydın başarısız olduğunu varsaymayın.",
+  },
   workbench: workbenchEn,
   common: {
     search: "Ara...",

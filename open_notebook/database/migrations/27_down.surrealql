@@ -1,0 +1,2 @@
+REMOVE FIELD revision ON note;
+REMOVE TABLE note_write_guard;

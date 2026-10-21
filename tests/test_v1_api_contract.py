@@ -167,6 +167,16 @@ async def test_workspace_fixture_matches_existing_service(monkeypatch):
         )
 
     monkeypatch.setattr(Notebook, "get", get)
+    from open_notebook.database.note_repository import NoteWriteResult
+
+    async def bundles(_):
+        return [
+            NoteWriteResult(native=note, snapshot=None) for note in expected["notes"]
+        ]
+
+    monkeypatch.setattr(
+        "open_notebook.database.note_repository.read_project_notes_locked", bundles
+    )
     actual = await PersonalService(store=MemoryStore()).workspace(
         expected["notebook"]["id"]
     )
@@ -212,17 +222,32 @@ async def test_error_fixtures_match_actual_handlers():
         assert json.loads(response.body) == example["body"]
 
 
-def test_note_conflict_fixture_does_not_claim_unimplemented_guarantee():
+@pytest.mark.asyncio
+async def test_note_conflict_fixture_matches_implemented_contract():
+    from api.main import note_revision_conflict_handler, note_revision_required_handler
+    from open_notebook.exceptions import NoteRevisionConflict, NoteRevisionRequired
+
     example = fixture("note-conflict")
-    assert example["implemented"] is False
-    assert example["http_response"] is None
-    operation = json.loads(CONTRACT.read_text())["paths"][
+    request = Request({"type": "http", "headers": []})
+    response = await note_revision_conflict_handler(request, NoteRevisionConflict(2))
+    assert response.status_code == example["status"] == 409
+    assert json.loads(response.body) == example["body"]
+    response = await note_revision_required_handler(request, NoteRevisionRequired())
+    assert response.status_code == 428
+    assert json.loads(response.body) == {"detail": {"code": "NOTE_REVISION_REQUIRED"}}
+    schema = json.loads(CONTRACT.read_text())
+    operation = schema["paths"][
         "/api/personal/notebooks/{notebook_id}/notes/{note_id}"
     ]["patch"]
-    request_schema = operation["requestBody"]["content"]["application/json"]["schema"]
-    assert request_schema["additionalProperties"] is True
-    assert "expected_revision" not in request_schema.get("properties", {})
-    assert "409" not in operation["responses"]
+    assert operation["requestBody"]["content"]["application/json"]["schema"][
+        "$ref"
+    ].endswith("NoteUpdateRequest")
+    assert (
+        "expected_revision"
+        in schema["components"]["schemas"]["NoteUpdateRequest"]["properties"]
+    )
+    assert "409" in operation["responses"]
+    assert "428" in operation["responses"]
 
 
 def test_snapshot_is_unmodified_actual_app_schema():

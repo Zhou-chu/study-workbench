@@ -43,7 +43,7 @@ All examples were authored for this repository; none are captured user traffic.
 They are illustrative **existing runtime** contracts, tested offline against real
 service/handler/mapper code with in-memory persistence and no provider calls.
 
-- `workspace.json`: empty workspace response, including nullable link/selection.
+- `workspace.json`: synthetic note at revision 1, including nullable link/selection.
 - `job.json`: real deterministic independent-turn submission with opaque stable
   job/turn IDs, nullable request fields, UTC timestamp and `not_submitted` state.
 - `turn.json`: local-cancellation SSE payload (not remote cancellation), and an
@@ -53,9 +53,25 @@ service/handler/mapper code with in-memory persistence and no provider calls.
   currently returns 400/detail, bridge conflict 409/error. A generic capability
   error currently returns 502; scope-isolation failure is 422. Do not normalize
   these differences in a client without a separately reviewed API change.
-- `note-conflict.json`: an explicit **gap record**, NOT a response fixture.
-  Conditional note writes, revisions, expected_revision and 409 note conflict
-  responses do not exist yet. No concurrency/auth behavior changes in this batch.
+- `note-conflict.json`: actual 409 `detail` object for a stale note revision.
+  Personal PATCH and legacy PUT accept strict positive integer `expected_revision`.
+  Native note revisions and personal snapshots commit together; creation starts at
+  1 and each editorial update increments once. Embedding-only jobs do not increment.
+
+`GET /api/personal/note-capabilities` reports contract version `v1`, conditional
+write support, and whether expected revisions are required. The default
+`STUDY_WORKBENCH_NOTE_WRITE_MODE=legacy_single_web` permits omission/null for
+compatibility; `multiclient` requires a predecessor (428 `detail.code` =
+`NOTE_REVISION_REQUIRED`). A supplied predecessor is enforced in either mode.
+Invalid modes fail startup. This does **not** activate multiclient mode or certify
+Web/native clients. Unknown commit acknowledgement is a 500 detail string: keep
+the draft and reconcile with a read; never automatically resubmit.
+
+Membership, not snapshot existence, authorizes personal writes. Missing/foreign
+membership returns 404 before any revision is exposed. Shared notes expose native
+content/revision but not another notebook's snapshot citations/scope. Portable
+archives preserve revision N under new IDs; legacy absence means 1, and invalid or
+inconsistent duplicate revisions are rejected before writes.
 
 ## Known schema gaps and release gates
 

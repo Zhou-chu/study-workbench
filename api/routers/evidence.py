@@ -10,6 +10,14 @@ from pydantic import BaseModel, Field
 
 from api.evidence_maintenance import EvidenceMaintenanceService
 from api.evidence_service import EvidenceService
+from api.personal_contracts import (
+    NoteConflictResponse,
+    NoteCreateRequest,
+    NoteRequiredResponse,
+    NoteUpdateRequest,
+    NoteWriteCapabilities,
+    PersonalNoteResponse,
+)
 from api.personal_service import PersonalService, digest, now, submit_job
 from api.personal_store import get_store
 from open_notebook.database.repository import repo_delete, repo_relate
@@ -353,13 +361,29 @@ async def turn_events(turn_id: str):
     )
 
 
-@router.post("/notebooks/{notebook_id}/notes")
-async def create_note(notebook_id: str, value: dict[str, Any]):
+@router.post("/notebooks/{notebook_id}/notes", response_model=PersonalNoteResponse)
+async def create_note(notebook_id: str, value: NoteCreateRequest):
     await Notebook.get(notebook_id)
-    return await PersonalService().save_note(notebook_id, value)
+    return await PersonalService().save_note(notebook_id, value.model_dump())
 
 
-@router.patch("/notebooks/{notebook_id}/notes/{note_id}")
-async def update_note(notebook_id: str, note_id: str, value: dict[str, Any]):
+@router.patch(
+    "/notebooks/{notebook_id}/notes/{note_id}",
+    response_model=PersonalNoteResponse,
+    responses={
+        409: {"model": NoteConflictResponse},
+        428: {"model": NoteRequiredResponse},
+    },
+)
+async def update_note(notebook_id: str, note_id: str, value: NoteUpdateRequest):
     await Notebook.get(notebook_id)
-    return await PersonalService().save_note(notebook_id, value, note_id)
+    return await PersonalService().save_note(notebook_id, value.model_dump(), note_id)
+
+
+@router.get("/note-capabilities", response_model=NoteWriteCapabilities)
+async def note_capabilities():
+    from open_notebook.config import get_note_write_mode
+
+    return NoteWriteCapabilities(
+        expected_revision_required=get_note_write_mode() == "multiclient"
+    )

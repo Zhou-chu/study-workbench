@@ -673,6 +673,7 @@ async def test_real_surreal_sqlite_and_originals_restore_into_fresh_environment(
             "notebook": ensure_record_id(notebook.id),
             "content": {
                 "title": "Public fixture note",
+                "revision": 7,
                 "content": "真实原件与历史引用。",
                 "note_type": "human",
             },
@@ -705,6 +706,7 @@ async def test_real_surreal_sqlite_and_originals_restore_into_fresh_environment(
         note_id,
         {
             "note_id": note_id,
+            "revision": 7,
             "notebook_id": notebook.id,
             "turn_id": turn_id,
             "scope_snapshot": scope,
@@ -717,6 +719,8 @@ async def test_real_surreal_sqlite_and_originals_restore_into_fresh_environment(
         data_root=source_root,
     )
     exported = await service.export_project(notebook.id)
+    with zipfile.ZipFile(exported["path"]) as package:
+        assert json.loads(package.read("manifest.json"))["format_version"] == 2
     standalone = tmp_path / "transfer.zip"
     shutil.copy2(exported["path"], standalone)
     shutil.rmtree(source_root)
@@ -745,6 +749,18 @@ async def test_real_surreal_sqlite_and_originals_restore_into_fresh_environment(
     )
     notes = await restored.get_notes(include_content=True)
     assert len(notes) == 1 and notes[0].content == "真实原件与历史引用。"
+    assert notes[0].revision == 7
+    monkeypatch.setattr(
+        "open_notebook.domain.notebook.submit_command", lambda *a, **k: "synthetic"
+    )
+    notes[0].content = "Restored revision edit"
+    await notes[0].save(expected_revision=7)
+    assert notes[0].revision == 8
+    assert notes[0].id is not None
+    restored_snapshot = await store.get("note_snapshot", notes[0].id)
+    assert restored_snapshot is not None
+    assert restored_snapshot["revision"] == 8
+    assert restored_snapshot["content"] == "Restored revision edit"
     restored_turn = (await store.list("turn", notebook_id=restored.id))[0]
     assert restored_turn["citations"][0]["reference_validity"] == "unverified"
     assert restored_turn["citations"][0]["evidence_id"] != evidence_id
@@ -1059,6 +1075,7 @@ async def test_entity_exact_limit_roundtrips_and_one_byte_over_fails(
 
     service, projects, _, _ = populated
     projects.snapshot["notes"][0]["content"] = "x" * 5000
+    projects.snapshot["notes"][0]["revision"] = 1
     size = len(_json(projects.snapshot["notes"]))
     service.limits = replace(service.limits, max_entity_bytes=size)
     exported = await service.export_project("notebook:original")
@@ -1106,3 +1123,207 @@ def test_import_entry_preflight_precedes_zipfile_allocation(tmp_path, monkeypatc
     monkeypatch.setattr(zipfile, "ZipFile", forbidden_constructor)
     with pytest.raises(InvalidInputError, match="entry count"):
         service._read_archive(archive, tmp_path / "stage")
+
+
+@pytest.mark.parametrize(
+    "native,snapshot,wanted", [(None, None, 1), (1, None, 1), (None, 1, 1), (7, 7, 7)]
+)
+def test_portable_note_revision_normalization(native, snapshot, wanted):
+    from api.portable_service import normalize_note_revisions
+
+    notes = [{"id": "note:one"}]
+    snapshots = [{"note_id": "note:one"}]
+    if native is not None:
+        notes[0]["revision"] = native
+    if snapshot is not None:
+        snapshots[0]["revision"] = snapshot
+    normalize_note_revisions(notes, snapshots)
+    assert notes[0]["revision"] == snapshots[0]["revision"] == wanted
+
+
+@pytest.mark.parametrize(
+    "native,snapshot",
+    [(True, 1), (1.0, 1), ("1", 1), (0, 1), (-1, 1), (7, 6), (None, 7), (7, None)],
+)
+def test_portable_rejects_bad_or_mismatched_note_revision(native, snapshot):
+    from api.portable_service import normalize_note_revisions
+
+    notes = [{"id": "note:one"}]
+    snapshots = [{"note_id": "note:one"}]
+    if native is not None:
+        notes[0]["revision"] = native
+    if snapshot is not None:
+        snapshots[0]["revision"] = snapshot
+    with pytest.raises(InvalidInputError):
+        normalize_note_revisions(notes, snapshots)
+
+
+# Frozen compatibility model of the gate in 07654a46 and 51a58f1.
+# Deliberately independent of current FORMAT_VERSION and git availability.
+# This models the historical gate, NOT an entire historical application runtime.
+def historical_format1_gate(manifest):
+    if (
+        type(manifest.get("format_version")) is not int
+        or manifest["format_version"] != 1
+    ):
+        raise InvalidInputError("Unsupported portable format version")
+
+
+def set_archive_format(files, version):
+    manifest = json.loads(files["manifest.json"])
+    if version == "missing":
+        manifest.pop("format_version", None)
+    else:
+        manifest["format_version"] = version
+    files["manifest.json"] = json.dumps(manifest).encode()
+
+
+@pytest.mark.asyncio
+async def test_new_export_is_format2_and_old_gate_rejects_before_restore(populated):
+    service, _, _, _ = populated
+    exported = await service.export_project("notebook:original")
+    with zipfile.ZipFile(exported["path"]) as package:
+        manifest = json.loads(package.read("manifest.json"))
+        assert manifest["format_version"] == 2
+        assert b"format 2." in package.read("README.md")
+    historical_format1_gate({"format_version": 1})  # positive legacy control
+    writes = []
+    with pytest.raises(InvalidInputError, match="Unsupported portable format"):
+        historical_format1_gate(manifest)
+        writes.append("restore reached")
+    assert writes == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("version", [1, 2])
+@pytest.mark.parametrize("revision", [None, 7])
+async def test_supported_archive_versions_preserve_revision_semantics(
+    populated, tmp_path, version, revision
+):
+    service, _, _, _ = populated
+    exported = await service.export_project("notebook:original")
+
+    def mutate(files):
+        set_archive_format(files, version)
+        for name in ("notes.json", "note-snapshots.json"):
+
+            def change(rows):
+                for row in rows:
+                    if revision is None:
+                        row.pop("revision", None)
+                    else:
+                        row["revision"] = revision
+
+            rehash_changed_entities(files, name, change)
+
+    store = MemoryStore()
+    projects = MemoryProjects(store=store)
+    importer = PortableService(
+        store=store, project_repository=projects, data_root=tmp_path / "restored"
+    )
+    await importer.import_archive(rewrite_zip(exported["path"].read_bytes(), mutate))
+    assert projects.restored[0]["notes"][0]["revision"] == (revision or 1)
+    assert (await store.list("note_snapshot"))[0]["revision"] == (revision or 1)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "version", [0, 3, True, False, 1.0, 2.0, "2", None, [], {}, "missing"]
+)
+async def test_invalid_archive_version_rejected_without_writes(
+    populated, tmp_path, version
+):
+    service, _, _, _ = populated
+    exported = await service.export_project("notebook:original")
+    store = MemoryStore()
+    projects = MemoryProjects(store=store)
+    importer = PortableService(
+        store=store, project_repository=projects, data_root=tmp_path / "destination"
+    )
+    archive = rewrite_zip(
+        exported["path"].read_bytes(), lambda files: set_archive_format(files, version)
+    )
+    with pytest.raises(InvalidInputError, match="Unsupported portable format"):
+        await importer.import_archive(archive)
+    assert store.data == {}
+    assert projects.restored == []
+    assert not list(importer.root.glob("restored/*"))
+    assert not list(importer.root.glob(".import-*"))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("version", [1, 2])
+@pytest.mark.parametrize(
+    "native,snapshot",
+    [(7, 6), (None, 7), (True, 1), ("7", 7), (1.0, 1), (0, 1), (-1, 1)],
+)
+async def test_supported_formats_reject_bad_revisions_without_writes(
+    populated, tmp_path, version, native, snapshot
+):
+    service, _, _, _ = populated
+    exported = await service.export_project("notebook:original")
+
+    def mutate(files):
+        set_archive_format(files, version)
+        for name, revision in (
+            ("notes.json", native),
+            ("note-snapshots.json", snapshot),
+        ):
+
+            def change(rows):
+                if revision is None:
+                    rows[0].pop("revision", None)
+                else:
+                    rows[0]["revision"] = revision
+
+            rehash_changed_entities(files, name, change)
+
+    store = MemoryStore()
+    projects = MemoryProjects(store=store)
+    importer = PortableService(
+        store=store, project_repository=projects, data_root=tmp_path / "destination"
+    )
+    with pytest.raises(InvalidInputError, match="revision"):
+        await importer.import_archive(
+            rewrite_zip(exported["path"].read_bytes(), mutate)
+        )
+    assert store.data == {}
+    assert projects.restored == []
+    assert not list(importer.root.glob("restored/*"))
+    assert not list(importer.root.glob(".import-*"))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("note_shape", ["snapshot", "native_only", "no_notes"])
+async def test_format2_export_is_unconditional_and_restores_revision7(
+    populated, tmp_path, note_shape
+):
+    service, projects, _, _ = populated
+    projects.snapshot["notes"][0]["revision"] = 7
+    for key, row in list(service.store.data.items()):
+        if key[0] == "note_snapshot":
+            if note_shape == "snapshot":
+                row["revision"] = 7
+            else:
+                del service.store.data[key]
+    if note_shape == "no_notes":
+        projects.snapshot["notes"] = []
+    exported = await service.export_project("notebook:original")
+    with zipfile.ZipFile(exported["path"]) as package:
+        assert json.loads(package.read("manifest.json"))["format_version"] == 2
+    store = MemoryStore()
+    restored = MemoryProjects(store=store)
+    importer = PortableService(
+        store=store, project_repository=restored, data_root=tmp_path / "destination"
+    )
+    await importer.import_archive(exported["path"])
+    notes = restored.restored[0]["notes"]
+    snapshots = await store.list("note_snapshot")
+    if note_shape == "no_notes":
+        assert notes == []
+    else:
+        assert notes[0]["revision"] == 7
+    if note_shape == "snapshot":
+        assert snapshots[0]["revision"] == 7
+    else:
+        assert snapshots == []

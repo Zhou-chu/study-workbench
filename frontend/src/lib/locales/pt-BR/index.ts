@@ -2,6 +2,26 @@ import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const ptBR = {
+  noteConflict: {
+    candidates: "Notas do servidor para conferir",
+    inspectCandidate: "Conferir nota do servidor",
+    conflict: "Esta nota foi alterada em outro lugar. Seu rascunho foi preservado. Compare antes de substituí-lo.",
+    unknown: "Não foi possível confirmar o salvamento. Seu rascunho foi preservado. Compare com o servidor e não envie novamente.",
+    rejected: "O salvamento foi rejeitado. Seu rascunho foi preservado. Confira a cópia do servidor antes de recarregar.",
+    compare: "Comparar com o servidor",
+    reload: "Recarregar cópia do servidor",
+    discard: "Descartar rascunho e recarregar",
+    discardTitle: "Descartar seu rascunho?",
+    discardDescription: "O título, o conteúdo e as referências serão substituídos pela cópia do servidor exibida. Isso não pode ser desfeito.",
+    baseRevision: "Revisão base do rascunho",
+    serverRevision: "Revisão do servidor",
+    yourDraft: "Seu rascunho inalterado",
+    latest: "Cópia mais recente do servidor",
+    references: "Citações e escopo",
+    review: "Revisar salvamento da nota",
+    readFailed: "Não foi possível carregar a cópia do servidor. Seu rascunho não foi alterado.",
+    notFound: "Nenhuma nota correspondente no servidor. Mantenha o rascunho; não presuma que o salvamento falhou.",
+  },
   workbench: workbenchEn,
   common: {
     search: "Buscar...",

@@ -223,10 +223,22 @@ async def test_editing_imported_note_cannot_upgrade_archived_evidence(
         {"notebook_id": "nb", "note_id": "note:imported"},
     )
 
-    async def update(*args, **kwargs):
-        return {}
+    from open_notebook.database.note_repository import NoteWriteResult
 
-    monkeypatch.setattr("open_notebook.database.repository.repo_update", update)
+    async def update(**kwargs):
+        return NoteWriteResult(
+            native={
+                "id": "note:imported",
+                "content": kwargs["fields"]["content"],
+                "revision": 2,
+            },
+            snapshot=kwargs["snapshot"],
+        )
+
+    monkeypatch.setattr("open_notebook.database.note_repository.update_note", update)
+    monkeypatch.setattr(
+        "open_notebook.domain.notebook.Note.submit_embedding", lambda self: None
+    )
     note = await PersonalService(store=service.store).save_note(
         "nb",
         {

@@ -4,6 +4,7 @@ import { QUERY_KEYS } from '@/lib/api/query-client'
 import { useToast } from '@/lib/hooks/use-toast'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { getApiErrorKey } from '@/lib/utils/error-handler'
+import { noteProblemKeys, noteWriteProblem } from '@/lib/utils/note-conflict'
 import { CreateNoteRequest, UpdateNoteRequest } from '@/lib/types/api'
 
 export function useNotes(notebookId?: string) {
@@ -29,6 +30,7 @@ export function useCreateNote() {
   const { t } = useTranslation()
 
   return useMutation({
+    retry: false,
     mutationFn: (data: CreateNoteRequest) => notesApi.create(data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ 
@@ -42,7 +44,7 @@ export function useCreateNote() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('notebooks.failedToCreateNote')),
+        description: noteWriteProblem(error).kind === 'rejected' ? getApiErrorKey(error, t('notebooks.failedToCreateNote')) : t(noteProblemKeys[noteWriteProblem(error).kind]),
         variant: 'destructive',
       })
     },
@@ -55,6 +57,7 @@ export function useUpdateNote() {
   const { t } = useTranslation()
 
   return useMutation({
+    retry: false,
     mutationFn: ({ id, data }: { id: string; data: UpdateNoteRequest }) =>
       notesApi.update(id, data),
     onSuccess: (_, { id }) => {
@@ -68,7 +71,7 @@ export function useUpdateNote() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('notebooks.failedToUpdateNote')),
+        description: noteWriteProblem(error).kind === 'rejected' ? getApiErrorKey(error, t('notebooks.failedToUpdateNote')) : t(noteProblemKeys[noteWriteProblem(error).kind]),
         variant: 'destructive',
       })
     },
@@ -81,6 +84,7 @@ export function useDeleteNote() {
   const { t } = useTranslation()
 
   return useMutation({
+    retry: false,
     mutationFn: (id: string) => notesApi.delete(id),
     onSuccess: () => {
       // Invalidate all notes queries (with and without notebook IDs)

@@ -2060,6 +2060,38 @@
         "title": "ModelTestResponse",
         "type": "object"
       },
+      "NoteConflictDetail": {
+        "properties": {
+          "code": {
+            "const": "NOTE_REVISION_CONFLICT",
+            "default": "NOTE_REVISION_CONFLICT",
+            "title": "Code",
+            "type": "string"
+          },
+          "current_revision": {
+            "minimum": 1.0,
+            "title": "Current Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "current_revision"
+        ],
+        "title": "NoteConflictDetail",
+        "type": "object"
+      },
+      "NoteConflictResponse": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/NoteConflictDetail"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "NoteConflictResponse",
+        "type": "object"
+      },
       "NoteCreate": {
         "properties": {
           "content": {
@@ -2111,6 +2143,67 @@
         "title": "NoteCreate",
         "type": "object"
       },
+      "NoteCreateRequest": {
+        "properties": {
+          "citations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "scope_snapshot": {
+            "additionalProperties": true,
+            "title": "Scope Snapshot",
+            "type": "object"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "content"
+        ],
+        "title": "NoteCreateRequest",
+        "type": "object"
+      },
+      "NoteRequiredDetail": {
+        "properties": {
+          "code": {
+            "const": "NOTE_REVISION_REQUIRED",
+            "default": "NOTE_REVISION_REQUIRED",
+            "title": "Code",
+            "type": "string"
+          }
+        },
+        "title": "NoteRequiredDetail",
+        "type": "object"
+      },
+      "NoteRequiredResponse": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/NoteRequiredDetail"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "NoteRequiredResponse",
+        "type": "object"
+      },
       "NoteResponse": {
         "properties": {
           "command_id": {
@@ -2154,6 +2247,11 @@
             ],
             "title": "Note Type"
           },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
           "title": {
             "anyOf": [
               {
@@ -2171,6 +2269,7 @@
           }
         },
         "required": [
+          "revision",
           "id",
           "title",
           "content",
@@ -2194,6 +2293,18 @@
             ],
             "description": "Note content",
             "title": "Content"
+          },
+          "expected_revision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Revision"
           },
           "note_type": {
             "anyOf": [
@@ -2221,6 +2332,80 @@
           }
         },
         "title": "NoteUpdate",
+        "type": "object"
+      },
+      "NoteUpdateRequest": {
+        "properties": {
+          "citations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "expected_revision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Revision"
+          },
+          "scope_snapshot": {
+            "additionalProperties": true,
+            "title": "Scope Snapshot",
+            "type": "object"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "content"
+        ],
+        "title": "NoteUpdateRequest",
+        "type": "object"
+      },
+      "NoteWriteCapabilities": {
+        "properties": {
+          "conditional_writes": {
+            "const": true,
+            "default": true,
+            "title": "Conditional Writes",
+            "type": "boolean"
+          },
+          "contract_version": {
+            "const": "v1",
+            "default": "v1",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "expected_revision_required": {
+            "title": "Expected Revision Required",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "expected_revision_required"
+        ],
+        "title": "NoteWriteCapabilities",
         "type": "object"
       },
       "NotebookCreate": {
@@ -2407,6 +2592,74 @@
           }
         },
         "title": "NotebookUpdate",
+        "type": "object"
+      },
+      "PersonalNoteResponse": {
+        "properties": {
+          "citations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "note_id": {
+            "title": "Note Id",
+            "type": "string"
+          },
+          "notebook_id": {
+            "title": "Notebook Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "scope_snapshot": {
+            "additionalProperties": true,
+            "title": "Scope Snapshot",
+            "type": "object"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "content",
+          "id",
+          "note_id",
+          "notebook_id",
+          "revision",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PersonalNoteResponse",
         "type": "object"
       },
       "PodcastEpisodeResponse": {
@@ -7759,6 +8012,16 @@
             },
             "description": "Successful Response"
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteConflictResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -7768,6 +8031,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteRequiredResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
           }
         },
         "summary": "Update Note",
@@ -8214,6 +8487,27 @@
         "summary": "Cancel Job",
         "tags": [
           "personal-notebooklm"
+        ]
+      }
+    },
+    "/api/personal/note-capabilities": {
+      "get": {
+        "operationId": "note_capabilities_api_personal_note_capabilities_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteWriteCapabilities"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Note Capabilities",
+        "tags": [
+          "personal-evidence"
         ]
       }
     },
@@ -8734,9 +9028,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": true,
-                "title": "Value",
-                "type": "object"
+                "$ref": "#/components/schemas/NoteCreateRequest"
               }
             }
           },
@@ -8746,7 +9038,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/PersonalNoteResponse"
+                }
               }
             },
             "description": "Successful Response"
@@ -8795,9 +9089,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": true,
-                "title": "Value",
-                "type": "object"
+                "$ref": "#/components/schemas/NoteUpdateRequest"
               }
             }
           },
@@ -8807,10 +9099,22 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/PersonalNoteResponse"
+                }
               }
             },
             "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteConflictResponse"
+                }
+              }
+            },
+            "description": "Conflict"
           },
           "422": {
             "content": {
@@ -8821,6 +9125,16 @@
               }
             },
             "description": "Validation Error"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteRequiredResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
           }
         },
         "summary": "Update Note",

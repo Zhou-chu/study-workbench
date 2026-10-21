@@ -58,6 +58,8 @@ from open_notebook.exceptions import (
     ExternalServiceError,
     InvalidInputError,
     NetworkError,
+    NoteRevisionConflict,
+    NoteRevisionRequired,
     NotFoundError,
     OpenNotebookError,
     RateLimitError,
@@ -192,6 +194,10 @@ async def lifespan(app: FastAPI):
     Lifespan event handler for the FastAPI application.
     Runs database migrations automatically on startup.
     """
+    from open_notebook.config import get_note_write_mode
+
+    get_note_write_mode()
+
     # Startup: Security checks
     logger.info("Starting API initialization...")
 
@@ -458,3 +464,26 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+
+@app.exception_handler(NoteRevisionConflict)
+async def note_revision_conflict_handler(request: Request, exc: NoteRevisionConflict):
+    return JSONResponse(
+        status_code=409,
+        content={
+            "detail": {
+                "code": "NOTE_REVISION_CONFLICT",
+                "current_revision": exc.current_revision,
+            }
+        },
+        headers=_cors_headers(request),
+    )
+
+
+@app.exception_handler(NoteRevisionRequired)
+async def note_revision_required_handler(request: Request, exc: NoteRevisionRequired):
+    return JSONResponse(
+        status_code=428,
+        content={"detail": {"code": "NOTE_REVISION_REQUIRED"}},
+        headers=_cors_headers(request),
+    )

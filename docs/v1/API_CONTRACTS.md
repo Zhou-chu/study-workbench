@@ -52,3 +52,56 @@ See typed request models in `open_notebook/integrations/notebooklm/contracts.py`
 - Reader navigation aborts client requests and ignores stale completion, but does not cancel a durable server operation. A polling error can recheck that existing job without submitting another. Reparse does not replace a historical citation selector.
 
 Fresh evidence verification does not override frozen answer scope: explicit `invalid` and `out_of_scope` citations remain such. Only matching, restored, unverified local citations can receive an updated reader-only badge; stored answer/note citation snapshots are not rewritten by maintenance. Strict remote ask capability is checked again inside the serialized call boundary; the published SDK remains blocked until non-destructive fresh context is supported.
+
+
+## Atomic note revisions (T3b backend)
+
+Personal note creation uses a separate typed create payload (title, content,
+citations, scope_snapshot). Personal PATCH and legacy PUT add optional
+`expected_revision`, a strict positive integer: bool, float, string, zero and
+negative values return the existing 422 validation-list envelope. Create responses
+start at `revision: 1`; editorial updates (including citation/scope-only changes)
+advance exactly once. Native `note.revision` is authoritative. Native content and
+personal snapshot metadata/revision are committed and read transactionally;
+original creation timestamps survive. Embedding-only submission does not revise.
+
+- Stale supplied predecessor: 409
+  `{"detail":{"code":"NOTE_REVISION_CONFLICT","current_revision":2}}`.
+- Missing/null predecessor in explicit `multiclient` mode: 428
+  `{"detail":{"code":"NOTE_REVISION_REQUIRED"}}`.
+- `STUDY_WORKBENCH_NOTE_WRITE_MODE` defaults to `legacy_single_web`: omission/null
+  remains accepted for compatibility, but any supplied revision is enforced.
+  Invalid configuration fails startup. No authentication/session-mode activation
+  is part of this change, and omission-compatible operation is not a multiclient
+  release-readiness claim.
+- `GET /api/personal/note-capabilities` reports `contract_version: "v1"`,
+  `conditional_writes: true`, and `expected_revision_required` for the current mode.
+- Missing/foreign notebook membership returns 404 before revision disclosure.
+  Native-only notes can gain a snapshot on their first authorized personal save.
+  A shared note keeps one snapshot owner; other notebooks may read native content
+  and revision, but not the owner's citation/scope metadata or edit that snapshot.
+- Unknown commit acknowledgement (including lost connection/cancellation after a
+  possible commit) is a typed 500 detail string. Preserve the draft, read/reconcile,
+  and never automatically retry with either the old or a newly fetched base.
+
+Legacy PUT retains supplied-field semantics, and domain saves enforce their loaded
+revision. Note deletion atomically removes native rows, artifact memberships and
+snapshots. Notebook deletion atomically removes its note set and parent at the
+final note commit; unrelated source/chat cleanup is not claimed newly atomic.
+Local export coordination still requires a shared flock-capable data root; DB CAS
+provides revision safety across independent roots, not distributed export locks.
+Portable restore preserves valid N under fresh identities; old absence is 1 and
+malformed or inconsistent native/snapshot revisions reject the archive before writes.
+
+
+Membership/deletion safety uses `note_write_guard` records keyed by the native
+note/notebook identity, in the same transaction as the mutation. These internal
+random tokens are not revisions, carry no content, and are excluded from archive
+exports. Guards are retained as tombstones after deletion (not deleted/recreated
+across the competing mutation), and are lazily initialized for restored/legacy
+IDs. They prevent database snapshot-isolation write skew without touching native
+user-visible timestamps. A definitive serialization loser is an error requiring
+reconciliation, not an automatic retry. Related project locks are acquired in
+sorted order only after the note mutation barrier; export/read project locks never
+acquire that barrier. Archive import uses fresh identities in its existing single
+transaction; no live guards or runtime concurrency state are imported.

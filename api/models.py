@@ -2,6 +2,8 @@ from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from open_notebook.database.note_contract import Revision
+
 
 # Notebook models
 class NotebookCreate(BaseModel):
@@ -225,12 +227,14 @@ class NoteCreate(BaseModel):
 
 
 class NoteUpdate(BaseModel):
+    expected_revision: Revision | None = None
     title: Optional[str] = Field(None, description="Note title")
     content: Optional[str] = Field(None, description="Note content")
     note_type: Optional[str] = Field(None, description="Type of note (human, ai)")
 
 
 class NoteResponse(BaseModel):
+    revision: Revision
     id: str
     title: Optional[str]
     content: Optional[str]

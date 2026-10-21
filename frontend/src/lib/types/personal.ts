@@ -102,7 +102,9 @@ export interface BridgeJob {
   result?: { download_url?: string; artifact_id?: string; import_report?: unknown; [key: string]: unknown } | null
   remote_may_continue?: boolean
 }
-export interface WorkbenchNote { id: string; title: string; content: string; citations: EvidenceCitation[]; scope_snapshot?: ScopeSnapshot }
+export interface CreateWorkbenchNoteInput { title: string; content: string; citations: EvidenceCitation[]; scope_snapshot?: ScopeSnapshot }
+export interface UpdateWorkbenchNoteInput extends CreateWorkbenchNoteInput { expected_revision: number }
+export interface WorkbenchNote extends CreateWorkbenchNoteInput { id: string; revision: number }
 export interface RemoteLink { remote_notebook_id: string; connection_id?: string }
 export interface Workspace {
   notebook: { id: string; name: string }

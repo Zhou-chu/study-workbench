@@ -145,14 +145,25 @@ async def test_notebooklm_answer_saved_as_canonical_turn(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_note_cannot_forge_verified_citation(monkeypatch):
-    import open_notebook.database.repository as repo
     from api.personal_service import PersonalService
 
     store = MemoryStore()
+    from open_notebook.database import note_repository
+
+    async def create_note(**kwargs):
+        return note_repository.NoteWriteResult(
+            native={
+                "id": "note:test",
+                "content": kwargs["fields"]["content"],
+                "revision": 1,
+            },
+            snapshot={**kwargs["snapshot"], "id": "note:test", "revision": 1},
+        )
+
+    monkeypatch.setattr(note_repository, "create_note", create_note)
     monkeypatch.setattr(
-        repo, "repo_create", AsyncMock(return_value={"id": "note:test"})
+        "open_notebook.domain.notebook.Note.submit_embedding", lambda self: None
     )
-    monkeypatch.setattr(repo, "repo_relate", AsyncMock())
     note = await PersonalService(store).save_note(
         "nb",
         {
@@ -223,13 +234,23 @@ async def test_completion_preserves_worker_ack_written_during_call(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_remote_note_reference_retains_remote_identity(monkeypatch):
-    import open_notebook.database.repository as repo
     from api.personal_service import PersonalService
+    from open_notebook.database import note_repository
 
+    async def create_note(**kwargs):
+        return note_repository.NoteWriteResult(
+            native={
+                "id": "note:test",
+                "content": kwargs["fields"]["content"],
+                "revision": 1,
+            },
+            snapshot={**kwargs["snapshot"], "id": "note:test", "revision": 1},
+        )
+
+    monkeypatch.setattr(note_repository, "create_note", create_note)
     monkeypatch.setattr(
-        repo, "repo_create", AsyncMock(return_value={"id": "note:test"})
+        "open_notebook.domain.notebook.Note.submit_embedding", lambda self: None
     )
-    monkeypatch.setattr(repo, "repo_relate", AsyncMock())
     cite = {
         "citation_id": "c1",
         "kind": "remote_unmapped",
@@ -286,6 +307,19 @@ async def test_workspace_keeps_canonical_note_edits(monkeypatch):
         get_notes=AsyncMock(return_value=[note]),
     )
     monkeypatch.setattr(Notebook, "get", AsyncMock(return_value=nb))
+    from open_notebook.database import note_repository
+
+    monkeypatch.setattr(
+        note_repository,
+        "read_project_notes_locked",
+        AsyncMock(
+            return_value=[
+                note_repository.NoteWriteResult(
+                    native=note.model_dump(), snapshot={"citations": []}
+                )
+            ]
+        ),
+    )
     assert (await PersonalService(store).workspace("nb"))["notes"][0][
         "content"
     ] == "New content"

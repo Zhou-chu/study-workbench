@@ -10,7 +10,8 @@ Updated 2026-10-21 UTC. Planned work is not accepted functionality.
 | Frontend baseline | 390 tests / 53 files, types, lint (7 existing warnings), production build | Passed; initial external node_modules symlink rejected by Turbopack, resolved by isolated local dependency copy without code changes |
 | Docker deployment | d773de0; 61 final focused tests; independent fix re-review approved | Static PASS. No Docker runtime; build/Compose/restore NOT RUN |
 | API contract foundation | 47d0134; 84 regression tests passed / 1 skipped before final test-only addition; final 15 contract tests passed; independent review approved | Integrated locally; current generic response-schema gaps remain explicit |
-| Device sessions | Reviewed security design | Not implemented or activated |
+| Note revision backend | dc96f38 reviewed; 77 isolated note/portable checks; integrated 1499 passed / 19 gated skips | Backend integrated; reviewed Web conflict UX integrated below; legacy compatibility still default |
+| Device sessions | Reviewed pure core b3f18b0 integrated; real adapter/HTTP correction under review | Not activated; Web migration and coordinated acceptance pending |
 | Native private ingress | No verified supported dot tunnel registration/native HTTP path | BLOCKED/UNKNOWN, not declared unsupported |
 | Android | No client build | Not started; SDK/device evidence pending |
 | iPadOS | No client build | Not started; macOS/Xcode/device evidence pending |
@@ -41,3 +42,24 @@ A local verification-wrapper bug reran pytest inside spawned extraction workers 
 The final Python runner clears ambient credentials/dotenv, reuses the verified cache and rejects external Python DNS/connect. This is a regression tripwire, not a claim of an OS-level network sandbox. Reviewed subprocess paths and exporter isolation remain separate checks. Final full result: **1473 passed, 1 opt-in skipped, 2 existing deprecation warnings**.
 
 No actual Docker build/Compose, native client build/device test, live model/Google acceptance or private Sites publication occurred in this foundation checkpoint. User explicitly requires owner-private ChatGPT Sites publication after completion and acceptance; the supported dot connection and native access gates remain unresolved.
+
+## Note-backend checkpoint
+
+The two Note.save compatibility findings were fixed and re-reviewed: projected notes retain omitted body fields; strict domain validation happens before any write. Integrated backend result: **1499 passed, 19 gated skips, 2 existing warnings**. The native SurrealDB note/portable run independently passed **77 checks**. At that checkpoint, Web conflict UI, device-session storage/HTTP integration and enforcement activation remained incomplete; later evidence follows below.
+
+Foundation integration is published at remote aa029330e85c78b637ee4df90b7c1f6f40e85eff. Updating main was denied pending explicit user permission; main remains 07654a46. This permission gate does not stop implementation or reviewed feature/integration-branch publication.
+
+
+## Note Web recovery checkpoint (2026-10-21 18:44 UTC)
+
+Reviewed source `ae9e81c6cc2ce2d7766dc274c2cde0e12fa865c6` (after `ffa20301`) integrated without conflicts. Full frontend suite: **414 passed / 55 files**, focused **105 passed**, typecheck and production build passed; lint has zero errors and seven unchanged warnings. No auth-mode activation or deployment occurred.
+
+Independent browser checks used synthetic data with real SurrealDB/API and the exact frozen frontend build. Initial coverage passed stale-revision 409 handling in both editors, retained drafts, read-only comparison, canceled/confirmed reload, subsequent revision-conditioned saves, duplicate-click protection, committed-but-lost responses, and bounded candidate inspection. Desktop/tablet/mobile widths and Chinese mobile confirmation were inspected.
+
+Independent RED reproduction exposed buffered inline-title loss during a pending acknowledgement and duplicate Save Answer creation after a committed-but-lost response. On the final fix build, scoped GREEN confirmed the newer focused title stays visible and the next explicit save persists revision 3; ambiguous Save Answer remains blocked with exactly one POST, explicit read-only candidate comparison and unrelated draft retention. Final code review passed. Real-component unit tests additionally cover create/update buffered titles and Escape; real-hook tests cover create/update/delete with a global retry default. These last cases were not all repeated in browser. Owned synthetic services were stopped.
+
+## Portable format and core checkpoint
+
+Revision-aware archives now write format 2; exact-integer format 1/2 reading remains supported. Reviewed `7265593` passed 106 focused tests (one gated skip), its branch suite 1560 tests (19 skips), and a separate actual database export revision 7 → restore 7 → save 8 check. Old readers reject format 2 instead of silently discarding revisions. This is not a full deployment migration drill.
+
+Pure device-session core `b3f18b0` passed 28 focused tests and independent contention/mutation review before integration. Real database/HTTP extension is not yet accepted: its independent review found a damaged-schema readiness gap, now being corrected. No browser cookie migration, native client or actual user session is claimed.

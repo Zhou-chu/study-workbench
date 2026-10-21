@@ -2,6 +2,26 @@ import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const itIT = {
+  noteConflict: {
+    candidates: "Note sul server da esaminare",
+    inspectCandidate: "Esamina nota sul server",
+    conflict: "Questa nota è stata modificata altrove. La bozza è conservata. Confronta prima di sostituirla.",
+    unknown: "Impossibile confermare il salvataggio. La bozza è conservata. Confronta con il server e non inviare di nuovo.",
+    rejected: "Salvataggio rifiutato. La bozza è conservata. Controlla la copia sul server prima di ricaricarla.",
+    compare: "Confronta con il server",
+    reload: "Ricarica copia dal server",
+    discard: "Scarta bozza e ricarica",
+    discardTitle: "Scartare la bozza?",
+    discardDescription: "Titolo, contenuto e riferimenti saranno sostituiti dalla copia del server visualizzata. Questa azione è irreversibile.",
+    baseRevision: "Revisione di base della bozza",
+    serverRevision: "Revisione sul server",
+    yourDraft: "La tua bozza invariata",
+    latest: "Ultima copia sul server",
+    references: "Citazioni e ambito",
+    review: "Verifica salvataggio nota",
+    readFailed: "Impossibile caricare la copia dal server. La bozza non è cambiata.",
+    notFound: "Nessuna nota corrispondente sul server. Conserva la bozza; non presumere che il salvataggio sia fallito.",
+  },
   workbench: workbenchEn,
   common: {
     search: "Cerca...",

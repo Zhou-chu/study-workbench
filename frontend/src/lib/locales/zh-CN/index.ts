@@ -2,6 +2,26 @@ import { workbenchZh } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const zhCN = {
+  noteConflict: {
+    candidates: "可查看的服务器笔记",
+    inspectCandidate: "查看服务器笔记",
+    conflict: "此笔记已在别处更改。草稿仍保留在这里，请先比较再替换。",
+    unknown: "无法确认保存是否完成。草稿已保留，请先与服务器比较，不要再次提交。",
+    rejected: "保存被拒绝，草稿已保留。重新加载前请查看服务器副本。",
+    compare: "与服务器比较",
+    reload: "重新加载服务器副本",
+    discard: "放弃草稿并重新加载",
+    discardTitle: "放弃草稿？",
+    discardDescription: "这会用显示的服务器副本替换标题、正文和引用，且无法撤销。",
+    baseRevision: "草稿基础版本",
+    serverRevision: "服务器版本",
+    yourDraft: "保留的草稿",
+    latest: "最新服务器副本",
+    references: "引用和范围",
+    review: "检查笔记保存",
+    readFailed: "无法加载服务器副本，草稿未更改。",
+    notFound: "未找到对应的服务器笔记。请保留草稿，不要假定保存失败。",
+  },
   workbench: workbenchZh,
   common: {
     search: "搜索...",

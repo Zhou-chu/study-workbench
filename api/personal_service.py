@@ -246,11 +246,11 @@ class PersonalService:
         notebook = await Notebook.get(notebook_id)
         sources = await notebook.get_sources()
         versions = await self.store.list("version", notebook_id=notebook_id)
-        notes = await notebook.get_notes(include_content=True)
-        snapshots = {
-            n["note_id"]: n
-            for n in await self.store.list("note_snapshot", notebook_id=notebook_id)
-        }
+        from open_notebook.database.note_repository import read_project_notes_locked
+
+        async with self.store.project_lock(notebook_id):
+            bundles = await read_project_notes_locked(notebook_id)
+        notes = [{**(bundle.snapshot or {}), **bundle.native} for bundle in bundles]
         return {
             "notebook": {"id": notebook.id, "name": notebook.name},
             "sources": [
@@ -261,9 +261,7 @@ class PersonalService:
                 }
                 for s in sources
             ],
-            "notes": [
-                {**snapshots.get(n.id, {}), **n.model_dump(mode="json")} for n in notes
-            ],
+            "notes": notes,
             "turns": await self.store.list("turn", notebook_id=notebook_id),
             "jobs": await self.store.list("job", notebook_id=notebook_id),
             "link": await self.store.get("link", notebook_id),
@@ -274,11 +272,8 @@ class PersonalService:
         }
 
     async def save_note(self, notebook_id, value, note_id=None):
-        from open_notebook.database.repository import (
-            repo_create,
-            repo_relate,
-            repo_update,
-        )
+        from open_notebook.config import get_note_write_mode
+        from open_notebook.database.note_repository import create_note, update_note
 
         title = str(value.get("title") or "Study note")[:500]
         content = str(value.get("content") or "")
@@ -318,29 +313,25 @@ class PersonalService:
                 )
             else:
                 citations.append(await evidence.validate_citation(citation, versions))
-        async with self.store.project_lock(notebook_id):
-            if note_id:
-                previous = await self.store.get("note_snapshot", note_id)
-                if not previous or previous["notebook_id"] != notebook_id:
-                    raise NotFoundError("V1 note not found")
-                await repo_update("note", note_id, {"title": title, "content": content})
-            else:
-                result = await repo_create(
-                    "note", {"title": title, "content": content, "embedding": []}
-                )
-                result = result[0] if isinstance(result, list) else result
-                note_id = result["id"]
-                await repo_relate(note_id, "artifact", notebook_id)
-            snapshot = {
-                "note_id": note_id,
-                "id": note_id,
-                "notebook_id": notebook_id,
-                "title": title,
-                "content": content,
-                "citations": citations,
-                "scope_snapshot": value.get("scope_snapshot", {}),
-                "created_at": now(),
-                "updated_at": now(),
-            }
-            await self.store.put("note_snapshot", note_id, snapshot)
-        return snapshot
+        snapshot = {
+            "citations": citations,
+            "scope_snapshot": value.get("scope_snapshot", {}),
+        }
+        fields = {"title": title, "content": content}
+        if note_id:
+            result = await update_note(
+                note_id=note_id,
+                notebook_id=notebook_id,
+                fields=fields,
+                snapshot=snapshot,
+                expected_revision=value.get("expected_revision"),
+                mode=get_note_write_mode(),
+            )
+        else:
+            result = await create_note(
+                fields=fields, notebook_id=notebook_id, snapshot=snapshot
+            )
+        from open_notebook.domain.notebook import Note
+
+        Note(**result.native).submit_embedding()
+        return result.snapshot

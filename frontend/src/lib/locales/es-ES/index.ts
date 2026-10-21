@@ -2,6 +2,26 @@ import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const esES = {
+  noteConflict: {
+    candidates: "Notas del servidor para revisar",
+    inspectCandidate: "Revisar nota del servidor",
+    conflict: "Esta nota cambió en otro lugar. Tu borrador se conserva. Compara antes de reemplazarlo.",
+    unknown: "No se pudo confirmar el guardado. Tu borrador se conserva. Compara con el servidor y no lo envíes de nuevo.",
+    rejected: "Se rechazó el guardado. Tu borrador se conserva. Revisa la copia del servidor antes de recargar.",
+    compare: "Comparar con el servidor",
+    reload: "Recargar copia del servidor",
+    discard: "Descartar borrador y recargar",
+    discardTitle: "¿Descartar tu borrador?",
+    discardDescription: "El título, el contenido y las referencias se reemplazarán por la copia del servidor mostrada. No se puede deshacer.",
+    baseRevision: "Revisión base del borrador",
+    serverRevision: "Revisión del servidor",
+    yourDraft: "Tu borrador sin cambios",
+    latest: "Última copia del servidor",
+    references: "Citas y alcance",
+    review: "Revisar guardado de nota",
+    readFailed: "No se pudo cargar la copia del servidor. Tu borrador no ha cambiado.",
+    notFound: "No se encontró una nota coincidente en el servidor. Conserva el borrador; no supongas que el guardado falló.",
+  },
   workbench: workbenchEn,
   common: {
     search: "Buscar...",

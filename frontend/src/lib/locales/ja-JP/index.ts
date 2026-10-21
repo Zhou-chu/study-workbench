@@ -2,6 +2,26 @@ import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const jaJP = {
+  noteConflict: {
+    candidates: "確認するサーバーのノート",
+    inspectCandidate: "サーバーのノートを確認",
+    conflict: "このノートは別の場所で変更されました。下書きは保持されています。置き換える前に比較してください。",
+    unknown: "保存が完了したか確認できません。下書きは保持されています。再送信せず、サーバーの内容と比較してください。",
+    rejected: "保存が拒否されました。下書きは保持されています。再読み込みの前にサーバーの内容を確認してください。",
+    compare: "サーバーと比較",
+    reload: "サーバーの内容を再読み込み",
+    discard: "下書きを破棄して再読み込み",
+    discardTitle: "下書きを破棄しますか？",
+    discardDescription: "表示されているサーバーの内容でタイトル、本文、参照を置き換えます。元に戻せません。",
+    baseRevision: "下書きの基準リビジョン",
+    serverRevision: "サーバーのリビジョン",
+    yourDraft: "保持された下書き",
+    latest: "サーバーの最新内容",
+    references: "引用と対象範囲",
+    review: "ノートの保存を確認",
+    readFailed: "サーバーの内容を取得できませんでした。下書きは変更されていません。",
+    notFound: "一致するノートが見つかりません。下書きを保持し、保存が失敗したと判断しないでください。",
+  },
   workbench: workbenchEn,
   common: {
     search: "検索...",

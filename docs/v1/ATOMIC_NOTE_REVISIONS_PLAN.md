@@ -8,7 +8,7 @@
 
 **Tech Stack:** Existing async Python/FastAPI/Pydantic, SurrealDB 2.3.10, pytest, Next.js/TanStack Query/Vitest.
 
-**Spec:** `docs/v1/MULTICLIENT_IMPLEMENTATION_PLAN.md` T3; `/workspace/shared/note-conflict-preflight.md`. Canonical files inspected read-only on 2026-10-21. T3a commit `264a338` supplies schema/exporter fixtures, **not** `api/personal_contracts.py`; T3b introduces focused typed note models.
+**Spec:** `docs/v1/MULTICLIENT_IMPLEMENTATION_PLAN.md` T3; `docs/7-DEVELOPMENT/decisions/ADR-014-atomic-note-revisions.md`. Canonical files inspected read-only on 2026-10-21. T3a commit `264a338` supplies schema/exporter fixtures, **not** `api/personal_contracts.py`; T3b introduces focused typed note models.
 
 ## Ownership and constraints
 
@@ -75,6 +75,7 @@
 **Interfaces:** `normalize_note_revisions(notes: list[dict[str, Any]], snapshots: list[dict[str, Any]]) -> None` is a private pure-data helper called on validated import data before remap/commit. Absent native/snapshot revision means 1; explicitly present invalid revision is rejected. If both are present they must agree; one absent legacy side is accepted only when the present side is 1, otherwise reject inconsistent archive. Preserve valid N under new imported IDs, and emit revision on export even for old native-only notes.
 
 - [ ] Add fixtures: fully legacy archive→1; current N=7→import7→save8; native-only note; bool/float/string/zero/negative revision rejected; native7/snapshot6 rejected; native absent/snapshot7 rejected; no import writes on invalid archive. Run portable tests RED.
+- [ ] Emit archive format 2 and explicitly read formats 1/2 so old format-1-only readers cannot silently drop native revisions; preserve all strict mismatch checks and existing archives.
 - [ ] Include revision in native restore allowlist and snapshot payload. Ensure export obtains coherent native/snapshot note bundle within its existing project lock without recursively acquiring it; existing before/after detection is not a substitute for consistency. Import keeps native and snapshot creation in its existing single transaction and new identities; validate parent/membership rules without taking locks in reverse order.
 - [ ] Run portable and note suites GREEN including isolated real DB archive roundtrip. Checkpoint `fix(portable): preserve validated note revisions`.
 

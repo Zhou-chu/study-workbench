@@ -2,6 +2,26 @@ import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const caES = {
+  noteConflict: {
+    candidates: "Notes del servidor per revisar",
+    inspectCandidate: "Revisar la nota del servidor",
+    conflict: "Aquesta nota ha canviat en un altre lloc. Es conserva el teu esborrany. Compara abans de substituir-lo.",
+    unknown: "No es pot confirmar si s’ha desat. Es conserva l’esborrany. Compara amb el servidor i no el tornis a enviar.",
+    rejected: "S’ha rebutjat el desament. Es conserva l’esborrany. Revisa la còpia del servidor abans de recarregar.",
+    compare: "Comparar amb el servidor",
+    reload: "Recarregar la còpia del servidor",
+    discard: "Descartar l’esborrany i recarregar",
+    discardTitle: "Vols descartar l’esborrany?",
+    discardDescription: "El títol, el contingut i les referències se substituiran per la còpia del servidor que es mostra. No es pot desfer.",
+    baseRevision: "Revisió base de l’esborrany",
+    serverRevision: "Revisió del servidor",
+    yourDraft: "El teu esborrany sense canvis",
+    latest: "Última còpia del servidor",
+    references: "Citacions i abast",
+    review: "Revisar el desament de la nota",
+    readFailed: "No s’ha pogut carregar la còpia del servidor. L’esborrany no ha canviat.",
+    notFound: "No s’ha trobat cap nota coincident al servidor. Conserva l’esborrany; no assumeixis que el desament ha fallat.",
+  },
   workbench: workbenchEn,
   common: {
     search: "Cerca...",

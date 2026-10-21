@@ -5,6 +5,26 @@ import type { TranslationShape } from '../en-US';
 // Translate values only; do not change keys, placeholders or structure.
 
 export const deDE = {
+  noteConflict: {
+    candidates: "Servernotizen zur Prüfung",
+    inspectCandidate: "Servernotiz prüfen",
+    conflict: "Diese Notiz wurde anderswo geändert. Dein Entwurf bleibt erhalten. Vergleiche vor dem Ersetzen.",
+    unknown: "Der Speicherstatus ist unklar. Dein Entwurf bleibt erhalten. Vergleiche mit dem Server und sende nicht erneut.",
+    rejected: "Das Speichern wurde abgelehnt. Dein Entwurf bleibt erhalten. Prüfe vor dem Neuladen die Serverkopie.",
+    compare: "Mit Server vergleichen",
+    reload: "Serverkopie neu laden",
+    discard: "Entwurf verwerfen und neu laden",
+    discardTitle: "Entwurf verwerfen?",
+    discardDescription: "Titel, Inhalt und Verweise werden durch die angezeigte Serverkopie ersetzt. Dies kann nicht rückgängig gemacht werden.",
+    baseRevision: "Basisrevision des Entwurfs",
+    serverRevision: "Serverrevision",
+    yourDraft: "Dein unveränderter Entwurf",
+    latest: "Aktuelle Serverkopie",
+    references: "Zitate und Umfang",
+    review: "Speichern der Notiz prüfen",
+    readFailed: "Serverkopie konnte nicht geladen werden. Dein Entwurf ist unverändert.",
+    notFound: "Keine passende Servernotiz gefunden. Behalte deinen Entwurf; das Speichern könnte dennoch erfolgreich gewesen sein.",
+  },
   workbench: workbenchEn,
   common: {
     search: "Suchen...",

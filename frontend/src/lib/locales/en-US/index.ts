@@ -1,5 +1,25 @@
 import { workbenchEn } from '../workbench'
 export const enUS = {
+  noteConflict: {
+    candidates: "Server notes to inspect",
+    inspectCandidate: "Inspect server note",
+    conflict: "This note changed elsewhere. Your draft is safe here. Compare before replacing it.",
+    unknown: "We could not confirm whether this save completed. Your draft is preserved. Compare with the server before doing anything else; do not submit again.",
+    rejected: "The save was rejected. Your draft is preserved. Review the server copy before reloading.",
+    compare: "Compare with server",
+    reload: "Reload server copy",
+    discard: "Discard draft and reload",
+    discardTitle: "Discard your draft?",
+    discardDescription: "This replaces your title, content and references with the displayed server copy. This cannot be undone.",
+    baseRevision: "Draft base revision",
+    serverRevision: "Server revision",
+    yourDraft: "Your unchanged draft",
+    latest: "Latest server copy",
+    references: "Citations and scope",
+    review: "Review note save",
+    readFailed: "Could not load the server copy. Your draft has not changed.",
+    notFound: "No matching server note was found. Keep your draft; do not assume the save failed.",
+  },
   workbench: workbenchEn,
   common: {
     search: "Search...",

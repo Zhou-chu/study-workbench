@@ -2,6 +2,26 @@ import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const frFR = {
+  noteConflict: {
+    candidates: "Notes du serveur à examiner",
+    inspectCandidate: "Examiner la note du serveur",
+    conflict: "Cette note a été modifiée ailleurs. Votre brouillon est conservé. Comparez avant de le remplacer.",
+    unknown: "Impossible de confirmer la sauvegarde. Votre brouillon est conservé. Comparez avec le serveur ; ne renvoyez pas la demande.",
+    rejected: "La sauvegarde a été refusée. Votre brouillon est conservé. Vérifiez la copie du serveur avant de la recharger.",
+    compare: "Comparer avec le serveur",
+    reload: "Recharger la copie du serveur",
+    discard: "Abandonner le brouillon et recharger",
+    discardTitle: "Abandonner votre brouillon ?",
+    discardDescription: "Le titre, le contenu et les références seront remplacés par la copie affichée du serveur. Cette action est irréversible.",
+    baseRevision: "Révision de base du brouillon",
+    serverRevision: "Révision du serveur",
+    yourDraft: "Votre brouillon inchangé",
+    latest: "Dernière copie du serveur",
+    references: "Citations et périmètre",
+    review: "Vérifier la sauvegarde",
+    readFailed: "Impossible de charger la copie du serveur. Votre brouillon est inchangé.",
+    notFound: "Aucune note correspondante sur le serveur. Conservez votre brouillon ; cela ne signifie pas que la sauvegarde a échoué.",
+  },
   workbench: workbenchEn,
   common: {
     search: "Recherche...",

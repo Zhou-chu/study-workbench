@@ -41,6 +41,7 @@ vi.mock('@/lib/stores/notebook-columns-store', () => ({
 
 const notebookId = 'notebook:123'
 const existingNote: NoteResponse = {
+  revision: 1,
   id: 'note:456',
   title: 'Existing note',
   content: 'Existing note content',

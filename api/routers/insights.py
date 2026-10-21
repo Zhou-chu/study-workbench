@@ -73,6 +73,7 @@ async def save_insight_as_note(insight_id: str, request: SaveAsNoteRequest):
 
         return NoteResponse(
             id=note.id or "",
+            revision=note.revision,
             title=note.title,
             content=note.content,
             note_type=note.note_type,

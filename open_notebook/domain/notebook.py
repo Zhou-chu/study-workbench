@@ -8,12 +8,14 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from surreal_commands import submit_command
 from surrealdb import RecordID
 
+from open_notebook.database.note_contract import Revision
 from open_notebook.database.repository import ensure_record_id, repo_query
 from open_notebook.domain.base import ObjectModel
 from open_notebook.exceptions import (
     DatabaseOperationError,
     InvalidInputError,
     NotFoundError,
+    OpenNotebookError,
 )
 
 
@@ -213,6 +215,16 @@ class Notebook(ObjectModel):
             raise DatabaseOperationError(e)
 
     async def delete(self, delete_exclusive_sources: bool = False) -> Dict[str, int]:
+        from open_notebook.database.note_repository import notebook_mutation_locks
+
+        if not self.id:
+            raise InvalidInputError("Cannot delete notebook without an ID")
+        async with notebook_mutation_locks(str(self.id)):
+            return await self._delete_locked(delete_exclusive_sources)
+
+    async def _delete_locked(
+        self, delete_exclusive_sources: bool = False
+    ) -> Dict[str, int]:
         """
         Delete notebook with cascade deletion of notes and optional source deletion.
 
@@ -236,16 +248,8 @@ class Notebook(ObjectModel):
 
             # 1. Get and delete all notes linked to this notebook
             notes = await self.get_notes()
-            for note in notes:
-                await note.delete()
-                deleted_notes += 1
+            deleted_notes = len(notes)
             logger.info(f"Deleted {deleted_notes} notes for notebook {self.id}")
-
-            # Delete artifact relationships
-            await repo_query(
-                "DELETE artifact WHERE out = $notebook_id",
-                {"notebook_id": notebook_id},
-            )
 
             # 2. Handle sources
             if delete_exclusive_sources:
@@ -303,7 +307,11 @@ class Notebook(ObjectModel):
             )
 
             # 4. Delete the notebook record itself
-            await super().delete()
+            from open_notebook.database.note_repository import (
+                delete_notebook_notes_locked,
+            )
+
+            deleted_notes = await delete_notebook_notes_locked(str(self.id))
             logger.info(f"Deleted notebook {self.id}")
 
             return {
@@ -313,6 +321,8 @@ class Notebook(ObjectModel):
                 "deleted_chat_sessions": deleted_chat_sessions,
             }
 
+        except OpenNotebookError:
+            raise
         except Exception as e:
             logger.error(f"Error deleting notebook {self.id}: {e}")
             logger.exception(e)
@@ -397,9 +407,7 @@ class SourceInsight(ObjectModel):
             title=f"{self.insight_type} from source {source.title}",
             content=self.content,
         )
-        await note.save()
-        if notebook_id:
-            await note.add_to_notebook(notebook_id)
+        await note.save(notebook_id=notebook_id)
         return note
 
 
@@ -689,6 +697,7 @@ class Source(ObjectModel):
 
 
 class Note(ObjectModel):
+    revision: Revision = 1
     table_name: ClassVar[str] = "note"
     title: Optional[str] = None
     note_type: Optional[Literal["human", "ai"]] = None
@@ -701,20 +710,44 @@ class Note(ObjectModel):
             raise InvalidInputError("Note content cannot be empty")
         return v
 
-    async def save(self) -> Optional[str]:
-        """
-        Save the note and submit embedding command.
+    async def save(
+        self,
+        *,
+        expected_revision: int | None = None,
+        fields: dict | None = None,
+        notebook_id: str | None = None,
+    ) -> Optional[str]:
+        from open_notebook.database.note_repository import create_note, update_note
 
-        Overrides ObjectModel.save() to submit an async embed_note command
-        after saving, instead of inline embedding.
+        # ObjectModel.save validated assignments and omitted unloaded/None fields.
+        # Keep both semantics without falling back to its non-CAS persistence.
+        self.model_validate(self.model_dump(), strict=True)
+        candidates = self._prepare_save_data() if fields is None else fields
+        values = {
+            key: value
+            for key, value in candidates.items()
+            if key in ("title", "content", "note_type")
+            and (value is not None or key in self.nullable_fields)
+        }
+        if fields is not None:
+            self.model_validate({**self.model_dump(), **values}, strict=True)
+        if self.id:
+            result = await update_note(
+                note_id=str(self.id),
+                fields=values,
+                expected_revision=self.revision
+                if expected_revision is None
+                else expected_revision,
+            )
+        else:
+            result = await create_note(fields=values, notebook_id=notebook_id)
+        saved = type(self)(**result.native)
+        for name in type(self).model_fields:
+            setattr(self, name, getattr(saved, name))
+        return self.submit_embedding()
 
-        Returns:
-            Optional[str]: The command_id if embedding was submitted, None
-                otherwise (either no content to embed, or submission failed)
-        """
-        # Call parent save (without embedding)
-        await super().save()
-
+    def submit_embedding(self) -> Optional[str]:
+        """Best effort, strictly after a confirmed editorial commit."""
         # Submit embedding command (fire-and-forget) if note has content.
         # Unlike Source.vectorize()/add_insight() (explicit, dedicated calls
         # whose whole point is the submission), this runs automatically
@@ -737,10 +770,18 @@ class Note(ObjectModel):
         return None
 
     async def add_to_notebook(self, notebook_id: str) -> Any:
-        if not notebook_id:
-            raise InvalidInputError("Notebook ID must be provided")
-        await Notebook.get(notebook_id)  # raises NotFoundError if invalid/missing
-        return await self.relate("artifact", notebook_id)
+        from open_notebook.database.note_repository import add_to_notebook
+
+        if not self.id or not notebook_id:
+            raise InvalidInputError("Note and notebook IDs must be provided")
+        return await add_to_notebook(str(self.id), notebook_id)
+
+    async def delete(self):
+        from open_notebook.database.note_repository import delete_note
+
+        if not self.id:
+            raise InvalidInputError("Cannot delete note without an ID")
+        await delete_note(str(self.id))
 
     def get_context(
         self, context_size: Literal["short", "long"] = "short"

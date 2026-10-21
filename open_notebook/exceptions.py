@@ -81,3 +81,18 @@ class NoTranscriptFound(OpenNotebookError):
     """Raised when no transcript is found for a video."""
 
     pass
+
+
+class NoteRevisionConflict(OpenNotebookError):
+    def __init__(self, current_revision: int):
+        super().__init__("NOTE_REVISION_CONFLICT")
+        self.current_revision = current_revision
+
+
+class NoteRevisionRequired(OpenNotebookError):
+    def __init__(self):
+        super().__init__("NOTE_REVISION_REQUIRED")
+
+
+class NoteCommitOutcomeUnknown(OpenNotebookError):
+    """Read/reconcile before retrying; commit may already have succeeded."""

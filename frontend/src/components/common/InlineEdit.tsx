@@ -7,6 +7,8 @@ import { useTranslation } from '@/lib/hooks/use-translation'
 interface InlineEditProps {
   value: string
   onSave: (value: string) => void | Promise<void>
+  // Observe buffered keystrokes without committing them; Escape still cancels.
+  onDraftChange?: (value: string) => void
   className?: string
   inputClassName?: string
   placeholder?: string
@@ -20,6 +22,7 @@ interface InlineEditProps {
 export function InlineEdit({
   value,
   onSave,
+  onDraftChange,
   className,
   inputClassName,
   placeholder,
@@ -106,7 +109,7 @@ export function InlineEdit({
       <textarea
         ref={inputRef as RefObject<HTMLTextAreaElement>}
         value={editValue}
-        onChange={(e) => setEditValue(e.target.value)}
+        onChange={(e) => { setEditValue(e.target.value); onDraftChange?.(e.target.value) }}
         onKeyDown={handleKeyDown}
         onBlur={() => {
           if (!isSaving && editValue.trim() !== value.trim()) {
@@ -133,7 +136,7 @@ export function InlineEdit({
     <input
       ref={inputRef as RefObject<HTMLInputElement>}
       value={editValue}
-      onChange={(e) => setEditValue(e.target.value)}
+      onChange={(e) => { setEditValue(e.target.value); onDraftChange?.(e.target.value) }}
       onKeyDown={handleKeyDown}
       onBlur={() => {
         if (!isSaving && editValue.trim() !== value.trim()) {

@@ -2,6 +2,26 @@ import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const plPL = {
+  noteConflict: {
+    candidates: "Notatki na serwerze do sprawdzenia",
+    inspectCandidate: "Sprawdź notatkę na serwerze",
+    conflict: "Ta notatka została zmieniona gdzie indziej. Szkic jest zachowany. Porównaj przed zastąpieniem.",
+    unknown: "Nie można potwierdzić zapisu. Szkic jest zachowany. Porównaj z serwerem i nie wysyłaj ponownie.",
+    rejected: "Zapis został odrzucony. Szkic jest zachowany. Sprawdź kopię na serwerze przed ponownym wczytaniem.",
+    compare: "Porównaj z serwerem",
+    reload: "Wczytaj kopię z serwera",
+    discard: "Odrzuć szkic i wczytaj",
+    discardTitle: "Odrzucić szkic?",
+    discardDescription: "Tytuł, treść i odwołania zostaną zastąpione wyświetloną kopią z serwera. Nie można tego cofnąć.",
+    baseRevision: "Rewizja bazowa szkicu",
+    serverRevision: "Rewizja na serwerze",
+    yourDraft: "Twój niezmieniony szkic",
+    latest: "Najnowsza kopia na serwerze",
+    references: "Cytowania i zakres",
+    review: "Sprawdź zapis notatki",
+    readFailed: "Nie udało się wczytać kopii z serwera. Szkic nie został zmieniony.",
+    notFound: "Nie znaleziono pasującej notatki na serwerze. Zachowaj szkic; nie zakładaj, że zapis się nie powiódł.",
+  },
   workbench: workbenchEn,
   common: {
     search: "Szukaj...",

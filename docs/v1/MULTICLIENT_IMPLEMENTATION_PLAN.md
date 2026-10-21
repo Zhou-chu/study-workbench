@@ -22,7 +22,7 @@ Proceed with authorized local code/test work after self-review. Do not infer per
 - Only frontend publishes a host port, bound to loopback; API/DB do not. Internal backend name is `http://api:5055`; SurrealDB remains `2.3.10`.
 - Personal volume: `/app/data/personal`, `STUDY_WORKBENCH_DATA_DIR`; upstream volume: `/app/data/upstream-data`, `OPEN_NOTEBOOK_DATA_DIR`; DB has a separate persistent volume.
 - Async-first DB/AI/graph operations; bound query parameters; secrets outside images/source/project ZIP; `_FILE` secret support; no default root credentials or placeholder encryption keys.
-- Preserve `/api/personal` routes, evidence/version identity, portable format and explicit capability failures. Turn events describe persistent state, not token streaming.
+- Preserve `/api/personal` routes, evidence/version identity, portable archive structure with explicit version compatibility, and explicit capability failures. New exports use format 2; current readers retain format 1 support (ADR-014). Turn events describe persistent state, not token streaming.
 - Online MVP only: no offline mutation queue, automatic conflict merge, end-device model, indefinite background worker or client-side Google integration.
 - Keep Google strict-isolation fail-closed; real model/Google evidence remains a separate release gate. Independent-model-only release needs explicit scope acceptance.
 - No upstream push, force-push or silent history replacement. Snapshot/private history and source history are distinct.

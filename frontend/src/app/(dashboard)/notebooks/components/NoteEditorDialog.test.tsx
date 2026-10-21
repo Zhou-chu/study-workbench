@@ -1,117 +1,194 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, expect, it, vi } from 'vitest'
+import { notesApi } from '@/lib/api/notes'
+import { QUERY_KEYS } from '@/lib/api/query-client'
+const { toast } = vi.hoisted(() => ({ toast: vi.fn() }))
+vi.mock('@/lib/hooks/use-toast', () => ({ useToast: () => ({ toast }) }))
 import { NoteEditorDialog } from './NoteEditorDialog'
-import { useNote } from '@/lib/hooks/use-notes'
-
-// useTranslation is mocked globally in setup.ts (t returns the key string)
-
-vi.mock('@/lib/hooks/use-notes', () => ({
-  useNote: vi.fn(),
-  useCreateNote: () => ({ isPending: false, mutateAsync: vi.fn() }),
-  useUpdateNote: () => ({ isPending: false, mutateAsync: vi.fn() }),
-}))
-
-vi.mock('@/components/ui/markdown-editor', () => ({
-  MarkdownEditor: ({ value }: { value: string }) => (
-    <textarea data-testid="markdown-editor" defaultValue={value} />
-  ),
-}))
-
-const mockUseNote = vi.mocked(useNote)
-
-const notFoundError = Object.assign(new Error('Request failed with status code 404'), {
-  isAxiosError: true,
-  response: { status: 404 },
-})
-
-const networkError = Object.assign(new Error('Network Error'), {
-  isAxiosError: true,
-  response: undefined,
-})
-
-type UseNoteResult = ReturnType<typeof useNote>
-
-const asResult = (value: Partial<UseNoteResult>) => value as UseNoteResult
-
-function renderDialog(props: Partial<Parameters<typeof NoteEditorDialog>[0]> = {}) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <NoteEditorDialog
-        open={true}
-        onOpenChange={vi.fn()}
-        notebookId=""
-        note={{ id: 'note-1', title: null, content: null }}
-        {...props}
-      />
-    </QueryClientProvider>
-  )
+vi.mock('@/lib/api/notes', () => ({ notesApi: { get: vi.fn(), list: vi.fn(), update: vi.fn(), create: vi.fn() } }))
+vi.mock('@/components/ui/markdown-editor', () => ({ MarkdownEditor: ({ value, onChange }: { value: string; onChange: (value: string) => void }) => <textarea aria-label="Body" value={value} onChange={event => onChange(event.target.value)} /> }))
+vi.mock('@/components/common/InlineEdit', () => ({ InlineEdit: ({ value, onSave }: { value: string; onSave: (value: string) => void }) => <input aria-label="Title" value={value} onChange={event => onSave(event.target.value)} /> }))
+const original = { id: 'note:a', revision: 3, title: 'Original', content: 'Full body', note_type: 'human', created: '', updated: '' }
+const latest = { ...original, revision: 4, title: 'Remote title', content: 'Remote body' }
+const onClose = vi.fn()
+function show(note: { id: string; title: string | null; content: string | null } | undefined = { id: 'note:a', title: 'Summary', content: null }) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: 1, retryDelay: 0 } } })
+  const view = (open = true, value = note) => <QueryClientProvider client={client}><NoteEditorDialog open={open} onOpenChange={onClose} notebookId="notebook:1" note={value} /></QueryClientProvider>
+  return { ...render(view()), client, view }
 }
-
-describe('NoteEditorDialog', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('shows the shared not-found state instead of the editor when the note returns 404', () => {
-    mockUseNote.mockReturnValue(
-      asResult({ data: undefined, isLoading: false, isError: true, error: notFoundError })
-    )
-
-    renderDialog()
-
-    expect(screen.getByTestId('content-unavailable')).toBeInTheDocument()
-    expect(screen.getByText('common.contentUnavailable.notFoundTitle')).toBeInTheDocument()
-    // The editor is gated: no ghost editing or saving
-    expect(screen.queryByTestId('markdown-editor')).not.toBeInTheDocument()
-    expect(screen.queryByText('sources.saveNote')).not.toBeInTheDocument()
-  })
-
-  it('shows the shared load-error state for non-404 failures', () => {
-    mockUseNote.mockReturnValue(
-      asResult({ data: undefined, isLoading: false, isError: true, error: networkError })
-    )
-
-    renderDialog()
-
-    expect(screen.getByText('common.contentUnavailable.errorTitle')).toBeInTheDocument()
-    expect(screen.queryByTestId('markdown-editor')).not.toBeInTheDocument()
-  })
-
-  it('closes the dialog from the not-found state close button', () => {
-    mockUseNote.mockReturnValue(
-      asResult({ data: undefined, isLoading: false, isError: true, error: notFoundError })
-    )
-    const onOpenChange = vi.fn()
-
-    renderDialog({ onOpenChange })
-
-    within(screen.getByTestId('content-unavailable')).getByText('common.close').click()
-    expect(onOpenChange).toHaveBeenCalledWith(false)
-  })
-
-  it('renders the editor when the note loads successfully', () => {
-    mockUseNote.mockReturnValue(
-      asResult({
-        data: {
-          id: 'note-1',
-          title: 'My note',
-          content: 'Note body',
-          note_type: 'human',
-          created: '2026-01-01T00:00:00Z',
-          updated: '2026-01-01T00:00:00Z',
-        } as UseNoteResult['data'],
-        isLoading: false,
-        isError: false,
-        error: null,
-      })
-    )
-
-    renderDialog()
-
-    expect(screen.getByTestId('markdown-editor')).toBeInTheDocument()
-    expect(screen.getByText('sources.saveNote')).toBeInTheDocument()
-    expect(screen.queryByTestId('content-unavailable')).not.toBeInTheDocument()
-  })
+beforeEach(() => { vi.clearAllMocks(); vi.mocked(notesApi.get).mockResolvedValue(original) })
+it('waits for full body and revision before enabling summary-note editing', async () => {
+  let resolve!: (value: typeof original) => void
+  vi.mocked(notesApi.get).mockReturnValue(new Promise(done => { resolve = done }))
+  show()
+  expect(screen.getByRole('button', { name: 'sources.saveNote' })).toBeDisabled()
+  expect(screen.queryByLabelText('Body')).not.toBeInTheDocument()
+  await act(async () => resolve(original))
+  expect(await screen.findByLabelText('Body')).toHaveValue('Full body')
+})
+it('keeps draft/base across refetch and conflict; compares read-only and confirms discard', async () => {
+  vi.mocked(notesApi.update).mockRejectedValue({ response: { status: 409, data: { detail: { code: 'NOTE_REVISION_CONFLICT', current_revision: 4 } } } })
+  const { client } = show()
+  await screen.findByLabelText('Body')
+  fireEvent.change(screen.getByLabelText('Body'), { target: { value: 'My draft' } })
+  fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'My title' } })
+  await act(async () => { client.setQueryData(QUERY_KEYS.note('note:a'), latest); await new Promise(resolve => setTimeout(resolve, 20)) })
+  expect(screen.getByLabelText('Body')).toHaveValue('My draft')
+  fireEvent.click(screen.getByRole('button', { name: 'sources.saveNote' }))
+  await screen.findByText('noteConflict.conflict')
+  expect(notesApi.update).toHaveBeenCalledTimes(1)
+  expect(notesApi.update).toHaveBeenCalledWith('note:a', { title: 'My title', content: 'My draft', expected_revision: 3 })
+  expect(onClose).not.toHaveBeenCalled()
+  vi.mocked(notesApi.get).mockResolvedValue(latest)
+  fireEvent.click(screen.getByRole('button', { name: 'noteConflict.compare' }))
+  await screen.findByText('Remote body')
+  expect(screen.getByLabelText('Body')).toHaveValue('My draft')
+  fireEvent.click(screen.getByRole('button', { name: 'noteConflict.reload' }))
+  fireEvent.click(screen.getByRole('button', { name: 'noteConflict.discard' }))
+  expect(screen.getByLabelText('Body')).toHaveValue('Remote body')
+  fireEvent.click(screen.getByRole('button', { name: 'sources.saveNote' }))
+  await waitFor(() => expect(notesApi.update).toHaveBeenLastCalledWith('note:a', expect.objectContaining({ expected_revision: 4 })))
+})
+it('preserves newer typing when a matching save acknowledges and advances only its base', async () => {
+  let resolve!: (value: typeof original) => void
+  vi.mocked(notesApi.update).mockReturnValueOnce(new Promise(done => { resolve = done }))
+  show()
+  await screen.findByLabelText('Body')
+  fireEvent.click(screen.getByRole('button', { name: 'sources.saveNote' }))
+  await waitFor(() => expect(notesApi.update).toHaveBeenCalledTimes(1))
+  fireEvent.change(screen.getByLabelText('Body'), { target: { value: 'New typing' } })
+  await act(async () => resolve({ ...original, revision: 4 }))
+  expect(screen.getByLabelText('Body')).toHaveValue('New typing')
+  expect(onClose).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: 'sources.saveNote' }))
+  await waitFor(() => expect(notesApi.update).toHaveBeenLastCalledWith('note:a', expect.objectContaining({ content: 'New typing', expected_revision: 4 })))
+})
+// Existing unavailable-content coverage, now exercising the real query hook.
+it.each([404, undefined])('shows the shared unavailable state on initial load failure (%s)', async status => {
+  vi.mocked(notesApi.get).mockRejectedValue(Object.assign(new Error('load failed'), { isAxiosError: true, response: status ? { status } : undefined }))
+  show()
+  await screen.findByText(status === 404 ? 'common.contentUnavailable.notFoundTitle' : 'common.contentUnavailable.errorTitle')
+  expect(screen.queryByLabelText('Body')).not.toBeInTheDocument()
+  expect(screen.queryByText('sources.saveNote')).not.toBeInTheDocument()
+})
+it('closes from the not-found state', async () => {
+  vi.mocked(notesApi.get).mockRejectedValue({ isAxiosError: true, response: { status: 404 } })
+  show()
+  fireEvent.click(await screen.findByText('common.close'))
+  expect(onClose).toHaveBeenCalledWith(false)
+})
+it('renders the editor after successful full-detail load', async () => {
+  show()
+  expect(await screen.findByLabelText('Body')).toHaveValue('Full body')
+  expect(screen.getByRole('button', { name: 'sources.saveNote' })).toBeEnabled()
+  expect(screen.queryByTestId('content-unavailable')).not.toBeInTheDocument()
+})
+it('keeps unknown-outcome drafts open and does not automatically retry', async () => {
+  vi.mocked(notesApi.update).mockRejectedValue(new Error('lost response'))
+  show()
+  await screen.findByLabelText('Body')
+  fireEvent.change(screen.getByLabelText('Body'), { target: { value: 'Unconfirmed draft' } })
+  fireEvent.click(screen.getByRole('button', { name: 'sources.saveNote' }))
+  await screen.findByText('noteConflict.unknown')
+  expect(screen.getByLabelText('Body')).toHaveValue('Unconfirmed draft')
+  expect(screen.getByRole('button', { name: 'sources.saveNote' })).toBeDisabled()
+  expect(notesApi.update).toHaveBeenCalledTimes(1)
+  expect(onClose).not.toHaveBeenCalled()
+  expect(toast).toHaveBeenCalledWith(expect.objectContaining({ description: 'noteConflict.unknown' }))
+})
+it('ignores acknowledgement from a prior editor session and prevents duplicate pending submissions', async () => {
+  let resolve!: (value: typeof original) => void
+  vi.mocked(notesApi.update).mockReturnValueOnce(new Promise(done => { resolve = done }))
+  const { rerender, view } = show()
+  await screen.findByLabelText('Body')
+  const save = screen.getByRole('button', { name: 'sources.saveNote' })
+  fireEvent.click(save); fireEvent.click(save)
+  await waitFor(() => expect(notesApi.update).toHaveBeenCalledTimes(1))
+  vi.mocked(notesApi.get).mockResolvedValue({ ...original, id: 'note:b', revision: 8, content: 'Other note' })
+  rerender(view(true, { id: 'note:b', title: 'Other', content: null }))
+  await waitFor(() => expect(screen.getByLabelText('Body')).toHaveValue('Other note'))
+  fireEvent.change(screen.getByLabelText('Body'), { target: { value: 'Other draft' } })
+  await act(async () => resolve({ ...original, revision: 4 }))
+  expect(onClose).not.toHaveBeenCalled()
+  expect(screen.getByLabelText('Body')).toHaveValue('Other draft')
+  fireEvent.click(screen.getByRole('button', { name: 'sources.saveNote' }))
+  await waitFor(() => expect(notesApi.update).toHaveBeenLastCalledWith('note:b', expect.objectContaining({ expected_revision: 8, content: 'Other draft' })))
+})
+it('creates without a predecessor and retains typing after acknowledgement for a conditional update', async () => {
+  let resolve!: (value: typeof original) => void
+  vi.mocked(notesApi.create).mockReturnValueOnce(new Promise(done => { resolve = done }))
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={client}><NoteEditorDialog open onOpenChange={onClose} notebookId="notebook:1" /></QueryClientProvider>)
+  fireEvent.change(screen.getByLabelText('Body'), { target: { value: 'New draft' } })
+  fireEvent.click(screen.getByRole('button', { name: 'sources.createNoteBtn' }))
+  await waitFor(() => expect(notesApi.create).toHaveBeenCalledTimes(1))
+  expect(vi.mocked(notesApi.create).mock.calls[0][0]).not.toHaveProperty('expected_revision')
+  fireEvent.change(screen.getByLabelText('Body'), { target: { value: 'Newer draft' } })
+  await act(async () => resolve({ ...original, revision: 1 }))
+  expect(onClose).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', { name: 'sources.saveNote' }))
+  await waitFor(() => expect(notesApi.update).toHaveBeenCalledWith('note:a', expect.objectContaining({ expected_revision: 1, content: 'Newer draft' })))
+})
+it('does not hide an initialized dirty draft when a background detail refresh fails', async () => {
+  const { client } = show()
+  await screen.findByLabelText('Body')
+  fireEvent.change(screen.getByLabelText('Body'), { target: { value: 'Local draft survives' } })
+  vi.mocked(notesApi.get).mockRejectedValue({ isAxiosError: true, response: { status: 404 } })
+  await act(async () => { await client.refetchQueries({ queryKey: QUERY_KEYS.note('note:a') }); await new Promise(resolve => setTimeout(resolve, 20)) })
+  expect(screen.getByLabelText('Body')).toHaveValue('Local draft survives')
+})
+it('disables duplicate updates after a create acknowledged with newer local typing', async () => {
+  let resolveCreate!: (value: typeof original) => void
+  vi.mocked(notesApi.create).mockReturnValueOnce(new Promise(done => { resolveCreate = done }))
+  vi.mocked(notesApi.update).mockReturnValueOnce(new Promise(() => {}))
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={client}><NoteEditorDialog open onOpenChange={onClose} notebookId="notebook:1" /></QueryClientProvider>)
+  fireEvent.change(screen.getByLabelText('Body'), { target: { value: 'Initial body' } })
+  fireEvent.click(screen.getByRole('button', { name: 'sources.createNoteBtn' }))
+  await waitFor(() => expect(notesApi.create).toHaveBeenCalledTimes(1))
+  fireEvent.change(screen.getByLabelText('Body'), { target: { value: 'More typing' } })
+  await act(async () => resolveCreate({ ...original, revision: 1 }))
+  fireEvent.click(screen.getByRole('button', { name: 'sources.saveNote' }))
+  await waitFor(() => expect(notesApi.update).toHaveBeenCalledTimes(1))
+  expect(screen.getByRole('button', { name: /common.saving|common.creating|sources.createNoteBtn/ })).toBeDisabled()
+})
+it('does not attach a pending creation to a draft after the notebook changes', async () => {
+  let resolve!: (value: typeof original) => void
+  vi.mocked(notesApi.create).mockReturnValueOnce(new Promise(done => { resolve = done }))
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const view = (notebookId: string) => <QueryClientProvider client={client}><NoteEditorDialog open onOpenChange={onClose} notebookId={notebookId} /></QueryClientProvider>
+  const { rerender } = render(view('notebook:1'))
+  fireEvent.change(screen.getByLabelText('Body'), { target: { value: 'First notebook' } })
+  fireEvent.click(screen.getByRole('button', { name: 'sources.createNoteBtn' }))
+  await waitFor(() => expect(notesApi.create).toHaveBeenCalledTimes(1))
+  rerender(view('notebook:2'))
+  fireEvent.change(screen.getByLabelText('Body'), { target: { value: 'Second notebook' } })
+  await act(async () => resolve({ ...original, revision: 1 }))
+  expect(onClose).not.toHaveBeenCalled()
+  expect(screen.getByLabelText('Body')).toHaveValue('Second notebook')
+  fireEvent.click(screen.getByRole('button', { name: 'sources.createNoteBtn' }))
+  await waitFor(() => expect(notesApi.create).toHaveBeenCalledTimes(2))
+  expect(notesApi.create).toHaveBeenLastCalledWith(expect.objectContaining({ notebook_id: 'notebook:2', content: 'Second notebook' }))
+  expect(notesApi.update).not.toHaveBeenCalled()
+})
+it('loads only an explicitly selected candidate when reconciling unknown creation without adopting identity', async () => {
+  vi.mocked(notesApi.create).mockRejectedValueOnce(new Error('response lost'))
+  vi.mocked(notesApi.list).mockResolvedValue([{ ...original, content: null, revision: 1 }])
+  vi.mocked(notesApi.get).mockResolvedValue({ ...original, content: 'Confirmed full server body', revision: 8 })
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={client}><NoteEditorDialog open onOpenChange={onClose} notebookId="notebook:1" /></QueryClientProvider>)
+  fireEvent.change(screen.getByLabelText('Body'), { target: { value: 'Unconfirmed local body' } })
+  fireEvent.click(screen.getByRole('button', { name: 'sources.createNoteBtn' }))
+  await screen.findByText('noteConflict.unknown')
+  fireEvent.click(screen.getByRole('button', { name: 'noteConflict.compare' }))
+  const candidate = await screen.findByRole('button', { name: 'noteConflict.inspectCandidate: Original' })
+  expect(notesApi.get).not.toHaveBeenCalled()
+  fireEvent.click(candidate)
+  await screen.findByText('Confirmed full server body')
+  expect(notesApi.get).toHaveBeenCalledWith('note:a')
+  expect(screen.getByLabelText('Body')).toHaveValue('Unconfirmed local body')
+  expect(screen.queryByRole('button', { name: 'noteConflict.reload' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'sources.createNoteBtn' })).toBeDisabled()
+  expect(notesApi.create).toHaveBeenCalledTimes(1)
 })
