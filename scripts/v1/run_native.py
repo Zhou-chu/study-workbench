@@ -7,6 +7,7 @@ Nothing in this launcher creates credentials, opens a public listener, or logs i
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import os
 import signal
 import socket
@@ -15,6 +16,7 @@ import subprocess
 import time
 from collections.abc import Callable, Mapping
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import httpx
 from dotenv import dotenv_values
@@ -45,22 +47,96 @@ def build_runtime_environment(
     }
 
 
-def apply_runtime_defaults(env: dict[str, str], source_root: Path = ROOT) -> Path:
+def is_loopback_host(host: str) -> bool:
+    """Recognize numeric browser IPv4 aliases locally, without DNS resolution."""
+    host = host.rstrip(".")
+    if host == "localhost" or host.endswith(".localhost"):
+        return True
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        try:
+            address = ipaddress.IPv4Address(socket.inet_aton(host))
+        except OSError:
+            return False
+    if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped:
+        return address.ipv4_mapped.is_loopback
+    return address.is_loopback
+
+
+def validate_runtime_urls(env: Mapping[str, str], ports: tuple[int, int, int]):
+    """A selected native stack must not silently route to a different local store."""
+    database, api, frontend = ports
+    isolated = ports != PORTS
+    targets = [("SURREAL_URL", database), ("INTERNAL_API_URL", api)]
+    if isolated:
+        targets.extend([("API_URL", frontend), ("CORS_ORIGINS", frontend)])
+    for key, port in targets:
+        values = env[key].split(",") if key == "CORS_ORIGINS" else [env[key]]
+        for value in values:
+            try:
+                url = urlsplit(value.strip())
+                host = url.hostname or ""
+                if isolated and key in ("API_URL", "CORS_ORIGINS"):
+                    if key == "CORS_ORIGINS" and value.strip() in ("", "*"):
+                        continue
+                    # Browsers normalize escaped hosts/backslashes differently
+                    # from urlsplit; accept only unambiguous HTTP authorities.
+                    if (
+                        "\\" in value
+                        or "%" in url.netloc
+                        or not url.netloc.isascii()
+                        or url.scheme not in ("http", "https")
+                        or not host
+                        or url.username is not None
+                        or url.password is not None
+                    ):
+                        raise ValueError
+                if is_loopback_host(host) and url.port != port:
+                    raise ValueError
+                if isolated and key in ("SURREAL_URL", "INTERNAL_API_URL"):
+                    expected = (
+                        f"ws://127.0.0.1:{database}/rpc"
+                        if key == "SURREAL_URL"
+                        else f"http://127.0.0.1:{api}"
+                    )
+                    allowed = (
+                        (expected,)
+                        if key == "SURREAL_URL"
+                        else (expected, expected + "/")
+                    )
+                    if value not in allowed:
+                        raise ValueError
+            except ValueError:
+                # Never include parsed config values, userinfo or query secrets.
+                raise ValueError(
+                    "Runtime URLs must match the selected native ports"
+                ) from None
+
+
+def apply_runtime_defaults(
+    env: dict[str, str],
+    source_root: Path = ROOT,
+    *,
+    ports: tuple[int, int, int] = PORTS,
+) -> Path:
     """Default only known noncredential options, before any storage mutation."""
+    database, api, frontend = ports
     defaults = {
         "SURREAL_USER": "root",
-        "SURREAL_URL": "ws://127.0.0.1:18000/rpc",
+        "SURREAL_URL": f"ws://127.0.0.1:{database}/rpc",
         "SURREAL_NAMESPACE": "study_workbench",
         "SURREAL_DATABASE": "study_workbench",
         "STUDY_WORKBENCH_DATA_DIR": str(source_root / ".runtime/data/personal"),
         "STUDY_WORKBENCH_RUNTIME_DIR": str(source_root / ".runtime/data"),
-        "INTERNAL_API_URL": "http://127.0.0.1:5055",
-        "API_URL": "http://127.0.0.1:13000",
-        "CORS_ORIGINS": "http://127.0.0.1:13000",
+        "INTERNAL_API_URL": f"http://127.0.0.1:{api}",
+        "API_URL": f"http://127.0.0.1:{frontend}",
+        "CORS_ORIGINS": f"http://127.0.0.1:{frontend}",
     }
     for key, default in defaults.items():
         if not env.get(key, "").strip():
             env[key] = default
+    validate_runtime_urls(env, ports)
     runtime = Path(env["STUDY_WORKBENCH_RUNTIME_DIR"]).resolve()
     if source_root.resolve().is_relative_to(runtime):
         raise ValueError("Runtime directory must not be the source root or ancestor")
@@ -133,8 +209,8 @@ def worker_startup_observed(log: Path, offset: int) -> bool:
         return b"Starting LIVE query listener" in handle.read()
 
 
-def require_free_ports():
-    for port in PORTS:
+def require_free_ports(ports: tuple[int, int, int] = PORTS):
+    for port in ports:
         with socket.socket() as sock:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
@@ -145,7 +221,7 @@ def require_free_ports():
                 ) from None
 
 
-def verify_loopback_listeners():
+def verify_loopback_listeners(ports: tuple[int, int, int] = PORTS):
     """Linux native runbook: reject wildcard/non-loopback listeners on our ports."""
     for filename, allowed in (
         ("tcp", "0100007F"),
@@ -154,7 +230,7 @@ def verify_loopback_listeners():
         for line in Path("/proc/net", filename).read_text().splitlines()[1:]:
             fields = line.split()
             address, port = fields[1].split(":")
-            if fields[3] == "0A" and int(port, 16) in PORTS and address != allowed:
+            if fields[3] == "0A" and int(port, 16) in ports and address != allowed:
                 raise RuntimeError(
                     "Runtime port has a non-loopback listener; stopping owned services"
                 )
@@ -183,7 +259,14 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--config", required=True)
     p.add_argument("--frontend-dev", action="store_true")
+    p.add_argument("--database-port", type=int, default=PORTS[0])
+    p.add_argument("--api-port", type=int, default=PORTS[1])
+    p.add_argument("--frontend-port", type=int, default=PORTS[2])
     args = p.parse_args()
+    ports = (args.database_port, args.api_port, args.frontend_port)
+    if len(set(ports)) != 3 or any(not 1 <= port <= 65535 for port in ports):
+        p.error("Native ports must be distinct integers between 1 and 65535")
+    database, api, frontend = ports
     os.umask(0o077)
     try:
         config = validate_private_config(Path(args.config))
@@ -203,17 +286,17 @@ def main():
             )
     env["SURREAL_PASS"] = env["SURREAL_PASSWORD"]
     try:
-        runtime = apply_runtime_defaults(env)
+        runtime = apply_runtime_defaults(env, ports=ports)
     except ValueError:
         raise SystemExit(
-            "Runtime directory must not be the source root or ancestor"
+            "Runtime directory must not be the source root or ancestor; runtime URLs must match the selected native ports"
         ) from None
     runtime.mkdir(parents=True, exist_ok=True, mode=0o700)
     if runtime.stat().st_uid != os.getuid():
         raise SystemExit("Runtime directory must be owned by the current user")
     runtime.chmod(0o700)
     env["STUDY_WORKBENCH_PRIVATE_MODE"] = "1"
-    env["PORT"] = "13000"
+    env["PORT"] = str(frontend)
     env["HOSTNAME"] = "127.0.0.1"
     if not args.frontend_dev:
         import shutil
@@ -237,7 +320,7 @@ def main():
                 str(ROOT / ".runtime/bin/surreal"),
                 "start",
                 "--bind",
-                "127.0.0.1:18000",
+                f"127.0.0.1:{database}",
                 "--log",
                 "warn",
                 "rocksdb:" + str(runtime / "surreal.db"),
@@ -254,7 +337,7 @@ def main():
                 "--host",
                 "127.0.0.1",
                 "--port",
-                "5055",
+                str(api),
             ],
             ROOT,
         ),
@@ -279,12 +362,12 @@ def main():
                 "--hostname",
                 "127.0.0.1",
                 "--port",
-                "13000",
+                str(frontend),
             ],
             ROOT / "frontend",
         ),
     ]
-    require_free_ports()
+    require_free_ports(ports)
     processes = []
     logs = []
 
@@ -310,9 +393,9 @@ def main():
                 )
             )
             urls = {
-                "database": "http://127.0.0.1:18000/health",
-                "api": "http://127.0.0.1:5055/health",
-                "frontend": "http://127.0.0.1:13000/login",
+                "database": f"http://127.0.0.1:{database}/health",
+                "api": f"http://127.0.0.1:{api}/health",
+                "frontend": f"http://127.0.0.1:{frontend}/login",
             }
             probe = (
                 (lambda: worker_startup_observed(log, offset))
@@ -324,9 +407,9 @@ def main():
                 raise RuntimeError(
                     "A service exited during startup; inspect private logs"
                 )
-            verify_loopback_listeners()
+            verify_loopback_listeners(ports)
         print(
-            "Database, API and frontend HTTP checks passed on loopback; worker startup observed (job execution not yet verified). Frontend http://127.0.0.1:13000 is local to this process environment, not an external delivery URL.",
+            f"Database, API and frontend HTTP checks passed on loopback; worker startup observed (job execution not yet verified). Frontend http://127.0.0.1:{frontend} is local to this process environment, not an external delivery URL.",
             flush=True,
         )
         while all(proc.poll() is None for proc in processes):
