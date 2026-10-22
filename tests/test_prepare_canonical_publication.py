@@ -370,3 +370,186 @@ def test_merge_parents_ignore_signature_continuations(repo, tmp_path):
     (root / ".git/shallow").write_text(source + "\n")
     result = module().prepare(root, source, base, tmp_path / "out")
     assert result["source_parents"] == [base, second]
+
+
+PUBLIC_NPMRC_PATH = "clients/mobile/.npmrc"
+PUBLIC_NPMRC_BYTES = b"ignore-scripts=true\naudit=false\nfund=false\n"
+
+
+def npmrc_commit(root, data, name=PUBLIC_NPMRC_PATH):
+    path = root / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+    return commit(root)
+
+
+def test_exact_public_npmrc_uses_tracked_bytes(repo, tmp_path):
+    root, base = repo
+    source = npmrc_commit(root, PUBLIC_NPMRC_BYTES)
+    (root / PUBLIC_NPMRC_PATH).write_bytes(b"dirty synthetic content")
+    m = module()
+    for baseline in (base, source):
+        out = tmp_path / baseline
+        result = m.prepare(root, source, baseline, out)
+        assert (out / PUBLIC_NPMRC_PATH).read_bytes() == PUBLIC_NPMRC_BYTES
+        assert result["expected_tree_sha"] == git(root, "rev-parse", source + "^{tree}")
+        assert result["policy_exceptions"] == [
+            {
+                "path": PUBLIC_NPMRC_PATH,
+                "git_blob_sha": m.object_sha("blob", PUBLIC_NPMRC_BYTES),
+                "reason": "exact reviewed public npm safety configuration v1",
+            }
+        ]
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        b"",
+        PUBLIC_NPMRC_BYTES + b"registry=https://example.invalid\n",
+        PUBLIC_NPMRC_BYTES.replace(b"true", b"false"),
+        PUBLIC_NPMRC_BYTES + b"//example.invalid/:_authToken=SYNTHETIC_TOKEN\n",
+        PUBLIC_NPMRC_BYTES + b"//example.invalid/:_authToken=${NPM_TOKEN}\n",
+        PUBLIC_NPMRC_BYTES + b"ignore-scripts=false\n",
+        PUBLIC_NPMRC_BYTES + b"ignore-scripts=true\n",
+        PUBLIC_NPMRC_BYTES + b"# comment\n",
+        b"\xef\xbb\xbf" + PUBLIC_NPMRC_BYTES,
+        PUBLIC_NPMRC_BYTES.decode().encode("utf-16"),
+        PUBLIC_NPMRC_BYTES.replace(b"\n", b"\r\n"),
+        PUBLIC_NPMRC_BYTES.rstrip(b"\n"),
+        PUBLIC_NPMRC_BYTES + b"\n",
+        PUBLIC_NPMRC_BYTES.replace(b"=", b" = "),
+        b"\xff" + PUBLIC_NPMRC_BYTES,
+    ],
+)
+def test_public_npmrc_rejects_any_different_bytes(repo, tmp_path, data):
+    root, base = repo
+    source = npmrc_commit(root, data)
+    m = module()
+    for source_id, base_id in ((source, base), (source, source), (base, source)):
+        with pytest.raises(ValueError, match="Forbidden") as exc:
+            m.prepare(root, source_id, base_id, tmp_path / "out")
+        assert "SYNTHETIC_TOKEN" not in str(exc.value)
+        assert not (tmp_path / "out").exists()
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        ".npmrc",
+        "other/.npmrc",
+        "clients/Mobile/.npmrc",
+        "clients/mobile/.NPMRC",
+        "clients/mobile/nested/.npmrc",
+        "Clients/mobile/.npmrc",
+    ],
+)
+def test_other_npmrc_paths_rejected_before_reads(repo, tmp_path, monkeypatch, name):
+    root, base = repo
+    source = npmrc_commit(root, PUBLIC_NPMRC_BYTES, name)
+    m = module()
+    original = m.git
+
+    def guarded(repo, *args):
+        assert "cat-file" not in args
+        return original(repo, *args)
+
+    monkeypatch.setattr(m, "git", guarded)
+    with pytest.raises(ValueError, match="Forbidden"):
+        m.prepare(root, source, base, tmp_path / "out")
+
+
+def test_public_npmrc_requires_content_and_valid_blob_hash(repo, tmp_path, monkeypatch):
+    root, base = repo
+    source = npmrc_commit(root, PUBLIC_NPMRC_BYTES)
+    m = module()
+    entries = m.read_tree(root, source)
+    with pytest.raises(ValueError, match="Forbidden"):
+        m.validate_policy(entries, entries)
+    original = m.git
+
+    def corrupt(repo, *args):
+        if args[:2] == ("cat-file", "blob"):
+            return PUBLIC_NPMRC_BYTES + b"# synthetic mismatch\n"
+        return original(repo, *args)
+
+    monkeypatch.setattr(m, "git", corrupt)
+    with pytest.raises(ValueError, match="integrity"):
+        m.prepare(root, source, base, tmp_path / "out")
+    assert not (tmp_path / "out").exists()
+
+
+@pytest.mark.parametrize("mode", ["100755", "120000", "160000"])
+def test_public_npmrc_requires_nonexecutable_regular_mode(repo, tmp_path, mode):
+    root, base = repo
+    source = npmrc_commit(root, PUBLIC_NPMRC_BYTES)
+    sha = (
+        base
+        if mode == "160000"
+        else git(root, "rev-parse", source + ":" + PUBLIC_NPMRC_PATH)
+    )
+    git(root, "update-index", "--cacheinfo", f"{mode},{sha},{PUBLIC_NPMRC_PATH}")
+    git(root, "commit", "-qm", "mode fixture")
+    with pytest.raises(ValueError, match="Forbidden|Unsupported"):
+        module().prepare(root, git(root, "rev-parse", "HEAD"), base, tmp_path / "out")
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "clients/../clients/mobile/.npmrc",
+        "clients//mobile/.npmrc",
+        "clients/mobile/./.npmrc",
+        "/clients/mobile/.npmrc",
+        "clients\\mobile\\.npmrc",
+    ],
+)
+def test_public_npmrc_does_not_normalize_paths(monkeypatch, name):
+    m = module()
+    raw = (
+        b"100644 blob "
+        + m.object_sha("blob", PUBLIC_NPMRC_BYTES).encode()
+        + b"\t"
+        + name.encode()
+        + b"\0"
+    )
+    monkeypatch.setattr(m, "git", lambda *args: raw)
+    with pytest.raises(ValueError, match="Unsafe"):
+        m.read_tree("unused", "a" * 40)
+
+
+def test_forbidden_inventory_precedes_public_npmrc_content(repo, tmp_path, monkeypatch):
+    root, base = repo
+    npmrc_commit(root, PUBLIC_NPMRC_BYTES)
+    source = npmrc_commit(root, b"synthetic", "forbidden/.env")
+    m = module()
+    original = m.git
+
+    def guarded(repo, *args):
+        assert "cat-file" not in args
+        return original(repo, *args)
+
+    monkeypatch.setattr(m, "git", guarded)
+    with pytest.raises(ValueError, match="Forbidden"):
+        m.prepare(root, source, base, tmp_path / "out")
+
+
+def test_safe_baseline_public_npmrc_can_be_explicitly_deleted(repo, tmp_path):
+    root, _ = repo
+    base = npmrc_commit(root, PUBLIC_NPMRC_BYTES)
+    (root / PUBLIC_NPMRC_PATH).unlink()
+    source = commit(root)
+    result = module().prepare(root, source, base, tmp_path / "out")
+    assert result["changes"]["deleted"] == [PUBLIC_NPMRC_PATH]
+    assert result["policy_exceptions"] == []
+    assert not (tmp_path / "out" / PUBLIC_NPMRC_PATH).exists()
+
+
+def test_missing_public_npmrc_blob_fails_closed(repo, tmp_path):
+    root, base = repo
+    source = npmrc_commit(root, PUBLIC_NPMRC_BYTES)
+    sha = git(root, "rev-parse", source + ":" + PUBLIC_NPMRC_PATH)
+    (root / ".git/objects" / sha[:2] / sha[2:]).unlink()
+    with pytest.raises(subprocess.CalledProcessError):
+        module().prepare(root, source, base, tmp_path / "out")
+    assert not (tmp_path / "out").exists()

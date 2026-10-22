@@ -1,0 +1,61 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> test
+> npm run test:domain && npm run test:ui
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> test:domain
+> node --test test/*.test.mjs
+
+✔ list → faithful workspace → separately labeled text → conditional save → queued receipt (14.425965ms)
+✔ public workspace fixture equality, detached values, unknown/null/omitted retained (2.674427ms)
+✔ stale navigation cannot replace newer workspace or destroy drafts (0.378304ms)
+✔ conflict, error, unknown and stale saves preserve draft and expected revision (0.923307ms)
+✔ same action and resume keep idempotency identity; mismatched payload rejected (1.141281ms)
+✔ unknown submission is not automatically retried and raw job states grant no replay (0.551422ms)
+✔ core has local-only imports and no network/storage/timer dependencies (1.996777ms)
+✔ save retains existing note metadata and extensions; invalid requests fail closed (0.83172ms)
+✔ loaded historical jobs remain readable but never become executable (0.618652ms)
+✔ new actions reserve retained job/turn identities without shadowing history (1.394759ms)
+✔ reopened/reset draft ignores old success/error even with identical text and serial (2.519746ms)
+✔ session drafts survive workspace navigation and preserve edit during exact-attempt save (2.242293ms)
+✔ unknown saves cannot retry even after editing and errors do not lose text (1.450622ms)
+✔ reset isolates outstanding saves from fresh same-identity draft (0.378834ms)
+✔ late workspace and list responses cannot replace newer or reset state (0.424613ms)
+✔ outline duplicate and unknown actions never resubmit; resume only reads receipt (10.390048ms)
+✔ missing note text remains missing and load failures are visible (0.594886ms)
+✔ thrown mutation errors remain unknown, never retryable certainty (0.558262ms)
+✔ reset fences late outline submission and resume without changing new operations (1.554127ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 176.547779
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> test:ui
+> jest --runInBand
+
+PASS test/native-ui.test.tsx
+  ✓ native fixture flow keeps public text separate from empty sources and queue from output (361 ms)
+  ✓ back and width change preserve draft; successful save is explicitly ephemeral (288 ms)
+  ✓ unknown note result preserves text and never says saved (210 ms)
+  ✓ conflict note result preserves text and never says saved (207 ms)
+  ✓ settings is separate and reset requires confirmation (76 ms)
+  ✓ wide landing uses one sidebar index and a calm main welcome (64 ms)
+  ✓ empty and failed list are readable, and read-only retry can recover (120 ms)
+  ✓ loading list has accessible progress and does not invent notebooks (15 ms)
+  ✓ missing note content is not silently saved empty; explicit writing enables save (153 ms)
+  ✓ unknown outline survives dismiss without a retry or generated result (201 ms)
+  ✓ confirmed reset clears drafts and returns to list, cancellation keeps everything (78 ms)
+  ✓ wide sidebar owns the nonzero top inset without padding the native-header root (62 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       12 passed, 12 total
+Snapshots:   0 total
+Time:        2.881 s
+Ran all test suites.

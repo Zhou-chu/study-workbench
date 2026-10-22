@@ -1,0 +1,115 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> typecheck
+> tsc -p tsconfig.domain.json && tsc -p tsconfig.json
+
+node_modules/@react-navigation/core/lib/typescript/src/useNavigationBuilder.d.ts(86,142): error TS2344: Type 'Omit<{ dispatch(action: Readonly<{ type: string; payload?: object; source?: string; target?: string; }> | ((state: Readonly<State>) => Readonly<{ type: string; payload?: object; source?: string; target?: string; }>)): void; ... 9 more ...; getState(): State; } & PrivateValueStore<...>, "getParent"> & ... 4 more ... ...' does not satisfy the constraint 'NavigationProp<any, any, any, any, any, any>'.
+  Type 'Omit<{ dispatch(action: Readonly<{ type: string; payload?: object; source?: string; target?: string; }> | ((state: Readonly<State>) => Readonly<{ type: string; payload?: object; source?: string; target?: string; }>)): void; ... 9 more ...; getState(): State; } & PrivateValueStore<...>, "getParent"> & ... 4 more ... ...' is not assignable to type 'Omit<NavigationHelpersCommon<any, any>, "getParent">'.
+    Types of property 'preload' are incompatible.
+      Type '<RouteName extends string>(...args: RouteName extends unknown ? [screen: RouteName, params?: object | undefined] : never) => void' is not assignable to type '<RouteName extends string | number | symbol>(...args: RouteName extends unknown ? [screen: RouteName, params?: any] : never) => void'.
+        Types of parameters 'screen' and 'args' are incompatible.
+          Type 'RouteName extends unknown ? [screen: RouteName, params?: any] : never' is not assignable to type '[screen: string, params?: object | undefined]'.
+            Type '[screen: string, params?: any] | [screen: number, params?: any] | [screen: symbol, params?: any]' is not assignable to type '[screen: string, params?: object | undefined]'.
+              Type '[screen: number, params?: any]' is not assignable to type '[screen: string, params?: object | undefined]'.
+                Type at position 0 in source is not compatible with type at position 0 in target.
+                  Type 'number' is not assignable to type 'string'.
+node_modules/@react-navigation/core/lib/typescript/src/useNavigationBuilder.d.ts(138,80): error TS2344: Type 'Omit<{ dispatch(action: Readonly<{ type: string; payload?: object; source?: string; target?: string; }> | ((state: Readonly<State>) => Readonly<{ type: string; payload?: object; source?: string; target?: string; }>)): void; ... 9 more ...; getState(): State; } & PrivateValueStore<...>, "getParent"> & ... 4 more ... ...' does not satisfy the constraint 'NavigationProp<any, any, any, any, any, any>'.
+  Type 'Omit<{ dispatch(action: Readonly<{ type: string; payload?: object; source?: string; target?: string; }> | ((state: Readonly<State>) => Readonly<{ type: string; payload?: object; source?: string; target?: string; }>)): void; ... 9 more ...; getState(): State; } & PrivateValueStore<...>, "getParent"> & ... 4 more ... ...' is not assignable to type 'Omit<NavigationHelpersCommon<any, any>, "getParent">'.
+    Types of property 'preload' are incompatible.
+      Type '<RouteName extends string>(...args: RouteName extends unknown ? [screen: RouteName, params?: object | undefined] : never) => void' is not assignable to type '<RouteName extends string | number | symbol>(...args: RouteName extends unknown ? [screen: RouteName, params?: any] : never) => void'.
+        Types of parameters 'screen' and 'args' are incompatible.
+          Type 'RouteName extends unknown ? [screen: RouteName, params?: any] : never' is not assignable to type '[screen: string, params?: object | undefined]'.
+            Type '[screen: string, params?: any] | [screen: number, params?: any] | [screen: symbol, params?: any]' is not assignable to type '[screen: string, params?: object | undefined]'.
+              Type '[screen: number, params?: any]' is not assignable to type '[screen: string, params?: object | undefined]'.
+                Type at position 0 in source is not compatible with type at position 0 in target.
+                  Type 'number' is not assignable to type 'string'.
+node_modules/@react-navigation/elements/lib/typescript/src/Header/HeaderButton.d.ts(3,140): error TS2694: Namespace '"/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-native/types_generated/index".Animated' has no exported member 'LegacyRef'.
+node_modules/@react-navigation/elements/lib/typescript/src/PlatformPressable.d.ts(25,34): error TS2694: Namespace '"/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-native/types_generated/Libraries/Animated/AnimatedExports"' has no exported member 'LegacyRef'.
+node_modules/@react-navigation/native-stack/lib/typescript/src/types.d.ts(1135,120): error TS2344: Type 'RouteProp<ParamListBase>' does not satisfy the constraint 'RouteProp<any, any>'.
+  Type 'RouteProp<ParamListBase>' is not assignable to type 'Readonly<{ params?: Readonly<any>; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'params' are incompatible.
+      Type 'Readonly<object | undefined>' is not assignable to type 'Readonly<any>'.
+        Type 'undefined' is not assignable to type 'Readonly<any>'.
+node_modules/@react-navigation/native/lib/typescript/src/Link.d.ts(21,182): error TS2344: Type '(props: Omit<TextProps, "ref"> & { ref?: Ref<ReactNativeElement> | undefined; }) => ReactNode' does not satisfy the constraint 'Component<TextProps, any, any>'.
+node_modules/@react-navigation/routers/lib/typescript/src/DrawerRouter.d.ts(65,133): error TS2344: Type 'Action | DrawerActionType' does not satisfy the constraint 'Readonly<{ type: string; payload?: object; source?: string; target?: string; }>'.
+  Type 'ResetAction' is not assignable to type 'Readonly<{ type: string; payload?: object; source?: string; target?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'payload' are incompatible.
+      Type 'ResetState | undefined' is not assignable to type 'object'.
+        Type 'undefined' is not assignable to type 'object'.
+node_modules/@react-navigation/routers/lib/typescript/src/StackRouter.d.ts(130,111): error TS2344: Type 'Action | StackActionType' does not satisfy the constraint 'Readonly<{ type: string; payload?: object; source?: string; target?: string; }>'.
+  Type 'ResetAction' is not assignable to type 'Readonly<{ type: string; payload?: object; source?: string; target?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'payload' are incompatible.
+      Type 'ResetState | undefined' is not assignable to type 'object'.
+        Type 'undefined' is not assignable to type 'object'.
+node_modules/@react-navigation/routers/lib/typescript/src/TabRouter.d.ts(40,105): error TS2344: Type 'Action | SwitchActionType' does not satisfy the constraint 'Readonly<{ type: string; payload?: object; source?: string; target?: string; }>'.
+  Type 'ResetAction' is not assignable to type 'Readonly<{ type: string; payload?: object; source?: string; target?: string; }>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+    Types of property 'payload' are incompatible.
+      Type 'ResetState | undefined' is not assignable to type 'object'.
+        Type 'undefined' is not assignable to type 'object'.
+node_modules/@testing-library/react-native/build/act.d.ts(2,45): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/fire-event.d.ts(2,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/helpers/accessibility.d.ts(2,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/helpers/debug.d.ts(1,44): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/helpers/format-element.d.ts(1,63): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/helpers/matchers/match-accessibility-state.d.ts(1,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/helpers/matchers/match-accessibility-value.d.ts(1,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/matchers/to-have-style.d.ts(2,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/matchers/types.d.ts(2,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/queries/make-queries.d.ts(1,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/queries/role.d.ts(2,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/render-async.d.ts(2,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/render-async.d.ts(29,33): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/render-async.d.ts(29,87): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/render.d.ts(2,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/render.d.ts(30,33): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/render.d.ts(30,87): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/render.d.ts(112,33): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/render.d.ts(112,87): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/user-event/index.d.ts(1,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/user-event/press/press.d.ts(1,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/user-event/scroll/scroll-to.d.ts(1,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/user-event/setup/setup.d.ts(1,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/user-event/type/type.d.ts(1,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/@testing-library/react-native/build/within.d.ts(1,40): error TS7016: Could not find a declaration file for module 'react-test-renderer'. '/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-test-renderer/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react-test-renderer` if it exists or add a new declaration (.d.ts) file containing `declare module 'react-test-renderer';`
+node_modules/react-native-safe-area-context/lib/typescript/src/SafeArea.types.d.ts(35,55): error TS2344: Type 'HostComponent<NativeProps>' does not satisfy the constraint 'abstract new (...args: any) => any'.
+  Type 'HostComponent<NativeProps>' provides no match for the signature 'new (...args: any): any'.
+node_modules/react-native-safe-area-context/lib/typescript/src/SafeAreaView.d.ts(4,214): error TS2694: Namespace '"/workspace/scratch/7ae04dc66900/mobile-native-ui/clients/mobile/node_modules/react-native/types_generated/index"' has no exported member 'ReactNativeElement'.
+node_modules/react-native-safe-area-context/lib/typescript/src/specs/NativeSafeAreaView.d.ts(1,34): error TS2307: Cannot find module 'react-native/Libraries/Types/CodegenTypes' or its corresponding type declarations.
+node_modules/react-native-screens/lib/typescript/components/tabs/host/index.d.ts(1,37): error TS2307: Cannot find module './TabsHost' or its corresponding type declarations.
+node_modules/react-native-screens/lib/typescript/components/tabs/screen/index.d.ts(1,39): error TS2307: Cannot find module './TabsScreen' or its corresponding type declarations.
+node_modules/react-native-screens/lib/typescript/types.d.ts(2,74): error TS2724: '"react-native"' has no exported member named 'TextInputFocusEventData'. Did you mean 'TextInputFocusEvent'?
+node_modules/react-native/types_generated/Libraries/Animated/nodes/AnimatedProps.d.ts(19,3): error TS2411: Property 'style' of type 'Readonly<{ [$$Key$$: string]: true; }> | undefined' is not assignable to 'string' index type 'true | Readonly<{ [$$Key$$: string]: true; }>'.
+node_modules/react-native/types_generated/Libraries/Lists/VirtualizedList.d.ts(17,58): error TS2344: Type 'typeof VirtualizedList' does not satisfy the constraint 'ElementType<any, keyof IntrinsicElements>'.
+  Type 'typeof VirtualizedList' is not assignable to type 'ComponentClass<any, any>'.
+    Types of property 'getDerivedStateFromProps' are incompatible.
+      Type '(newProps: VirtualizedListProps, prevState: State) => State' is not assignable to type 'GetDerivedStateFromProps<any, any>'.
+        Types of parameters 'newProps' and 'nextProps' are incompatible.
+          Type 'Readonly<any>' is not assignable to type 'VirtualizedListProps'.
+            Type 'Readonly<any>' is missing the following properties from type 'Omit<RequiredVirtualizedListProps, keyof OptionalVirtualizedListProps>': getItem, getItemCount
+node_modules/react-native/types_generated/src/private/webapis/dom/nodes/ReactNativeDocument.d.ts(29,7): error TS2416: Property 'textContent' in type 'ReactNativeDocument' is not assignable to the same property in base type 'ReadOnlyNode'.
+  Type 'null' is not assignable to type 'string'.

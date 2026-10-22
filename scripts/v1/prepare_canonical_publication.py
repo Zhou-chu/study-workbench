@@ -34,6 +34,10 @@ else:
     object_sha = snapshot.object_sha
     tree_sha = snapshot.tree_sha
 
+# Versioned, reviewed public bytes: do not parse, normalize, or broaden this rule.
+PUBLIC_NPMRC_PATH = "clients/mobile/.npmrc"
+PUBLIC_NPMRC_V1 = b"ignore-scripts=true\naudit=false\nfund=false\n"
+
 HISTORICAL_RUNTIME_PATH = "frontend/test-results/.last-run.json"
 HISTORICAL_RUNTIME_SHA = "5fca3f84bc7b9240b2963858fe2f32f7c515a8d4"
 
@@ -107,12 +111,19 @@ def read_tree(repo, commit):
     return entries
 
 
-def validate_policy(source, baseline):
+def validate_policy(source, baseline, repo=None):
     exceptions = []
+    public_configs = set()
     # Both complete inventories are checked before reading any blob contents.
     for entries in (baseline, source):
         for name, value in entries.items():
             reason = exclusion(name)
+            if name.rsplit("/", 1)[-1].lower() == ".npmrc":
+                reason = "npm configuration is not the exact reviewed public config"
+                if name == PUBLIC_NPMRC_PATH and value[0] == "100644":
+                    # Defer only this candidate until BOTH path inventories pass.
+                    public_configs.add(value[1])
+                    reason = None
             if "test-results" in name.split("/"):
                 historical = (
                     name == HISTORICAL_RUNTIME_PATH
@@ -125,6 +136,23 @@ def validate_policy(source, baseline):
                     )
             if reason:
                 raise ValueError(f"Forbidden committed path: {name} ({reason})")
+    for sha in sorted(public_configs):
+        if repo is None:
+            raise ValueError("Forbidden public npm configuration: content unavailable")
+        data = git(repo, "cat-file", "blob", sha)
+        if object_sha("blob", data) != sha:
+            raise ValueError(f"Blob integrity mismatch: {PUBLIC_NPMRC_PATH}")
+        if data != PUBLIC_NPMRC_V1:
+            # Never include untrusted configuration bytes in diagnostics.
+            raise ValueError("Forbidden public npm configuration: exact bytes required")
+    if PUBLIC_NPMRC_PATH in source:
+        exceptions.append(
+            {
+                "path": PUBLIC_NPMRC_PATH,
+                "git_blob_sha": source[PUBLIC_NPMRC_PATH][1],
+                "reason": "exact reviewed public npm safety configuration v1",
+            }
+        )
     if HISTORICAL_RUNTIME_PATH in source:
         exceptions.append(
             {
@@ -157,7 +185,7 @@ def prepare(repo, commit, baseline, output):
     commit = resolve_commit(repo, commit)
     baseline = resolve_commit(repo, baseline)
     source, old = read_tree(repo, commit), read_tree(repo, baseline)
-    exceptions = validate_policy(source, old)
+    exceptions = validate_policy(source, old, repo=repo)
     expected = git(repo, "rev-parse", f"{commit}^{{tree}}").decode().strip()
     baseline_tree = git(repo, "rev-parse", f"{baseline}^{{tree}}").decode().strip()
     old_inventory = [

@@ -44,10 +44,43 @@ Only regular `100644`/`100755` blobs and safe UTF-8 relative paths are supported
 Links, submodules, traversal, `.git` components, control characters, ambiguous
 paths, duplicates and file/directory collisions fail closed. Both source and
 baseline path inventories pass the existing private-snapshot exclusion predicate
-**before any blob content reads**. Forbidden credentials, real environment files,
+**before any blob content reads**, except for the single content-checked public
+npm configuration candidate described below. Forbidden credentials, real environment files,
 workflows, runtime data, caches and dependencies cause rejection, not filtering.
 This is a path gate, not a detector for secrets embedded in otherwise valid code.
 Do not pass dedicated secret files to a scanner or print suspect content.
+
+### Exact public npm safety configuration
+
+The canonical exporter alone accepts `clients/mobile/.npmrc` in regular,
+nonexecutable mode `100644`, only when its hash-verified tracked blob bytes equal
+this versioned ASCII constant (LF after each line, including the last):
+
+```ini
+ignore-scripts=true
+audit=false
+fund=false
+```
+
+This is public installation safety configuration: `ignore-scripts=true` disables
+installation lifecycle scripts. Removing it merely to satisfy a filename gate
+would weaken those defaults. This is not a general npmrc allowlist, credential
+scrubber, hash-only exemption, omission, or force option. Any future content
+change needs explicit code/policy review. The private-snapshot predicate is
+unchanged.
+
+Both complete path inventories must pass before reading even this candidate.
+Only its exact path/mode is deferred for content validation; every `.npmrc`
+basename (including case variants) elsewhere is rejected before blob reads.
+The exact candidate's blobs in **both source and baseline** are read from local
+Git objects, verified against their blob IDs, then compared byte-for-byte, never
+read from a dirty worktree. Missing content fails closed. Comments, interpolation,
+extra/duplicate/changed keys, token settings, whitespace, BOMs, alternate
+encodings, newline changes and executable/link modes are not accepted. Neither
+normalization nor token values appear in rejection messages. All other forbidden
+paths still reject the entire export. The receipt records this reviewed exception
+only when the source retains it; deleting an accepted baseline config is an
+explicit tree change, not an exporter omission.
 
 Every `test-results` path component is additionally forbidden, with exactly one
 historical exception:
@@ -87,7 +120,8 @@ The deterministic external JSON receipt includes:
   UTF-8 `content`, `encoding`, path, mode, and expected blob SHA;
 - `unchanged_blobs`: source entries whose blob SHA already exists anywhere in the
   baseline tree. This is **blob reuse**, not a claim that the path/mode is unchanged;
-- `policy_exceptions`: explicit historical runtime exception, if retained.
+- `policy_exceptions`: explicit reviewed public npm configuration and/or historical
+  runtime exceptions, if retained.
 
 All source bytes are checked against their Git blob hashes. The complete source
 and baseline inventories independently reconstruct their Git tree hashes and

@@ -1,7 +1,24 @@
-# Mobile offline domain slice (Android / iPad preparation)
+# Native mobile public-fixture source slice (Android / iPad preparation)
 
-Dependency-free TypeScript domain source intended for a later genuine React Native UI.
-**Not an application, native build, generated SDK, WebView or connected client.**
+Genuine React Native components over the reviewed in-memory TypeScript domain.
+**Source + JavaScript tests, not an installable application or connected client.**
+No WebView/HTML wrapper, native platform scaffold, signing keys or SDK installation.
+
+## What is implemented
+
+- Notebook list → faithful workspace → separately labeled selectable public text.
+- Native multi-line revision-aware note editor. Back/dismiss and width changes
+  preserve drafts; pending saves retain exact attempt identity. Unknown saves do
+  not retry; clean/completed unchanged saves do not write again.
+- Outline modal → queued receipt → read-only same-job status. Dismiss/reopen does
+  not resubmit. Historical/unknown outputs cannot replay; queued is not generated.
+- Native-stack phone navigation and >=840 logical-unit,280-unit sidebar. At large
+  text sizes width/fontScale<600 uses full-width layout. The same session survives
+  resizing. System back, gestures and focus are supplied by native-stack but still
+  need real-device acceptance.
+- Calm reading/writing, separate settings, confirmed destructive demo reset.
+  Font scaling is not capped; buttons are at least48 logical units, inputs/status
+  are labeled, content scrolls, keyboard avoidance uses native header height.
 
 Visible copy is fixed:
 - 演示数据 · 未连接服务
@@ -22,7 +39,7 @@ Visible copy is fixed:
   projects only shared identity/state, not a claimed complete SDK/decoder.
 - Navigation tickets reject stale/mismatched responses. Keep drafts keyed by note
   ID and operations keyed by user action **outside navigation state**; back/dismiss
-  must not recreate them. UI binding has not been implemented or runtime-tested.
+  must not recreate them. The native UI session now binds these interfaces; device runtime remains untested.
 - `openDraft/editDraft/beginSave/finishSave` preserve unknown/missing content rather
   than turning it into saved empty text. A save attempt captures text and revision;
   duplicate/late completions cannot overwrite newer edits. Completion ownership
@@ -30,8 +47,8 @@ Visible copy is fixed:
   Callbacks must retain the object returned by `beginSave`; do not clone,
   serialize or reconstruct it. Reopening/resetting creates different attempts,
   so old success/error callbacks cannot settle a new editor's save. Conflicts retain the
-  draft/revision; unknown saves cannot be blindly retried. No conflict resolution
-  or unknown-result reconciliation UI exists yet.
+  draft/revision; unknown saves cannot be blindly retried. The editor explains conflict/unknown outcomes and retains text; no automatic merge
+  or unknown-result reconciliation is implemented.
 - `beginOutline` returns the existing operation on repeated action; do not call
   submit again when an operation already exists. `receiveSubmission` and
   `resumeOperation` retain its key and receipt identity. Resume only reads a known
@@ -46,28 +63,48 @@ Visible copy is fixed:
 No network transport, endpoint/login settings, credentials, persistent storage,
 models, background execution, cancellation, PDF rendering or remote success.
 
-## Exact local verification
+## Run the supported source checks
 
-From `clients/mobile/`, using the already available Node **24.19.0** type stripping:
+From `clients/mobile/`, Node matching `package.json` (verified24.19.0 here):
 
 ```sh
-node --test test/*.test.mjs
-# Equivalent package test command (no install required):
-npm test
-# This execution workspace's preinstalled frontend compiler:
-node ../../../audit-followup-integration/frontend/node_modules/typescript/bin/tsc -p tsconfig.domain.json
+npm ci --ignore-scripts --no-audit --no-fund --cache /tmp/study-mobile-npm-cache
+npm test                 # domain/session + mocked-native JS component suite
+npm run typecheck        # unchanged strict domain + strict application source
+npm run test:domain      # only Node built-in/type-stripped tests; no RN runtime
+npm run test:ui          # Jest/RNTL, native modules mocked (NOT device acceptance)
 ```
 
-Elsewhere use the project's already installed TypeScript compiler with the same
-`-p tsconfig.domain.json`; do not acquire dependencies implicitly.
-The strict domain-only configuration has ES2022 types, no DOM/Node ambient types
-and no fake React Native declarations. Tests guard import/execution network
-access and source imports, compare the shared public fixture, and check
-conditional saves, draft races, stale navigation, unknown outcomes and identity.
-This does not constitute a security sandbox for future arbitrary code.
+No `run-android`, `run-ios` or platform build command is provided: this worktree has
+no platform host. Future authorized platform integration should import the default
+component from `src/App.tsx` into its independently reviewed RN registration entry.
+Do not run a template generator here: it can create platform/signing artifacts.
+The source checks do not launch Metro, emulators, ADB, simulators or network clients.
 
-**NOT RUN:** React Native dependency installation/compilation, Android or iOS
-builds, simulator/device/UI/accessibility execution, signing, PDF rendering,
-connected auth/transport, models, Docker, whole-backend/Web regression suites.
-Those remain separate integration/platform gates; this slice cannot waive them.
-No SDK scaffolds, version guesses, signing keys, CI activation or publication.
+[Dependency research](docs/DEPENDENCIES.md) records exact verified pins and official
+sources. `package-lock.json` freezes integrity/resolution. Lifecycle scripts are
+also disabled in `.npmrc`. UI strict source types use the installed RN types;
+`skipLibCheck:true` follows RN0.87's documented generated API migration. The initial
+full vendor-declaration check failed and is **not claimed passing**. Domain-only
+checking is unchanged; no fake ambient native declarations are used.
+
+## Evidence and remaining gates
+
+Verified here:11 original domain tests,8 session tests,12 JS component tests;
+strict domain and strict UI application-source typechecks. Component coverage
+includes route return, sheet dismissal, width390/768/1024,200% font-scale state
+retention (not visual fit), unknown/conflict, missing text, empty/error/loading,
+queue receipt/resume, reset confirmation, and a nonzero sidebar top-inset
+ownership check that leaves the native-header root unpadded. Native screen hosts and safe areas
+are mocked; geometry and actual accessibility cannot be inferred from these tests.
+
+**NOT RUN:** Android/iPad native builds, device/simulator execution, install/signing,
+TalkBack/VoiceOver, real keyboard/pointer/focus/safe areas/gestures/system back,
+PDF rendering, process-death persistence, connected auth/transport/models, Docker,
+whole-backend/Web regression suites. No CI activation or publication.
+Cloud SDKs are unverified. User-laptop tools are **UNKNOWN** after an environment
+error before inspection commands launched; this task did not operate that laptop.
+
+The slice is intentionally public synthetic and ephemeral. The approved online MVP
+still requires protected draft persistence, private native ingress, credentials,
+real source/PDF/citation workflows and platform acceptance; none is waived here.

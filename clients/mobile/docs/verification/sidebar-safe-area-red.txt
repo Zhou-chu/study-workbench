@@ -1,0 +1,45 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> test:ui
+> jest --runInBand --testNamePattern=wide sidebar owns
+
+FAIL test/native-ui.test.tsx
+  ✕ wide sidebar owns the nonzero top inset without padding the native-header root (174 ms)
+  ○ skipped native fixture flow keeps public text separate from empty sources and queue from output
+  ○ skipped back and width change preserve draft; successful save is explicitly ephemeral
+  ○ skipped unknown note result preserves text and never says saved
+  ○ skipped conflict note result preserves text and never says saved
+  ○ skipped settings is separate and reset requires confirmation
+  ○ skipped wide landing uses one sidebar index and a calm main welcome
+  ○ skipped empty and failed list are readable, and read-only retry can recover
+  ○ skipped loading list has accessible progress and does not invent notebooks
+  ○ skipped missing note content is not silently saved empty; explicit writing enables save
+  ○ skipped unknown outline survives dismiss without a retry or generated result
+  ○ skipped confirmed reset clears drafts and returns to list, cancellation keeps everything
+
+  ● wide sidebar owns the nonzero top inset without padding the native-header root
+
+    expect(element).toHaveStyle()
+
+    - Expected
+    + Received
+
+    - paddingTop: 44;
+
+      121 |     const rendered = render(<App />);
+      122 |     await screen.findByLabelText('打开工作台 Public synthetic workspace');
+    > 123 |     expect(screen.getByLabelText('工作台侧栏')).toHaveStyle({paddingTop:44});
+          |                                            ^
+      124 |     // The native-stack header, not the app root, remains the main pane's top owner.
+      125 |     expect(rendered.UNSAFE_getAllByType(SafeArea.SafeAreaView).map(view => view.props.edges))
+      126 |       .toEqual([['bottom', 'left', 'right']]);
+
+      at Object.toHaveStyle (test/native-ui.test.tsx:123:44)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 11 skipped, 12 total
+Snapshots:   0 total
+Time:        1.38 s, estimated 9 s
+Ran all test suites with tests matching "wide sidebar owns".
