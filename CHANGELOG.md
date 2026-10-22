@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **StudyWorkbench local evidence maintenance (2026-10-20).** Durable authenticated reparse and historical-citation revalidation endpoints and reader controls compare retained originals with a fresh CPU extraction. Historical IDs and locators remain stable; mismatches stay unverified, and imported revalidation claims are discarded.
 
 ### Changed
+- **Fresh empty-preview acceptance (2026-10-22).** Record owner-approved native test startup, actual direct/proxy authentication and public-fixture worker/original-byte checks, while keeping user browser login, durable storage and external integrations explicitly unverified.
 - **Temporary-preview recovery boundaries (2026-10-22).** Record exact source recovery separately from unavailable runtime/user-data recovery, and require verified durable storage and an independent restore path before relying on temporary cloud previews for important data.
 - **Reading-first workspace polish (2026-10-22).** Keep version identifiers inside reader details, use a neutral download label for derived snapshots, and show material-selection guidance before optional engine-configuration prompts. Preserve all authentication, mapping and request guards.
 - **StudyWorkbench approachable navigation and task status (2026-10-21).** Notebook cards/rows link directly to the study workspace. Task names are localized; raw operation IDs and submission diagnostics remain in accessible details while important remote-uncertainty warnings stay visible.
