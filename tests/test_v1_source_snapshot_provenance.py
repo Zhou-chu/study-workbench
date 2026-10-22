@@ -29,7 +29,9 @@ async def test_derived_provenance_survives_reparse_and_model_payload(tmp_path):
         origin="derived_snapshot",
         provenance=provenance,
     )
-    assert SourceVersion(**version).provenance.kind == "derived"
+    parsed_provenance = SourceVersion(**version).provenance
+    assert parsed_provenance is not None
+    assert parsed_provenance.kind == "derived"
     for _ in range(2):
         extraction = await service.extract(version["source_version_id"], force=True)
         record = await service.evidence(extraction["evidence_ids"][0])

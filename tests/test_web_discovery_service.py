@@ -111,7 +111,10 @@ async def test_failed_paid_call_not_automatically_replayed(service):
 
 
 @pytest.mark.asyncio
-async def test_worker_failure_preserves_snapshot_and_reports_not_queued(service):
+@pytest.mark.parametrize("retry_key", ["once", "new-browser-key"])
+async def test_worker_failure_preserves_snapshot_and_reports_not_queued(
+    service, retry_key
+):
     service.submit.side_effect = RuntimeError("private worker internals")
     response = await service.import_source("notebook:a", request())
     assert response.state == "saved"
@@ -119,14 +122,17 @@ async def test_worker_failure_preserves_snapshot_and_reports_not_queued(service)
     assert await service.store.get("version", response.source_version_id)
     assert "private" not in str(response)
     service.submit.side_effect = None
-    restored = await service.import_source("notebook:a", request())
+    restored = await service.import_source(
+        "notebook:a", request(idempotency_key=retry_key)
+    )
     assert restored.state == "queued"
     assert service.provider.scrape.await_count == 1
     assert service.submit.await_count == 2
 
 
 @pytest.mark.asyncio
-async def test_inflight_dedupe_does_not_double_charge(service):
+@pytest.mark.parametrize("retry_key", ["once", "other"])
+async def test_inflight_dedupe_does_not_double_charge(service, retry_key):
     import asyncio
 
     started = asyncio.Event()
@@ -141,7 +147,7 @@ async def test_inflight_dedupe_does_not_double_charge(service):
     first = asyncio.create_task(service.import_source("notebook:a", request()))
     await started.wait()
     with pytest.raises(InvalidInputError, match="WEB_IMPORT_IN_PROGRESS"):
-        await service.import_source("notebook:a", request(idempotency_key="other"))
+        await service.import_source("notebook:a", request(idempotency_key=retry_key))
     release.set()
     await first
     assert service.provider.scrape.await_count == 1

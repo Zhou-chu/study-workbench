@@ -30,6 +30,7 @@ async def test_real_db_import_claim_native_source_version_export_and_deleted_rep
     monkeypatch.setenv("STUDY_WORKBENCH_DATA_DIR", str(tmp_path))
     notebook = Notebook(name="Synthetic web acceptance", description="No live provider")
     await notebook.save()
+    assert notebook.id is not None
     store = PersonalStore()
     provider = AsyncMock()
     started, release = asyncio.Event(), asyncio.Event()

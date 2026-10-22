@@ -44,7 +44,9 @@ class Repository:
             prepared["origin_kind"] == "note"
             and self.note["revision"] != prepared["origin_revision"]
         ):
-            raise NoteRevisionConflict(self.note["revision"])
+            revision = self.note["revision"]
+            assert isinstance(revision, int)
+            raise NoteRevisionConflict(revision)
         self.commits.append(prepared)
         for kind, identity, payload in prepared["records"]:
             await self.store.put(kind, identity, payload)

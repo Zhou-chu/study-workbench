@@ -251,7 +251,7 @@ class WebDiscoveryService:
             saved = bool(
                 existing and existing.get("result", {}).get("state") == "saved"
             )
-            if saved:
+            if existing is not None and saved:
                 await self._cached_response(notebook_id, existing["result"])
             if existing and existing.get("result") and not saved:
                 response = await self._cached_response(
@@ -272,7 +272,12 @@ class WebDiscoveryService:
             resume = saved or bool(
                 existing and existing.get("state") in {"fetching", "outcome_unknown"}
             )
-            if resume and not saved and existing.get("request_id") != request_id:
+            if (
+                existing is not None
+                and resume
+                and not saved
+                and existing.get("request_id") != request_id
+            ):
                 # A browser restart can lose the original key. A durable local
                 # checkpoint may be finished under a new key, but never refetched.
                 if await asyncio.to_thread(self._read_checkpoint, url_id, url) is None:
@@ -309,6 +314,10 @@ class WebDiscoveryService:
                 await self.store.put(
                     "import_report", url_id, existing, create_only=create_only
                 )
+
+        if existing is None:
+            # Never fabricate a missing dispatch receipt or refetch on resume.
+            raise ExternalServiceError("WEB_IMPORT_OUTCOME_UNKNOWN")
 
         checkpoint = await asyncio.to_thread(self._read_checkpoint, url_id, url)
         if checkpoint is None:

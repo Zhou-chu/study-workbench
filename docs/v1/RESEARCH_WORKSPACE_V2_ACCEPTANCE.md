@@ -2,7 +2,7 @@
 
 Date: 2026-10-22 UTC.
 
-**Status: code regression gates and isolated local-workflow browser acceptance passed before the environment interruption. The old preview is now unreachable and its expected runtime paths are absent. Source code has been recovered exactly; user data and runtime credentials have not. A fresh empty test instance requires the owner's explicit approval and protection of any unsaved browser content. Live web discovery remains unverified.**
+**Status: fresh code, build and static-check gates passed after source recovery; earlier isolated browser acceptance remains historical evidence. The old preview is unreachable and its expected runtime paths are absent. User data and runtime credentials have not been recovered. A fresh empty test instance requires the owner's explicit approval and protection of any unsaved browser content. Live web discovery remains unverified.**
 
 ## Intended user workflow
 
@@ -75,6 +75,18 @@ At 05:18–05:21 UTC on 2026-10-22, following an execution-environment resume, i
 
 - A bounded review of surviving project metadata, recorded artifacts and Library titles found no verified backup of the current user's notebook data. Older public/synthetic fixtures were not substituted for a real backup, and older unverified datastores were left untouched.
 - At 05:29 UTC, source recovery reconstructed the published commit `44387d9fcb15a02f294087e42e9d32adbbb6f507` and tree `69e17e07e01dec78c4687aeb1ff8d230c790999e`. All 1,112 tracked paths, modes and blob hashes matched; strict Git integrity and clean-worktree checks passed. The older checkout and its uncommitted work were preserved.
-- This is source-code recovery only. Dependencies, build artifacts, runtime configuration, credentials and user data were not restored, and no service was started. Earlier test results remain evidence for the verified code snapshot, not proof of a working recovered deployment.
+- This was source-code recovery only. At that checkpoint, dependencies and build artifacts had not been reconstructed; runtime configuration, credentials and user data were not restored, and no service was started. Earlier test results were not proof of a working recovered deployment.
 - The owner was warned to preserve unsaved browser content and asked whether to authorize an explicitly empty test instance with new dedicated credentials. No affirmative response is assumed. Any owner-supplied notebook export must be validated before restoration.
 - Until storage durability and an independent recovery path have been demonstrated, this temporary environment must hold test data only, never the sole copy of important material. See the persistence gates in `RUNBOOK.md`.
+
+## Fresh post-recovery checks
+
+Trusted existing dependency manifests/lockfiles matched exactly. Dependencies were copied independently, public tokenizer bytes were verified by the installed package's expected SHA-256, and the unchanged frontend was rebuilt with genuine public assets. No user runtime configuration or authenticated provider access was used.
+
+- At `3002fd72`, fresh frontend coverage verification passed **1,172 tests in 77 files**, production build, explicit TypeScript and lint (**0 errors, 7 existing warnings**). The standalone bundle includes verified static/public assets. The frontend tree is unchanged by the later Python type-contract fix.
+- Fresh full mypy initially found **16 errors in 6 files**. Fix `d45caea` binds provider metadata before narrowing, makes existing optional-receipt guards explicit, fails closed rather than inventing a missing dispatch receipt, and strengthens test assertions. Seven metadata/replay regression cases were added; no provider/network configuration or replay fallback was introduced.
+- Root verification on the integrated Python fix passed **1,719 backend tests, 46 gated skips, 2 dependency deprecation warnings**, full non-incremental **mypy on 256 files**, and full **Ruff lint/format on 256 files**. The actual isolated database opt-ins were not rerun after recovery; their earlier 29-test result is historical, not a new live-DB result.
+- The full Python run used a separate guarded test harness, not application code. Eight DNS operations were denied by its audit hook; none completed through those attempts. Attribution identifies six source/domain cleanup tests and two explicit-localhost validation tests, without claiming every attempted operation was intended.
+- Intermediate verification failures were retained: an empty isolated tokenizer cache attempted a blocked public dependency fetch; a later harness missing its main guard re-entered pytest under multiprocessing spawn. Both runs were reconciled/stopped. The corrected harness used the verified local encoding, kept network denial in force, passed a multiprocessing smoke test, then passed the full suite. No denied network operation was retried through another route.
+
+These checks prepare code and artifacts only. No replacement preview, user database, new credential or restored personal data has been created.

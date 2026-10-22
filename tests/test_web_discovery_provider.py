@@ -91,6 +91,7 @@ async def test_explicit_keyless_trial_search_and_scrape_never_send_or_read_key(
     assert status.access_mode == "keyless_trial"
     assert status.automatic_paid_fallback is False
     assert status.externally_verified is False
+    assert status.trial_limits is not None
     assert status.trial_limits.model_dump() == {
         "scope": "server_ip",
         "period": "daily",
@@ -195,6 +196,52 @@ async def test_search_protocol_bounded_deduped_plain_metadata():
     assert body["sources"] == ["web"]
     assert "scrapeOptions" not in body
     assert "notebook" not in requests[0].content.decode()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("metadata", "expected_title", "expected_snippet"),
+    [
+        ({}, "https://example.com/article", ""),
+        (
+            {"title": None, "description": None},
+            "https://example.com/article",
+            "",
+        ),
+        (
+            {"title": 42, "description": {"unexpected": "object"}},
+            "https://example.com/article",
+            "",
+        ),
+        ({"title": "", "description": ""}, "https://example.com/article", ""),
+        (
+            {"title": "t" * 501, "description": "s" * 2001},
+            "t" * 500,
+            "s" * 2000,
+        ),
+    ],
+)
+async def test_search_metadata_fallbacks_and_bounds(
+    metadata, expected_title, expected_snippet
+):
+    provider = FirecrawlProvider(
+        api_key="test-secret",
+        transport=httpx.MockTransport(
+            lambda _: httpx.Response(
+                200,
+                json={
+                    "success": True,
+                    "data": {
+                        "web": [{"url": "https://example.com/article"} | metadata]
+                    },
+                },
+            )
+        ),
+    )
+    result = await provider.search("topic", 1)
+    assert len(result.results) == 1
+    assert result.results[0].title == expected_title
+    assert result.results[0].snippet == expected_snippet
 
 
 @pytest.mark.asyncio

@@ -208,12 +208,12 @@ class FirecrawlProvider:
             if url in seen:
                 continue
             seen.add(url)
-            title = row.get("title") if isinstance(row.get("title"), str) else url
-            snippet = (
-                row.get("description")
-                if isinstance(row.get("description"), str)
-                else ""
-            )
+            title = row.get("title")
+            if not isinstance(title, str):
+                title = url
+            snippet = row.get("description")
+            if not isinstance(snippet, str):
+                snippet = ""
             results.append(
                 WebResult(
                     id=hashlib.sha256(url.encode()).hexdigest(),
