@@ -78,7 +78,12 @@ def _parse_original(path, mime_type, page_limit, text_limit):
             if nonempty == len(blocks) and nonempty
             else ("partial" if nonempty else "needs_ocr"),
         }
-    text = Path(path).read_bytes().decode("utf-8-sig")
+    return parse_text_bytes(Path(path).read_bytes(), text_limit)
+
+
+def parse_text_bytes(data, text_limit):
+    """Shared UTF-8 interpretation, including BOM and empty-text behavior."""
+    text = data.decode("utf-8-sig")
     if len(text) > text_limit:
         raise ValueError("TEXT_LIMIT: extracted text exceeds configured limit")
     return {
@@ -151,6 +156,92 @@ def _terms(text):
     return normalized, terms
 
 
+def publish_snapshot_bytes(path, data, *, durability_root=None):
+    """Publish deterministic bytes durably without overwriting a competing winner."""
+    root = Path(durability_root or path.parent).resolve()
+    if not path.resolve().is_relative_to(root):
+        raise InvalidInputError("Unsafe snapshot publication path")
+    created_parents = set()
+    directory = path.parent
+    while not directory.exists():
+        created_parents.add(directory.parent)
+        directory = directory.parent
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + ".staging-" + uuid4().hex)
+    try:
+        EvidenceService._write_new(temporary, data)
+        try:
+            os.link(temporary, path)
+        except FileExistsError:
+            if path.read_bytes() != data:
+                raise InvalidInputError("SNAPSHOT_CONFLICT: staged bytes differ")
+    finally:
+        temporary.unlink(missing_ok=True)
+    # The published name and every newly created ancestor entry must be durable
+    # before metadata can acknowledge these bytes. Unsupported filesystems fail
+    # explicitly here; callers retain the unacknowledged file, not a ready receipt.
+    directories = []
+    for directory in path.parents:
+        directories.append(directory)
+        if directory == root:
+            break
+    directories.extend(
+        sorted(
+            created_parents.difference(directories), key=lambda item: -len(item.parts)
+        )
+    )
+    for directory in directories:
+        descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+
+
+def build_evidence_records(version, extraction_id, blocks, max_records=None):
+    """Single codepoint/paragraph indexing implementation for all retained text."""
+    origin = version["origin"]
+    kind = (
+        "derived_snapshot"
+        if origin == "derived_snapshot"
+        else "remote_text_snapshot"
+        if origin in ("remote_text_snapshot", "web_snapshot")
+        else "pdf_text"
+        if version["mime_type"] == "application/pdf"
+        else "text"
+    )
+    records: list[dict[str, Any]] = []
+    for block in blocks:
+        for start, end, quote in _paragraphs(block["text"]):
+            if max_records is not None and len(records) >= max_records:
+                raise InvalidInputError("EVIDENCE_LIMIT: too many evidence records")
+            identity = (
+                "ev_"
+                + _sha(
+                    f"{version['source_version_id']}:{extraction_id}:{block['block_id']}:{start}:{end}".encode()
+                )[:32]
+            )
+            records.append(
+                EvidenceRecord(
+                    evidence_id=identity,
+                    source_version_id=version["source_version_id"],
+                    extraction_id=extraction_id,
+                    notebook_id=version["notebook_id"],
+                    source_title=version["source_title"],
+                    quote=quote,
+                    quote_hash=_sha(quote.encode()),
+                    evidence_kind=kind,
+                    locator={
+                        "block_id": block["block_id"],
+                        "page_index": block["page_index"],
+                        "start_offset": start,
+                        "end_offset": end,
+                    },
+                ).model_dump()
+            )
+    return records
+
+
 class EvidenceService:
     def __init__(self, store=None, data_root=None):
         if store is None:
@@ -173,7 +264,16 @@ class EvidenceService:
         filename=None,
         origin="upload",
         original_status="available",
+        provenance=None,
+        source_version_id=None,
+        preserve_on_error=False,
     ):
+        if origin == "web_snapshot" and (
+            not isinstance(provenance, dict)
+            or not provenance.get("source_url")
+            or provenance.get("historical_url_omitted")
+        ):
+            raise InvalidInputError("New web ingestion requires the fetched source URL")
         limit = float(os.getenv("STUDY_WORKBENCH_MAX_FILE_MB", "50")) * 1024 * 1024
         if not data or len(data) > limit:
             raise InvalidInputError(
@@ -203,7 +303,12 @@ class EvidenceService:
                 raise InvalidInputError(
                     "UTF-8 encoding required; convert the text file and upload again"
                 ) from exc
-        version_id = f"sv_{uuid4().hex}"
+        if source_version_id is not None and (
+            not isinstance(source_version_id, str)
+            or not re.fullmatch(r"sv_[A-Za-z0-9_-]{1,180}", source_version_id)
+        ):
+            raise InvalidInputError("Invalid source version identity")
+        version_id = source_version_id or f"sv_{uuid4().hex}"
         suffix = {v: k for k, v in types.items()}[mime]
         relative = f"originals/{version_id}/original{suffix}"
         path = self.data_root / relative
@@ -213,6 +318,7 @@ class EvidenceService:
             notebook_id=notebook_id,
             source_title=title,
             origin=origin,
+            provenance=provenance,
             original_status=original_status,
             sha256=_sha(data),
             mime_type=mime,
@@ -221,12 +327,50 @@ class EvidenceService:
             created_at=_now(),
         ).model_dump()
         async with self.store.project_lock(notebook_id):
-            await asyncio.to_thread(path.parent.mkdir, parents=True, exist_ok=True)
+            if not source_version_id:
+                await asyncio.to_thread(path.parent.mkdir, parents=True, exist_ok=True)
+            previous = (
+                await self.store.get("version", version_id)
+                if source_version_id
+                else None
+            )
+            if previous:
+                fields = (
+                    "notebook_id",
+                    "source_id",
+                    "source_title",
+                    "origin",
+                    "original_status",
+                    "sha256",
+                    "mime_type",
+                    "byte_size",
+                    "file_path",
+                    "provenance",
+                )
+                if any(previous.get(key) != version.get(key) for key in fields):
+                    raise InvalidInputError(
+                        "SNAPSHOT_CONFLICT: version identity already has different content"
+                    )
+                await self.resolve_file(version_id)
+                return previous
+            created_file = False
             try:
-                await asyncio.to_thread(self._write_new, path, data)
+                if source_version_id:
+                    await asyncio.to_thread(
+                        publish_snapshot_bytes,
+                        path,
+                        data,
+                        durability_root=self.data_root,
+                    )
+                else:
+                    await asyncio.to_thread(self._write_new, path, data)
+                    created_file = True
                 await self.store.put("version", version_id, version, create_only=True)
             except Exception:
-                path.unlink(missing_ok=True)
+                # Caller opts into deterministic reconciliation; a failed acknowledgement
+                # does not prove that the metadata commit was rolled back.
+                if created_file and not preserve_on_error:
+                    path.unlink(missing_ok=True)
                 raise
         return version
 
@@ -357,35 +501,7 @@ class EvidenceService:
                     int(os.getenv("STUDY_WORKBENCH_MAX_TEXT_CODEPOINTS", "5000000")),
                 )
             extraction.update(parsed)
-            records = []
-            for block in parsed["blocks"]:
-                for start, end, quote in _paragraphs(block["text"]):
-                    evidence_id = (
-                        "ev_"
-                        + _sha(
-                            f"{version_id}:{extraction_id}:{block['block_id']}:{start}:{end}".encode()
-                        )[:32]
-                    )
-                    records.append(
-                        EvidenceRecord(
-                            evidence_id=evidence_id,
-                            source_version_id=version_id,
-                            extraction_id=extraction_id,
-                            notebook_id=version["notebook_id"],
-                            source_title=version["source_title"],
-                            quote=quote,
-                            quote_hash=_sha(quote.encode()),
-                            evidence_kind="remote_text_snapshot"
-                            if version["origin"] == "remote_text_snapshot"
-                            else ("pdf_text" if is_pdf else "text"),
-                            locator={
-                                "block_id": block["block_id"],
-                                "page_index": block["page_index"],
-                                "start_offset": start,
-                                "end_offset": end,
-                            },
-                        ).model_dump()
-                    )
+            records = build_evidence_records(version, extraction_id, parsed["blocks"])
             extraction["evidence_ids"] = [record["evidence_id"] for record in records]
             extraction["completed_at"] = _now()
             async with self.store.project_lock(version["notebook_id"]):
@@ -554,6 +670,8 @@ class EvidenceService:
             )
             hit["reference_validity"] = reference["reference_validity"]
             hit["reference_reason"] = reference.get("reason")
+            hit["provenance"] = reference.get("provenance")
+            hit["independent_support"] = reference.get("independent_support")
         return ranked
 
     async def validate_citation(self, citation, version_ids, evidence_ids=None):
@@ -622,19 +740,30 @@ class EvidenceService:
             if evidence_id in report.get("evidence_ids", []) and fresh_id:
                 fresh = await self.store.get("extraction", fresh_id)
                 revalidated = self._matches_fresh(evidence, fresh)
+        # Historical evidence may outlive its version. Absence is not a fresh
+        # verification, even when an older revalidation report still matches.
+        version = await self.store.get("version", evidence["source_version_id"])
+        derived = (version or {}).get("origin") == "derived_snapshot" or evidence.get(
+            "evidence_kind"
+        ) == "derived_snapshot"
+        unverified = not version or (restored and not revalidated)
         return {
             **result,
-            "kind": "remote_text_snapshot"
+            "provenance": (version or {}).get("provenance"),
+            "independent_support": False if derived else None,
+            "kind": "derived_snapshot"
+            if derived
+            else "remote_text_snapshot"
             if evidence.get("evidence_kind") == "remote_text_snapshot"
             else "local_evidence",
             "source_version_id": evidence["source_version_id"],
             "source_title": evidence.get("source_title") or "",
             "locator": locator,
             "quote": quote,
-            "reference_validity": "unverified"
-            if restored and not revalidated
-            else "verified",
+            "reference_validity": "unverified" if unverified else "verified",
             "reason": "Restored archive evidence has not been verified by a fresh local extraction"
             if restored and not revalidated
+            else "Source version is unavailable; retained citation cannot be freshly verified"
+            if not version
             else None,
         }

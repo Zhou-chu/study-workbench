@@ -8,6 +8,13 @@ export function requestError(error: unknown): string | null {
   if (detail && typeof detail.code === 'string') return detail.code
   return null
 }
+/** Machine-readable error classification; never parses human/provider messages. */
+export function requestErrorCode(error: unknown): string | null {
+  if (!error || typeof error !== 'object') return null
+  const data = (error as { response?: { data?: { error?: unknown; detail?: unknown } } }).response?.data
+  const detail = data?.error || data?.detail || error
+  return detail && typeof detail === 'object' && typeof (detail as { code?: unknown }).code === 'string' ? (detail as { code: string }).code : null
+}
 export const stateKeys: Record<string, string> = {
   queued: 'workbench.states.queued', running: 'workbench.states.running', waiting_remote: 'workbench.states.waiting_remote', succeeded: 'workbench.states.succeeded', failed: 'workbench.states.failed', needs_reauth: 'workbench.states.needs_reauth', submission_unknown: 'workbench.states.submission_unknown', cancelled_local: 'workbench.states.cancelled_local', ready: 'workbench.states.ready', completed: 'workbench.states.completed', pending: 'workbench.states.pending', extracting: 'workbench.states.extracting', needs_ocr: 'workbench.states.needs_ocr', partial: 'workbench.states.partial', unsupported: 'workbench.states.unsupported', available: 'workbench.states.available', missing: 'workbench.states.missing', unverified: 'workbench.states.unverified',
 }

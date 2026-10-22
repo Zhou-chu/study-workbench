@@ -1,5 +1,7 @@
+import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchEn } from '../workbench'
 export const enUS = {
+  ...learningWorkspaceLocales['en-US'],
   noteConflict: {
     notSent: "This save was not sent. Your draft is unchanged. Reconnect, then choose Save when you are ready.",
     authRejected: "The session check rejected this save. Your draft is unchanged. Sign in or reconnect, then choose Save again.",
@@ -46,7 +48,6 @@ export const enUS = {
     language: "Language",
     source: "Source",
     notebook: "Notebook",
-    podcast: "Podcast",
     quickActions: "Quick actions",
     quickActionsDesc: "Navigation, search, ask, theme",
     appName: "Open Notebook",
@@ -243,10 +244,8 @@ export const enUS = {
     connectErrorHint: "Unable to connect to server. Please check if the API is running.",
   },
   navigation: {
-    collect: "Collect",
     process: "Process",
     create: "Create",
-    manage: "Manage",
     sources: "Sources",
     notebooks: "Notebooks",
     askAndSearch: "Ask and Search",

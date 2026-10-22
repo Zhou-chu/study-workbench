@@ -1,8 +1,8 @@
 'use client'
 import { isAuthRecoveryError } from '@/lib/api/browser-transport'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, Files, MessageSquare, NotebookPen, Search, Upload, CircleCheck, Layers } from 'lucide-react'
+import { ArrowLeft, BookOpen, Files, MessageSquare, NotebookPen, Search, Upload, Layers, Settings2, MoreHorizontal, Globe2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { evidenceApi } from '@/lib/api/evidence'
 import { useModelDefaults } from '@/lib/hooks/use-models'
@@ -14,13 +14,16 @@ import { activeJob, useSaveWorkbenchSelection, useWorkbench } from '@/lib/hooks/
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { useToast } from '@/lib/hooks/use-toast'
 import { canonicalCitationLocator } from '@/lib/utils/evidence'
-import { requestError, stateKeys, connectionKeys } from '@/lib/utils/workbench'
+import { requestError, requestErrorCode, stateKeys, connectionKeys } from '@/lib/utils/workbench'
 import type { BridgeJob, CreateWorkbenchNoteInput, EvidenceCitation, ScopeSnapshot, TurnRecord, WorkbenchNote, WorkbenchSelection } from '@/lib/types/personal'
 import { EvidenceReader } from '@/components/evidence/EvidenceReader'
-import { NotebookLMPanel } from '@/components/integrations/NotebookLMPanel'
+import { NotebookSettingsDialog } from './NotebookSettingsDialog'
 import { JobsPanel } from './JobsPanel'
 import { PortableControls } from './PortableControls'
 import { TurnCoverage } from './TurnCoverage'
+import { WorkbenchSourcesList } from './WorkbenchSourcesList'
+import { SnapshotPromotionButton } from './SnapshotPromotionButton'
+import { WebDiscoveryDialog } from '@/components/sources/WebDiscoveryDialog'
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -54,14 +57,18 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const [tab, setTab] = useState('conversation')
   const uploadInput = useRef<HTMLInputElement>(null)
   const [focusUpload, setFocusUpload] = useState(false)
-  const googleDisclosure = useRef<HTMLDetailsElement>(null)
+  const readerButton = useRef<HTMLButtonElement | null>(null)
+  const focusReader = () => requestAnimationFrame(() => readerButton.current?.focus({ preventScroll: true }))
+  const settingsOpener = useRef<HTMLButtonElement | null>(null)
+  const discoveryOpener = useRef<HTMLButtonElement | null>(null)
+  const openSettings = (event: MouseEvent<HTMLButtonElement>) => { settingsOpener.current = event.currentTarget; setSettingsOpen(true) }
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [discoverOpen, setDiscoverOpen] = useState(false)
+  const [studioOpen, setStudioOpen] = useState(false)
   useEffect(() => {
     if (focusUpload && tab === 'sources') { uploadInput.current?.focus(); setFocusUpload(false) }
   }, [focusUpload, tab])
-  useEffect(() => {
-    if (selection.selection_origin === 'remote' && googleDisclosure.current) googleDisclosure.current.open = true
-  }, [selection.selection_origin])
-  const [readerOpen, setReaderOpen] = useState(true)
+  const [readerOpen, setReaderOpen] = useState(false)
   const [citation, setCitation] = useState<EvidenceCitation | null>(null)
   const [question, setQuestion] = useState('')
   // A save may finish after New, Edit, or an outline replaced the draft.
@@ -144,7 +151,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
         setBaseRevision(null); resetNoteReview()
         setNoteTitle(t('workbench.outline')); setNoteContent(outline.answer); setNoteScope(outline.scope_snapshot)
         setEditingNote({ id: '', title: '', content: '', citations: outline.citations, scope_snapshot: outline.scope_snapshot })
-        setTab('notes')
+        setStudioOpen(false); setTab('notes')
       }
       setOutlineTurn(null)
     }
@@ -216,7 +223,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   }
   const openCitation = async (reference: EvidenceCitation) => {
     const request = ++citationRequest.current
-    setCitation(reference); setReaderOpen(true); setTab('conversation')
+    setCitation(reference); setReaderOpen(true); setTab('conversation'); focusReader()
     if (reference.kind === 'remote_unmapped' || !reference.source_version_id) return
     updateSelection({ reading: { source_version_id: reference.source_version_id, page_index: reference.reference_validity === 'verified' ? reference.locator?.page_index ?? 0 : 0, evidence_id: reference.evidence_id || undefined } })
     // Restored citations keep their archived verification label. Re-read the
@@ -236,22 +243,19 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   if (!data) return <div className="p-6 space-y-3"><p role="alert">{requestError(workspace.error) || t('workbench.serviceError')}</p><Button onClick={() => workspace.refetch()}>{t('workbench.retry')}</Button></div>
   const readVersion = citation?.kind === 'remote_unmapped' ? undefined : selection.reading?.source_version_id
   const hasRemoteContext = Boolean(data.link?.remote_notebook_id) || (selection.selection_origin === 'remote' && selection.remote_source_ids.length > 0)
-  return <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
-    <header className="shrink-0 border-b bg-card px-4 pt-4 pb-3 lg:px-6 space-y-3">
-      <div className="flex flex-wrap justify-between items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <Link className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring rounded-sm" href={`/notebooks/${encodeURIComponent(notebookId)}`}><ArrowLeft className="size-3" aria-hidden="true" />{t('workbench.back')}</Link>
-          <h1 className="font-display text-2xl font-medium tracking-tight break-words mt-1">{data.notebook.name}</h1>
-          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"><span>{t('workbench.title')}</span><span className="inline-flex items-center gap-1"><CircleCheck className="size-3 text-fern" aria-hidden="true" />{t('workbench.serviceOnline')}</span></p>
+  const unmappedSources = requestErrorCode(ask.error) === 'UNMAPPED_SOURCE' || requestErrorCode(lastJobOutcome?.error) === 'UNMAPPED_SOURCE'
+  const hasUnsavedNote = (saved: WorkbenchNote) => editingNote?.id === saved.id && (note.isPending || !!noteProblem || baseRevision !== saved.revision || noteContent !== (saved.content || '') || (noteTitle || t('common.note')) !== (saved.title || t('common.note')))
+  return <div aria-label={t('learningWorkspace.workspace')} className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
+    <header className="shrink-0 border-b bg-card px-4 py-3 lg:px-6 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Link href="/notebooks" aria-label={t('navigation.notebooks')} className="rounded-md p-2 text-muted-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><ArrowLeft className="size-4" aria-hidden="true" /></Link>
+          <div className="min-w-0"><h1 className="truncate font-display text-xl font-semibold tracking-tight" title={data.notebook.name}>{data.notebook.name}</h1><p className="mt-0.5 text-xs text-muted-foreground">{t('workbench.title')}</p></div>
         </div>
-        <PortableControls notebookId={notebookId} onChanged={refresh} />
-      </div>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm border-t pt-3">
-        <div className="flex items-center gap-2"><label htmlFor="workbench-engine" className="text-xs text-muted-foreground">{t('workbench.engine')}</label>
-          <select id="workbench-engine" className="min-w-0 max-w-full rounded-md border bg-background px-2 py-1.5 text-xs focus-visible:ring-2 focus-visible:ring-ring" value={selection.engine} onChange={event => updateSelection({ engine: event.target.value as WorkbenchSelection['engine'] })}><option value="notebooklm">{t('workbench.notebooklm')}</option><option value="independent">{t('workbench.independent')}</option></select>
+        <div className="flex shrink-0 items-center gap-1">
+          <Button size="icon" variant="ghost" aria-label={t('learningWorkspace.notebookSettings')} onClick={openSettings}><Settings2 className="size-4" aria-hidden="true" /></Button>
+          <details className="relative"><summary aria-label={t('learningWorkspace.notebookTools')} className="list-none cursor-pointer rounded-md p-2 text-muted-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><MoreHorizontal className="size-4" aria-hidden="true" /></summary><div className="absolute right-0 top-full z-30 mt-2 w-72 max-w-[85vw] space-y-3 rounded-lg border bg-card p-4 shadow-pop"><PortableControls notebookId={notebookId} onChanged={refresh} /><Link href={`/notebooks/${encodeURIComponent(notebookId)}`} target="_blank" rel="noopener noreferrer" className="block text-sm text-primary hover:underline">{t('learningWorkspace.classicNotebook')}</Link><p className="text-xs leading-5 text-muted-foreground">{t('learningWorkspace.classicDescription')}</p></div></details>
         </div>
-        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary"><Layers className="size-3.5" aria-hidden="true" />{t('workbench.selectedCount', { count: selectedCount })}</span>
-        {selection.engine === 'notebooklm' && <span className="text-xs text-muted-foreground">{t(connectionStatusKey)}</span>}<Link href="/settings/models" className="text-xs text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring rounded-sm lg:ml-auto">{t('workbench.modelSettings')}</Link>
       </div>
       <div role="tablist" aria-label={t('workbench.title')} className="grid grid-cols-3 gap-1 rounded-md bg-muted p-1 xl:hidden">{workspaceTabs.map(name => {
         const Icon = panelIcons[name]
@@ -268,41 +272,39 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     <div className="flex min-h-0 flex-1 overflow-hidden">
       <aside id="workbench-panel-sources" aria-label={t('workbench.sources')} className={cn('min-h-0 overflow-auto border-r bg-card px-4 pb-5 space-y-4 w-full xl:block xl:w-72 xl:min-w-56 xl:max-w-[32vw] xl:shrink-0 xl:resize-x', tab !== 'sources' && 'hidden')}>
         <h2 className="sticky top-0 z-10 flex items-center gap-2 border-b bg-card py-4 text-sm font-semibold"><Files className="size-4 text-muted-foreground" aria-hidden="true" />{t('workbench.sources')}<span className="ml-auto font-normal text-muted-foreground tabular-nums">{data.sources.length}</span></h2>
-        <label className="relative flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-primary/40 bg-fern-tint px-3 py-4 text-sm font-medium text-primary focus-within:ring-2 focus-within:ring-ring"><Upload className="size-4" aria-hidden="true" /><span>{t('workbench.upload')}</span><input ref={uploadInput} className="sr-only" type="file" accept=".pdf,.md,.markdown,.txt" multiple onChange={event => { void upload(event.target.files); event.target.value = '' }} /></label>
+        <label className="relative flex cursor-pointer items-center justify-center gap-2 rounded-md border border-primary/30 bg-card px-3 py-3 text-sm font-medium text-primary focus-within:ring-2 focus-within:ring-ring"><Upload className="size-4" aria-hidden="true" /><span>{t('workbench.upload')}</span><input ref={uploadInput} className="sr-only" type="file" accept=".pdf,.md,.markdown,.txt" multiple onChange={event => { void upload(event.target.files); event.target.value = '' }} /></label>
+        <Button className="w-full gap-2" variant="outline" ref={discoveryOpener} onClick={() => setDiscoverOpen(true)}><Globe2 className="size-4" aria-hidden="true" />{t('learningWorkspace.discover')}</Button>
         {uploads.map(item => <div key={item.id} className="space-y-1 text-xs"><p className="break-all" role="status">{item.name}: {t({ uploading: 'workbench.uploading', uploadAccepted: 'workbench.uploadAccepted', uploadFailed: 'workbench.uploadFailed', uploadUncertain: 'workbench.uploadUncertain' }[item.state])}{item.error && ` · ${item.error}`}</p>{item.state !== 'uploading' && <div className="flex flex-wrap gap-2">{item.state !== 'uploadAccepted' && <Button size="sm" variant="outline" onClick={() => { void retryUpload(item.id) }}>{t('workbench.retryUpload')}</Button>}<Button size="sm" variant="ghost" onClick={() => dismissUpload(item.id)}>{t('workbench.dismissUpload')}</Button></div>}{item.state === 'uploadUncertain' && <p className="text-muted-foreground">{t('workbench.uploadRecoveryHint')}</p>}</div>)}
-        <label htmlFor="workbench-scope" className="block text-xs">{t('workbench.scope')}</label><select id="workbench-scope" className="w-full rounded-md border bg-background p-2 text-sm" value={selection.selection_origin} onChange={event => updateSelection({ selection_origin: event.target.value as 'local' | 'remote' })}><option value="local">{t('workbench.localScope')}</option><option value="remote">{t('workbench.remoteScope')}</option></select>
-        {selection.selection_origin === 'remote' && <p className="text-xs text-muted-foreground">{t('workbench.remoteOriginalWarning')}</p>}
-        <p className="text-xs text-muted-foreground">{t('workbench.readingScopeHint')}</p>
+        <p className="text-xs leading-5 text-muted-foreground">{t('learningWorkspace.sourcesHint')}</p>
+        {selection.selection_origin === 'remote' && <Button size="sm" variant="outline" onClick={openSettings}>{t('workbench.remoteScope')}</Button>}
         <div className="flex flex-wrap gap-1"><Button size="sm" variant="ghost" onClick={() => updateSelection({ source_version_ids: data.sources.flatMap(source => source.versions.length ? [[...source.versions].sort((a, b) => b.created_at.localeCompare(a.created_at))[0].source_version_id] : []), selection_origin: 'local' })}>{t('workbench.selectAll')}</Button><Button size="sm" variant="ghost" onClick={() => updateSelection({ source_version_ids: [], remote_source_ids: [] })}>{t('workbench.clearSelection')}</Button></div>
-        <label htmlFor="workspace-search" className="text-xs flex items-center gap-1.5"><Search className="size-3.5" aria-hidden="true" />{t('workbench.searchEvidence')}</label><Input id="workspace-search" value={searchText} onChange={event => setSearchText(event.target.value)} /><Button size="sm" variant="outline" disabled={!searchText.trim() || !selection.source_version_ids.length || search.isPending} onClick={() => search.mutate()}>{t('workbench.search')}</Button>
+        <label htmlFor="workspace-search" className="text-xs flex items-center gap-1.5"><Search className="size-3.5" aria-hidden="true" />{t('learningWorkspace.sourceSearch')}</label><Input id="workspace-search" value={searchText} onChange={event => setSearchText(event.target.value)} /><Button size="sm" variant="outline" disabled={!searchText.trim() || !selection.source_version_ids.length || search.isPending} onClick={() => search.mutate()}>{t('workbench.search')}</Button>
         {search.isError && <p role="alert" className="text-xs text-destructive">{requestError(search.error) || t('workbench.error')}</p>}
-        {search.data?.hits.map(hit => <button key={hit.evidence_id} className="w-full rounded border p-2 text-left text-xs hover:bg-muted" onClick={() => openCitation({ citation_id: hit.evidence_id, evidence_id: hit.evidence_id, source_version_id: hit.source_version_id, source_title: hit.source_title || hit.source_version_id, kind: hit.evidence_kind === 'remote_text_snapshot' ? 'remote_text_snapshot' : 'local_evidence', locator: hit.locator, quote: hit.quote, reference_validity: hit.reference_validity || 'unverified' })}>{hit.quote}</button>)}
+        {search.data?.hits.map(hit => <button key={hit.evidence_id} className="w-full rounded border p-2 text-left text-xs hover:bg-muted" onClick={() => openCitation({ citation_id: hit.evidence_id, evidence_id: hit.evidence_id, source_version_id: hit.source_version_id, source_title: hit.source_title || hit.source_version_id, kind: hit.evidence_kind === 'derived_snapshot' ? 'derived_snapshot' : hit.evidence_kind === 'remote_text_snapshot' ? 'remote_text_snapshot' : 'local_evidence', provenance: hit.provenance, independent_support: hit.independent_support, locator: hit.locator, quote: hit.quote, reference_validity: hit.reference_validity || 'unverified' })}>{hit.quote}</button>)}
         {!data.sources.length && <p className="text-sm text-muted-foreground">{t('workbench.noSources')}</p>}
-        {data.sources.map(source => <div className="space-y-2 border-b pb-4" key={source.source_id}><p className="font-medium text-sm break-words">{source.title}</p><label className="relative block cursor-pointer text-xs text-primary focus-within:ring-2 focus-within:ring-ring">{t('workbench.uploadVersion')}<input className="sr-only" type="file" accept=".pdf,.md,.markdown,.txt" onChange={event => { void upload(event.target.files, source.source_id); event.target.value = '' }} /></label>{source.versions.map(version => <div key={version.source_version_id} className={cn("space-y-1 rounded-md p-2", selection.source_version_ids.includes(version.source_version_id) ? "bg-fern-tint" : "bg-muted/40")}><label className="flex gap-2 items-start text-xs"><input aria-label={`${source.title} · ${version.source_version_id}`} type="checkbox" checked={selection.source_version_ids.includes(version.source_version_id)} onChange={event => updateSelection({ source_version_ids: event.target.checked ? [...selection.source_version_ids, version.source_version_id] : selection.source_version_ids.filter(id => id !== version.source_version_id) })} /><span className="min-w-0"><span className="block font-medium">{version.created_at.slice(0, 10)}</span><span className="block truncate text-[10px] text-muted-foreground" title={version.source_version_id}>{version.source_version_id}</span></span></label><div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-muted-foreground">{t(stateKeys[version.status || version.extraction_status || 'pending'] || 'workbench.unavailable')}</span><Button size="sm" variant="ghost" onClick={() => { citationRequest.current++; setCitation(null); setReaderOpen(true); setTab('conversation'); updateSelection({ reading: { source_version_id: version.source_version_id, page_index: 0 } }) }}>{t('workbench.read')}</Button></div>{version.original_status !== 'available' && <p className="text-xs text-muted-foreground">{t('workbench.originalMissing')}</p>}</div>)}</div>)}
-        <details ref={googleDisclosure} className="rounded-md border p-3">
-          <summary className="cursor-pointer text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring rounded-sm"><span>{t('workbench.optionalGoogle')}</span><span className="mt-1 block text-xs font-normal text-muted-foreground">{t(connectionStatusKey)}</span></summary>
-          <div className="mt-3"><NotebookLMPanel notebookId={notebookId} selectedVersionIds={selection.source_version_ids} remoteSourceIds={selection.remote_source_ids} selectionOrigin={selection.selection_origin} link={data.link} onRemoteSelection={ids => updateSelection({ remote_source_ids: ids })} onChanged={refresh} /></div>
-        </details>
+        <WorkbenchSourcesList notebookId={notebookId} sources={data.sources} selectedVersionIds={selection.source_version_ids} onSelectionChange={ids => updateSelection({ source_version_ids: ids })} onRead={id => { citationRequest.current++; setCitation(null); setReaderOpen(true); setTab('conversation'); focusReader(); updateSelection({ reading: { source_version_id: id, page_index: 0 } }) }} onUpload={(files, id) => { void upload(files, id) }} />
       </aside>
-      <main id="workbench-panel-conversation" className={cn('min-w-0 min-h-0 overflow-auto flex-1 px-4 pb-6 space-y-5 lg:px-6 xl:block', tab !== 'conversation' && 'hidden')}>
-        <div className="sticky top-0 z-10 flex gap-2 border-b bg-background py-3"><Button size="sm" variant={readerOpen ? 'default' : 'outline'} onClick={() => setReaderOpen(true)}><BookOpen className="size-4" aria-hidden="true" />{t('workbench.reader')}</Button><Button size="sm" variant={!readerOpen ? 'default' : 'outline'} onClick={() => setReaderOpen(false)}><MessageSquare className="size-4" aria-hidden="true" />{t('workbench.conversation')}</Button></div>
+      <div id="workbench-panel-conversation" className={cn('min-w-0 min-h-0 overflow-auto flex-1 px-4 pb-6 space-y-5 lg:px-6 xl:block', tab !== 'conversation' && 'hidden')}>
+        <div className="sticky top-0 z-10 flex gap-2 border-b bg-background py-3"><Button ref={readerButton} size="sm" variant={readerOpen ? 'default' : 'outline'} onClick={() => setReaderOpen(true)}><BookOpen className="size-4" aria-hidden="true" />{t('workbench.reader')}</Button><Button size="sm" variant={!readerOpen ? 'default' : 'outline'} onClick={() => setReaderOpen(false)}><MessageSquare className="size-4" aria-hidden="true" />{t('workbench.conversation')}</Button></div>
         {!data.sources.length && !hasRemoteContext && !readVersion && !citation && <div className="space-y-2 py-2">
           <h2 className="text-base font-semibold">{t('workbench.startLocalTitle')}</h2>
           <p className="text-sm text-muted-foreground">{t('workbench.localToolsHint')}</p>
           <Button size="sm" onClick={() => { setTab('sources'); setFocusUpload(true) }}><Upload className="size-4" aria-hidden="true" />{t('workbench.addStudyMaterials')}</Button>
         </div>}
-        {readerOpen && (data.sources.length > 0 || readVersion || citation) && <EvidenceReader sourceVersionId={readVersion} evidenceId={selection.reading?.evidence_id} citation={citation} initialPage={selection.reading?.page_index || 0} onPositionChange={reading => updateSelection({ reading })} onChanged={refresh} />}
-        <section className="space-y-4 border-t pt-5" aria-label={t('workbench.conversation')}>
-          <div className="rounded-lg border bg-card p-4 space-y-3"><label className="block text-sm font-semibold" htmlFor="workbench-question">{t('workbench.question')}</label><Textarea id="workbench-question" value={question} onChange={event => setQuestion(event.target.value)} rows={3} />
-          {selection.engine === 'independent' && <div className="space-y-2">
+        {(data.sources.length > 0 || readVersion || citation) && <div className={cn(!readerOpen && 'hidden')}><EvidenceReader sourceVersionId={readVersion} evidenceId={selection.reading?.evidence_id} citation={citation} initialPage={selection.reading?.page_index || 0} onPositionChange={reading => updateSelection({ reading })} onChanged={refresh} /></div>}
+        <section className={cn("space-y-4", readerOpen && "hidden")} aria-label={t('workbench.conversation')}>
+          <div className="rounded-lg border bg-card p-4 space-y-3"><p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Layers className="size-3.5" aria-hidden="true" />{t('workbench.selectedCount', { count: selectedCount })}</p><label className="block text-sm font-semibold" htmlFor="workbench-question">{t('workbench.question')}</label><Textarea id="workbench-question" value={question} onChange={event => setQuestion(event.target.value)} rows={3} />
+          {selection.engine === 'independent' && modelState !== 'ready' && <div className="space-y-2">
             <p id="workbench-model-status" role={modelState === 'error' ? 'alert' : 'status'} className="text-xs text-muted-foreground">{t(modelStatusKey)}</p>
             {modelState === 'error' && <Button size="sm" variant="outline" onClick={() => { void modelDefaults.refetch() }}>{t('workbench.retryModelCheck')}</Button>}
-            {modelState === 'notConfigured' && <Link href="/settings/models" className="inline-block text-xs text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring rounded-sm">{t('workbench.modelSettings')}</Link>}
+            {modelState === 'notConfigured' && <Button size="sm" variant="ghost" onClick={openSettings}>{t('workbench.modelSettings')}</Button>}
           </div>}
           {!canAsk && !modelBlocked && <p className="text-xs text-muted-foreground">{googleBlocked || t(selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
-          <div className="flex flex-wrap gap-2"><Button aria-describedby={selection.engine === 'independent' ? 'workbench-model-status' : undefined} disabled={!canAsk || !question.trim() || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: question.trim() })}>{t('workbench.ask')}</Button><Button aria-describedby={selection.engine === 'independent' ? 'workbench-model-status' : undefined} variant="outline" disabled={!canAsk || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: t('workbench.outlinePrompt'), outline: true, editorSnapshot: { session: noteEditorSession.current, revision: noteEditorRevision.current } })}>{t('workbench.outline')}</Button></div></div>
+          {googleBlocked && <Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button>}
+          <div className="flex flex-wrap gap-2"><Button aria-describedby={selection.engine === 'independent' && modelState !== 'ready' ? 'workbench-model-status' : undefined} disabled={!canAsk || !question.trim() || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: question.trim() })}>{t('workbench.ask')}</Button><Button aria-describedby={selection.engine === 'independent' && modelState !== 'ready' ? 'workbench-model-status' : undefined} variant="outline" disabled={!canAsk || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: t('workbench.outlinePrompt'), outline: true, editorSnapshot: { session: noteEditorSession.current, revision: noteEditorRevision.current } })}>{t('workbench.outline')}</Button></div></div>
           {(ask.isPending || pendingTurn) && <p role="status" className="text-sm text-teal">{t('workbench.asking')}</p>}
-          {ask.isError && <div role="alert"><p className="text-destructive">{t('workbench.answerFailure')}</p><p className="text-xs">{requestError(ask.error) || t('workbench.unknownSubmission')}</p></div>}
+          {ask.isError && <div role="alert"><p className="text-destructive">{t('workbench.answerFailure')}</p>{!unmappedSources && <p className="text-xs">{requestError(ask.error) || t('workbench.unknownSubmission')}</p>}</div>}
+          {unmappedSources && <div role="alert" className="space-y-2"><p className="text-sm leading-6 text-muted-foreground">{t('learningWorkspace.unmappedSources')}</p><Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button></div>}
           {pendingStatus.isError && <div role="alert"><p className="text-xs text-destructive">{t('workbench.jobStatusUnavailable')}</p><Button size="sm" variant="outline" onClick={() => pendingStatus.refetch()}>{t('workbench.refreshJob')}</Button></div>}
           {lastJobOutcome && lastJobOutcome.state !== 'succeeded' && <div role="status"><p>{t(stateKeys[lastJobOutcome.state] || 'workbench.unavailable')}</p>{lastJobOutcome.state === 'submission_unknown' && <p className="text-xs text-muted-foreground">{t('workbench.unknownSubmission')}</p>}</div>}
           {history.isError && <div role="alert"><p className="text-xs text-destructive">{requestError(history.error) || t('workbench.error')}</p><Button size="sm" variant="outline" onClick={() => history.refetch()}>{t('workbench.refresh')}</Button></div>}
@@ -311,21 +313,24 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
             <NoteConflictPanel problem={uncertainAnswer.problem} baseRevision={null} draft={uncertainAnswer.snapshot} latest={answerLatest ? [answerLatest] : null} loading={answerComparing} readFailed={answerReadFailed} onCompare={compareAnswer} />
             {answerCandidates && <section className="space-y-2" aria-label={t('noteConflict.candidates')}><h3 className="text-sm font-medium">{t('noteConflict.candidates')}</h3>{answerCandidates.length ? answerCandidates.map(candidate => <Button key={candidate.id} type="button" variant="outline" size="sm" className="block max-w-full truncate" disabled={answerComparing} aria-label={`${t('noteConflict.inspectCandidate')}: ${candidate.title || t('sources.untitledNote')}`} onClick={() => setAnswerLatest(candidate)}>{candidate.title || t('sources.untitledNote')}</Button>) : <p className="text-sm text-muted-foreground">{t('noteConflict.notFound')}</p>}</section>}
           </div>}
-          <h2 className="font-semibold">{t('workbench.history')}</h2>
+          {!turns.length && <div className="space-y-2 py-6"><h2 className="text-base font-medium">{t(selectedCount ? 'workbench.conversation' : 'learningWorkspace.selectSources')}</h2><p className="max-w-prose text-sm leading-6 text-muted-foreground">{t('learningWorkspace.chatEmpty')}</p></div>}
+          {!!turns.length && <h2 className="text-sm font-semibold text-muted-foreground">{t('workbench.history')}</h2>}
           {data.legacy_history?.map(session => <details className="rounded-md border p-3 space-y-2" key={session.chat_session_id}><summary className="text-sm">{t('workbench.importedHistory')}</summary>{session.messages?.map((message, index) => <div key={index} className="border-t py-2 text-sm"><p className="text-xs text-muted-foreground">{message.role}</p>{typeof message.content === 'string' && <MarkdownRenderer>{message.content}</MarkdownRenderer>}</div>)}</details>)}
-          {turns.map(turn => <article className="rounded-md border p-4 space-y-3" key={turn.turn_id}><h3 className="font-medium">{turn.message}</h3><details className="text-xs text-muted-foreground"><summary>{t('workbench.turnScope')} · {t(turn.engine === 'independent' ? 'workbench.independent' : 'workbench.notebooklm')}</summary><p className="break-all">{[...(turn.scope_snapshot?.source_version_ids || []), ...(turn.scope_snapshot?.remote_source_ids || [])].join(', ')}</p></details><TurnCoverage coverage={turn.coverage} warnings={turn.warnings} />{turn.answer && <MarkdownRenderer>{turn.answer}</MarkdownRenderer>}{!turn.answer && <p className="text-sm">{t(stateKeys[turn.state || turn.status || 'pending'] || 'workbench.unavailable')}</p>}{!!turn.error && <p className="text-xs text-destructive">{typeof turn.error === 'string' ? turn.error : (turn.error as { message?: string; code?: string }).message || (turn.error as { code?: string }).code || t('workbench.error')}</p>}{turn.state === 'submission_unknown' && <p className="text-sm text-muted-foreground">{t('workbench.unknownSubmission')}</p>}<div className="flex flex-wrap gap-2">{turn.citations?.map(reference => <Button size="sm" variant="outline" key={reference.citation_id} onClick={() => openCitation(reference)}>{reference.source_title} · {reference.citation_id}</Button>)}</div>{turn.answer && <Button size="sm" variant="outline" disabled={note.isPending || !!uncertainAnswer} onClick={() => saveAnswer(turn)}>{t('workbench.saveAnswer')}</Button>}</article>)}
+          {turns.map(turn => <article className="rounded-md border p-4 space-y-3" key={turn.turn_id}><h3 className="font-medium">{turn.message}</h3><details className="text-xs text-muted-foreground"><summary>{t('workbench.turnScope')} · {t(turn.engine === 'independent' ? 'workbench.independent' : 'workbench.notebooklm')}</summary><p className="break-all">{[...(turn.scope_snapshot?.source_version_ids || []), ...(turn.scope_snapshot?.remote_source_ids || [])].join(', ')}</p></details><TurnCoverage coverage={turn.coverage} warnings={turn.warnings} />{turn.answer && <MarkdownRenderer>{turn.answer}</MarkdownRenderer>}{!turn.answer && <p className="text-sm">{t(stateKeys[turn.state || turn.status || 'pending'] || 'workbench.unavailable')}</p>}{!!turn.error && <p className="text-xs text-destructive">{typeof turn.error === 'string' ? turn.error : (turn.error as { message?: string; code?: string }).message || (turn.error as { code?: string }).code || t('workbench.error')}</p>}{turn.state === 'submission_unknown' && <p className="text-sm text-muted-foreground">{t('workbench.unknownSubmission')}</p>}<div className="flex flex-wrap gap-2">{turn.citations?.map(reference => <Button size="sm" variant="outline" key={reference.citation_id} onClick={() => openCitation(reference)}>{reference.source_title} · {reference.citation_id}</Button>)}</div>{turn.answer && <Button size="sm" variant="outline" disabled={note.isPending || !!uncertainAnswer} onClick={() => saveAnswer(turn)}>{t('workbench.saveAnswer')}</Button>}{turn.answer && (!turn.state || turn.state === 'succeeded') && (!turn.status || turn.status === 'succeeded') && <SnapshotPromotionButton notebookId={notebookId} origin={{ kind: 'turn', id: turn.turn_id }} onAdded={refresh} />}</article>)}
         </section>
-      </main>
+      </div>
       <aside id="workbench-panel-notes" aria-label={t('workbench.notes')} className={cn('min-h-0 overflow-auto border-l bg-card px-4 pb-5 space-y-4 w-full xl:block xl:w-72 2xl:w-80 xl:min-w-56 xl:max-w-[32vw] xl:shrink-0 xl:resize-x', tab !== 'notes' && 'hidden')}>
-        <div className="sticky top-0 z-10 flex justify-between items-center gap-2 border-b bg-card py-3"><h2 className="flex items-center gap-2 text-sm font-semibold"><NotebookPen className="size-4 text-muted-foreground" aria-hidden="true" />{t('workbench.notes')}</h2><Button size="sm" variant="ghost" onClick={() => { noteEditorSession.current++; setBaseRevision(null); resetNoteReview(); setEditingNote(null); setNoteContent(''); setNoteTitle(''); setNoteScope(undefined) }}>{t('common.new')}</Button></div>
-        <label className="text-xs block" htmlFor="note-title">{t('workbench.noteTitle')}</label><Input id="note-title" value={noteTitle} onChange={event => { noteEditorRevision.current++; setNoteTitle(event.target.value) }} />
+        <div className="sticky top-0 z-10 flex justify-between items-center gap-2 border-b bg-card py-3"><div className="flex gap-1"><Button size="sm" variant={studioOpen ? 'ghost' : 'secondary'} aria-pressed={!studioOpen} onClick={() => setStudioOpen(false)}>{t('learningWorkspace.notesTab')}</Button><Button size="sm" variant={studioOpen ? 'secondary' : 'ghost'} aria-pressed={studioOpen} onClick={() => setStudioOpen(true)}>{t('learningWorkspace.studioTab')}</Button></div><Button size="sm" variant="ghost" onClick={() => { setStudioOpen(false); noteEditorSession.current++; setBaseRevision(null); resetNoteReview(); setEditingNote(null); setNoteContent(''); setNoteTitle(''); setNoteScope(undefined) }}>{t('common.new')}</Button></div>
+        <div className={cn("space-y-4", studioOpen && "hidden")}><label className="text-xs block" htmlFor="note-title">{t('workbench.noteTitle')}</label><Input id="note-title" value={noteTitle} onChange={event => { noteEditorRevision.current++; setNoteTitle(event.target.value) }} />
         <label className="text-xs block" htmlFor="note-content">{t('workbench.noteContent')}</label><Textarea id="note-content" className="bg-background leading-6" rows={8} value={noteContent} onChange={event => { noteEditorRevision.current++; setNoteContent(event.target.value) }} />
         <Button size="sm" disabled={!noteContent.trim() || note.isPending || !canRetryNoteWrite(noteProblem) || (!!editingNote?.id && baseRevision == null)} onClick={() => submitNote({ editorSession: noteEditorSession.current, baseRevision, noteId: editingNote?.id || undefined, title: noteTitle || t('common.note'), content: noteContent, citations: editingNote?.citations || [], scope_snapshot: noteScope || { engine: selection.engine, source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [], remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [], selection_origin: selection.selection_origin } })}>{t('workbench.saveNote')}</Button>
         {noteProblem && <NoteConflictPanel problem={noteProblem} baseRevision={baseRevision} draft={{ title: noteTitle, content: noteContent, citations: editingNote?.citations, scope_snapshot: noteScope }} latest={latestNotes} loading={comparing} readFailed={compareFailed} onCompare={compareNote} onReload={editingNote?.id ? reloadNote : undefined} />}
-        {!data.notes.length && <p className="text-sm text-muted-foreground">{t('workbench.noNotes')}</p>}
-        {data.notes.map(saved => <article key={saved.id} className="rounded-md border p-3 space-y-2"><h3 className="font-medium">{saved.title}</h3><MarkdownRenderer>{saved.content || ''}</MarkdownRenderer>{saved.citations?.map(reference => <Button key={reference.citation_id} size="sm" variant="ghost" onClick={() => openCitation(reference)}>{reference.source_title} · {reference.citation_id}</Button>)}{saved.scope_snapshot && <Button size="sm" variant="outline" onClick={() => { noteEditorSession.current++; setBaseRevision(saved.revision); resetNoteReview(); setEditingNote(saved); setNoteTitle(saved.title || ''); setNoteContent(saved.content || ''); setNoteScope(saved.scope_snapshot) }}>{t('common.edit')}</Button>}</article>)}
-        <JobsPanel jobs={data.jobs || []} onChanged={refresh} />
+        {!data.notes.length && <p className="text-sm text-muted-foreground">{t('learningWorkspace.notesEmpty')}</p>}
+        {data.notes.map(saved => <article key={saved.id} className="rounded-md border p-3 space-y-2"><h3 className="font-medium">{saved.title}</h3><MarkdownRenderer>{saved.content || ''}</MarkdownRenderer>{saved.citations?.map(reference => <Button key={reference.citation_id} size="sm" variant="ghost" onClick={() => openCitation(reference)}>{reference.source_title} · {reference.citation_id}</Button>)}{Number.isInteger(saved.revision) && <Button size="sm" variant="outline" onClick={() => { noteEditorSession.current++; setBaseRevision(saved.revision); resetNoteReview(); setEditingNote(saved); setNoteTitle(saved.title || ''); setNoteContent(saved.content || ''); setNoteScope(saved.scope_snapshot) }}>{t('common.edit')}</Button>}{Number.isInteger(saved.revision) && <fieldset disabled={hasUnsavedNote(saved)}><SnapshotPromotionButton notebookId={notebookId} origin={{ kind: 'note', id: saved.id, revision: saved.revision }} onAdded={refresh} /></fieldset>}{hasUnsavedNote(saved) && <p className="text-xs text-muted-foreground">{t('sourceSnapshots.saveFirst')}</p>}</article>)}
+        </div><div className={cn("space-y-4", !studioOpen && "hidden")}><p className="text-xs leading-5 text-muted-foreground">{t('learningWorkspace.studioDescription')}</p><JobsPanel jobs={data.jobs || []} onChanged={refresh} /></div>
       </aside>
     </div>
+    <WebDiscoveryDialog key={notebookId} onCloseAutoFocus={event => { event.preventDefault(); discoveryOpener.current?.focus() }} notebookId={notebookId} open={discoverOpen} onOpenChange={setDiscoverOpen} onImported={refresh} />
+    <NotebookSettingsDialog notebookId={notebookId} open={settingsOpen} onOpenChange={setSettingsOpen} onCloseAutoFocus={event => { event.preventDefault(); settingsOpener.current?.focus() }} selection={selection} onSelectionChange={updateSelection} link={data.link} onChanged={refresh} modelStatus={modelStatusKey} connectionStatus={connectionStatusKey} />
   </div>
 }

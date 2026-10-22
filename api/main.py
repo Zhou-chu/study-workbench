@@ -51,6 +51,8 @@ from api.routers import commands as commands_router
 from api.routers import evidence as personal_evidence
 from api.routers import notebooklm as personal_notebooklm
 from api.routers import portable as personal_portable
+from api.routers import source_snapshots as personal_source_snapshots
+from api.routers import web_discovery as personal_web_discovery
 from open_notebook.database.async_migrate import AsyncMigrationManager
 from open_notebook.exceptions import (
     AuthenticationError,
@@ -437,6 +439,8 @@ async def personal_bridge_error_handler(request: Request, exc: BridgeError):
 app.include_router(personal_evidence.router, prefix="/api")
 app.include_router(personal_notebooklm.router, prefix="/api")
 app.include_router(personal_portable.router, prefix="/api")
+app.include_router(personal_source_snapshots.router, prefix="/api")
+app.include_router(personal_web_discovery.router, prefix="/api")
 app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(config.router, prefix="/api", tags=["config"])
 app.include_router(notebooks.router, prefix="/api", tags=["notebooks"])

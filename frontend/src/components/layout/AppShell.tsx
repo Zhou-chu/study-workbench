@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { Menu } from 'lucide-react'
 import { AppSidebar } from './AppSidebar'
 import { SetupBanner } from './SetupBanner'
+import { SettingsNavigation } from '@/components/settings/SettingsNavigation'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { useTranslation } from '@/lib/hooks/use-translation'
@@ -14,6 +16,8 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const { t } = useTranslation()
+  const pathname = usePathname()
+  const isSettings = pathname?.startsWith('/settings') || pathname === '/advanced' || pathname === '/transformations'
   const [navigationOpen, setNavigationOpen] = useState(false)
   return (
     <div className="flex h-dvh overflow-hidden">
@@ -32,7 +36,7 @@ export function AppShell({ children }: AppShellProps) {
             </DialogContent>
           </Dialog>
         </div>
-        <SetupBanner />
+        {isSettings && <><SetupBanner /><SettingsNavigation /></>}
         {children}
       </main>
     </div>

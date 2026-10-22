@@ -1,7 +1,9 @@
+import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const frFR = {
+  ...learningWorkspaceLocales['fr-FR'],
   noteConflict: {
     notSent: "Cette demande d’enregistrement n’a pas été envoyée. Votre brouillon est inchangé. Rétablissez la connexion, puis choisissez « Enregistrer » lorsque vous êtes prêt.",
     authRejected: "La vérification de session a refusé cette demande d’enregistrement. Votre brouillon est inchangé. Identifiez-vous ou rétablissez la connexion, puis choisissez à nouveau « Enregistrer ».",
@@ -48,7 +50,6 @@ export const frFR = {
     language: "Langue",
     source: "Source",
     notebook: "Carnet",
-    podcast: "Podcast",
     quickActions: "Actions rapides",
     quickActionsDesc: "Navigation, recherche, poser une question, thème",
     appName: "Open Notebook",
@@ -245,10 +246,8 @@ export const frFR = {
     connectErrorHint: "Impossible de se connecter au serveur. Veuillez vérifier si l'API est lancée.",
   },
   navigation: {
-    collect: "Collecter",
     process: "Traiter",
     create: "Créer",
-    manage: "Gérer",
     sources: "Sources",
     notebooks: "Carnets",
     askAndSearch: "Demander et rechercher",

@@ -1456,6 +1456,86 @@
         "title": "DefaultPromptUpdate",
         "type": "object"
       },
+      "DerivedProvenance": {
+        "additionalProperties": false,
+        "properties": {
+          "authorship": {
+            "enum": [
+              "human",
+              "ai",
+              "unknown"
+            ],
+            "title": "Authorship",
+            "type": "string"
+          },
+          "captured_at": {
+            "title": "Captured At",
+            "type": "string"
+          },
+          "citations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "content_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "kind": {
+            "const": "derived",
+            "default": "derived",
+            "title": "Kind",
+            "type": "string"
+          },
+          "note_revision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note Revision"
+          },
+          "origin_id": {
+            "title": "Origin Id",
+            "type": "string"
+          },
+          "origin_kind": {
+            "enum": [
+              "note",
+              "turn"
+            ],
+            "title": "Origin Kind",
+            "type": "string"
+          },
+          "origin_title": {
+            "title": "Origin Title",
+            "type": "string"
+          },
+          "scope_snapshot": {
+            "additionalProperties": true,
+            "title": "Scope Snapshot",
+            "type": "object"
+          }
+        },
+        "required": [
+          "origin_kind",
+          "origin_id",
+          "origin_title",
+          "authorship",
+          "captured_at",
+          "content_sha256"
+        ],
+        "title": "DerivedProvenance",
+        "type": "object"
+      },
       "DeviceAuthStatus": {
         "properties": {
           "auth_enabled": {
@@ -2352,6 +2432,41 @@
           "updated"
         ],
         "title": "NoteResponse",
+        "type": "object"
+      },
+      "NoteSnapshotRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "note_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Note Id",
+            "type": "string"
+          },
+          "origin_kind": {
+            "const": "note",
+            "title": "Origin Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "origin_kind",
+          "note_id",
+          "expected_revision"
+        ],
+        "title": "NoteSnapshotRequest",
         "type": "object"
       },
       "NoteUpdate": {
@@ -3889,6 +4004,42 @@
         "title": "SettingsUpdate",
         "type": "object"
       },
+      "SnapshotProblemDetail": {
+        "properties": {
+          "code": {
+            "enum": [
+              "SNAPSHOT_IDEMPOTENCY_CONFLICT",
+              "RESULT_NOT_READY",
+              "EMPTY_SNAPSHOT",
+              "SNAPSHOT_TOO_LARGE",
+              "SNAPSHOT_COMMIT_UNKNOWN",
+              "SNAPSHOT_UNAVAILABLE",
+              "INVALID_IDEMPOTENCY_KEY",
+              "SOURCE_LIMIT",
+              "SOURCE_OUT_OF_SCOPE"
+            ],
+            "title": "Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "SnapshotProblemDetail",
+        "type": "object"
+      },
+      "SnapshotProblemResponse": {
+        "properties": {
+          "detail": {
+            "$ref": "#/components/schemas/SnapshotProblemDetail"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "SnapshotProblemResponse",
+        "type": "object"
+      },
       "SourceChatSessionResponse": {
         "properties": {
           "created": {
@@ -4504,6 +4655,50 @@
         "title": "SourceResponse",
         "type": "object"
       },
+      "SourceSnapshotResponse": {
+        "properties": {
+          "embedding_status": {
+            "const": "not_requested",
+            "default": "not_requested",
+            "title": "Embedding Status",
+            "type": "string"
+          },
+          "existing": {
+            "title": "Existing",
+            "type": "boolean"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/DerivedProvenance"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "source_version_id": {
+            "title": "Source Version Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "ready",
+            "default": "ready",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_id",
+          "source_version_id",
+          "job_id",
+          "existing",
+          "provenance"
+        ],
+        "title": "SourceSnapshotResponse",
+        "type": "object"
+      },
       "SourceStatusResponse": {
         "properties": {
           "command_id": {
@@ -5069,6 +5264,35 @@
         "title": "TurnRequest",
         "type": "object"
       },
+      "TurnSnapshotRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "idempotency_key": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "origin_kind": {
+            "const": "turn",
+            "title": "Origin Kind",
+            "type": "string"
+          },
+          "turn_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Turn Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key",
+          "origin_kind",
+          "turn_id"
+        ],
+        "title": "TurnSnapshotRequest",
+        "type": "object"
+      },
       "UpdateCredentialRequest": {
         "description": "Request to update an existing credential.",
         "properties": {
@@ -5345,6 +5569,302 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "WebImportRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "idempotency_key": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "provider": {
+            "const": "firecrawl",
+            "default": "firecrawl",
+            "title": "Provider",
+            "type": "string"
+          },
+          "snippet": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Snippet",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "title",
+          "idempotency_key"
+        ],
+        "title": "WebImportRequest",
+        "type": "object"
+      },
+      "WebImportResponse": {
+        "properties": {
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "source_version_id": {
+            "title": "Source Version Id",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "queued",
+              "already_imported",
+              "saved"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning"
+          }
+        },
+        "required": [
+          "state",
+          "source_id",
+          "source_version_id",
+          "url"
+        ],
+        "title": "WebImportResponse",
+        "type": "object"
+      },
+      "WebResult": {
+        "properties": {
+          "domain": {
+            "title": "Domain",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "snippet": {
+            "title": "Snippet",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "title",
+          "snippet",
+          "domain"
+        ],
+        "title": "WebResult",
+        "type": "object"
+      },
+      "WebSearchRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "default": 6,
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "query": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "WebSearchRequest",
+        "type": "object"
+      },
+      "WebSearchResponse": {
+        "properties": {
+          "provider": {
+            "const": "firecrawl",
+            "default": "firecrawl",
+            "title": "Provider",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/WebResult"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "searched_at": {
+            "title": "Searched At",
+            "type": "string"
+          },
+          "total_count": {
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "searched_at",
+          "results",
+          "total_count"
+        ],
+        "title": "WebSearchResponse",
+        "type": "object"
+      },
+      "WebSearchStatus": {
+        "properties": {
+          "access_mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "api_key",
+                  "keyless_trial"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "api_key",
+            "title": "Access Mode"
+          },
+          "automatic_paid_fallback": {
+            "const": false,
+            "default": false,
+            "title": "Automatic Paid Fallback",
+            "type": "boolean"
+          },
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "externally_verified": {
+            "const": false,
+            "default": false,
+            "title": "Externally Verified",
+            "type": "boolean"
+          },
+          "max_results": {
+            "default": 10,
+            "title": "Max Results",
+            "type": "integer"
+          },
+          "provider": {
+            "const": "firecrawl",
+            "default": "firecrawl",
+            "title": "Provider",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "settings_url": {
+            "default": "/settings#web-search",
+            "title": "Settings Url",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "ready",
+              "configuration_required"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "trial_limits": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WebTrialLimits"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "state",
+          "configured"
+        ],
+        "title": "WebSearchStatus",
+        "type": "object"
+      },
+      "WebTrialLimits": {
+        "properties": {
+          "numeric_caps_published": {
+            "const": false,
+            "default": false,
+            "title": "Numeric Caps Published",
+            "type": "boolean"
+          },
+          "period": {
+            "const": "daily",
+            "default": "daily",
+            "title": "Period",
+            "type": "string"
+          },
+          "scope": {
+            "const": "server_ip",
+            "default": "server_ip",
+            "title": "Scope",
+            "type": "string"
+          }
+        },
+        "title": "WebTrialLimits",
         "type": "object"
       },
       "api__models__DiscoveredModelResponse": {
@@ -10040,6 +10560,131 @@
         ]
       }
     },
+    "/api/personal/notebooks/{notebook_id}/source-snapshots": {
+      "post": {
+        "operationId": "create_source_snapshot_api_personal_notebooks__notebook_id__source_snapshots_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notebook_id",
+            "required": true,
+            "schema": {
+              "title": "Notebook Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "discriminator": {
+                  "mapping": {
+                    "note": "#/components/schemas/NoteSnapshotRequest",
+                    "turn": "#/components/schemas/TurnSnapshotRequest"
+                  },
+                  "propertyName": "origin_kind"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/NoteSnapshotRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/TurnSnapshotRequest"
+                  }
+                ],
+                "title": "Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceSnapshotResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotProblemResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/NoteConflictResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SnapshotProblemResponse"
+                    }
+                  ],
+                  "title": "Response 409 Create Source Snapshot Api Personal Notebooks  Notebook Id  Source Snapshots Post"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotProblemResponse"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotProblemResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotProblemResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Create Source Snapshot",
+        "tags": [
+          "personal-evidence"
+        ]
+      }
+    },
     "/api/personal/notebooks/{notebook_id}/sources/upload": {
       "post": {
         "operationId": "upload_api_personal_notebooks__notebook_id__sources_upload_post",
@@ -10087,6 +10732,58 @@
         "summary": "Upload",
         "tags": [
           "personal-evidence"
+        ]
+      }
+    },
+    "/api/personal/notebooks/{notebook_id}/sources/web-import": {
+      "post": {
+        "operationId": "web_import_api_personal_notebooks__notebook_id__sources_web_import_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notebook_id",
+            "required": true,
+            "schema": {
+              "title": "Notebook Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebImportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Web Import",
+        "tags": [
+          "personal-web-discovery"
         ]
       }
     },
@@ -10529,6 +11226,68 @@
         "summary": "Turn Events",
         "tags": [
           "personal-evidence"
+        ]
+      }
+    },
+    "/api/personal/web-search": {
+      "post": {
+        "operationId": "web_search_api_personal_web_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebSearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebSearchResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Web Search",
+        "tags": [
+          "personal-web-discovery"
+        ]
+      }
+    },
+    "/api/personal/web-search/status": {
+      "get": {
+        "operationId": "web_search_status_api_personal_web_search_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebSearchStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Web Search Status",
+        "tags": [
+          "personal-web-discovery"
         ]
       }
     },

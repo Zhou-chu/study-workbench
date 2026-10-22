@@ -1,3 +1,16 @@
+import type { DerivedSourceProvenance } from './source-snapshots'
+
+export interface WebSourceProvenance {
+  kind: 'web'
+  source_url: string | null
+  retrieved_at: string
+  provider: 'firecrawl'
+  search_result_title?: string | null
+  search_result_snippet?: string | null
+  historical_url_omitted?: boolean
+}
+export type SourceProvenance = DerivedSourceProvenance | WebSourceProvenance
+
 export type Engine = 'notebooklm' | 'independent'
 export type JobState = 'queued' | 'running' | 'waiting_remote' | 'succeeded' | 'failed' | 'needs_reauth' | 'submission_unknown' | 'cancelled_local'
 export interface Locator {
@@ -10,7 +23,9 @@ export interface Locator {
 }
 export interface EvidenceCitation {
   citation_id: string
-  kind: 'local_evidence' | 'remote_text_snapshot' | 'remote_unmapped'
+  independent_support?: false
+  provenance?: SourceProvenance
+  kind: 'local_evidence' | 'remote_text_snapshot' | 'remote_unmapped' | 'derived_snapshot'
   source_version_id: string | null
   evidence_id: string | null
   source_title: string
@@ -20,6 +35,8 @@ export interface EvidenceCitation {
   remote_reference?: { url?: string; [key: string]: unknown } | null
 }
 export interface EvidenceRecord {
+  independent_support?: false
+  provenance?: SourceProvenance
   reference_reason?: string | null
   reference_validity?: string
   evidence_id: string
@@ -31,6 +48,7 @@ export interface EvidenceRecord {
   evidence_kind?: string
 }
 export interface SourceVersion {
+  provenance?: SourceProvenance
   source_version_id: string
   source_id: string
   title?: string

@@ -1,3 +1,4 @@
+import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
@@ -5,6 +6,7 @@ import type { TranslationShape } from '../en-US';
 // Translate values only; do not change keys, placeholders or structure.
 
 export const deDE = {
+  ...learningWorkspaceLocales['de-DE'],
   noteConflict: {
     notSent: "Diese Speicheranfrage wurde nicht gesendet. Dein Entwurf ist unverändert. Stelle die Verbindung wieder her und wähle dann „Speichern“, wenn du bereit bist.",
     authRejected: "Die Sitzungsprüfung hat diese Speicheranfrage abgelehnt. Dein Entwurf ist unverändert. Melde dich an oder stelle die Verbindung wieder her und wähle dann erneut „Speichern“.",
@@ -51,7 +53,6 @@ export const deDE = {
     language: "Sprache",
     source: "Quelle",
     notebook: "Notebook",
-    podcast: "Podcast",
     quickActions: "Schnellaktionen",
     quickActionsDesc: "Navigation, Suche, Fragen, Design",
     appName: "Open Notebook",
@@ -248,10 +249,8 @@ export const deDE = {
     connectErrorHint: "Keine Verbindung zum Server möglich. Bitte prüfe, ob die API läuft.",
   },
   navigation: {
-    collect: "Sammeln",
     process: "Verarbeiten",
     create: "Erstellen",
-    manage: "Verwalten",
     sources: "Quellen",
     notebooks: "Notebooks",
     askAndSearch: "Fragen und Suchen",

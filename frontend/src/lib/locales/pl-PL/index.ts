@@ -1,7 +1,9 @@
+import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const plPL = {
+  ...learningWorkspaceLocales['pl-PL'],
   noteConflict: {
     notSent: "Ta prośba o zapis nie została wysłana. Szkic nie uległ zmianie. Przywróć połączenie, a następnie wybierz Zapisz, gdy zechcesz kontynuować.",
     authRejected: "Weryfikacja sesji odrzuciła tę prośbę o zapis. Szkic nie uległ zmianie. Zaloguj się lub przywróć połączenie, a następnie ponownie wybierz Zapisz.",
@@ -48,7 +50,6 @@ export const plPL = {
     language: "Język",
     source: "Źródło",
     notebook: "Notatnik",
-    podcast: "Podcast",
     quickActions: "Szybkie akcje",
     quickActionsDesc: "Nawigacja, wyszukiwanie, pytania, motyw",
     appName: "Open Notebook",
@@ -245,10 +246,8 @@ export const plPL = {
     connectErrorHint: "Nie można połączyć się z serwerem. Sprawdź, czy API jest uruchomione.",
   },
   navigation: {
-    collect: "Zbieraj",
     process: "Przetwarzaj",
     create: "Twórz",
-    manage: "Zarządzaj",
     sources: "Źródła",
     notebooks: "Notatniki",
     askAndSearch: "Pytaj i szukaj",

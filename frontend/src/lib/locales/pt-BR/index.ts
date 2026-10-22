@@ -1,7 +1,9 @@
+import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const ptBR = {
+  ...learningWorkspaceLocales['pt-BR'],
   noteConflict: {
     notSent: "Esta solicitação de salvamento não foi enviada. Seu rascunho não mudou. Restabeleça a conexão e selecione Salvar quando estiver pronto.",
     authRejected: "A verificação da sessão rejeitou esta solicitação de salvamento. Seu rascunho não mudou. Entre ou restabeleça a conexão e selecione Salvar novamente.",
@@ -48,7 +50,6 @@ export const ptBR = {
     language: "Idioma",
     source: "Fonte",
     notebook: "Caderno",
-    podcast: "Podcast",
     quickActions: "Ações rápidas",
     quickActionsDesc: "Navegação, busca, perguntar, tema",
     appName: "Open Notebook",
@@ -245,10 +246,8 @@ export const ptBR = {
     connectErrorHint: "Não foi possível conectar ao servidor. Verifique se a API está rodando.",
   },
   navigation: {
-    collect: "Coletar",
     process: "Processar",
     create: "Criar",
-    manage: "Gerenciar",
     sources: "Fontes",
     notebooks: "Cadernos",
     askAndSearch: "Perguntar e Buscar",

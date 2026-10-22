@@ -1,7 +1,9 @@
+import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const ruRU = {
+  ...learningWorkspaceLocales['ru-RU'],
   noteConflict: {
     notSent: "Этот запрос на сохранение не был отправлен. Черновик не изменился. Восстановите соединение, а затем нажмите «Сохранить», когда будете готовы.",
     authRejected: "Проверка сеанса отклонила этот запрос на сохранение. Черновик не изменился. Войдите или восстановите соединение, а затем снова нажмите «Сохранить».",
@@ -48,7 +50,6 @@ export const ruRU = {
     language: "Язык",
     source: "Источник",
     notebook: "Блокнот",
-    podcast: "Подкаст",
     quickActions: "Быстрые действия",
     quickActionsDesc: "Навигация, поиск, запрос, тема",
     appName: "Open Notebook",
@@ -245,10 +246,8 @@ export const ruRU = {
     connectErrorHint: "Не удаётся подключиться к серверу. Проверьте, запущен ли API.",
   },
   navigation: {
-    collect: "Собрать",
     process: "Обработать",
     create: "Создать",
-    manage: "Управление",
     sources: "Источники",
     notebooks: "Блокноты",
     askAndSearch: "Запрос и поиск",

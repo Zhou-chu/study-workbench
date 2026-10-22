@@ -16,11 +16,12 @@ interface Props {
   versionId: string
   extractionId?: string
   restored: boolean
+  snapshot?: boolean
   onComplete: () => void
 }
 /** A keyed instance owns only its own local job. Leaving the reader stops polling,
  * not the durable CPU task. Mutations are never automatically replayed. */
-export function EvidenceMaintenance({ versionId, extractionId, restored, onComplete }: Props) {
+export function EvidenceMaintenance({ versionId, extractionId, restored, snapshot = false, onComplete }: Props) {
   const { t } = useTranslation()
   const controller = useRef<AbortController | null>(null)
   const busy = useRef(false)
@@ -71,10 +72,10 @@ export function EvidenceMaintenance({ versionId, extractionId, restored, onCompl
   const error = submit.error || status.error
   const jobError = typeof current?.error === 'string' ? current.error : (current?.error as { message?: string } | null)?.message
   return <div className="space-y-2 pt-3 text-xs">
-    <p className="text-muted-foreground">{t('workbench.maintenanceMeaning')}</p>
+    <p className="text-muted-foreground">{t(snapshot ? 'webDiscovery.snapshotMaintenance' : 'workbench.maintenanceMeaning')}</p>
     <div className="flex flex-wrap gap-2">
-      <Button size="sm" variant="outline" disabled={waiting} onClick={() => start('reparse')}>{t('workbench.reparse')}</Button>
-      {restored && extractionId && <Button size="sm" variant="outline" disabled={waiting} onClick={() => start('revalidate')}>{t('workbench.revalidate')}</Button>}
+      <Button size="sm" variant="outline" disabled={waiting} onClick={() => start('reparse')}>{t(snapshot ? 'workbench.jobOperations.reparse' : 'workbench.reparse')}</Button>
+      {!snapshot && restored && extractionId && <Button size="sm" variant="outline" disabled={waiting} onClick={() => start('revalidate')}>{t('workbench.revalidate')}</Button>}
     </div>
     {waiting && <p role="status">{t('workbench.maintenancePending')}</p>}
     {current && !waiting && current.state !== 'succeeded' && <p role="status">{t(stateKeys[current.state] || 'workbench.unavailable')}</p>}

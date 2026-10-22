@@ -8,6 +8,7 @@ import { canonicalCitationLocator, verifiedQuoteRange } from '@/lib/utils/eviden
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { SourceProvenance } from './SourceProvenance'
 import { EvidenceMaintenance } from './EvidenceMaintenance'
 import { PdfCanvas, PdfTextFallback } from './PdfCanvas'
 
@@ -110,6 +111,7 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
   const range = citation && quoteBlock && locator?.start_offset != null && locator.end_offset != null
     ? verifiedQuoteRange(quoteBlock.text, locator.start_offset, locator.end_offset, citation.quote) : null
 
+  const webSnapshot = detail?.version.origin === 'web_snapshot' && detail.version.mime_type === 'text/markdown'
   return <section className="space-y-3" aria-label={t('workbench.reader')}>
     {citation && <div className="border-l-2 border-teal pl-4 py-1 space-y-2">
       <p className="font-medium">{citation.source_title}</p>
@@ -117,6 +119,8 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
       <p className="text-xs text-muted-foreground">{t('workbench.verificationMeaning')}</p>
       <p className="text-xs font-medium">{t('workbench.quote')}</p>
       <p className="whitespace-pre-wrap text-sm leading-7">{citation.quote}</p>
+      {citation.provenance && <SourceProvenance provenance={citation.provenance} /> }
+      {citation.kind === 'derived_snapshot' && !citation.provenance && <p className="text-xs text-muted-foreground">{t('sourceSnapshots.notIndependentEvidence')}</p>}
       {citation.kind === 'remote_unmapped' && <p className="text-sm text-muted-foreground">{t('workbench.remoteUnmapped')}</p>}
       {citation.locator?.page_label && <p>{t('workbench.printPage', { label: citation.locator.page_label })}</p>}
     </div>}
@@ -125,11 +129,12 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
     {downloadError && <p role="alert" className="text-destructive">{t('workbench.readerDownloadFailed')}</p>}
     {sourceVersionId && !detail && !error && <p role="status">{t('common.loading')}</p>}
     {detail && <>
+      {detail.version.provenance && !citation?.provenance && <SourceProvenance provenance={detail.version.provenance} />}
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-0"><p className="text-sm font-medium truncate">{detail.version.source_title || detail.version.title}</p><p className="text-xs text-muted-foreground truncate max-w-48" title={detail.version.source_version_id}>{detail.version.source_version_id}</p></div>
         {detail.version.original_status === 'available' ? <Button size="sm" variant="outline" onClick={download} disabled={downloading}>{t('workbench.downloadOriginal')}</Button> : <p className="text-sm text-muted-foreground">{t('workbench.originalMissing')}</p>}
       </div>
-      {detail.version.original_status === 'available' && <details key={`${sourceVersionId}:${evidenceId || ''}`} open={detail.extraction?.verification_origin === 'restored_archive'} className="border-b pb-3 text-xs"><summary className="cursor-pointer py-1 text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring rounded-sm">{t('workbench.documentTools')}</summary><EvidenceMaintenance key={`${sourceVersionId}:${evidenceId || ''}`} versionId={detail.version.source_version_id} extractionId={detail.extraction?.extraction_id} restored={detail.extraction?.verification_origin === 'restored_archive'} onComplete={() => { setRevision(value => value + 1); onChanged?.() }} /></details>}
+      {(detail.version.original_status === 'available' || webSnapshot) && <details key={`${sourceVersionId}:${evidenceId || ''}`} open={detail.extraction?.verification_origin === 'restored_archive'} className="border-b pb-3 text-xs"><summary className="cursor-pointer py-1 text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring rounded-sm">{t('workbench.documentTools')}</summary><EvidenceMaintenance key={`${sourceVersionId}:${evidenceId || ''}`} versionId={detail.version.source_version_id} extractionId={detail.extraction?.extraction_id} snapshot={webSnapshot} restored={detail.extraction?.verification_origin === 'restored_archive'} onComplete={() => { setRevision(value => value + 1); onChanged?.() }} /></details>}
       {detail.extraction?.warnings?.map((warning, index) => <p className="text-sm text-muted-foreground" key={index}>{warning}</p>)}
       {detail.version.mime_type === 'application/pdf' && <>
         <div className="flex flex-wrap items-center gap-2">

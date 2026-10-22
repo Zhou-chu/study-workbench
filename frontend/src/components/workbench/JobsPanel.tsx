@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button'
 
 const operationKeys: Record<string, string> = {
   extract_evidence: 'workbench.jobOperations.extract',
+  source_snapshot: 'sourceSnapshots.add',
+  web_import: 'webDiscovery.imported',
   read: 'workbench.jobOperations.read',
   reparse: 'workbench.jobOperations.reparse',
   revalidate: 'workbench.jobOperations.revalidate',

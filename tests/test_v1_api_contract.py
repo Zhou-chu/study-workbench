@@ -339,7 +339,62 @@ async def test_archived_citation_is_not_fresh_verification(tmp_path):
     actual = await EvidenceService(store=store, data_root=tmp_path).validate_citation(
         {"evidence_id": "ev_synthetic"}, ["sv_synthetic"]
     )
-    assert actual == example["response"]
+    assert actual == EvidenceCitation.model_validate(example["response"]).model_dump()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("restored", [False, True])
+@pytest.mark.parametrize("kind", ["text", "remote_text_snapshot", "derived_snapshot"])
+async def test_missing_source_version_never_verifies_retained_citation(
+    tmp_path, restored, kind
+):
+    from api.evidence_service import EvidenceService
+
+    example = fixture("turn")["archived_citation"]
+    evidence, extraction = example["evidence"], example["extraction"]
+    evidence["evidence_kind"] = kind
+    if not restored:
+        evidence.pop("verification_origin")
+        extraction.pop("verification_origin")
+    store = MemoryStore()
+    await store.put("evidence", "ev_synthetic", evidence)
+    await store.put("extraction", "ex_synthetic", extraction)
+    actual = await EvidenceService(store=store, data_root=tmp_path).validate_citation(
+        {"evidence_id": "ev_synthetic"}, ["sv_synthetic"]
+    )
+    assert actual["reference_validity"] == "unverified"
+    assert actual["kind"] == ("local_evidence" if kind == "text" else kind)
+    assert actual["independent_support"] is (
+        False if kind == "derived_snapshot" else None
+    )
+    assert actual["provenance"] is None
+    assert actual["quote"] == evidence["quote"]
+    assert actual["locator"] == evidence["locator"]
+
+
+@pytest.mark.asyncio
+async def test_missing_version_blocks_historical_revalidation_upgrade(tmp_path):
+    from api.evidence_service import EvidenceService
+
+    example = fixture("turn")["archived_citation"]
+    evidence, extraction = example["evidence"], example["extraction"]
+    fresh = {**extraction, "extraction_id": "ex_fresh", "verification_origin": "local"}
+    extraction["revalidation"] = {
+        "fresh_extraction_id": "ex_fresh",
+        "evidence_ids": ["ev_synthetic"],
+    }
+    store = MemoryStore()
+    await store.put("evidence", "ev_synthetic", evidence)
+    await store.put("extraction", "ex_synthetic", extraction)
+    await store.put("extraction", "ex_fresh", fresh)
+    actual = await EvidenceService(store=store, data_root=tmp_path).validate_citation(
+        {"evidence_id": "ev_synthetic"}, ["sv_synthetic"]
+    )
+    assert actual["reference_validity"] == "unverified"
+    assert (
+        actual["reason"]
+        == "Source version is unavailable; retained citation cannot be freshly verified"
+    )
 
 
 def test_public_examples_are_explicit_synthetic_data_with_utc_timestamp():

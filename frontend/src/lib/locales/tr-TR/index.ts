@@ -1,7 +1,9 @@
+import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const trTR = {
+  ...learningWorkspaceLocales['tr-TR'],
   noteConflict: {
     notSent: "Bu kaydetme isteği gönderilmedi. Taslağınız değişmedi. Yeniden bağlanın, ardından hazır olduğunuzda Kaydet’i seçin.",
     authRejected: "Oturum kontrolü bu kaydetme isteğini reddetti. Taslağınız değişmedi. Oturum açın veya yeniden bağlanın, ardından Kaydet’i tekrar seçin.",
@@ -48,7 +50,6 @@ export const trTR = {
     language: "Dil",
     source: "Kaynak",
     notebook: "Defter",
-    podcast: "Podcast",
     quickActions: "Hızlı eylemler",
     quickActionsDesc: "Gezinme, arama, sor, tema",
     appName: "Open Notebook",
@@ -245,10 +246,8 @@ export const trTR = {
     connectErrorHint: "Sunucuya bağlanılamıyor. API'nin çalışıp çalışmadığını kontrol edin.",
   },
   navigation: {
-    collect: "Topla",
     process: "İşle",
     create: "Oluştur",
-    manage: "Yönet",
     sources: "Kaynaklar",
     notebooks: "Defterler",
     askAndSearch: "Sor ve Ara",

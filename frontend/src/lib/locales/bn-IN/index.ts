@@ -1,7 +1,9 @@
+import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const bnIN = {
+  ...learningWorkspaceLocales['bn-IN'],
   noteConflict: {
     notSent: "এই সংরক্ষণের অনুরোধ পাঠানো হয়নি। আপনার খসড়া অপরিবর্তিত আছে। আবার সংযোগ করুন, তারপর প্রস্তুত হলে “সংরক্ষণ করুন” বেছে নিন।",
     authRejected: "সেশন যাচাইয়ে এই সংরক্ষণের অনুরোধ প্রত্যাখ্যাত হয়েছে। আপনার খসড়া অপরিবর্তিত আছে। সাইন ইন করুন বা আবার সংযোগ করুন, তারপর আবার “সংরক্ষণ করুন” বেছে নিন।",
@@ -48,7 +50,6 @@ export const bnIN = {
     language: "ভাষা",
     source: "উৎস",
     notebook: "নোটবুক",
-    podcast: "পডকাস্ট",
     quickActions: "দ্রুত ক্রিয়া",
     quickActionsDesc: "নেভিগেশন, অনুসন্ধান, প্রশ্ন, থিম",
     appName: "ওপেন নোটবুক",
@@ -245,10 +246,8 @@ export const bnIN = {
     connectErrorHint: "সার্ভারে সংযোগ করতে অক্ষম। API চালু আছে কিনা চেক করুন।",
   },
   navigation: {
-    collect: "সংগ্রহ",
     process: "প্রক্রিয়া",
     create: "তৈরি",
-    manage: "ব্যবস্থাপনা",
     sources: "উৎসগুলি",
     notebooks: "নোটবুকগুলি",
     askAndSearch: "জিজ্ঞাসা ও অনুসন্ধান",

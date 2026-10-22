@@ -1,7 +1,9 @@
+import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchZh } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const zhCN = {
+  ...learningWorkspaceLocales['zh-CN'],
   noteConflict: {
     notSent: "这次保存尚未发送，草稿没有改动。重新连接后，请在准备好时点击“保存”。",
     authRejected: "登录状态检查拒绝了这次保存，草稿没有改动。请登录或重新连接，然后再次点击“保存”。",
@@ -48,7 +50,6 @@ export const zhCN = {
     language: "语言",
     source: "来源",
     notebook: "笔记本",
-    podcast: "播客",
     quickActions: "快捷操作",
     quickActionsDesc: "导航、搜索、提问、主题",
     appName: "Open Notebook",
@@ -245,10 +246,8 @@ export const zhCN = {
     connectErrorHint: "无法连接到服务器。请检查 API 是否正在运行。",
   },
   navigation: {
-    collect: "采集",
     process: "处理",
     create: "创作",
-    manage: "管理",
     sources: "来源",
     notebooks: "笔记本",
     askAndSearch: "询问与搜索",

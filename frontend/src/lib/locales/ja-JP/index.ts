@@ -1,7 +1,9 @@
+import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const jaJP = {
+  ...learningWorkspaceLocales['ja-JP'],
   noteConflict: {
     notSent: "この保存リクエストは送信されていません。下書きは変更されていません。再接続後、準備ができたら「保存」を選んでください。",
     authRejected: "セッションの確認により、この保存リクエストは拒否されました。下書きは変更されていません。ログインまたは再接続してから、もう一度「保存」を選んでください。",
@@ -48,7 +50,6 @@ export const jaJP = {
     language: "言語",
     source: "ソース",
     notebook: "ノートブック",
-    podcast: "ポッドキャスト",
     quickActions: "クイックアクション",
     quickActionsDesc: "ナビゲーション、検索、質問、テーマ",
     appName: "Open Notebook",
@@ -245,10 +246,8 @@ export const jaJP = {
     connectErrorHint: "サーバーに接続できません。APIが起動しているか確認してください。",
   },
   navigation: {
-    collect: "収集",
     process: "処理",
     create: "作成",
-    manage: "管理",
     sources: "ソース",
     notebooks: "ノートブック",
     askAndSearch: "質問と検索",

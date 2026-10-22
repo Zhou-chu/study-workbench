@@ -1,7 +1,9 @@
+import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const caES = {
+  ...learningWorkspaceLocales['ca-ES'],
   noteConflict: {
     notSent: "Aquesta sol·licitud de desament no s’ha enviat. L’esborrany no ha canviat. Restableix la connexió i tria Desa quan estiguis a punt.",
     authRejected: "La comprovació de sessió ha rebutjat aquesta sol·licitud de desament. L’esborrany no ha canviat. Inicia la sessió o restableix la connexió i torna a triar Desa.",
@@ -48,7 +50,6 @@ export const caES = {
     language: "Idioma",
     source: "Font",
     notebook: "Quadern",
-    podcast: "Podcast",
     quickActions: "Accions ràpides",
     quickActionsDesc: "Navegació, cerca, preguntes, tema",
     appName: "Open Notebook",
@@ -245,10 +246,8 @@ export const caES = {
     connectErrorHint: "No es pot connectar al servidor. Comprova si l'API s'està executant.",
   },
   navigation: {
-    collect: "Recull",
     process: "Processa",
     create: "Crea",
-    manage: "Gestiona",
     sources: "Fonts",
     notebooks: "Quaderns",
     askAndSearch: "Pregunta i cerca",

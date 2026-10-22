@@ -1,7 +1,9 @@
+import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const itIT = {
+  ...learningWorkspaceLocales['it-IT'],
   noteConflict: {
     notSent: "Questa richiesta di salvataggio non è stata inviata. La bozza è invariata. Ripristina la connessione, poi scegli Salva quando vuoi procedere.",
     authRejected: "Il controllo della sessione ha rifiutato questa richiesta di salvataggio. La bozza è invariata. Accedi o ripristina la connessione, poi scegli di nuovo Salva.",
@@ -48,7 +50,6 @@ export const itIT = {
     language: "Lingua",
     source: "Fonte",
     notebook: "Quaderno",
-    podcast: "Podcast",
     quickActions: "Azioni rapide",
     quickActionsDesc: "Navigazione, ricerca, domande, tema",
     appName: "Open Notebook",
@@ -245,10 +246,8 @@ export const itIT = {
     connectErrorHint: "Impossibile connettersi al server. Verifica che l'API sia in esecuzione.",
   },
   navigation: {
-    collect: "Raccogli",
     process: "Elabora",
     create: "Crea",
-    manage: "Gestisci",
     sources: "Fonti",
     notebooks: "Quaderni",
     askAndSearch: "Chiedi e cerca",

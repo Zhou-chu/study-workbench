@@ -251,6 +251,18 @@ def normalize_note_revisions(
         row["revision"] = native[row["note_id"]]
 
 
+def _mark_historical_web_urls(value):
+    # The global sanitizer remains unchanged: structured URLs are not portable.
+    if isinstance(value, dict):
+        if value.get("kind") == "web" and "source_url" not in value:
+            value["historical_url_omitted"] = True
+        for child in value.values():
+            _mark_historical_web_urls(child)
+    elif isinstance(value, list):
+        for child in value:
+            _mark_historical_web_urls(child)
+
+
 def _validate_project(project, files):
     """Check entity closure before copying or accepting any destination records."""
     if set(project) != set(FILES) or not isinstance(project["notebook"], dict):
@@ -358,6 +370,44 @@ def _validate_project(project, files):
         ):
             raise InvalidInputError("Unsupported artifact MIME type")
     for version in versions.values():
+        origin = version.get("origin", "upload")
+        if origin not in (
+            "upload",
+            "pasted_text",
+            "remote_text_snapshot",
+            "derived_snapshot",
+            "web_snapshot",
+        ):
+            raise InvalidInputError("Unsupported source provenance origin")
+        if origin in ("derived_snapshot", "web_snapshot"):
+            from pydantic import ValidationError
+
+            from open_notebook.domain.evidence import DerivedProvenance, WebProvenance
+
+            try:
+                provenance_type = (
+                    DerivedProvenance if origin == "derived_snapshot" else WebProvenance
+                )
+                provenance = provenance_type.model_validate(version.get("provenance"))
+            except (ValidationError, TypeError, ValueError) as exc:
+                raise InvalidInputError("Invalid source snapshot provenance") from exc
+            if isinstance(provenance, DerivedProvenance):
+                if (
+                    provenance.content_sha256 != version.get("sha256")
+                    or provenance.origin_title != version.get("source_title")
+                    or (
+                        provenance.origin_kind == "note"
+                        and provenance.note_revision is None
+                    )
+                    or (
+                        provenance.origin_kind == "turn"
+                        and (
+                            provenance.note_revision is not None
+                            or provenance.authorship != "ai"
+                        )
+                    )
+                ):
+                    raise InvalidInputError("Inconsistent derived source provenance")
         if version.get("mime_type") not in (
             "application/pdf",
             "text/plain",
@@ -378,6 +428,13 @@ def _validate_project(project, files):
         ):
             raise InvalidInputError("Available original has no file reference")
     for row in evidence.values():
+        if (
+            versions[row["source_version_id"]].get("origin") == "derived_snapshot"
+            and row.get("evidence_kind") != "derived_snapshot"
+        ):
+            raise InvalidInputError(
+                "Derived evidence provenance cannot become original evidence"
+            )
         extraction = extractions[row["extraction_id"]]
         if extraction["source_version_id"] != row["source_version_id"]:
             raise InvalidInputError("Evidence version reference mismatch")
@@ -419,8 +476,17 @@ def _validate_project(project, files):
 
     # A manifest hash is not proof of a model citation. Verify every claimed
     # citation against retained extraction text and the answer's frozen scope.
-    for kind in ("turn", "note_snapshot"):
-        for record in project[kind]:
+    for kind in ("turn", "note_snapshot", "derived_provenance"):
+        records = (
+            project[kind]
+            if kind != "derived_provenance"
+            else [
+                version["provenance"]
+                for version in versions.values()
+                if version.get("origin") == "derived_snapshot"
+            ]
+        )
+        for record in records:
             scope = record.get("scope_snapshot", {})
             allowed = scope.get("source_version_ids")
             for citation in record.get("citations", []):
@@ -693,6 +759,7 @@ class PortableService:
                 raise InvalidInputError(
                     "Project changed during legacy snapshot; retry after writes complete"
                 )
+            _mark_historical_web_urls(project)
             _validate_project(project, files)
             return project, files, missing
 

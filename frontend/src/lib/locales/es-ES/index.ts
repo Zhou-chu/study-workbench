@@ -1,7 +1,9 @@
+import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchEn } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const esES = {
+  ...learningWorkspaceLocales['es-ES'],
   noteConflict: {
     notSent: "Esta solicitud de guardado no se ha enviado. Tu borrador no ha cambiado. Restablece la conexión y selecciona Guardar cuando estés listo.",
     authRejected: "La comprobación de sesión ha rechazado esta solicitud de guardado. Tu borrador no ha cambiado. Inicia sesión o restablece la conexión y vuelve a seleccionar Guardar.",
@@ -48,7 +50,6 @@ export const esES = {
     language: "Idioma",
     source: "Fuente",
     notebook: "Cuaderno",
-    podcast: "Podcast",
     quickActions: "Acciones rápidas",
     quickActionsDesc: "Navegación, búsqueda, preguntar, tema",
     appName: "Open Notebook",
@@ -245,10 +246,8 @@ export const esES = {
     connectErrorHint: "No se puede conectar al servidor. Por favor, verifica si la API está funcionando.",
   },
   navigation: {
-    collect: "Recopilar",
     process: "Procesar",
     create: "Crear",
-    manage: "Gestionar",
     sources: "Fuentes",
     notebooks: "Cuadernos",
     askAndSearch: "Preguntar y buscar",

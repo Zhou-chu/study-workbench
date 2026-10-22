@@ -1,7 +1,9 @@
+import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchZh } from '../workbench'
 import type { TranslationShape } from '../en-US';
 
 export const zhTW = {
+  ...learningWorkspaceLocales['zh-TW'],
   noteConflict: {
     notSent: "這次儲存尚未送出，草稿沒有變動。重新連線後，請在準備好時點選「儲存」。",
     authRejected: "登入狀態檢查拒絕了這次儲存，草稿沒有變動。請登入或重新連線，然後再次點選「儲存」。",
@@ -48,7 +50,6 @@ export const zhTW = {
     language: "語言",
     source: "來源",
     notebook: "筆記本",
-    podcast: "播客",
     quickActions: "快捷操作",
     quickActionsDesc: "導覽、搜尋、提問、主題",
     appName: "Open Notebook",
@@ -245,10 +246,8 @@ export const zhTW = {
     connectErrorHint: "無法連線至伺服器。請檢查 API 是否正在運行。",
   },
   navigation: {
-    collect: "採集",
     process: "處理",
     create: "創作",
-    manage: "管理",
     sources: "來源",
     notebooks: "筆記本",
     askAndSearch: "詢問與搜尋",
