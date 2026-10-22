@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import AsyncMock
 
 import pytest
 from test_v1_evidence_ingest import MemoryStore
@@ -237,7 +238,8 @@ async def test_editing_imported_note_cannot_upgrade_archived_evidence(
 
     monkeypatch.setattr("open_notebook.database.note_repository.update_note", update)
     monkeypatch.setattr(
-        "open_notebook.domain.notebook.Note.submit_embedding", lambda self: None
+        "open_notebook.domain.notebook.Note.submit_embedding",
+        AsyncMock(return_value=None),
     )
     note = await PersonalService(store=service.store).save_note(
         "nb",

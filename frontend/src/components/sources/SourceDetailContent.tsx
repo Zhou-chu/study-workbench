@@ -8,6 +8,7 @@ import { QUERY_KEYS } from '@/lib/api/query-client'
 import { useSource, useUpdateSource, useDeleteSource } from '@/lib/hooks/use-sources'
 import { insightsApi, SourceInsightResponse } from '@/lib/api/insights'
 import { transformationsApi } from '@/lib/api/transformations'
+import { isCommandSubmissionUnknown, runCommandSubmission } from '@/lib/utils/command-submission'
 import { embeddingApi } from '@/lib/api/embedding'
 import { SourceDetailResponse } from '@/lib/types/api'
 import { Transformation } from '@/lib/types/transformations'
@@ -172,9 +173,11 @@ function SourceDetailContentInner({
 
     try {
       setCreatingInsight(true)
-      const response = await insightsApi.create(sourceId, {
-        transformation_id: selectedTransformation
-      })
+      const response = await runCommandSubmission(
+        `source:insight:${sourceId}:${selectedTransformation}`,
+        () => insightsApi.create(sourceId, { transformation_id: selectedTransformation }),
+        t('commandSubmission.newAttemptConfirm'),
+      )
       if (controller.signal.aborted) return
 
       // Show toast for async operation
@@ -220,6 +223,11 @@ function SourceDetailContentInner({
       }
     } catch (err) {
       if (controller.signal.aborted) return
+      if (isCommandSubmissionUnknown(err)) {
+        toast.warning(t('commandSubmission.title'), { description: t('commandSubmission.warning') })
+        if (insightPollingRef.current === controller) insightPollingRef.current = null
+        return
+      }
       console.error('Failed to create insight:', err)
       // Show the server's reason when there is one; a network error has no
       // detail and keeps the localized generic message.
@@ -277,10 +285,18 @@ function SourceDetailContentInner({
 
     try {
       setIsEmbedding(true)
-      const response = await embeddingApi.embedContent(sourceId, 'source')
+      const response = await runCommandSubmission(
+        `source:embed:${sourceId}`,
+        () => embeddingApi.embedContent(sourceId, 'source'),
+        t('commandSubmission.newAttemptConfirm'),
+      )
       toast.success(response.message || t('common.success'))
       await refetchSource()
     } catch (err) {
+      if (isCommandSubmissionUnknown(err)) {
+        toast.warning(t('commandSubmission.title'), { description: t('commandSubmission.warning') })
+        return
+      }
       console.error('Failed to embed content:', err)
       toast.error(t('common.error'))
     } finally {

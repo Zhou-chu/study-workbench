@@ -4,6 +4,14 @@ import type { TranslationShape } from '../en-US';
 
 export const itIT = {
   ...learningWorkspaceLocales['it-IT'],
+  commandSubmission: {
+    "newAttemptError": "Questo nuovo tentativo ha restituito un errore. L’invio precedente resta non confermato.",
+    "title": "Invio non confermato",
+    "warning": "Il lavoro potrebbe essere già in corso e generare costi. Verifica prima di inviare di nuovo. Un elenco vuoto non dimostra un rifiuto.",
+    "newAttemptConfirm": "Avviare un nuovo tentativo? Comprendo che il lavoro precedente potrebbe continuare e che un altro invio potrebbe duplicare lavoro e costi.",
+    "sessionOnly": "Questa protezione vale solo per questa sessione caricata, non dopo un ricaricamento né in altre schede o dispositivi.",
+    "observing": "Verifica del comando confermato. Un errore nella lettura dello stato non significa che il lavoro si sia fermato."
+},
   noteConflict: {
     notSent: "Questa richiesta di salvataggio non è stata inviata. La bozza è invariata. Ripristina la connessione, poi scegli Salva quando vuoi procedere.",
     authRejected: "Il controllo della sessione ha rifiutato questa richiesta di salvataggio. La bozza è invariata. Accedi o ripristina la connessione, poi scegli di nuovo Salva.",

@@ -6,7 +6,7 @@ Normative rules for working on the Python backend. Architecture and design ratio
 
 - Run API: `make api` (runs `run_api.py`: uvicorn with reload on 127.0.0.1:5055; Swagger at http://localhost:5055/docs)
 - Background jobs need the worker: `make worker-start` (`surreal-commands-worker --import-modules commands`)
-- Tests: `uv run pytest tests/`
+- Offline tests (repo root, prepared environment/cache): `python scripts/offline_pytest.py --tiktoken-cache /path/to/prepared/tiktoken-cache` — see [testing](../docs/7-DEVELOPMENT/testing.md)
 - Lint/format/typecheck: `uv run ruff check . --fix`, `uv run ruff format .` and `uv run python -m mypy .` (CI runs `ruff format --check`)
 
 ## API layer (`api/`)

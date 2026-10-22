@@ -74,7 +74,7 @@ export function EpisodesTab() {
   )
 
   const handleRetry = useCallback(
-    async (episodeId: string) => { await retryEpisode.mutateAsync(episodeId) },
+    (episodeId: string) => { retryEpisode.mutate(episodeId) },
     [retryEpisode]
   )
 

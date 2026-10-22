@@ -190,7 +190,7 @@ describe('portable export progress at the starting point', () => {
   })
   it('does not carry late download feedback into another notebook', async () => {
     let finish!: (blob: Blob) => void
-    vi.mocked(workbenchApi.job).mockResolvedValue(exportJob('succeeded', { download_url: '/personal/package/download' }))
+    vi.mocked(workbenchApi.job).mockResolvedValue(exportJob('succeeded', { download_url: '/api/personal/exports/package/download' }))
     vi.mocked(portableApi.download).mockReturnValue(new Promise(resolve => { finish = resolve }))
     const client = new QueryClient()
     const view = (id: string) => <QueryClientProvider client={client}><PortableControls notebookId={id} onChanged={vi.fn()} /></QueryClientProvider>
@@ -228,4 +228,15 @@ describe('portable export progress at the starting point', () => {
     expect(portableApi.export).toHaveBeenCalledTimes(1)
     expect(screen.getByText('workbench.exportDownloadStarted')).toBeVisible()
   })
+})
+
+it.each([42, ['historical'], { download_url: 42 }, { download_url: 'https://external.invalid/file' }])('does not enable malformed export result downloads: %j', async result => {
+  vi.clearAllMocks()
+  vi.mocked(portableApi.export).mockResolvedValue(exportJob('succeeded', result))
+  vi.mocked(workbenchApi.job).mockReturnValue(new Promise(() => {}))
+  setup()
+  fireEvent.click(exportButton())
+  expect(await screen.findByText('workbench.exportUnavailable')).toBeVisible()
+  expect(screen.queryByRole('button', { name: 'workbench.downloadProject' })).not.toBeInTheDocument()
+  expect(portableApi.download).not.toHaveBeenCalled()
 })

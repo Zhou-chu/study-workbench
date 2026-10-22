@@ -5,7 +5,7 @@ import { noteProblemKeys, canRetryNoteWrite, type NoteWriteProblem } from '@/lib
 import { Button } from '@/components/ui/button'
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog'
 
-export interface NoteComparison { title: string | null; content: string | null; revision?: number; citations?: unknown[]; scope_snapshot?: unknown }
+export interface NoteComparison { title?: string | null; content?: string | null; revision?: number; citations?: unknown[]; scope_snapshot?: unknown }
 export function NoteConflictPanel({ problem, baseRevision, draft, latest, loading, readFailed, onCompare, onReload }: {
   problem: NoteWriteProblem; baseRevision: number | null; draft: NoteComparison; latest: NoteComparison[] | null
   loading: boolean; readFailed: boolean; onCompare: () => void; onReload?: () => void

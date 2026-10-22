@@ -4,6 +4,14 @@ import type { TranslationShape } from '../en-US';
 
 export const zhTW = {
   ...learningWorkspaceLocales['zh-TW'],
+  commandSubmission: {
+    "newAttemptError": "這次新嘗試傳回了錯誤。先前的提交狀態仍未確認。",
+    "title": "提交狀態未確認",
+    "warning": "工作可能已在執行並產生費用。請先確認，不要再次提交。結果清單為空不代表請求遭拒。",
+    "newAttemptConfirm": "要開始新的嘗試嗎？我了解先前的工作可能仍在執行，再次提交可能造成重複工作與費用。",
+    "sessionOnly": "此保護僅在目前應用程式工作階段有效；重新載入、其他分頁或裝置不共用此保護。",
+    "observing": "正在查詢已確認接收的命令。狀態查詢失敗不代表工作已停止。"
+},
   noteConflict: {
     notSent: "這次儲存尚未送出，草稿沒有變動。重新連線後，請在準備好時點選「儲存」。",
     authRejected: "登入狀態檢查拒絕了這次儲存，草稿沒有變動。請登入或重新連線，然後再次點選「儲存」。",

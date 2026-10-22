@@ -4,6 +4,14 @@ import type { TranslationShape } from '../en-US';
 
 export const ptBR = {
   ...learningWorkspaceLocales['pt-BR'],
+  commandSubmission: {
+    "newAttemptError": "Esta nova tentativa retornou um erro. O envio anterior continua sem confirmação.",
+    "title": "Envio não confirmado",
+    "warning": "O trabalho pode já estar em andamento e gerar custos. Verifique antes de enviar novamente. Uma lista vazia não comprova rejeição.",
+    "newAttemptConfirm": "Iniciar uma nova tentativa? Entendo que o trabalho anterior pode continuar e que outro envio pode duplicar o trabalho e os custos.",
+    "sessionOnly": "Esta proteção só dura nesta sessão carregada, não após recarregar nem em outras abas ou dispositivos.",
+    "observing": "Consultando o comando confirmado. Um erro ao consultar o status não significa que o trabalho parou."
+},
   noteConflict: {
     notSent: "Esta solicitação de salvamento não foi enviada. Seu rascunho não mudou. Restabeleça a conexão e selecione Salvar quando estiver pronto.",
     authRejected: "A verificação da sessão rejeitou esta solicitação de salvamento. Seu rascunho não mudou. Entre ou restabeleça a conexão e selecione Salvar novamente.",

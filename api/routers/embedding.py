@@ -6,6 +6,7 @@ from api.models import EmbedRequest, EmbedResponse
 from open_notebook.ai.models import model_manager
 from open_notebook.domain.notebook import Note, Source
 from open_notebook.exceptions import (
+    CommandSubmissionUnknownError,
     NotFoundError,
     OpenNotebookError,
 )
@@ -66,6 +67,10 @@ async def embed_content(embed_request: EmbedRequest):
                     command_id=command_id,
                 )
 
+            except CommandSubmissionUnknownError as exc:
+                exc.resource_id = item_id
+                exc.resource_type = item_type
+                raise
             except Exception as e:
                 logger.error(f"Failed to submit async embedding command: {e}")
                 raise HTTPException(
@@ -92,7 +97,7 @@ async def embed_content(embed_request: EmbedRequest):
 
                 # Embedding-only work must not advance the editorial revision.
                 # Explicit submission still reports failure to this caller.
-                command_id = note_item.submit_embedding()
+                command_id = await note_item.submit_embedding(strict=True)
                 if not command_id and note_item.content and note_item.content.strip():
                     raise HTTPException(
                         status_code=500, detail="Failed to submit note embedding job"
@@ -107,6 +112,10 @@ async def embed_content(embed_request: EmbedRequest):
                 command_id=command_id,
             )
 
+    except CommandSubmissionUnknownError as exc:
+        exc.resource_id = embed_request.item_id
+        exc.resource_type = embed_request.item_type
+        raise
     except HTTPException:
         raise
     except NotFoundError:

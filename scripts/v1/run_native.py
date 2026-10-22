@@ -14,20 +14,46 @@ import socket
 import stat
 import subprocess
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.parse import urlsplit
 
-import httpx
+import httpx as httpx  # compatibility for launcher probe callers/tests
 from dotenv import dotenv_values
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
-# Deliberately not a denylist: unknown provider credentials, *_FILE, proxy,
-# interpreter injection and database auth switches must not enter from the host.
-SAFE_INHERITED_ENV = frozenset({"PATH", "LANG", "LC_ALL", "LC_CTYPE", "TZ", "TERM"})
-PORTS = (18000, 5055, 13000)
+# Re-export shared names for existing callers; direct script invocation is supported.
+if TYPE_CHECKING or __package__:
+    from .runtime_lifecycle import (
+        PORTS,
+        SAFE_INHERITED_ENV,
+        OwnedProcess,
+        http_ready,
+        owned_listener_ready,
+        require_free_ports,
+        require_owned_listener,
+        start_owned,
+        stop_processes,
+        verify_loopback_listeners,
+        wait_for_service,
+    )
+else:
+    from runtime_lifecycle import (
+        PORTS,
+        SAFE_INHERITED_ENV,
+        OwnedProcess,
+        http_ready,
+        owned_listener_ready,
+        require_free_ports,
+        require_owned_listener,
+        start_owned,
+        stop_processes,
+        verify_loopback_listeners,
+        wait_for_service,
+    )
 
 
 def build_runtime_environment(
@@ -183,76 +209,10 @@ def open_private_log(path: Path):
         raise
 
 
-def wait_for_service(name: str, proc, probe: Callable[[], bool], timeout: float = 120):
-    deadline = time.monotonic() + timeout
-    while True:
-        if proc.poll() is not None:
-            raise RuntimeError(f"{name} exited before readiness; inspect private logs")
-        if probe():
-            return
-        if time.monotonic() >= deadline:
-            raise RuntimeError(f"{name} readiness timed out; inspect private logs")
-        time.sleep(min(0.25, max(0, deadline - time.monotonic())))
-
-
-def http_ready(url: str) -> bool:
-    try:
-        # Never send credentials to a probe or inherit a host proxy.
-        return httpx.get(url, timeout=1, trust_env=False).status_code == 200
-    except httpx.HTTPError:
-        return False
-
-
 def worker_startup_observed(log: Path, offset: int) -> bool:
     with log.open("rb") as handle:
         handle.seek(offset)
         return b"Starting LIVE query listener" in handle.read()
-
-
-def require_free_ports(ports: tuple[int, int, int] = PORTS):
-    for port in ports:
-        with socket.socket() as sock:
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            try:
-                sock.bind(("127.0.0.1", port))
-            except OSError:
-                raise RuntimeError(
-                    "Required loopback port is occupied; no services started"
-                ) from None
-
-
-def verify_loopback_listeners(ports: tuple[int, int, int] = PORTS):
-    """Linux native runbook: reject wildcard/non-loopback listeners on our ports."""
-    for filename, allowed in (
-        ("tcp", "0100007F"),
-        ("tcp6", "00000000000000000000000001000000"),
-    ):
-        for line in Path("/proc/net", filename).read_text().splitlines()[1:]:
-            fields = line.split()
-            address, port = fields[1].split(":")
-            if fields[3] == "0A" and int(port, 16) in ports and address != allowed:
-                raise RuntimeError(
-                    "Runtime port has a non-loopback listener; stopping owned services"
-                )
-
-
-def stop_processes(processes):
-    # A dead npm leader can still have live descendants in its dedicated session.
-    for proc in reversed(processes):
-        try:
-            os.killpg(proc.pid, signal.SIGTERM)
-        except ProcessLookupError:
-            pass
-    for proc in reversed(processes):
-        try:
-            proc.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            pass
-        try:
-            os.killpg(proc.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-        proc.wait()
 
 
 def main():
@@ -291,6 +251,7 @@ def main():
         raise SystemExit(
             "Runtime directory must not be the source root or ancestor; runtime URLs must match the selected native ports"
         ) from None
+    require_free_ports(ports)
     runtime.mkdir(parents=True, exist_ok=True, mode=0o700)
     if runtime.stat().st_uid != os.getuid():
         raise SystemExit("Runtime directory must be owned by the current user")
@@ -367,8 +328,7 @@ def main():
             ROOT / "frontend",
         ),
     ]
-    require_free_ports(ports)
-    processes = []
+    processes: list[OwnedProcess] = []
     logs = []
 
     def stop(*_):
@@ -377,19 +337,21 @@ def main():
     signal.signal(signal.SIGTERM, stop)
     try:
         for name, cmd, cwd in commands:
+            if name in ("api", "worker"):
+                require_owned_listener(processes[0], database)
+            if name == "frontend":
+                require_owned_listener(processes[1], api)
             log = runtime / (name + ".log")
             output = open_private_log(log)
             offset = log.stat().st_size
             logs.append(output)
             processes.append(
-                subprocess.Popen(
+                start_owned(
                     cmd,
                     cwd=cwd,
                     env=env,
                     stdout=output,
                     stderr=subprocess.STDOUT,
-                    start_new_session=True,
-                    umask=0o077,
                 )
             )
             urls = {
@@ -402,7 +364,13 @@ def main():
                 if name == "worker"
                 else (lambda: http_ready(urls[name]))
             )
-            wait_for_service(name, processes[-1], probe)
+            port = {"database": database, "api": api, "frontend": frontend}.get(name)
+            guard = (
+                (lambda: require_owned_listener(processes[0], database))
+                if port is None
+                else (lambda: owned_listener_ready(processes[-1], port))
+            )
+            wait_for_service(name, processes[-1], probe, guard=guard)
             if any(proc.poll() is not None for proc in processes):
                 raise RuntimeError(
                     "A service exited during startup; inspect private logs"
@@ -424,9 +392,11 @@ def main():
             "Private runtime startup/health check failed; inspect owner-only logs. No credential values are printed."
         ) from None
     finally:
-        stop_processes(processes)
-        for output in logs:
-            output.close()
+        try:
+            stop_processes(processes)
+        finally:
+            for output in logs:
+                output.close()
 
 
 if __name__ == "__main__":

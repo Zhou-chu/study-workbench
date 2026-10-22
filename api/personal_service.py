@@ -333,5 +333,5 @@ class PersonalService:
             )
         from open_notebook.domain.notebook import Note
 
-        Note(**result.native).submit_embedding()
+        await Note(**result.native).submit_embedding()
         return result.snapshot

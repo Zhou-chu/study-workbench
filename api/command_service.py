@@ -1,9 +1,10 @@
 from typing import Any, Dict, List, Optional
 
 from loguru import logger
-from surreal_commands import get_command_status, submit_command
+from surreal_commands import get_command_status
 
 from open_notebook.exceptions import UnsupportedCapabilityError
+from open_notebook.utils.command_submission import submit_command
 
 
 class CommandService:
@@ -27,10 +28,11 @@ class CommandService:
                 raise ValueError("Command modules not available")
 
             # surreal-commands expects: submit_command(app_name, command_name, args)
-            cmd_id = submit_command(
+            cmd_id = await submit_command(
                 module_name,  # This is actually the app name (e.g., "open_notebook")
                 command_name,  # Command name (e.g., "generate_podcast")
                 command_args,  # Input data
+                **({"context": context} if context is not None else {}),
             )
             # Convert RecordID to string if needed
             if not cmd_id:

@@ -1,0 +1,223 @@
+{
+  "date_utc": "2026-10-22",
+  "status": "offline_disposable_database_and_frontend_http_stack_verified_not_deployed",
+  "verification_local_commit": "d123e924afad13509ce7297358c7b82daf252c9f",
+  "verification_local_tree": "8397f94654bac6920e710ec32d58fca27c6cf943",
+  "frontend_verified_tree": "f43e3e2409d11fced69afa3d0fc25c69233927ac",
+  "source_identity_note": "Final application verification used this source, including the test typing refinement and explicit webpack build. Subsequent evidence/report edits are documentation only. Canonical publication is verified separately by exact Git tree.",
+  "backend": {
+    "full_suite_local_commit": "d123e924afad13509ce7297358c7b82daf252c9f",
+    "passed": 2210,
+    "skipped": 128,
+    "warnings": 2,
+    "duration_seconds": 48.99,
+    "method": "supported scripts/offline_pytest.py with explicit verified existing cache",
+    "isolation": [
+      "fresh child with allowlisted environment",
+      "dotenv disabled",
+      "temporary application/HOME/runtime/storage/cache",
+      "verified candidate module resolution",
+      "Python DNS and INET audit-hook tripwire"
+    ],
+    "not_an_os_native_subprocess_or_filesystem_sandbox": true
+  },
+  "separate_opt_in_gates": {
+    "passed": 82,
+    "duration_seconds": 65.38,
+    "source_owner_database": 42,
+    "embedding_database": 14,
+    "source_metadata_database": 6,
+    "owned_dummy_process_lifecycle": 2,
+    "database_version": "2.3.10",
+    "binary_sha256": "bc916c7c775ed32aa40c33fd57bc9b477128c8ad9118bb1620696a05247bb0a7",
+    "memory_only": true,
+    "public_fixture_credentials_only": true,
+    "owned_processes_reaped": true,
+    "fresh_migration_chain": [
+      1,
+      30
+    ],
+    "composite_source_claim_embedding_publication_note_invalidation": true,
+    "arbitrary_existing_database_upgrade_accepted": false,
+    "legacy_migration_preservation_database": 18
+  },
+  "remaining_default_skips_not_executed": 0,
+  "frontend": {
+    "vitest_passed": 1311,
+    "vitest_files": 89,
+    "node_artifact_passed": 25,
+    "default_npm_test_runs_both": true,
+    "typescript": "passed",
+    "lint_errors": 0,
+    "existing_lint_warnings": 7,
+    "production_build": "passed",
+    "artifact_identity": {
+      "manifest_sha256": "283194fa56039e84b58771420547298257a4bac6f1b93e6895eb93fdc47d6f30",
+      "build_id": "083eb885-9ea0-4597-9adc-8ea27de1181e",
+      "source_sha256": "86632b81d25bc77d17655ea8dee34bd1406c9711434be224a9e515e3be9adb0d",
+      "artifact_sha256": "62adebf129e161438392ea4cf4223dfba74bce6e9373b54797a012c611771d77",
+      "generated_sha256": "52d6dbf123c1155f4ecf503800bea441b5473eaadfb3378c303edd079642711d",
+      "claim": "source-artifact-association-not-reproducibility"
+    },
+    "verification_after_api_stack": "passed after coupled frontend/DB/API/worker restart and cleanup",
+    "build_transport_note": "Existing platform proxy/CA settings were retained opaquely; values are not recorded and TLS policy was not weakened. Build output is suppressed by the guarded wrapper.",
+    "compiler": "webpack; documented Next CLI option, real Google fonts retained"
+  },
+  "python_static": {
+    "ruff": "passed",
+    "format_files": 297,
+    "mypy_files": 297,
+    "mypy": "passed"
+  },
+  "contract": {
+    "actual_openapi_drift_check": "passed",
+    "personal_http_operations": 43,
+    "empty_success_json_schemas": 27,
+    "previous_empty_success_json_schemas": 36,
+    "new_typed_operations": 5,
+    "complete_sdk": false,
+    "empty_json_schemas_before_transport_correction": 31,
+    "corrected_non_json_operations": 4
+  },
+  "api_stack": {
+    "status": "passed",
+    "services": [
+      "owned disposable native database",
+      "API",
+      "worker",
+      "packaged frontend HTTP server"
+    ],
+    "browser": "not_run",
+    "frontend_http_runtime": "passed",
+    "fixture_sha256": {
+      "fixture_course.md": "20e21965df9711d91e8e2b03dd890a453f0a71bc5092c7eb251c43e4c664effa",
+      "fixture_a.pdf": "9d0cd69bbcc02c806f065d2e456b5a08f38c5822c342226d964125077b982032",
+      "fixture_b.pdf": "d94cea49810b0e3c132428b612ca886001fb5337cb13664e5f61323c10bc258c",
+      "fixture_scanned.pdf": "ddad283b2bdbca47e163e7f69b5a87a9a4cd10f99ab1007e1b0e15146e83d300",
+      "fixture_invalid.pdf": "5b0adf3ef9de941dc47f9afc757ebe7fc1ba14999a0e7eb53efbd593725d5f8a"
+    },
+    "checks": [
+      "Anonymous API, original, task and export requests rejected with 401",
+      "Real native DB/API/worker upload, CPU extraction, idempotency and original hash verified",
+      "Real lexical search, note save and persistent selection verified without a model",
+      "Real Chinese PDF (3+4 pages), TXT, image-only PDF needs_ocr and malformed PDF failed states verified; all original bytes preserved",
+      "API process restart retains original bytes, evidence, note and selection in real native DB",
+      "Verified artifact /config, exact static bytes and anonymous/authenticated API proxy passed over HTTP (no browser)",
+      "Owned DB/API/worker/frontend coupled stop/restart retained original bytes, notes and selection using same fixture data/config; not cold restore",
+      "All owned fixture listeners released after cleanup"
+    ],
+    "api_process_restart": true,
+    "database_process_restart": true,
+    "cold_backup_restore": false,
+    "owned_processes_reaped": true,
+    "selected_ports_released": true,
+    "temporary_storage_not_durable_hosting": true,
+    "no_google_or_model_calls": true,
+    "coupled_service_restart": true,
+    "authentication_mode": "legacy synthetic test mode; device-session activation not accepted",
+    "portable_fresh_restore_separately_verified": true
+  },
+  "container": {
+    "static": "passed",
+    "scoped_tests_passed": 98,
+    "docker_build_runtime": "not_run"
+  },
+  "verification_failures_fixed_before_delivery": [
+    "fresh migration7 missing legacy speaker table",
+    "duplicate SDK execution falsely marked live owner failed",
+    "suppressed cancelled-sibling submission uncertainty",
+    "stale metadata edits overwrote processed content",
+    "UTC datetime response encoding drift",
+    "unknown engine/origin enabled invalid generation actions",
+    "Vitest discovered the separate Node test suite",
+    "test-fixture typecheck errors",
+    "legacy migration7 destroyed existing speaker profiles",
+    "historical test runner SIGTERM skipped cleanup",
+    "recovered test-only signal-handler typing",
+    "external dependency symlink rejected by Turbopack",
+    "Turbopack failed to parse real Google-font URL query; supported webpack compiler selected"
+  ],
+  "not_verified": [
+    "updated user preview deployment or restoration of original user data",
+    "actual browser and user-login experience for this batch",
+    "Docker images/runtime",
+    "cold full-deployment backup restore (synthetic portable-project fresh restore was tested)",
+    "native mobile builds or devices",
+    "live Google/NotebookLM",
+    "live independent model quality",
+    "live web discovery/import",
+    "durable hosting/private Sites ingress",
+    "fresh coverage threshold acceptance",
+    "device-session runtime activation"
+  ],
+  "remaining_risks": [
+    "schema/version migration atomicity and concurrent migration locking",
+    "legacy migration7 now stops for operator review; inherited downgrade remains destructive",
+    "crash/cancellation/unknown/legacy source attempts require operational reconciliation, not lease expiry",
+    "initial source creation ACK uncertainty lacks a complete outbox",
+    "legacy podcast requests lack cross-session durable idempotency",
+    "workspace raw version file_path exposure and opaque nested archive contracts",
+    "large-library whole-table filtering and evidence N+1",
+    "actual browser cleanup/service-worker acceptance and non-hermetic dependency closure"
+  ],
+  "source_recovery": {
+    "original_local_commit": "171b0596740bd751f639e168107b727bb2bd3d5e",
+    "recovered_local_commit": "4ae90c76ccfb23b77f6df5e058491cea9cbe6b74",
+    "exact_tree": "9b35c006dec6ccbb8ba9b8cd3856960f94e29d7c",
+    "verified_paths": 1179,
+    "git_history_recovered": false,
+    "runtime_or_user_data_recovered": false,
+    "newer_slices_reconstructed_and_reverified": true
+  },
+  "historical_opt_in_gates": {
+    "passed": 63,
+    "skipped": 0,
+    "duration_seconds": 101.98,
+    "newly_exercised_default_skips": 46,
+    "duplicated_offline_cases": 17,
+    "device_session_database": 18,
+    "note_repository_database": 18,
+    "source_snapshot_database": 8,
+    "portable_fresh_restore": 1,
+    "mock_provider_discovery_database": 1,
+    "memory_only": true,
+    "public_fixture_credentials_only": true,
+    "owned_sessions_cleaned_up": true,
+    "sigterm_cleanup_regressions": "passed; mocked readiness, pytest wait and spawn-registration cases",
+    "sigkill_cleanup_guaranteed": false
+  },
+  "legacy_migration": {
+    "automatic_table_reset_removed": true,
+    "read_only_schema_preflight": true,
+    "independent_transactional_sql_guards": true,
+    "empty_unknown_tables_preserved": true,
+    "post_preflight_race_cases": 3,
+    "post_seed_rollback_and_retry": "passed",
+    "synchronous_indexes": true,
+    "arbitrary_existing_schema_upgrade_supported": false,
+    "schema_and_version_atomicity_solved": false,
+    "concurrent_migration_locking_solved": false,
+    "inherited_destructive_down_migration_is_not_safe_recovery": true
+  },
+  "live_web_discovery": {
+    "mode": "keyless_trial",
+    "real_provider_search": "passed",
+    "search_http_status": 200,
+    "public_results": 3,
+    "query": "site.nasa.gov solar system planets educational overview",
+    "provider_search_attempts": 1,
+    "scrape_transport_entries": 1,
+    "scrape_delivery_and_result": "unknown",
+    "selected_public_url": "https://science.nasa.gov/solar-system/planets/",
+    "import_persistence_extraction": "not_verified",
+    "browser": "not_run",
+    "existing_platform_proxy_and_verified_ca_used": true,
+    "default_transport_connectivity_verified": false,
+    "credentials_used": false,
+    "paid_fallback": false,
+    "retry_after_unknown": false,
+    "execution_observation": "session poll rejected by auto-review over unexpected download.surrealdb.com connection; no response/checkpoint retained and no matching owned processes found afterward",
+    "explicit_termination_receipt": false,
+    "actual_vendor_url_path_known": false
+  }
+}

@@ -1,8 +1,8 @@
-"""Typed personal note request/response contracts."""
+"""Public personal note and durable-operation contracts."""
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from open_notebook.database.note_contract import Revision
 
@@ -48,3 +48,133 @@ class NoteRequiredDetail(BaseModel):
 
 class NoteRequiredResponse(BaseModel):
     detail: NoteRequiredDetail
+
+
+# Responses deliberately retain extension fields. These models are not persistence
+# models and must be serialized with exclude_unset: absence is not a null/default.
+class OperationResponse(BaseModel):
+    model_config = ConfigDict(extra="allow", strict=True)
+
+
+class TurnSubmissionResponse(OperationResponse):
+    """Durable receipt, never a completed answer or permission to resubmit."""
+
+    job_id: str
+    turn_id: str
+    state: str = Field(
+        description="Raw durable state; unknown values grant no actions."
+    )
+
+
+class DurableJobResponse(OperationResponse):
+    """Current job metadata; operation-specific result payloads remain opaque."""
+
+    job_id: str
+    notebook_id: str
+    operation: str
+    state: str = Field(
+        description="Known: queued, running, waiting_remote, succeeded, failed, "
+        "needs_reauth, submission_unknown, cancelled_local. Preserve unknown values."
+    )
+    submission_state: str | None = Field(
+        default=None,
+        description="Known: not_submitted, confirmed, unknown. Unknown is not safe to retry.",
+    )
+    provider: str | None = None
+    turn_id: str | None = None
+    chat_session_id: str | None = None
+    source_id: str | None = None
+    source_version_id: str | None = None
+    extraction_id: str | None = None
+    fresh_extraction_id: str | None = None
+    worker_job_id: str | None = None
+    remote_task_id: str | None = None
+    idempotency_key: str | None = None
+    request_hash: str | None = None
+    request_snapshot: dict[str, Any] | None = None
+    attempts: int | None = None
+    poll_attempts: int | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    completed_at: str | None = None
+    next_poll_at: str | None = None
+    next_dispatch_at: str | None = None
+    dispatch_after: str | None = None
+    lease_until: str | None = None
+    result: Any = Field(
+        default=None, description="Operation-specific JSON; not yet fully typed."
+    )
+    error: Any = Field(
+        default=None, description="Stored operation error, not an HTTP error envelope."
+    )
+    cancel_requested: bool | None = None
+    remote_may_continue: bool | None = None
+    replay_allowed: bool | None = None
+
+
+class HistoricalJobResponse(OperationResponse):
+    """Archive-compatible record, not an executable current-job contract.
+
+    Portable restore historically accepted opaque job fields. Only identities and
+    the restore marker are typed here; tightening the rest would require a separately
+    reviewed archive compatibility change. Raw result/provenance/state stay intact.
+    """
+
+    job_id: str
+    state: str
+    restored_history: Literal[True]
+    replay_allowed: Literal[False]
+
+
+PersonalJobResponse = HistoricalJobResponse | DurableJobResponse
+
+
+class WorkspaceNotebookResponse(OperationResponse):
+    id: str
+    name: str
+
+
+class WorkspaceSourceResponse(OperationResponse):
+    source_id: str
+    title: str | None
+    versions: list[dict[str, Any]] = Field(
+        description="Existing version records, not a public persistence-model contract. "
+        "Legacy/provenance extensions are retained; field-level typing is deferred."
+    )
+
+
+class WorkspaceNoteResponse(OperationResponse):
+    """Native note merged over optional personal snapshot metadata.
+
+    Native-only/shared notes need not carry citations or scope. Snapshot extensions
+    remain opaque, including retained archive citations; no defaults are invented.
+    """
+
+    id: str
+    revision: Revision
+    title: str | None = None
+    content: str | None = None
+
+
+class SelectionResponse(OperationResponse):
+    """Current save receipt; optional supplied values are not validated by service."""
+
+    notebook_id: str
+    engine: str
+    source_version_ids: list[str]
+    updated_at: str
+
+
+class WorkspaceResponse(OperationResponse):
+    """Typed envelope, not a complete SDK for opaque retained records."""
+
+    notebook: WorkspaceNotebookResponse
+    sources: list[WorkspaceSourceResponse]
+    notes: list[WorkspaceNoteResponse]
+    turns: list[dict[str, Any]]
+    jobs: list[dict[str, Any]]
+    link: dict[str, Any] | None
+    selection: dict[str, Any] | None = Field(
+        description="Null before any selection; retained selections may have legacy fields."
+    )
+    legacy_history: list[dict[str, Any]]

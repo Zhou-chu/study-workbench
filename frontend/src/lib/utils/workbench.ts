@@ -1,4 +1,13 @@
 import axios from 'axios'
+import type { KnownEngine } from '@/lib/types/personal'
+
+export function isKnownEngine(value: unknown): value is KnownEngine {
+  return value === 'independent' || value === 'notebooklm'
+}
+export function isKnownSelectionOrigin(value: unknown): value is 'local' | 'remote' {
+  return value === 'local' || value === 'remote'
+}
+
 export function requestError(error: unknown): string | null {
   if (!axios.isAxiosError(error)) return null
   const detail = error.response?.data?.error || error.response?.data?.detail

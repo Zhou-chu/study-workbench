@@ -11,8 +11,13 @@ export interface WebSourceProvenance {
 }
 export type SourceProvenance = DerivedSourceProvenance | WebSourceProvenance
 
-export type Engine = 'notebooklm' | 'independent'
-export type JobState = 'queued' | 'running' | 'waiting_remote' | 'succeeded' | 'failed' | 'needs_reauth' | 'submission_unknown' | 'cancelled_local'
+export type KnownEngine = 'notebooklm' | 'independent'
+// Retained selections/scopes may name engines this client cannot execute.
+export type Engine = KnownEngine | (string & {})
+export type KnownJobState = 'queued' | 'running' | 'waiting_remote' | 'succeeded' | 'failed' | 'needs_reauth' | 'submission_unknown' | 'cancelled_local'
+// Keep future server states verbatim; only explicit known states authorize actions.
+export type JobState = KnownJobState | (string & {})
+export interface TurnSubmissionResponse { job_id: string; turn_id: string; state: JobState }
 export interface Locator {
   page_index?: number | null
   page_label?: string | null
@@ -28,7 +33,7 @@ export interface EvidenceCitation {
   kind: 'local_evidence' | 'remote_text_snapshot' | 'remote_unmapped' | 'derived_snapshot'
   source_version_id: string | null
   evidence_id: string | null
-  source_title: string
+  source_title: string | null
   locator?: Locator | null
   quote: string
   reference_validity: string
@@ -104,34 +109,50 @@ export interface TurnRecord {
   created_at?: string
 }
 export interface TurnRequest extends WorkbenchSelection {
+  engine: KnownEngine
   task: 'question' | 'outline'
   notebook_id: string
   message: string
   remote_notebook_id?: string | null
   idempotency_key: string
 }
-export interface BridgeJob {
-  provider?: string
+export interface CurrentJobResponse {
+  provider?: string | null
   job_id: string
+  notebook_id?: string
   operation: string
   state: JobState
-  submission_state?: 'not_submitted' | 'confirmed' | 'unknown'
+  submission_state?: string | null
   error?: unknown
-  result?: { download_url?: string; artifact_id?: string; import_report?: unknown; [key: string]: unknown } | null
-  remote_may_continue?: boolean
+  result?: unknown
+  remote_may_continue?: boolean | null
+  cancel_requested?: boolean | null
+  restored_history?: false
+  replay_allowed?: boolean | null
+  [key: string]: unknown
 }
+// Archive fields were historically opaque; do not pretend they match live results.
+export interface HistoricalJobResponse {
+  job_id: string
+  state: JobState
+  restored_history: true
+  replay_allowed: false
+  [key: string]: unknown
+}
+export type BridgeJob = CurrentJobResponse | HistoricalJobResponse
 export interface CreateWorkbenchNoteInput { title: string; content: string; citations: EvidenceCitation[]; scope_snapshot?: ScopeSnapshot }
 export interface UpdateWorkbenchNoteInput extends CreateWorkbenchNoteInput { expected_revision: number }
-export interface WorkbenchNote extends CreateWorkbenchNoteInput { id: string; revision: number }
+// Workspace native-only notes do not necessarily have personal snapshot metadata.
+export interface WorkbenchNote { id: string; revision: number; title?: string | null; content?: string | null; citations?: EvidenceCitation[]; scope_snapshot?: ScopeSnapshot }
 export interface RemoteLink { remote_notebook_id: string; connection_id?: string }
 export interface Workspace {
   notebook: { id: string; name: string }
-  sources: Array<{ source_id: string; title: string; versions: SourceVersion[] }>
+  sources: Array<{ source_id: string; title: string | null; versions: SourceVersion[] }>
   notes: WorkbenchNote[]
   turns: TurnRecord[]
   jobs: BridgeJob[]
   link: RemoteLink | null
-  selection: WorkbenchSelection
+  selection: WorkbenchSelection | null
   legacy_history?: Array<{ chat_session_id: string; history_origin?: string; messages: Array<{ role?: string; content?: string }> }>
 }
 export interface ConnectionStatus {

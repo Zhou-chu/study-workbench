@@ -150,3 +150,45 @@ See `WEB_SESSION_BROWSER_ACCEPTANCE.md` for reconciled scope, limitations and cl
 Actual Source Chat navigation exposed missing cancellation. Initial fix `a7e4f28b` was superseded after browser evidence caught production-cache reuse instead of the claimed fresh completion GET. Reviewed follow-up `89b4232bdab40650430ffd70c5cb575391daca49` is integrated as `bb0fb5ea87be8a0e914046f3b95de930b1166b34`; frontend bytes match. Final aggregate **1100 tests / 71 files**, production build/TypeScript and full lint **0 errors / 7 existing warnings** passed; independent **72 checks** use production query defaults. Exact actual RED replay is now GREEN, with navigation abort observed before the fixture watchdog and no provider dispatch. Local abort does not prove remote model termination.
 
 No production activation, main update, actual Docker build/lifecycle, native application delivery or Sites deployment follows from this local evidence. Private connectivity registration/native onboarding contracts and a Docker-capable authorized test runtime remain unresolved. Migration preflight remains unmerged behind its separate safety-review block.
+
+## R2a operation-response checkpoint (2026-10-22 13:19 UTC)
+
+Local branch `feat/api-contracts-r2-operations`, based on `5221211`, adds only the
+three-route response slice: personal turn receipt, job GET and explicit cancel.
+Contract SHA-256: `288a5bca01e445e2c99dd27b80b8be0f0791b95d58a0dc9f02ba88e558d5caaf`.
+Schema changes are limited to those paths and three new models; existing operation
+IDs and prior component schemas are unchanged. Current metadata is typed, extension
+fields and absent/null distinctions are preserved, and archive history has its own
+opaque compatibility branch. Operation-specific results remain incompletely typed;
+workspace, SSE, binary transfer contracts and native SDK/client acceptance are not
+claimed. GET job retains its existing dispatch behavior.
+
+Fixture-first RED was one missing-schema failure with 14 baseline serialization
+checks passing. GREEN includes exact unfiltered-route versus HTTP comparison,
+unknown/submission/cancellation cases and actual portable remapping of opaque
+historical fields. Frontend uses a receipt type and an honest current/historical job
+union, with narrow runtime guards at result consumers. Valid restored local audio
+remains downloadable; historical replay, unknown-state actions and malformed
+result fields do not become executable operations.
+
+Independent review identified prototype-property state lookup and opaque
+maintenance error-message rendering; dedicated REDs reproduced both, and guarded
+lookup/string rendering fixed them. Reviewer final rerun passed 81 frontend tests
+in four files and 17 backend response-contract tests; no remaining R2a blocker.
+
+Final guarded offline backend command: installed Python running the reviewed
+`audit-20261022/offline_pytest.py -q tests/` from this worktree, with `env -i`,
+dotenv disabled, isolated scratch data/runtime roots, verified tokenizer cache,
+no live opt-in flags, and Python INET/DNS guards. Result: **1982 passed, 60 skipped,
+2 existing dependency warnings**. This guard is not an OS/native-subprocess sandbox.
+Final frontend command from `frontend/`: installed TypeScript `--noEmit`, scoped
+ESLint, and installed Vitest `run`: **1222 passed / 79 files**; typecheck/lint passed.
+One intervening Vitest run from repository root failed two cwd-dependent filesystem
+tests (markdown CSS and session-policy source inventory); that attempt is excluded,
+and both pass in the corrected frontend-cwd full run.
+
+Focused Ruff/format, mypy for the three changed Python source files, diff whitespace
+check and isolated actual-app OpenAPI `--check` passed. No production build,
+containers, live database/provider/Google/browser, native toolchain, auth-mode
+activation, publication or deployment was performed. Integration owns CHANGELOG
+and the combined OpenAPI re-export after other branches merge.

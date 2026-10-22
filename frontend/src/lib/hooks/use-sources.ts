@@ -1,3 +1,4 @@
+import { isCommandSubmissionUnknown, runCommandSubmission } from '@/lib/utils/command-submission'
 import { isAuthRecoveryError } from '@/lib/api/browser-transport'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
@@ -93,7 +94,8 @@ export function useCreateSource() {
   const { t } = useTranslation()
 
   return useMutation({
-    mutationFn: (data: CreateSourceRequest) => sourcesApi.create(data),
+    retry: false,
+    mutationFn: (data: CreateSourceRequest) => runCommandSubmission('source:create', () => sourcesApi.create(data), t('commandSubmission.newAttemptConfirm')),
     onSuccess: (result: SourceResponse, variables) => {
       // Invalidate queries for all relevant notebooks with immediate refetch
       if (variables.notebooks) {
@@ -138,6 +140,10 @@ export function useCreateSource() {
       }
     },
     onError: (error: unknown) => {
+      if (isCommandSubmissionUnknown(error)) {
+        toast({ title: t('commandSubmission.title'), description: `${t('commandSubmission.warning')} ${t('commandSubmission.sessionOnly')}` })
+        return
+      }
       toast({
         title: t('common.error'),
         description: getApiErrorMessage(error, (key) => t(key), t('sources.failedToAddSource')),
@@ -207,8 +213,9 @@ export function useFileUpload() {
   const { t } = useTranslation()
 
   return useMutation({
+    retry: false,
     mutationFn: ({ file, notebookId }: { file: File; notebookId: string }) =>
-      sourcesApi.upload(file, notebookId),
+      runCommandSubmission('source:create', () => sourcesApi.upload(file, notebookId), t('commandSubmission.newAttemptConfirm')),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.sources(variables.notebookId)
@@ -223,6 +230,10 @@ export function useFileUpload() {
       })
     },
     onError: (error: unknown) => {
+      if (isCommandSubmissionUnknown(error)) {
+        toast({ title: t('commandSubmission.title'), description: `${t('commandSubmission.warning')} ${t('commandSubmission.sessionOnly')}` })
+        return
+      }
       toast({
         title: t('common.error'),
         description: getApiErrorMessage(error, (key) => t(key), t('sources.failedToUploadFile')),
@@ -259,7 +270,8 @@ export function useRetrySource() {
   const { t } = useTranslation()
 
   return useMutation({
-    mutationFn: (sourceId: string) => sourcesApi.retry(sourceId),
+    retry: false,
+    mutationFn: (sourceId: string) => runCommandSubmission('source:retry:' + sourceId, () => sourcesApi.retry(sourceId), t('commandSubmission.newAttemptConfirm')),
     onSuccess: (result, sourceId) => {
       // Invalidate status query to refetch latest status
       queryClient.invalidateQueries({
@@ -275,6 +287,10 @@ export function useRetrySource() {
       })
     },
     onError: (error: unknown) => {
+      if (isCommandSubmissionUnknown(error)) {
+        toast({ title: t('commandSubmission.title'), description: `${t('commandSubmission.warning')} ${t('commandSubmission.sessionOnly')}` })
+        return
+      }
       toast({
         title: t('common.error'),
         description: getApiErrorMessage(error, (key) => t(key), t('sources.failedToRetry')),

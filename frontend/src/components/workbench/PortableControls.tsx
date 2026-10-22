@@ -48,7 +48,9 @@ function NotebookPortableControls({ notebookId, onChanged }: PortableControlsPro
   const currentExport = submitted ? exportStatus.data || submitted : undefined
   const terminalExport = currentExport && ['succeeded', 'failed', 'cancelled_local'].includes(currentExport.state)
   const exportBusy = exporting.isPending || (!!submitted && (!terminalExport || exportStatus.isError))
-  const downloadUrl = currentExport?.state === 'succeeded' ? currentExport.result?.download_url : undefined
+  const result = currentExport?.result && typeof currentExport.result === 'object' && !Array.isArray(currentExport.result) ? currentExport.result as Record<string, unknown> : undefined
+  const candidate = result?.download_url
+  const downloadUrl = currentExport?.state === 'succeeded' && currentExport.operation === 'portable_export' && currentExport.restored_history !== true && typeof candidate === 'string' && /^\/(?:api\/)?personal\/exports\/[^/?#]+\/download$/.test(candidate) ? candidate : undefined
   const download = useMutation({ mutationFn: async () => {
     if (!downloadUrl || !currentExport) return
     const blob = await portableApi.download(downloadUrl)

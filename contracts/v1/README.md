@@ -114,3 +114,53 @@ This matches the auth router's default error schema; resource routing errors
 remain unchanged. Auth schema integrity is checked on every store operation;
 missing tables/fields/index constraints fail closed, never trigger implicit
 SCHEMALESS table recreation. Stop the API before administrative DDL or restore.
+
+## R2a: durable operation response slice
+
+POST personal chat turns now describes a `TurnSubmissionResponse` receipt
+(`job_id`, `turn_id`, raw `state`), not a completed turn. GET personal job and
+explicit POST cancel describe current durable metadata or a historical archive
+record. These three responses preserve extension fields and omit unset model
+fields; absent values do not become null/default values. Personal timestamp strings
+are not rewritten to auth's canonical `Z` format.
+
+State/operation/submission strings are open for compatibility. Unknown values are
+not permission to retry, replay or cancel. `submission_unknown` is not a confirmed
+failure; `cancelled_local` does not guarantee remote termination. Restored history
+retains `historical_state`, `restored_history`, and `replay_allowed:false`; its other
+fields remain opaque because historical archive readers did not enforce current
+job shapes. Current operation-specific result/error JSON also remains deliberately
+opaque in this slice; this is not a fully typed SDK contract.
+
+GET job can dispatch existing remote/maintenance work. Contract tests inject
+in-memory boundaries and do not call providers. `job-states.json` and
+`turn-submission.json` are synthetic and exercise lossless router serialization,
+including nullable fields, unknown states, restored provenance and extension data.
+SSE, binary and nested workspace response gaps remain separate work; they are
+not fixed by these operation models.
+
+## R2b: workspace envelope and nullable Web fields
+
+Workspace and selection-save response schemas now describe the proven envelope,
+with extra fields retained and unset fields omitted. Native workspace notes differ
+from personal write receipts: title/content may be null or absent, and citations
+and scope need not exist. Workspace selection and remote citation source titles
+can be null. Real-service/ASGI tests cover those cases and opaque archive records.
+Nested historical jobs/turns, versions/provenance, selection/link metadata and note
+snapshot extensions intentionally remain opaque, not a complete native SDK.
+
+Existing raw workspace versions can contain storage `file_path`; preserving that
+wire behavior here does not make it a supported stable public field. A safe public
+version projection/redaction remains a separately reviewed residual task. No
+persistence SourceVersion model is used as a public response DTO.
+
+## R2c: personal transport declarations
+
+Four personal stream/download operations now describe true SSE/binary success
+bodies and permissive existing application error envelopes, without changing
+runtime serialization. `fixtures/stream.json` is exact synthetic SSE output from
+the real handler (including in-band error and incomplete bounded EOF). Download
+tests exercise original/export/artifact handlers, raw bytes and middleware headers.
+See `docs/v1/STREAM_DOWNLOAD_PROTOCOL.md` for client rules and remaining gaps.
+Legacy SSE/download operations and opaque nested histories remain outside this
+slice; the earlier known-gap statements still apply to those untyped operations.

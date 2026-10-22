@@ -6,87 +6,22 @@ No configured database is contacted. Fixture credentials are intentionally publi
 """
 
 import asyncio
-import hashlib
-import os
-import signal
-import socket
-import subprocess
-import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from uuid import uuid4
 
 import pytest
 import pytest_asyncio
+from disposable_database import disposable_database
 
 pytestmark = pytest.mark.asyncio
 ROOT = Path(__file__).resolve().parents[1]
-SHA256 = "bc916c7c775ed32aa40c33fd57bc9b477128c8ad9118bb1620696a05247bb0a7"
 
 
 @pytest.fixture(scope="session")
 def disposable_server(tmp_path_factory):
-    if os.getenv("EMBEDDING_DISPOSABLE_DB") != "1":
-        pytest.skip("requires explicitly enabled owned disposable database")
-    selected = os.getenv("EMBEDDING_TEST_SURREAL_BINARY")
-    if not selected:
-        pytest.fail(
-            "Set EMBEDDING_TEST_SURREAL_BINARY to an explicitly selected verified SurrealDB 2.3.10 executable"
-        )
-    binary = Path(selected).expanduser().resolve(strict=True)
-    assert binary.is_file() and os.access(binary, os.X_OK), (
-        "fixture binary must be executable"
-    )
-    assert hashlib.sha256(binary.read_bytes()).hexdigest() == SHA256, (
-        "fixture requires the documented official 2.3.10 binary digest"
-    )
-    with socket.socket() as reservation:
-        reservation.bind(("127.0.0.1", 0))
-        port = reservation.getsockname()[1]
-    directory = tmp_path_factory.mktemp("embedding-surreal")
-    with (directory / "server.log").open("wb") as log:
-        process = subprocess.Popen(
-            [
-                str(binary),
-                "start",
-                "--bind",
-                f"127.0.0.1:{port}",
-                "--user",
-                "public_fixture",
-                "--pass",
-                "public_fixture",
-                "memory",
-            ],
-            cwd=directory,
-            env={"PATH": "/usr/bin:/bin", "HOME": str(directory)},
-            stdout=log,
-            stderr=subprocess.STDOUT,
-            start_new_session=True,
-        )
-        try:
-            assert os.getpgid(process.pid) == process.pid
-            deadline = time.monotonic() + 15
-            while True:
-                assert process.poll() is None, (directory / "server.log").read_text()
-                try:
-                    with socket.create_connection(("127.0.0.1", port), timeout=0.1):
-                        break
-                except OSError:
-                    if time.monotonic() >= deadline:
-                        pytest.fail("owned disposable database did not become ready")
-                    time.sleep(0.05)
-            yield f"ws://127.0.0.1:{port}/rpc"
-        finally:
-            if process.poll() is None:
-                assert os.getpgid(process.pid) == process.pid
-                os.killpg(process.pid, signal.SIGTERM)
-                try:
-                    process.wait(timeout=10)
-                except subprocess.TimeoutExpired:
-                    os.killpg(process.pid, signal.SIGKILL)
-                    process.wait(timeout=10)
-            else:
-                process.wait()
+    with disposable_database(tmp_path_factory, "EMBEDDING", "embedding-surreal") as url:
+        yield url
 
 
 @pytest_asyncio.fixture

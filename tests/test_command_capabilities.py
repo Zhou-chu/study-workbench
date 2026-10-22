@@ -115,7 +115,7 @@ async def test_auth_rejects_before_unsupported_service(
 @pytest.mark.asyncio
 async def test_generic_submission_and_status_remain_available(monkeypatch):
     # Import registration only; the actual submission/status backends are mocked.
-    submit = Mock(return_value="command:fixture")
+    submit = AsyncMock(return_value="command:fixture")
     status = AsyncMock(return_value=SimpleNamespace(status="running", result=None))
     monkeypatch.setattr(command_service, "submit_command", submit)
     monkeypatch.setattr(command_service, "get_command_status", status)

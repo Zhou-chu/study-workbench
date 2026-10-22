@@ -162,7 +162,8 @@ async def test_note_cannot_forge_verified_citation(monkeypatch):
 
     monkeypatch.setattr(note_repository, "create_note", create_note)
     monkeypatch.setattr(
-        "open_notebook.domain.notebook.Note.submit_embedding", lambda self: None
+        "open_notebook.domain.notebook.Note.submit_embedding",
+        AsyncMock(return_value=None),
     )
     note = await PersonalService(store).save_note(
         "nb",
@@ -249,7 +250,8 @@ async def test_remote_note_reference_retains_remote_identity(monkeypatch):
 
     monkeypatch.setattr(note_repository, "create_note", create_note)
     monkeypatch.setattr(
-        "open_notebook.domain.notebook.Note.submit_embedding", lambda self: None
+        "open_notebook.domain.notebook.Note.submit_embedding",
+        AsyncMock(return_value=None),
     )
     cite = {
         "citation_id": "c1",

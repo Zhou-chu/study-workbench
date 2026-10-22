@@ -4,6 +4,14 @@ import type { TranslationShape } from '../en-US';
 
 export const trTR = {
   ...learningWorkspaceLocales['tr-TR'],
+  commandSubmission: {
+    "newAttemptError": "Bu yeni deneme bir hata döndürdü. Önceki gönderim hâlâ doğrulanmadı.",
+    "title": "Gönderim doğrulanamadı",
+    "warning": "İş zaten çalışıyor ve maliyet oluşturuyor olabilir. Kontrol etmeden tekrar göndermeyin. Boş sonuç listesi reddedildiğini kanıtlamaz.",
+    "newAttemptConfirm": "Yeni bir deneme başlatılsın mı? Önceki işin hâlâ çalışabileceğini ve yeniden göndermenin işi ve maliyeti tekrarlayabileceğini anlıyorum.",
+    "sessionOnly": "Bu koruma yalnızca bu yüklü uygulama oturumunda geçerlidir; yeniden yüklemede, diğer sekmelerde veya cihazlarda geçerli değildir.",
+    "observing": "Onaylanan komut kontrol ediliyor. Durum okuma hatası işin durduğu anlamına gelmez."
+},
   noteConflict: {
     notSent: "Bu kaydetme isteği gönderilmedi. Taslağınız değişmedi. Yeniden bağlanın, ardından hazır olduğunuzda Kaydet’i seçin.",
     authRejected: "Oturum kontrolü bu kaydetme isteğini reddetti. Taslağınız değişmedi. Oturum açın veya yeniden bağlanın, ardından Kaydet’i tekrar seçin.",

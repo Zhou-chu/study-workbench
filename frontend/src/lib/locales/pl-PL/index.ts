@@ -4,6 +4,14 @@ import type { TranslationShape } from '../en-US';
 
 export const plPL = {
   ...learningWorkspaceLocales['pl-PL'],
+  commandSubmission: {
+    "newAttemptError": "Ta nowa próba zwróciła błąd. Poprzednie wysłanie nadal nie jest potwierdzone.",
+    "title": "Wysłanie niepotwierdzone",
+    "warning": "Praca może już trwać i generować koszty. Sprawdź przed ponownym wysłaniem. Pusta lista wyników nie dowodzi odrzucenia.",
+    "newAttemptConfirm": "Rozpocząć nową próbę? Rozumiem, że poprzednia praca może nadal trwać, a kolejne wysłanie może powielić pracę i koszty.",
+    "sessionOnly": "Ta ochrona działa tylko w tej załadowanej sesji, nie po odświeżeniu ani w innych kartach lub urządzeniach.",
+    "observing": "Sprawdzanie potwierdzonego polecenia. Błąd odczytu stanu nie oznacza zatrzymania pracy."
+},
   noteConflict: {
     notSent: "Ta prośba o zapis nie została wysłana. Szkic nie uległ zmianie. Przywróć połączenie, a następnie wybierz Zapisz, gdy zechcesz kontynuować.",
     authRejected: "Weryfikacja sesji odrzuciła tę prośbę o zapis. Szkic nie uległ zmianie. Zaloguj się lub przywróć połączenie, a następnie ponownie wybierz Zapisz.",

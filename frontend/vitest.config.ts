@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
@@ -12,6 +12,8 @@ export default defineConfig({
   // to resolve the postcss config; this bypasses it outright.
   css: { postcss: { plugins: [] } },
   test: {
+    // This stdlib Node suite has its own runner; preserve all other discovery.
+    exclude: [...configDefaults.exclude, 'scripts/artifact-identity.test.mjs'],
     environment: 'jsdom',
     globals: true,
     css: false,

@@ -4,15 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/build-artifact.mjs",
     "start": "node start-server.js",
     "lint": "eslint src/",
-    "test": "vitest run",
+    "test": "npm run test:artifact && npm run test:unit --",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
-    "prebuild": "node scripts/prepare-pdf-assets.mjs",
-    "predev": "node scripts/prepare-pdf-assets.mjs"
+    "test:coverage": "npm run test:artifact && vitest run --coverage",
+    "predev": "node scripts/prepare-pdf-assets.mjs",
+    "test:unit": "vitest run",
+    "test:artifact": "node --test scripts/artifact-identity.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

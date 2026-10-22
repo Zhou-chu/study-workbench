@@ -29,6 +29,7 @@ from api.personal_store import get_store, record_key
 from api.portable_limits import get_portable_limits
 from api.portable_zip import validate_zip_directory
 from open_notebook.exceptions import (
+    CommandSubmissionUnknownError,
     DatabaseOperationError,
     InvalidInputError,
     NotFoundError,
@@ -106,6 +107,7 @@ DROP_KEYS = {
     "connection_id",
     "worker_job_id",
     "command",
+    "processing_attempt",
     "model_override",
     "lease_until",
     "next_poll_at",
@@ -1394,11 +1396,32 @@ class PortableService:
             }
             await self.store.put("job", job_id, job, create_only=True)
         try:
-            from surreal_commands import submit_command
+            from open_notebook.utils.command_submission import submit_command
 
-            worker_id = await asyncio.to_thread(
-                submit_command, "open_notebook", "export_portable", {"job_id": job_id}
+            worker_id = await submit_command(
+                "open_notebook", "export_portable", {"job_id": job_id}
             )
+        except (CommandSubmissionUnknownError, asyncio.CancelledError) as exc:
+            # CREATE may have committed. Preserve any worker progress and never
+            # invite a new-key replay merely because its acknowledgement was lost.
+            async with self.store.project_lock(notebook_id):
+                current = await self.store.get("job", job_id)
+                if current is not None and current.get("state") == "queued":
+                    current.update(
+                        state="submission_unknown",
+                        submission_state="unknown",
+                        error={
+                            "code": "QUEUE_SUBMISSION_UNKNOWN",
+                            "message": "Export may be queued; do not automatically retry",
+                        },
+                        updated_at=_now(),
+                    )
+                    await self.store.put("job", job_id, current)
+            if isinstance(exc, asyncio.CancelledError) or current is None:
+                raise
+            # Return the durable identity so clients can refresh this job rather
+            # than create a new idempotency key after an ambiguous acknowledgement.
+            return current
         except Exception as exc:
             async with self.store.project_lock(notebook_id):
                 job.update(
@@ -1443,8 +1466,11 @@ class PortableService:
                     )
                 if job.get("state") in ("succeeded", "cancelled_local"):
                     return job
+                if (job.get("error") or {}).get("code") == "QUEUE_SUBMISSION_UNKNOWN":
+                    job.pop("error", None)
                 job.update(
                     state="running",
+                    submission_state="confirmed",
                     attempts=job.get("attempts", 0) + 1,
                     updated_at=_now(),
                 )

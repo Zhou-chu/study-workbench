@@ -251,6 +251,21 @@ it('highlights text at codepoint offsets without splitting astral characters', a
 
 const archive = () => ({ version, extraction: { extraction_id: 'ex_old', verification_origin: 'restored_archive', status: 'ready', page_count: 10, warnings: [] }, evidence: [{ evidence_id: 'ev1', source_version_id: 'sv_old', extraction_id: 'ex_old', quote: citation.quote, locator: { page_index: 7 }, reference_validity: 'unverified' }] })
 describe('Reader maintenance', () => {
+  it.each([['historical'], { checked_count: '1', verified_count: 1, unverified_count: 0 }])('does not promote malformed maintenance counts: %j', async result => {
+    vi.mocked(workbenchApi.job).mockResolvedValue({ job_id: 'j_verify', operation: 'revalidate', state: 'succeeded', result })
+    render(<EvidenceReader sourceVersionId="sv_old" citation={citation} onPositionChange={vi.fn()} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'workbench.revalidate' }))
+    await waitFor(() => expect(workbenchApi.job).toHaveBeenCalled())
+    expect(screen.queryByText('workbench.revalidationComplete')).not.toBeInTheDocument()
+    expect(screen.queryByText('workbench.revalidationPartial')).not.toBeInTheDocument()
+  })
+  it('renders unknown maintenance state and opaque error safely', async () => {
+    vi.mocked(workbenchApi.job).mockResolvedValue({ job_id: 'j_verify', operation: 'revalidate', state: 'constructor', error: { message: { historical: true } } })
+    render(<EvidenceReader sourceVersionId="sv_old" citation={citation} onPositionChange={vi.fn()} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'workbench.revalidate' }))
+    expect(await screen.findByText('workbench.unavailable')).toBeInTheDocument()
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(evidenceApi.version).mockResolvedValue(archive())

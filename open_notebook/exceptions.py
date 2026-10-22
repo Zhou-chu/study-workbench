@@ -10,6 +10,26 @@ class DatabaseOperationError(OpenNotebookError):
     pass
 
 
+class CommandSubmissionUnknownError(OpenNotebookError):
+    """CREATE may have committed; automatic replay can duplicate queued work."""
+
+    def __init__(
+        self,
+        *,
+        source_id: str | None = None,
+        command_id: str | None = None,
+        resource_id: str | None = None,
+        resource_type: str | None = None,
+    ):
+        self.source_id = source_id
+        self.command_id = command_id
+        self.resource_id = source_id or resource_id
+        self.resource_type = "source" if source_id else resource_type
+        super().__init__(
+            "Command submission may already be committed; do not automatically retry."
+        )
+
+
 class UnsupportedTypeException(OpenNotebookError):
     """Raised when an unsupported type is provided."""
 

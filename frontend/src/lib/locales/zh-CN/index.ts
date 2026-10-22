@@ -4,6 +4,14 @@ import type { TranslationShape } from '../en-US';
 
 export const zhCN = {
   ...learningWorkspaceLocales['zh-CN'],
+  commandSubmission: {
+    "newAttemptError": "这次新尝试返回了错误。之前的提交状态仍未确认。",
+    "title": "提交状态未确认",
+    "warning": "任务可能已在运行并产生费用。请先核实，不要再次提交。结果列表为空不代表请求被拒绝。",
+    "newAttemptConfirm": "要发起新的尝试吗？我理解之前的任务可能仍在运行，再次提交可能造成重复任务和费用。",
+    "sessionOnly": "此保护仅在当前应用会话中有效；刷新页面、其他标签页或设备不共享此保护。",
+    "observing": "正在查询已确认接收的命令。状态查询失败不代表任务已停止。"
+},
   noteConflict: {
     notSent: "这次保存尚未发送，草稿没有改动。重新连接后，请在准备好时点击“保存”。",
     authRejected: "登录状态检查拒绝了这次保存，草稿没有改动。请登录或重新连接，然后再次点击“保存”。",

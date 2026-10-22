@@ -68,9 +68,11 @@ export function EvidenceMaintenance({ versionId, extractionId, restored, snapsho
     submit.mutate(kind)
   }
   const waiting = submit.isPending || (!!current && activeJob(current.state))
-  const result = current?.state === 'succeeded' ? current.result : null
+  const result = current?.state === 'succeeded' && current.restored_history !== true && current.result && typeof current.result === 'object' && !Array.isArray(current.result) ? current.result as Record<string, unknown> : null
+  const validCounts = result && ['checked_count', 'verified_count', 'unverified_count'].every(key => typeof result[key] === 'number' && Number.isSafeInteger(result[key]) && Number(result[key]) >= 0)
   const error = submit.error || status.error
-  const jobError = typeof current?.error === 'string' ? current.error : (current?.error as { message?: string } | null)?.message
+  const errorObject = current?.error && typeof current.error === 'object' ? current.error as Record<string, unknown> : undefined
+  const jobError = typeof current?.error === 'string' ? current.error : typeof errorObject?.message === 'string' ? errorObject.message : undefined
   return <div className="space-y-2 pt-3 text-xs">
     <p className="text-muted-foreground">{t(snapshot ? 'webDiscovery.snapshotMaintenance' : 'workbench.maintenanceMeaning')}</p>
     <div className="flex flex-wrap gap-2">
@@ -78,9 +80,9 @@ export function EvidenceMaintenance({ versionId, extractionId, restored, snapsho
       {!snapshot && restored && extractionId && <Button size="sm" variant="outline" disabled={waiting} onClick={() => start('revalidate')}>{t('workbench.revalidate')}</Button>}
     </div>
     {waiting && <p role="status">{t('workbench.maintenancePending')}</p>}
-    {current && !waiting && current.state !== 'succeeded' && <p role="status">{t(stateKeys[current.state] || 'workbench.unavailable')}</p>}
+    {current && !waiting && current.state !== 'succeeded' && <p role="status">{t(Object.hasOwn(stateKeys, current.state) ? stateKeys[current.state] : 'workbench.unavailable')}</p>}
     {result && operation === 'reparse' && <p role="status">{t('workbench.reparseComplete')}</p>}
-    {result && operation === 'revalidate' && <p role="status">{t(Number(result.unverified_count) > 0 ? 'workbench.revalidationPartial' : 'workbench.revalidationComplete', { checked: Number(result.checked_count), verified: Number(result.verified_count), unverified: Number(result.unverified_count) })}</p>}
+    {result && validCounts && operation === 'revalidate' && <p role="status">{t(Number(result.unverified_count) > 0 ? 'workbench.revalidationPartial' : 'workbench.revalidationComplete', { checked: Number(result.checked_count), verified: Number(result.verified_count), unverified: Number(result.unverified_count) })}</p>}
     {(error || jobError) && <p role="alert" className="text-destructive">{requestError(error) || jobError || t('workbench.error')}</p>}
     {status.isError && <Button size="sm" variant="outline" onClick={() => status.refetch()}>{t('workbench.refreshJob')}</Button>}
   </div>

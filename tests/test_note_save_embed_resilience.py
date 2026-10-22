@@ -53,7 +53,7 @@ class TestNoteSaveEmbedResilience:
                 snapshot=None,
             )
 
-        def submit(*args):
+        async def submit(*args):
             assert events == ["commit"]
             events.append("submit")
             if isinstance(submission, Exception):
@@ -76,7 +76,7 @@ class TestNoteSaveEmbedResilience:
         async def rejected(**kwargs):
             raise NoteRevisionConflict(2)
 
-        def submit(*args):
+        async def submit(*args):
             raise AssertionError("embedding before confirmed commit")
 
         monkeypatch.setattr(
@@ -186,7 +186,8 @@ async def test_invalid_mutable_note_fields_never_reach_coordinator(
 
     monkeypatch.setattr("open_notebook.database.note_repository.update_note", forbidden)
     monkeypatch.setattr(
-        "open_notebook.domain.notebook.submit_command", lambda *a: calls.append(a)
+        "open_notebook.domain.notebook.submit_command",
+        AsyncMock(side_effect=lambda *a: calls.append(a)),
     )
     note = Note(id="note:synthetic", content="Retained body", note_type="human")
     if not field_override:

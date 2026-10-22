@@ -2,6 +2,14 @@ import { learningWorkspaceLocales } from '../learning-workspace'
 import { workbenchEn } from '../workbench'
 export const enUS = {
   ...learningWorkspaceLocales['en-US'],
+  commandSubmission: {
+    "newAttemptError": "This new attempt returned an error. The earlier submission is still unconfirmed.",
+    "title": "Submission not confirmed",
+    "warning": "Work may already be running and may incur costs. Do not submit again until checked. An empty results list does not prove rejection.",
+    "newAttemptConfirm": "Start a new attempt? I understand that the previous work may still run and that another submission may duplicate work and costs.",
+    "sessionOnly": "This safeguard lasts only in this loaded app session, not after reload or in other tabs or devices.",
+    "observing": "Checking the acknowledged command. A status-read error does not mean the work stopped."
+},
   noteConflict: {
     notSent: "This save was not sent. Your draft is unchanged. Reconnect, then choose Save when you are ready.",
     authRejected: "The session check rejected this save. Your draft is unchanged. Sign in or reconnect, then choose Save again.",

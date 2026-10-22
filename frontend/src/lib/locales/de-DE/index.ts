@@ -7,6 +7,14 @@ import type { TranslationShape } from '../en-US';
 
 export const deDE = {
   ...learningWorkspaceLocales['de-DE'],
+  commandSubmission: {
+    "newAttemptError": "Dieser neue Versuch hat einen Fehler zurückgegeben. Die frühere Übermittlung ist weiterhin unbestätigt.",
+    "title": "Übermittlung nicht bestätigt",
+    "warning": "Die Arbeit läuft möglicherweise bereits und kann Kosten verursachen. Erst prüfen, dann erneut senden. Eine leere Ergebnisliste beweist keine Ablehnung.",
+    "newAttemptConfirm": "Neuen Versuch starten? Ich verstehe, dass die vorherige Arbeit noch laufen kann und erneutes Senden Arbeit und Kosten verdoppeln kann.",
+    "sessionOnly": "Dieser Schutz gilt nur in dieser geladenen Sitzung, nicht nach Neuladen oder in anderen Tabs oder Geräten.",
+    "observing": "Der bestätigte Auftrag wird geprüft. Ein Fehler beim Statusabruf bedeutet nicht, dass die Arbeit beendet ist."
+},
   noteConflict: {
     notSent: "Diese Speicheranfrage wurde nicht gesendet. Dein Entwurf ist unverändert. Stelle die Verbindung wieder her und wähle dann „Speichern“, wenn du bereit bist.",
     authRejected: "Die Sitzungsprüfung hat diese Speicheranfrage abgelehnt. Dein Entwurf ist unverändert. Melde dich an oder stelle die Verbindung wieder her und wähle dann erneut „Speichern“.",

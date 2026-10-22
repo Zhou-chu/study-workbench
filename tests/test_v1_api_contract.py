@@ -137,8 +137,18 @@ def test_schema_records_real_paths_requests_and_known_response_gaps():
         if isinstance(op, dict) and "operationId" in op
     ]
     assert len(ids) == len(set(ids))
+    for path, method in (
+        ("/api/personal/chats/{chat_session_id}/turns", "post"),
+        ("/api/personal/jobs/{job_id}", "get"),
+        ("/api/personal/jobs/{job_id}/cancel", "post"),
+    ):
+        assert paths[path][method]["responses"]["200"]["content"]["application/json"][
+            "schema"
+        ]
     workspace = paths["/api/personal/notebooks/{notebook_id}/workspace"]["get"]
-    assert workspace["responses"]["200"]["content"]["application/json"]["schema"] == {}
+    assert workspace["responses"]["200"]["content"]["application/json"]["schema"][
+        "$ref"
+    ].endswith("/WorkspaceResponse")
     portable = paths["/api/personal/imports/portable"]["post"]
     assert "201" in portable["responses"]
     assert portable["requestBody"]["content"]["multipart/form-data"]["schema"][

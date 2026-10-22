@@ -1,6 +1,7 @@
 """Native transactional note proof; isolated synthetic SurrealDB only."""
 
 import os
+from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
@@ -32,24 +33,24 @@ async def test_missing_transaction_ack_is_unknown(monkeypatch, response):
 async def database(monkeypatch):
     if os.getenv("STUDY_WORKBENCH_TEST_SURREAL") != "1":
         pytest.skip("requires isolated synthetic SurrealDB")
-    from pathlib import Path
     from uuid import uuid4
 
-    from open_notebook.database.repository import db_connection
+    from open_notebook.database.async_migrate import (
+        AsyncMigrationManager,
+        _query_checked,
+    )
 
     assert os.getenv("SURREAL_URL", "").startswith("ws://127.0.0.1:"), (
         "isolated loopback fixture required"
     )
     monkeypatch.setenv("SURREAL_DATABASE", "note_revision_" + uuid4().hex)
 
-    async with db_connection() as db:
-        for name in ("1", "2", "26", "27"):
-            await db.query(
-                Path(f"open_notebook/database/migrations/{name}.surrealql").read_text()
-            )
-        await db.query(
-            'CREATE notebook:proof SET name="Proof", description="Synthetic"; CREATE notebook:foreign SET name="Foreign", description="Synthetic";'
-        )
+    # Exercise the supported fresh schema, not the obsolete 1/2/26/27 subset.
+    # Migration 13 makes embeddings optional; editorial writes invalidate them.
+    await AsyncMigrationManager().run_migration_up()
+    await _query_checked(
+        'CREATE notebook:proof SET name="Proof", description="Synthetic"; CREATE notebook:foreign SET name="Foreign", description="Synthetic";'
+    )
     yield
 
 
@@ -132,7 +133,8 @@ async def test_real_domain_stale_delete_and_shared_projection(
 
     monkeypatch.setenv("STUDY_WORKBENCH_DATA_DIR", str(tmp_path))
     monkeypatch.setattr(
-        "open_notebook.domain.notebook.submit_command", lambda *a, **k: "synthetic"
+        "open_notebook.domain.notebook.submit_command",
+        AsyncMock(return_value="synthetic"),
     )
     created = await repo.create_note(
         fields={"content": "old"},
@@ -221,7 +223,8 @@ async def test_real_http_legacy_personal_contract_and_cascade(
 
     monkeypatch.setenv("STUDY_WORKBENCH_DATA_DIR", str(tmp_path))
     monkeypatch.setattr(
-        "open_notebook.domain.notebook.submit_command", lambda *a, **k: "synthetic"
+        "open_notebook.domain.notebook.submit_command",
+        AsyncMock(return_value="synthetic"),
     )
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app), base_url="http://test"
@@ -479,7 +482,8 @@ async def test_real_embedding_only_route_does_not_increment(
 
     monkeypatch.setenv("STUDY_WORKBENCH_DATA_DIR", str(tmp_path))
     monkeypatch.setattr(
-        "open_notebook.domain.notebook.submit_command", lambda *a, **k: "synthetic"
+        "open_notebook.domain.notebook.submit_command",
+        AsyncMock(return_value="synthetic"),
     )
     monkeypatch.setattr(
         "open_notebook.ai.models.model_manager.get_embedding_model",
@@ -654,7 +658,8 @@ async def test_real_insight_creation_has_atomic_membership_and_revision(
 
     monkeypatch.setenv("STUDY_WORKBENCH_DATA_DIR", str(tmp_path))
     monkeypatch.setattr(
-        "open_notebook.domain.notebook.submit_command", lambda *a, **k: "synthetic"
+        "open_notebook.domain.notebook.submit_command",
+        AsyncMock(return_value="synthetic"),
     )
     insight = SourceInsight(
         id="source_insight:synthetic",
@@ -714,7 +719,9 @@ async def test_real_migration_backfills_legacy_without_touching_embedding(
         expected_revision=1,
     )
     assert updated.native["revision"] == updated.snapshot["revision"] == 2
-    assert updated.native["embedding"] == [0.25]
+    # Migration preserved the old vector above; changing its source text must
+    # invalidate it rather than expose stale search results.
+    assert updated.native.get("embedding") is None
     assert updated.snapshot["created_at"] == "original"
 
 
@@ -726,7 +733,8 @@ async def test_real_summary_note_rename_preserves_body_and_snapshot(
 
     monkeypatch.setenv("STUDY_WORKBENCH_DATA_DIR", str(tmp_path))
     monkeypatch.setattr(
-        "open_notebook.domain.notebook.submit_command", lambda *a, **k: "synthetic"
+        "open_notebook.domain.notebook.submit_command",
+        AsyncMock(return_value="synthetic"),
     )
     created = await repo.create_note(
         fields={"title": "Before", "content": "Retained body", "note_type": "human"},
@@ -757,7 +765,7 @@ async def test_real_invalid_assigned_note_type_is_rejected_before_write(
     submissions = []
     monkeypatch.setattr(
         "open_notebook.domain.notebook.submit_command",
-        lambda *a, **k: submissions.append(a),
+        AsyncMock(side_effect=lambda *a, **k: submissions.append(a)),
     )
     created = await repo.create_note(
         fields={"content": "Retained body", "note_type": "human"},

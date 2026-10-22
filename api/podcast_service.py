@@ -3,10 +3,12 @@ from typing import Any, Dict, Optional
 from fastapi import HTTPException
 from loguru import logger
 from pydantic import BaseModel
-from surreal_commands import get_command_status, submit_command
+from surreal_commands import get_command_status
 
 from open_notebook.domain.notebook import Notebook
+from open_notebook.exceptions import CommandSubmissionUnknownError
 from open_notebook.podcasts.models import EpisodeProfile, PodcastEpisode, SpeakerProfile
+from open_notebook.utils.command_submission import submit_command
 
 
 class PodcastGenerationRequest(BaseModel):
@@ -94,7 +96,9 @@ class PodcastService:
                 raise ValueError("Podcast commands not available")
 
             # Submit command to surreal-commands
-            job_id = submit_command("open_notebook", "generate_podcast", command_args)
+            job_id = await submit_command(
+                "open_notebook", "generate_podcast", command_args
+            )
 
             # Convert RecordID to string if needed
             if not job_id:
@@ -105,6 +109,8 @@ class PodcastService:
             )
             return job_id_str
 
+        except CommandSubmissionUnknownError:
+            raise
         except Exception as e:
             logger.error(f"Failed to submit podcast generation job: {e}")
             raise HTTPException(

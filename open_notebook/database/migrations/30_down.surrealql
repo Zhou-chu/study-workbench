@@ -1,0 +1,5 @@
+REMOVE FIELD processing_attempt.owner ON source;
+REMOVE FIELD processing_attempt.command ON source;
+REMOVE FIELD processing_attempt.phase ON source;
+REMOVE FIELD processing_attempt.token ON source;
+REMOVE FIELD processing_attempt ON source;

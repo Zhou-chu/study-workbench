@@ -11,7 +11,7 @@ from typing import (
 )
 
 from loguru import logger
-from surreal_commands import CommandInput, CommandOutput, command, submit_command
+from surreal_commands import CommandInput, CommandOutput, command
 
 from open_notebook.ai.models import model_manager
 from open_notebook.database.embedding_repository import (
@@ -22,11 +22,13 @@ from open_notebook.database.embedding_repository import (
 from open_notebook.database.repository import ensure_record_id, repo_query
 from open_notebook.domain.notebook import Note, Source, SourceInsight
 from open_notebook.exceptions import (
+    CommandSubmissionUnknownError,
     ConfigurationError,
     ContextLengthExceededError,
     NotFoundError,
 )
 from open_notebook.utils.chunking import ContentType, chunk_text, detect_content_type
+from open_notebook.utils.command_submission import submit_command
 from open_notebook.utils.embedding import generate_embedding, generate_embeddings
 
 # Permanent validation/not-found errors return success=False. Uncertain commits
@@ -39,6 +41,7 @@ EMBED_RETRY_CONFIG = {
     "wait_min": 1,
     "wait_max": 60,
     "stop_on": [
+        CommandSubmissionUnknownError,
         ValueError,
         EmbeddingOutcomeUnknown,
         ConfigurationError,
@@ -468,7 +471,7 @@ async def create_insight_command(
             raise ValueError("Failed to create insight - no ID in result")
 
         # 2. Submit embedding command (fire-and-forget)
-        submit_command(
+        await submit_command(
             "open_notebook",
             "embed_insight",
             {"insight_id": insight_id},
@@ -583,7 +586,7 @@ async def collect_items_for_rebuild(
     return items
 
 
-def _submit_embedding_jobs(
+async def _submit_embedding_jobs(
     kind: str, command_name: str, id_field: str, item_ids: List[str]
 ) -> Tuple[int, int]:
     """
@@ -597,7 +600,7 @@ def _submit_embedding_jobs(
     failed = 0
     for idx, item_id in enumerate(item_ids, 1):
         try:
-            submit_command(
+            await submit_command(
                 "open_notebook",
                 command_name,
                 {id_field: item_id},
@@ -677,13 +680,13 @@ async def rebuild_embeddings_command(
             )
 
         # Submit one embedding command per item, per kind
-        sources_submitted, sources_failed = _submit_embedding_jobs(
+        sources_submitted, sources_failed = await _submit_embedding_jobs(
             "source", "embed_source", "source_id", items["sources"]
         )
-        notes_submitted, notes_failed = _submit_embedding_jobs(
+        notes_submitted, notes_failed = await _submit_embedding_jobs(
             "note", "embed_note", "note_id", items["notes"]
         )
-        insights_submitted, insights_failed = _submit_embedding_jobs(
+        insights_submitted, insights_failed = await _submit_embedding_jobs(
             "insight", "embed_insight", "insight_id", items["insights"]
         )
         failed_submissions = sources_failed + notes_failed + insights_failed

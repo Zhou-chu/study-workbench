@@ -4,6 +4,14 @@ import type { TranslationShape } from '../en-US';
 
 export const esES = {
   ...learningWorkspaceLocales['es-ES'],
+  commandSubmission: {
+    "newAttemptError": "Este nuevo intento devolvió un error. El envío anterior sigue sin confirmar.",
+    "title": "Envío no confirmado",
+    "warning": "El trabajo puede estar en marcha y generar costes. Compruébalo antes de volver a enviar. Una lista vacía no demuestra que se rechazara.",
+    "newAttemptConfirm": "¿Iniciar un nuevo intento? Entiendo que el trabajo anterior puede seguir en marcha y que otro envío puede duplicar el trabajo y los costes.",
+    "sessionOnly": "Esta protección solo dura en esta sesión cargada, no tras recargar ni en otras pestañas o dispositivos.",
+    "observing": "Consultando el comando confirmado. Un error al consultar el estado no significa que el trabajo se haya detenido."
+},
   noteConflict: {
     notSent: "Esta solicitud de guardado no se ha enviado. Tu borrador no ha cambiado. Restablece la conexión y selecciona Guardar cuando estés listo.",
     authRejected: "La comprobación de sesión ha rechazado esta solicitud de guardado. Tu borrador no ha cambiado. Inicia sesión o restablece la conexión y vuelve a seleccionar Guardar.",

@@ -4,6 +4,14 @@ import type { TranslationShape } from '../en-US';
 
 export const frFR = {
   ...learningWorkspaceLocales['fr-FR'],
+  commandSubmission: {
+    "newAttemptError": "Cette nouvelle tentative a renvoyé une erreur. L’envoi précédent reste non confirmé.",
+    "title": "Envoi non confirmé",
+    "warning": "Le travail peut déjà être en cours et entraîner des frais. Vérifiez avant tout nouvel envoi. Une liste vide ne prouve pas un rejet.",
+    "newAttemptConfirm": "Commencer une nouvelle tentative ? Je comprends que le travail précédent peut continuer et qu’un nouvel envoi peut dupliquer le travail et les frais.",
+    "sessionOnly": "Cette protection ne vaut que pour cette session chargée, pas après un rechargement ni dans d’autres onglets ou appareils.",
+    "observing": "Vérification de la commande confirmée. Une erreur de lecture du statut ne signifie pas que le travail est arrêté."
+},
   noteConflict: {
     notSent: "Cette demande d’enregistrement n’a pas été envoyée. Votre brouillon est inchangé. Rétablissez la connexion, puis choisissez « Enregistrer » lorsque vous êtes prêt.",
     authRejected: "La vérification de session a refusé cette demande d’enregistrement. Votre brouillon est inchangé. Identifiez-vous ou rétablissez la connexion, puis choisissez à nouveau « Enregistrer ».",

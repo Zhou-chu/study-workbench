@@ -10,6 +10,7 @@ import stat
 import zipfile
 from contextlib import asynccontextmanager
 from typing import Any
+from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
@@ -440,11 +441,10 @@ async def test_restore_rejects_recomputed_dangling_graph(populated):
 async def test_export_job_is_idempotent_and_has_verified_download(
     populated, monkeypatch
 ):
-    import surreal_commands
-
     service, _, _, _ = populated
     monkeypatch.setattr(
-        surreal_commands, "submit_command", lambda *args: "command:test"
+        "open_notebook.utils.command_submission.submit_command",
+        AsyncMock(return_value="command:test"),
     )
     first = await service.request_export("notebook:original", "one-click")
     second = await service.request_export("notebook:original", "one-click")
@@ -751,7 +751,8 @@ async def test_real_surreal_sqlite_and_originals_restore_into_fresh_environment(
     assert len(notes) == 1 and notes[0].content == "真实原件与历史引用。"
     assert notes[0].revision == 7
     monkeypatch.setattr(
-        "open_notebook.domain.notebook.submit_command", lambda *a, **k: "synthetic"
+        "open_notebook.domain.notebook.submit_command",
+        AsyncMock(return_value="synthetic"),
     )
     notes[0].content = "Restored revision edit"
     await notes[0].save(expected_revision=7)
@@ -917,10 +918,11 @@ async def test_unknown_commit_keeps_bytes_for_possibly_committed_records(
 
 @pytest.mark.asyncio
 async def test_concurrent_export_workers_publish_one_attempt(populated, monkeypatch):
-    import surreal_commands
-
     service, _, _, _ = populated
-    monkeypatch.setattr(surreal_commands, "submit_command", lambda *args: "command:one")
+    monkeypatch.setattr(
+        "open_notebook.utils.command_submission.submit_command",
+        AsyncMock(return_value="command:one"),
+    )
     job = await service.request_export("notebook:original", "simultaneous")
     one, two = await asyncio.gather(
         service.run_export(job["job_id"]), service.run_export(job["job_id"])
@@ -1009,12 +1011,11 @@ async def test_restore_discards_claimed_revalidation_report(populated, tmp_path)
 
 @pytest.mark.asyncio
 async def test_export_metadata_32mib_regression_fails_durably(populated, monkeypatch):
-    import surreal_commands
-
     service, projects, _, _ = populated
     projects.snapshot["notes"][0]["content"] = "x" * (32 * 1024 * 1024)
     monkeypatch.setattr(
-        surreal_commands, "submit_command", lambda *args: "command:test"
+        "open_notebook.utils.command_submission.submit_command",
+        AsyncMock(return_value="command:test"),
     )
     job = await service.request_export("notebook:original", "oversized-metadata")
     with pytest.raises(InvalidInputError, match="metadata notes.json"):
@@ -1327,3 +1328,62 @@ async def test_format2_export_is_unconditional_and_restores_revision7(
         assert snapshots[0]["revision"] == 7
     else:
         assert snapshots == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("cancelled", [False, True])
+async def test_unknown_export_submission_is_not_failed_or_replayed(
+    populated, monkeypatch, cancelled
+):
+    from open_notebook.exceptions import CommandSubmissionUnknownError
+
+    service, _, _, _ = populated
+    error = asyncio.CancelledError() if cancelled else CommandSubmissionUnknownError()
+    submit = AsyncMock(side_effect=error)
+    monkeypatch.setattr("open_notebook.utils.command_submission.submit_command", submit)
+    if cancelled:
+        with pytest.raises(asyncio.CancelledError):
+            await service.request_export("notebook:original", "unknown-queue-ack")
+    else:
+        submitted = await service.request_export(
+            "notebook:original", "unknown-queue-ack"
+        )
+        assert submitted["job_id"]
+        assert submitted["state"] == "submission_unknown"
+    same = await service.request_export("notebook:original", "unknown-queue-ack")
+    assert same["state"] == "submission_unknown"
+    assert same["submission_state"] == "unknown"
+    assert same["error"]["code"] == "QUEUE_SUBMISSION_UNKNOWN"
+    submit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("worker_before_ack_loss", [False, True])
+async def test_unknown_export_can_finish_same_durable_job(
+    populated, monkeypatch, worker_before_ack_loss
+):
+    from open_notebook.exceptions import CommandSubmissionUnknownError
+
+    service, _, _, _ = populated
+
+    async def lost_ack(app, command, args):
+        if worker_before_ack_loss:
+            await service.run_export(args["job_id"])
+        raise CommandSubmissionUnknownError()
+
+    submit = AsyncMock(side_effect=lost_ack)
+    monkeypatch.setattr("open_notebook.utils.command_submission.submit_command", submit)
+    submitted = await service.request_export("notebook:original", "late-worker")
+    assert submitted["job_id"]
+    existing = await service.request_export("notebook:original", "late-worker")
+    if not worker_before_ack_loss:
+        assert existing["state"] == "submission_unknown"
+        await service.run_export(existing["job_id"])
+    completed = await service.request_export("notebook:original", "late-worker")
+    assert completed["job_id"] == existing["job_id"]
+    assert completed["state"] == "succeeded"
+    assert completed["submission_state"] == "confirmed"
+    assert not completed.get("error")
+    assert completed["attempts"] == 1
+    assert completed["result"]
+    submit.assert_awaited_once()

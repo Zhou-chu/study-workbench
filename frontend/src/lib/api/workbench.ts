@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { BridgeJob, CreateWorkbenchNoteInput, UpdateWorkbenchNoteInput, TurnRecord, TurnRequest, WorkbenchNote, WorkbenchSelection, Workspace } from '@/lib/types/personal'
+import type { BridgeJob, TurnSubmissionResponse, CreateWorkbenchNoteInput, UpdateWorkbenchNoteInput, TurnRecord, TurnRequest, WorkbenchNote, WorkbenchSelection, Workspace } from '@/lib/types/personal'
 const id = encodeURIComponent
 export const workbenchApi = {
   workspace: async (notebookId: string) => (await apiClient.get<Workspace>(`/personal/notebooks/${id(notebookId)}/workspace`)).data,
@@ -12,7 +12,7 @@ export const workbenchApi = {
     if (sourceId) form.append('source_id', sourceId)
     return (await apiClient.post<{ source_id: string; source_version_id: string; job_id: string }>(`/personal/notebooks/${id(notebookId)}/sources/upload`, form)).data
   },
-  turn: async (sessionId: string, request: TurnRequest) => (await apiClient.post<TurnRecord | { turn_id: string; job_id: string }>(`/personal/chats/${id(sessionId)}/turns`, request)).data,
+  turn: async (sessionId: string, request: TurnRequest) => (await apiClient.post<TurnSubmissionResponse>(`/personal/chats/${id(sessionId)}/turns`, request)).data,
   turns: async (sessionId: string) => (await apiClient.get<TurnRecord[]>(`/personal/chats/${id(sessionId)}/turns`)).data,
   saveNote: async (notebookId: string, note: CreateWorkbenchNoteInput) => (await apiClient.post<WorkbenchNote>(`/personal/notebooks/${id(notebookId)}/notes`, note)).data,
   updateNote: async (notebookId: string, noteId: string, note: UpdateWorkbenchNoteInput) => (await apiClient.patch<WorkbenchNote>(`/personal/notebooks/${id(notebookId)}/notes/${id(noteId)}`, note)).data,

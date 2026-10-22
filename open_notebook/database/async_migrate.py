@@ -74,6 +74,38 @@ class AsyncMigration:
             raise
 
 
+class PodcastProfileMigration(AsyncMigration):
+    """Migration 7 only: unknown legacy schemas require an operator decision.
+
+    SurrealDB 2.3 cannot use INFO inside an expression. Inspect it read-only
+    before submitting any writes; the SQL transaction independently rejects
+    existing records and existing tables (including a concurrent creator).
+    """
+
+    async def run(self, bump: bool = True) -> None:
+        results = await _query_checked(
+            "INFO FOR DB; SELECT * FROM podcast_config LIMIT 1;"
+        )
+        if (
+            len(results) != 2
+            or not isinstance(results[0], dict)
+            or not isinstance(results[0].get("tables"), dict)
+            or not isinstance(results[1], list)
+        ):
+            raise RuntimeError("Migration 7 preflight could not verify database state")
+        tables = results[0]["tables"]
+        if {"speaker_profile", "episode_profile", "episode"}.intersection(
+            tables
+        ) or results[1]:
+            raise RuntimeError(
+                "Migration 7 requires manual review of existing podcast data or schema. "
+                "No migration-7 writes were submitted. Back up the database and "
+                "review a data-preserving conversion on a copy before upgrading; "
+                "do not delete tables or mark the migration complete to bypass this check."
+            )
+        await super().run(bump=bump)
+
+
 class AsyncMigrationRunner:
     """
     Handles running multiple migrations in sequence.
@@ -127,7 +159,9 @@ class AsyncMigrationManager:
             AsyncMigration.from_file("open_notebook/database/migrations/4.surrealql"),
             AsyncMigration.from_file("open_notebook/database/migrations/5.surrealql"),
             AsyncMigration.from_file("open_notebook/database/migrations/6.surrealql"),
-            AsyncMigration.from_file("open_notebook/database/migrations/7.surrealql"),
+            PodcastProfileMigration.from_file(
+                "open_notebook/database/migrations/7.surrealql"
+            ),
             AsyncMigration.from_file("open_notebook/database/migrations/8.surrealql"),
             AsyncMigration.from_file("open_notebook/database/migrations/9.surrealql"),
             AsyncMigration.from_file("open_notebook/database/migrations/10.surrealql"),
@@ -150,6 +184,7 @@ class AsyncMigrationManager:
             AsyncMigration.from_file("open_notebook/database/migrations/27.surrealql"),
             AsyncMigration.from_file("open_notebook/database/migrations/28.surrealql"),
             AsyncMigration.from_file("open_notebook/database/migrations/29.surrealql"),
+            AsyncMigration.from_file("open_notebook/database/migrations/30.surrealql"),
         ]
         self.down_migrations = [
             AsyncMigration.from_file(
@@ -238,6 +273,9 @@ class AsyncMigrationManager:
             ),
             AsyncMigration.from_file(
                 "open_notebook/database/migrations/29_down.surrealql"
+            ),
+            AsyncMigration.from_file(
+                "open_notebook/database/migrations/30_down.surrealql"
             ),
         ]
         self.runner = AsyncMigrationRunner(

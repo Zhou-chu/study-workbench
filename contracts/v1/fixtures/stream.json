@@ -1,0 +1,99 @@
+[
+  {
+    "name": "missing",
+    "turn": [],
+    "wire": "event: error\ndata: {\"code\": \"TURN_NOT_FOUND\"}\n\n",
+    "sleeps": 0
+  },
+  {
+    "name": "failed",
+    "job": [
+      {
+        "job_id": "job_synthetic",
+        "turn_id": "turn_synthetic",
+        "state": "failed",
+        "error": null
+      }
+    ],
+    "wire": "event: stage\ndata: {\"turn_id\": \"turn_synthetic\", \"state\": \"failed\", \"error\": null}\n\n",
+    "sleeps": 0
+  },
+  {
+    "name": "submission_unknown",
+    "job": [
+      {
+        "job_id": "job_synthetic",
+        "turn_id": "turn_synthetic",
+        "state": "submission_unknown",
+        "error": null
+      }
+    ],
+    "wire": "event: stage\ndata: {\"turn_id\": \"turn_synthetic\", \"state\": \"submission_unknown\", \"error\": null}\n\n",
+    "sleeps": 0
+  },
+  {
+    "name": "cancelled_local",
+    "job": [
+      {
+        "job_id": "job_synthetic",
+        "turn_id": "turn_synthetic",
+        "state": "cancelled_local",
+        "error": null,
+        "remote_may_continue": true
+      }
+    ],
+    "wire": "event: stage\ndata: {\"turn_id\": \"turn_synthetic\", \"state\": \"cancelled_local\", \"error\": null, \"remote_may_continue\": true}\n\n",
+    "sleeps": 0,
+    "turn": [
+      {
+        "turn_id": "turn_synthetic",
+        "status": "succeeded",
+        "answer": "Late synthetic result must not override local cancellation."
+      }
+    ]
+  },
+  {
+    "name": "succeeded",
+    "turn": [
+      {
+        "turn_id": "turn_synthetic",
+        "status": "succeeded",
+        "answer": "合成示例",
+        "extension": {
+          "future": true
+        }
+      }
+    ],
+    "wire": "event: final\ndata: {\"turn_id\": \"turn_synthetic\", \"status\": \"succeeded\", \"answer\": \"合成示例\", \"extension\": {\"future\": true}}\n\n",
+    "sleeps": 0
+  },
+  {
+    "name": "failed",
+    "turn": [
+      {
+        "turn_id": "turn_synthetic",
+        "status": "failed",
+        "answer": "合成示例",
+        "extension": {
+          "future": true
+        }
+      }
+    ],
+    "wire": "event: final\ndata: {\"turn_id\": \"turn_synthetic\", \"status\": \"failed\", \"answer\": \"合成示例\", \"extension\": {\"future\": true}}\n\n",
+    "sleeps": 0
+  },
+  {
+    "name": "bounded_eof_is_not_success",
+    "turn": [
+      {
+        "turn_id": "turn_synthetic",
+        "status": "future_state",
+        "history": [
+          "opaque"
+        ]
+      }
+    ],
+    "wire": "event: stage\ndata: {\"turn_id\": \"turn_synthetic\", \"status\": \"future_state\", \"history\": [\"opaque\"]}\n\n",
+    "sleeps": 120
+  }
+]

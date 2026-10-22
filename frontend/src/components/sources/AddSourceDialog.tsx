@@ -23,6 +23,7 @@ import { useTransformations } from '@/lib/hooks/use-transformations'
 import { useCreateSource } from '@/lib/hooks/use-sources'
 import { useSettings } from '@/lib/hooks/use-settings'
 import { CreateSourceRequest } from '@/lib/types/api'
+import { hasUncertainCommandSubmission, isCommandSubmissionUnknown } from '@/lib/utils/command-submission'
 import { useTranslation } from '@/lib/hooks/use-translation'
 
 const MAX_BATCH_SIZE = 50
@@ -101,6 +102,10 @@ export function AddSourceDialog({
   // Simplified state management
   const [currentStep, setCurrentStep] = useState(1)
   const [processing, setProcessing] = useState(false)
+  // Local draft stays in this dialog; only the submission metadata latch is shared.
+  const [submissionUnknown, setSubmissionUnknown] = useState(() => hasUncertainCommandSubmission('source:create'))
+  const submissionUnknownRef = useRef(submissionUnknown)
+  const submissionPendingRef = useRef(false)
   const [processingStatus, setProcessingStatus] = useState<ProcessingState | null>(null)
   const [selectedNotebooks, setSelectedNotebooks] = useState<string[]>(
     defaultNotebookId ? [defaultNotebookId] : []
@@ -141,6 +146,7 @@ export function AddSourceDialog({
 
   // Initialize form values when settings and transformations are loaded
   useEffect(() => {
+    if (submissionUnknownRef.current || submissionPendingRef.current) return
     if (settings && transformations.length > 0) {
       const defaultTransformations = transformations
         .filter(t => t.apply_default)
@@ -368,6 +374,8 @@ export function AddSourceDialog({
         await createSource.mutateAsync(createRequest)
         results.success++
       } catch (error) {
+        // Stop the batch: absence from the list cannot prove this item was rejected.
+        if (isCommandSubmissionUnknown(error)) throw error
         console.error(`Error creating source for ${itemLabel}:`, error)
         results.failed++
       }
@@ -385,6 +393,7 @@ export function AddSourceDialog({
   // Form submission
   const onSubmit = async (data: CreateSourceFormData) => {
     try {
+      submissionPendingRef.current = true
       setProcessing(true)
 
       if (isBatchMode) {
@@ -392,32 +401,52 @@ export function AddSourceDialog({
         setProcessingStatus({ message: t('sources.processingFiles') })
         const results = await submitBatch(data)
 
+        // A definite result belongs only to this new attempt, not the older unknown.
+        const summaryOptions = submissionUnknownRef.current && results.failed > 0
+          ? { description: t('commandSubmission.newAttemptError') }
+          : undefined
         // Show summary toast
         if (results.failed === 0) {
           toast.success(t('sources.batchSuccess', { count: results.success }))
         } else if (results.success === 0) {
-          toast.error(t('sources.batchFailed', { count: results.failed }))
+          toast.error(t('sources.batchFailed', { count: results.failed }), summaryOptions)
         } else {
-          toast.warning(t('sources.batchPartial', { success: results.success.toString(), failed: results.failed.toString() }))
+          toast.warning(t('sources.batchPartial', { success: results.success.toString(), failed: results.failed.toString() }), summaryOptions)
         }
 
+        submissionPendingRef.current = false
+        // A separately acknowledged attempt cannot resolve an older unknown one.
+        // Keep its warning and draft even if this batch/attempt has now settled.
         handleClose()
       } else {
         // Single source submission
         setProcessingStatus({ message: t('sources.submittingSource') })
         await submitSingleSource(data)
+        submissionPendingRef.current = false
+        // A separately acknowledged attempt cannot resolve an older unknown one.
+        // Keep its warning and draft even if this batch/attempt has now settled.
         handleClose()
       }
     } catch (error) {
+      if (isCommandSubmissionUnknown(error)) {
+        submissionUnknownRef.current = true
+        setSubmissionUnknown(true)
+        setProcessing(false)
+        setProcessingStatus(null)
+        // The mutation hook owns the warning toast. Do not show failure/success.
+        return
+      }
       console.error('Error creating source:', error)
       setProcessingStatus({
-        message: t('common.error'),
+        message: t(submissionUnknownRef.current ? 'commandSubmission.newAttemptError' : 'common.error'),
       })
       timeoutRef.current = setTimeout(() => {
         setProcessing(false)
         setProcessingStatus(null)
         setBatchProgress(null)
       }, 3000)
+    } finally {
+      submissionPendingRef.current = false
     }
   }
 
@@ -427,6 +456,17 @@ export function AddSourceDialog({
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
       timeoutRef.current = null
+    }
+
+    if (submissionPendingRef.current) {
+      // Closing is not cancellation: retain the draft until submission settles.
+      onOpenChange(false)
+      return
+    }
+    if (submissionUnknownRef.current) {
+      setProcessing(false)
+      onOpenChange(false)
+      return
     }
 
     reset()
@@ -541,6 +581,13 @@ export function AddSourceDialog({
             {t('sources.processDescription')}
           </DialogDescription>
         </DialogHeader>
+
+        {submissionUnknown && (
+          <div role="alert" className="mx-6 rounded-md bg-warn-tint p-3 text-sm">
+            <p>{t('commandSubmission.warning')}</p>
+            <p>{t('commandSubmission.sessionOnly')}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="min-w-0">
           <WizardContainer

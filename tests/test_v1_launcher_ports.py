@@ -1,14 +1,13 @@
 """Port isolation is exercised with synthetic config and mocked OS/network calls."""
 
 import signal
-import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, call
 
 import pytest
 
-from scripts.v1 import run_native
+from scripts.v1 import run_native, runtime_lifecycle
 
 ISOLATED_PORTS = (18001, 5056, 13001)
 PORT_FLAGS = [
@@ -162,6 +161,12 @@ def mocked_launcher(tmp_path, monkeypatch):
     ]
     popen = Mock(side_effect=procs)
     monkeypatch.setattr(run_native.subprocess, "Popen", popen)
+    monkeypatch.setattr(
+        runtime_lifecycle, "process_identity", lambda pid: (pid, pid, 1)
+    )
+    monkeypatch.setattr(runtime_lifecycle.os, "waitid", Mock(return_value=None))
+    monkeypatch.setattr(run_native, "owned_listener_ready", Mock(return_value=True))
+    monkeypatch.setattr(run_native, "require_owned_listener", Mock(return_value=True))
     get = Mock(return_value=Mock(status_code=200))
     monkeypatch.setattr(run_native.httpx, "get", get)
     worker = Mock(return_value=True)
@@ -177,7 +182,12 @@ def mocked_launcher(tmp_path, monkeypatch):
         if self.parent == Path("/proc/net")
         else read_text(self, *a, **kw),
     )
-    monkeypatch.setattr(run_native.time, "sleep", Mock(side_effect=KeyboardInterrupt))
+
+    def sleep(seconds):
+        if seconds == 1:
+            raise KeyboardInterrupt
+
+    monkeypatch.setattr(run_native.time, "sleep", sleep)
     monkeypatch.setattr(
         sys,
         "argv",
@@ -240,7 +250,6 @@ def test_startup_failure_closes_logs_and_only_stops_owned_groups(
 ):
     env, procs, popen, get, worker, sock, killpg = mocked_launcher
     popen.side_effect = [procs[0], OSError("synthetic-db-secret")]
-    procs[0].wait.side_effect = [subprocess.TimeoutExpired("synthetic", 10), None]
     with pytest.raises(SystemExit) as error:
         run_native.main()
     assert "synthetic-db-secret" not in str(error.value) + capsys.readouterr().out
@@ -304,6 +313,7 @@ def test_occupied_selected_port_never_starts_services(mocked_launcher):
     popen.assert_not_called()
     get.assert_not_called()
     killpg.assert_not_called()
+    assert not Path(env["STUDY_WORKBENCH_RUNTIME_DIR"]).exists()
 
 
 def test_readiness_failure_stops_only_started_services(mocked_launcher, monkeypatch):

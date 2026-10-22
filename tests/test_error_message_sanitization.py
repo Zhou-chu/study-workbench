@@ -65,16 +65,25 @@ class TestSourcesRouterDoesNotLeakExceptionText:
 
     def test_update_source_failure_returns_generic_message(self, client):
         mock_source = AsyncMock()
-        mock_source.save = AsyncMock(side_effect=RuntimeError(SECRET))
         mock_source.asset = None
 
-        with patch(
-            "api.routers.sources.Source.get", new=AsyncMock(return_value=mock_source)
+        with (
+            patch(
+                "api.routers.sources.Source.get",
+                new=AsyncMock(return_value=mock_source),
+            ),
+            patch(
+                "api.routers.sources.repo_update",
+                new=AsyncMock(side_effect=RuntimeError(SECRET)),
+            ) as update,
         ):
             response = client.put(
                 "/api/sources/source:abc123", json={"title": "New Title"}
             )
 
+        update.assert_awaited_once_with(
+            "source", "source:abc123", {"title": "New Title"}
+        )
         assert response.status_code == 500
         assert SECRET not in response.text
         assert response.json()["detail"] == "Error updating source"
@@ -89,16 +98,21 @@ class TestInvalidInputErrorsStillReturnTheirOwnSafeMessage:
         from open_notebook.exceptions import InvalidInputError
 
         mock_source = AsyncMock()
-        mock_source.save = AsyncMock(
-            side_effect=InvalidInputError("Title cannot be empty")
-        )
         mock_source.asset = None
 
-        with patch(
-            "api.routers.sources.Source.get", new=AsyncMock(return_value=mock_source)
+        with (
+            patch(
+                "api.routers.sources.Source.get",
+                new=AsyncMock(return_value=mock_source),
+            ),
+            patch(
+                "api.routers.sources.repo_update",
+                new=AsyncMock(side_effect=InvalidInputError("Title cannot be empty")),
+            ) as update,
         ):
             response = client.put("/api/sources/source:abc123", json={"title": "x"})
 
+        update.assert_awaited_once_with("source", "source:abc123", {"title": "x"})
         assert response.status_code == 400
         assert response.json()["detail"] == "Title cannot be empty"
 

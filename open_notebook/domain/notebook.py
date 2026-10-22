@@ -5,17 +5,22 @@ from typing import Any, ClassVar, Dict, List, Literal, Optional, Union
 
 from loguru import logger
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from surreal_commands import submit_command
 from surrealdb import RecordID
 
 from open_notebook.database.note_contract import Revision
 from open_notebook.database.repository import ensure_record_id, repo_query
 from open_notebook.domain.base import ObjectModel
 from open_notebook.exceptions import (
+    CommandSubmissionUnknownError,
     DatabaseOperationError,
     InvalidInputError,
     NotFoundError,
     OpenNotebookError,
+)
+from open_notebook.utils.command_submission import submit_command
+from open_notebook.utils.source_execution import (
+    source_owner_progress,
+    source_processing_status,
 )
 
 
@@ -424,6 +429,8 @@ class Source(ObjectModel):
         default=None, description="Link to surreal-commands processing job"
     )
 
+    processing_attempt: Optional[Dict[str, Any]] = None
+
     @field_validator("command", mode="before")
     @classmethod
     def parse_command(cls, value):
@@ -444,6 +451,8 @@ class Source(ObjectModel):
 
     async def get_status(self) -> Optional[str]:
         """Get the processing status of the associated command"""
+        if self.processing_attempt and not self.processing_attempt.get("command"):
+            return "unknown"
         if not self.command:
             return None
 
@@ -451,10 +460,12 @@ class Source(ObjectModel):
             from surreal_commands import get_command_status
 
             status = await get_command_status(str(self.command))
-            return status.status if status else "unknown"
+            return source_processing_status(
+                self.processing_attempt, status.status if status else "unknown"
+            )
         except Exception as e:
             logger.warning(f"Failed to get command status for {self.command}: {e}")
-            return "unknown"
+            return source_processing_status(self.processing_attempt, "unknown")
 
     async def get_processing_progress(self) -> Optional[Dict[str, Any]]:
         """Get detailed processing information for the associated command"""
@@ -466,7 +477,15 @@ class Source(ObjectModel):
 
             status_result = await get_command_status(str(self.command))
             if not status_result:
-                return None
+                return source_owner_progress(
+                    self.processing_attempt,
+                    source_processing_status(self.processing_attempt, "unknown"),
+                )
+            public_status = source_processing_status(
+                self.processing_attempt, status_result.status
+            )
+            if public_status != status_result.status:
+                return source_owner_progress(self.processing_attempt, public_status)
 
             # Extract execution metadata if available
             result = getattr(status_result, "result", None)
@@ -483,7 +502,10 @@ class Source(ObjectModel):
             }
         except Exception as e:
             logger.warning(f"Failed to get command progress for {self.command}: {e}")
-            return None
+            return source_owner_progress(
+                self.processing_attempt,
+                source_processing_status(self.processing_attempt, "unknown"),
+            )
 
     async def get_context(
         self,
@@ -568,7 +590,7 @@ class Source(ObjectModel):
                 raise ValueError(f"Source {self.id} has no text to vectorize")
 
             # Submit the embed_source command
-            command_id = submit_command(
+            command_id = await submit_command(
                 "open_notebook",
                 "embed_source",
                 {"source_id": str(self.id)},
@@ -582,7 +604,7 @@ class Source(ObjectModel):
 
             return command_id_str
 
-        except ValueError:
+        except (ValueError, CommandSubmissionUnknownError):
             raise
         except Exception as e:
             logger.error(f"Failed to submit embed_source job for source {self.id}: {e}")
@@ -624,7 +646,7 @@ class Source(ObjectModel):
         try:
             # Submit create_insight command (fire-and-forget)
             # Command handles retries internally for transaction conflicts
-            command_id = submit_command(
+            command_id = await submit_command(
                 "open_notebook",
                 "create_insight",
                 {
@@ -639,6 +661,8 @@ class Source(ObjectModel):
             )
             return str(command_id)
 
+        except CommandSubmissionUnknownError:
+            raise
         except Exception as e:
             logger.exception(
                 f"Error submitting create_insight for source {self.id}: {e}"
@@ -646,13 +670,13 @@ class Source(ObjectModel):
             raise DatabaseOperationError(e)
 
     def _prepare_save_data(self) -> dict:
-        """Override to ensure command field is always RecordID format for database"""
+        """Ordinary saves cannot overwrite a separately claimed queue owner."""
         data = super()._prepare_save_data()
-
-        # Ensure command field is RecordID format if not None
-        if data.get("command") is not None:
+        if self.id:
+            data.pop("command", None)
+            data.pop("processing_attempt", None)
+        elif data.get("command") is not None:
             data["command"] = ensure_record_id(data["command"])
-
         return data
 
     async def delete(self) -> bool:
@@ -744,11 +768,13 @@ class Note(ObjectModel):
         saved = type(self)(**result.native)
         for name in type(self).model_fields:
             setattr(self, name, getattr(saved, name))
-        return self.submit_embedding()
+        return await self.submit_embedding()
 
-    def submit_embedding(self) -> Optional[str]:
-        """Best effort, strictly after a confirmed editorial commit."""
-        # Submit embedding command (fire-and-forget) if note has content.
+    async def submit_embedding(self, *, strict: bool = False) -> Optional[str]:
+        """Submit embedding after editorial commit; explicit callers propagate uncertainty."""
+        # Automatic post-save embedding is best effort; strict explicit requests
+        # must not describe an ambiguous CREATE as a definite enqueue failure.
+        # Submit embedding command if note has content.
         # Unlike Source.vectorize()/add_insight() (explicit, dedicated calls
         # whose whole point is the submission), this runs automatically
         # inside save() - the note itself is already durably saved above,
@@ -756,13 +782,20 @@ class Note(ObjectModel):
         # save with a 500. Best-effort: log and move on.
         if self.id and self.content and self.content.strip():
             try:
-                command_id = submit_command(
+                command_id = await submit_command(
                     "open_notebook",
                     "embed_note",
                     {"note_id": str(self.id)},
                 )
                 logger.debug(f"Submitted embed_note command {command_id} for {self.id}")
                 return command_id
+            except CommandSubmissionUnknownError as exc:
+                if strict:
+                    exc.resource_id = str(self.id)
+                    exc.resource_type = "note"
+                    raise
+                logger.warning("Automatic note embedding submission outcome is unknown")
+                return None
             except Exception as e:
                 logger.error(f"Failed to submit embed_note command for {self.id}: {e}")
                 return None

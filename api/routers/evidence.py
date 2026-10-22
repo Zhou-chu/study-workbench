@@ -5,6 +5,7 @@ import json
 from typing import Any, Literal
 
 from fastapi import APIRouter, File, Form, UploadFile
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -17,9 +18,13 @@ from api.personal_contracts import (
     NoteUpdateRequest,
     NoteWriteCapabilities,
     PersonalNoteResponse,
+    SelectionResponse,
+    TurnSubmissionResponse,
+    WorkspaceResponse,
 )
 from api.personal_service import PersonalService, digest, now, submit_job
 from api.personal_store import get_store
+from api.personal_transport_contracts import TURN_EVENTS_RESPONSES, transport_responses
 from open_notebook.database.repository import repo_delete, repo_relate
 from open_notebook.domain.notebook import Notebook, Source
 from open_notebook.exceptions import InvalidInputError, NotFoundError
@@ -40,12 +45,21 @@ class TurnRequest(BaseModel):
     task: Literal["question", "outline"] = "question"
 
 
-@router.get("/notebooks/{notebook_id}/workspace")
+@router.get(
+    "/notebooks/{notebook_id}/workspace",
+    response_model=WorkspaceResponse,
+    response_model_exclude_unset=True,
+)
 async def workspace(notebook_id: str):
-    return await PersonalService().workspace(notebook_id)
+    # Preserve the pre-response-model FastAPI wire encoding (notably UTC +00:00).
+    return jsonable_encoder(await PersonalService().workspace(notebook_id))
 
 
-@router.patch("/notebooks/{notebook_id}/selection")
+@router.patch(
+    "/notebooks/{notebook_id}/selection",
+    response_model=SelectionResponse,
+    response_model_exclude_unset=True,
+)
 async def selection(notebook_id: str, value: dict[str, Any]):
     await Notebook.get(notebook_id)
     return await PersonalService().save_selection(notebook_id, value)
@@ -221,7 +235,14 @@ async def revalidate(source_version_id: str, request: RevalidationRequest):
     )
 
 
-@router.get("/source-versions/{source_version_id}/download")
+@router.get(
+    "/source-versions/{source_version_id}/download",
+    response_class=FileResponse,
+    responses=transport_responses(
+        ["application/pdf", "text/plain", "text/markdown"],
+        "Protected original bytes; inline stored title, no-store. MIME is allowlisted.",
+    ),
+)
 async def download(source_version_id: str):
     service = EvidenceService()
     version = await service.version(source_version_id)
@@ -260,7 +281,11 @@ async def search(value: dict[str, Any]):
     }
 
 
-@router.post("/chats/{chat_session_id}/turns")
+@router.post(
+    "/chats/{chat_session_id}/turns",
+    response_model=TurnSubmissionResponse,
+    response_model_exclude_unset=True,
+)
 async def turn(chat_session_id: str, request: TurnRequest):
     await Notebook.get(request.notebook_id)
     service = EvidenceService()
@@ -283,7 +308,11 @@ async def turns(chat_session_id: str):
     )
 
 
-@router.get("/turns/{turn_id}/events")
+@router.get(
+    "/turns/{turn_id}/events",
+    response_class=StreamingResponse,
+    responses=TURN_EVENTS_RESPONSES,
+)
 async def turn_events(turn_id: str):
     async def events():
         previous = None

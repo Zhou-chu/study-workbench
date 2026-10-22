@@ -31,43 +31,56 @@ const operationKeys: Record<string, string> = {
   download: 'workbench.jobOperations.download',
 }
 
+function canPoll(job: BridgeJob | undefined) {
+  return !!job && job.restored_history !== true && job.replay_allowed !== false && typeof job.operation === 'string' && Object.hasOwn(operationKeys, job.operation) && activeJob(job.state)
+}
+
 function JobCard({ job, onChanged }: { job: BridgeJob; onChanged: () => void }) {
   const { t } = useTranslation()
   const [audioUrl, setAudioUrl] = useState<string>()
-  const status = useQuery({ queryKey: QUERY_KEYS.personalJob(job.job_id), queryFn: () => workbenchApi.job(job.job_id), initialData: job, enabled: activeJob(job.state), retry: false, refetchInterval: query => !isAuthRecoveryError(query.state.error) && activeJob(query.state.data?.state) ? 2000 : false })
+  const status = useQuery({ queryKey: QUERY_KEYS.personalJob(job.job_id), queryFn: () => workbenchApi.job(job.job_id), initialData: job, enabled: canPoll(job), retry: false, refetchInterval: query => !isAuthRecoveryError(query.state.error) && canPoll(query.state.data) ? 2000 : false })
   const current = status.data || job
+  const knownOperation = typeof current.operation === 'string' && Object.hasOwn(operationKeys, current.operation)
+  const knownState = ['queued', 'running', 'waiting_remote', 'succeeded', 'failed', 'needs_reauth', 'submission_unknown', 'cancelled_local'].includes(current.state)
+  const live = current.restored_history !== true && current.replay_allowed !== false
   const remoteWork = current.provider === 'notebooklm' || current.operation === 'chat'
-  const canCancel = current.state === 'queued' || (current.state === 'running' && current.operation === 'chat') || (activeJob(current.state) && current.provider === 'notebooklm')
+  const canCancel = live && knownOperation && knownState && (current.state === 'queued' || (current.state === 'running' && current.operation === 'chat') || (activeJob(current.state) && current.provider === 'notebooklm'))
   const cancel = useMutation({ mutationFn: () => workbenchApi.cancelJob(job.job_id), retry: false, onSuccess: () => { status.refetch(); onChanged() } })
-  const artifact = current.result?.artifact as { artifact_id?: string; mime_type?: string } | undefined
-  const downloadUrl = current.result?.download_url || (artifact?.artifact_id && current.result?.downloaded ? `/personal/artifacts/${encodeURIComponent(artifact.artifact_id)}/download` : undefined)
+  const result = current.result && typeof current.result === 'object' && !Array.isArray(current.result) ? current.result as Record<string, unknown> : undefined
+  const artifact = result?.artifact && typeof result.artifact === 'object' && !Array.isArray(result.artifact) ? result.artifact as Record<string, unknown> : undefined
+  const artifactId = typeof artifact?.artifact_id === 'string' && artifact.artifact_id ? artifact.artifact_id : undefined
+  const audio = typeof artifact?.mime_type === 'string' && artifact.mime_type.startsWith('audio/')
+  const candidate = typeof result?.download_url === 'string' ? result.download_url : (artifactId && result?.downloaded === true ? `/personal/artifacts/${encodeURIComponent(artifactId)}/download` : undefined)
+  const downloadUrl = knownOperation && knownState && candidate && /^\/(?:api\/)?personal\/(?:exports|artifacts)\/[^/?#]+\/download$/.test(candidate) ? candidate : undefined
   const download = useMutation({ mutationFn: async (play: boolean) => {
     if (!downloadUrl) return
     const blob = await portableApi.download(downloadUrl)
     if (play && blob.type.startsWith('audio/')) setAudioUrl(URL.createObjectURL(blob))
-    else saveBlob(blob, `${artifact?.artifact_id || job.job_id}.${blob.type.startsWith('audio/') ? (blob.type.includes('wav') ? 'wav' : 'mp3') : 'zip'}`)
+    else saveBlob(blob, `${artifactId || job.job_id}.${blob.type.startsWith('audio/') ? (blob.type.includes('wav') ? 'wav' : 'mp3') : 'zip'}`)
   }, retry: false })
   useEffect(() => () => { if (audioUrl) URL.revokeObjectURL(audioUrl) }, [audioUrl])
-  const errorText = typeof current.error === 'string' ? current.error : (current.error as { message?: string } | null)?.message
+  const errorObject = current.error && typeof current.error === 'object' ? current.error as Record<string, unknown> : undefined
+  const errorText = typeof current.error === 'string' ? current.error : typeof errorObject?.message === 'string' ? errorObject.message : undefined
   return <article className="rounded-md border p-3 space-y-2 text-xs">
-    <p className="font-medium">{t(Object.hasOwn(operationKeys, current.operation) ? operationKeys[current.operation] : 'workbench.jobOperations.other')}</p>
-    <p role="status">{t(stateKeys[current.state] || 'workbench.unavailable')}</p>
+    <p className="font-medium">{t(knownOperation && typeof current.operation === 'string' ? operationKeys[current.operation] : 'workbench.jobOperations.other')}</p>
+    <p role="status">{t(Object.hasOwn(stateKeys, current.state) ? stateKeys[current.state] : 'workbench.unavailable')}</p>
     {current.state === 'submission_unknown' && <p className="text-muted-foreground">{t('workbench.unknownSubmission')}</p>}
     {errorText && <p className="text-destructive">{errorText}</p>}
-    {current.result?.downloaded === false && <p className="text-muted-foreground">{t('workbench.artifactNotSaved')}</p>}
-    {typeof current.result?.download_error === 'string' && <p className="text-muted-foreground">{current.result.download_error}</p>}
-    {current.result?.import_report != null && <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words">{JSON.stringify(current.result.import_report, null, 2)}</pre>}
+    {result?.downloaded === false && <p className="text-muted-foreground">{t('workbench.artifactNotSaved')}</p>}
+    {typeof result?.download_error === 'string' && <p className="text-muted-foreground">{result.download_error}</p>}
+    {result?.import_report != null && <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words">{JSON.stringify(result.import_report, null, 2)}</pre>}
     {(status.isError || cancel.isError || download.isError) && <p role="alert" className="text-destructive">{requestError(status.error || cancel.error || download.error) || t('workbench.error')}</p>}
-    {(current.remote_may_continue || (['running', 'waiting_remote'].includes(current.state) && remoteWork)) && <p className="text-muted-foreground">{t('workbench.remoteMayContinue')}</p>}
+    {(current.remote_may_continue === true || (['running', 'waiting_remote'].includes(current.state) && remoteWork)) && <p className="text-muted-foreground">{t('workbench.remoteMayContinue')}</p>}
     {canCancel && <Button size="sm" variant="outline" disabled={cancel.isPending} onClick={() => cancel.mutate()}>{t('workbench.cancelWaiting')}</Button>}
-    {downloadUrl && <div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={download.isPending} onClick={() => download.mutate(false)}>{t('workbench.downloadResult')}</Button>{artifact?.mime_type?.startsWith('audio/') && <Button size="sm" variant="outline" disabled={download.isPending} onClick={() => download.mutate(true)}>{t('workbench.playAudio')}</Button>}</div>}
+    {downloadUrl && <div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={download.isPending} onClick={() => download.mutate(false)}>{t('workbench.downloadResult')}</Button>{audio && <Button size="sm" variant="outline" disabled={download.isPending} onClick={() => download.mutate(true)}>{t('workbench.playAudio')}</Button>}</div>}
     <details className="text-muted-foreground">
       <summary className="cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">{t('workbench.jobTechnicalDetails')}</summary>
       <dl className="mt-2 space-y-1 break-all">
         <div><dt>{t('workbench.jobId')}</dt><dd>{current.job_id}</dd></div>
-        <div><dt>{t('workbench.jobOperation')}</dt><dd>{current.operation}</dd></div>
+        <div><dt>{t('workbench.jobOperation')}</dt><dd>{typeof current.operation === 'string' ? current.operation : JSON.stringify(current.operation)}</dd></div>
       </dl>
-      {current.submission_state && <p>{t('workbench.submissionStatus', { status: current.submission_state })}</p>}
+      {typeof current.submission_state === 'string' && <p>{t('workbench.submissionStatus', { status: current.submission_state })}</p>}
+      {(current.restored_history === true || !knownOperation || !knownState) && <pre className="whitespace-pre-wrap break-words">{JSON.stringify(current, null, 2)}</pre>}
     </details>
     {audioUrl && <audio className="w-full" controls src={audioUrl} />}
   </article>

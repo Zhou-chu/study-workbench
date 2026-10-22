@@ -166,6 +166,11 @@ async def test_commands_log_incomplete_generation_as_permanent(during_import):
 
     with (
         patch(
+            "commands.source_commands.start_worker",
+            new=AsyncMock(return_value={"processing_attempt": {"token": "owned"}}),
+        ),
+        patch("commands.source_commands.finish_worker", new=AsyncMock()),
+        patch(
             "commands.source_commands.Source.get", new=AsyncMock(return_value=source)
         ),
         patch.object(Source, "save", new_callable=AsyncMock),

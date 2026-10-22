@@ -187,7 +187,7 @@ async def update_note(note_id: str, note_update: NoteUpdate):
             mode=get_note_write_mode(),
         )
         note = Note(**result.native)
-        command_id = note.submit_embedding()
+        command_id = await note.submit_embedding()
 
         return NoteResponse(
             id=note.id or "",

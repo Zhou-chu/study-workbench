@@ -44,7 +44,7 @@ export function useCreateNote() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: noteWriteProblem(error).kind === 'rejected' ? getApiErrorKey(error, t('notebooks.failedToCreateNote')) : t(noteProblemKeys[noteWriteProblem(error).kind]),
+        description: noteWriteProblem(error).kind === 'rejected' ? t(getApiErrorKey(error, 'notebooks.failedToCreateNote')) : t(noteProblemKeys[noteWriteProblem(error).kind]),
         variant: 'destructive',
       })
     },
@@ -71,7 +71,7 @@ export function useUpdateNote() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: noteWriteProblem(error).kind === 'rejected' ? getApiErrorKey(error, t('notebooks.failedToUpdateNote')) : t(noteProblemKeys[noteWriteProblem(error).kind]),
+        description: noteWriteProblem(error).kind === 'rejected' ? t(getApiErrorKey(error, 'notebooks.failedToUpdateNote')) : t(noteProblemKeys[noteWriteProblem(error).kind]),
         variant: 'destructive',
       })
     },
@@ -97,7 +97,7 @@ export function useDeleteNote() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('notebooks.failedToDeleteNote')),
+        description: t(getApiErrorKey(error, 'notebooks.failedToDeleteNote')),
         variant: 'destructive',
       })
     },

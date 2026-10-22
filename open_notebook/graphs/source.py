@@ -10,14 +10,16 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 from loguru import logger
-from typing_extensions import Annotated, TypedDict
+from typing_extensions import Annotated, NotRequired, TypedDict
 
 from open_notebook.ai.models import Model, ModelManager
+from open_notebook.database import source_attempt_repository as source_attempts
 from open_notebook.domain.content_settings import ContentSettings
 from open_notebook.domain.notebook import Asset, Source
 from open_notebook.domain.transformation import Transformation
 from open_notebook.graphs.transformation import graph as transform_graph
 from open_notebook.utils.runtime_capabilities import engine_runtime_missing
+from open_notebook.utils.source_execution import track_source_uncertainty
 
 # content-core >= 2.1 disables its own Loguru logging for library consumers.
 # Both the API and the worker import this module before extracting anything,
@@ -50,6 +52,8 @@ class SourceState(TypedDict):
     extraction: ExtractionOutput
     apply_transformations: List[Transformation]
     source_id: str
+    submission_token: NotRequired[str]
+    execution_owner: NotRequired[str]
     notebook_ids: List[str]
     source: Source
     transformation: Annotated[list, operator.add]
@@ -57,6 +61,8 @@ class SourceState(TypedDict):
 
 
 class TransformationState(TypedDict):
+    submission_token: NotRequired[str]
+    execution_owner: NotRequired[str]
     source: Source
     transformation: Transformation
 
@@ -157,7 +163,16 @@ def _extraction_error(error: "cc.ContentCoreError", url: str) -> ValueError:
     return ValueError("Could not extract content from this source.")
 
 
+async def _check_execution_owner(state, source_id):
+    if state.get("execution_owner"):
+        await source_attempts.assert_owner(
+            source_id, state.get("submission_token"), state["execution_owner"]
+        )
+
+
+@track_source_uncertainty
 async def content_process(state: SourceState) -> dict:
+    await _check_execution_owner(state, state.get("source_id"))
     content_state: Dict[str, Any] = state["content_state"]
 
     # content-core 2.x takes engine/model overrides via ContentCoreConfig
@@ -255,7 +270,12 @@ async def content_process(state: SourceState) -> dict:
     # content-core 2.x no longer deletes the uploaded source file after
     # extraction (the delete_source flag it used to honor is gone). Preserve the
     # previous auto-delete behavior on our side.
-    if content_state.get("delete_source") and content_state.get("file_path"):
+    if (
+        content_state.get("delete_source")
+        and content_state.get("file_path")
+        and not state.get("execution_owner")
+    ):
+        # Owned queue attempts retain inputs: completion/ACK may still be lost.
         file_path = content_state["file_path"]
         try:
             os.unlink(file_path)
@@ -267,6 +287,7 @@ async def content_process(state: SourceState) -> dict:
     return {"extraction": processed}
 
 
+@track_source_uncertainty
 async def save_source(state: SourceState) -> dict:
     content_state = state["content_state"]
     extraction = state["extraction"]
@@ -287,7 +308,23 @@ async def save_source(state: SourceState) -> dict:
     if extraction.title and (not source.title or source.title == "Processing..."):
         source.title = extraction.title
 
-    await source.save()
+    if state.get("execution_owner"):
+        source = Source(
+            **(
+                await source_attempts.publish_source(
+                    state["source_id"],
+                    state.get("submission_token"),
+                    state["execution_owner"],
+                    {
+                        "full_text": source.full_text,
+                        "asset": source.asset.model_dump() if source.asset else None,
+                        "title": extraction.title,
+                    },
+                )
+            )
+        )
+    else:
+        await source.save()
 
     # NOTE: Notebook associations are created by the API immediately for UI responsiveness
     # No need to create them here to avoid duplicate edges
@@ -295,6 +332,7 @@ async def save_source(state: SourceState) -> dict:
     if state["embed"]:
         if source.full_text and source.full_text.strip():
             logger.debug("Embedding content for vector search")
+            await _check_execution_owner(state, state.get("source_id"))
             await source.vectorize()
         else:
             logger.warning(
@@ -317,14 +355,18 @@ def trigger_transformations(state: SourceState, config: RunnableConfig) -> List[
             {
                 "source": state["source"],
                 "transformation": t,
+                "submission_token": state.get("submission_token"),
+                "execution_owner": state.get("execution_owner"),
             },
         )
         for t in to_apply
     ]
 
 
+@track_source_uncertainty
 async def transform_content(state: TransformationState) -> Optional[dict]:
     source = state["source"]
+    await _check_execution_owner(state, getattr(source, "id", None))
     content = source.full_text
     # Whitespace-only text would hit the transformation graph's empty-content
     # guard; skip it here like empty text.
@@ -339,6 +381,7 @@ async def transform_content(state: TransformationState) -> Optional[dict]:
         dict(input_text=content, transformation=transformation),
         config=RunnableConfig(configurable={"model_id": transformation.model_id}),
     )
+    await _check_execution_owner(state, getattr(source, "id", None))
     await source.add_insight(transformation.title, result["output"])
     return {
         "transformation": [

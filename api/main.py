@@ -56,6 +56,7 @@ from api.routers import web_discovery as personal_web_discovery
 from open_notebook.database.async_migrate import AsyncMigrationManager
 from open_notebook.exceptions import (
     AuthenticationError,
+    CommandSubmissionUnknownError,
     ConfigurationError,
     ExternalServiceError,
     InvalidInputError,
@@ -416,6 +417,26 @@ async def unsupported_capability_error_handler(
         status_code=501,
         content={"detail": str(exc)},
         headers=_cors_headers(request),
+    )
+
+
+@app.exception_handler(CommandSubmissionUnknownError)
+async def command_submission_unknown_handler(
+    request: Request, exc: CommandSubmissionUnknownError
+):
+    detail = {
+        "code": "COMMAND_SUBMISSION_UNKNOWN",
+        "message": "Submission may already be accepted. Do not retry; check existing work first.",
+        "retry_safe": False,
+    }
+    resource_id = exc.source_id or exc.resource_id
+    resource_type = "source" if exc.source_id else exc.resource_type
+    if resource_id and resource_type:
+        detail.update(resource_id=resource_id, resource_type=resource_type)
+    if exc.command_id:
+        detail["command_id"] = exc.command_id
+    return JSONResponse(
+        status_code=409, content={"detail": detail}, headers=_cors_headers(request)
     )
 
 

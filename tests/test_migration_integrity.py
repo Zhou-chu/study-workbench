@@ -190,3 +190,53 @@ async def test_query_cancellation_does_not_change_version(bump):
     assert caught.value is error
     ns["bump_version"].assert_not_awaited()
     ns["lower_version"].assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("table", ["speaker_profile", "episode_profile", "episode"])
+async def test_podcast_preflight_rejects_existing_schema_before_writes(table):
+    ns, connection = load_migrations(
+        {
+            "result": [
+                {"status": "OK", "result": {"tables": {table: "private schema"}}},
+                {"status": "OK", "result": []},
+            ]
+        }
+    )
+    ns["bump_version"] = AsyncMock()
+    with pytest.raises(RuntimeError, match="manual review"):
+        await ns["PodcastProfileMigration"]("CREATE should_not_run;").run()
+    assert connection.query_raw.await_count == 1
+    assert "CREATE" not in connection.query_raw.await_args.args[0]
+    ns["bump_version"].assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "results",
+    [[], [{}], [{"tables": []}, []], [{"tables": {}}, {}], [{"tables": {}}, [], []]],
+)
+async def test_podcast_preflight_rejects_malformed_state(results):
+    ns, _ = load_migrations(
+        {"result": [{"status": "OK", "result": value} for value in results]}
+    )
+    ns["bump_version"] = AsyncMock()
+    with pytest.raises(RuntimeError):
+        await ns["PodcastProfileMigration"]("CREATE should_not_run;").run()
+    ns["bump_version"].assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_podcast_preflight_legacy_config_has_safe_operator_message():
+    ns, connection = load_migrations(
+        {
+            "result": [
+                {"status": "OK", "result": {"tables": {"podcast_config": "schema"}}},
+                {"status": "OK", "result": [{"private": "synthetic-private-value"}]},
+            ]
+        }
+    )
+    with pytest.raises(RuntimeError, match="manual review") as caught:
+        await ns["PodcastProfileMigration"]("CREATE should_not_run;").run()
+    assert "synthetic-private-value" not in str(caught.value)
+    assert connection.query_raw.await_count == 1

@@ -287,10 +287,11 @@ class TestSourceDomain:
         source2 = Source(title="Test", command=None)
         assert source2.command is None
 
-        # Test command is included in save data prep
+        # Existing-source saves must not overwrite separately claimed ownership
         source3 = Source(id="source:123", title="Test", command="command:456")
         save_data = source3._prepare_save_data()
-        assert "command" in save_data
+        assert "command" not in save_data
+        assert "command" in source._prepare_save_data()
 
     @pytest.mark.asyncio
     async def test_source_delete_cleans_up_file(self):
@@ -526,7 +527,7 @@ class TestPodcastService:
         async def fake_get_for_sources(cls, source_ids):
             return {sid: [] for sid in source_ids}
 
-        def fake_submit_command(app_name, command_name, command_args):
+        async def fake_submit_command(app_name, command_name, command_args):
             submitted_args.update(command_args)
             return "command:podcast"
 

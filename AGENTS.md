@@ -14,7 +14,7 @@ Use [the project entrypoint guide](docs/v1/ENTRYPOINTS.md) and [V1 runbook](docs
 
 ## Commands
 
-- Tests: `uv run pytest tests/`
+- Offline tests (prepared environment/cache): `python scripts/offline_pytest.py --tiktoken-cache /path/to/prepared/tiktoken-cache` — see [testing](docs/7-DEVELOPMENT/testing.md)
 - Python lint/format/typecheck: `uv run ruff check . --fix` · `uv run ruff format .` · `uv run python -m mypy .`
 - Frontend (inside `frontend/`): `npm run lint` · `npm run test` · `npm run build`
 - Required offline checks: Ruff/format, mypy, pytest, frontend lint/types/tests/build; coverage and opt-in database/runtime gates are reported separately. This private source delivery currently has no active checked-in CI workflows: do not claim CI ran or enable inherited publication workflows implicitly.

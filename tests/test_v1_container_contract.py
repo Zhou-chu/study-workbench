@@ -358,8 +358,23 @@ def test_malformed_structure_returns_redacted_errors(case):
         ("deploy/v1/Dockerfile.frontend", "RUN npm ci", "RUN npm install"),
         (
             "deploy/v1/Dockerfile.frontend",
-            "ENV INTERNAL_API_URL=http://api:5055 NEXT_TELEMETRY_DISABLED=1",
-            "# missing build-time rewrite URL",
+            "INTERNAL_API_URL=http://api:5055",
+            "INTERNAL_API_URL=http://wrong:5055",
+        ),
+        (
+            "deploy/v1/Dockerfile.frontend",
+            "COPY contracts/v1/openapi.json /app/contracts/v1/openapi.json",
+            "# missing public build contract",
+        ),
+        (
+            "frontend/next.config.ts",
+            'output: "standalone",',
+            'output: "standalone", rewrites: async () => [],',
+        ),
+        (
+            "frontend/src/app/api/[...path]/route.ts",
+            "export const runtime = 'nodejs'",
+            "export const runtime = 'edge'",
         ),
         ("deploy/v1/entrypoint.py", "import os", "# pip install package\nimport os"),
     ],
@@ -373,10 +388,14 @@ def test_build_artifact_mutations_are_rejected(tmp_path, path, old, new):
         "deploy/v1/entrypoint.py",
         "deploy/v1/env.example",
         "docs/v1/DOCKER_MIGRATION.md",
+        "frontend/next.config.ts",
+        "frontend/src/app/api/[...path]/route.ts",
+        "contracts/v1/openapi.json",
     ]:
         target = tmp_path / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text((ROOT / name).read_text())
+    assert checker.validate(manifest(), tmp_path) == []
     target = tmp_path / path
     assert old in target.read_text()
     target.write_text(target.read_text().replace(old, new))
@@ -478,3 +497,11 @@ def test_secret_suffix_is_required_at_root_and_nested_build_context_paths():
     # frontend/nested/operator.secret must both be excluded from the context.
     assert "**/*.secret" in checker.IGNORE_PATTERNS
     assert "**/*.secret" in (ROOT / ".dockerignore").read_text().splitlines()
+
+
+@pytest.mark.parametrize("filename", ["Dockerfile", "deploy/v1/Dockerfile.frontend"])
+def test_frontend_builders_copy_exact_public_contract(filename):
+    builder = (ROOT / filename).read_text().split("RUN npm run build", 1)[0]
+    assert "COPY contracts/v1/openapi.json /app/contracts/v1/openapi.json" in builder
+    assert "COPY contracts/ " not in builder
+    assert "COPY . " not in builder

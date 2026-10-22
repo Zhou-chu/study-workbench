@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SourceDetailContent } from './SourceDetailContent'
 import { sourcesApi } from '@/lib/api/sources'
+import { embeddingApi } from '@/lib/api/embedding'
 import { insightsApi } from '@/lib/api/insights'
 import { transformationsApi } from '@/lib/api/transformations'
 import { QUERY_KEYS } from '@/lib/api/query-client'
@@ -33,7 +34,7 @@ vi.mock('@/lib/api/transformations', () => ({
 
 vi.mock('@/lib/api/embedding', () => ({
   embeddingApi: {
-    embedSource: vi.fn(),
+    embedContent: vi.fn(),
   },
 }))
 
@@ -72,6 +73,7 @@ vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
+    warning: vi.fn(),
   },
 }))
 
@@ -292,4 +294,45 @@ describe('SourceDetailContent', () => {
 
     expect(toast.error).not.toHaveBeenCalledWith('Stale failure')
   })
+  it('retains insight selection and gates a new attempt after uncertainty and remount', async () => {
+    const id = 'source:uncertain-insight'
+    mockSourcesGet.mockResolvedValue({ ...loadedSource, id })
+    const unknown = { response: { status: 409, data: { detail: {
+      code: 'COMMAND_SUBMISSION_UNKNOWN', retry_safe: false, message: 'private-secret', resource_id: id,
+    } } } }
+    mockCreateInsight.mockRejectedValue(unknown)
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const view = renderContent(undefined, id)
+    await startInsightGeneration()
+    await waitFor(() => expect(toast.warning).toHaveBeenCalledWith('commandSubmission.title', { description: 'commandSubmission.warning' }))
+    expect(screen.getByRole('combobox', { name: 'transformation' })).toHaveValue('transformation:summary')
+    expect(toast.error).not.toHaveBeenCalled()
+    expect(toast.success).not.toHaveBeenCalled()
+    expect(mockWaitForCommand).not.toHaveBeenCalled()
+    view.unmount()
+    renderContent(undefined, id)
+    await startInsightGeneration()
+    await waitFor(() => expect(confirm).toHaveBeenCalledWith('commandSubmission.newAttemptConfirm'))
+    expect(mockCreateInsight).toHaveBeenCalledTimes(1)
+    confirm.mockReturnValue(true)
+    fireEvent.click(screen.getByRole('button', { name: 'common.create' }))
+    await waitFor(() => expect(mockCreateInsight).toHaveBeenCalledTimes(2))
+    confirm.mockRestore()
+  })
+
+  it('warns rather than reports failure when explicit embedding submission is uncertain', async () => {
+    const id = 'source:uncertain-embed'
+    mockSourcesGet.mockResolvedValue({ ...loadedSource, id })
+    vi.mocked(embeddingApi.embedContent).mockRejectedValue({ response: { status: 409, data: { detail: {
+      code: 'COMMAND_SUBMISSION_UNKNOWN', retry_safe: false, message: 'private-secret',
+    } } } })
+    renderContent(undefined, id)
+    await screen.findByText('Loaded source')
+    fireEvent.click(screen.getAllByRole('button', { name: 'sources.embedContent' })[0])
+    await waitFor(() => expect(toast.warning).toHaveBeenCalled())
+    expect(toast.error).not.toHaveBeenCalled()
+    expect(toast.success).not.toHaveBeenCalled()
+    expect(JSON.stringify(vi.mocked(toast.warning).mock.calls)).not.toContain('private-secret')
+  })
+
 })

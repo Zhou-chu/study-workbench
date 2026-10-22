@@ -41,7 +41,8 @@ def client(monkeypatch):
 @pytest.mark.parametrize("command_id", ["command:embed123", None])
 def test_create_note_returns_command_id(client, monkeypatch, command_id):
     monkeypatch.setattr(
-        "open_notebook.domain.notebook.submit_command", lambda *args: command_id
+        "open_notebook.domain.notebook.submit_command",
+        AsyncMock(return_value=command_id),
     )
     response = client.post(
         "/api/notes", json={"content": "Some content", "note_type": "human"}
@@ -54,7 +55,8 @@ def test_create_note_returns_command_id(client, monkeypatch, command_id):
 @pytest.mark.parametrize("command_id", ["command:embed789", None])
 def test_update_note_returns_command_id(client, monkeypatch, command_id):
     monkeypatch.setattr(
-        "open_notebook.domain.notebook.submit_command", lambda *args: command_id
+        "open_notebook.domain.notebook.submit_command",
+        AsyncMock(return_value=command_id),
     )
     response = client.put("/api/notes/note:abc123", json={"title": "Updated Title"})
     assert response.status_code == 200

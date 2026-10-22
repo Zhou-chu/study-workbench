@@ -132,3 +132,54 @@ personal portable archives. Supplied Origin must exactly match
 allowed for explicit native requests. API never authenticates cookies; app
 cookies/mixed credentials are rejected. BFF CSRF and browser token hiding remain
 separate required gates, not guarantees supplied by this API implementation.
+
+## Typed operation responses (R2a)
+
+POST `/chats/{id}/turns` returns `{job_id,turn_id,state}`, a durable receipt rather
+than the answer itself. GET `/jobs/{id}` and POST `/jobs/{id}/cancel` publish typed
+current metadata and a separate historical compatibility branch. Serialization
+preserves existing extra fields, absent versus null, and original timestamp text.
+Unknown operation/state/submission strings remain raw and grant no new actions.
+Operation-specific result/error JSON is not yet fully typed.
+
+Restored jobs retain `restored_history:true`, `replay_allowed:false` and historical
+metadata without coercing old result/error fields into current shapes. GET job may
+resume dispatch for existing remote or maintenance jobs: do not describe it as an
+inert read or infer that response typing changes dispatch policy. Local cancellation,
+unknown submission, idempotency, auth gates and note revision behavior are unchanged.
+
+## Workspace response envelope (R2b)
+
+GET workspace now describes the notebook/source envelope and native note identity,
+revision and nullable/optional title/content. Native-only or shared notes can omit
+personal citations/scope entirely; they are not the personal write receipt shape.
+Selection is null before first save. PATCH selection describes its proven current
+receipt fields, but optional supplied reading/remote fields retain existing loose
+validation; this is not a new strict selection request contract.
+
+Workspace turns/jobs, version records, links, retained selection and note snapshot
+extensions remain opaque JSON, preserving archive/provenance data and absence vs
+null without invented defaults. In particular, existing workspace versions can
+include storage `file_path`: this pre-existing exposure is **not** promised as a
+stable public field, nor fixed by response typing. Public version projection and
+any security redaction require a separately reviewed compatibility change.
+Citation titles may be null (including unmapped remote references); the Web type
+now reflects that. Citation provenance and all historical shapes are not fully
+typed or certified safe for arbitrary future client rendering by this slice.
+
+Workspace serialization retains the old FastAPI datetime encoding (including UTC
+`+00:00`) before DTO validation. The Web client preserves unknown engine strings,
+but only explicit `independent`/`notebooklm` engines and `local`/`remote` origins
+enable Ask/outline. Unknown origins also hide scope-dependent remote actions. Unknown
+engines/origins are shown as unavailable, including in settings, rather than silently
+being treated as either provider; changing engine remains an explicit user action.
+
+## R2c: transport boundaries
+
+The personal turn-event stream and original/export/artifact downloads now declare
+SSE/binary OpenAPI success media rather than empty JSON schemas. Application HTTP
+errors retain their existing detail/error envelopes. See
+[stream/download protocol](STREAM_DOWNLOAD_PROTOCOL.md) for exact event shapes,
+bounded EOF, cancellation/unknown-submission rules, download MIME/filenames and
+credential-safe redirects. This does not type historical turns or activate native
+clients; GET job can dispatch work and is not universally safe to auto-retry.

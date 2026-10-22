@@ -38,7 +38,7 @@ export function useCreateNotebook() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: t(getApiErrorKey(error, t('common.error'))),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -64,7 +64,7 @@ export function useUpdateNotebook() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: t(getApiErrorKey(error, t('common.error'))),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -104,7 +104,7 @@ export function useDeleteNotebook() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: t(getApiErrorKey(error, t('common.error'))),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },

@@ -4,8 +4,10 @@ WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 COPY frontend/ ./
-# Next rewrites are compiled here. Runtime alone does not change the manifest.
-ENV INTERNAL_API_URL=http://api:5055 NEXT_TELEMETRY_DISABLED=1
+# Public contract is an explicit frontend typecheck/build input, not runtime data.
+COPY contracts/v1/openapi.json /app/contracts/v1/openapi.json
+# API forwarding is a runtime Node App Route policy, not a baked rewrite.
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 FROM node:22.19.0-bookworm-slim AS frontend

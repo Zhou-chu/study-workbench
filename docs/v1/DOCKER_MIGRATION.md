@@ -44,10 +44,17 @@ allowed origin (never `*`). This preserves origin checking for mutations and por
 imports forwarded with browser Origin but internal API Host; foreign origins remain
 rejected. It is runtime-only, never a public build secret. **Do not use `API_URL=/`**: existing
 client/config code appends `/api`, producing `//api`. Empty API_URL currently triggers
-`:5055` autodetection. Explicit origin is a compatibility bridge; native same-origin
-`/config` semantics and proxy allowlisting need the frontend-owned follow-on.
-`INTERNAL_API_URL=http://api:5055` is baked before Next build and present at runtime for
-the portable streaming route. Existing frontend files/routes remain untouched.
+`:5055` autodetection. Explicit origin remains a legacy compatibility requirement. Runtime same-origin
+configuration and proxy allowlisting exist, but their actual container behavior
+still needs T11 acceptance.
+`INTERNAL_API_URL=http://api:5055` is a runtime server setting for the Node App
+Routes. There is no external build-time rewrite bypass: ordinary API and portable
+streaming requests use the registered runtime proxy policy. Device-session mode
+remains gated; this candidate does not enable it. The frontend builder copies only
+the exact public `contracts/v1/openapi.json` alongside frontend source because
+contract tests/typechecking and the build fingerprint consume it. No private
+configuration or entire backend tree is added to that build stage. Static checks
+cover these declarations; they do not prove a Docker image was built or served.
 
 ## Data migration (operator procedure; not executed)
 
@@ -83,10 +90,12 @@ This checks manifest structure and mutations, file-secret validation, commands,
 mounts, context exclusions and build policy. It never reads operator secret files,
 interpolates `.env`, invokes Docker, starts services or claims readiness.
 
-The API healthcheck targets existing `/health` **liveness only**. Dependency ordering
-waits for DB probe and API liveness; it is NOT proof migrations completed. No nonexistent
-`/ready` check is shipped. API-owned bounded DB/migration `/ready` is pending; switch
-ordering only after its tests pass. Worker has no fabricated API-derived healthcheck;
+The API healthcheck targets existing `/health` **liveness only**. The API lifespan
+awaits startup migrations before serving requests; dependency ordering therefore
+cannot observe a successfully serving API before that startup finishes. This is
+not ongoing proof of database connectivity, migration consistency or worker health.
+No nonexistent `/ready` check is shipped. A bounded runtime dependency readiness
+probe remains pending; change ordering only after its tests pass. Worker has no fabricated API-derived healthcheck;
 independent worker lifecycle/job execution proof remains pending.
 
 Surreal 2.3.10 `start` supports SURREAL_USER, SURREAL_PASS and --bind, confirmed by

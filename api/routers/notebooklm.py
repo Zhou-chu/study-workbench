@@ -10,7 +10,9 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from api.notebooklm_service import get_notebooklm_service
+from api.personal_contracts import PersonalJobResponse
 from api.personal_store import data_root
+from api.personal_transport_contracts import transport_responses
 from open_notebook.domain.notebook import Notebook
 from open_notebook.exceptions import InvalidInputError, NotFoundError
 from open_notebook.integrations.notebooklm.sdk_adapter import now
@@ -253,7 +255,15 @@ async def download_artifact(
     )
 
 
-@router.get("/artifacts/{artifact_id}/download")
+@router.get(
+    "/artifacts/{artifact_id}/download",
+    response_class=FileResponse,
+    responses=transport_responses(
+        ["*/*"],
+        "Protected integrity-checked artifact bytes with stored MIME (not fixed to audio); "
+        "attachment uses the stored path basename, private/no-store.",
+    ),
+)
 async def local_artifact(artifact_id: str, service=Depends(get_notebooklm_service)):
     artifact = await service.store.get("artifact", artifact_id)
     if not artifact:
@@ -295,7 +305,11 @@ async def local_artifact(artifact_id: str, service=Depends(get_notebooklm_servic
     )
 
 
-@router.get("/jobs/{job_id}")
+@router.get(
+    "/jobs/{job_id}",
+    response_model=PersonalJobResponse,
+    response_model_exclude_unset=True,
+)
 async def job_status(job_id: str, service=Depends(get_notebooklm_service)):
     job = await service.store.get("job", job_id)
     if not job:
@@ -310,7 +324,11 @@ async def job_status(job_id: str, service=Depends(get_notebooklm_service)):
     return job
 
 
-@router.post("/jobs/{job_id}/cancel")
+@router.post(
+    "/jobs/{job_id}/cancel",
+    response_model=PersonalJobResponse,
+    response_model_exclude_unset=True,
+)
 async def cancel_job(job_id: str, service=Depends(get_notebooklm_service)):
     job = await service.store.get("job", job_id)
     if not job:

@@ -310,10 +310,30 @@ def _validate(data, root):
             "RUN npm ci" in frontend and "frontend/package-lock.json" in frontend,
             "Frozen frontend lock install required",
         )
+        contract_copy = "COPY contracts/v1/openapi.json /app/contracts/v1/openapi.json"
         require(
-            frontend.index("ENV INTERNAL_API_URL=http://api:5055")
-            < frontend.index("RUN npm run build"),
-            "Internal rewrite URL must be baked before frontend build",
+            contract_copy in frontend
+            and frontend.index(contract_copy) < frontend.index("RUN npm run build")
+            and (root / "contracts/v1/openapi.json").is_file(),
+            "Exact public OpenAPI build input must be copied before frontend build",
+        )
+        runtime_stage = frontend.split(" AS frontend\n", 1)[1]
+        require(
+            re.search(
+                r"^ENV[^\n]*\bINTERNAL_API_URL=http://api:5055(?:\s|$)",
+                runtime_stage,
+                re.M,
+            )
+            is not None,
+            "Runtime frontend backend URL required",
+        )
+        next_config = (root / "frontend/next.config.ts").read_text()
+        route = (root / "frontend/src/app/api/[...path]/route.ts").read_text()
+        require(
+            not re.search(r"\brewrites\s*(?:\(|:)", next_config)
+            and "export const runtime = 'nodejs'" in route
+            and "dispatchApiRequest(req)" in route,
+            "API forwarding must retain the Node App Route policy, not external rewrites",
         )
         for source in (backend, frontend):
             require(
@@ -337,7 +357,7 @@ def _validate(data, root):
             not re.search(r"(?:pip install|uv sync|npm (?:ci|install)|apt-get)", entry),
             "Runtime package installation forbidden",
         )
-    except (OSError, ValueError):
+    except (OSError, ValueError, IndexError):
         errors.append("Required build artifact missing or malformed")
     return errors
 

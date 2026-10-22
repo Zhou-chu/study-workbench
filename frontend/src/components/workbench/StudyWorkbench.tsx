@@ -14,7 +14,7 @@ import { activeJob, useSaveWorkbenchSelection, useWorkbench } from '@/lib/hooks/
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { useToast } from '@/lib/hooks/use-toast'
 import { canonicalCitationLocator } from '@/lib/utils/evidence'
-import { requestError, requestErrorCode, stateKeys, connectionKeys } from '@/lib/utils/workbench'
+import { requestError, requestErrorCode, stateKeys, connectionKeys, isKnownEngine, isKnownSelectionOrigin } from '@/lib/utils/workbench'
 import type { BridgeJob, CreateWorkbenchNoteInput, EvidenceCitation, ScopeSnapshot, TurnRecord, WorkbenchNote, WorkbenchSelection } from '@/lib/types/personal'
 import { EvidenceReader } from '@/components/evidence/EvidenceReader'
 import { NotebookSettingsDialog } from './NotebookSettingsDialog'
@@ -104,7 +104,8 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const history = useQuery({ queryKey: QUERY_KEYS.personalTurns(sessionId), queryFn: () => workbenchApi.turns(sessionId), enabled: !!pendingTurn, retry: false, refetchInterval: query => !isAuthRecoveryError(query.state.error) && pendingTurn ? 2000 : false })
   const pendingStatus = useQuery({ queryKey: QUERY_KEYS.personalJob(pendingJob || ''), queryFn: ({ signal }) => workbenchApi.job(pendingJob!, signal), enabled: !!pendingJob, retry: false, refetchInterval: query => !isAuthRecoveryError(query.state.error) && activeJob(query.state.data?.state) ? 2000 : false })
   const turns = [...new Map([...(data?.turns || []), ...(history.data || [])].map(turn => [turn.turn_id, turn])).values()]
-  const selectedCount = selection.selection_origin === 'local' ? selection.source_version_ids.length : selection.remote_source_ids.length
+  const knownOrigin = isKnownSelectionOrigin(selection.selection_origin)
+  const selectedCount = selection.selection_origin === 'local' ? selection.source_version_ids.length : selection.selection_origin === 'remote' ? selection.remote_source_ids.length : 0
   // Configuration availability is not an inference or credential health check.
   // A failed refresh must not authorize a turn using stale cached defaults.
   const modelState = modelDefaults.isFetching || modelDefaults.isLoading ? 'loading' :
@@ -124,7 +125,8 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     askCapability?.support !== 'available' ? askCapability?.reason || t('workbench.googleAskUnavailable') :
     !data?.link?.remote_notebook_id ? t('workbench.googleLinkRequired') : null
   ) : null
-  const canAsk = selectedCount > 0 && !modelBlocked && !googleBlocked && !(selection.engine === 'independent' && selection.selection_origin === 'remote')
+  const knownEngine = isKnownEngine(selection.engine)
+  const canAsk = knownEngine && knownOrigin && selectedCount > 0 && !modelBlocked && !googleBlocked && !(selection.engine === 'independent' && selection.selection_origin === 'remote')
   const updateSelection = (patch: Partial<WorkbenchSelection>) => {
     const next = { ...selectionRef.current, ...patch }
     selectionRef.current = next
@@ -133,12 +135,15 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   }
   const search = useMutation({ mutationFn: () => evidenceApi.search(searchText, [...selection.source_version_ids]), retry: false })
   const ask = useMutation({
-    mutationFn: ({ message, outline }: { message: string; outline?: boolean; questionRevision?: number; editorSnapshot?: NoteEditorSnapshot }) => workbenchApi.turn(sessionId, {
-      task: outline ? 'outline' : 'question', notebook_id: notebookId, engine: selection.engine, selection_origin: selection.selection_origin,
-      source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [],
-      remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [],
-      remote_notebook_id: data?.link?.remote_notebook_id || null, message, idempotency_key: crypto.randomUUID(),
-    }), retry: false,
+    mutationFn: ({ message, outline }: { message: string; outline?: boolean; questionRevision?: number; editorSnapshot?: NoteEditorSnapshot }) => {
+      if (!isKnownEngine(selection.engine) || !isKnownSelectionOrigin(selection.selection_origin)) throw new Error(t('workbench.unavailable'))
+      return workbenchApi.turn(sessionId, {
+        task: outline ? 'outline' : 'question', notebook_id: notebookId, engine: selection.engine, selection_origin: selection.selection_origin,
+        source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [],
+        remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [],
+        remote_notebook_id: data?.link?.remote_notebook_id || null, message, idempotency_key: crypto.randomUUID(),
+      })
+    }, retry: false,
     onSuccess: (turn, variables) => {
       // An outline never owns the question. A submitted question owns only its
       // unchanged draft generation, even if later edits return to the same text.
@@ -225,7 +230,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     const latest = latestNotes?.[0]
     if (!latest || latest.id !== editingNote?.id) return
     noteEditorSession.current++
-    setEditingNote(latest); setBaseRevision(latest.revision); setNoteTitle(latest.title); setNoteContent(latest.content); setNoteScope(latest.scope_snapshot); resetNoteReview()
+    setEditingNote(latest); setBaseRevision(latest.revision); setNoteTitle(latest.title ?? ''); setNoteContent(latest.content ?? ''); setNoteScope(latest.scope_snapshot); resetNoteReview()
   }
   const openCitation = async (reference: EvidenceCitation) => {
     const request = ++citationRequest.current
@@ -305,8 +310,10 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
             {modelState === 'error' && <Button size="sm" variant="outline" onClick={() => { void modelDefaults.refetch() }}>{t('workbench.retryModelCheck')}</Button>}
             {modelState === 'notConfigured' && <Button size="sm" variant="ghost" onClick={openSettings}>{t('workbench.modelSettings')}</Button>}
           </div>}
-          {selectedCount === 0 && <p className="text-xs text-muted-foreground">{t('workbench.emptySelection')}</p>}
-          {selectedCount > 0 && !canAsk && !modelBlocked && <p className="text-xs text-muted-foreground">{googleBlocked || t(selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
+          {knownOrigin && selectedCount === 0 && <p className="text-xs text-muted-foreground">{t('workbench.emptySelection')}</p>}
+          {!knownEngine && <p role="status" className="text-xs text-muted-foreground">{t('workbench.engine')}: {typeof selection.engine === 'string' ? selection.engine : ''} — {t('workbench.unavailable')}</p>}
+          {!knownOrigin && <p role="status" className="text-xs text-muted-foreground">{t('workbench.scope')}: {typeof selection.selection_origin === 'string' ? selection.selection_origin : ''} — {t('workbench.unavailable')}</p>}
+          {knownEngine && selectedCount > 0 && !canAsk && !modelBlocked && <p className="text-xs text-muted-foreground">{googleBlocked || t(selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
           {selectedCount > 0 && googleBlocked && <Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button>}
           <div className="flex flex-wrap gap-2"><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} disabled={!canAsk || !question.trim() || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: question.trim(), questionRevision: questionRevision.current })}>{t('workbench.ask')}</Button><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} variant="outline" disabled={!canAsk || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: t('workbench.outlinePrompt'), outline: true, editorSnapshot: { session: noteEditorSession.current, revision: noteEditorRevision.current } })}>{t('workbench.outline')}</Button></div></div>
           {(ask.isPending || pendingTurn) && <p role="status" className="text-sm text-teal">{t('workbench.asking')}</p>}
@@ -323,7 +330,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
           {!turns.length && <div className="space-y-2 py-6"><h2 className="text-base font-medium">{t(selectedCount ? 'workbench.conversation' : 'learningWorkspace.selectSources')}</h2><p className="max-w-prose text-sm leading-6 text-muted-foreground">{t('learningWorkspace.chatEmpty')}</p></div>}
           {!!turns.length && <h2 className="text-sm font-semibold text-muted-foreground">{t('workbench.history')}</h2>}
           {data.legacy_history?.map(session => <details className="rounded-md border p-3 space-y-2" key={session.chat_session_id}><summary className="text-sm">{t('workbench.importedHistory')}</summary>{session.messages?.map((message, index) => <div key={index} className="border-t py-2 text-sm"><p className="text-xs text-muted-foreground">{message.role}</p>{typeof message.content === 'string' && <MarkdownRenderer>{message.content}</MarkdownRenderer>}</div>)}</details>)}
-          {turns.map(turn => <article className="rounded-md border p-4 space-y-3" key={turn.turn_id}><h3 className="font-medium">{turn.message}</h3><details className="text-xs text-muted-foreground"><summary>{t('workbench.turnScope')} · {t(turn.engine === 'independent' ? 'workbench.independent' : 'workbench.notebooklm')}</summary><p className="break-all">{[...(turn.scope_snapshot?.source_version_ids || []), ...(turn.scope_snapshot?.remote_source_ids || [])].join(', ')}</p></details><TurnCoverage coverage={turn.coverage} warnings={turn.warnings} />{turn.answer && <MarkdownRenderer>{turn.answer}</MarkdownRenderer>}{!turn.answer && <p className="text-sm">{t(stateKeys[turn.state || turn.status || 'pending'] || 'workbench.unavailable')}</p>}{!!turn.error && <p className="text-xs text-destructive">{typeof turn.error === 'string' ? turn.error : (turn.error as { message?: string; code?: string }).message || (turn.error as { code?: string }).code || t('workbench.error')}</p>}{turn.state === 'submission_unknown' && <p className="text-sm text-muted-foreground">{t('workbench.unknownSubmission')}</p>}<div className="flex flex-wrap gap-2">{turn.citations?.map(reference => <Button size="sm" variant="outline" key={reference.citation_id} onClick={() => openCitation(reference)}>{reference.source_title} · {reference.citation_id}</Button>)}</div>{turn.answer && <Button size="sm" variant="outline" disabled={note.isPending || !!uncertainAnswer} onClick={() => saveAnswer(turn)}>{t('workbench.saveAnswer')}</Button>}{turn.answer && (!turn.state || turn.state === 'succeeded') && (!turn.status || turn.status === 'succeeded') && <SnapshotPromotionButton notebookId={notebookId} origin={{ kind: 'turn', id: turn.turn_id }} onAdded={refresh} />}</article>)}
+          {turns.map(turn => <article className="rounded-md border p-4 space-y-3" key={turn.turn_id}><h3 className="font-medium">{turn.message}</h3><details className="text-xs text-muted-foreground"><summary>{t('workbench.turnScope')} · {isKnownEngine(turn.engine) ? t(turn.engine === 'independent' ? 'workbench.independent' : 'workbench.notebooklm') : typeof turn.engine === 'string' ? turn.engine : t('workbench.unavailable')}</summary><p className="break-all">{[...(turn.scope_snapshot?.source_version_ids || []), ...(turn.scope_snapshot?.remote_source_ids || [])].join(', ')}</p></details><TurnCoverage coverage={turn.coverage} warnings={turn.warnings} />{turn.answer && <MarkdownRenderer>{turn.answer}</MarkdownRenderer>}{!turn.answer && <p className="text-sm">{t(stateKeys[turn.state || turn.status || 'pending'] || 'workbench.unavailable')}</p>}{!!turn.error && <p className="text-xs text-destructive">{typeof turn.error === 'string' ? turn.error : (turn.error as { message?: string; code?: string }).message || (turn.error as { code?: string }).code || t('workbench.error')}</p>}{turn.state === 'submission_unknown' && <p className="text-sm text-muted-foreground">{t('workbench.unknownSubmission')}</p>}<div className="flex flex-wrap gap-2">{turn.citations?.map(reference => <Button size="sm" variant="outline" key={reference.citation_id} onClick={() => openCitation(reference)}>{reference.source_title} · {reference.citation_id}</Button>)}</div>{turn.answer && <Button size="sm" variant="outline" disabled={note.isPending || !!uncertainAnswer} onClick={() => saveAnswer(turn)}>{t('workbench.saveAnswer')}</Button>}{turn.answer && (!turn.state || turn.state === 'succeeded') && (!turn.status || turn.status === 'succeeded') && <SnapshotPromotionButton notebookId={notebookId} origin={{ kind: 'turn', id: turn.turn_id }} onAdded={refresh} />}</article>)}
         </section>
       </div>
       <aside id="workbench-panel-notes" aria-label={t('workbench.notes')} className={cn('min-h-0 overflow-auto border-l bg-card px-4 pb-5 space-y-4 w-full xl:block xl:w-72 2xl:w-80 xl:min-w-56 xl:max-w-[32vw] xl:shrink-0 xl:resize-x', tab !== 'notes' && 'hidden')}>

@@ -4,6 +4,14 @@ import type { TranslationShape } from '../en-US';
 
 export const caES = {
   ...learningWorkspaceLocales['ca-ES'],
+  commandSubmission: {
+    "newAttemptError": "Aquest nou intent ha retornat un error. L’enviament anterior continua sense confirmar.",
+    "title": "Enviament no confirmat",
+    "warning": "La feina pot estar en curs i generar costos. Comprova-ho abans de tornar a enviar. Una llista buida no demostra que s’hagi rebutjat.",
+    "newAttemptConfirm": "Vols iniciar un nou intent? Entenc que la feina anterior pot continuar i que un altre enviament pot duplicar la feina i els costos.",
+    "sessionOnly": "Aquesta protecció només dura en aquesta sessió carregada, no després de recarregar ni en altres pestanyes o dispositius.",
+    "observing": "S’està consultant l’ordre confirmada. Un error en consultar l’estat no vol dir que la feina s’hagi aturat."
+},
   noteConflict: {
     notSent: "Aquesta sol·licitud de desament no s’ha enviat. L’esborrany no ha canviat. Restableix la connexió i tria Desa quan estiguis a punt.",
     authRejected: "La comprovació de sessió ha rebutjat aquesta sol·licitud de desament. L’esborrany no ha canviat. Inicia la sessió o restableix la connexió i torna a triar Desa.",
