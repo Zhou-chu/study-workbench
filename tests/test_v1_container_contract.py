@@ -346,6 +346,7 @@ def test_malformed_structure_returns_redacted_errors(case):
     "path,old,new",
     [
         (".dockerignore", "**/.runtime", "# removed runtime protection"),
+        (".dockerignore", "**/*.secret", "# removed secret protection"),
         (".dockerignore", "**/node_modules", "!frontend/node_modules"),
         (
             "deploy/v1/Dockerfile.backend",
@@ -469,3 +470,11 @@ def test_backend_runtime_keeps_version_metadata_without_broad_copy():
     runtime = source.split("FROM python-base AS backend\n", 1)[1]
     assert "COPY pyproject.toml ./pyproject.toml" in runtime
     assert "COPY . " not in runtime
+
+
+def test_secret_suffix_is_required_at_root_and_nested_build_context_paths():
+    checker = module("scripts/v1/container_check.py")
+    # Docker's ** matches zero or more directories: operator.secret and
+    # frontend/nested/operator.secret must both be excluded from the context.
+    assert "**/*.secret" in checker.IGNORE_PATTERNS
+    assert "**/*.secret" in (ROOT / ".dockerignore").read_text().splitlines()

@@ -2,7 +2,7 @@
 
 Date: 2026-10-22 UTC.
 
-**Status: fresh code, build and static-check gates passed after source recovery; earlier isolated browser acceptance remains historical evidence. The old preview is unreachable and its expected runtime paths are absent. User data and runtime credentials have not been recovered. A fresh empty test instance requires the owner's explicit approval and protection of any unsaved browser content. Live web discovery remains unverified.**
+**Current preview status: the owner approved a fresh empty instance on 2026-10-22; its direct/proxy authentication, public-fixture worker extraction and original-byte checks passed (see the fresh-preview checkpoint below). This is not recovery of old user data. User browser login and live web discovery remain unverified. Subsequent repository-audit fixes are isolated and are not automatically deployed to this preview. Earlier recovery/build/browser entries remain historical evidence.**
 
 ## Intended user workflow
 

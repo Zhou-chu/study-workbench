@@ -71,6 +71,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const [readerOpen, setReaderOpen] = useState(false)
   const [citation, setCitation] = useState<EvidenceCitation | null>(null)
   const [question, setQuestion] = useState('')
+  const questionRevision = useRef(0)
   // A save may finish after New, Edit, or an outline replaced the draft.
   const noteEditorSession = useRef(0)
   const noteSavePending = useRef(false)
@@ -132,13 +133,17 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   }
   const search = useMutation({ mutationFn: () => evidenceApi.search(searchText, [...selection.source_version_ids]), retry: false })
   const ask = useMutation({
-    mutationFn: ({ message, outline }: { message: string; outline?: boolean; editorSnapshot?: NoteEditorSnapshot }) => workbenchApi.turn(sessionId, {
+    mutationFn: ({ message, outline }: { message: string; outline?: boolean; questionRevision?: number; editorSnapshot?: NoteEditorSnapshot }) => workbenchApi.turn(sessionId, {
       task: outline ? 'outline' : 'question', notebook_id: notebookId, engine: selection.engine, selection_origin: selection.selection_origin,
       source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [],
       remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [],
       remote_notebook_id: data?.link?.remote_notebook_id || null, message, idempotency_key: crypto.randomUUID(),
     }), retry: false,
-    onSuccess: (turn, variables) => { setQuestion(''); setLastJobOutcome(null); setPendingJob('job_id' in turn ? turn.job_id : null); setPendingTurn(turn.turn_id); if (variables.outline && variables.editorSnapshot) setOutlineTurn({ turnId: turn.turn_id, ...variables.editorSnapshot }); refresh() },
+    onSuccess: (turn, variables) => {
+      // An outline never owns the question. A submitted question owns only its
+      // unchanged draft generation, even if later edits return to the same text.
+      if (!variables.outline && variables.questionRevision === questionRevision.current) setQuestion('')
+      setLastJobOutcome(null); setPendingJob('job_id' in turn ? turn.job_id : null); setPendingTurn(turn.turn_id); if (variables.outline && variables.editorSnapshot) setOutlineTurn({ turnId: turn.turn_id, ...variables.editorSnapshot }); refresh() },
   })
   useEffect(() => {
     const result = history.data?.find(turn => turn.turn_id === pendingTurn)
@@ -294,7 +299,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
         </div>}
         {(data.sources.length > 0 || readVersion || citation) && <div className={cn(!readerOpen && 'hidden')}><EvidenceReader sourceVersionId={readVersion} evidenceId={selection.reading?.evidence_id} citation={citation} initialPage={selection.reading?.page_index || 0} onPositionChange={reading => updateSelection({ reading })} onChanged={refresh} /></div>}
         <section className={cn("space-y-4", readerOpen && "hidden")} aria-label={t('workbench.conversation')}>
-          <div className="rounded-lg border bg-card p-4 space-y-3"><p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Layers className="size-3.5" aria-hidden="true" />{t('workbench.selectedCount', { count: selectedCount })}</p><label className="block text-sm font-semibold" htmlFor="workbench-question">{t('workbench.question')}</label><Textarea id="workbench-question" value={question} onChange={event => setQuestion(event.target.value)} rows={3} />
+          <div className="rounded-lg border bg-card p-4 space-y-3"><p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Layers className="size-3.5" aria-hidden="true" />{t('workbench.selectedCount', { count: selectedCount })}</p><label className="block text-sm font-semibold" htmlFor="workbench-question">{t('workbench.question')}</label><Textarea id="workbench-question" value={question} onChange={event => { questionRevision.current++; setQuestion(event.target.value) }} rows={3} />
           {showModelStatus && <div className="space-y-2">
             <p id="workbench-model-status" role={modelState === 'error' ? 'alert' : 'status'} className="text-xs text-muted-foreground">{t(modelStatusKey)}</p>
             {modelState === 'error' && <Button size="sm" variant="outline" onClick={() => { void modelDefaults.refetch() }}>{t('workbench.retryModelCheck')}</Button>}
@@ -303,7 +308,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
           {selectedCount === 0 && <p className="text-xs text-muted-foreground">{t('workbench.emptySelection')}</p>}
           {selectedCount > 0 && !canAsk && !modelBlocked && <p className="text-xs text-muted-foreground">{googleBlocked || t(selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
           {selectedCount > 0 && googleBlocked && <Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button>}
-          <div className="flex flex-wrap gap-2"><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} disabled={!canAsk || !question.trim() || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: question.trim() })}>{t('workbench.ask')}</Button><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} variant="outline" disabled={!canAsk || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: t('workbench.outlinePrompt'), outline: true, editorSnapshot: { session: noteEditorSession.current, revision: noteEditorRevision.current } })}>{t('workbench.outline')}</Button></div></div>
+          <div className="flex flex-wrap gap-2"><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} disabled={!canAsk || !question.trim() || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: question.trim(), questionRevision: questionRevision.current })}>{t('workbench.ask')}</Button><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} variant="outline" disabled={!canAsk || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: t('workbench.outlinePrompt'), outline: true, editorSnapshot: { session: noteEditorSession.current, revision: noteEditorRevision.current } })}>{t('workbench.outline')}</Button></div></div>
           {(ask.isPending || pendingTurn) && <p role="status" className="text-sm text-teal">{t('workbench.asking')}</p>}
           {ask.isError && <div role="alert"><p className="text-destructive">{t('workbench.answerFailure')}</p>{!unmappedSources && <p className="text-xs">{requestError(ask.error) || t('workbench.unknownSubmission')}</p>}</div>}
           {unmappedSources && <div role="alert" className="space-y-2"><p className="text-sm leading-6 text-muted-foreground">{t('learningWorkspace.unmappedSources')}</p><Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button></div>}

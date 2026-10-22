@@ -14,7 +14,12 @@ from loguru import logger
 from surreal_commands import CommandInput, CommandOutput, command, submit_command
 
 from open_notebook.ai.models import model_manager
-from open_notebook.database.repository import ensure_record_id, repo_insert, repo_query
+from open_notebook.database.embedding_repository import (
+    EmbeddingOutcomeUnknown,
+    publish_markdown_embedding,
+    publish_source_embeddings,
+)
+from open_notebook.database.repository import ensure_record_id, repo_query
 from open_notebook.domain.notebook import Note, Source, SourceInsight
 from open_notebook.exceptions import (
     ConfigurationError,
@@ -24,17 +29,18 @@ from open_notebook.exceptions import (
 from open_notebook.utils.chunking import ContentType, chunk_text, detect_content_type
 from open_notebook.utils.embedding import generate_embedding, generate_embeddings
 
-# NOTE: `stop_on` below can never trigger in practice — each command catches
-# ValueError (and NotFoundError) internally and returns success=False instead
-# of raising, so the retry layer never sees it. Kept as-is on purpose; to be revisited in a
-# dedicated error-handling PR.
+# Permanent validation/not-found errors return success=False. Uncertain commits
+# propagate but are excluded from automatic retries, as is cancellation.
 EMBED_RETRY_CONFIG = {
     "max_attempts": 5,
+    # Exclude cancellation/BaseException from the SDK's blocklist-only retry.
+    "retry_on": [Exception],
     "wait_strategy": "exponential_jitter",
     "wait_min": 1,
     "wait_max": 60,
     "stop_on": [
         ValueError,
+        EmbeddingOutcomeUnknown,
         ConfigurationError,
         ContextLengthExceededError,
     ],  # Don't retry validation/config errors
@@ -130,13 +136,13 @@ async def _embed_markdown_record(
         record.content, content_type=ContentType.MARKDOWN, command_id=cmd_id
     )
 
-    # 3. UPSERT embedding into the record
-    await repo_query(
-        "UPDATE $record_id SET embedding = $embedding",
-        {
-            "record_id": ensure_record_id(record_id),
-            "embedding": embedding,
-        },
+    # Publish only while the loaded content/revision still owns this record.
+    await publish_markdown_embedding(
+        record_id,
+        record.content,
+        record.created,
+        embedding,
+        revision=record.revision if label == "Note" else None,
     )
 
     return {}, ""
@@ -320,11 +326,11 @@ async def embed_source_command(input_data: EmbedSourceInput) -> EmbedSourceOutpu
 
     Flow:
     1. Load Source by ID
-    2. DELETE existing source_embedding records for this source
+    2. Keep the existing index while preparing the replacement
     3. Detect content type from file path or content
     4. Chunk text using appropriate splitter
     5. Generate embeddings for all chunks in batches
-    6. Bulk INSERT source_embedding records
+    6. Atomically publish all chunks if the source is still current
 
     Retry Strategy:
     - Retries up to 5 times for transient failures (network, timeout, etc.)
@@ -341,13 +347,6 @@ async def embed_source_command(input_data: EmbedSourceInput) -> EmbedSourceOutpu
 
         if not source.full_text or not source.full_text.strip():
             raise ValueError(f"Source '{input_data.source_id}' has no text to embed")
-
-        # 2. DELETE existing embeddings (idempotency)
-        logger.debug(f"Deleting existing embeddings for source {input_data.source_id}")
-        await repo_query(
-            "DELETE source_embedding WHERE source = $source_id",
-            {"source_id": ensure_record_id(input_data.source_id)},
-        )
 
         # 3. Detect content type from file path if available
         file_path = source.asset.file_path if source.asset else None
@@ -393,25 +392,9 @@ async def embed_source_command(input_data: EmbedSourceInput) -> EmbedSourceOutpu
             for idx, (chunk, embedding) in enumerate(zip(chunks, embeddings))
         ]
 
-        logger.debug(f"Inserting {len(records)} source_embedding records")
-        try:
-            await repo_insert("source_embedding", records)
-        except Exception:
-            # repo_insert writes in batches, so a failure on a later batch
-            # leaves the earlier ones behind. A partial set would mark the
-            # source as embedded while search sees only part of it: remove
-            # them before re-raising (the original error drives retry/stop).
-            try:
-                await repo_query(
-                    "DELETE source_embedding WHERE source = $source_id",
-                    {"source_id": ensure_record_id(input_data.source_id)},
-                )
-            except Exception as cleanup_error:
-                logger.error(
-                    f"Failed to clean up partial embeddings for source "
-                    f"{input_data.source_id}: {cleanup_error}"
-                )
-            raise
+        await publish_source_embeddings(
+            input_data.source_id, source.full_text, file_path, source.created, records
+        )
 
         return {"chunks_created": total_chunks}, f": {total_chunks} chunks"
 

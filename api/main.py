@@ -65,6 +65,7 @@ from open_notebook.exceptions import (
     NotFoundError,
     OpenNotebookError,
     RateLimitError,
+    UnsupportedCapabilityError,
     UnsupportedTypeException,
 )
 from open_notebook.integrations.notebooklm.contracts import BridgeError
@@ -402,6 +403,17 @@ async def unsupported_type_error_handler(
 ):
     return JSONResponse(
         status_code=415,
+        content={"detail": str(exc)},
+        headers=_cors_headers(request),
+    )
+
+
+@app.exception_handler(UnsupportedCapabilityError)
+async def unsupported_capability_error_handler(
+    request: Request, exc: UnsupportedCapabilityError
+):
+    return JSONResponse(
+        status_code=501,
         content={"detail": str(exc)},
         headers=_cors_headers(request),
     )

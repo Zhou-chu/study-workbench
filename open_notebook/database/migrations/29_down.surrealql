@@ -1,0 +1,1 @@
+REMOVE FIELD embedding_publication ON source;

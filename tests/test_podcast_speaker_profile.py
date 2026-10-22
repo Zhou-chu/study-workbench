@@ -355,7 +355,9 @@ class TestOrphanedProfileDoesNotPoisonConfig:
                 "commands.podcast_commands._resolve_model_config",
                 new=AsyncMock(return_value=resolved),
             ),
-            patch("commands.podcast_commands.repo_query", new=fake_repo_query),
+            patch(
+                "commands.podcast_commands.repo_query", new=fake_repo_query, create=True
+            ),
             patch("commands.podcast_commands.configure", new=fake_configure),
             patch(
                 "commands.podcast_commands.create_podcast",
@@ -481,7 +483,9 @@ class TestUnconfiguredSpeakerProfileDoesNotPoisonConfig:
                 "commands.podcast_commands._resolve_model_config",
                 new=AsyncMock(return_value=resolved),
             ),
-            patch("commands.podcast_commands.repo_query", new=fake_repo_query),
+            patch(
+                "commands.podcast_commands.repo_query", new=fake_repo_query, create=True
+            ),
             patch("commands.podcast_commands.configure", new=fake_configure),
             patch(
                 "commands.podcast_commands.create_podcast",

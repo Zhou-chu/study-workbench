@@ -47,6 +47,7 @@ IGNORE_PATTERNS = {
     "**/*.tar*",
     "**/*.pem",
     "**/*.key",
+    "**/*.secret",
 }
 
 

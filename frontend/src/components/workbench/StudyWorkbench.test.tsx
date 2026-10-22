@@ -42,6 +42,45 @@ describe('StudyWorkbench source snapshots', () => {
     vi.mocked(workbenchApi.turn).mockResolvedValue({ turn_id: 'new_turn', job_id: 'j1' })
   })
   it.each([
+    { action: 'outline', edits: [], expected: 'Original question' },
+    { action: 'outline', edits: ['New question'], expected: 'New question' },
+    { action: 'ask', edits: ['New question'], expected: 'New question' },
+    { action: 'ask', edits: ['Temporary edit', 'Original question'], expected: 'Original question' },
+    { action: 'ask', edits: [], expected: '' },
+  ])('owns only the submitted question generation on $action success after $edits', async ({ action, edits, expected }) => {
+    let resolveTurn!: (value: Awaited<ReturnType<typeof workbenchApi.turn>>) => void
+    vi.mocked(workbenchApi.turn).mockReturnValueOnce(new Promise(resolve => { resolveTurn = resolve }))
+    show()
+    await screen.findByText('Lecture notes')
+    const question = screen.getByLabelText('workbench.question')
+    fireEvent.change(question, { target: { value: 'Original question' } })
+    fireEvent.click(screen.getByRole('button', { name: `workbench.${action}` }))
+    await waitFor(() => expect(workbenchApi.turn).toHaveBeenCalledTimes(1))
+    expect(question).toBeEnabled()
+    for (const value of edits) fireEvent.change(question, { target: { value } })
+    await act(async () => { resolveTurn({ turn_id: 'new_turn', job_id: 'j1' }) })
+    await waitFor(() => expect(workbenchApi.turns).toHaveBeenCalled())
+    expect(question).toHaveValue(expected)
+    expect(screen.getByRole('button', { name: 'workbench.ask' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'workbench.outline' })).toBeDisabled()
+  })
+  it.each([false, true])('retains the question on failed submission with later edits: %s', async edited => {
+    let rejectTurn!: (reason: Error) => void
+    vi.mocked(workbenchApi.turn).mockReturnValueOnce(new Promise((_resolve, reject) => { rejectTurn = reject }))
+    show()
+    await screen.findByText('Lecture notes')
+    const question = screen.getByLabelText('workbench.question')
+    fireEvent.change(question, { target: { value: 'Original question' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.ask' }))
+    await waitFor(() => expect(workbenchApi.turn).toHaveBeenCalledTimes(1))
+    if (edited) fireEvent.change(question, { target: { value: 'New question' } })
+    await act(async () => { rejectTurn(new Error('Question request failed')) })
+    await screen.findByText('workbench.answerFailure')
+    expect(question).toHaveValue(edited ? 'New question' : 'Original question')
+    expect(screen.getByRole('button', { name: 'workbench.ask' })).toBeEnabled()
+    expect(workbenchApi.turn).toHaveBeenCalledTimes(1)
+  })
+  it.each([
     ['notebooklm', true], ['notebooklm', false], ['independent', true], ['independent', false],
   ] as const)('prioritizes source selection over %s configuration when empty notebook is %s', async (engine, emptyNotebook) => {
     vi.mocked(useModelDefaults).mockReturnValue({ data: { default_chat_model: null } } as never)

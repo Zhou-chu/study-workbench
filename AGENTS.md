@@ -8,28 +8,23 @@ This file holds the project-wide rules every coding session needs. Component rul
 
 Three tiers: Next.js frontend (3000) → FastAPI (5055) → SurrealDB (8000).
 
-Start in this order — each tier depends on the one below:
+Use [the project entrypoint guide](docs/v1/ENTRYPOINTS.md) and [V1 runbook](docs/v1/RUNBOOK.md). The owned foreground Linux launcher starts database → API → worker → frontend and cleans up only its own process groups. **API startup runs schema migrations; the worker can consume queued jobs.** Never point an acceptance run at a user's database.
 
-1. `make database` — SurrealDB (API fails without it)
-2. `make api` — FastAPI; **schema migrations run automatically on startup** (check logs)
-3. `make worker-start` — surreal-commands worker. **Required**: podcasts, embeddings and source processing are async jobs that silently queue forever without it
-4. `make frontend` — UI (depends on the API for all data)
-
-Or all at once: `make start-all` (status: `make status`, stop: `make stop-all`). First-time setup (`uv sync`, `npm install`, a `.env` with `SURREAL_URL=ws://localhost:8000/rpc`): [development-setup.md](docs/7-DEVELOPMENT/development-setup.md).
+`make` is nonmutating help. Legacy `database`, `start-all`, `stop-all`, `status`, worker stop/restart and inherited Docker/release/tag targets fail closed. Root Compose has no services. Standalone `make api`, `make worker-start` and `make frontend` remain foreground development commands, not an isolated deployment. Stop them in their owning terminals; never use global process-name kills. The explicit four-service Docker candidate is not runtime-accepted.
 
 ## Commands
 
 - Tests: `uv run pytest tests/`
 - Python lint/format/typecheck: `uv run ruff check . --fix` · `uv run ruff format .` · `uv run python -m mypy .`
 - Frontend (inside `frontend/`): `npm run lint` · `npm run test` · `npm run build`
-- CI runs `uv run ruff check .`, `uv run ruff format --check .`, mypy, pytest and, in `frontend/`, `npm run lint`, `npm run test:coverage` and `npm run build`; all must pass
-- Docker release: `make docker-release` (see `.github/RELEASE_PROCESS.md`)
+- Required offline checks: Ruff/format, mypy, pytest, frontend lint/types/tests/build; coverage and opt-in database/runtime gates are reported separately. This private source delivery currently has no active checked-in CI workflows: do not claim CI ran or enable inherited publication workflows implicitly.
+- Docker/release: [V1 migration gates](docs/v1/DOCKER_MIGRATION.md); inherited release Make targets are disabled, not a supported publication route.
 
 ## Hard rules
 
 - **Async-first**: every DB query, graph invocation and AI call is `await`-ed. No sync DB access.
 - **Never commit secrets.** Credentials are encrypted at rest and require `OPEN_NOTEBOOK_ENCRYPTION_KEY` to be set.
-- CORS is wide-open and auth is a simple password middleware — **dev defaults, not production hardening**. Don't build features that assume otherwise.
+- Authentication/CORS depend on explicit runtime mode. Legacy password remains the default; device-session and same-origin Web-session code is separately gated. Preserve private-access, exact-Origin and credential-custody checks; do not assume production hardening or device activation from code presence. See [device protocol](docs/v1/DEVICE_SESSION_PROTOCOL.md).
 - Product direction questions (does this feature fit?) → [VISION.md](VISION.md). Past decisions ("why is it like this?") → [docs/7-DEVELOPMENT/decisions/](docs/7-DEVELOPMENT/decisions/). Structural decisions made while coding should produce a new decision record there.
 - **Conventional Commits** for commits and PR titles (`fix(podcasts): …`, `feat(providers): …`, `docs: …`).
 - **Every user-visible change adds a CHANGELOG entry** under `## [Unreleased]`, in the one section for its type (`### Added` / `### Changed` / `### Deprecated` / `### Removed` / `### Fixed` / `### Security`); never create a duplicate section. Details: [contributing.md](docs/7-DEVELOPMENT/contributing.md#changelog).

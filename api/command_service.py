@@ -3,6 +3,8 @@ from typing import Any, Dict, List, Optional
 from loguru import logger
 from surreal_commands import get_command_status, submit_command
 
+from open_notebook.exceptions import UnsupportedCapabilityError
+
 
 class CommandService:
     """Generic service layer for command operations"""
@@ -74,19 +76,10 @@ class CommandService:
         status_filter: Optional[str] = None,
         limit: int = 50,
     ) -> List[Dict[str, Any]]:
-        """List command jobs with optional filtering"""
-        # This will be implemented with proper SurrealDB queries
-        # For now, return empty list as this is foundation phase
-        return []
+        """Generic job listing is unavailable; never present it as an empty queue."""
+        raise UnsupportedCapabilityError("GENERIC_COMMAND_LISTING_UNSUPPORTED")
 
     @staticmethod
     async def cancel_command_job(job_id: str) -> bool:
-        """Cancel a running command job"""
-        try:
-            # Implementation depends on surreal-commands cancellation support
-            # For now, just log the attempt
-            logger.info(f"Attempting to cancel job: {job_id}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to cancel command job: {e}")
-            raise
+        """Generic cancellation is unavailable; no backend job is changed."""
+        raise UnsupportedCapabilityError("GENERIC_COMMAND_CANCELLATION_UNSUPPORTED")

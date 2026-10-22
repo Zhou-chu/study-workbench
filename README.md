@@ -5,6 +5,9 @@
 
 ## 当前进度与验收边界
 
+- [全仓风险与功能缺口审查](docs/v1/REPOSITORY_AUDIT_2026-10-22.md) · [风险优先整改计划](docs/v1/GAP_CLOSURE_PLAN.md)
+- [安全启动与停止入口](docs/v1/ENTRYPOINTS.md)：旧全局停止和上游发布命令已禁用；默认 Compose 不启动服务，四服务 Docker 仍待真实验收。
+
 - [当前进度](docs/v1/PROGRESS.md)：最新检查点、测试结果及下一步。
 - [验收矩阵](docs/v1/ACCEPTANCE.md)：真实验证、模拟测试、部分完成和阻塞项。
 - [运行手册](docs/v1/RUNBOOK.md)：本地配置与复现。

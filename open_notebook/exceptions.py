@@ -96,3 +96,7 @@ class NoteRevisionRequired(OpenNotebookError):
 
 class NoteCommitOutcomeUnknown(OpenNotebookError):
     """Read/reconcile before retrying; commit may already have succeeded."""
+
+
+class UnsupportedCapabilityError(OpenNotebookError):
+    """Raised when an operation is explicitly unavailable, rather than successful."""

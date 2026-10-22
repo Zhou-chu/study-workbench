@@ -291,7 +291,7 @@ async def update_note(
     IF $expected = NONE AND $required { THROW "NOTE_REVISION_REQUIRED"; };
     IF $expected != NONE AND $expected != $revision { THROW "NOTE_REVISION_CONFLICT"; };
     UPSERT $note_guard SET token = rand::uuid();
-    LET $updated = (UPDATE $note MERGE object::from_entries(array::concat(object::entries($fields), object::entries({revision: $revision + 1}))) WHERE (revision ?? 1) = $revision)[0];
+    LET $updated = (UPDATE $note MERGE object::from_entries(array::concat(object::entries($fields), object::entries({revision: $revision + 1, embedding: NONE}))) WHERE (revision ?? 1) = $revision)[0];
     IF $updated = NONE { THROW "NOTE_REVISION_CONFLICT"; };
     LET $metadata = $snapshot ?? $old_snapshot;
     LET $saved = IF $metadata != NONE { object::from_entries(array::concat(object::entries($metadata), object::entries({id: $identity, note_id: $identity, notebook_id: $old_snapshot.notebook_id ?? $notebook_identity, title: $updated.title, content: $updated.content, revision: $updated.revision, created_at: $old_snapshot.created_at ?? $timestamp, updated_at: $timestamp}))) } ELSE { NONE };

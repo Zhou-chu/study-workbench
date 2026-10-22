@@ -87,17 +87,29 @@ def ensure_record_id(value: Union[str, RecordID]) -> RecordID:
 @asynccontextmanager
 async def db_connection():
     db = AsyncSurreal(get_database_url())
-    await db.signin(
-        {
-            "username": os.environ.get("SURREAL_USER"),
-            "password": get_database_password(),
-        }
-    )
-    await db.use(get_database_namespace(), get_database_name())
+    failed = False
     try:
+        await db.signin(
+            {
+                "username": os.environ.get("SURREAL_USER"),
+                "password": get_database_password(),
+            }
+        )
+        await db.use(get_database_namespace(), get_database_name())
         yield db
+    except BaseException:
+        # Cancellation must also release a partially initialized connection.
+        failed = True
+        raise
     finally:
-        await db.close()
+        try:
+            await db.close()
+        except Exception:
+            if not failed:
+                raise
+            # Preserve the original failure (including cancellation), without
+            # logging connection details which can contain credentials.
+            logger.warning("Database connection cleanup failed after an error")
 
 
 async def repo_query(

@@ -1,5 +1,13 @@
 # StudyWorkbench V1 progress
 
+## Current priority: repository remediation, 2026-10-22
+
+The owner requested risk/error repairs before completing feature gaps. See [the repository audit](REPOSITORY_AUDIT_2026-10-22.md) and [the revised gap plan](GAP_CLOSURE_PLAN.md). Changes are integrated separately from the running preview; this is not a deployment announcement.
+
+First remediation checkpoint: **1965 backend tests passed / 60 opt-in skips / 2 existing dependency warnings**, plus **14 separately executed disposable SurrealDB tests**; **1207 frontend tests across 78 files**, frontend types/build and lint (0 errors / 7 existing warnings) passed. Full Python Ruff/format/mypy passed for 268 files. [Machine-readable evidence](evidence/repository-audit-2026-10-22/summary.json) identifies the verified code and exclusions. The remaining 46 opt-in skips are not passed gates. Default Compose now has no services and inherited unsafe operations fail closed; actual Docker acceptance remains pending.
+
+The latest preview checkpoint is the owner-approved **fresh empty** 2026-10-22 instance with public-fixture authentication/worker/original-byte checks. User-data restoration, user browser login, live web discovery, actual model/Google calls, Docker runtime and native clients are not inferred. Earlier sections are historical, not the current release gate result.
+
 Original checkpoint: 2026-10-18 UTC. Continuation updated: 2026-10-21 UTC. Branch: `feature/study-workbench-v1`. Baseline: Open Notebook 1.15.0 at `a0f6f3081ae06328f0a451b3a3ef2959ca25721d`. Exact handoff commit and archive hashes are recorded in the accompanying delivery manifest; use `git rev-parse HEAD` in the Git bundle checkout.
 
 This is a reproducible development delivery with a working local document workflow, **not a fully accepted personal NotebookLM deployment**. No real Google login, model call, NotebookLM write or paid resource was used. Dedicated private runtime credentials were authorized and provisioned on 2026-10-21; values remain outside source. Protected external access remains pending.

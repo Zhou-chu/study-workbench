@@ -2,8 +2,7 @@
 
 **Status: Static checks only. Docker build/run and production readiness NOT RUN.**
 Do not replace a working deployment with this draft until the T11 gates below pass.
-Legacy Docker files are unchanged; `deploy/v1/compose.yaml` is the explicit opt-in
-manifest. It uses JSON syntax (valid YAML 1.2), so the offline checker needs only Python.
+Root Compose now has no runnable services and inherited lifecycle/publication Make targets fail closed; see [safe entrypoints](ENTRYPOINTS.md). Historical Docker examples/scripts are not endorsed deployment routes. `deploy/v1/compose.yaml` remains the explicit opt-in candidate, not an activated deployment. It uses JSON syntax (valid YAML 1.2), so the offline checker needs only Python.
 
 ## Topology and boundaries
 

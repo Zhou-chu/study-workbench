@@ -7032,6 +7032,9 @@
               }
             },
             "description": "Validation Error"
+          },
+          "501": {
+            "description": "Generic command listing is not supported"
           }
         },
         "summary": "List Command Jobs",
@@ -7113,6 +7116,9 @@
               }
             },
             "description": "Validation Error"
+          },
+          "501": {
+            "description": "Generic command cancellation is not supported"
           }
         },
         "summary": "Cancel Command Job",

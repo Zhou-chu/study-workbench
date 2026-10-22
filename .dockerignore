@@ -83,3 +83,4 @@ docs
 **/*.tar*
 **/*.pem
 **/*.key
+**/*.secret

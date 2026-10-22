@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { getApiErrorMessage } from '@/lib/utils/error-handler'
@@ -9,12 +9,17 @@ import { chatApi } from '@/lib/api/chat'
 import { QUERY_KEYS } from '@/lib/api/query-client'
 import {
   NotebookChatMessage,
-  CreateNotebookChatSessionRequest,
+  NotebookChatSession,
   UpdateNotebookChatSessionRequest,
   SourceListResponse,
   NoteResponse
 } from '@/lib/types/api'
 import { ContextSelections } from '@/app/(dashboard)/notebooks/[id]/page'
+
+interface Ownership {
+  notebook: string
+  generation: number
+}
 
 interface UseNotebookChatParams {
   notebookId: string
@@ -26,13 +31,52 @@ interface UseNotebookChatParams {
 export function useNotebookChat({ notebookId, sources, notes, contextSelections }: UseNotebookChatParams) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
+  const [selection, setSelection] = useState<{ notebook: string, id: string | null }>({ notebook: notebookId, id: null })
+  const currentSessionId = selection.notebook === notebookId ? selection.id : null
+  const notebookRef = useRef(notebookId)
+  const selectedRef = useRef<string | null>(null)
+  const generationRef = useRef(0)
+  const mountedRef = useRef(true)
+  const operationRef = useRef<object | null>(null)
+  const hydrateRef = useRef(true)
   const [messages, setMessages] = useState<NotebookChatMessage[]>([])
   const [isSending, setIsSending] = useState(false)
   const [tokenCount, setTokenCount] = useState<number>(0)
   const [charCount, setCharCount] = useState<number>(0)
   // Pending model override for when user changes model before a session exists
   const [pendingModelOverride, setPendingModelOverride] = useState<string | null>(null)
+
+  // Requests are not remotely canceled: invalidate only their ownership of UI state.
+  const invalidateOperation = useCallback(() => {
+    generationRef.current += 1
+    operationRef.current = null
+    setIsSending(false)
+  }, [])
+  const selectSession = useCallback((id: string | null) => {
+    selectedRef.current = id
+    hydrateRef.current = true
+    setSelection({ notebook: notebookId, id })
+    setMessages([])
+  }, [notebookId])
+  const owns = useCallback(({ notebook, generation }: Ownership) =>
+    mountedRef.current && notebookRef.current === notebook && generationRef.current === generation, [])
+
+  useEffect(() => {
+    mountedRef.current = true
+    if (notebookRef.current !== notebookId) {
+      notebookRef.current = notebookId
+      selectSession(null)
+      setIsSending(false)
+      setPendingModelOverride(null)
+      setTokenCount(0)
+      setCharCount(0)
+    }
+    return () => {
+      mountedRef.current = false
+      generationRef.current += 1
+      operationRef.current = null
+    }
+  }, [notebookId, selectSession])
 
   // Fetch sessions for this notebook
   const {
@@ -47,8 +91,7 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
 
   // Fetch current session with messages
   const {
-    data: currentSession,
-    refetch: refetchCurrentSession
+    data: currentSession
   } = useQuery({
     queryKey: QUERY_KEYS.notebookChatSession(currentSessionId!),
     queryFn: () => chatApi.getSession(currentSessionId!),
@@ -57,32 +100,34 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
 
   // Update messages when current session changes
   useEffect(() => {
-    if (currentSession?.messages) {
+    if (hydrateRef.current && currentSession?.id === currentSessionId && currentSession?.messages) {
       setMessages(currentSession.messages)
     }
-  }, [currentSession])
+  }, [currentSession, currentSessionId, isSending])
 
   // Auto-select most recent session when sessions are loaded
   useEffect(() => {
-    if (sessions.length > 0 && !currentSessionId) {
+    if (sessions.length > 0 && !currentSessionId && !operationRef.current) {
       // Sessions are sorted by created date desc from API
       const mostRecentSession = sessions[0]
-      setCurrentSessionId(mostRecentSession.id)
+      selectSession(mostRecentSession.id)
     }
-  }, [sessions, currentSessionId])
+  }, [sessions, currentSessionId, selectSession])
 
   // Create session mutation
   const createSessionMutation = useMutation({
-    mutationFn: (data: CreateNotebookChatSessionRequest) =>
-      chatApi.createSession(data),
-    onSuccess: (newSession) => {
+    mutationFn: ({ title, notebook }: Ownership & { title?: string }) =>
+      chatApi.createSession({ notebook_id: notebook, title }),
+    onSuccess: (newSession, owner) => {
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notebookChatSessions(notebookId)
+        queryKey: QUERY_KEYS.notebookChatSessions(owner.notebook)
       })
-      setCurrentSessionId(newSession.id)
+      if (!owns(owner)) return
+      selectSession(newSession.id)
       toast.success(t('chat.sessionCreated'))
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, owner) => {
+      if (!owns(owner)) return
       const error = err as { response?: { data?: { detail?: string } }, message?: string };
       toast.error(getApiErrorMessage(error.response?.data?.detail || error.message, (key) => t(key), 'apiErrors.failedToCreateSession'))
     }
@@ -93,17 +138,18 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
     mutationFn: ({ sessionId, data }: {
       sessionId: string
       data: UpdateNotebookChatSessionRequest
-    }) => chatApi.updateSession(sessionId, data),
-    onSuccess: () => {
+    } & Ownership) => chatApi.updateSession(sessionId, data),
+    onSuccess: (_, owner) => {
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notebookChatSessions(notebookId)
+        queryKey: QUERY_KEYS.notebookChatSessions(owner.notebook)
       })
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notebookChatSession(currentSessionId!)
+        queryKey: QUERY_KEYS.notebookChatSession(owner.sessionId)
       })
-      toast.success(t('chat.sessionUpdated'))
+      if (owns(owner)) toast.success(t('chat.sessionUpdated'))
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, owner) => {
+      if (!owns(owner)) return
       const error = err as { response?: { data?: { detail?: string } }, message?: string };
       toast.error(getApiErrorMessage(error.response?.data?.detail || error.message, (key) => t(key), 'apiErrors.failedToUpdateSession'))
     }
@@ -111,19 +157,26 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
 
   // Delete session mutation
   const deleteSessionMutation = useMutation({
-    mutationFn: (sessionId: string) =>
+    mutationFn: ({ sessionId }: Ownership & { sessionId: string }) =>
       chatApi.deleteSession(sessionId),
-    onSuccess: (_, deletedId) => {
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notebookChatSessions(notebookId)
-      })
-      if (currentSessionId === deletedId) {
-        setCurrentSessionId(null)
-        setMessages([])
+    onSuccess: (_, owner) => {
+      const deletedId = owner.sessionId
+      // Reconcile the captured target even if another selection now owns the UI.
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.notebookChatSession(deletedId), exact: true })
+      queryClient.setQueryData<NotebookChatSession[]>(
+        QUERY_KEYS.notebookChatSessions(owner.notebook),
+        previous => previous?.filter(session => session.id !== deletedId)
+      )
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notebookChatSessions(owner.notebook) })
+      const showToast = owns(owner)
+      if (mountedRef.current && notebookRef.current === owner.notebook && selectedRef.current === deletedId) {
+        invalidateOperation()
+        selectSession(null)
       }
-      toast.success(t('chat.sessionDeleted'))
+      if (showToast) toast.success(t('chat.sessionDeleted'))
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, owner) => {
+      if (!owns(owner)) return
       const error = err as { response?: { data?: { detail?: string } }, message?: string };
       toast.error(getApiErrorMessage(error.response?.data?.detail || error.message, (key) => t(key), 'apiErrors.failedToDeleteSession'))
     }
@@ -165,56 +218,65 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
       context_config
     })
 
-    // Store token and char counts
-    setTokenCount(response.token_count)
-    setCharCount(response.char_count)
-
-    return response.context
+    return response
   }, [notebookId, sources, notes, contextSelections])
 
   // Send message (synchronous, no streaming)
   const sendMessage = useCallback(async (message: string, modelOverride?: string) => {
-    let sessionId = currentSessionId
-
-    // Auto-create session if none exists
-    if (!sessionId) {
-      try {
-        const defaultTitle = message.length > 30
-          ? `${message.substring(0, 30)}...`
-          : message
-        const newSession = await chatApi.createSession({
-          notebook_id: notebookId,
-          title: defaultTitle,
-          // Include pending model override when creating session
-          model_override: pendingModelOverride ?? undefined
-        })
-        sessionId = newSession.id
-        setCurrentSessionId(sessionId)
-        // Clear pending model override now that it's applied to the session
-        setPendingModelOverride(null)
-        queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.notebookChatSessions(notebookId)
-        })
-      } catch (err: unknown) {
-        const error = err as { response?: { data?: { detail?: string } }, message?: string };
-        toast.error(getApiErrorMessage(error.response?.data?.detail || error.message, (key) => t(key), 'apiErrors.failedToCreateSession'))
-        return
-      }
-    }
-
-    // Add user message optimistically
-    const userMessage: NotebookChatMessage = {
-      id: `temp-${Date.now()}`,
-      type: 'human',
-      content: message,
-      timestamp: new Date().toISOString()
-    }
-    setMessages(prev => [...prev, userMessage])
+    if (!mountedRef.current || notebookRef.current !== notebookId || operationRef.current) return
+    const operation = {}
+    operationRef.current = operation
+    const owner = { notebook: notebookId, generation: ++generationRef.current }
+    let sessionId = selectedRef.current
+    const isCurrent = () => owns(owner) && operationRef.current === operation && selectedRef.current === sessionId
+    hydrateRef.current = false
     setIsSending(true)
-
+    const userMessageId = `temp-${owner.generation}-${Date.now()}`
+    let receivedResponse = false
     try {
-      // Build context and send message
-      const context = await buildContext()
+      // Auto-create session if none exists
+      if (!sessionId) {
+        try {
+          const defaultTitle = message.length > 30
+            ? `${message.substring(0, 30)}...`
+            : message
+          const newSession = await chatApi.createSession({
+            notebook_id: notebookId,
+            title: defaultTitle,
+            // Include pending model override when creating session
+            model_override: pendingModelOverride ?? undefined
+          })
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notebookChatSessions(owner.notebook) })
+          if (!isCurrent()) return
+          sessionId = newSession.id
+          selectedRef.current = sessionId
+          setSelection({ notebook: notebookId, id: sessionId })
+          // Clear pending model override now that it's applied to the session
+          setPendingModelOverride(null)
+
+        } catch (err: unknown) {
+          if (!isCurrent()) return
+          const error = err as { response?: { data?: { detail?: string } }, message?: string };
+          toast.error(getApiErrorMessage(error.response?.data?.detail || error.message, (key) => t(key), 'apiErrors.failedToCreateSession'))
+          return
+        }
+      }
+
+      // Add user message optimistically
+      const userMessage: NotebookChatMessage = {
+        id: userMessageId,
+        type: 'human',
+        content: message,
+        timestamp: new Date().toISOString()
+      }
+      setMessages(prev => [...prev, userMessage])
+
+      // Build context and send message only while this selection still owns admission.
+      const built = await buildContext()
+      if (!isCurrent()) return
+      setTokenCount(built.token_count)
+      setCharCount(built.char_count)
+      const context = built.context
       const response = await chatApi.sendMessage({
         session_id: sessionId,
         message,
@@ -222,62 +284,85 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
         model_override: modelOverride ?? (currentSession?.model_override ?? undefined)
       })
 
-      // Update messages with API response
+      if (!isCurrent()) return
+      // Preserve server history semantics, then perform one fresh read of the actual target.
+      receivedResponse = true
       setMessages(response.messages)
 
-      // Refetch current session to get updated data
-      await refetchCurrentSession()
+      // Discard older query results before the authoritative read. chatApi does not
+      // accept an AbortSignal, so this cancels cache ownership, not remote HTTP.
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.notebookChatSession(sessionId), exact: true })
+      if (!isCurrent()) return
+      const refreshed = await chatApi.getSession(sessionId)
+      if (!isCurrent()) return
+      queryClient.setQueryData(QUERY_KEYS.notebookChatSession(sessionId), refreshed)
+      setMessages(refreshed.messages)
+      hydrateRef.current = true
     } catch (err: unknown) {
+      if (!isCurrent()) return
       const error = err as { response?: { data?: { detail?: string } }, message?: string };
       console.error('Error sending message:', error)
       toast.error(getApiErrorMessage(error.response?.data?.detail || error.message, (key) => t(key), 'apiErrors.failedToSendMessage'))
+      // A failed send must not permanently suppress a pending initial history read.
+      if (!receivedResponse) hydrateRef.current = true
       // Remove optimistic message on error
-      setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')))
+      setMessages(prev => prev.filter(msg => msg.id !== userMessageId))
     } finally {
-      setIsSending(false)
+      if (isCurrent()) {
+        operationRef.current = null
+        setIsSending(false)
+      }
     }
   }, [
     notebookId,
-    currentSessionId,
     currentSession,
     pendingModelOverride,
     buildContext,
-    refetchCurrentSession,
+    owns,
     queryClient,
     t
   ])
 
   // Switch session
   const switchSession = useCallback((sessionId: string) => {
-    setCurrentSessionId(sessionId)
-  }, [])
+    if (selectedRef.current === sessionId) return
+    invalidateOperation()
+    selectSession(sessionId)
+  }, [invalidateOperation, selectSession])
 
   // Create session
   const createSession = useCallback((title?: string) => {
+    invalidateOperation()
     return createSessionMutation.mutate({
-      notebook_id: notebookId,
+      notebook: notebookId,
+      generation: generationRef.current,
       title
     })
-  }, [createSessionMutation, notebookId])
+  }, [createSessionMutation, notebookId, invalidateOperation])
 
   // Update session
   const updateSession = useCallback((sessionId: string, data: UpdateNotebookChatSessionRequest) => {
     return updateSessionMutation.mutate({
       sessionId,
-      data
+      data,
+      notebook: notebookId,
+      generation: generationRef.current
     })
-  }, [updateSessionMutation])
+  }, [updateSessionMutation, notebookId])
 
   // Delete session
   const deleteSession = useCallback((sessionId: string) => {
-    return deleteSessionMutation.mutate(sessionId)
-  }, [deleteSessionMutation])
+    if (selectedRef.current === sessionId) invalidateOperation()
+    return deleteSessionMutation.mutate({ sessionId, notebook: notebookId, generation: generationRef.current })
+  }, [deleteSessionMutation, notebookId, invalidateOperation])
 
   // Set model override - handles both existing sessions and pending state
   const setModelOverride = useCallback((model: string | null) => {
     if (currentSessionId) {
       // Session exists - update it directly
       updateSessionMutation.mutate({
+        notebook: notebookId,
+        generation: generationRef.current,
         sessionId: currentSessionId,
         data: { model_override: model }
       })
@@ -285,18 +370,23 @@ export function useNotebookChat({ notebookId, sources, notes, contextSelections 
       // No session yet - store as pending
       setPendingModelOverride(model)
     }
-  }, [currentSessionId, updateSessionMutation])
+  }, [currentSessionId, updateSessionMutation, notebookId])
 
   // Update token/char counts when context selections change
   useEffect(() => {
+    let active = true
     const updateContextCounts = async () => {
       try {
-        await buildContext()
+        const response = await buildContext()
+        if (!active) return
+        setTokenCount(response.token_count)
+        setCharCount(response.char_count)
       } catch (error) {
-        console.error('Error updating context counts:', error)
+        if (active) console.error('Error updating context counts:', error)
       }
     }
     updateContextCounts()
+    return () => { active = false }
   }, [buildContext])
 
   return {
