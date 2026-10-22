@@ -41,6 +41,42 @@ describe('StudyWorkbench source snapshots', () => {
     vi.mocked(workbenchApi.turns).mockResolvedValue([])
     vi.mocked(workbenchApi.turn).mockResolvedValue({ turn_id: 'new_turn', job_id: 'j1' })
   })
+  it.each([
+    ['notebooklm', true], ['notebooklm', false], ['independent', true], ['independent', false],
+  ] as const)('prioritizes source selection over %s configuration when empty notebook is %s', async (engine, emptyNotebook) => {
+    vi.mocked(useModelDefaults).mockReturnValue({ data: { default_chat_model: null } } as never)
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), sources: emptyNotebook ? [] : fixture.sources, selection: { ...fixture.selection!, engine, source_version_ids: [] } })
+    show(); await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'Keep my question' } })
+    expect(screen.getByText('workbench.emptySelection')).toBeVisible()
+    expect(screen.queryByText('workbench.connectionNotVerified')).not.toBeInTheDocument()
+    expect(screen.queryByText('workbench.notConfigured')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'navigation.settings' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'workbench.modelSettings' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'workbench.ask' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'workbench.outline' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'workbench.ask' })).not.toHaveAttribute('aria-describedby')
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+  })
+  it.each([
+    ['notebooklm', 'workbench.connectionNotVerified'], ['independent', 'workbench.notConfigured'],
+  ] as const)('reveals the unchanged %s guard after selecting sources', async (engine, reason) => {
+    vi.mocked(useModelDefaults).mockReturnValue({ data: { default_chat_model: null } } as never)
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), selection: { ...fixture.selection!, engine, source_version_ids: [] } })
+    show(); await screen.findByText('Lecture notes')
+    expect(screen.queryByText(reason)).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'Keep my question' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.selectAll' }))
+    expect(screen.getByText(reason)).toBeVisible()
+    expect(screen.queryByText('workbench.emptySelection')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'workbench.ask' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'workbench.outline' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.clearSelection' }))
+    expect(screen.getByText('workbench.emptySelection')).toBeVisible()
+    expect(screen.queryByText(reason)).not.toBeInTheDocument()
+    expect(screen.getByLabelText('workbench.question')).toHaveValue('Keep my question')
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+  })
   it('keeps configuration out of daily work and preserves drafts through notebook settings', async () => {
     show()
     await screen.findByText('Lecture notes')

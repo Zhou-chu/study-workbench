@@ -111,6 +111,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     !modelDefaults.data.default_chat_model ? 'notConfigured' : 'ready'
   const modelStatusKey = { loading: 'workbench.modelChecking', error: 'workbench.modelCheckFailed', notConfigured: 'workbench.notConfigured', ready: 'workbench.modelConfigured' }[modelState]
   const modelBlocked = selection.engine === 'independent' && modelState !== 'ready'
+  const showModelStatus = selectedCount > 0 && modelBlocked
   const connectionStatusKey = connection.isError ? 'workbench.googleCheckFailed' :
     connection.isFetching || connection.isLoading || !connection.data ? 'workbench.googleChecking' :
     connectionKeys[connection.data.state] || 'workbench.googleChecking'
@@ -294,14 +295,15 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
         {(data.sources.length > 0 || readVersion || citation) && <div className={cn(!readerOpen && 'hidden')}><EvidenceReader sourceVersionId={readVersion} evidenceId={selection.reading?.evidence_id} citation={citation} initialPage={selection.reading?.page_index || 0} onPositionChange={reading => updateSelection({ reading })} onChanged={refresh} /></div>}
         <section className={cn("space-y-4", readerOpen && "hidden")} aria-label={t('workbench.conversation')}>
           <div className="rounded-lg border bg-card p-4 space-y-3"><p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Layers className="size-3.5" aria-hidden="true" />{t('workbench.selectedCount', { count: selectedCount })}</p><label className="block text-sm font-semibold" htmlFor="workbench-question">{t('workbench.question')}</label><Textarea id="workbench-question" value={question} onChange={event => setQuestion(event.target.value)} rows={3} />
-          {selection.engine === 'independent' && modelState !== 'ready' && <div className="space-y-2">
+          {showModelStatus && <div className="space-y-2">
             <p id="workbench-model-status" role={modelState === 'error' ? 'alert' : 'status'} className="text-xs text-muted-foreground">{t(modelStatusKey)}</p>
             {modelState === 'error' && <Button size="sm" variant="outline" onClick={() => { void modelDefaults.refetch() }}>{t('workbench.retryModelCheck')}</Button>}
             {modelState === 'notConfigured' && <Button size="sm" variant="ghost" onClick={openSettings}>{t('workbench.modelSettings')}</Button>}
           </div>}
-          {!canAsk && !modelBlocked && <p className="text-xs text-muted-foreground">{googleBlocked || t(selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
-          {googleBlocked && <Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button>}
-          <div className="flex flex-wrap gap-2"><Button aria-describedby={selection.engine === 'independent' && modelState !== 'ready' ? 'workbench-model-status' : undefined} disabled={!canAsk || !question.trim() || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: question.trim() })}>{t('workbench.ask')}</Button><Button aria-describedby={selection.engine === 'independent' && modelState !== 'ready' ? 'workbench-model-status' : undefined} variant="outline" disabled={!canAsk || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: t('workbench.outlinePrompt'), outline: true, editorSnapshot: { session: noteEditorSession.current, revision: noteEditorRevision.current } })}>{t('workbench.outline')}</Button></div></div>
+          {selectedCount === 0 && <p className="text-xs text-muted-foreground">{t('workbench.emptySelection')}</p>}
+          {selectedCount > 0 && !canAsk && !modelBlocked && <p className="text-xs text-muted-foreground">{googleBlocked || t(selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
+          {selectedCount > 0 && googleBlocked && <Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button>}
+          <div className="flex flex-wrap gap-2"><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} disabled={!canAsk || !question.trim() || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: question.trim() })}>{t('workbench.ask')}</Button><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} variant="outline" disabled={!canAsk || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: t('workbench.outlinePrompt'), outline: true, editorSnapshot: { session: noteEditorSession.current, revision: noteEditorRevision.current } })}>{t('workbench.outline')}</Button></div></div>
           {(ask.isPending || pendingTurn) && <p role="status" className="text-sm text-teal">{t('workbench.asking')}</p>}
           {ask.isError && <div role="alert"><p className="text-destructive">{t('workbench.answerFailure')}</p>{!unmappedSources && <p className="text-xs">{requestError(ask.error) || t('workbench.unknownSubmission')}</p>}</div>}
           {unmappedSources && <div role="alert" className="space-y-2"><p className="text-sm leading-6 text-muted-foreground">{t('learningWorkspace.unmappedSources')}</p><Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button></div>}

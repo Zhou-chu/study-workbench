@@ -2,7 +2,7 @@
 
 Date: 2026-10-22 UTC.
 
-**Status: merged-code regression gates passed; live preview replacement and browser/provider acceptance remain pending.**
+**Status: merged-code regression gates and isolated local-workflow browser acceptance passed. Live web discovery is blocked by refused API transport; replacement of the user's preview is still pending their saved-input confirmation.**
 
 ## Intended user workflow
 
@@ -42,17 +42,29 @@ These routes must be registered in the backend, exported into the actual OpenAPI
 
 ## Verification ledger
 
-Root verification on the merged code through `95e42c7`, including keyless trial and the regenerated actual OpenAPI schema:
+Root backend verification through `95e42c7`, including keyless trial and the regenerated actual OpenAPI schema; frontend rerun through presentation refinement `84cb32b`:
 
 - [x] Aggregate backend: `python -m pytest -q`, **1,712 passed, 46 gated skips, 2 dependency deprecation warnings**.
 - [x] Focused isolated SurrealDB suite: snapshot, web-import and native-note repository tests, **29 passed**, including concurrent/replayed transactions, lost acknowledgements, deletion races and archive export. The provider and worker submissions are mocked; this is not a live scraping test.
-- [x] Aggregate frontend: `npm test -- --run`, **77 files / 1,162 tests passed**, including locale checks and existing auth/SSE/draft regressions.
+- [x] Aggregate frontend: `npm test`, **77 files / 1,172 tests passed**, including locale checks and existing auth/SSE/draft regressions.
 - [x] Production `npm run build`, fresh `tsc --noEmit`, and lint passed. Lint has **0 errors / 7 existing warnings** outside the new feature changes.
 - [x] Actual guarded OpenAPI export/check and exact browser-route audit. Only the four intended paths were added; no existing path or schema was removed or changed by the initial integration. Trial adds its explicitly typed status metadata.
 - [x] Static/synthetic PM review fixes: discovery entry, settings anchor, dirty-note warning, explicit recovery actions, neutral uncertain/saved states, focus restoration, wrapping controls, and clear Google-unmapped-source guidance. This does not replace visual browser evidence.
-- [ ] Browser visual/interaction verification, with evidence distinguished from synthetic DOM tests.
+- [x] Isolated browser local-workflow acceptance against the staged `4e741c12` build, as described below. Later small presentation refinements have regression/build coverage, not a second visual acceptance pass yet.
 - [ ] Preview update preserving user data, authentication and current work.
 
 Initial verification issues were resolved rather than omitted: the frontend route audit first raced schema generation, then passed after export; the backend found a historical citation regression when its version was missing, fixed by retaining unverified status (including derived non-independent identity). A fresh tokenizer cache was seeded from an existing public encoding after matching the installed package's SHA-256, avoiding an online tokenizer download. An over-isolated build initially lacked the environment's existing proxy for Google Fonts; the successful rerun retained that existing build-time proxy without changing any network configuration or the provider client's no-proxy policy.
 
-No live search, scrape, Google call or model-quality acceptance has been performed yet. Docker definitions are retained, but the current dot-cloud preview is a temporary native-process deployment, not Docker execution or ChatGPT Sites hosting. Preview replacement is waiting for the user to confirm current input is saved; existing data and credentials must remain unchanged.
+## Browser acceptance and provider limitation
+
+A separate, loopback-only stack used a fresh in-memory database and public synthetic electrical-engineering notes. It did not read the user's runtime configuration or modify their notebook. The real preview remained running unchanged.
+
+- At an observed 1,180 × 757 browser viewport, materials, reading/questions and notes/results used the responsive tab layout. Settings were outside the routine working panels. No actual Android, HarmonyOS, iPadOS or wide three-column device acceptance is claimed.
+- Created and saved an Ohm's-law note, then added it to the same notebook's materials. Exactly one source appeared, unselected, labeled as derived material. Reading preserved the saved text and explained that the snapshot is not independent evidence.
+- Modified the note without saving: promotion was disabled and save-first guidance appeared. Opening and closing notebook Settings preserved the unsaved edit.
+- Saved that modification, refreshed the browser, and reopened the previously created material. The original snapshot remained unchanged. Selecting it and searching locally for `欧姆定律` returned a matching evidence result.
+- The browser review prompted two subsequent presentation refinements: hide raw version identifiers inside details and use a neutral download label for derived snapshots; defer engine-configuration prompts until the user has selected materials. Existing request, authentication and mapping guards are unchanged.
+- One actual keyless search for the public query `site:example.com Example Domain` returned application HTTP 502 without results. There was no automatic retry, scrape or paid fallback.
+- One separate, bounded HEAD request to the fixed provider origin, from the same host and with the same direct/no-proxy TLS policy, produced only the exception classes `ConnectError → ConnectError → OSError → ConnectionRefusedError`. No HTTP response was received. This establishes a current transport failure, not a conclusion about account eligibility, trial quota, response schema or provider-wide availability. Network/proxy/TLS settings were not changed.
+
+Successful real web search and import remain unverified. No live Google call or model-quality acceptance was performed. Docker definitions are retained, but the current dot-cloud preview is a temporary native-process deployment, not Docker execution or ChatGPT Sites hosting. Preview replacement is waiting for the user to confirm current input is saved; existing data and credentials must remain unchanged.
