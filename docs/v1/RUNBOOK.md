@@ -73,7 +73,16 @@ Startup refuses occupied ports, waits for database/API/frontend HTTP health and 
 - `STUDY_WORKBENCH_RUNTIME_DIR` selects the native runtime/log root
 - Google application profile, if later authorized: `NOTEBOOKLM_STORAGE_PATH`; never included in portable export
 
-Application-process restart was tested with actual disk-backed SurrealDB. Filesystem state is shared across command invocations, but this cloud gives separate PID/network namespaces per command. Services and browser tests must therefore be launched together. Workspace stop/deletion and externally managed host lifecycle guarantees are unknown. Back up the full runtime while stopped for operational recovery; use portable project exports for independent project ownership.
+Application-process restart was tested with actual disk-backed SurrealDB. That is not a host-lifecycle durability test. In the current test environment, commands can use different PID/network namespaces; readiness must be checked from the same context as the application/browser, not inferred from an unrelated loopback failure. Files visible across commands are not necessarily retained across an environment resume.
+
+An observed 2026-10-22 interruption left the temporary preview unreachable and its expected runtime paths absent, while the published source tree remained recoverable. Git/source ZIPs did not contain the user's database, configuration or credentials. Treat temporary cloud previews as disposable and test-data-only until all of these operational gates are met:
+
+1. Identify storage with verified lifecycle guarantees. A directory name, successful process restart or surviving source checkout is not evidence of durable runtime storage.
+2. Keep a stopped, consistent full-runtime backup for operational recovery and portable notebook exports for independent ownership. Store required authorized secrets separately from source control; secret export or reconfiguration requires the owner's specific authorization. A password-only file is not a database or complete configuration backup.
+3. Demonstrate restoration into an isolated target without overwriting the source, using a known notebook/source inventory and readable originals. Record the verification time and limitations. Do not label fixture archives or a newly initialized empty database as recovered user data.
+4. If runtime paths disappear, preserve surviving files and any unsaved browser content first. Do not silently initialize a new store, invent replacement credentials, or start migrations against an unverified datastore. Distinguish exact code recovery, actual data restoration and an owner-approved fresh test instance.
+
+Workspace stop/deletion and externally managed host lifecycle guarantees remain unknown. Do not use this temporary preview as the sole copy of important material.
 
 ## Google connection and future acceptance
 

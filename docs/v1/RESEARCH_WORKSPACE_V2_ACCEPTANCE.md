@@ -2,7 +2,7 @@
 
 Date: 2026-10-22 UTC.
 
-**Status: merged-code regression gates and isolated local-workflow browser acceptance passed. Live web discovery is blocked by refused API transport; replacement of the user's preview is still pending their saved-input confirmation.**
+**Status: code regression gates and isolated local-workflow browser acceptance passed before the environment interruption. The old preview is now unreachable and its expected runtime paths are absent. Source code has been recovered exactly; user data and runtime credentials have not. A fresh empty test instance requires the owner's explicit approval and protection of any unsaved browser content. Live web discovery remains unverified.**
 
 ## Intended user workflow
 
@@ -67,4 +67,14 @@ A separate, loopback-only stack used a fresh in-memory database and public synth
 - One actual keyless search for the public query `site:example.com Example Domain` returned application HTTP 502 without results. There was no automatic retry, scrape or paid fallback.
 - One separate, bounded HEAD request to the fixed provider origin, from the same host and with the same direct/no-proxy TLS policy, produced only the exception classes `ConnectError → ConnectError → OSError → ConnectionRefusedError`. No HTTP response was received. This establishes a current transport failure, not a conclusion about account eligibility, trial quota, response schema or provider-wide availability. Network/proxy/TLS settings were not changed.
 
-Successful real web search and import remain unverified. No live Google call or model-quality acceptance was performed. Docker definitions are retained, but the current dot-cloud preview is a temporary native-process deployment, not Docker execution or ChatGPT Sites hosting. Preview replacement is waiting for the user to confirm current input is saved; existing data and credentials must remain unchanged.
+Successful real web search and import remain unverified. No live Google call or model-quality acceptance was performed. Docker definitions are retained; the tested dot-cloud preview used temporary native processes, not Docker execution or ChatGPT Sites hosting.
+
+## Environment interruption and source recovery
+
+At 05:18–05:21 UTC on 2026-10-22, following an execution-environment resume, independent read-only GUI-browser checks found both the old frontend and API refusing connections. Metadata checks in both execution contexts found the expected application, runtime configuration and runtime data paths absent. This does not establish the underlying lifecycle cause or prove that every possible backup is unavailable.
+
+- A bounded review of surviving project metadata, recorded artifacts and Library titles found no verified backup of the current user's notebook data. Older public/synthetic fixtures were not substituted for a real backup, and older unverified datastores were left untouched.
+- At 05:29 UTC, source recovery reconstructed the published commit `44387d9fcb15a02f294087e42e9d32adbbb6f507` and tree `69e17e07e01dec78c4687aeb1ff8d230c790999e`. All 1,112 tracked paths, modes and blob hashes matched; strict Git integrity and clean-worktree checks passed. The older checkout and its uncommitted work were preserved.
+- This is source-code recovery only. Dependencies, build artifacts, runtime configuration, credentials and user data were not restored, and no service was started. Earlier test results remain evidence for the verified code snapshot, not proof of a working recovered deployment.
+- The owner was warned to preserve unsaved browser content and asked whether to authorize an explicitly empty test instance with new dedicated credentials. No affirmative response is assumed. Any owner-supplied notebook export must be validated before restoration.
+- Until storage durability and an independent recovery path have been demonstrated, this temporary environment must hold test data only, never the sole copy of important material. See the persistence gates in `RUNBOOK.md`.
