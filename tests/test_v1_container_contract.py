@@ -30,6 +30,7 @@ def manifest():
 
 def test_actual_manifest_and_static_cli():
     checker = module("scripts/v1/container_check.py")
+    assert manifest()["volumes"] == {"personal": {}, "upstream": {}, "database": {}}
     assert checker.validate(manifest(), ROOT) == []
     result = subprocess.run(
         [sys.executable, str(ROOT / "scripts/v1/container_check.py"), "--static"],
@@ -39,6 +40,95 @@ def test_actual_manifest_and_static_cli():
     assert result.returncode == 0, result.stderr
     assert "Static PASS" in result.stdout
     assert "NOT RUN" in result.stdout
+
+
+VOLUME_CONTRACT_ERROR = (
+    "Data volumes must be exactly personal, upstream and database with empty "
+    "project-scoped definitions; custom volume configuration is unsupported"
+)
+
+
+@pytest.mark.parametrize("name", ["personal", "upstream", "database"])
+@pytest.mark.parametrize(
+    "definition",
+    [
+        pytest.param({"external": True}, id="external"),
+        pytest.param({"external": False}, id="explicit-nonexternal"),
+        pytest.param({"name": "do-not-print-me"}, id="explicit-name"),
+        pytest.param({"driver": "local"}, id="explicit-driver"),
+        pytest.param(
+            {
+                "driver": "local",
+                "driver_opts": {
+                    "type": "none",
+                    "o": "bind",
+                    "device": "/do-not-print-me",
+                },
+            },
+            id="host-bind",
+        ),
+        pytest.param(
+            {
+                "driver": "local",
+                "driver_opts": {
+                    "type": "nfs",
+                    "o": "addr=do-not-print-me,rw",
+                    "device": ":/data",
+                },
+            },
+            id="nfs",
+        ),
+        pytest.param({"driver_opts": {}}, id="empty-driver-options"),
+        pytest.param({"labels": {"purpose": "do-not-print-me"}}, id="labels"),
+        pytest.param({"unknown": "do-not-print-me"}, id="unknown-option"),
+        pytest.param(None, id="null"),
+        pytest.param([], id="empty-list"),
+        pytest.param(["do-not-print-me"], id="list"),
+        pytest.param("do-not-print-me", id="string"),
+        pytest.param(True, id="boolean"),
+        pytest.param(0, id="number"),
+    ],
+)
+def test_volume_definitions_reject_customization_and_malformed_shapes(name, definition):
+    checker = module("scripts/v1/container_check.py")
+    data = manifest()
+    data["volumes"][name] = definition
+    errors = checker.validate(data, ROOT)
+    assert errors == [VOLUME_CONTRACT_ERROR]
+    assert "do-not-print-me" not in str(errors)
+
+
+@pytest.mark.parametrize(
+    "volumes",
+    [
+        pytest.param(None, id="null"),
+        pytest.param([], id="empty-list"),
+        pytest.param(["personal", "upstream", "database"], id="names-list"),
+        pytest.param("do-not-print-me", id="string"),
+        pytest.param(True, id="boolean"),
+        pytest.param(42, id="number"),
+        pytest.param({}, id="empty-map"),
+        pytest.param({"personal": {}, "upstream": {}}, id="missing-volume"),
+        pytest.param(
+            {"personal": {}, "upstream": {}, "database": {}, "do-not-print-me": {}},
+            id="extra-volume",
+        ),
+    ],
+)
+def test_volume_mapping_rejects_wrong_names_and_malformed_shapes(volumes):
+    checker = module("scripts/v1/container_check.py")
+    data = manifest()
+    data["volumes"] = volumes
+    errors = checker.validate(data, ROOT)
+    assert errors == [VOLUME_CONTRACT_ERROR]
+    assert "do-not-print-me" not in str(errors)
+
+
+def test_volume_mapping_is_required():
+    checker = module("scripts/v1/container_check.py")
+    data = manifest()
+    del data["volumes"]
+    assert checker.validate(data, ROOT) == [VOLUME_CONTRACT_ERROR]
 
 
 @pytest.mark.parametrize(

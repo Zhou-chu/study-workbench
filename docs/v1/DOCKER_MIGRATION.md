@@ -58,7 +58,9 @@ cover these declarations; they do not prove a Docker image was built or served.
 
 ## Data migration (operator procedure; not executed)
 
-Stop API and worker before taking a consistent backup of DB and both data trees.
+Before taking filesystem/volume snapshots of DB and both data trees, quiesce and
+stop all writers, including API, worker and the database itself; stopping only
+API/worker does not make a live database storage-directory copy consistent.
 Keep that backup until restore and rollback are verified. Use named volumes:
 
 | Volume | Container path | Contents |
@@ -66,6 +68,19 @@ Keep that backup until restore and rollback are verified. Use named volumes:
 | personal | `/app/data/personal` | personal store/evidence/portable artifacts |
 | upstream | `/app/data/upstream-data` | uploads, podcasts, sqlite-db/checkpoints.sqlite |
 | database | `/app/data/db` | SurrealDB database.db storage directory |
+
+For this supported candidate, the top-level `volumes` mapping must be exactly
+`{"personal": {}, "upstream": {}, "database": {}}`. Empty definitions retain
+Compose project-scoped volume names. The static preflight intentionally rejects
+all custom definitions, including `external`, explicit `name`, `driver`,
+`driver_opts` (host binds or NFS), labels and null/list/scalar definitions, rather
+than accepting an unreviewed storage target under one of the expected keys.
+This is a deliberately narrow candidate contract, not a claim that every custom
+Docker volume is unsafe. Custom storage needs separate review and acceptance.
+Project scoping alone does not prove volumes are new or unused: a future runtime
+gate must verify ownership and isolation under a fresh disposable project, never
+reuse a user's existing project or data, and never infer runtime safety from a
+static pass. Actual migration, restore and rollback remain unverified.
 
 Set `STUDY_WORKBENCH_DATA_DIR` and `OPEN_NOTEBOOK_DATA_DIR` exactly as the manifest.
 Copy the contents of the old upstream data root, preserving its relative subpaths;

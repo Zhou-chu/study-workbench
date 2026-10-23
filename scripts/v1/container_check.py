@@ -129,8 +129,9 @@ def _validate(data, root):
         "Frontend must not receive secrets or data",
     )
     require(
-        set(data.get("volumes", {})) == {"personal", "upstream", "database"},
-        "Three separate data volumes required",
+        data.get("volumes") == {"personal": {}, "upstream": {}, "database": {}},
+        "Data volumes must be exactly personal, upstream and database with empty "
+        "project-scoped definitions; custom volume configuration is unsupported",
     )
     secrets = data.get("secrets", {})
     require(
