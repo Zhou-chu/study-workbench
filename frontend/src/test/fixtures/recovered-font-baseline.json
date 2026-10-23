@@ -1,0 +1,238 @@
+{
+  "identity": "New recovered byte baseline; not proved equal to lost historical assets.",
+  "fonts": [
+    {
+      "originalName": "017d9bea37084d9b-s.p.41rroleoq1br7.woff2",
+      "file": "recovered-4fd48b2c1ab27220.woff2",
+      "sha256": "4fd48b2c1ab27220e71f15f990550261b35245c3bdfd8d8025b4bdac0459ee2d",
+      "size": 41236,
+      "names": {
+        "0": [
+          "Copyright 2022 The Bricolage Grotesque Project Authors (https://github.com/ateliertriay/bricolage)"
+        ],
+        "1": [
+          "Bricolage Grotesque 96pt ExtraBold"
+        ],
+        "2": [
+          "Regular"
+        ],
+        "3": [
+          "1.001;ATLR;BricolageGrotesque96ptExtraBold-Regular"
+        ],
+        "5": [
+          "Version 1.001;gftools[0.9.33.dev8+g029e19f]"
+        ],
+        "13": [],
+        "14": [
+          "https://scripts.sil.org/OFL"
+        ]
+      },
+      "nameTableSha256": "73f9bc241e462392402447daee162b8e9f2b75c90ba919ad9b2c7cbac9bcc540"
+    },
+    {
+      "originalName": "033400d475fad6b1-s.197tvtifbphtu.woff2",
+      "file": "recovered-ea16948d4a91b772.woff2",
+      "sha256": "ea16948d4a91b77221f119ad27d4ac7a7581c98cf990712047f89a531a49ef28",
+      "size": 8652,
+      "names": {
+        "0": [
+          "Copyright 2022 The Bricolage Grotesque Project Authors (https://github.com/ateliertriay/bricolage)"
+        ],
+        "1": [
+          "Bricolage Grotesque 96pt ExtraBold"
+        ],
+        "2": [
+          "Regular"
+        ],
+        "3": [
+          "1.001;ATLR;BricolageGrotesque96ptExtraBold-Regular"
+        ],
+        "5": [
+          "Version 1.001;gftools[0.9.33.dev8+g029e19f]"
+        ],
+        "13": [],
+        "14": [
+          "https://scripts.sil.org/OFL"
+        ]
+      },
+      "nameTableSha256": "73f9bc241e462392402447daee162b8e9f2b75c90ba919ad9b2c7cbac9bcc540"
+    },
+    {
+      "originalName": "26daee0352f50a5f-s.2e115y8-hourl.woff2",
+      "file": "recovered-a22c997a894377f3.woff2",
+      "sha256": "a22c997a894377f36d81c904163e0c05fbbcd32f0ca2e7beedb86b39be1296a1",
+      "size": 18740,
+      "names": {
+        "0": [
+          "Copyright 2022 The Bricolage Grotesque Project Authors (https://github.com/ateliertriay/bricolage)"
+        ],
+        "1": [
+          "Bricolage Grotesque 96pt ExtraBold"
+        ],
+        "2": [
+          "Regular"
+        ],
+        "3": [
+          "1.001;ATLR;BricolageGrotesque96ptExtraBold-Regular"
+        ],
+        "5": [
+          "Version 1.001;gftools[0.9.33.dev8+g029e19f]"
+        ],
+        "13": [],
+        "14": [
+          "https://scripts.sil.org/OFL"
+        ]
+      },
+      "nameTableSha256": "73f9bc241e462392402447daee162b8e9f2b75c90ba919ad9b2c7cbac9bcc540"
+    },
+    {
+      "originalName": "5e60c3e60a629e0e-s.185vq78hrw2dq.woff2",
+      "file": "recovered-bde42c142265c31a.woff2",
+      "sha256": "bde42c142265c31a450781d82cc72e1859bd42cba8e438fb96f77f1d69ebc8d6",
+      "size": 20748,
+      "names": {
+        "0": [
+          "Copyright 2022 The Spline Sans Mono Project Authors (https://github.com/SorkinType/SplineSansMono)"
+        ],
+        "1": [
+          "Spline Sans Mono"
+        ],
+        "2": [
+          "Regular"
+        ],
+        "3": [
+          "1.004;STC;SplineSansMono-Regular"
+        ],
+        "5": [
+          "Version 1.004"
+        ],
+        "13": [],
+        "14": [
+          "https://scripts.sil.org/OFL"
+        ]
+      },
+      "nameTableSha256": "d9b36171b6f6aa8baf053e055df2c9fc8141dddb465f00d0f334ed533b3e5bce"
+    },
+    {
+      "originalName": "c7f47671e39f7787-s.0klc_mi0-5f4_.woff2",
+      "file": "recovered-21fac8da552a915e.woff2",
+      "sha256": "21fac8da552a915e7a9fb84c5afaeb85d35507b2616346d592e78128c1cfe3e0",
+      "size": 11092,
+      "names": {
+        "0": [
+          "Copyright 2022 The Instrument Sans Project Authors (https://github.com/Instrument/instrument-sans)"
+        ],
+        "1": [
+          "Instrument Sans"
+        ],
+        "2": [
+          "Regular"
+        ],
+        "3": [
+          "1.000;NONE;InstrumentSans-Regular"
+        ],
+        "5": [
+          "Version 1.000;gftools[0.9.28]"
+        ],
+        "13": [],
+        "14": [
+          "https://scripts.sil.org/OFL"
+        ]
+      },
+      "nameTableSha256": "89afcedea63ed070305c6ac1bfc1aaf08faa6d692daee91cdd10f16aa8a187b0"
+    },
+    {
+      "originalName": "d2d62b05021c6286-s.p.2d9e_tvweuz-y.woff2",
+      "file": "recovered-2b193a4f0fef3fc4.woff2",
+      "sha256": "2b193a4f0fef3fc4c6a3fa756bb5dab6c10b489acd5e0718736847755077e9ec",
+      "size": 36528,
+      "names": {
+        "0": [
+          "Copyright 2022 The Spline Sans Mono Project Authors (https://github.com/SorkinType/SplineSansMono)"
+        ],
+        "1": [
+          "Spline Sans Mono"
+        ],
+        "2": [
+          "Regular"
+        ],
+        "3": [
+          "1.004;STC;SplineSansMono-Regular"
+        ],
+        "5": [
+          "Version 1.004"
+        ],
+        "13": [],
+        "14": [
+          "https://scripts.sil.org/OFL"
+        ]
+      },
+      "nameTableSha256": "d9b36171b6f6aa8baf053e055df2c9fc8141dddb465f00d0f334ed533b3e5bce"
+    },
+    {
+      "originalName": "f06bf9da926bae75-s.p.2874ccu1_u7jf.woff2",
+      "file": "recovered-6219bc4bfdfc5d9b.woff2",
+      "sha256": "6219bc4bfdfc5d9b2201dcdf046218b122a758f932e25ed5f168f929b7ca2311",
+      "size": 29904,
+      "names": {
+        "0": [
+          "Copyright 2022 The Instrument Sans Project Authors (https://github.com/Instrument/instrument-sans)"
+        ],
+        "1": [
+          "Instrument Sans"
+        ],
+        "2": [
+          "Regular"
+        ],
+        "3": [
+          "1.000;NONE;InstrumentSans-Regular"
+        ],
+        "5": [
+          "Version 1.000;gftools[0.9.28]"
+        ],
+        "13": [],
+        "14": [
+          "https://scripts.sil.org/OFL"
+        ]
+      },
+      "nameTableSha256": "89afcedea63ed070305c6ac1bfc1aaf08faa6d692daee91cdd10f16aa8a187b0"
+    }
+  ],
+  "faces": [
+    "@font-face{font-family:Instrument Sans;font-style:normal;font-weight:400 700;font-stretch:100%;font-display:swap;src:url(/fonts/recovered-21fac8da552a915e.woff2)format(\"woff2\");unicode-range:U+100-2BA,U+2BD-2C5,U+2C7-2CC,U+2CE-2D7,U+2DD-2FF,U+304,U+308,U+329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}",
+    "@font-face{font-family:Instrument Sans;font-style:normal;font-weight:400 700;font-stretch:100%;font-display:swap;src:url(/fonts/recovered-6219bc4bfdfc5d9b.woff2)format(\"woff2\");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}",
+    "@font-face{font-family:Instrument Sans Fallback;src:local(Arial);ascent-override:94.42%;descent-override:24.33%;line-gap-override:0.0%;size-adjust:102.74%}",
+    "@font-face{font-family:Bricolage Grotesque;font-style:normal;font-weight:600;font-stretch:100%;font-display:swap;src:url(/fonts/recovered-ea16948d4a91b772.woff2)format(\"woff2\");unicode-range:U+102-103,U+110-111,U+128-129,U+168-169,U+1A0-1A1,U+1AF-1B0,U+300-301,U+303-304,U+308-309,U+323,U+329,U+1EA0-1EF9,U+20AB}",
+    "@font-face{font-family:Bricolage Grotesque;font-style:normal;font-weight:600;font-stretch:100%;font-display:swap;src:url(/fonts/recovered-a22c997a894377f3.woff2)format(\"woff2\");unicode-range:U+100-2BA,U+2BD-2C5,U+2C7-2CC,U+2CE-2D7,U+2DD-2FF,U+304,U+308,U+329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}",
+    "@font-face{font-family:Bricolage Grotesque;font-style:normal;font-weight:600;font-stretch:100%;font-display:swap;src:url(/fonts/recovered-4fd48b2c1ab27220.woff2)format(\"woff2\");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}",
+    "@font-face{font-family:Bricolage Grotesque;font-style:normal;font-weight:700;font-stretch:100%;font-display:swap;src:url(/fonts/recovered-ea16948d4a91b772.woff2)format(\"woff2\");unicode-range:U+102-103,U+110-111,U+128-129,U+168-169,U+1A0-1A1,U+1AF-1B0,U+300-301,U+303-304,U+308-309,U+323,U+329,U+1EA0-1EF9,U+20AB}",
+    "@font-face{font-family:Bricolage Grotesque;font-style:normal;font-weight:700;font-stretch:100%;font-display:swap;src:url(/fonts/recovered-a22c997a894377f3.woff2)format(\"woff2\");unicode-range:U+100-2BA,U+2BD-2C5,U+2C7-2CC,U+2CE-2D7,U+2DD-2FF,U+304,U+308,U+329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}",
+    "@font-face{font-family:Bricolage Grotesque;font-style:normal;font-weight:700;font-stretch:100%;font-display:swap;src:url(/fonts/recovered-4fd48b2c1ab27220.woff2)format(\"woff2\");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}",
+    "@font-face{font-family:Bricolage Grotesque Fallback;src:local(Arial);ascent-override:88.21%;descent-override:25.61%;line-gap-override:0.0%;size-adjust:105.43%}",
+    "@font-face{font-family:Spline Sans Mono;font-style:normal;font-weight:300 700;font-display:swap;src:url(/fonts/recovered-bde42c142265c31a.woff2)format(\"woff2\");unicode-range:U+100-2BA,U+2BD-2C5,U+2C7-2CC,U+2CE-2D7,U+2DD-2FF,U+304,U+308,U+329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}",
+    "@font-face{font-family:Spline Sans Mono;font-style:normal;font-weight:300 700;font-display:swap;src:url(/fonts/recovered-2b193a4f0fef3fc4.woff2)format(\"woff2\");unicode-range:U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}",
+    "@font-face{font-family:Spline Sans Mono Fallback;src:local(Arial);ascent-override:71.59%;descent-override:17.57%;line-gap-override:0.0%;size-adjust:134.59%}"
+  ],
+  "latinPreloads": [
+    "/fonts/recovered-6219bc4bfdfc5d9b.woff2",
+    "/fonts/recovered-4fd48b2c1ab27220.woff2",
+    "/fonts/recovered-2b193a4f0fef3fc4.woff2"
+  ],
+  "licenses": [
+    {
+      "file": "instrument-OFL.txt",
+      "sha256": "7b266505322dc22da8167c28324544faea6cf43bab50d248440e00117d5b5e87",
+      "sourceUrl": "https://raw.githubusercontent.com/Instrument/instrument-sans/master/OFL.txt"
+    },
+    {
+      "file": "bricolage-OFL.txt",
+      "sha256": "56df499563f68dc4de13323d00cebc80075bfb878c35f9e9e27df7ed9ca804fc",
+      "sourceUrl": "https://raw.githubusercontent.com/ateliertriay/bricolage/main/OFL.txt"
+    },
+    {
+      "file": "spline-OFL.txt",
+      "sha256": "28184706639b1ef10b236fb51bc70b771c176d6f6cf65e918331d54060d66cdb",
+      "sourceUrl": "https://raw.githubusercontent.com/SorkinType/SplineSansMono/main/OFL.txt"
+    }
+  ]
+}

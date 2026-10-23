@@ -222,3 +222,40 @@ async def test_source_creation_uncertainty_response_contains_existing_identity(
     assert response.json()["detail"]["resource_type"] == "source"
     assert response.json()["detail"]["retry_safe"] is False
     cleanup.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("visible_id", ["source:retained", None])
+async def test_initial_source_save_ack_loss_has_safe_http_contract(
+    app, monkeypatch, visible_id
+):
+    async def save_then_lose_ack(source):
+        source.id = visible_id
+        raise ConnectionError("private database acknowledgement failure")
+
+    monkeypatch.setattr(Source, "save", save_then_lose_ack)
+    submit = AsyncMock()
+    monkeypatch.setattr(sources.CommandService, "submit_command_job", submit)
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://fixture"
+    ) as client:
+        response = await client.post(
+            "/api/sources/json",
+            json={
+                "type": "text",
+                "content": "retained draft",
+                "async_processing": True,
+            },
+        )
+    assert response.status_code == 409
+    detail = response.json()["detail"]
+    assert detail["code"] == "COMMAND_SUBMISSION_UNKNOWN"
+    assert detail["retry_safe"] is False
+    assert "command_id" not in detail and "job_id" not in detail
+    if visible_id:
+        assert detail["resource_id"] == visible_id
+        assert detail["resource_type"] == "source"
+    else:
+        assert "resource_id" not in detail and "resource_type" not in detail
+    assert "private" not in response.text
+    submit.assert_not_awaited()

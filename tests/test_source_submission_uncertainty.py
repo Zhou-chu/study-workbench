@@ -23,7 +23,7 @@ def creation(monkeypatch, tmp_path):
         saved.append(source)
 
     delete = AsyncMock()
-    cleanup = Mock()
+    cleanup = Mock(wraps=sources._cleanup_uploaded_file)
     monkeypatch.setattr(Source, "save", save)
     monkeypatch.setattr(Source, "delete", delete)
     monkeypatch.setattr(Source, "add_to_notebook", AsyncMock())
@@ -38,6 +38,79 @@ def creation(monkeypatch, tmp_path):
     )
     monkeypatch.setattr(sources, "_cleanup_uploaded_file", cleanup)
     return path, saved, delete, cleanup
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("visible_id", ["source:fixture", None])
+async def test_initial_save_commit_ack_loss_preserves_upload_without_enqueue(
+    creation, monkeypatch, visible_id
+):
+    path, saved, delete, cleanup = creation
+    content = "\ufeff🌞 原始字节。\r\n".encode()
+    path.write_bytes(content)
+    committed = {}
+    writes = []
+
+    async def commit_then_raise(source):
+        writes.append(source.model_dump())
+        committed["source:fixture"] = source.model_copy(
+            update={"id": "source:fixture"}, deep=True
+        )
+        source.id = visible_id
+        raise ConnectionError("private database acknowledgement failure")
+
+    monkeypatch.setattr(Source, "save", commit_then_raise)
+    associate = AsyncMock()
+    monkeypatch.setattr(Source, "add_to_notebook", associate)
+    submit = AsyncMock()
+    monkeypatch.setattr(sources.CommandService, "submit_command_job", submit)
+    data = SourceCreate(
+        type="upload", notebooks=["notebook:fixture"], async_processing=True
+    )
+    with pytest.raises(CommandSubmissionUnknownError) as caught:
+        await sources.create_source((data, cast(UploadFile, object())))
+    assert path.read_bytes() == content
+    assert committed["source:fixture"].asset.file_path == str(path)
+    assert len(writes) == 1
+    assert caught.value.source_id == visible_id
+    assert caught.value.command_id is None
+    assert "private" not in str(caught.value)
+    delete.assert_not_awaited()
+    cleanup.assert_not_called()
+    submit.assert_not_awaited()
+    associate.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("missing_id", [None, "", "   "])
+async def test_initial_save_without_usable_identity_never_enqueues_or_claims_success(
+    creation, monkeypatch, missing_id
+):
+    path, saved, delete, cleanup = creation
+    writes = []
+
+    async def save_without_identity(source):
+        writes.append(source.model_dump())
+        source.id = missing_id
+
+    monkeypatch.setattr(Source, "save", save_without_identity)
+    associate = AsyncMock()
+    monkeypatch.setattr(Source, "add_to_notebook", associate)
+    submit = AsyncMock(side_effect=CommandSubmissionUnknownError())
+    monkeypatch.setattr(sources.CommandService, "submit_command_job", submit)
+    data = SourceCreate(
+        type="upload", notebooks=["notebook:fixture"], async_processing=True
+    )
+    with pytest.raises(CommandSubmissionUnknownError) as caught:
+        await sources.create_source((data, cast(UploadFile, object())))
+    assert caught.value.source_id is None
+    assert caught.value.command_id is None
+    assert len(writes) == 1
+    assert path.read_text() == "worker input"
+    delete.assert_not_awaited()
+    cleanup.assert_not_called()
+    submit.assert_not_awaited()
+    associate.assert_not_awaited()
 
 
 @pytest.mark.asyncio

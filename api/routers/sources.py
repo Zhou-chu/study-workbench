@@ -525,10 +525,14 @@ async def _create_source_async_path(
         topics=[],
         asset=source_asset,
     )
-    await source.save()
-
     command_id = None
     try:
+        # The initial CREATE can commit before its acknowledgement is lost too.
+        # Retain inputs even if no source identity made it back to this process.
+        await source.save()
+        if not isinstance(source.id, str) or not source.id.strip():
+            raise CommandSubmissionUnknownError()
+
         # Once the durable intent exists, any association/submission failure
         # preserves it and the original input for read-only reconciliation.
         for notebook_id in source_data.notebooks or []:
@@ -575,12 +579,17 @@ async def _create_source_async_path(
         )
 
     except CommandSubmissionUnknownError as exc:
-        exc.source_id = str(source.id)
+        exc.source_id = (
+            source.id if isinstance(source.id, str) and source.id.strip() else None
+        )
         exc.command_id = command_id or exc.command_id
         raise
     except Exception as exc:
         raise CommandSubmissionUnknownError(
-            source_id=str(source.id), command_id=command_id
+            source_id=(
+                source.id if isinstance(source.id, str) and source.id.strip() else None
+            ),
+            command_id=command_id,
         ) from exc
 
 
@@ -708,8 +717,8 @@ async def create_source(
         )
 
     except CommandSubmissionUnknownError:
-        # A worker may already own these inputs. Expose the known source identity
-        # for read-only recovery; never delete its upload on an uncertain ACK.
+        # A source or worker may already own these inputs. Expose only a known
+        # identity for inspection; never delete its upload on an uncertain ACK.
         raise
     except HTTPException:
         # Clean up uploaded file on HTTP exceptions if we created it
