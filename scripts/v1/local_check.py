@@ -9,6 +9,7 @@ import os
 import secrets
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import tempfile
@@ -61,6 +62,51 @@ else:
         validate_ports,
         wait_for_service,
     )
+
+
+# Installed tiktoken_ext.openai_public.o200k_base pins these upstream bytes.
+# Cache filename is SHA1 of the encoding URL; this code never fetches that URL.
+TOKENIZER_FILE = "fb374d419588a4632f3f557e76b4b70aebbca790"
+TOKENIZER_SHA256 = "446a9538cb6c348e3516120d7c08b09f57c36495e2acfffe59a5bf8b0cfb1a2d"
+
+
+def prepared_tokenizer(source: Path) -> bytes:
+    source = source.absolute()
+    if any(path.is_symlink() for path in (source, *source.parents)):
+        raise ValueError("Prepared tokenizer directory must not contain symlinks")
+    if {path.name for path in source.iterdir()} != {TOKENIZER_FILE}:
+        raise ValueError("Prepared tokenizer inventory mismatch")
+    file = source / TOKENIZER_FILE
+    fd = os.open(file, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(fd, "rb") as handle:
+        info = os.fstat(handle.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise ValueError("Prepared tokenizer must be an independent regular file")
+        payload = handle.read()
+    if hashlib.sha256(payload).hexdigest() != TOKENIZER_SHA256:
+        raise ValueError("Prepared tokenizer hash mismatch")
+    return payload
+
+
+def seed_tokenizer(run: Path, payload: bytes) -> Path:
+    if hashlib.sha256(payload).hexdigest() != TOKENIZER_SHA256:
+        raise ValueError("Prepared tokenizer payload changed")
+    if any(path.is_symlink() for path in (run, *run.parents)):
+        raise ValueError("Tokenizer destination must not contain symlinks")
+    upstream = run / "upstream-data"
+    upstream.mkdir(mode=0o700)
+    destination = upstream / "tiktoken-cache"
+    destination.mkdir(mode=0o700)
+    fd = os.open(
+        destination / TOKENIZER_FILE,
+        os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+        0o400,
+    )
+    with os.fdopen(fd, "wb") as handle:
+        handle.write(payload)
+    if prepared_tokenizer(destination) != payload:
+        raise RuntimeError("Tokenizer copy verification failed")
+    return destination
 
 
 def build_fixture_environment(
@@ -206,6 +252,7 @@ def main():
     parser.add_argument("--browser", action="store_true")
     parser.add_argument("--frontend-http", action="store_true")
     parser.add_argument("--artifact", type=Path)
+    parser.add_argument("--tiktoken-cache", type=Path)
     parser.add_argument(
         "--browser-engine", choices=["chromium", "firefox"], default="chromium"
     )
@@ -223,6 +270,11 @@ def main():
         parser.error(
             "Frontend acceptance requires --artifact from an isolated npm run build"
         )
+    if args.browser and args.tiktoken_cache is None:
+        parser.error(
+            "Browser acceptance requires an explicit prepared --tiktoken-cache"
+        )
+    tokenizer = prepared_tokenizer(args.tiktoken_cache) if args.tiktoken_cache else None
     artifact_identity = verify_artifact(ROOT, args.artifact) if args.artifact else None
     requested = (args.database_port, args.api_port, args.frontend_port)
     if any(port is not None for port in requested) and not all(
@@ -246,6 +298,20 @@ def main():
     api_base = f"http://127.0.0.1:{api_port}"
     run = Path(tempfile.mkdtemp(prefix="sw-check-"))
     env = build_fixture_environment(run, os.environ, ports=ports)
+    if tokenizer is not None:
+        cache = seed_tokenizer(run, tokenizer)
+        env["TIKTOKEN_CACHE_DIR"] = str(cache)
+        (run / "tokenizer-receipt.json").write_text(
+            json.dumps(
+                {
+                    "encoding": "o200k_base",
+                    "filename": TOKENIZER_FILE,
+                    "sha256": TOKENIZER_SHA256,
+                    "destination": str(cache),
+                    "source_mutated": False,
+                }
+            )
+        )
     fixture_hashes = {
         name: hashlib.sha256(data).hexdigest() for name, data in fixtures.items()
     }

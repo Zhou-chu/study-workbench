@@ -12,14 +12,26 @@ def test_browser_requires_verified_artifact_before_ports_or_storage(
     tmp_path, monkeypatch
 ):
     monkeypatch.setattr(
-        "sys.argv", ["local_check", "--browser", "--artifact", str(tmp_path / "old")]
+        "sys.argv",
+        [
+            "local_check",
+            "--browser",
+            "--artifact",
+            str(tmp_path / "old"),
+            "--tiktoken-cache",
+            str(tmp_path / "cache"),
+        ],
     )
+    # This test isolates artifact ordering; cache validation has dedicated tests.
+    prepared = Mock(return_value=b"fixture")
+    monkeypatch.setattr(local_check, "prepared_tokenizer", prepared)
     verify = Mock(side_effect=RuntimeError("stale artifact"))
     monkeypatch.setattr(local_check, "verify_artifact", verify, raising=False)
     ports = Mock(side_effect=AssertionError("no ports before artifact verification"))
     monkeypatch.setattr(local_check, "select_unused_ports", ports)
     with pytest.raises(RuntimeError, match="stale"):
         local_check.main()
+    prepared.assert_called_once_with(tmp_path / "cache")
     verify.assert_called_once()
     ports.assert_not_called()
 

@@ -91,3 +91,13 @@ workspace refresh. Unexpected writes fail the stage. Its JSON/PNG are separate
 from native-flow evidence. The bounded post-action observation does not establish
 indefinite suppression, generic transport behavior, cross-remount persistence,
 real DB commit, worker processing, or the unrecovered native lost-ACK flow.
+
+Browser runs also require `--tiktoken-cache /absolute/prepared/directory`. The
+harness verifies exactly the installed o200k_base cache filename and upstream
+SHA256, rejecting missing/extra files, symlinks, hardlinks, special files and
+wrong bytes before launching services. It seeds a new independent regular file
+under the fresh fixture's `upstream-data/tiktoken-cache`, matching the application's
+OPEN_NOTEBOOK_DATA_DIR resolver, and records a hash-only inventory receipt.
+The original prepared cache is never writable runtime storage. No download or
+network-fallback path is added; the separate runtime network namespace must still
+exclude external routes. A correct seed is not by itself a global egress guard.
