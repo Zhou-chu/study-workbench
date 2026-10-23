@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from api.evidence_maintenance import EvidenceMaintenanceService
+from api.evidence_reads import EvidenceReadContext
 from api.evidence_service import EvidenceService
 from api.personal_contracts import (
     NoteConflictResponse,
@@ -188,25 +189,26 @@ async def version(
     extraction_id: str | None = None,
 ):
     service = EvidenceService()
-    value = await service.version(source_version_id)
+    reads = EvidenceReadContext(service.store)
+    value = await service.version(source_version_id, _reads=reads)
     extraction = value.pop("extraction", None)
     if evidence_id:
-        record = await service.evidence(evidence_id)
+        record = await service.evidence(evidence_id, _reads=reads)
         if record["source_version_id"] != source_version_id:
             raise InvalidInputError("EVIDENCE_VERSION_MISMATCH")
         if extraction_id and extraction_id != record["extraction_id"]:
             raise InvalidInputError("EVIDENCE_EXTRACTION_MISMATCH")
         extraction_id = record["extraction_id"]
     if extraction_id:
-        extraction = await service.store.get("extraction", extraction_id)
+        extraction = await reads.get("extraction", extraction_id)
         if not extraction or extraction["source_version_id"] != source_version_id:
             raise InvalidInputError("EXTRACTION_VERSION_MISMATCH")
     records = await service.list_evidence(
-        source_version_id, extraction_id=extraction_id
+        source_version_id, extraction_id=extraction_id, _reads=reads
     )
     for record in records:
         validation = await service.validate_citation(
-            {"evidence_id": record["evidence_id"]}, [source_version_id]
+            {"evidence_id": record["evidence_id"]}, [source_version_id], _reads=reads
         )
         record["reference_validity"] = validation["reference_validity"]
         record["reference_reason"] = validation.get("reason")

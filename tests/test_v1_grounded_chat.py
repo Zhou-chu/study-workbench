@@ -107,6 +107,46 @@ async def test_forged_out_of_scope_and_unsupplied_citations_never_verify(tmp_pat
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("task", ["question", "outline"])
+@pytest.mark.parametrize("foreign", ["version", "extraction"])
+async def test_corrupt_extraction_membership_stops_before_prompt_or_model(
+    tmp_path, monkeypatch, task, foreign
+):
+    store, evidence, solar, wind = await setup(tmp_path)
+    selected = await evidence.extract(solar["source_version_id"])
+    if foreign == "version":
+        other = await evidence.extract(wind["source_version_id"])
+    else:
+        other = selected
+        selected = await evidence.extract(solar["source_version_id"], force=True)
+    selected["evidence_ids"] = other["evidence_ids"]
+    await store.put("extraction", selected["extraction_id"], selected)
+    prompt_calls = []
+    model_calls = []
+
+    def messages(*args):
+        prompt_calls.append(True)
+        raise AssertionError("Foreign evidence reached prompt construction")
+
+    async def model(messages):
+        model_calls.append(True)
+        raise AssertionError("Foreign evidence reached the model")
+
+    chat = GroundedChatService(evidence_service=evidence, model=model)
+    monkeypatch.setattr(chat, "_messages", messages)
+    with pytest.raises(
+        InvalidInputError, match="Stored evidence integrity check failed"
+    ):
+        await chat.turn("nb", "chat", {**request(solar), "task": task})
+    assert prompt_calls == model_calls == []
+    turns = await store.list("turn")
+    assert len(turns) == 1
+    assert turns[0]["status"] == "failed"
+    assert turns[0]["evidence_ids"] == []
+    assert turns[0]["answer"] == ""
+
+
+@pytest.mark.asyncio
 async def test_scope_switch_removes_prior_answers_and_questions(tmp_path):
     store, evidence, solar, wind = await setup(tmp_path)
     calls = []

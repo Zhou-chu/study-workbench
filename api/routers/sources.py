@@ -601,27 +601,18 @@ async def _create_source_sync_path(
     """SYNC PATH: Execute synchronously using execute_command_sync."""
     logger.info("Using sync processing path")
 
-    try:
-        # Import command modules to ensure they're registered
-        import commands.source_commands  # noqa: F401
+    # Import/construct before the write boundary so definite validation errors
+    # still reach create_source's request-owned upload cleanup.
+    import commands.source_commands  # noqa: F401
 
-        # Create source record - let SurrealDB generate the ID
-        source = Source(
-            title=source_data.title or "Processing...",
-            topics=[],
-        )
-        try:
-            # CREATE may commit before its receipt is lost. The outer handler
-            # must not unlink this request's upload or authorize blind replay.
-            await source.save()
-        except Exception as exc:
-            raise CommandSubmissionUnknownError(
-                source_id=(
-                    source.id
-                    if isinstance(source.id, str) and source.id.strip()
-                    else None
-                )
-            ) from exc
+    source = Source(
+        title=source_data.title or "Processing...",
+        topics=[],
+    )
+    try:
+        # Initial CREATE and all later writes can outlive their acknowledgement.
+        # From this boundary onward, preserve inputs and existing work on error.
+        await source.save()
         if not isinstance(source.id, str) or not source.id.strip():
             raise CommandSubmissionUnknownError()
 
@@ -651,16 +642,9 @@ async def _create_source_sync_path(
         )
 
         if not result.is_success():
-            logger.error(f"Sync processing failed: {result.error_message}")
-            # Clean up source record
-            try:
-                await source.delete()
-            except Exception:
-                pass
-            raise HTTPException(
-                status_code=500,
-                detail=f"Processing failed: {_truncate_error(result.error_message)}",
-            )
+            # Shared SDK failure/cancellation is not source-owner termination
+            # evidence. Even a definite failure retains partial work for review.
+            raise CommandSubmissionUnknownError(source_id=source.id)
 
         # Get the processed source
         if not source.id:
@@ -673,10 +657,15 @@ async def _create_source_sync_path(
         # No command_id or status for sync processing (legacy behavior)
         return _source_to_response(processed_source, embedded_chunks=embedded_chunks)
 
-    except Exception as e:
-        logger.error(f"Sync processing failed: {e}")
-        # The uploaded file (if any) is cleaned up by create_source's handlers
-        raise
+    except Exception as exc:
+        # A failed request does not prove rollback or make replay/cleanup safe.
+        # Cancellation (BaseException) still propagates and does not stop the
+        # SDK thread or its queued worker. Never invent a command receipt.
+        raise CommandSubmissionUnknownError(
+            source_id=(
+                source.id if isinstance(source.id, str) and source.id.strip() else None
+            )
+        ) from exc
 
 
 @router.post("/sources", response_model=SourceResponse)

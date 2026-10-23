@@ -10,6 +10,7 @@ import unicodedata
 import weakref
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from itertools import islice
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -394,16 +395,18 @@ class EvidenceService:
             key=lambda v: v["created_at"],
         )
 
-    async def _version(self, version_id):
-        version = await self.store.get("version", version_id)
+    async def _version(self, version_id, *, _reads=None):
+        version = await (_reads or self.store).get("version", version_id)
         if version is None:
             raise NotFoundError("Source version not found")
         return version
 
-    async def version(self, version_id):
-        version = await self._version(version_id)
+    async def version(self, version_id, *, _reads=None):
+        version = await self._version(version_id, _reads=_reads)
         extraction = (
-            await self.store.get("extraction", version["current_extraction_id"])
+            await (_reads or self.store).get(
+                "extraction", version["current_extraction_id"]
+            )
             if version.get("current_extraction_id")
             else None
         )
@@ -619,21 +622,46 @@ class EvidenceService:
             await self.store.put("extraction", extraction_id, current)
         return report
 
-    async def evidence(self, evidence_id):
-        evidence = await self.store.get("evidence", evidence_id)
+    async def evidence(self, evidence_id, *, _reads=None):
+        evidence = await (_reads or self.store).get("evidence", evidence_id)
         if evidence is None:
             raise NotFoundError("Evidence not found")
+        if evidence.get("evidence_id") != evidence_id:
+            raise InvalidInputError("Stored evidence integrity check failed")
         return evidence
 
-    async def list_evidence(self, version_id, extraction_id=None):
-        version = await self._version(version_id)
+    async def list_evidence(self, version_id, extraction_id=None, *, _reads=None):
+        version = await self._version(version_id, _reads=_reads)
         extraction_id = extraction_id or version.get("current_extraction_id")
         if not extraction_id:
             return []
-        extraction = await self.store.get("extraction", extraction_id)
+        extraction = await (_reads or self.store).get("extraction", extraction_id)
         if not extraction or extraction["source_version_id"] != version_id:
             raise NotFoundError("Extraction not found for this source version")
-        return [await self.evidence(id) for id in extraction["evidence_ids"]]
+
+        def checked(record):
+            # A retained index is not authority to expose another extraction's
+            # evidence to a reader, lexical search, or a model prompt.
+            if (
+                record.get("source_version_id") != version_id
+                or record.get("extraction_id") != extraction_id
+            ):
+                raise InvalidInputError("Stored evidence integrity check failed")
+            return record
+
+        if _reads is None:
+            return [
+                checked(await self.evidence(id)) for id in extraction["evidence_ids"]
+            ]
+        from api.personal_store import READ_BATCH_SIZE
+
+        records = []
+        identities = iter(extraction["evidence_ids"])
+        while batch := list(islice(identities, READ_BATCH_SIZE)):
+            await _reads.prefetch("evidence", batch)
+            for identity in batch:
+                records.append(checked(await self.evidence(identity, _reads=_reads)))
+        return records
 
     async def retrieve(self, query, version_ids, limit=12):
         version_ids = list(dict.fromkeys(version_ids))
@@ -681,7 +709,9 @@ class EvidenceService:
             hit["independent_support"] = reference.get("independent_support")
         return ranked
 
-    async def validate_citation(self, citation, version_ids, evidence_ids=None):
+    async def validate_citation(
+        self, citation, version_ids, evidence_ids=None, *, _reads=None
+    ):
         evidence_id = citation.get("evidence_id")
         result = EvidenceCitation(
             citation_id=str(citation.get("citation_id") or "c1"),
@@ -693,16 +723,20 @@ class EvidenceService:
         ).model_dump()
         if not isinstance(evidence_id, str) or not evidence_id:
             return {**result, "reason": "Malformed evidence ID"}
-        evidence = await self.store.get("evidence", evidence_id)
+        evidence = await (_reads or self.store).get("evidence", evidence_id)
         if not evidence:
             return {**result, "reason": "Unknown evidence ID"}
+        # Bind the verdict and supplied-ID membership to the physical lookup,
+        # never to a possibly corrupted identity declared inside its payload.
+        if evidence.get("evidence_id") != evidence_id:
+            return {**result, "reason": "Stored evidence integrity check failed"}
         if evidence["source_version_id"] not in version_ids:
             return {
                 **result,
                 "reference_validity": "out_of_scope",
                 "reason": "Evidence is outside the selected source versions",
             }
-        if evidence_ids is not None and evidence["evidence_id"] not in evidence_ids:
+        if evidence_ids is not None and evidence_id not in evidence_ids:
             return {**result, "reason": "Evidence was not supplied to this answer"}
         if (
             citation.get("source_version_id")
@@ -713,7 +747,14 @@ class EvidenceService:
         if not isinstance(quote, str) or quote not in evidence["quote"]:
             return {**result, "reason": "Quote does not match evidence"}
         # Recheck against the retained extraction, not merely against a model string.
-        extraction = await self.store.get("extraction", evidence["extraction_id"])
+        extraction = await (_reads or self.store).get(
+            "extraction", evidence["extraction_id"]
+        )
+        if (
+            not extraction
+            or extraction.get("source_version_id") != evidence["source_version_id"]
+        ):
+            return {**result, "reason": "Stored evidence integrity check failed"}
         block = next(
             (
                 b
@@ -745,11 +786,13 @@ class EvidenceService:
             report = extraction.get("revalidation") or {}
             fresh_id = report.get("fresh_extraction_id")
             if evidence_id in report.get("evidence_ids", []) and fresh_id:
-                fresh = await self.store.get("extraction", fresh_id)
+                fresh = await (_reads or self.store).get("extraction", fresh_id)
                 revalidated = self._matches_fresh(evidence, fresh)
         # Historical evidence may outlive its version. Absence is not a fresh
         # verification, even when an older revalidation report still matches.
-        version = await self.store.get("version", evidence["source_version_id"])
+        version = await (_reads or self.store).get(
+            "version", evidence["source_version_id"]
+        )
         derived = (version or {}).get("origin") == "derived_snapshot" or evidence.get(
             "evidence_kind"
         ) == "derived_snapshot"

@@ -23,6 +23,14 @@ class MemoryStore:
     async def get(self, kind, id):
         return deepcopy(self.data.get((kind, id)))
 
+    async def get_many(self, kind, identities):
+        return {
+            identity: {"payload": deepcopy(self.data[(kind, identity)])}
+            if (kind, identity) in self.data
+            else None
+            for identity in identities
+        }
+
     async def list(self, kind, notebook_id=None, **filters):
         return [
             deepcopy(value)

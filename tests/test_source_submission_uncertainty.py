@@ -236,12 +236,12 @@ async def test_sync_failed_result_does_not_delete_caller_owned_file(
     monkeypatch.setattr(sources, "execute_command_sync", Mock(return_value=result))
     data = SourceCreate(type="upload", file_path=str(path), async_processing=False)
 
-    with pytest.raises(HTTPException) as caught:
+    with pytest.raises(CommandSubmissionUnknownError) as caught:
         await sources.create_source((data, None))
 
-    assert caught.value.status_code == 500
+    assert caught.value.source_id == "source:fixture"
     assert path.read_bytes() == b"retained caller input"
-    delete_record.assert_awaited_once()
+    delete_record.assert_not_awaited()
 
 
 @pytest.mark.asyncio

@@ -34,6 +34,7 @@ KINDS = frozenset(
         "legacy_chat",
     }
 )
+READ_BATCH_SIZE = 128
 
 
 def record_key(kind: str, identity: str) -> str:
@@ -49,6 +50,34 @@ class PersonalStore:
         target = RecordID.parse(record_key(kind, identity))
         rows = await repo_query("SELECT payload FROM $target;", {"target": target})
         return rows[0]["payload"] if rows else None
+
+    async def get_many(
+        self, kind: str, identities: list[str]
+    ) -> dict[str, dict[str, Any] | None]:
+        """Read raw rows by physical identity, with None for absent records.
+
+        Payloads are deliberately not decoded here: a malformed later row must
+        not hide an earlier missing row when the caller consumes input order.
+        The caller owns ordering, duplicate expansion, and payload validation.
+        """
+        record_key(kind, "validate")
+        targets = {
+            identity: RecordID.parse(record_key(kind, identity))
+            for identity in identities
+        }
+        result: dict[str, dict[str, Any] | None] = {}
+        items = list(targets.items())
+        for offset in range(0, len(items), READ_BATCH_SIZE):
+            batch = items[offset : offset + READ_BATCH_SIZE]
+            rows = await repo_query(
+                "SELECT id, payload FROM $targets;",
+                {"targets": [target for _, target in batch]},
+            )
+            by_target = {str(row["id"]): row for row in rows}
+            result.update(
+                (identity, by_target.get(str(target))) for identity, target in batch
+            )
+        return result
 
     async def list(
         self, kind: str, notebook_id: str | None = None, **filters: Any

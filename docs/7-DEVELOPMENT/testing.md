@@ -165,3 +165,33 @@ Vitest runs in `jsdom` with globals enabled and the `@/` alias (`frontend/vitest
 - A bug fix comes with a test that fails without the fix. Name it after the behavior (`test_delete_notebook_missing_returns_404`) and reference the issue in the docstring.
 - API changes: status codes, validation errors and the error mapping, not only the happy path.
 - Don't test third-party libraries (Esperanto, content-core, LangGraph) or make real provider calls.
+
+### Evidence-detail read batching
+
+`tests/test_v1_evidence_reads.py` exercises the real route, evidence service and
+personal store against a synthetic `repo_query` boundary. The ordinary retained
+172-record fixture requires four SELECT calls (version, current extraction and
+two evidence batches), compared with 692 before request-local reuse. This is a
+query-count assertion, not database execution or a latency benchmark. Each batch
+binds at most 128 physical RecordIDs; unordered rows, duplicates, missing/malformed
+records, history and archive validation are covered. Other service callers retain
+their original sequential reads.
+
+The context belongs only to one source-version detail response, returns copies,
+and intentionally reuses each identity's first observed value. It is **not** an
+atomic snapshot: concurrent writes may produce mixed-time records, and a change
+after an identity's first read is observed only by a later request. Query size is
+bounded, not total response/context memory.
+
+Integrity regressions reject payload-ID aliases before copying another physical
+record's verdict, bind supplied-evidence membership to the requested ID, and check
+retained extraction ownership. Direct evidence/detail/search reads reject stored
+identity inconsistencies with a controlled 400; citation validation instead
+returns `invalid` with the existing integrity-failure reason. Evidence listed by
+an extraction must belong to that exact source version and extraction. HTTP tests
+and fake-provider question/outline tests verify that corrupt index membership
+fails before returning foreign quotes or constructing a prompt. Correct explicit
+historical selection, duplicate order and batching counts remain covered. These
+tests address inconsistent stored metadata; they do not establish an ordinary
+import or unauthorized-access path, database/runtime acceptance, or protection
+against every possible form of metadata corruption.

@@ -445,6 +445,82 @@ async def test_historical_reader_returns_requested_old_extraction_and_exact_code
     assert missing.status_code == 404
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("endpoint", ["detail", "selected", "direct", "search"])
+@pytest.mark.parametrize("corruption", ["alias", "missing", "non_string"])
+async def test_evidence_reads_reject_physical_payload_identity_mismatch(
+    routes, historical, endpoint, corruption
+):
+    identity = historical.current["evidence_ids"][0]
+    record = await routes.evidence.evidence(identity)
+    if corruption == "missing":
+        record.pop("evidence_id")
+    else:
+        record["evidence_id"] = (
+            historical.old["evidence_ids"][0] if corruption == "alias" else []
+        )
+    record["quote_hash"] = "corrupt"
+    await routes.store.put("evidence", identity, record)
+    version_id = historical.version["source_version_id"]
+    if endpoint == "search":
+        response = await routes.client.post(
+            "/api/personal/search",
+            json={"query": "原始", "source_version_ids": [version_id]},
+        )
+    else:
+        response = await routes.client.get(
+            f"/api/personal/evidence/{identity}"
+            if endpoint == "direct"
+            else f"/api/personal/source-versions/{version_id}",
+            params={"evidence_id": identity} if endpoint == "selected" else {},
+        )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Stored evidence integrity check failed"}
+    assert await routes.store.get("evidence", identity) == record
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("endpoint", ["detail", "search"])
+@pytest.mark.parametrize("foreign", ["version", "extraction"])
+async def test_selected_extraction_cannot_return_intact_foreign_evidence(
+    routes, historical, endpoint, foreign
+):
+    extraction = historical.current
+    extraction["evidence_ids"] = (
+        historical.other_ex if foreign == "version" else historical.old
+    )["evidence_ids"]
+    await routes.store.put("extraction", extraction["extraction_id"], extraction)
+    version_id = historical.version["source_version_id"]
+    if endpoint == "search":
+        response = await routes.client.post(
+            "/api/personal/search",
+            json={"query": "evidence 原始", "source_version_ids": [version_id]},
+        )
+    else:
+        response = await routes.client.get(
+            f"/api/personal/source-versions/{version_id}"
+        )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Stored evidence integrity check failed"}
+
+
+@pytest.mark.asyncio
+async def test_direct_evidence_marks_foreign_retained_extraction_invalid(
+    routes, historical
+):
+    extraction = historical.old
+    extraction["source_version_id"] = historical.other["source_version_id"]
+    await routes.store.put("extraction", extraction["extraction_id"], extraction)
+    response = await routes.client.get(
+        f"/api/personal/evidence/{extraction['evidence_ids'][0]}"
+    )
+    assert response.status_code == 200
+    assert response.json()["reference_validity"] == "invalid"
+    assert (
+        response.json()["reference_reason"] == "Stored evidence integrity check failed"
+    )
+
+
 def parse_events(text):
     return [
         (
