@@ -4,7 +4,7 @@ import importlib
 import os
 import signal
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
@@ -249,9 +249,20 @@ server.serve_forever()
         lib.stop_processes(processes, grace=0.01)
 
 
+@pytest.fixture
+def mocked_runner_custody(monkeypatch):
+    # These runner tests fake every process; real custody belongs in bounded
+    # subprocess tests, not the potentially multithreaded aggregate pytest host.
+    custody = MagicMock()
+    monkeypatch.setattr(local_check, "BrowserSubreaper", lambda: custody)
+    yield custody
+    custody.__enter__.assert_called_once_with()
+    custody.__exit__.assert_called_once_with(None, None, None)
+
+
 @pytest.mark.parametrize("foreign_index,expected_starts", [(0, 1), (1, 2)])
 def test_local_runner_foreign_db_or_api_stops_before_dependents_and_writes(
-    tmp_path, monkeypatch, foreign_index, expected_starts
+    tmp_path, monkeypatch, foreign_index, expected_starts, mocked_runner_custody
 ):
     monkeypatch.setattr(
         "sys.argv",
@@ -344,7 +355,9 @@ def test_stale_record_does_not_prevent_other_owned_cleanup(monkeypatch):
     assert not stale.closed
 
 
-def test_local_runner_rechecks_ownership_at_first_write(tmp_path, monkeypatch):
+def test_local_runner_rechecks_ownership_at_first_write(
+    tmp_path, monkeypatch, mocked_runner_custody
+):
     monkeypatch.setattr(
         "sys.argv",
         [

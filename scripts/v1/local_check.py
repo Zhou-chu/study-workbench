@@ -1,4 +1,4 @@
-"""Isolated real-stack checks, no Google/model calls. All processes share one sandbox."""
+"""Isolated real-stack checks, no Google/model calls. All owned processes share one execution namespace."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import secrets
+import shutil
 import signal
 import subprocess
 import sys
@@ -22,6 +23,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 if TYPE_CHECKING or __package__:
     from .artifact_identity import verify_artifact
+    from .browser_check import validate_firefox_executable
+    from .browser_ownership import BrowserSubreaper
+    from .frontend_runtime import FrontendRuntimeCopies
     from .runtime_lifecycle import (
         PORTS,
         SAFE_INHERITED_ENV,
@@ -39,6 +43,9 @@ if TYPE_CHECKING or __package__:
     )
 else:
     from artifact_identity import verify_artifact
+    from browser_check import validate_firefox_executable
+    from browser_ownership import BrowserSubreaper
+    from frontend_runtime import FrontendRuntimeCopies
     from runtime_lifecycle import (
         PORTS,
         SAFE_INHERITED_ENV,
@@ -65,6 +72,7 @@ def build_fixture_environment(
     return {
         **{k: v for k, v in inherited_env.items() if k in SAFE_INHERITED_ENV},
         "PYTHON_DOTENV_DISABLED": "1",
+        "OPEN_NOTEBOOK_DISABLE_UPDATE_CHECK": "1",
         "LOGURU_DIAGNOSE": "NO",
         "SURREAL_URL": f"ws://127.0.0.1:{database}/rpc",
         "SURREAL_USER": "root",
@@ -144,6 +152,34 @@ def restart_owned_stack(processes, ports, start_backend, start_frontend):
     return (*backend, frontend)
 
 
+def finish_owned_run(
+    processes, custody, ports, copies, run, profile_identity, check_artifact
+):
+    """Observe all cleanup boundaries, but never delete after uncertain custody."""
+    failures = []
+    for action in (
+        lambda: stop_processes(processes),
+        lambda: custody.__exit__(None, None, None) if custody is not None else None,
+        lambda: require_free_ports(ports),
+        check_artifact,
+    ):
+        try:
+            action()
+        except BaseException as error:
+            failures.append(error)
+    if failures:
+        raise BaseExceptionGroup(
+            "Owned fixture cleanup failed; temporary state retained", failures
+        )
+    copies.remove_after_drain()
+    if profile_identity is not None:
+        target = run / "browser-temp"
+        info = target.lstat()
+        if target.is_symlink() or (info.st_dev, info.st_ino) != profile_identity:
+            raise RuntimeError("Browser temporary ownership changed")
+        shutil.rmtree(target)
+
+
 def fixture_inventory(root: Path) -> dict[str, bytes]:
     fixtures = {}
     for name in (
@@ -175,7 +211,14 @@ def main():
     )
     for name in ("database", "api", "frontend"):
         parser.add_argument(f"--{name}-port", type=int)
+    parser.add_argument("--firefox-executable", type=Path)
     args = parser.parse_args()
+    if args.browser and args.browser_engine == "firefox":
+        if args.firefox_executable is None:
+            parser.error("Firefox requires --firefox-executable")
+        validate_firefox_executable(args.firefox_executable)
+    elif args.firefox_executable is not None:
+        parser.error("Firefox executable requires --browser --browser-engine firefox")
     if (args.browser or args.frontend_http) and args.artifact is None:
         parser.error(
             "Frontend acceptance requires --artifact from an isolated npm run build"
@@ -210,6 +253,11 @@ def main():
     handles = []
     results = []
     navigation_cases = []
+    copies = FrontendRuntimeCopies(run)
+    custody = BrowserSubreaper()
+    custody_entered = False
+    profile_identity = None
+    frontend_runs = []
 
     def start(name, args, *, child_env=None):
         output = (run / (name + ".log")).open("a")
@@ -257,6 +305,7 @@ def main():
                 "warn",
                 "rocksdb:" + str(run / "db"),
             ],
+            child_env={**env, "SURREAL_ONLINE_VERSION_CHECK": "false"},
         )
         wait_url("database", db, database, "/health")
         require_owned_listener(db, database)
@@ -289,16 +338,27 @@ def main():
 
     def start_frontend():
         check_artifact()
+        runtime, identity = copies.create(ROOT, args.artifact)
         proc = start(
             "frontend",
-            ["node", str(args.artifact.absolute() / "server.js")],
+            ["node", str(runtime / "server.js")],
             child_env=build_frontend_environment(env, frontend),
         )
+        frontend_runs.append(
+            {
+                "artifact_identity": identity,
+                "runtime_path": str(runtime),
+                "process": {"pid": proc.pid, "identity": proc.identity},
+            }
+        )
+        (run / "frontend-runtime-receipts.json").write_text(json.dumps(frontend_runs))
         wait_url("frontend", proc, frontend, "/config")
         return proc
 
     previous_handler = signal.signal(signal.SIGTERM, interrupted)
     try:
+        custody.__enter__()
+        custody_entered = True
         db, api, worker = start_stack()
         with httpx.Client(
             base_url=api_base,
@@ -663,6 +723,11 @@ def main():
                 )
                 with os.fdopen(fd, "w") as output:
                     json.dump(context, output)
+                browser_temp = run / "browser-temp"
+                browser_temp.mkdir(mode=0o700)
+                (browser_temp / "home").mkdir(mode=0o700)
+                info = browser_temp.stat()
+                profile_identity = (info.st_dev, info.st_ino)
                 browser = start(
                     "browser",
                     [
@@ -672,7 +737,19 @@ def main():
                         str(context_path),
                         "--engine",
                         args.browser_engine,
+                        *(
+                            ["--firefox-executable", str(args.firefox_executable)]
+                            if args.firefox_executable
+                            else []
+                        ),
                     ],
+                    child_env={
+                        **env,
+                        "HOME": str(browser_temp / "home"),
+                        "TMPDIR": str(browser_temp),
+                        "XDG_CONFIG_HOME": str(browser_temp / "config"),
+                        "XDG_CACHE_HOME": str(browser_temp / "cache"),
+                    },
                 )
                 deadline = time.monotonic() + 1200
                 while browser.poll() is None:
@@ -690,12 +767,22 @@ def main():
                     "Parent-bound browser fixture actions passed against the verified artifact"
                 )
     finally:
+        mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT, signal.SIGTERM})
         try:
-            stop_processes(procs)
+            finish_owned_run(
+                procs,
+                custody if custody_entered else None,
+                ports,
+                copies,
+                run,
+                profile_identity,
+                check_artifact,
+            )
         finally:
             for h in handles:
                 h.close()
             signal.signal(signal.SIGTERM, previous_handler)
+            signal.pthread_sigmask(signal.SIG_SETMASK, mask)
 
     require_free_ports(ports)
     results.append("All owned fixture listeners released after cleanup")

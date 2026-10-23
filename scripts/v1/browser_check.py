@@ -3,7 +3,8 @@
 import argparse
 import json
 import os
-import tempfile
+import re
+import stat
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
@@ -11,8 +12,10 @@ from urllib.parse import quote, urlsplit
 
 if TYPE_CHECKING or __package__:
     from .browser_context import BrowserContext, load_context
+    from .browser_upload_fixture import run_typed_unsafe_fixture
 else:
     from browser_context import BrowserContext, load_context
+    from browser_upload_fixture import run_typed_unsafe_fixture
 
 
 def browser_environment(profile: Path, inherited: dict[str, str]) -> dict[str, str]:
@@ -23,9 +26,31 @@ def browser_environment(profile: Path, inherited: dict[str, str]) -> dict[str, s
             if key in {"PATH", "LANG", "LC_ALL", "LC_CTYPE", "TZ"}
         },
         "HOME": str(profile),
+        "TMPDIR": str(profile),
         "XDG_CONFIG_HOME": str(profile / "config"),
         "XDG_CACHE_HOME": str(profile / "cache"),
     }
+
+
+def validate_firefox_executable(path: Path) -> str:
+    if not path.is_absolute() or any(p.is_symlink() for p in (path, *path.parents)):
+        raise ValueError("Firefox must be an absolute non-symlink executable")
+    if not stat.S_ISREG(path.stat().st_mode) or not os.access(path, os.X_OK):
+        raise ValueError("Firefox executable unavailable")
+    return str(path)
+
+
+def browser_launch_options(engine, profile, executable):
+    options = {"headless": True, "env": browser_environment(profile, dict(os.environ))}
+    if engine == "firefox" and executable is not None:
+        options["executable_path"] = validate_firefox_executable(executable)
+    elif engine == "chromium" and executable is None:
+        options.update(executable_path="/usr/bin/chromium", chromium_sandbox=True)
+    else:
+        raise ValueError(
+            "Firefox requires explicit executable; Chromium cannot override it"
+        )
+    return options
 
 
 def route_owned_request(guard: BrowserContext, route):
@@ -43,16 +68,25 @@ def route_owned_request(guard: BrowserContext, route):
     route.continue_()
 
 
+def successful_response(response, method, url):
+    return (
+        response.request.method == method
+        and response.url == url
+        and 200 <= response.status < 300
+    )
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-context", required=True)
     parser.add_argument("--engine", choices=["chromium", "firefox"], default="chromium")
+    parser.add_argument("--firefox-executable", type=Path)
     options = parser.parse_args()
     guard = load_context(Path(options.run_context))
-    run_browser(guard, options.engine)
+    run_browser(guard, options.engine, options.firefox_executable)
 
 
-def run_browser(guard: BrowserContext, engine: str):
+def run_browser(guard: BrowserContext, engine: str, executable: Path | None = None):
     guard.recheck()
     from playwright.sync_api import expect, sync_playwright
 
@@ -65,21 +99,15 @@ def run_browser(guard: BrowserContext, engine: str):
     )
     out = guard.out
     out.mkdir(parents=False, exist_ok=True)
-    with (
-        tempfile.TemporaryDirectory(
-            prefix="browser-profile-", dir=guard.path.parent
-        ) as profile_home,
-        sync_playwright() as pw,
-    ):
-        launch_options = {
-            "headless": True,
-            "env": browser_environment(Path(profile_home), dict(os.environ)),
-        }
-        if args.engine == "chromium":
-            launch_options["executable_path"] = "/usr/bin/chromium"
+    # Parent owns driver/browser HOME and TMPDIR until descendant drain completes.
+    profile_home = guard.path.parent / "browser-temp" / "home"
+    launch_options = browser_launch_options(engine, profile_home, executable)
+    with sync_playwright() as pw:
         browser = getattr(pw, args.engine).launch(**launch_options)
         context = browser.new_context(
-            viewport={"width": 1440, "height": 1000}, locale="en-US"
+            viewport={"width": 1440, "height": 1000},
+            locale="en-US",
+            service_workers="block",
         )
 
         context.route("**/*", lambda route: route_owned_request(guard, route))
@@ -132,7 +160,7 @@ def run_browser(guard: BrowserContext, engine: str):
             metrics = page.evaluate("""() => {
                 const visible = element => element.getClientRects().length > 0;
                 const main = document.querySelector('main');
-                const panels = [...document.querySelectorAll('main main, main aside')].filter(visible);
+                const panels = [...document.querySelectorAll('#workbench-panel-conversation, #workbench-panel-sources, #workbench-panel-notes')].filter(visible);
                 const canvas = document.querySelector('canvas[data-page-number]');
                 const bounds = canvas && visible(canvas) ? canvas.getBoundingClientRect() : null;
                 return {
@@ -157,6 +185,37 @@ def run_browser(guard: BrowserContext, engine: str):
                 ), metrics
             mobile_checks.append({"view": label, **metrics})
 
+        def loaded_workspace(action, url):
+            with page.expect_response(
+                lambda r: successful_response(r, "GET", url), timeout=30000
+            ) as response:
+                action()
+            payload = response.value.json()
+            assert payload["sources"], "Fixture workspace has no sources"
+            expect(page.locator("#workbench-panel-sources")).to_be_attached()
+            expect(
+                page.get_by_role(
+                    "heading", level=1, name=payload["notebook"]["name"], exact=True
+                )
+            ).to_be_visible()
+            return payload
+
+        def reader_version():
+            reader = page.get_by_role("region", name="Reader", exact=True)
+            tools = reader.locator("details").filter(
+                has=page.get_by_text("Document tools", exact=True)
+            )
+            if not tools.get_attribute("open") == "":
+                tools.locator("summary").click()
+            version = tools.locator(":scope > p").first
+            expect(version).to_be_visible()
+            return version
+
+        def open_notebook_tools():
+            tools = page.locator('summary[aria-label="Notebook tools"]')
+            if tools.locator("..").get_attribute("open") is None:
+                tools.click()
+
         target = args.base + "/notebooks/" + quote(args.notebook, safe="") + "/study"
         try:
             page.goto(target)
@@ -164,44 +223,89 @@ def run_browser(guard: BrowserContext, engine: str):
             assert "/login" in page.url, page.url
             page.screenshot(path=str(out / "01-private-login.png"), full_page=True)
             page.locator("input[type=password]").fill(guard.password)
-            page.locator("button[type=submit]").click()
-            page.wait_for_url(lambda url: "/login" not in url, timeout=30000)
-            page.goto(target)
-            expect(page.get_by_text("StudyWorkbench", exact=False)).to_be_visible(
-                timeout=30000
+            workspace_url = (
+                args.base
+                + "/api/personal/notebooks/"
+                + quote(args.notebook, safe="")
+                + "/workspace"
             )
+            loaded = loaded_workspace(
+                lambda: page.locator("button[type=submit]").click(), workspace_url
+            )
+            page.wait_for_url(target, timeout=30000)
             expect(
                 page.get_by_text("fixture_course.md", exact=True).first
             ).to_be_visible()
-            page.get_by_role("button", name="Read", exact=True).first.click()
+            page.get_by_role("article").filter(
+                has=page.get_by_role("heading", name="fixture_course.md", exact=True)
+            ).get_by_role("button", name="Read", exact=True).click()
             expect(
                 page.get_by_role("button", name="Download original version", exact=True)
             ).to_be_visible(timeout=15000)
             page.locator("#workspace-search").fill("证据")
-            page.get_by_role("button", name="Search", exact=True).click()
-            page.wait_for_timeout(1000)
+            with page.expect_response(
+                lambda r: successful_response(
+                    r, "POST", args.base + "/api/personal/search"
+                )
+            ) as search_response:
+                page.get_by_role("button", name="Search", exact=True).click()
+            search_hits = search_response.value.json()["hits"]
+            assert search_hits, "Public fixture lexical search returned no hits"
+            expect(
+                page.locator("#workbench-panel-sources").get_by_role(
+                    "button", name=search_hits[0]["quote"], exact=True
+                )
+            ).to_be_visible()
             page.locator("#note-title").fill("Browser note")
             page.locator("#note-content").fill(
                 "Created through Playwright against the real API."
             )
-            page.get_by_role("button", name="Save note", exact=True).click()
+            with page.expect_response(
+                lambda r: successful_response(
+                    r, "POST", workspace_url.removesuffix("workspace") + "notes"
+                )
+            ) as note_saved:
+                page.get_by_role("button", name="Save note", exact=True).click()
+            assert (
+                note_saved.value.json()["content"]
+                == "Created through Playwright against the real API."
+            )
             expect(
                 page.get_by_text(
                     "Created through Playwright against the real API.", exact=True
                 )
             ).to_be_visible(timeout=15000)
-            selected = page.locator("input[type=checkbox]:checked").count()
-            assert selected > 0
-            page.reload()
-            expect(page.get_by_text("StudyWorkbench", exact=False)).to_be_visible(
-                timeout=15000
+            # Change to a non-default exact PDF version, not a checkbox count.
+            pdf = next(
+                source
+                for source in loaded["sources"]
+                if source["title"] == "fixture_a.pdf"
             )
-            assert page.locator("input[type=checkbox]:checked").count() == selected
+            chosen = pdf["versions"][0]["source_version_id"]
+            before_ids = loaded["selection"]["source_version_ids"]
+            selection_url = workspace_url.removesuffix("workspace") + "selection"
+            expected_ids = sorted(set(before_ids) ^ {chosen})
+            assert expected_ids and chosen not in before_ids
+            with page.expect_response(
+                lambda r: successful_response(r, "PATCH", selection_url)
+            ) as saved:
+                page.get_by_role(
+                    "checkbox", name=f"fixture_a.pdf · {chosen}", exact=True
+                ).check()
+            assert sorted(saved.value.json()["source_version_ids"]) == expected_ids
+            reloaded = loaded_workspace(page.reload, workspace_url)
+            assert sorted(reloaded["selection"]["source_version_ids"]) == expected_ids
+            expect(
+                page.get_by_role(
+                    "checkbox", name=f"fixture_a.pdf · {chosen}", exact=True
+                )
+            ).to_be_checked()
             expect(
                 page.get_by_text(
                     "Created through Playwright against the real API.", exact=True
                 )
             ).to_be_visible()
+            typed_fixture = run_typed_unsafe_fixture(page, guard, out)
             for case in json.loads(Path(args.navigation_cases).read_text()):
                 page.get_by_role(
                     "button",
@@ -211,20 +315,16 @@ def run_browser(guard: BrowserContext, engine: str):
                 expect(page.locator("#physical-page")).to_have_value(
                     str(case["physical_page"]), timeout=15000
                 )
-                expect(
-                    page.locator("main main").locator(
-                        f'[title="{case["source_version_id"]}"]'
-                    )
-                ).to_be_visible()
+                expect(reader_version()).to_have_text(case["source_version_id"])
                 expect(
                     page.get_by_text(case["quote"], exact=True).first
                 ).to_be_visible()
                 assert_pdf_page(case["physical_page"])
                 location_checks.append(case)
             assert len(location_checks) == 10
-            invalid_source = page.get_by_text(
-                "fixture_invalid.pdf", exact=True
-            ).first.locator("..")
+            invalid_source = page.get_by_role("article").filter(
+                has=page.get_by_role("heading", name="fixture_invalid.pdf", exact=True)
+            )
             invalid_source.get_by_role("button", name="Read", exact=True).click()
             expect(page.locator('[data-pdf-fallback="true"]')).to_be_visible(
                 timeout=15000
@@ -247,7 +347,7 @@ def run_browser(guard: BrowserContext, engine: str):
             before = context.request.get(
                 args.base + "/api/personal/source-versions/" + old_vid, headers=headers
             ).json()
-            page.get_by_text("Document tools", exact=True).click()
+            reader_version()
             reparse_button = page.get_by_role(
                 "button", name="Re-extract original", exact=True
             )
@@ -275,11 +375,10 @@ def run_browser(guard: BrowserContext, engine: str):
             ).click()
             expect(page.locator("#physical-page")).to_have_value("3")
             assert_pdf_page(3)
-            source_card = (
-                page.locator("aside")
-                .get_by_text("fixture_a.pdf", exact=True)
-                .first.locator("..")
+            source_card = page.get_by_role("article").filter(
+                has=page.get_by_role("heading", name="fixture_a.pdf", exact=True)
             )
+            source_card.get_by_text("Versions and source details", exact=True).click()
             source_card.get_by_label(
                 "Upload a new version", exact=True
             ).set_input_files(
@@ -294,9 +393,7 @@ def run_browser(guard: BrowserContext, engine: str):
             page.get_by_role(
                 "button", name="fixture_a.pdf · PDF_NAV", exact=True
             ).click()
-            expect(page.locator("main main p[title]")).to_have_attribute(
-                "title", old_vid
-            )
+            expect(reader_version()).to_have_text(old_vid)
             expect(page.locator("#physical-page")).to_have_value("3")
             assert_pdf_page(3)
             maintenance_checks.append(
@@ -310,13 +407,11 @@ def run_browser(guard: BrowserContext, engine: str):
                 }
             )
             page.screenshot(path=str(out / "02-desktop-workbench.png"), full_page=True)
+            open_notebook_tools()
             page.get_by_text("Project backup", exact=True).click()
             page.get_by_role("button", name="Export project", exact=True).click()
-            expect(
-                page.get_by_text("portable_export", exact=False).first
-            ).to_be_visible(timeout=20000)
             download_button = page.get_by_role(
-                "button", name="Download result", exact=True
+                "button", name="Download project package", exact=True
             ).first
             expect(download_button).to_be_visible(timeout=30000)
             with page.expect_download() as download_info:
@@ -324,6 +419,7 @@ def run_browser(guard: BrowserContext, engine: str):
             exported = out / "browser-project.zip"
             download_info.value.save_as(str(exported))
             assert exported.stat().st_size > 1000
+            page.locator('summary[aria-label="Notebook tools"]').click()
             page.set_viewport_size({"width": 390, "height": 844})
             page.get_by_role("tab", name="Sources", exact=True).click()
             expect(
@@ -340,20 +436,32 @@ def run_browser(guard: BrowserContext, engine: str):
             expect(page.locator("#note-content")).to_be_visible()
             assert_mobile_layout("notes-en-US")
             page.set_viewport_size({"width": 1440, "height": 1000})
+            open_notebook_tools()
             page.locator(
                 'input[type=file][accept=".zip,application/zip"]'
             ).set_input_files(str(exported))
-            page.get_by_role("dialog").get_by_role(
+            confirm_restore = page.get_by_role("dialog").get_by_role(
                 "button", name="Confirm", exact=True
-            ).click()
+            )
+            expect(confirm_restore).to_be_enabled(timeout=15000)
+            confirm_restore.click()
             restored_link = page.get_by_role(
                 "link", name="Open restored notebook", exact=True
             )
             expect(restored_link).to_be_visible(timeout=30000)
-            restored_link.click()
-            expect(page.get_by_text("StudyWorkbench", exact=False)).to_be_visible(
-                timeout=15000
+            restored_href = restored_link.get_attribute("href")
+            restored_id = restored_href.split("/notebooks/")[1].split("/")[0]
+            restored_workspace_url = (
+                args.base + "/api/personal/notebooks/" + restored_id + "/workspace"
             )
+            restored_data = loaded_workspace(
+                restored_link.click, restored_workspace_url
+            )
+            restored_ids = {
+                citation["citation_id"]: citation["source_version_id"]
+                for note in restored_data["notes"]
+                for citation in note.get("citations", [])
+            }
             for case in json.loads(Path(args.navigation_cases).read_text()):
                 page.get_by_role(
                     "button",
@@ -370,9 +478,8 @@ def run_browser(guard: BrowserContext, engine: str):
                     page.get_by_text(case["quote"], exact=True).first
                 ).to_be_visible()
                 assert_pdf_page(case["physical_page"])
-                restored_version = page.locator("main main p[title]").get_attribute(
-                    "title"
-                )
+                expect(reader_version()).to_have_text(restored_ids[case["citation_id"]])
+                restored_version = reader_version().inner_text()
                 assert (
                     restored_version and restored_version != case["source_version_id"]
                 )
@@ -395,7 +502,7 @@ def run_browser(guard: BrowserContext, engine: str):
             page.screenshot(path=str(out / "04-restored-reference.png"), full_page=True)
             # Revalidate through the real UI/worker and verify persistence without
             # editing the archived note or accepting its previous verified badge.
-            restored_vid = page.locator("main main p[title]").get_attribute("title")
+            restored_vid = reader_version().inner_text()
             with page.expect_response(
                 lambda r: r.request.method == "POST" and r.url.endswith("/revalidate")
             ) as operation:
@@ -431,13 +538,12 @@ def run_browser(guard: BrowserContext, engine: str):
             page.get_by_role(
                 "button", name="fixture_b.pdf · LOC_b_1", exact=True
             ).click()
-            other_vid = page.locator("main main p[title]").get_attribute("title")
+            expect(reader_version()).to_have_text(restored_ids["LOC_b_1"])
+            other_vid = reader_version().inner_text()
             assert other_vid != restored_vid
             page.wait_for_timeout(2500)
-            expect(page.locator("main main p[title]")).to_have_attribute(
-                "title", other_vid
-            )
-            page.reload()
+            expect(reader_version()).to_have_text(other_vid)
+            loaded_workspace(page.reload, restored_workspace_url)
             page.get_by_role(
                 "button", name="fixture_a.pdf · PDF_NAV", exact=True
             ).click()
@@ -457,12 +563,22 @@ def run_browser(guard: BrowserContext, engine: str):
                 }
             )
 
-            page.get_by_role(
+            with page.expect_popup() as popup:
+                page.get_by_role("link", name="Settings", exact=True).click()
+            settings = popup.value
+            settings.get_by_role(
                 "button", name="Language Toggle language", exact=True
             ).click()
-            page.get_by_role("menuitem", name="简体中文", exact=True).click()
-            page.get_by_role("menu").wait_for(state="detached")
-            expect(page.get_by_text("学习工作台", exact=False)).to_be_visible()
+            settings.get_by_role("menuitem", name="简体中文", exact=True).click()
+            expect(
+                settings.get_by_role("button", name="主题 主题", exact=True)
+            ).to_be_visible()
+            loaded_workspace(page.reload, restored_workspace_url)
+            expect(page.locator('[aria-label="学习工作台"]')).to_be_visible()
+            page.locator("#workbench-panel-conversation").get_by_role(
+                "button", name="阅读", exact=True
+            ).click()
+            page.locator('summary[aria-label="笔记本工具"]').click()
             page.get_by_text("项目备份", exact=True).press("Enter")
             expect(
                 page.get_by_role("button", name="导出项目", exact=True)
@@ -474,6 +590,7 @@ def run_browser(guard: BrowserContext, engine: str):
             expect(
                 page.get_by_role("button", name="导出项目", exact=True)
             ).not_to_be_visible()
+            page.locator('summary[aria-label="笔记本工具"]').click()
             for selector in (
                 "#workbench-panel-sources",
                 "#workbench-panel-conversation",
@@ -482,13 +599,30 @@ def run_browser(guard: BrowserContext, engine: str):
                 page.locator(selector).evaluate("element => element.scrollTop = 0")
             assert_viewport_height("desktop-zh-CN")
             page.screenshot(path=str(out / "05-desktop-zh-CN.png"), full_page=True)
-            page.evaluate("document.documentElement.classList.add('dark')")
-            page.wait_for_timeout(400)
+            settings.get_by_role("button", name="主题 主题", exact=True).click()
+            settings.get_by_role("menuitem", name="深色", exact=True).click()
+            loaded_workspace(page.reload, restored_workspace_url)
+            expect(page.locator("html")).to_have_class(
+                re.compile(r"(?:^|\s)dark(?:\s|$)")
+            )
+            page.locator("#workbench-panel-conversation").get_by_role(
+                "button", name="阅读", exact=True
+            ).click()
             page.screenshot(path=str(out / "05b-desktop-dark-zh-CN.png"))
-            page.evaluate("document.documentElement.classList.remove('dark')")
-            page.wait_for_timeout(400)
+            settings.get_by_role("button", name="主题 主题", exact=True).click()
+            settings.get_by_role("menuitem", name="浅色", exact=True).click()
+            loaded_workspace(page.reload, restored_workspace_url)
+            expect(page.locator("html")).not_to_have_class(
+                re.compile(r"(?:^|\s)dark(?:\s|$)")
+            )
+            page.locator("#workbench-panel-conversation").get_by_role(
+                "button", name="阅读", exact=True
+            ).click()
+            settings.close()
             page.set_viewport_size({"width": 1024, "height": 900})
-            expect(page.get_by_role("tab", name="对话", exact=True)).to_be_visible()
+            expect(
+                page.get_by_role("tab", name="阅读与提问", exact=True)
+            ).to_be_visible()
             expect(page.locator("#workbench-panel-sources")).not_to_be_visible()
             assert (
                 page.locator("#workbench-panel-conversation").bounding_box()["width"]
@@ -498,7 +632,9 @@ def run_browser(guard: BrowserContext, engine: str):
             page.screenshot(path=str(out / "05c-tablet-zh-CN.png"), full_page=True)
             page.set_viewport_size({"width": 390, "height": 844})
             page.get_by_role("tab", name="资料", exact=True).click()
-            expect(page.get_by_text("资料范围", exact=True)).to_be_visible()
+            expect(
+                page.get_by_text("选择下一次提问需要使用的资料。", exact=True)
+            ).to_be_visible()
             assert_mobile_layout("sources-zh-CN")
             assert_viewport_height("sources-zh-CN")
             assert page.locator("header").bounding_box()["height"] < 280
@@ -509,7 +645,7 @@ def run_browser(guard: BrowserContext, engine: str):
             page.screenshot(
                 path=str(out / "06-mobile-sources-zh-CN.png"), full_page=True
             )
-            page.get_by_role("tab", name="对话", exact=True).click()
+            page.get_by_role("tab", name="阅读与提问", exact=True).click()
             expect(page.get_by_text("PDF 物理页", exact=True)).to_be_visible()
             assert_pdf_page(3)
             assert_mobile_layout("reader-zh-CN", reader=True)
@@ -560,6 +696,11 @@ def run_browser(guard: BrowserContext, engine: str):
                     "Visible locale menu switched to Chinese; desktop/mobile labels and layouts verified",
                     "Downloaded ZIP restored through UI; ten archived whole-quote/subquote references open remapped versions and correct physical pages while remaining unverified",
                 ],
+                "mocked_typed_500_ui_fixture": typed_fixture,
+                "selection_check": {
+                    "source_version_ids": expected_ids,
+                    "selected_pdf": chosen,
+                },
                 "maintenance_checks": maintenance_checks,
                 "page_errors": errors,
                 "pdf_raster_checks": raster_checks,
