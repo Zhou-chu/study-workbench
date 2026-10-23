@@ -610,7 +610,20 @@ async def _create_source_sync_path(
             title=source_data.title or "Processing...",
             topics=[],
         )
-        await source.save()
+        try:
+            # CREATE may commit before its receipt is lost. The outer handler
+            # must not unlink this request's upload or authorize blind replay.
+            await source.save()
+        except Exception as exc:
+            raise CommandSubmissionUnknownError(
+                source_id=(
+                    source.id
+                    if isinstance(source.id, str) and source.id.strip()
+                    else None
+                )
+            ) from exc
+        if not isinstance(source.id, str) or not source.id.strip():
+            raise CommandSubmissionUnknownError()
 
         # Add source to notebooks immediately so it appears in the UI
         # The source_graph will skip adding duplicates

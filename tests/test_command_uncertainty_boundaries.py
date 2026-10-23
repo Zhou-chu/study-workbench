@@ -226,8 +226,9 @@ async def test_source_creation_uncertainty_response_contains_existing_identity(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("visible_id", ["source:retained", None])
+@pytest.mark.parametrize("async_processing", [True, False])
 async def test_initial_source_save_ack_loss_has_safe_http_contract(
-    app, monkeypatch, visible_id
+    app, monkeypatch, visible_id, async_processing
 ):
     async def save_then_lose_ack(source):
         source.id = visible_id
@@ -244,7 +245,7 @@ async def test_initial_source_save_ack_loss_has_safe_http_contract(
             json={
                 "type": "text",
                 "content": "retained draft",
-                "async_processing": True,
+                "async_processing": async_processing,
             },
         )
     assert response.status_code == 409
