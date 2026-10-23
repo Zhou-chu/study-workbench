@@ -22,6 +22,10 @@ export const workbenchEn = {
   addStudyMaterials: 'Add study materials',
   readingScopeHint: 'Reading does not change your question scope. Check materials to include them in searches or questions.',
   uploadUncertain: 'We couldn’t confirm whether this file was received.',
+  uploadBlocked: 'This upload may already be saved. Retrying is blocked.',
+  uploadBlockedHint: 'Keep your original file and this page open. Refresh the source list to inspect existing material; a listed source does not confirm this upload or make retrying safe. Do not upload it again after leaving this page; ask an administrator to reconcile it first.',
+  inspectUploadSources: 'Refresh sources to inspect',
+  uploadInspectionFailed: 'Could not refresh sources. The upload remains unresolved; do not upload it again.',
   retryUpload: 'Try this upload again', dismissUpload: 'Dismiss upload notice',
   uploadRecoveryHint: 'Retrying here reuses this upload record to avoid adding the file twice. Keep this page open; dismissing or leaving it forgets this retry, but does not remove any file already received.',
 
@@ -90,6 +94,10 @@ export const workbenchZh: typeof workbenchEn = {
   addStudyMaterials: '添加学习资料',
   readingScopeHint: '阅读不会改变提问范围；勾选资料后再搜索或提问。',
   uploadUncertain: '暂时无法确认资料是否已收到。',
+  uploadBlocked: '本次上传可能已保存，已阻止重试。',
+  uploadBlockedHint: '请保留原文件和此页面。可刷新资料列表检查已有资料；列表中出现资料不代表本次上传已确认，也不代表可以安全重试。离开此页面后请勿再次上传，应先请管理员核查处理。',
+  inspectUploadSources: '刷新资料列表以检查',
+  uploadInspectionFailed: '无法刷新资料列表。本次上传仍未确认，请勿再次上传。',
   retryUpload: '重试这次上传', dismissUpload: '移除此提示',
   uploadRecoveryHint: '在这里重试会复用本次上传记录，避免重复添加。请保留此页面；移除此提示或离开页面后将无法继续这次重试，但不会删除已收到的资料。',
 

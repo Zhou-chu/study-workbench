@@ -8,7 +8,11 @@ from pathlib import Path
 import pytest
 
 from api.evidence_service import EvidenceService
-from open_notebook.exceptions import InvalidInputError, NotFoundError
+from open_notebook.exceptions import (
+    InvalidInputError,
+    NotFoundError,
+    UploadCommitUnknownError,
+)
 
 
 class MemoryStore:
@@ -93,6 +97,42 @@ async def test_changed_source_has_new_immutable_version(evidence_service):
     assert (
         await evidence_service.resolve_file(one["source_version_id"])
     ).read_bytes() == b"first"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("committed", [False, True])
+async def test_upload_retains_exact_bytes_when_version_write_outcome_is_unknown(
+    evidence_service, committed, monkeypatch
+):
+    original_put = evidence_service.store.put
+    attempts = []
+
+    async def uncertain_put(kind, identity, value, create_only=False):
+        attempts.append((kind, identity))
+        if committed:
+            await original_put(kind, identity, value, create_only=create_only)
+        raise RuntimeError("private database acknowledgement failure")
+
+    monkeypatch.setattr(evidence_service.store, "put", uncertain_put)
+    content = "\ufeff🌞 原始证据。\r\n".encode()
+    with pytest.raises(UploadCommitUnknownError) as failure:
+        await evidence_service.ingest(
+            "notebook:a", "source:a", "Original", content, filename="original.txt"
+        )
+
+    originals = list(evidence_service.data_root.glob("originals/*/original.txt"))
+    assert len(originals) == 1
+    assert originals[0].read_bytes() == content
+    assert len(attempts) == 1  # No replay or compensating metadata write.
+    assert failure.value.source_id == "source:a"
+    assert failure.value.source_version_id == attempts[0][1]
+    assert "private" not in str(failure.value)
+    versions = await evidence_service.versions("source:a")
+    assert len(versions) == int(committed)
+    if committed:
+        assert (
+            await evidence_service.resolve_file(versions[0]["source_version_id"])
+        ).read_bytes() == content
 
 
 @pytest.mark.asyncio

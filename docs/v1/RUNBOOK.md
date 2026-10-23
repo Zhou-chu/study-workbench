@@ -107,6 +107,7 @@ See `NOTEBOOKLM_SDK.md` for the exact supported SDK operations and honest limita
 ## Operations and recovery
 
 - Originals are immutable by version; upload a new version instead of overwriting
+- Ordinary upload version-metadata errors return HTTP 500 `UPLOAD_COMMIT_UNKNOWN` with `retry_safe: false`. Retain the file and inspect the existing source before taking further action; do not automatically retry or delete retained data. The returned source/version IDs are allocated inspection hints, not proof of a database commit. The server preserves original bytes and sources even when it cannot establish whether metadata committed, and does not enqueue extraction on this failure path. This narrow safeguard does not establish same-key replay safety, an upload receipt/outbox, initial source-save or extraction-job acknowledgement recovery, or power-loss durability. Browser consumers must honor `retry_safe: false`; backend tests alone do not establish that UI behavior.
 - PDF image-only pages show `needs_ocr`; OCR is not included; malformed/encrypted/over-limit files fail explicitly
 - Text/PDF locator offsets refer to retained extraction text; the reader shows physical page and quote, not invented PDF bounding boxes
 - A provider write with uncertain submission is `submission_unknown`; inspect the remote account before any new explicit submission

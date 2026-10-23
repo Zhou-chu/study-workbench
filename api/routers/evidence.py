@@ -129,7 +129,9 @@ async def upload(
                 mime_type=file.content_type,
                 filename=file.filename,
             )
-        except Exception:
+        except InvalidInputError:
+            # Only definite pre-write validation rejection permits cleanup.
+            # Metadata-write errors are outcome-unknown and retain this source.
             if created and source.id is not None:
                 await repo_delete(source.id)
             raise

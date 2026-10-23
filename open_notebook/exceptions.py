@@ -10,6 +10,19 @@ class DatabaseOperationError(OpenNotebookError):
     pass
 
 
+class UploadCommitUnknownError(OpenNotebookError):
+    """Version metadata may be committed; retain originals and never auto-replay."""
+
+    def __init__(self, *, source_id: str, source_version_id: str):
+        # These allocated identities aid inspection; they do not confirm a commit.
+        self.source_id = source_id
+        self.source_version_id = source_version_id
+        super().__init__(
+            "Upload may already be saved. Do not retry; inspect the existing source "
+            "before taking further action."
+        )
+
+
 class CommandSubmissionUnknownError(OpenNotebookError):
     """CREATE may have committed; automatic replay can duplicate queued work."""
 

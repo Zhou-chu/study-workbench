@@ -68,6 +68,7 @@ from open_notebook.exceptions import (
     RateLimitError,
     UnsupportedCapabilityError,
     UnsupportedTypeException,
+    UploadCommitUnknownError,
 )
 from open_notebook.integrations.notebooklm.contracts import BridgeError
 from open_notebook.utils.encryption import get_secret_from_env
@@ -437,6 +438,25 @@ async def command_submission_unknown_handler(
         detail["command_id"] = exc.command_id
     return JSONResponse(
         status_code=409, content={"detail": detail}, headers=_cors_headers(request)
+    )
+
+
+@app.exception_handler(UploadCommitUnknownError)
+async def upload_commit_unknown_handler(
+    request: Request, exc: UploadCommitUnknownError
+):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": {
+                "code": "UPLOAD_COMMIT_UNKNOWN",
+                "message": str(exc),
+                "retry_safe": False,
+                "source_id": exc.source_id,
+                "source_version_id": exc.source_version_id,
+            }
+        },
+        headers=_cors_headers(request),
     )
 
 

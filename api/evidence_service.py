@@ -20,7 +20,11 @@ from open_notebook.domain.evidence import (
     Extraction,
     SourceVersion,
 )
-from open_notebook.exceptions import InvalidInputError, NotFoundError
+from open_notebook.exceptions import (
+    InvalidInputError,
+    NotFoundError,
+    UploadCommitUnknownError,
+)
 
 _PARSE_SLOTS: weakref.WeakKeyDictionary[
     asyncio.AbstractEventLoop, asyncio.Semaphore
@@ -268,6 +272,8 @@ class EvidenceService:
         source_version_id=None,
         preserve_on_error=False,
     ):
+        # preserve_on_error remains accepted for existing deterministic callers;
+        # a metadata-write failure must never authorize deleting original bytes.
         if origin == "web_snapshot" and (
             not isinstance(provenance, dict)
             or not provenance.get("source_url")
@@ -353,24 +359,25 @@ class EvidenceService:
                     )
                 await self.resolve_file(version_id)
                 return previous
-            created_file = False
+            if source_version_id:
+                await asyncio.to_thread(
+                    publish_snapshot_bytes,
+                    path,
+                    data,
+                    durability_root=self.data_root,
+                )
+            else:
+                await asyncio.to_thread(self._write_new, path, data)
             try:
-                if source_version_id:
-                    await asyncio.to_thread(
-                        publish_snapshot_bytes,
-                        path,
-                        data,
-                        durability_root=self.data_root,
-                    )
-                else:
-                    await asyncio.to_thread(self._write_new, path, data)
-                    created_file = True
                 await self.store.put("version", version_id, version, create_only=True)
-            except Exception:
-                # Caller opts into deterministic reconciliation; a failed acknowledgement
-                # does not prove that the metadata commit was rolled back.
-                if created_file and not preserve_on_error:
-                    path.unlink(missing_ok=True)
+            except Exception as exc:
+                # Even a typed DB exception does not establish rollback. Ordinary
+                # uploads have no deterministic receipt to make replay safe.
+                if source_version_id is None:
+                    raise UploadCommitUnknownError(
+                        source_id=source_id, source_version_id=version_id
+                    ) from exc
+                # Preserve deterministic callers' existing reconciliation contract.
                 raise
         return version
 
