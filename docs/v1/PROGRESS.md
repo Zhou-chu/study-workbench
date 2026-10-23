@@ -1,5 +1,13 @@
 # StudyWorkbench V1 progress
 
+## 最新恢复检查点：2026-10-23
+
+[恢复后的验证检查点](RECOVERED_CHECKPOINT_2026-10-23.md) 记录从 `4d2b3e42` 重建后的五次私有源码发布，最新为 `680d2eb8`。
+新鲜后端 **2325 通过 / 128 跳过 / 2 条警告**；未改变的前端 **1354 + 25 测试通过**，独立离线 LSN97G 构建与关联通过。
+实际浏览器尝试在网络命名空间 loopback 准备时 **BLOCKED**，应用服务和浏览器均未启动，不是页面 PASS/FAIL。
+旧工作区及旧验收不可替代新证据；主分支、部署、提供方、Harmony、Docker 运行与用户数据恢复边界未解除。
+以下原有章节保留为历史，不代表恢复后的最新验收。
+
 ## Current priority: repository remediation, 2026-10-22
 
 The owner requested risk/error repairs before completing feature gaps. See [the repository audit](REPOSITORY_AUDIT_2026-10-22.md) and [the revised gap plan](GAP_CLOSURE_PLAN.md). Changes are integrated separately from the running preview; this is not a deployment announcement.

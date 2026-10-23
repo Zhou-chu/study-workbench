@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **恢复后的源码检查点（2026-10-23）。** [记录](docs/v1/RECOVERED_CHECKPOINT_2026-10-23.md) 五次已核验私有发布、新鲜离线测试与真实字体产物关联；浏览器尝试在服务启动前被环境阻塞，未宣称页面通过。保留旧历史及未完成边界。
 - **Personal stream and download contracts (2026-10-22).** Describe the actual SSE stage/final/error protocol and binary MIME/range responses without changing handlers or authentication. Incomplete EOF, unsupported resume and dispatch-capable job reads remain explicit; this is not a complete SDK.
 - **Artifact-bound frontend HTTP acceptance (2026-10-22).** Add an explicit disposable mode for packaged static/config bytes, authenticated proxying and owned DB/API/worker/frontend restart with original, note and selection retention. Browser, Docker, cold restore and deployed-preview acceptance remain separate gates.
 - **Lossless multi-client response foundations (2026-10-22).** Type turn receipts, durable job reads/cancellation, workspace and selection responses without discarding restored history or changing existing datetime wire values. Preserve nullable native notes and opaque legacy data; unknown engines/origins grant no generation actions. This is not a complete native SDK.
