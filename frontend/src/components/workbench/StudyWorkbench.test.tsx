@@ -41,6 +41,74 @@ describe('StudyWorkbench source snapshots', () => {
     vi.mocked(workbenchApi.turns).mockResolvedValue([])
     vi.mocked(workbenchApi.turn).mockResolvedValue({ turn_id: 'new_turn', job_id: 'j1', state: 'queued' })
   })
+  it.each([
+    { engine: 'independent', selection_origin: 'local', source_version_ids: null, remote_source_ids: [] },
+    { engine: 'notebooklm', selection_origin: 'remote', source_version_ids: [], remote_source_ids: null },
+    { engine: 'independent', selection_origin: 'local', source_version_ids: ['sv_old', 7], remote_source_ids: [] },
+    { engine: 'independent', selection_origin: 'local', source_version_ids: ['sv_old'] },
+  ])('does_not_dispatch_or_patch_on_unsupported_selection: %j', async selection => {
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), selection: selection as never })
+    show()
+    await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'Question' } })
+    fireEvent.change(screen.getByLabelText('learningWorkspace.sourceSearch'), { target: { value: 'Evidence' } })
+    for (const name of ['workbench.ask', 'workbench.outline', 'workbench.search']) {
+      const button = screen.getByRole('button', { name })
+      expect(button).toBeDisabled()
+      fireEvent.click(button)
+    }
+    expect(screen.queryByText('workbench.emptySelection')).not.toBeInTheDocument()
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+    expect(evidenceApi.search).not.toHaveBeenCalled()
+    expect(workbenchApi.saveSelection).not.toHaveBeenCalled()
+  })
+  it('does_not_guess_latest_version_without_dates and still permits explicit ID selection', async () => {
+    const data = structuredClone(fixture)
+    data.selection = { ...data.selection!, source_version_ids: [] }
+    delete (data.sources[0].versions[1] as Partial<typeof data.sources[0]['versions'][0]>).created_at
+    vi.mocked(workbenchApi.workspace).mockResolvedValue(data)
+    show()
+    await screen.findByText('Lecture notes')
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.selectAll' }))
+    expect(screen.getByRole('checkbox', { name: 'My PDF · sv_new' })).not.toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'My PDF · sv_old' })).not.toBeChecked()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'My PDF · sv_new' }))
+    await waitFor(() => expect(workbenchApi.saveSelection).toHaveBeenLastCalledWith('notebook:1', expect.objectContaining({ source_version_ids: ['sv_new'] })))
+  })
+  it('requires explicit repair of unknown engine, origin and invalid ID lists before writing', async () => {
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), selection: { engine: { future: true }, selection_origin: { future: true }, source_version_ids: ['sv_old'], remote_source_ids: null } as never })
+    show()
+    await screen.findByText('Lecture notes')
+    fireEvent.click(screen.getByRole('button', { name: 'learningWorkspace.notebookSettings' }))
+    fireEvent.change(screen.getByLabelText('workbench.engine'), { target: { value: 'independent' } })
+    expect(workbenchApi.saveSelection).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByLabelText('workbench.scope'), { target: { value: 'local' } })
+    expect(workbenchApi.saveSelection).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'common.close' }))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.clearSelection' }))
+    await waitFor(() => expect(workbenchApi.saveSelection).toHaveBeenCalledTimes(1))
+    expect(workbenchApi.saveSelection).toHaveBeenCalledWith('notebook:1', { engine: 'independent', selection_origin: 'local', source_version_ids: [], remote_source_ids: [], reading: null })
+  })
+  it('retains opaque Query data across refresh without PATCH and keeps independent note drafts usable', async () => {
+    const raw = { ...structuredClone(fixture), selection: { engine: { future: true }, selection_origin: 'local', source_version_ids: ['sv_old'], remote_source_ids: null, reading: ['opaque'], extension: { retained: null } } }
+    const before = structuredClone(raw)
+    vi.mocked(workbenchApi.workspace).mockResolvedValue(raw)
+    vi.mocked(workbenchApi.saveNote).mockResolvedValue({ id: 'note:new', revision: 1, title: 'Synthetic', content: 'Draft' })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={client}><StudyWorkbench notebookId="notebook:1" /></QueryClientProvider>)
+    await screen.findByText('Lecture notes')
+    await act(async () => { await client.refetchQueries() })
+    expect(client.getQueryData(['personal', 'workspace', 'notebook:1'])).toEqual(before)
+    expect(workbenchApi.saveSelection).not.toHaveBeenCalled()
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByLabelText('workbench.noteTitle'), { target: { value: 'Synthetic' } })
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1))
+    expect(workbenchApi.saveNote).toHaveBeenCalledWith('notebook:1', { title: 'Synthetic', content: 'Draft', citations: [], scope_snapshot: undefined })
+    expect(raw).toEqual(before)
+    expect(workbenchApi.saveSelection).not.toHaveBeenCalled()
+  })
   it.each(['local', 'remote'] as const)('blocks generation for a retained unknown engine in %s scope without rewriting it', async origin => {
     vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), selection: { ...fixture.selection!, engine: 'future-engine', selection_origin: origin, remote_source_ids: ['remote1'] } })
     show()

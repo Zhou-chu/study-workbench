@@ -177,3 +177,41 @@ async def test_personal_note_write_keeps_nullable_remote_citation(monkeypatch):
     assert citation["source_title"] is None
     assert citation["reference_validity"] == "unverified"
     assert citation["evidence_id"] is None
+
+
+@pytest.mark.asyncio
+async def test_shared_workspace_read_fixture_retains_opaque_wire_fields(monkeypatch):
+    """The client read projection must not tighten the server's wire envelope."""
+    import json
+    from pathlib import Path
+
+    fixture = json.loads(
+        (
+            Path(__file__).parents[1]
+            / "contracts/v1/fixtures/workspace-read-compatibility.json"
+        ).read_text()
+    )
+    payload = None
+
+    class FixtureService:
+        async def workspace(self, notebook_id):
+            assert notebook_id == "notebook:synthetic"
+            return payload
+
+    monkeypatch.setattr(evidence, "PersonalService", FixtureService)
+    app = FastAPI()
+    app.include_router(evidence.router, prefix="/api")
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        for case in fixture["selections"]:
+            payload = {**fixture["workspace"], "selection": case["value"]}
+            response = await client.get(
+                "/api/personal/notebooks/notebook:synthetic/workspace"
+            )
+            assert response.status_code == 200, case["name"]
+            assert response.json() == payload, case["name"]
+            assert (
+                "source_version_id" not in response.json()["sources"][0]["versions"][2]
+            )
+            assert "content" not in response.json()["notes"][1]

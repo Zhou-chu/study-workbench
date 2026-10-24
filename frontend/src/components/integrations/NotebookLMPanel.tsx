@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { notebooklmApi } from '@/lib/api/notebooklm'
 import { QUERY_KEYS } from '@/lib/api/query-client'
@@ -15,15 +15,26 @@ interface Props {
   notebookId: string
   selectedVersionIds: string[]
   remoteSourceIds: string[]
+  scopeSupported?: boolean
   selectionOrigin?: 'local' | 'remote'
   link: RemoteLink | null
   onRemoteSelection: (ids: string[]) => void
   onChanged: () => void
 }
-interface Confirmation { description: string; target?: string; versions?: string[]; remoteSources?: string[]; language?: string; run: () => Promise<unknown> }
-export function NotebookLMPanel({ notebookId, selectedVersionIds, remoteSourceIds, selectionOrigin = 'local', link, onRemoteSelection, onChanged }: Props) {
+interface Confirmation { scopeSensitive?: boolean; description: string; target?: string; versions?: string[]; remoteSources?: string[]; language?: string; run: () => Promise<unknown> }
+export function NotebookLMPanel({ notebookId, selectedVersionIds, remoteSourceIds, scopeSupported = true, selectionOrigin = 'local', link, onRemoteSelection, onChanged }: Props) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const supportedScope = useRef(scopeSupported)
+  useLayoutEffect(() => {
+    supportedScope.current = scopeSupported
+    // An admitted mutation can outlive this panel (for example opaque origin).
+    return () => { supportedScope.current = false }
+  }, [scopeSupported])
+  const runScoped = (run: () => Promise<unknown>) => {
+    if (!supportedScope.current) throw new Error(t('workbench.unavailable'))
+    return run()
+  }
   const status = useNotebookLMStatus()
   const capabilities = useNotebookLMCapabilities()
   const [flowId, setFlowId] = useState<string>()
@@ -48,16 +59,16 @@ export function NotebookLMPanel({ notebookId, selectedVersionIds, remoteSourceId
   const audioBlocked = ['unsupported', 'temporarily_unavailable'].includes(capabilities.data?.operations.find(operation => operation.name === 'generate_audio')?.support || 'unsupported')
   const startLogin = () => action.mutate(async () => { const result = await notebooklmApi.connect(actualStatus?.state === 'needs_reauth'); setFlowId(result.flow_id); return result })
   const confirmScoped = (kind: 'sync' | 'import' | 'audio') => {
-    if (!link) return
+    if (!supportedScope.current || !link) return
     const target = link.remote_notebook_id
     const versions = [...selectedVersionIds]
     const remoteSources = [...remoteSourceIds]
     const key = crypto.randomUUID()
     const audioLanguage = language
-    setConfirmation({ description: t({ sync: 'workbench.syncConfirm', import: 'workbench.importConfirm', audio: 'workbench.audioConfirm' }[kind]), target, versions: kind === 'import' || (kind === 'audio' && selectionOrigin === 'remote') ? [] : versions, remoteSources: kind === 'sync' || (kind === 'audio' && selectionOrigin === 'local') ? [] : remoteSources, language: kind === 'audio' ? audioLanguage : undefined,
-      run: () => kind === 'sync' ? notebooklmApi.sync(notebookId, { remote_notebook_id: target, source_version_ids: versions, idempotency_key: key })
+    setConfirmation({ scopeSensitive: true, description: t({ sync: 'workbench.syncConfirm', import: 'workbench.importConfirm', audio: 'workbench.audioConfirm' }[kind]), target, versions: kind === 'import' || (kind === 'audio' && selectionOrigin === 'remote') ? [] : versions, remoteSources: kind === 'sync' || (kind === 'audio' && selectionOrigin === 'local') ? [] : remoteSources, language: kind === 'audio' ? audioLanguage : undefined,
+      run: () => runScoped(() => kind === 'sync' ? notebooklmApi.sync(notebookId, { remote_notebook_id: target, source_version_ids: versions, idempotency_key: key })
         : kind === 'import' ? notebooklmApi.importSources(notebookId, { remote_notebook_id: target, remote_source_ids: remoteSources, include_text: true, idempotency_key: key })
-          : notebooklmApi.audio(notebookId, { remote_notebook_id: target, source_version_ids: selectionOrigin === 'local' ? versions : [], remote_source_ids: selectionOrigin === 'remote' ? remoteSources : [], language: audioLanguage, idempotency_key: key }),
+          : notebooklmApi.audio(notebookId, { remote_notebook_id: target, source_version_ids: selectionOrigin === 'local' ? versions : [], remote_source_ids: selectionOrigin === 'remote' ? remoteSources : [], language: audioLanguage, idempotency_key: key })),
     })
   }
   const create = () => {
@@ -97,7 +108,7 @@ export function NotebookLMPanel({ notebookId, selectedVersionIds, remoteSourceId
     <Input id="remote-new-title" value={title} onChange={event => setTitle(event.target.value)} />
     <Button size="sm" variant="outline" disabled={!connected || !title.trim() || action.isPending} onClick={create}>{t('workbench.createRemote')}</Button>
     <div className="space-y-2 border-t pt-3">
-      <Button size="sm" variant="outline" disabled={!connected || !link || !selectedVersionIds.length || action.isPending} onClick={() => confirmScoped('sync')}>{t('workbench.syncSelected')}</Button>
+      <Button size="sm" variant="outline" disabled={!scopeSupported || !connected || !link || !selectedVersionIds.length || action.isPending} onClick={() => confirmScoped('sync')}>{t('workbench.syncSelected')}</Button>
       <Button size="sm" variant="outline" disabled={!connected || !link} onClick={() => setShowSources(true)}>{t('workbench.loadRemoteSources')}</Button>
       {showSources && <div className="space-y-2 max-h-60 overflow-y-auto">
         <p className="text-xs text-muted-foreground">{t('workbench.remoteOriginalWarning')}</p>
@@ -106,17 +117,18 @@ export function NotebookLMPanel({ notebookId, selectedVersionIds, remoteSourceId
         {sources.hasNextPage && <Button size="sm" variant="ghost" onClick={() => sources.fetchNextPage()} disabled={sources.isFetching}>{t('common.next')}</Button>}
         {sources.data?.pages.some(page => page.listing_complete === false) && <p className="text-xs">{t('workbench.listIncomplete')}</p>}
       </div>}
-      <Button size="sm" variant="outline" disabled={!connected || !link || !remoteSourceIds.length || action.isPending} onClick={() => confirmScoped('import')}>{t('workbench.importSelected')}</Button>
+      <Button size="sm" variant="outline" disabled={!scopeSupported || !connected || !link || !remoteSourceIds.length || action.isPending} onClick={() => confirmScoped('import')}>{t('workbench.importSelected')}</Button>
     </div>
-    <Button size="sm" variant="outline" disabled={!connected || !link || selectedVersionIds.length !== 1 || remoteSourceIds.length !== 1 || action.isPending} onClick={() => {
-      const target = link!.remote_notebook_id
+    <Button size="sm" variant="outline" disabled={!scopeSupported || !connected || !link || selectedVersionIds.length !== 1 || remoteSourceIds.length !== 1 || action.isPending} onClick={() => {
+      if (!supportedScope.current || !link) return
+      const target = link.remote_notebook_id
       const sourceVersionId = selectedVersionIds[0]
       const remoteSourceId = remoteSourceIds[0]
-      setConfirmation({ description: t('workbench.associateConfirm'), target, versions: [sourceVersionId], remoteSources: [remoteSourceId], run: () => notebooklmApi.associateSource(notebookId, { remote_notebook_id: target, source_version_id: sourceVersionId, remote_source_id: remoteSourceId, user_confirmed: true }) })
+      setConfirmation({ scopeSensitive: true, description: t('workbench.associateConfirm'), target, versions: [sourceVersionId], remoteSources: [remoteSourceId], run: () => runScoped(() => notebooklmApi.associateSource(notebookId, { remote_notebook_id: target, source_version_id: sourceVersionId, remote_source_id: remoteSourceId, user_confirmed: true })) })
     }}>{t('workbench.associateSource')}</Button>
     <label className="block text-xs" htmlFor="audio-language">{t('workbench.audioLanguage')}</label>
     <Input id="audio-language" value={language} onChange={event => setLanguage(event.target.value)} />
-    <Button size="sm" variant="outline" disabled={!connected || !link || audioBlocked || !(selectionOrigin === 'local' ? selectedVersionIds.length : remoteSourceIds.length) || !language || action.isPending} onClick={() => confirmScoped('audio')}>{t('workbench.audio')}</Button>
+    <Button size="sm" variant="outline" disabled={!scopeSupported || !connected || !link || audioBlocked || !(selectionOrigin === 'local' ? selectedVersionIds.length : remoteSourceIds.length) || !language || action.isPending} onClick={() => confirmScoped('audio')}>{t('workbench.audio')}</Button>
     {!available('generate_audio') && <p className="text-xs text-muted-foreground">{audioCapability?.reason || t('workbench.capabilityUnverified')}</p>}
     <Button size="sm" variant="outline" disabled={!connected || !link} onClick={() => setShowArtifacts(true)}>{t('workbench.listArtifacts')}</Button>
     {showArtifacts && <div className="space-y-2">{artifacts.isError && <p role="alert">{requestError(artifacts.error) || t('workbench.error')}</p>}{artifacts.data?.map(artifact => <div className="rounded border p-2 text-xs space-y-1" key={artifact.id}><p>{artifact.title} · {artifact.kind} · {artifact.status}</p><Button size="sm" variant="outline" disabled={artifact.status !== 'ready' || action.isPending || !link} onClick={() => action.mutate(() => notebooklmApi.downloadArtifact(artifact.id, { notebook_id: notebookId, remote_notebook_id: link!.remote_notebook_id, idempotency_key: crypto.randomUUID() }))}>{t('workbench.downloadArtifact')}</Button></div>)}</div>}
@@ -125,7 +137,7 @@ export function NotebookLMPanel({ notebookId, selectedVersionIds, remoteSourceId
       {!!confirmation?.versions?.length && <div className="text-sm"><p>{t('workbench.selectedVersions')}</p><ul className="max-h-40 overflow-y-auto break-all">{confirmation.versions.map(id => <li key={id}>{id}</li>)}</ul></div>}
       {!!confirmation?.remoteSources?.length && <div className="text-sm"><p>{t('workbench.selectedRemoteSources')}</p><ul className="max-h-40 overflow-y-auto break-all">{confirmation.remoteSources.map(id => <li key={id}>{id}</li>)}</ul></div>}
       {confirmation?.language && <p>{t('workbench.audioLanguage')}: {confirmation.language}</p>}
-      <DialogFooter><Button variant="outline" onClick={() => setConfirmation(null)}>{t('common.cancel')}</Button><Button disabled={action.isPending} onClick={() => { if (confirmation) action.mutate(confirmation.run); setConfirmation(null) }}>{t('common.confirm')}</Button></DialogFooter>
+      <DialogFooter><Button variant="outline" onClick={() => setConfirmation(null)}>{t('common.cancel')}</Button><Button disabled={action.isPending || (!!confirmation?.scopeSensitive && !scopeSupported)} onClick={() => { if (confirmation && (!confirmation.scopeSensitive || supportedScope.current)) action.mutate(confirmation.run); setConfirmation(null) }}>{t('common.confirm')}</Button></DialogFooter>
     </DialogContent></Dialog>
   </section>
 }

@@ -79,12 +79,33 @@ export interface Extraction {
 }
 export interface VersionDetail { version: SourceVersion; extraction: Extraction | null; evidence: EvidenceRecord[] }
 export interface ReadingPosition { source_version_id: string; page_index: number; evidence_id?: string }
+// Explicit write DTO. Opaque workspace reads are projected separately.
 export interface WorkbenchSelection {
-  engine: Engine
+  engine: KnownEngine
   selection_origin: 'local' | 'remote'
   source_version_ids: string[]
   remote_source_ids: string[]
   reading?: ReadingPosition | null
+}
+// Retained workspace objects are intentionally opaque wire data, not SourceVersion
+// or WorkbenchSelection write contracts. Keep them intact in the Query cache.
+export type WorkspaceSelection = Record<string, unknown>
+export interface WorkbenchSelectionView {
+  engine: unknown
+  selection_origin: unknown
+  source_version_ids: string[]
+  remote_source_ids: string[]
+  reading: ReadingPosition | null
+  supported: boolean
+}
+export interface WorkbenchVersionView {
+  source_version_id: string | null
+  created_at: string | null
+  origin: string | null
+  status: string | null
+  extraction_status: string | null
+  original_status: string | null
+  provenance: unknown
 }
 export interface ScopeSnapshot {
   engine?: Engine
@@ -147,12 +168,12 @@ export interface WorkbenchNote { id: string; revision: number; title?: string | 
 export interface RemoteLink { remote_notebook_id: string; connection_id?: string }
 export interface Workspace {
   notebook: { id: string; name: string }
-  sources: Array<{ source_id: string; title: string | null; versions: SourceVersion[] }>
+  sources: Array<{ source_id: string; title: string | null; versions: Record<string, unknown>[] }>
   notes: WorkbenchNote[]
   turns: TurnRecord[]
   jobs: BridgeJob[]
   link: RemoteLink | null
-  selection: WorkbenchSelection | null
+  selection: WorkspaceSelection | null
   legacy_history?: Array<{ chat_session_id: string; history_origin?: string; messages: Array<{ role?: string; content?: string }> }>
 }
 export interface ConnectionStatus {

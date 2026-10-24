@@ -2,6 +2,7 @@ import apiClient from './client'
 import type { BridgeJob, TurnSubmissionResponse, CreateWorkbenchNoteInput, UpdateWorkbenchNoteInput, TurnRecord, TurnRequest, WorkbenchNote, WorkbenchSelection, Workspace } from '@/lib/types/personal'
 const id = encodeURIComponent
 export const workbenchApi = {
+  // Keep opaque workspace fields losslessly; consumers opt into the read projection.
   workspace: async (notebookId: string) => (await apiClient.get<Workspace>(`/personal/notebooks/${id(notebookId)}/workspace`)).data,
   saveSelection: async (notebookId: string, selection: WorkbenchSelection) => (await apiClient.patch(`/personal/notebooks/${id(notebookId)}/selection`, selection)).data,
   upload: async (notebookId: string, file: File, idempotencyKey: string, sourceId?: string) => {

@@ -29,3 +29,18 @@ it('preserves unknown and historical fields without retry or normalization', asy
   expect(await workbenchApi.cancelJob('job:opaque')).toEqual(payload)
   expect(adapter).toHaveBeenCalledTimes(2) // Explicit call only; no state-derived actions.
 })
+
+it('retains workspace nulls, absent fields and opaque extensions without projection or writes', async () => {
+  const { default: fixture } = await import('../../../../contracts/v1/fixtures/workspace-read-compatibility.json')
+  for (const { value } of fixture.selections) {
+    const payload = { ...fixture.workspace, selection: value }
+    const adapter = vi.fn(async config => ({ data: payload, status: 200, statusText: 'OK', headers: {}, config }))
+    apiClient.defaults.adapter = adapter
+    const response = await workbenchApi.workspace('notebook:synthetic')
+    expect(response).toEqual(payload)
+    expect(response.sources[0].versions[2]).not.toHaveProperty('source_version_id')
+    expect(response.notes[1]).not.toHaveProperty('content')
+    expect(adapter).toHaveBeenCalledTimes(1)
+    expect(adapter.mock.calls[0][0].method).toBe('get')
+  }
+})

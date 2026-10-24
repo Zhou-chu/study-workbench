@@ -2,6 +2,7 @@ import { isAuthRecoveryError } from '@/lib/api/browser-transport'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { workbenchApi } from '@/lib/api/workbench'
 import { QUERY_KEYS } from '@/lib/api/query-client'
+import { projectWorkbenchVersion } from '@/lib/utils/workbench-read-model'
 import type { WorkbenchSelection } from '@/lib/types/personal'
 import { useToast } from './use-toast'
 import { useTranslation } from './use-translation'
@@ -13,7 +14,7 @@ export function useWorkbench(notebookId: string) {
     refetchInterval: (query) => {
       if (isAuthRecoveryError(query.state.error)) return false
       const data = query.state.data
-      return data?.jobs?.some(job => activeJob(job.state)) || data?.sources?.some(source => source.versions.some(version => ['queued', 'running', 'pending', 'extracting'].includes(version.status || version.extraction_status || ''))) ? 2000 : false
+      return data?.jobs?.some(job => activeJob(job.state)) || data?.sources?.some(source => source.versions.some(value => { const version = projectWorkbenchVersion(value); return ['queued', 'running', 'pending', 'extracting'].includes(version.status || version.extraction_status || '') })) ? 2000 : false
     },
   })
 }
