@@ -17,6 +17,7 @@ from open_notebook.exceptions import (
     NotFoundError,
     OpenNotebookError,
 )
+from open_notebook.utils.boundary_logging import log_boundary_failure
 from open_notebook.utils.command_submission import submit_command
 from open_notebook.utils.source_execution import (
     source_owner_progress,
@@ -52,9 +53,8 @@ class Notebook(ObjectModel):
             )
             return [Source(**src["source"]) for src in srcs] if srcs else []
         except Exception as e:
-            logger.error(f"Error fetching sources for notebook {self.id}: {str(e)}")
-            logger.exception(e)
-            raise DatabaseOperationError(e)
+            log_boundary_failure("notebook_sources", e)
+            raise DatabaseOperationError(e) from e
 
     async def get_notes(self, include_content: bool = False) -> List["Note"]:
         try:
@@ -74,9 +74,8 @@ class Notebook(ObjectModel):
             )
             return [Note(**src["note"]) for src in srcs] if srcs else []
         except Exception as e:
-            logger.error(f"Error fetching notes for notebook {self.id}: {str(e)}")
-            logger.exception(e)
-            raise DatabaseOperationError(e)
+            log_boundary_failure("notebook_notes", e)
+            raise DatabaseOperationError(e) from e
 
     async def get_context(self) -> str:
         """
@@ -384,9 +383,8 @@ class SourceInsight(ObjectModel):
                 {"source_ids": [ensure_record_id(sid) for sid in grouped]},
             )
         except Exception as e:
-            logger.error(f"Error batch-fetching insights for sources: {str(e)}")
-            logger.exception(e)
-            raise DatabaseOperationError("Failed to fetch insights for sources")
+            log_boundary_failure("notebook_insights", e)
+            raise DatabaseOperationError("Failed to fetch insights for sources") from e
         for row in result:
             key = str(row.get("source"))
             grouped.setdefault(key, []).append(cls(**row))
@@ -464,7 +462,7 @@ class Source(ObjectModel):
                 self.processing_attempt, status.status if status else "unknown"
             )
         except Exception as e:
-            logger.warning(f"Failed to get command status for {self.command}: {e}")
+            log_boundary_failure("notebook_status", e, level="WARNING")
             return source_processing_status(self.processing_attempt, "unknown")
 
     async def get_processing_progress(self) -> Optional[Dict[str, Any]]:
@@ -501,7 +499,7 @@ class Source(ObjectModel):
                 "result": result,
             }
         except Exception as e:
-            logger.warning(f"Failed to get command progress for {self.command}: {e}")
+            log_boundary_failure("notebook_progress", e, level="WARNING")
             return source_owner_progress(
                 self.processing_attempt,
                 source_processing_status(self.processing_attempt, "unknown"),
@@ -555,9 +553,8 @@ class Source(ObjectModel):
             )
             return [SourceInsight(**insight) for insight in result]
         except Exception as e:
-            logger.error(f"Error fetching insights for source {self.id}: {str(e)}")
-            logger.exception(e)
-            raise DatabaseOperationError("Failed to fetch insights for source")
+            log_boundary_failure("notebook_source_insights", e)
+            raise DatabaseOperationError("Failed to fetch insights for source") from e
 
     async def add_to_notebook(self, notebook_id: str) -> Any:
         if not notebook_id:

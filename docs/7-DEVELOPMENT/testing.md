@@ -4,17 +4,54 @@ How the test suites are laid out, how to run them, and the patterns to copy when
 
 ## Running the tests
 
+`make v1-check` is a **backend offline gate only**, not an aggregate repository
+check. It requires explicit paths to an already prepared Python executable and
+token-cache directory (paths containing spaces are supported):
+
+```bash
+make v1-check OFFLINE_PYTHON="/path/to/prepared/bin/python" TIKTOKEN_CACHE="/path/to/prepared/tiktoken-cache"
+```
+
+Use an absolute interpreter path or a relative path containing `/` (for example
+`./.venv/bin/python`), not a bare command name resolved through `PATH`.
+Missing/blank configuration, an unqualified or non-executable interpreter, or a
+missing cache directory fails before any child is called. The target delegates only to
+`scripts/offline_pytest.py`; the runner verifies the pinned cache bytes. Neither
+installs dependencies, discovers a fallback environment, or downloads token data.
+A failing runner makes Make fail; it never reports repository-wide success.
+
+**NOT RUN by this target:** Python lint/format/type checks; frontend
+lint/types/tests/build; coverage; database/runtime/browser/provider acceptance;
+and CI. Record these separate gates and their actual results independently.
+`make clean-cache` is disabled, exits nonzero and deletes nothing; it is not a
+replacement for an ownership-reviewed cleanup procedure.
+
 ```bash
 # Backend (repo root; use an already prepared Python environment)
 python scripts/offline_pytest.py --tiktoken-cache /path/to/prepared/tiktoken-cache
 python scripts/offline_pytest.py --tiktoken-cache /path/to/prepared/tiktoken-cache -- tests/test_sources_api.py -k retry
 python scripts/offline_pytest.py --tiktoken-cache /path/to/prepared/tiktoken-cache -- tests/ --cov=open_notebook --cov=api
 
-# Frontend (inside frontend/)
-npm run test              # vitest run, once
+# Frontend (inside frontend/; already prepared local dependencies, no installation)
+export NPM_CONFIG_OFFLINE=true NPM_CONFIG_UPDATE_NOTIFIER=false
+export NPM_CONFIG_AUDIT=false NPM_CONFIG_FUND=false NEXT_TELEMETRY_DISABLED=1
+npm run lint
+./node_modules/.bin/tsc --noEmit
+npm run test              # artifact identity tests and Vitest, once
 npm run test:watch        # watch mode
-npm run test:coverage     # what CI runs
+npm run test:coverage     # separate optional coverage gate, not evidence of CI
+
+# Python static checks (repo root; prepared interpreter)
+"$OFFLINE_PYTHON" -m ruff check .
+"$OFFLINE_PYTHON" -m ruff format --check .
+"$OFFLINE_PYTHON" -m mypy .
 ```
+
+Set the shell variable `OFFLINE_PYTHON` separately for the static-check commands;
+a Make command-line assignment does not configure later shell commands. Frontend
+builds are a separate [artifact identity gate](../v1/ARTIFACT_IDENTITY.md), not
+implicitly run by `v1-check`. Use only its prepared offline inputs and report
+build/runtime identity separately.
 
 The default backend suite needs **no running SurrealDB, worker or AI provider**.
 Use the supported `scripts/offline_pytest.py` entrypoint rather than bare pytest
@@ -27,7 +64,7 @@ DB/lifecycle opt-in variables are not forwarded. Temporary state is removed on
 exit. Pytest arguments are trusted developer input, not a sandbox boundary.
 
 The runner never installs or downloads anything. Supply an **existing** directory
-containing the `cl100k_base` tiktoken cache file
+containing the `o200k_base` tiktoken cache file
 `fb374d419588a4632f3f557e76b4b70aebbca790` with SHA-256
 `446a9538cb6c348e3516120d7c08b09f57c36495e2acfffe59a5bf8b0cfb1a2d`.
 It verifies the bytes and copies them into temporary storage; it does not modify

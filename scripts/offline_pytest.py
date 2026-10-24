@@ -66,18 +66,18 @@ def build_environment(run: Path, inherited: Mapping[str, str]) -> dict[str, str]
 
 
 def prepare_cache(source: Path, destination: Path) -> None:
-    """Verify the existing cl100k_base cache; never download or modify its source."""
+    """Verify the existing o200k_base cache; never download or modify its source."""
     cached = source / CACHE_FILE
     try:
         contents = cached.read_bytes()
     except OSError as exc:
         raise ValueError(
-            f"Missing readable cl100k_base cache at {cached}. Prepare it separately "
+            f"Missing readable o200k_base cache at {cached}. Prepare it separately "
             "in an authorized environment, then pass --tiktoken-cache DIRECTORY. "
             "This runner never downloads dependencies or token data."
         ) from exc
     if hashlib.sha256(contents).hexdigest() != CACHE_SHA256:
-        raise ValueError(f"cl100k_base cache SHA-256 mismatch: {cached}")
+        raise ValueError(f"o200k_base cache SHA-256 mismatch: {cached}")
     destination.mkdir(parents=True, exist_ok=True)
     (destination / CACHE_FILE).write_bytes(contents)
 

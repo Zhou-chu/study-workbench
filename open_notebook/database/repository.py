@@ -8,6 +8,7 @@ from loguru import logger
 from surrealdb import AsyncSurreal, RecordID  # type: ignore
 from surrealdb.data.types.table import Table  # type: ignore
 
+from open_notebook.utils.boundary_logging import log_boundary_failure
 from open_notebook.utils.proxy import ensure_internal_no_proxy
 
 # Keep the internal SurrealDB websocket out of any configured HTTP proxy
@@ -125,10 +126,10 @@ async def repo_query(
             return result
         except RuntimeError as e:
             # RuntimeError is raised for retriable transaction conflicts - log at debug to avoid noise
-            logger.debug(str(e))
+            log_boundary_failure("repo_query", e, level="DEBUG")
             raise
         except Exception as e:
-            logger.exception(e)
+            log_boundary_failure("repo_query", e)
             raise
 
 
@@ -146,11 +147,11 @@ async def repo_create(table: str, data: Dict[str, Any]) -> Dict[str, Any]:
                 raise RuntimeError(result)
             return result
     except RuntimeError as e:
-        logger.error(str(e))
+        log_boundary_failure("repo_create", e)
         raise
     except Exception as e:
-        logger.exception(e)
-        raise RuntimeError("Failed to create record")
+        log_boundary_failure("repo_create", e)
+        raise RuntimeError("Failed to create record") from e
 
 
 async def repo_relate(
@@ -226,8 +227,8 @@ async def repo_delete(record_id: Union[str, RecordID]):
         async with db_connection() as connection:
             return await connection.delete(ensure_record_id(record_id))
     except Exception as e:
-        logger.exception(e)
-        raise RuntimeError(f"Failed to delete record: {str(e)}")
+        log_boundary_failure("repo_delete", e)
+        raise RuntimeError(f"Failed to delete record: {str(e)}") from e
 
 
 async def repo_insert(
@@ -263,13 +264,13 @@ async def repo_insert(
                 # Log transaction conflicts at debug level (they are expected during concurrent operations)
                 error_str = str(e).lower()
                 if "transaction" in error_str or "conflict" in error_str:
-                    logger.debug(str(e))
+                    log_boundary_failure("repo_insert", e, level="DEBUG")
                 else:
-                    logger.error(str(e))
+                    log_boundary_failure("repo_insert", e)
                 raise
             except Exception as e:
                 if ignore_duplicates and "already contains" in str(e):
                     continue
-                logger.exception(e)
-                raise RuntimeError("Failed to create record")
+                log_boundary_failure("repo_insert", e)
+                raise RuntimeError("Failed to create record") from e
     return results

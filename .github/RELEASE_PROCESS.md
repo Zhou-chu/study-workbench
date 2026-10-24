@@ -1,4 +1,23 @@
-# Release Process
+# Historical Release Process — Non-operational Reference
+
+> **Historical only — not a current release or publication procedure.**
+> Start with the [safe V1 entrypoints](../docs/v1/ENTRYPOINTS.md),
+> [V1 runbook](../docs/v1/RUNBOOK.md), and
+> [V1 migration gates](../docs/v1/DOCKER_MIGRATION.md).
+> Inherited Docker/build/push/tag/release Make targets fail closed; there is **no
+> supported replacement publish command**. Root Compose has no services and the
+> explicit Docker candidate is **not runtime-accepted**. This private source
+> delivery has no active checked-in CI; the workflows, registries, default
+> credentials and image claims below describe the historical upstream process.
+> Do not invoke old helpers directly to bypass disabled targets. Any publication
+> needs its own authorized destination, reviewed tooling and acceptance evidence.
+
+## Archived upstream procedure
+
+The remainder is retained as historical context, not current operational steps or
+new verification evidence. For isolated local checks, use the
+[offline testing guide](../docs/7-DEVELOPMENT/testing.md), not the historical
+live-development-database advice below.
 
 Open Notebook uses a flow-driven release process. Work moves from `ready`
 issues into pull requests, pull requests merge to `main`, and maintainers cut a

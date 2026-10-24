@@ -58,6 +58,7 @@ from open_notebook.exceptions import (
     AuthenticationError,
     CommandSubmissionUnknownError,
     ConfigurationError,
+    DatabaseOperationError,
     ExternalServiceError,
     InvalidInputError,
     NetworkError,
@@ -456,6 +457,17 @@ async def upload_commit_unknown_handler(
                 "source_version_id": exc.source_version_id,
             }
         },
+        headers=_cors_headers(request),
+    )
+
+
+@app.exception_handler(DatabaseOperationError)
+async def database_operation_error_handler(
+    request: Request, exc: DatabaseOperationError
+):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Database operation failed"},
         headers=_cors_headers(request),
     )
 

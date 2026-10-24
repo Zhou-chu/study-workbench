@@ -129,23 +129,26 @@ export-docs:
 	@uv run python scripts/export_docs.py
 	@echo "✅ Documentation export complete!"
 
-# === Cleanup ===
+# Legacy recursive cleanup is disabled; dependencies and runtime data are not caches.
 clean-cache:
-	@echo "🧹 Cleaning cache directories..."
-	@find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
-	@find . -name ".mypy_cache" -type d -exec rm -rf {} + 2>/dev/null || true
-	@find . -name ".ruff_cache" -type d -exec rm -rf {} + 2>/dev/null || true
-	@find . -name ".pytest_cache" -type d -exec rm -rf {} + 2>/dev/null || true
-	@find . -name "*.pyc" -type f -delete 2>/dev/null || true
-	@find . -name "*.pyo" -type f -delete 2>/dev/null || true
-	@find . -name "*.pyd" -type f -delete 2>/dev/null || true
-	@echo "✅ Cache directories cleaned!"
-# StudyWorkbench V1: no paid or Google calls in these checks.
+	@echo "Blocked: legacy cleanup disabled. Read docs/v1/ENTRYPOINTS.md" >&2
+	@exit 2
+
+# Backend offline gate only; explicit already-prepared interpreter and token cache.
 .PHONY: v1-check v1-api-check v1-e2e v1-live-check
 v1-check:
-	UV_CACHE_DIR=/tmp/sw-uv-cache uv run pytest tests/
-	cd frontend && npm run test && npx tsc --noEmit && npm run build
+	@if [ -z "$(strip $(OFFLINE_PYTHON))" ] || [ -z "$(strip $(TIKTOKEN_CACHE))" ]; then \
+		echo "Blocked: set OFFLINE_PYTHON and TIKTOKEN_CACHE explicitly. Read docs/7-DEVELOPMENT/testing.md" >&2; exit 2; \
+	fi
+	@case "$(OFFLINE_PYTHON)" in */*) ;; *) echo "Blocked: OFFLINE_PYTHON must be an explicit executable path. Read docs/7-DEVELOPMENT/testing.md" >&2; exit 2;; esac
+	@if [ ! -f "$(OFFLINE_PYTHON)" ] || [ ! -x "$(OFFLINE_PYTHON)" ] || [ ! -d "$(TIKTOKEN_CACHE)" ]; then \
+		echo "Blocked: OFFLINE_PYTHON must be an existing executable and TIKTOKEN_CACHE an existing directory. Read docs/7-DEVELOPMENT/testing.md" >&2; exit 2; \
+	fi
+	@echo "Running backend offline gate only."
+	@echo "NOT RUN by this target: Python static checks; frontend lint/types/tests/build; coverage; DB/runtime; CI."
+	@"$(OFFLINE_PYTHON)" scripts/offline_pytest.py --tiktoken-cache "$(TIKTOKEN_CACHE)"
 
+# Separate opt-in runtime/provider checks; not part of the offline gate.
 v1-api-check:
 	UV_CACHE_DIR=/tmp/sw-uv-cache uv run python scripts/v1/local_check.py
 
