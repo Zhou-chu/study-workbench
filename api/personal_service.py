@@ -101,15 +101,22 @@ class PersonalService:
         try:
             worker_id = await self.submit("personal_turn", {"job_id": identity})
         except Exception as exc:
-            # Worker queue submission is local and querying this durable job remains safe.
-            job.update(
-                state="failed",
-                error={
-                    "code": "WORKER_UNAVAILABLE",
-                    "message": "Could not enqueue answer; worker/database availability must be checked",
-                },
-            )
-            await self.store.put("job", identity, job)
+            async with self.store.project_lock(notebook_id):
+                latest = await self.store.get("job", identity)
+                if latest is None:
+                    raise NotFoundError("Job not found") from exc
+                if latest != job:
+                    return latest
+                # Keep the existing unchanged-queued failure policy. A lost queue
+                # ACK does not prove rejection or provider submission uncertainty.
+                latest.update(
+                    state="failed",
+                    error={
+                        "code": "WORKER_UNAVAILABLE",
+                        "message": "Could not enqueue answer; worker/database availability must be checked",
+                    },
+                )
+                await self.store.put("job", identity, latest)
             raise InvalidInputError("WORKER_UNAVAILABLE") from exc
         async with self.store.project_lock(notebook_id):
             latest = await self.store.get("job", identity)
