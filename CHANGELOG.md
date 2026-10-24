@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **架构边界第一阶段验证（2026-10-24）。** [记录](docs/v1/ARCHITECTURE_PHASE_ONE_2026-10-24.md) 四项有界修复、私有源码检查点、新鲜组合测试与真实离线产物关联，保留运行阻塞及后续错误/任务恢复边界。
 - **离线加固验证增量（2026-10-23）。** [记录](docs/v1/VERIFIED_HARDENING_2026-10-23.md) 输入保留、证据读取与完整性保护的组合验证，区分模拟查询次数、静态测试和仍被阻塞的运行验收。
 - **恢复后的源码检查点（2026-10-23）。** [记录](docs/v1/RECOVERED_CHECKPOINT_2026-10-23.md) 五次已核验私有发布、新鲜离线测试与真实字体产物关联；浏览器尝试在服务启动前被环境阻塞，未宣称页面通过。保留旧历史及未完成边界。
 - **Personal stream and download contracts (2026-10-22).** Describe the actual SSE stage/final/error protocol and binary MIME/range responses without changing handlers or authentication. Incomplete EOF, unsupported resume and dispatch-capable job reads remain explicit; this is not a complete SDK.
