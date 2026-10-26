@@ -19,6 +19,8 @@ from api.personal_contracts import (
     NoteUpdateRequest,
     NoteWriteCapabilities,
     PersonalNoteResponse,
+    PersonalTurnDispatchUnknownResponse,
+    PersonalTurnInvalidInputResponse,
     SelectionResponse,
     TurnSubmissionResponse,
     WorkspaceResponse,
@@ -289,6 +291,16 @@ async def search(value: dict[str, Any]):
     "/chats/{chat_session_id}/turns",
     response_model=TurnSubmissionResponse,
     response_model_exclude_unset=True,
+    responses={
+        400: {
+            "model": PersonalTurnDispatchUnknownResponse
+            | PersonalTurnInvalidInputResponse,
+            "description": "Invalid input, or unchanged-queued dispatch ACK unknown. "
+            "WORKER_UNAVAILABLE retains its detail string and adds original parent "
+            "IDs with retry_safe:false. This does not prove queue rejection or "
+            "provider submission and does not authorize replay.",
+        }
+    },
 )
 async def turn(chat_session_id: str, request: TurnRequest):
     await Notebook.get(request.notebook_id)
@@ -297,11 +309,14 @@ async def turn(chat_session_id: str, request: TurnRequest):
         if (await service.version(identity))["notebook_id"] != request.notebook_id:
             raise InvalidInputError("SOURCE_OUT_OF_SCOPE")
     job = await PersonalService().submit_turn(chat_session_id, request.model_dump())
-    return {
+    response = {
         "job_id": job["job_id"],
         "turn_id": job["turn_id"],
         "state": job["state"],
     }
+    if "dispatch_receipt" in job:
+        response["dispatch_receipt"] = job["dispatch_receipt"]
+    return response
 
 
 @router.get("/chats/{chat_session_id}/turns")

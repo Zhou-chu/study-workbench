@@ -35,7 +35,18 @@ async def test_workspace_preserves_null_absence_and_opaque_history(
     await store.put("version", "sv_test", version)
     for kind in ("turn", "job", "legacy_chat"):
         await store.put(
-            kind, kind, {"notebook_id": notebook_id, "legacy": [None, {"opaque": True}]}
+            kind,
+            kind,
+            {
+                "notebook_id": notebook_id,
+                "legacy": [None, {"opaque": True}],
+                "dispatch_receipt": {
+                    "dispatch_ack": "future",
+                    "job_id": "job_conflicting",
+                    "retry_safe": True,
+                    "opaque": [None],
+                },
+            },
         )
     if selection is not None:
         await store.put("selection", notebook_id, selection)
@@ -72,7 +83,11 @@ async def test_workspace_preserves_null_absence_and_opaque_history(
     monkeypatch.setattr(
         "open_notebook.database.note_repository.read_project_notes_locked", bundles
     )
-    service = PersonalService(store=store)
+
+    async def no_dispatch(*_):
+        pytest.fail("Workspace inspection must not dispatch retained receipts")
+
+    service = PersonalService(store=store, submit=no_dispatch)
     monkeypatch.setattr(evidence, "PersonalService", lambda: service)
     before = await service.workspace(notebook_id)
     app = FastAPI()

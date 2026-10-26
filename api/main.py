@@ -66,6 +66,7 @@ from open_notebook.exceptions import (
     NoteRevisionRequired,
     NotFoundError,
     OpenNotebookError,
+    PersonalTurnDispatchUnknownError,
     RateLimitError,
     UnsupportedCapabilityError,
     UnsupportedTypeException,
@@ -348,6 +349,20 @@ async def not_found_error_handler(request: Request, exc: NotFoundError):
 
 @app.exception_handler(InvalidInputError)
 async def invalid_input_error_handler(request: Request, exc: InvalidInputError):
+    if isinstance(exc, PersonalTurnDispatchUnknownError):
+        return JSONResponse(
+            status_code=400,
+            content={
+                "detail": "WORKER_UNAVAILABLE",
+                "dispatch_receipt": {
+                    "dispatch_ack": "unknown",
+                    "job_id": exc.job_id,
+                    "turn_id": exc.turn_id,
+                    "retry_safe": False,
+                },
+            },
+            headers=_cors_headers(request),
+        )
     return JSONResponse(
         status_code=400,
         content={"detail": str(exc)},

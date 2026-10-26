@@ -3199,6 +3199,71 @@
         "title": "PersonalNoteResponse",
         "type": "object"
       },
+      "PersonalTurnDispatchReceipt": {
+        "additionalProperties": false,
+        "description": "Known generated shape only; never validate retained historical receipts.",
+        "properties": {
+          "dispatch_ack": {
+            "const": "unknown",
+            "title": "Dispatch Ack",
+            "type": "string"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "retry_safe": {
+            "const": false,
+            "title": "Retry Safe",
+            "type": "boolean"
+          },
+          "turn_id": {
+            "title": "Turn Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dispatch_ack",
+          "job_id",
+          "turn_id",
+          "retry_safe"
+        ],
+        "title": "PersonalTurnDispatchReceipt",
+        "type": "object"
+      },
+      "PersonalTurnDispatchUnknownResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "const": "WORKER_UNAVAILABLE",
+            "title": "Detail",
+            "type": "string"
+          },
+          "dispatch_receipt": {
+            "$ref": "#/components/schemas/PersonalTurnDispatchReceipt"
+          }
+        },
+        "required": [
+          "detail",
+          "dispatch_receipt"
+        ],
+        "title": "PersonalTurnDispatchUnknownResponse",
+        "type": "object"
+      },
+      "PersonalTurnInvalidInputResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "PersonalTurnInvalidInputResponse",
+        "type": "object"
+      },
       "PodcastEpisodeResponse": {
         "properties": {
           "audio_file": {
@@ -5678,6 +5743,10 @@
         "additionalProperties": true,
         "description": "Durable receipt, never a completed answer or permission to resubmit.",
         "properties": {
+          "dispatch_receipt": {
+            "description": "Opaque retained dispatch ACK evidence. Newly generated receipts contain dispatch_ack:unknown, original parent job_id/turn_id and retry_safe:false. Absence, malformed or future values are inconclusive; no stored value authorizes retry or replay.",
+            "title": "Dispatch Receipt"
+          },
           "job_id": {
             "title": "Job Id",
             "type": "string"
@@ -10301,6 +10370,24 @@
               }
             },
             "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/PersonalTurnDispatchUnknownResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PersonalTurnInvalidInputResponse"
+                    }
+                  ],
+                  "title": "Response 400 Turn Api Personal Chats  Chat Session Id  Turns Post"
+                }
+              }
+            },
+            "description": "Invalid input, or unchanged-queued dispatch ACK unknown. WORKER_UNAVAILABLE retains its detail string and adds original parent IDs with retry_safe:false. This does not prove queue rejection or provider submission and does not authorize replay."
           },
           "422": {
             "content": {

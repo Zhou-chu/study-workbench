@@ -209,6 +209,9 @@ async def test_unadvanced_enqueue_error_keeps_existing_failure_contract(
         )
     assert raised.value.__cause__ is failure
     initial = store.writes[0][1]
+    assert type(raised.value).__name__ == "PersonalTurnDispatchUnknownError"
+    assert getattr(raised.value, "job_id", None) == initial["job_id"]
+    assert getattr(raised.value, "turn_id", None) == initial["turn_id"]
     persisted = await store.get("job", initial["job_id"])
     assert persisted == {
         **initial,
@@ -217,14 +220,21 @@ async def test_unadvanced_enqueue_error_keeps_existing_failure_contract(
             "code": "WORKER_UNAVAILABLE",
             "message": "Could not enqueue answer; worker/database availability must be checked",
         },
+        "dispatch_receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": initial["job_id"],
+            "turn_id": initial["turn_id"],
+            "retry_safe": False,
+        },
     }
     assert persisted["submission_state"] == "not_submitted"
     assert len(store.writes) == 2
 
 
 @pytest.mark.asyncio
-async def test_accepted_but_still_queued_ack_loss_keeps_existing_limitation(
-    monkeypatch, request_payload
+@pytest.mark.parametrize("acceptance_observed", [False, True])
+async def test_unchanged_queued_ack_loss_reports_unknown_without_reenqueue(
+    monkeypatch, request_payload, acceptance_observed
 ):
     """Acceptance without a durable update is indistinguishable from rejection.
 
@@ -235,11 +245,14 @@ async def test_accepted_but_still_queued_ack_loss_keeps_existing_limitation(
     from api.routers import evidence
 
     store = MemoryStore()
+    submitted = []
     accepted = []
 
     async def submit(command, args):
-        accepted.append(deepcopy(args))  # Queue accepted, but worker has not started.
-        raise TimeoutError("Synthetic accepted command lost its ACK")
+        submitted.append((command, deepcopy(args)))
+        if acceptance_observed:
+            accepted.append(deepcopy(args))  # Accepted, but worker has not started.
+        raise TimeoutError("SYNTHETIC_PRIVATE_QUEUE_CAUSE_DO_NOT_EXPOSE")
 
     async def notebook_get(identity):
         return SimpleNamespace(id=identity)
@@ -257,21 +270,41 @@ async def test_accepted_but_still_queued_ack_loss_keeps_existing_limitation(
             "/api/personal/chats/chat:synthetic/turns", json=request_payload
         )
         assert response.status_code == 400
-        assert response.json() == {"detail": "WORKER_UNAVAILABLE"}
-        persisted = await store.get("job", accepted[0]["job_id"])
+        initial = store.writes[0][1]
+        receipt = {
+            "dispatch_ack": "unknown",
+            "job_id": initial["job_id"],
+            "turn_id": initial["turn_id"],
+            "retry_safe": False,
+        }
+        assert response.json() == {
+            "detail": "WORKER_UNAVAILABLE",
+            "dispatch_receipt": receipt,
+        }
+        assert "SYNTHETIC_PRIVATE" not in response.text
+        persisted = await store.get("job", initial["job_id"])
+        assert persisted["dispatch_receipt"] == receipt
         assert persisted["state"] == "failed"
         assert persisted["submission_state"] == "not_submitted"
         assert persisted["attempts"] == 0
         repeated = await client.post(
             "/api/personal/chats/chat:synthetic/turns", json=request_payload
         )
+        changed = await client.post(
+            "/api/personal/chats/chat:synthetic/turns",
+            json={**request_payload, "message": "A changed synthetic question"},
+        )
     assert repeated.status_code == 200
     assert repeated.json() == {
         "job_id": persisted["job_id"],
         "turn_id": persisted["turn_id"],
         "state": "failed",
+        "dispatch_receipt": receipt,
     }
-    assert len(accepted) == 1
+    assert changed.status_code == 400
+    assert changed.json() == {"detail": "IDEMPOTENCY_CONFLICT"}
+    assert submitted == [("personal_turn", {"job_id": persisted["job_id"]})]
+    assert len(accepted) == int(acceptance_observed)
     assert await service.run_turn(persisted["job_id"]) == persisted
     assert await store.get("job", persisted["job_id"]) == persisted
     assert len(store.writes) == 2

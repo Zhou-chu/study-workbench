@@ -5,7 +5,11 @@ import json
 from datetime import datetime, timezone
 
 from api.personal_store import get_store
-from open_notebook.exceptions import InvalidInputError, NotFoundError
+from open_notebook.exceptions import (
+    InvalidInputError,
+    NotFoundError,
+    PersonalTurnDispatchUnknownError,
+)
 
 
 def now():
@@ -115,9 +119,17 @@ class PersonalService:
                         "code": "WORKER_UNAVAILABLE",
                         "message": "Could not enqueue answer; worker/database availability must be checked",
                     },
+                    dispatch_receipt={
+                        "dispatch_ack": "unknown",
+                        "job_id": job["job_id"],
+                        "turn_id": job["turn_id"],
+                        "retry_safe": False,
+                    },
                 )
                 await self.store.put("job", identity, latest)
-            raise InvalidInputError("WORKER_UNAVAILABLE") from exc
+            raise PersonalTurnDispatchUnknownError(
+                job_id=job["job_id"], turn_id=job["turn_id"]
+            ) from exc
         async with self.store.project_lock(notebook_id):
             latest = await self.store.get("job", identity)
             if latest is None:

@@ -139,6 +139,35 @@ including nullable fields, unknown states, restored provenance and extension dat
 SSE, binary and nested workspace response gaps remain separate work; they are
 not fixed by these operation models.
 
+### Personal turn dispatch ACK uncertainty
+
+An enqueue exception on the still-identical queued parent now stores
+`dispatch_receipt:{dispatch_ack:"unknown",job_id,turn_id,retry_safe:false}`.
+The initial HTTP 400 retains `detail:"WORKER_UNAVAILABLE"` and adds that receipt
+as a sibling. Same-key/body HTTP 200 preserves the original IDs/state and includes
+the stored receipt only when the key exists. Changed bodies still conflict;
+ordinary InvalidInputError responses remain detail-only. `dispatch-unknown.json`
+is a public synthetic example exercised through the real service, registered
+handler and response serializer.
+
+The generated HTTP 400 receipt/envelope has strict known-field models, separate
+from the opaque `TurnSubmissionResponse.dispatch_receipt` read field. Retained
+null, scalars, lists, malformed objects, unknown extensions, conflicting IDs and
+`retry_safe:true` are preserved rather than validated, normalized or trusted.
+Absence is not converted to null and does not prove rejection. No stored value
+authorizes retry/replay. Workspace/history remain lossless; archive restore remaps
+nested local IDs but retains historical metadata and `replay_allowed:false`.
+
+This is dispatch **ACK** uncertainty, not provider-submission uncertainty. Existing
+`failed` / `WORKER_UNAVAILABLE` / `not_submitted` / zero-attempt semantics remain;
+none proves the queue rejected the command. Receipt persistence may itself fail
+or lose its ACK; that error propagates without a durable-receipt claim. Advanced,
+metadata-updated, cancelled or deleted jobs are not replaced by the new metadata.
+There is no new requeue/recovery/read endpoint, locking/write-order change,
+frontend registry or exactly-once guarantee. Generic job GET can still dispatch
+other work and is not a read-only recovery path. See
+[ADR-022](../../docs/7-DEVELOPMENT/decisions/ADR-022-personal-turn-dispatch-receipt.md).
+
 ## R2b: workspace envelope and nullable Web fields
 
 Workspace and selection-save response schemas now describe the proven envelope,

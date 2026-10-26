@@ -55,6 +55,15 @@ class InvalidInputError(OpenNotebookError):
     pass
 
 
+class PersonalTurnDispatchUnknownError(InvalidInputError):
+    """Queue ACK is unknown; allocated parent IDs do not authorize replay."""
+
+    def __init__(self, *, job_id: str, turn_id: str):
+        self.job_id = job_id
+        self.turn_id = turn_id
+        super().__init__("WORKER_UNAVAILABLE")
+
+
 class NotFoundError(OpenNotebookError):
     """Raised when a requested resource is not found."""
 

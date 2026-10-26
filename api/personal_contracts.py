@@ -64,6 +64,37 @@ class TurnSubmissionResponse(OperationResponse):
     state: str = Field(
         description="Raw durable state; unknown values grant no actions."
     )
+    dispatch_receipt: Any = Field(
+        default=None,
+        description="Opaque retained dispatch ACK evidence. Newly generated receipts "
+        "contain dispatch_ack:unknown, original parent job_id/turn_id and "
+        "retry_safe:false. Absence, malformed or future values are inconclusive; "
+        "no stored value authorizes retry or replay.",
+    )
+
+
+class PersonalTurnDispatchReceipt(BaseModel):
+    """Known generated shape only; never validate retained historical receipts."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    dispatch_ack: Literal["unknown"]
+    job_id: str
+    turn_id: str
+    retry_safe: Literal[False]
+
+
+class PersonalTurnDispatchUnknownResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    detail: Literal["WORKER_UNAVAILABLE"]
+    dispatch_receipt: PersonalTurnDispatchReceipt
+
+
+class PersonalTurnInvalidInputResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    detail: str
 
 
 class DurableJobResponse(OperationResponse):
