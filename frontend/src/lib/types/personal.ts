@@ -17,7 +17,7 @@ export type Engine = KnownEngine | (string & {})
 export type KnownJobState = 'queued' | 'running' | 'waiting_remote' | 'succeeded' | 'failed' | 'needs_reauth' | 'submission_unknown' | 'cancelled_local'
 // Keep future server states verbatim; only explicit known states authorize actions.
 export type JobState = KnownJobState | (string & {})
-export interface TurnSubmissionResponse { job_id: string; turn_id: string; state: JobState }
+export interface TurnSubmissionResponse { job_id: string; turn_id: string; state: JobState; dispatch_receipt?: unknown }
 export interface Locator {
   page_index?: number | null
   page_label?: string | null
@@ -129,7 +129,7 @@ export interface TurnRecord {
   error?: unknown
   created_at?: string
 }
-export interface TurnRequest extends WorkbenchSelection {
+export interface TurnRequest extends Omit<WorkbenchSelection, 'reading'> {
   engine: KnownEngine
   task: 'question' | 'outline'
   notebook_id: string

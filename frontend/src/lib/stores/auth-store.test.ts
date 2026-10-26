@@ -201,3 +201,34 @@ it('an exact rejected saved legacy password reaches password recovery instead of
   expect(auth.getState()).toMatchObject({ phase: 'reauth-required', error: 'auth.invalidPassword', isAuthenticated: false })
   expect(request).toHaveBeenCalledTimes(2)
 })
+
+describe('turn privacy context, independent of auth race generations', () => {
+  async function retained() {
+    const context = await import('@/lib/workbench/turn-context')
+    context.publishTurnTarget({ mode: 'device_sessions', apiBase: `${window.location.origin}/api`, protocol: 'bff-memory-v1' }, true)
+    const original = context.readTurnContext()!
+    const payloads = new Map([['notebook:fixture', 'private retained draft']])
+    const unsubscribe = context.subscribeTurnContext(() => { if (context.readTurnContext()?.epoch !== original.epoch) payloads.clear() })
+    return { context, original, payloads, unsubscribe }
+  }
+  it.each(['signoutLocal', 'logout', 'revokeAll', 'revokeSession', 'unknown-own'] as const)('%s releases subscribed captures synchronously before unresolved mode lookup', async action => {
+    const auth = await store(); auth.setState({ session: action === 'unknown-own' ? null : metadata })
+    const held = await retained(); const { getConfig } = await import('@/lib/config')
+    let finish!: (value: unknown) => void
+    vi.mocked(getConfig).mockImplementationOnce(() => new Promise(resolve => { finish = value => resolve(value as Awaited<ReturnType<typeof getConfig>>) }))
+    const pending = action === 'unknown-own' ? auth.getState().revokeSession('not-known-other') : action === 'revokeSession' ? auth.getState().revokeSession(metadata.session_id) : auth.getState()[action]()
+    expect(held.payloads.size).toBe(0); expect(held.context.readTurnContext()!.epoch).toBeGreaterThan(held.original.epoch)
+    finish(cfg); request.mockResolvedValueOnce(new Response(null, { status: 204 })); await pending; held.unsubscribe()
+  })
+  it.each(['revokeSession', 'refresh', 'bootstrap', 'login'] as const)('known-other revoke / ordinary %s keeps the turn context without POSTing turns', async action => {
+    const auth = await store(); auth.setState({ session: metadata, phase: 'authenticated', hasHydrated: true })
+    const held = await retained()
+    if (action === 'revokeSession') request.mockResolvedValueOnce(new Response(null, { status: 204 }))
+    else if (action === 'refresh') request.mockResolvedValueOnce(json(metadata))
+    else if (action === 'login') request.mockResolvedValueOnce(json(metadata, 201)).mockResolvedValueOnce(json(status('authenticated', metadata)))
+    else request.mockResolvedValueOnce(json(status('authenticated', metadata)))
+    await (action === 'revokeSession' ? auth.getState().revokeSession('known-other') : action === 'login' ? auth.getState().login('fixture') : auth.getState()[action]())
+    expect(held.context.readTurnContext()).toBe(held.original); expect(held.payloads.size).toBe(1)
+    expect(request.mock.calls.every(([url]) => !String(url).includes('/turns'))).toBe(true); held.unsubscribe()
+  })
+})

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { classifyAuthFailure, prepareBrowserRequest, protectedApiPath } from './browser-transport'
+import { asRequestNotDispatchedError, RequestNotDispatchedError, classifyAuthFailure, prepareBrowserRequest, protectedApiPath } from './browser-transport'
 import { resolvePodcastAssetUrl } from './podcasts'
 const metadata = vi.hoisted(() => ({ authMode: 'device_sessions', apiUrl: '', webSessionProtocol: 'bff-memory-v1' }))
 vi.mock('@/lib/config', () => ({ getConfig: async () => metadata, getApiUrl: async () => metadata.apiUrl }))
@@ -108,4 +108,15 @@ it('a custom AbortSignal reason stays cancellation, not an auth or service outag
   vi.stubGlobal('fetch', vi.fn(async () => { controller.abort(reason); throw reason }))
   try { await expect(browserFetch('/search/ask', { method: 'POST', signal: controller.signal })).rejects.toBe(reason); expect(onRecovery).not.toHaveBeenCalled() }
   finally { unsubscribe(); vi.unstubAllGlobals() }
+})
+
+it('recognizes only locally branded not-dispatched errors through own cause chains', () => {
+  const local = new RequestNotDispatchedError('superseded')
+  expect(asRequestNotDispatchedError(new Error('wrapper', { cause: local }))).toBe(local)
+  expect(asRequestNotDispatchedError({ name: local.name, reason: local.reason })).toBeNull()
+  expect(asRequestNotDispatchedError(Object.create(RequestNotDispatchedError.prototype))).toBeNull()
+  const cyclic: { cause?: unknown } = {}; cyclic.cause = cyclic
+  expect(asRequestNotDispatchedError(cyclic)).toBeNull()
+  const getter = vi.fn(() => local)
+  expect(asRequestNotDispatchedError(Object.defineProperty({}, 'cause', { get: getter }))).toBeNull(); expect(getter).not.toHaveBeenCalled()
 })

@@ -3,6 +3,7 @@ import { queryClient } from '@/lib/api/query-client'
 import { authApi, AuthRequestError, parseWebStatus } from '@/lib/api/auth'
 import { getConfig, resetConfig } from '@/lib/config'
 import { getAuthToken, purgeLegacyAuth, setLegacyAuthToken } from '@/lib/auth-token'
+import { invalidateTurnContext } from '@/lib/workbench/turn-context'
 import { sessionCoordinator } from '@/lib/auth/session-coordinator'
 import type { AuthPhase, ServerRevocation, WebSessionMetadata } from '@/lib/types/auth'
 import type { WebSessionMode } from '@/lib/types/config'
@@ -78,8 +79,10 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     return get().isAuthenticated
   }
   const revoke = async (target?: string) => {
+    // Unknown own identity cannot establish that this is another session.
+    const own = !target || !get().session?.session_id || target === get().session?.session_id
+    if (own) invalidateTurnContext()
     const operation = sessionCoordinator.begin()
-    const own = !target || target === get().session?.session_id
     set({ isLoading: true, error: null })
     try {
       const selectedMode = await mode()
@@ -178,6 +181,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     revokeSession: sessionId => revoke(sessionId),
     revokeAll: () => revoke(),
     signoutLocal: async () => {
+      invalidateTurnContext()
       const operation = sessionCoordinator.begin()
       // Lock this mounted screen immediately. A failed network request cannot
       // prove server retirement; retain an honest retryable unconfirmed state.

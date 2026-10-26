@@ -1,10 +1,13 @@
 /** Runtime configuration without application-supplied credentials. */
+import { browserTurnTarget } from '@/lib/api/browser-target'
+import { publishTurnTarget, suspendTurnTarget } from '@/lib/workbench/turn-context'
 import { purgeLegacyAuth } from '@/lib/auth-token'
 import { AppConfig, BackendConfigResponse, WEB_SESSION_PROTOCOL, type WebSessionMode } from '@/lib/types/config'
 
 const BUILD_TIME = new Date().toISOString()
 let config: AppConfig | null = null
 let configPromise: Promise<AppConfig> | null = null
+let configGeneration = 0
 const PUBLIC_CONFIG_FETCH = { cache: 'no-store', credentials: 'same-origin', redirect: 'error' } as const
 
 export async function getApiUrl(): Promise<string> {
@@ -13,8 +16,11 @@ export async function getApiUrl(): Promise<string> {
 
 export async function getConfig(): Promise<AppConfig> {
   if (config) return config
-  if (!configPromise) configPromise = fetchConfig()
-  return await configPromise
+  const generation = configGeneration
+  if (!configPromise) configPromise = fetchConfig(generation)
+  const result = await configPromise
+  assertCurrentConfig(generation)
+  return result
 }
 
 function unavailable(): never {
@@ -44,14 +50,22 @@ function runtimeMetadata(data: unknown): {
   }
 }
 
-async function fetchConfig(): Promise<AppConfig> {
+function assertCurrentConfig(generation: number): void {
+  if (generation !== configGeneration) unavailable()
+}
+
+async function fetchConfig(generation: number): Promise<AppConfig> {
   let metadata: ReturnType<typeof runtimeMetadata>
   try {
     // Failure must stop bootstrap: neither build-time URLs nor saved passwords
     // may select a legacy path before the server's mode has been discovered.
     const response = await fetch('/config', PUBLIC_CONFIG_FETCH)
+    assertCurrentConfig(generation)
     if (!response.ok) return unavailable()
     metadata = runtimeMetadata(await response.json())
+    assertCurrentConfig(generation)
+    // Retire an actual destination change before waiting for API readiness.
+    publishTurnTarget(browserTurnTarget(metadata), false)
     // Device discovery is sufficient to retire browser password persistence,
     // even if the later public API readiness/config request fails or hangs.
     if (metadata.authMode === 'device_sessions') purgeLegacyAuth()
@@ -63,9 +77,12 @@ async function fetchConfig(): Promise<AppConfig> {
   // an owner-private ingress; no application Authorization/password is supplied.
   // Never include cross-origin cookies or follow redirects. The BFF metadata
   // dispatcher strips Cookie/Authorization before contacting the backend.
-  const response = await fetch(`${metadata.apiUrl}/api/config`, PUBLIC_CONFIG_FETCH)
+  const target = browserTurnTarget(metadata)
+  const response = await fetch(metadata.apiUrl ? `${target.apiBase}/config` : '/api/config', PUBLIC_CONFIG_FETCH)
+  assertCurrentConfig(generation)
   if (!response.ok) throw new Error(`API config endpoint returned status ${response.status}`)
   const data: BackendConfigResponse = await response.json()
+  assertCurrentConfig(generation)
   config = {
     ...metadata,
     version: data.version || 'unknown',
@@ -74,11 +91,14 @@ async function fetchConfig(): Promise<AppConfig> {
     hasUpdate: data.hasUpdate || false,
     dbStatus: data.dbStatus,
   }
+  publishTurnTarget(target, true)
   return config
 }
 
 /** Reset only on an explicit caller action; configuration errors never retry. */
 export function resetConfig(): void {
+  configGeneration++
+  suspendTurnTarget()
   config = null
   configPromise = null
 }

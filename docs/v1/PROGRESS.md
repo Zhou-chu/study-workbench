@@ -1,5 +1,9 @@
 # StudyWorkbench V1 progress
 
+## F1 前端基础边界：2026-10-26 UTC
+
+[Task 1 进展与证据](FRONTEND_TURN_PROGRESS_2026-10-26.md)加入可选 context-bound 请求保护、旧配置 generation 防护和显式退出/本人撤销同步失效。前端 1,499 单元 + 25 artifact 测试、类型/lint 通过；尚未接入 registry/恢复 UI，未运行新 build 或浏览器验收，不能声称重复提交风险已整体解决。
+
 ## 工程质量跟进与持久化错误边界：2026-10-26 UTC
 
 [本轮审查及修复证据](ENGINEERING_QUALITY_FOLLOWUP_2026-10-26.md)修复新 extraction/maintenance 错误记录透传原异常的问题，保留原文件、历史数据和执行语义。完整离线后端 2,678 通过 / 128 跳过，静态/OpenAPI 通过。前端操作身份、未知状态解锁与纯读取恢复仍是待实施项，不把通过的旧测试当作正确契约。

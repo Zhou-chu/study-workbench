@@ -149,9 +149,11 @@ Recovery panel uses semantic tokens and localized copy. Add keys to both `workbe
 ### Task 1 — Prove context and exact-target dispatch boundary
 **Files:** new turn-context.ts + test; config.ts/config.test.ts; auth-store.ts/auth-store.test.ts; browser-transport.ts; client.ts/client.test.ts; API workbench.ts/workbench-contract.test.ts; types/personal.ts (TurnRequest excludes reading; optional opaque dispatch_receipt on receipt; read fields remain unknown where appropriate).
 
-- [ ] Write RED tests: logout and own/all revoke clear a subscribed registry before unresolved mode/auth promises; known-other revoke and ordinary refresh preserve it; same-target config refresh preserves it; A→B→A increments identity; stale config A cannot publish after B.
-- [ ] Write RED real-fetch-adapter tests: target changes during awaited config; after interceptor but before native fetch; invalidation during adapter body preparation; old epoch even when target returns to same URL; no native fetch in each case. Accepted path sends exact body once, original credentials/CSRF/redirect policy, and no internal metadata in native init/headers/body. Custom adapter/base/auth/env-fetch escape attempts fail closed.
-- [ ] Run focused tests and record intended RED, implement narrow APIs above, rerun GREEN including existing session-races/browser-transport tests. Review/commit this boundary without claiming F1 UI complete.
+- [x] Write RED tests: logout and own/all revoke clear a subscribed registry before unresolved mode/auth promises; known-other revoke and ordinary refresh preserve it; same-target config refresh preserves it; A→B→A increments identity; stale config A cannot publish after B.
+- [x] Write RED real-fetch-adapter tests: target changes during awaited config; after interceptor but before native fetch; invalidation during adapter body preparation; old epoch even when target returns to same URL; no native fetch in each case. Accepted path sends exact body once, original credentials/CSRF/redirect policy, and no internal metadata in native init/headers/body. Custom adapter/base/auth/env-fetch escape attempts fail closed.
+- [x] Run focused tests and record intended RED, implement narrow APIs above, rerun GREEN including existing session-races/browser-transport tests. Review/commit this boundary without claiming F1 UI complete.
+
+Task 1 独立审查与两轮 scoped 复审已通过；最终源码/验证及受约束 Axios callback/env 限制见 [进度记录](../../v1/FRONTEND_TURN_PROGRESS_2026-10-26.md)。该基础批次不表示 UI 已接入。
 
 ### Task 2 — Prove bounded ownership and read-only reconciliation
 **Files:** new turn-operations.ts/.test.ts and turn-reconciliation.ts/.test.ts; provider + provider test; root layout.

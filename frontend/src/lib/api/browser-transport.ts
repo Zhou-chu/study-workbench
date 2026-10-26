@@ -2,20 +2,43 @@ import { getConfig } from '@/lib/config'
 import { getAuthToken, purgeLegacyAuth } from '@/lib/auth-token'
 import { sessionCoordinator } from '@/lib/auth/session-coordinator'
 import type { AuthPhase } from '@/lib/types/auth'
+import { browserTurnTarget } from './browser-target'
+import { readTurnContext, sameTurnTarget, type TurnContext, type TurnTarget } from '@/lib/workbench/turn-context'
 
+const notDispatchedErrors = new WeakSet<object>()
 /** Only constructed locally before dispatch; never inferred from remote flags. */
 export class RequestNotDispatchedError extends Error {
   constructor(readonly reason: 'authentication' | 'configuration' | 'destination' | 'superseded') {
     super('Request was not sent')
     this.name = 'RequestNotDispatchedError'
+    notDispatchedErrors.add(this)
   }
+}
+/** Axios may wrap the thrown error. Only a locally branded cause is evidence. */
+export function asRequestNotDispatchedError(error: unknown): RequestNotDispatchedError | null {
+  const seen = new Set<object>()
+  let candidate = error
+  while (candidate && typeof candidate === 'object' && !seen.has(candidate)) {
+    if (notDispatchedErrors.has(candidate)) return candidate as RequestNotDispatchedError
+    seen.add(candidate)
+    candidate = Object.getOwnPropertyDescriptor(candidate, 'cause')?.value
+  }
+  return null
+}
+export function assertTurnDispatch(captured: TurnContext, policyTarget?: TurnTarget): void {
+  const current = readTurnContext()
+  if (!current) throw new RequestNotDispatchedError('configuration')
+  if (current.epoch !== captured.epoch || !sameTurnTarget(current.target, captured.target)) throw new RequestNotDispatchedError('superseded')
+  if (!captured.ready || !current.ready) throw new RequestNotDispatchedError('configuration')
+  if (policyTarget && !sameTurnTarget(captured.target, policyTarget)) throw new RequestNotDispatchedError('destination')
 }
 const recoveryErrors = new WeakSet<object>()
 export function rememberAuthRecoveryError(error: unknown): void {
   if (error && typeof error === 'object') recoveryErrors.add(error)
 }
 export function isAuthRecoveryError(error: unknown): boolean {
-  if (error instanceof RequestNotDispatchedError) return error.reason === 'authentication' || error.reason === 'configuration'
+  const local = asRequestNotDispatchedError(error)
+  if (local) return local.reason === 'authentication' || local.reason === 'configuration'
   if (!error || typeof error !== 'object') return false
   if (recoveryErrors.has(error)) return true
   const response = (error as { response?: { status?: number; data?: { error?: { code?: string } } } }).response
@@ -57,21 +80,18 @@ export async function prepareBrowserRequest(method: string, url: string) {
   const epoch = sessionCoordinator.current()
   let config: Awaited<ReturnType<typeof getConfig>>
   try { config = await getConfig() } catch { sessionCoordinator.report('unavailable', epoch); throw new RequestNotDispatchedError('configuration') }
+  const target = browserTurnTarget(config)
   const headers: Record<string, string> = {}
   if (config.authMode === 'device_sessions') {
     purgeLegacyAuth()
     if (!SAFE_METHODS.has(method.toUpperCase())) headers['X-StudyWorkbench-CSRF'] = '1'
-    return { url: `/api${path}`, headers, credentials: 'same-origin' as const, redirect: 'error' as const, mode: config.authMode }
+    return { url: `/api${path}`, headers, credentials: 'same-origin' as const, redirect: 'error' as const, mode: config.authMode, target }
   }
   if (config.authMode !== 'legacy_password') throw new Error('Web session configuration unavailable')
-  const base = config.apiUrl.replace(/\/$/, '')
-  if (base) {
-    const parsed = new URL(base)
-    if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password || parsed.search || parsed.hash) throw new Error('Invalid legacy API destination')
-  }
+  const base = config.apiUrl ? target.apiBase.slice(0, -4) : ''
   const token = getAuthToken('legacy_password')
   if (token) headers.Authorization = `Bearer ${token}`
-  return { url: `${base}/api${path}`, headers, credentials: 'omit' as const, redirect: 'error' as const, mode: config.authMode }
+  return { url: `${base}/api${path}`, headers, credentials: 'omit' as const, redirect: 'error' as const, mode: config.authMode, target }
 }
 
 async function boundedError(body: unknown): Promise<unknown> {
