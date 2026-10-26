@@ -72,7 +72,9 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   }, [focusUpload, tab])
   const [readerOpen, setReaderOpen] = useState(false)
   const [citation, setCitation] = useState<EvidenceCitation | null>(null)
-  const [mountId] = useState(() => crypto.randomUUID())
+  const [mountId] = useState<string | null>(() => {
+    try { return crypto.randomUUID() } catch { return null }
+  })
   const [question, setQuestion] = useState('')
   const questionRevision = useRef(0)
   // A save may finish after New, Edit, or an outline replaced the draft.
@@ -141,7 +143,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const recovery = useWorkbenchTurn(notebookId, { independentAvailable: modelState === 'ready', googleAvailable: !connection.isError && !capabilities.isError && connection.data?.state === 'connected' && askCapability?.support === 'available', googleLink: data?.link ?? null })
   const turns = [...new Map([...(data?.turns || []), ...recovery.turns].map(turn => [turn.turn_id, turn])).values()]
   const submitTurn = (outline: boolean) => {
-    if (!canAsk || !isKnownEngine(selection.engine) || !isKnownSelectionOrigin(selection.selection_origin)) return
+    if (mountId === null || !canAsk || !isKnownEngine(selection.engine) || !isKnownSelectionOrigin(selection.selection_origin)) return
     recovery.submit({ sessionId, available: canAsk,
       owner: { mountId, ...(outline ? { editor: { session: noteEditorSession.current, revision: noteEditorRevision.current } } : { questionRevision: questionRevision.current }) },
       ...(data?.link?.connection_id ? { googleConnectionId: data.link.connection_id } : {}),
@@ -155,7 +157,8 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     const operation = recovery.operation
     if (!operation || !recovery.isCurrent(operation.token)) return
     const owner = operation.capture.owner
-    const originalMount = owner.mountId === mountId
+    // A failed allocation is never an owner, even across failed remounts.
+    const originalMount = mountId !== null && owner.mountId === mountId
     // Acceptance belongs to a draft generation, not to text equality. Trusted
     // completion can also acknowledge an Ask whose original POST ACK was lost.
     if ((recovery.acceptance || recovery.completion) && originalMount && operation.capture.dto.task === 'question' && owner.questionRevision === questionRevision.current) {
@@ -331,7 +334,8 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
           {!knownOrigin && <p role="status" className="text-xs text-muted-foreground">{t('workbench.scope')}: {typeof selection.selection_origin === 'string' ? selection.selection_origin : ''} — {t('workbench.unavailable')}</p>}
           {selection.supported && knownEngine && selectedCount > 0 && !canAsk && !modelBlocked && <p className="text-xs text-muted-foreground">{googleBlocked || t(selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
           {selectedCount > 0 && googleBlocked && <Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button>}
-          <div className="flex flex-wrap gap-2"><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} disabled={!canAsk || !question.trim() || !recovery.ready || !!recovery.operation} onClick={() => submitTurn(false)}>{t('workbench.ask')}</Button><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} variant="outline" disabled={!canAsk || !recovery.ready || !!recovery.operation} onClick={() => submitTurn(true)}>{t('workbench.outline')}</Button></div></div>
+          {mountId === null && <p role="status" className="text-xs text-muted-foreground">{t('workbench.unavailable')}</p>}
+          <div className="flex flex-wrap gap-2"><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} disabled={mountId === null || !canAsk || !question.trim() || !recovery.ready || !!recovery.operation} onClick={() => submitTurn(false)}>{t('workbench.ask')}</Button><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} variant="outline" disabled={mountId === null || !canAsk || !recovery.ready || !!recovery.operation} onClick={() => submitTurn(true)}>{t('workbench.outline')}</Button></div></div>
           {recovery.submissionFailed && <p role="alert" className="text-destructive">{t('workbench.answerFailure')}</p>}
           {unmappedSources && <div role="alert" className="space-y-2"><p className="text-sm leading-6 text-muted-foreground">{t('learningWorkspace.unmappedSources')}</p><Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button></div>}
           <TurnRecoveryPanel recovery={recovery} />

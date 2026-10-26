@@ -1,7 +1,7 @@
 import { useLayoutEffect } from 'react'
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Workspace, TurnRecord, TurnRequest, EvidenceCitation, WorkbenchNote } from '@/lib/types/personal'
 import DashboardLayout from '@/app/(dashboard)/layout'
 import { useAuthStore } from '@/lib/stores/auth-store'
@@ -45,6 +45,16 @@ function completedEvidence(request: TurnRequest, answer = 'Generated outline') {
   return { turn: turn as unknown as TurnRecord, parent }
 }
 function show() { return render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: 1, retryDelay: 0 } } })}><TurnOperationProvider><StudyWorkbench notebookId="notebook:1" /></TurnOperationProvider></QueryClientProvider>) }
+let restoreUuid: (() => void) | null = null
+function makeUuidUnavailable(mode: 'missing' | 'throws') {
+  const descriptor = Object.getOwnPropertyDescriptor(crypto, 'randomUUID')
+  Object.defineProperty(crypto, 'randomUUID', { configurable: true, value: mode === 'missing' ? undefined : () => { throw new Error('UUID unavailable') } })
+  restoreUuid = () => {
+    if (descriptor) Object.defineProperty(crypto, 'randomUUID', descriptor)
+    else delete (crypto as Partial<Crypto>).randomUUID
+  }
+}
+afterEach(() => { restoreUuid?.(); restoreUuid = null })
 describe('StudyWorkbench source snapshots', () => {
   beforeEach(() => {
     vi.clearAllMocks(); locale.outlinePrompt = 'workbench.outlinePrompt'
@@ -57,6 +67,31 @@ describe('StudyWorkbench source snapshots', () => {
     vi.mocked(workbenchApi.workspace).mockResolvedValue(structuredClone(fixture))
     vi.mocked(workbenchApi.turns).mockResolvedValue([])
     vi.mocked(workbenchApi.turn).mockResolvedValue({ turn_id: 'new_turn', job_id: 'j1', state: 'queued' })
+  })
+  it.each(['missing', 'throws'] as const)('keeps notes and history usable but denies new turns when mount UUID allocation %s', async mode => {
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), turns: [oldTurn], notes: [{ id: 'note:old', revision: 1, title: 'Saved note', content: 'Saved writing' }] })
+    vi.mocked(workbenchApi.saveNote).mockResolvedValue({ id: 'note:new', revision: 1, title: 'New note', content: 'Independent writing' })
+    makeUuidUnavailable(mode)
+    expect(() => show()).not.toThrow()
+    await screen.findByText('Lecture notes')
+    expect(screen.getByText('Old answer')).toBeVisible()
+    expect(screen.getByText('Saved writing')).toBeInTheDocument()
+    expect(screen.getByText('workbench.unavailable')).toHaveAttribute('role', 'status')
+    expect(screen.queryByText('workbench.emptySelection')).not.toBeInTheDocument()
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'Keep my question' } })
+    for (const name of ['workbench.ask', 'workbench.outline']) {
+      const button = screen.getByRole('button', { name })
+      expect(button).toBeDisabled()
+      fireEvent.click(button)
+    }
+    fireEvent.change(screen.getByLabelText('workbench.noteTitle'), { target: { value: 'New note' } })
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Independent writing' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledWith('notebook:1', expect.objectContaining({ title: 'New note', content: 'Independent writing' })))
+    expect(screen.getByLabelText('workbench.question')).toHaveValue('Keep my question')
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Independent writing')
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
   })
   it.each([
     { engine: 'independent', selection_origin: 'local', source_version_ids: null, remote_source_ids: [] },
@@ -1042,7 +1077,11 @@ describe('StudyWorkbench source snapshots', () => {
     expect(screen.getByLabelText('workbench.question')).toHaveValue('New mount question')
     expect(workbenchApi.job).not.toHaveBeenCalled()
   })
-  it.each(['ask', 'outline'])('a late %s ACK and completion after route remount never owns the new question or editor', async action => {
+  it.each([
+    ['ask', 'available'], ['outline', 'available'],
+    ['ask', 'missing'], ['outline', 'missing'],
+    ['ask', 'throws'], ['outline', 'throws'],
+  ] as const)('a late %s ACK and completion after route remount with UUID %s never owns the new question or editor', async (action, uuidMode) => {
     let acknowledge!: (value: { job_id: string; turn_id: string; state: string }) => void
     let finish!: (turns: TurnRecord[]) => void
     vi.mocked(workbenchApi.turn).mockReturnValue(new Promise(resolve => { acknowledge = resolve }))
@@ -1059,6 +1098,7 @@ describe('StudyWorkbench source snapshots', () => {
     base.jobs = [evidence.parent]
     await act(async () => acknowledge({ job_id: 'j1', turn_id: 'new_turn', state: 'queued' }))
     expect(workbenchApi.turns).not.toHaveBeenCalled()
+    if (uuidMode !== 'available') makeUuidUnavailable(uuidMode)
     rendered.rerender(view('second')); await screen.findByText('Lecture notes')
     fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'New question' } })
     fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'New note' } })
@@ -1066,7 +1106,11 @@ describe('StudyWorkbench source snapshots', () => {
     await screen.findByText('Generated outline')
     expect(screen.getByLabelText('workbench.question')).toHaveValue('New question')
     expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('New note')
-    await waitFor(() => expect(screen.getByRole('button', { name: 'workbench.ask' })).toBeEnabled())
+    await waitFor(() => {
+      const ask = screen.getByRole('button', { name: 'workbench.ask' })
+      if (uuidMode === 'available') expect(ask).toBeEnabled()
+      else expect(ask).toBeDisabled()
+    })
     expect(workbenchApi.turn).toHaveBeenCalledTimes(1)
     expect(workbenchApi.job).not.toHaveBeenCalled()
   })

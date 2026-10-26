@@ -1,5 +1,53 @@
 # F1 前端操作身份进度：2026-10-26
 
+## 最终源码与构建验收：2026-10-26 UTC
+
+**F1 本轮实现、整项独立审查及修复复审、离线测试、生产构建与产物关联校验均已完成。不是上线或实际浏览器验收。** [机器可读验证记录](FRONTEND_TURN_VERIFICATION_2026-10-26.json)保存精确身份和边界。
+
+受测源码 `152250609b142b12aa86dc0e7f1f2cc2436ef0f5`，tree `53ade43f81b08759ff445434023c030b92409981`。随后只更新仓库文档/验证记录，不改变构建输入。
+
+- Ask/Outline 已接入不可变原请求、同步 latch、原 key 显式恢复和只读结果检查；普通认证恢复、路由返回或定时器不自动重新 POST。
+- 完成判定需真实匹配父任务、result 和 canonical answer；失败/取消/未知标签不解锁。隐藏 Studio 中关联任务也不会经 generic job GET 意外派发。
+- 新输入和新笔记保留自己的所有权；迟到 ACK/提纲不得覆盖。已确认答案会刷新普通 workspace 历史，覆盖三种离开/返回时序。
+- 最终整体审查另复现 UUID 能力缺失/抛错导致整页崩溃。现显式保留非 owner 状态、禁用并在 handler 拦截新 Ask/Outline，历史/笔记阅读编辑保存仍可用，旧结果不能取得新编辑器所有权；没有不安全随机或共用 ID 回退。原审查探针两项由红转绿。能力恢复后需真正 remount 才重新准入。
+- 全范围 EOF whitespace 问题已关闭，整段 committed diff 检查通过。独立 scoped 复审确认原两项均解决，没有新 scoped finding。
+
+| 新鲜检查 | 结果 |
+| --- | --- |
+| 前端定向回归 | 407 通过 / 8 文件 |
+| 完整前端单元测试 | 1,739 通过 / 99 文件；根任务独立重跑通过 |
+| synthetic artifact 工具测试 | 25 通过，不代替真实 build |
+| TypeScript / lint | 通过；0 错误、7 个继承 lint 警告 |
+| 整合后端离线测试 | 2,778 通过 / 128 跳过 / 2 警告 |
+| Ruff / format / mypy / OpenAPI | 通过；318 个 Python 源文件 |
+| 正式生产构建 | `npm run build` 通过，使用已有依赖、本地字体、净化环境；未安装依赖或请求远端字体 |
+| 独立产物复核 | `build-artifact.mjs --verify` 通过，与构建输出身份完全一致 |
+
+后端新鲜检查发生于最后四文件前端修复之前；后端/契约源码未变。不把继承 warning 或跳过项算作已解决，不将当前测试替身/合成组件检查冒充真实数据库、worker 或浏览器。
+
+### 审查裁定与代价
+
+1. **严格受约束传输，而非重建 HTTP 栈：** 保留默认平台环境与指定回调，拒绝会改写最终请求或伪造未发送证明的自定义 hook。代价是受约束内部调用不支持任意 Axios hook；普通请求保持兼容。
+2. **父任务绑定与答案完成分离：** 确认真实父身份后只检查，不重复 POST。代价是没有可信答案的未知/失败工作可能长期占用有界槽；没有自动 worker restart 或 exactly-once 承诺。
+3. **精确 workspace active refetch：** 当前 token/context 确认完成后刷新历史。代价是有观察者时增加一次普通读取；不调用 generic job GET，不自动应用旧提纲。
+4. **UUID 故障安全降级：** 保留笔记/阅读，拒绝新 turn；代价是该挂载期间不能新提问/生成提纲，恢复能力后需 remount。没有降低请求 ID 安全性。
+5. **防御性 notebook tagging 暂缓：** hook 若未来同实例直接切换 notebookId，应补标记与 prop-switch 回归。当前唯一产品路由已 keyed remount，审查确认此路径不可达；不是已知当前跨 notebook 泄漏。
+6. **真实运行范围未扩大：** 本轮未启动浏览器、数据库、API/worker、提供方或 CI，未重试被拒绝的 netlink 操作，未修改 main、部署或原用户数据。实际浏览器/运行期验收仍是单独门槛。
+
+恢复仅在当前 document 内存，reload/crash/关 tab/sign-out/根 Provider 替换会丢失 capture，但不证明远端未执行。8 槽 / 1 MiB 请求 JSON 限制不等于 JavaScript 总堆限制。浏览器 endpoint 相等不证明同 URL 后端、人类账户或 Google 账户连续性，服务端默认模型也未固定。现有能力未因此升级为自动研究、OCR、PPT 结构化解析或全库语义综合。
+
+### 实际构建产物身份
+
+本轮构建标识 `4876fd5d-8638-424f-87f8-12428a4fa267`。
+
+- authored source SHA-256: `ba1db0c0a7783be853cde9f79bd88df42e79dcb8e16347b7af051496a4f62853`
+- served artifact SHA-256: `d35d66d8395d6d8cf5799530535c0a0eeab8271ea3dcaa1619fd45b1e76be3f2`
+- manifest SHA-256: `adfc375c6d648cbf68a1fa2177cdfa46407caa7a8b083d39e6c69988822300a8`
+
+这是源文件/产物关联和新鲜度证明，不是可复现构建、依赖供应链认证或运行验收。源码与脱敏记录按既定私有分支同步；临时构建产物不是持久发布库，源码备份也不是用户笔记/数据库备份。
+
+## 分阶段历史（以下“最终审查/构建待执行”为当时状态）
+
 按[分阶段计划](../superpowers/plans/2026-10-26-frontend-turn-ownership.md)实施。**当前 Tasks 1–3 已实现并分别通过独立任务审查，包括 Ask/Outline、恢复 hook 和真实 JobsPanel 的接入。** Task 3 的完成读取/缓存新鲜度 P2 已修复并通过独立复审。整项功能的最终独立审查正在另行进行；生产 build 与真实产物关联尚待执行。此为分阶段源码检查点，不是浏览器、运行期或部署验收。
 
 ## 当前检查点：Task 3 集成与完成历史新鲜度

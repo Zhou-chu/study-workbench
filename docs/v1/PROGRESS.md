@@ -1,5 +1,15 @@
 # StudyWorkbench V1 progress
 
+## F1 本轮最终源码与构建通过：2026-10-26 UTC
+
+[完整实现、审查裁定与验证](FRONTEND_TURN_PROGRESS_2026-10-26.md)及[精确验证记录](FRONTEND_TURN_VERIFICATION_2026-10-26.json)：Task 1–3 与整项最终审查修复完成；最后 UUID 能力异常时整页崩溃及 full-range whitespace 问题已独立复审关闭。受测源码 `152250609b142b12aa86dc0e7f1f2cc2436ef0f5`，tree `53ade43f81b08759ff445434023c030b92409981`。
+
+前端 **1,739 单元 + 25 artifact 工具测试**、407 定向、类型/lint 通过（7 个继承警告）；整合后端新鲜 **2,778 / 128 跳过 / 2 警告**、318 文件静态与 OpenAPI 通过。正式 `npm run build` 和独立真实产物关联复核通过，构建 ID `4876fd5d-8638-424f-87f8-12428a4fa267`。文档/验证记录为其后补充，不改变构建输入。
+
+**未部署、未合并 main，未运行真实浏览器/数据库/worker/提供方或 CI。** 保留当前 document 内存恢复、未知结果保守占槽、endpoint 不等于账户身份等限制；实际 keyed 路由使同实例 notebook-tagging 防御项非当前阻塞。未新增自动搜索、OCR/PPT 解析能力，也不把源码备份视作用户数据备份。
+
+## 先前检查点（以下待办描述为历史）
+
 ## 当前 F1 前端检查点：Tasks 1–3 已实现并通过各任务审查，2026-10-26 UTC
 
 [当前实现、审查与证据](FRONTEND_TURN_PROGRESS_2026-10-26.md)：Ask/Outline 的操作身份、显式同 key 恢复、只读检查、UI/editor 所有权和真实 JobsPanel 窄 fence 已接入。Task 3 完成读取/历史缓存新鲜度 P2 已修复并独立复审通过；覆盖完成时不在场、完成后 remount、替代视图先 remount 后旧 Check 完成三种顺序，断言实际答案与 Save Answer 可用、无重复 POST/generic job GET/新草稿覆盖；退役隐私/目标 context 不 invalidation。

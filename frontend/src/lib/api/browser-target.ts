@@ -11,4 +11,3 @@ export function browserTurnTarget(config: Pick<AppConfig, 'authMode' | 'apiUrl' 
   const apiBase = new URL(`${base}/api`, typeof window === 'undefined' ? undefined : window.location.href).href
   return { mode: config.authMode, apiBase, protocol: config.webSessionProtocol ?? null }
 }
-
