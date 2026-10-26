@@ -72,3 +72,34 @@ describe('persistent jobs', () => {
   })
 
 })
+
+
+describe('scoped turn recovery fence', () => {
+  it('never GETs the parent, same-key child or ambiguous chat while unrelated jobs still poll', async () => {
+    vi.clearAllMocks()
+    const jobs = [
+      { job_id: 'parent', operation: 'chat', state: 'queued', idempotency_key: 'mine' },
+      { job_id: 'child', operation: 'ask', state: 'queued', idempotency_key: 'mine' },
+      { job_id: 'ambiguous', operation: 'ask', state: 'queued' },
+      { job_id: 'other-key', operation: 'ask', state: 'queued', idempotency_key: 'other' },
+      { job_id: 'audio', operation: 'audio', state: 'queued', provider: 'notebooklm' },
+    ]
+    vi.mocked(workbenchApi.job).mockImplementation(async id => jobs.find(job => job.job_id === id)!)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    client.setQueryData(['personal', 'jobs', 'parent'], { ...jobs[0], state: 'failed' })
+    const changed = vi.fn()
+    vi.mocked(workbenchApi.cancelJob).mockResolvedValue({ ...jobs[0], state: 'cancelled_local' })
+    const view = render(<QueryClientProvider client={client}><JobsPanel jobs={jobs} turnFence={{ key: 'mine', parentJobId: 'parent' }} onChanged={changed} /></QueryClientProvider>)
+    await waitFor(() => expect(workbenchApi.job).toHaveBeenCalledTimes(2))
+    expect(vi.mocked(workbenchApi.job).mock.calls.map(args => args[0]).sort()).toEqual(['audio', 'other-key'])
+    expect(screen.queryByText('workbench.states.failed')).not.toBeInTheDocument()
+    fireEvent.click(screen.getAllByRole('button', { name: 'workbench.cancelWaiting' })[0])
+    await waitFor(() => expect(changed).toHaveBeenCalledTimes(1))
+    expect(workbenchApi.cancelJob).toHaveBeenCalledWith('parent')
+    expect(workbenchApi.job).toHaveBeenCalledTimes(2)
+    view.rerender(<QueryClientProvider client={client}><JobsPanel jobs={[{ ...jobs[0], state: 'cancelled_local' }]} turnFence={{ key: 'mine', parentJobId: 'parent' }} onChanged={changed} /></QueryClientProvider>)
+    expect(screen.getByRole('status')).toHaveTextContent('workbench.states.cancelled_local')
+    await client.refetchQueries({ type: 'active' })
+    expect(workbenchApi.job).toHaveBeenCalledTimes(2)
+  })
+})

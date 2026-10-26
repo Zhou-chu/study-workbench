@@ -15,6 +15,7 @@ export const queryClient = new QueryClient({
 })
 
 export const QUERY_KEYS = {
+  workbenchTurnCheck: (id: string) => ['personal', 'turn-check', id] as const,
   portableLimits: ['personal', 'portable', 'limits'] as const,
   workbench: (id: string) => ['personal', 'workspace', id] as const,
   personalTurns: (id: string) => ['personal', 'turns', id] as const,

@@ -1,25 +1,26 @@
 'use client'
-import { isAuthRecoveryError } from '@/lib/api/browser-transport'
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, BookOpen, Files, MessageSquare, NotebookPen, Search, Upload, Layers, Settings2, MoreHorizontal, Globe2 } from 'lucide-react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { evidenceApi } from '@/lib/api/evidence'
 import { useModelDefaults } from '@/lib/hooks/use-models'
 import { useNotebookLMStatus, useNotebookLMCapabilities } from '@/lib/hooks/use-notebooklm'
 import { useWorkbenchUploads } from '@/lib/hooks/use-workbench-uploads'
 import { workbenchApi } from '@/lib/api/workbench'
 import { QUERY_KEYS } from '@/lib/api/query-client'
-import { activeJob, useSaveWorkbenchSelection, useWorkbench } from '@/lib/hooks/use-workbench'
+import { useSaveWorkbenchSelection, useWorkbench } from '@/lib/hooks/use-workbench'
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { useToast } from '@/lib/hooks/use-toast'
 import { newestSelectableVersionId, projectWorkbenchSelection, projectWorkbenchVersion } from '@/lib/utils/workbench-read-model'
 import { canonicalCitationLocator } from '@/lib/utils/evidence'
-import { requestError, requestErrorCode, stateKeys, connectionKeys, isKnownEngine, isKnownSelectionOrigin } from '@/lib/utils/workbench'
-import type { BridgeJob, CreateWorkbenchNoteInput, EvidenceCitation, ScopeSnapshot, TurnRecord, WorkbenchNote, WorkbenchSelection, WorkspaceSelection } from '@/lib/types/personal'
+import { requestError, stateKeys, connectionKeys, isKnownEngine, isKnownSelectionOrigin } from '@/lib/utils/workbench'
+import type { CreateWorkbenchNoteInput, EvidenceCitation, ScopeSnapshot, TurnRecord, WorkbenchNote, WorkbenchSelection, WorkspaceSelection } from '@/lib/types/personal'
 import { EvidenceReader } from '@/components/evidence/EvidenceReader'
 import { NotebookSettingsDialog } from './NotebookSettingsDialog'
 import { JobsPanel } from './JobsPanel'
+import { TurnRecoveryPanel } from './TurnRecoveryPanel'
+import { useWorkbenchTurn } from '@/lib/hooks/use-workbench-turn'
 import { PortableControls } from './PortableControls'
 import { TurnCoverage } from './TurnCoverage'
 import { WorkbenchSourcesList } from './WorkbenchSourcesList'
@@ -38,7 +39,6 @@ const panelLabels = { sources: 'workbench.sources', conversation: 'workbench.rea
 const panelIcons = { sources: Files, conversation: MessageSquare, notes: NotebookPen }
 const emptySelection = { engine: 'notebooklm', selection_origin: 'local', source_version_ids: [], remote_source_ids: [] }
 type NoteSaveInput = CreateWorkbenchNoteInput & { noteId?: string; editorSession?: number; baseRevision?: number | null; answerTurnId?: string }
-interface NoteEditorSnapshot { session: number; revision: number }
 export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const { t } = useTranslation()
   const { toast } = useToast()
@@ -72,6 +72,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   }, [focusUpload, tab])
   const [readerOpen, setReaderOpen] = useState(false)
   const [citation, setCitation] = useState<EvidenceCitation | null>(null)
+  const [mountId] = useState(() => crypto.randomUUID())
   const [question, setQuestion] = useState('')
   const questionRevision = useRef(0)
   // A save may finish after New, Edit, or an outline replaced the draft.
@@ -96,16 +97,9 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const [compareFailed, setCompareFailed] = useState(false)
   const resetNoteReview = () => { setNoteProblem(null); setLatestNotes(null); setComparing(false); setCompareFailed(false) }
   const [noteScope, setNoteScope] = useState<ScopeSnapshot | undefined>()
-  const [pendingJob, setPendingJob] = useState<string | null>(null)
-  const [lastJobOutcome, setLastJobOutcome] = useState<BridgeJob | null>(null)
-  const [pendingTurn, setPendingTurn] = useState<string | null>(null)
-  const [outlineTurn, setOutlineTurn] = useState<({ turnId: string } & NoteEditorSnapshot) | null>(null)
   const sessionId = `v1_${notebookId}`
   const refresh = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.workbench(notebookId) })
   const { uploads, upload, retryUpload, dismissUpload } = useWorkbenchUploads(notebookId, refresh)
-  const history = useQuery({ queryKey: QUERY_KEYS.personalTurns(sessionId), queryFn: () => workbenchApi.turns(sessionId), enabled: !!pendingTurn, retry: false, refetchInterval: query => !isAuthRecoveryError(query.state.error) && pendingTurn ? 2000 : false })
-  const pendingStatus = useQuery({ queryKey: QUERY_KEYS.personalJob(pendingJob || ''), queryFn: ({ signal }) => workbenchApi.job(pendingJob!, signal), enabled: !!pendingJob, retry: false, refetchInterval: query => !isAuthRecoveryError(query.state.error) && activeJob(query.state.data?.state) ? 2000 : false })
-  const turns = [...new Map([...(data?.turns || []), ...(history.data || [])].map(turn => [turn.turn_id, turn])).values()]
   const knownOrigin = isKnownSelectionOrigin(selection.selection_origin)
   const selectedCount = selection.selection_origin === 'local' ? selection.source_version_ids.length : selection.selection_origin === 'remote' ? selection.remote_source_ids.length : 0
   // Configuration availability is not an inference or credential health check.
@@ -144,48 +138,48 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     return evidenceApi.search(searchText, [...selection.source_version_ids])
   }, retry: false })
   const currentNoteScope: ScopeSnapshot | undefined = selection.supported && isKnownEngine(selection.engine) && isKnownSelectionOrigin(selection.selection_origin) ? { engine: selection.engine, selection_origin: selection.selection_origin, source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [], remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [] } : undefined
-  const ask = useMutation({
-    mutationFn: ({ message, outline }: { message: string; outline?: boolean; questionRevision?: number; editorSnapshot?: NoteEditorSnapshot }) => {
-      if (!selection.supported || !isKnownEngine(selection.engine) || !isKnownSelectionOrigin(selection.selection_origin)) throw new Error(t('workbench.unavailable'))
-      return workbenchApi.turn(sessionId, {
-        task: outline ? 'outline' : 'question', notebook_id: notebookId, engine: selection.engine, selection_origin: selection.selection_origin,
+  const recovery = useWorkbenchTurn(notebookId, { independentAvailable: modelState === 'ready', googleAvailable: !connection.isError && !capabilities.isError && connection.data?.state === 'connected' && askCapability?.support === 'available', googleLink: data?.link ?? null })
+  const turns = [...new Map([...(data?.turns || []), ...recovery.turns].map(turn => [turn.turn_id, turn])).values()]
+  const submitTurn = (outline: boolean) => {
+    if (!canAsk || !isKnownEngine(selection.engine) || !isKnownSelectionOrigin(selection.selection_origin)) return
+    recovery.submit({ sessionId, available: canAsk,
+      owner: { mountId, ...(outline ? { editor: { session: noteEditorSession.current, revision: noteEditorRevision.current } } : { questionRevision: questionRevision.current }) },
+      ...(data?.link?.connection_id ? { googleConnectionId: data.link.connection_id } : {}),
+      request: { task: outline ? 'outline' : 'question', notebook_id: notebookId, engine: selection.engine, selection_origin: selection.selection_origin,
         source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [],
         remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [],
-        remote_notebook_id: data?.link?.remote_notebook_id || null, message, idempotency_key: crypto.randomUUID(),
-      })
-    }, retry: false,
-    onSuccess: (turn, variables) => {
-      // An outline never owns the question. A submitted question owns only its
-      // unchanged draft generation, even if later edits return to the same text.
-      if (!variables.outline && variables.questionRevision === questionRevision.current) setQuestion('')
-      setLastJobOutcome(null); setPendingJob('job_id' in turn ? turn.job_id : null); setPendingTurn(turn.turn_id); if (variables.outline && variables.editorSnapshot) setOutlineTurn({ turnId: turn.turn_id, ...variables.editorSnapshot }); refresh() },
-  })
+        remote_notebook_id: data?.link?.remote_notebook_id || null, message: outline ? t('workbench.outlinePrompt') : question.trim() },
+    })
+  }
   useEffect(() => {
-    const result = history.data?.find(turn => turn.turn_id === pendingTurn)
-    if (result && (!activeJob(result.state || result.status) || result.answer)) { setPendingTurn(null); setPendingJob(null) }
-    const outline = history.data?.find(turn => turn.turn_id === outlineTurn?.turnId)
-    if (outline?.answer && outlineTurn) {
-      // Keep late outlines in history (including Save Answer) instead of replacing
-      // a draft the user changed after submitting the outline request.
-      if (outlineTurn.session === noteEditorSession.current && outlineTurn.revision === noteEditorRevision.current) {
+    const operation = recovery.operation
+    if (!operation || !recovery.isCurrent(operation.token)) return
+    const owner = operation.capture.owner
+    const originalMount = owner.mountId === mountId
+    // Acceptance belongs to a draft generation, not to text equality. Trusted
+    // completion can also acknowledge an Ask whose original POST ACK was lost.
+    if ((recovery.acceptance || recovery.completion) && originalMount && operation.capture.dto.task === 'question' && owner.questionRevision === questionRevision.current) {
+      questionRevision.current++
+      setQuestion('')
+    }
+    if (operation.phase !== 'complete') return
+    const completion = recovery.completion
+    if (completion && recovery.isCurrent(completion.token)) {
+      if (originalMount && operation.capture.dto.task === 'outline' && owner.editor?.session === noteEditorSession.current && owner.editor.revision === noteEditorRevision.current) {
+        const outline = completion.turn
         noteEditorSession.current++
         setBaseRevision(null); resetNoteReview()
-        setNoteTitle(t('workbench.outline')); setNoteContent(outline.answer); setNoteScope(outline.scope_snapshot)
+        setNoteTitle(t('workbench.outline')); setNoteContent(outline.answer!); setNoteScope(outline.scope_snapshot)
         setEditingNote({ id: '', title: '', content: '', citations: outline.citations, scope_snapshot: outline.scope_snapshot })
         setStudioOpen(false); setTab('notes')
       }
-      setOutlineTurn(null)
+      recovery.releaseCompleted(completion.token)
+    } else if (!originalMount) {
+      // A prior consumer may have established completion and left before it
+      // could consume the answer. Never apply that old answer to a new editor.
+      recovery.releaseCompleted(operation.token)
     }
-  }, [history.data, pendingTurn, outlineTurn, t])
-  useEffect(() => {
-    const job = pendingStatus.data
-    if (!pendingJob || !job || job.job_id !== pendingJob || activeJob(job.state) || job.state === 'succeeded') return
-    setLastJobOutcome(job)
-    setPendingTurn(null)
-    setPendingJob(null)
-    setOutlineTurn(null)
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.workbench(notebookId) })
-  }, [pendingStatus.data, pendingJob, queryClient, notebookId])
+  }, [recovery, mountId, t])
   const note = useMutation({
     mutationFn: (value: NoteSaveInput) => {
       const payload = { title: value.title, content: value.content, citations: value.citations, scope_snapshot: value.scope_snapshot }
@@ -264,7 +258,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   if (!data) return <div className="p-6 space-y-3"><p role="alert">{requestError(workspace.error) || t('workbench.serviceError')}</p><Button onClick={() => workspace.refetch()}>{t('workbench.retry')}</Button></div>
   const readVersion = citation?.kind === 'remote_unmapped' ? undefined : selection.reading?.source_version_id
   const hasRemoteContext = Boolean(data.link?.remote_notebook_id) || (selection.selection_origin === 'remote' && selection.remote_source_ids.length > 0)
-  const unmappedSources = requestErrorCode(ask.error) === 'UNMAPPED_SOURCE' || requestErrorCode(lastJobOutcome?.error) === 'UNMAPPED_SOURCE'
+  const unmappedSources = recovery.unmappedSources
   const hasUnsavedNote = (saved: WorkbenchNote) => editingNote?.id === saved.id && (note.isPending || !!noteProblem || baseRevision !== saved.revision || noteContent !== (saved.content || '') || (noteTitle || t('common.note')) !== (saved.title || t('common.note')))
   return <div aria-label={t('learningWorkspace.workspace')} className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
     <header className="shrink-0 border-b bg-card px-4 py-3 lg:px-6 space-y-3">
@@ -337,13 +331,10 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
           {!knownOrigin && <p role="status" className="text-xs text-muted-foreground">{t('workbench.scope')}: {typeof selection.selection_origin === 'string' ? selection.selection_origin : ''} — {t('workbench.unavailable')}</p>}
           {selection.supported && knownEngine && selectedCount > 0 && !canAsk && !modelBlocked && <p className="text-xs text-muted-foreground">{googleBlocked || t(selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
           {selectedCount > 0 && googleBlocked && <Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button>}
-          <div className="flex flex-wrap gap-2"><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} disabled={!canAsk || !question.trim() || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: question.trim(), questionRevision: questionRevision.current })}>{t('workbench.ask')}</Button><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} variant="outline" disabled={!canAsk || ask.isPending || !!pendingTurn} onClick={() => ask.mutate({ message: t('workbench.outlinePrompt'), outline: true, editorSnapshot: { session: noteEditorSession.current, revision: noteEditorRevision.current } })}>{t('workbench.outline')}</Button></div></div>
-          {(ask.isPending || pendingTurn) && <p role="status" className="text-sm text-teal">{t('workbench.asking')}</p>}
-          {ask.isError && <div role="alert"><p className="text-destructive">{t('workbench.answerFailure')}</p>{!unmappedSources && <p className="text-xs">{requestError(ask.error) || t('workbench.unknownSubmission')}</p>}</div>}
+          <div className="flex flex-wrap gap-2"><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} disabled={!canAsk || !question.trim() || !recovery.ready || !!recovery.operation} onClick={() => submitTurn(false)}>{t('workbench.ask')}</Button><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} variant="outline" disabled={!canAsk || !recovery.ready || !!recovery.operation} onClick={() => submitTurn(true)}>{t('workbench.outline')}</Button></div></div>
+          {recovery.submissionFailed && <p role="alert" className="text-destructive">{t('workbench.answerFailure')}</p>}
           {unmappedSources && <div role="alert" className="space-y-2"><p className="text-sm leading-6 text-muted-foreground">{t('learningWorkspace.unmappedSources')}</p><Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button></div>}
-          {pendingStatus.isError && <div role="alert"><p className="text-xs text-destructive">{t('workbench.jobStatusUnavailable')}</p><Button size="sm" variant="outline" onClick={() => pendingStatus.refetch()}>{t('workbench.refreshJob')}</Button></div>}
-          {lastJobOutcome && lastJobOutcome.state !== 'succeeded' && <div role="status"><p>{t(stateKeys[lastJobOutcome.state] || 'workbench.unavailable')}</p>{lastJobOutcome.state === 'submission_unknown' && <p className="text-xs text-muted-foreground">{t('workbench.unknownSubmission')}</p>}</div>}
-          {history.isError && <div role="alert"><p className="text-xs text-destructive">{requestError(history.error) || t('workbench.error')}</p><Button size="sm" variant="outline" onClick={() => history.refetch()}>{t('workbench.refresh')}</Button></div>}
+          <TurnRecoveryPanel recovery={recovery} />
           {uncertainAnswer && <div className="space-y-3" data-answer-turn={uncertainAnswer.turnId}>
             <h3 className="font-medium break-words">{uncertainAnswer.snapshot.title}</h3>
             <NoteConflictPanel problem={uncertainAnswer.problem} baseRevision={null} draft={uncertainAnswer.snapshot} latest={answerLatest ? [answerLatest] : null} loading={answerComparing} readFailed={answerReadFailed} onCompare={compareAnswer} />
@@ -363,7 +354,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
         {noteProblem && <NoteConflictPanel problem={noteProblem} baseRevision={baseRevision} draft={{ title: noteTitle, content: noteContent, citations: editingNote?.citations, scope_snapshot: noteScope }} latest={latestNotes} loading={comparing} readFailed={compareFailed} onCompare={compareNote} onReload={editingNote?.id ? reloadNote : undefined} />}
         {!data.notes.length && <p className="text-sm text-muted-foreground">{t('learningWorkspace.notesEmpty')}</p>}
         {data.notes.map(saved => <article key={saved.id} className="rounded-md border p-3 space-y-2"><h3 className="font-medium">{saved.title}</h3><MarkdownRenderer>{saved.content || ''}</MarkdownRenderer>{saved.citations?.map(reference => <Button key={reference.citation_id} size="sm" variant="ghost" onClick={() => openCitation(reference)}>{reference.source_title} · {reference.citation_id}</Button>)}{Number.isInteger(saved.revision) && <Button size="sm" variant="outline" onClick={() => { noteEditorSession.current++; setBaseRevision(saved.revision); resetNoteReview(); setEditingNote(saved); setNoteTitle(saved.title || ''); setNoteContent(saved.content || ''); setNoteScope(saved.scope_snapshot) }}>{t('common.edit')}</Button>}{Number.isInteger(saved.revision) && <fieldset disabled={hasUnsavedNote(saved)}><SnapshotPromotionButton notebookId={notebookId} origin={{ kind: 'note', id: saved.id, revision: saved.revision }} onAdded={refresh} /></fieldset>}{hasUnsavedNote(saved) && <p className="text-xs text-muted-foreground">{t('sourceSnapshots.saveFirst')}</p>}</article>)}
-        </div><div className={cn("space-y-4", !studioOpen && "hidden")}><p className="text-xs leading-5 text-muted-foreground">{t('learningWorkspace.studioDescription')}</p><JobsPanel jobs={data.jobs || []} onChanged={refresh} /></div>
+        </div><div className={cn("space-y-4", !studioOpen && "hidden")}><p className="text-xs leading-5 text-muted-foreground">{t('learningWorkspace.studioDescription')}</p><JobsPanel jobs={data.jobs || []} onChanged={refresh} turnFence={recovery.operation ? { key: recovery.operation.capture.dto.idempotency_key, parentJobId: recovery.operation.receipt?.jobId, turnId: recovery.operation.receipt?.turnId } : undefined} /></div>
       </aside>
     </div>
     <WebDiscoveryDialog key={notebookId} onCloseAutoFocus={event => { event.preventDefault(); discoveryOpener.current?.focus() }} notebookId={notebookId} open={discoverOpen} onOpenChange={setDiscoverOpen} onImported={refresh} />

@@ -1,8 +1,43 @@
 # F1 前端操作身份进度：2026-10-26
 
-按[分阶段计划](../superpowers/plans/2026-10-26-frontend-turn-ownership.md)实施。当前完成 Task 1 基础边界与 Task 2 核心/Provider，尚未完成用户界面的操作身份/恢复功能，不以本页替代浏览器验收。
+按[分阶段计划](../superpowers/plans/2026-10-26-frontend-turn-ownership.md)实施。**当前 Tasks 1–3 已实现并分别通过独立任务审查，包括 Ask/Outline、恢复 hook 和真实 JobsPanel 的接入。** Task 3 的完成读取/缓存新鲜度 P2 已修复并通过独立复审。整项功能的最终独立审查正在另行进行；生产 build 与真实产物关联尚待执行。此为分阶段源码检查点，不是浏览器、运行期或部署验收。
 
-## Task 1：上下文与最终请求发送保护
+## 当前检查点：Task 3 集成与完成历史新鲜度
+
+受测源码提交 `1f7bb9518fd6e4f65af05b0e550d5de67ffe3ffc`，tree `afbfba281185d890e30555313651cfc6984d069f`；本页及总进度随后仅作脱敏文档更新，不改变应用源码。
+
+- Ask/Outline 同步占用 registry 的同一 notebook 槽和 busy latch；显式恢复发送原 session/key/body/target，不自动生成新操作。挂载、认证恢复、focus、online、timer 不发 POST；已知父任务只允许读取检查。未决/失败/取消标签本身不授权释放。
+- Check 强制读取捕获目标的 workspace 与 canonical history，并传入已知 receipt；不以普通缓存或 generic job GET 证明完成。真实 JobsPanel（包括 CSS 隐藏的 Studio）按窄 turn fence 禁用关联/身份不确定任务的 generic GET 和轮询；无关任务行为不变。
+- 原挂载的 question generation 与 editor session/revision 控制 UI 所有权；迟到 ACK/完成不能覆盖新挂载、新输入或新笔记。保留原引用/scope，现有显式 Save Answer 与笔记保存/冲突语义不变。
+- 独立审查发现的 P2：已确认答案可能只存在于短暂 Check 结果，普通 workspace 缓存却在生产五分钟 staleTime 下仍 fresh 且为空。最终修复在再次确认当前 token/context 后、mounted-only guard 前，仅对捕获 notebook 的精确 workspace key 作 active-refetch invalidation；完成证明仍来自新鲜标记读取，不来自该普通缓存。
+- 回归覆盖全部三种顺序：完成时视图不在场；原视图在场完成后重新挂载；替代视图已挂载、旧 Check 随后完成。均断言实际答案与可用 Save Answer、恰好一次 POST、一次 canonical-history Check、零 generic job GET；替代视图的新草稿不被覆盖。隐私 epoch 或目标已退役的结果不触发 invalidation 或普通 workspace refresh。
+- 两轮行为 RED 先证明缺陷（包括被否决的 none-only invalidation 无法刷新已挂载替代视图），最终五条生命周期回归全绿。独立复审另以原 absent-view 探针确认答案/Save Answer；P2 关闭，无待修 Task 3 必选项。
+
+| 最终 Task 3 源码检查 | 结果 |
+| --- | --- |
+| 定向 integration/core/provider/locales | 401 通过，8 文件 |
+| 全前端单元测试 | 1,733 通过，99 文件 |
+| synthetic artifact identity 单元测试 | 25 通过（不等于真实构建产物验收） |
+| TypeScript | 通过，无诊断 |
+| lint | 0 错误，7 个继承警告 |
+| 独立任务审查 | Tasks 1–3 通过；Task 3 修复复审关闭 P2 |
+| 整项功能最终独立审查 | 正在独立进行，尚无最终结论 |
+| 生产 build / 真实产物关联 | 待执行 |
+
+本次文档/发布不重跑测试或构建；以上来自该冻结源码的新鲜任务证据。关联读取组合后的后端 2,778 通过 / 128 跳过是 Task 2 阶段的独立既有证据，不冒充 Task 3 后端重跑。没有新的浏览器、服务、数据库、worker、提供方、CI 或部署验收，不修改 main 或上游仓库。
+
+## 当前边界与剩余门槛
+
+- exact-target 仅约束浏览器可见模式/API endpoint，不证明同 URL 背后服务器未更换，不建立稳定人类账户身份，也不固定服务端默认模型。Google `connection_id: notebooklm` 只是观察到的 provider label，不证明 Google 账户连续性；原观察目标恢复后也只重新允许显式同 key POST，不自动发送。
+- 恢复仅保留于当前 document 内存。reload、crash、关 tab、sign-out 或根 Provider 替换会丢失本地 capture；丢失不证明或停止远端工作。没有持久 journal、跨 tab 恢复或 TTL 驱逐；释放引用不是安全擦除，也不能撤回已发送字节。不宣称 exactly-once、可靠 dispatch 或完整重复执行风险消除。
+- 唯一保留的轻微 P3 是 hook 在**同一实例**直接切换 notebookId 时的防御性 read tagging；实际唯一产品路由以 notebookId 作 key、强制重新挂载，因此本检查点不受该路径阻塞。若未来复用同一实例，须补 notebook 标记和 prop-switch 回归。
+- 待整项最终独立审查、生产 build 与真实产物身份关联完成后另记结论；这些离线门槛仍不替代浏览器/运行期/部署验收。
+
+## 历史阶段记录（以下限制与测试数不是当前状态）
+
+下方保留 Tasks 1/2 当时的证据与决策。诸如“旧界面尚未接入”“Task 3 待实现”“未具备恢复能力”均描述当时阶段，已由上方 Task 3 当前状态取代。
+
+## 历史 Task 1：上下文与最终请求发送保护
 
 - 非敏感 context 只含 epoch、浏览器可见 API 目标/模式/协议与 ready 状态；实际目标变化或显式本地退出/本人撤销意图同步推进 epoch。普通认证恢复、同目标 readiness 变化不据此丢弃未来的未决 capture。
 - 配置 reset 只暂停发送并推进配置请求 generation；迟到的旧请求不能覆盖或返回新配置之前的可用结果。
@@ -13,7 +48,7 @@
 
 独立审查发现并经两轮复审修复的同类缺口：受约束请求拒绝非默认 request/response transforms、validateStatus、函数 withXSRFToken/parseReviver，以及偏离已捕获平台默认值的 env 替换（包括 Request/Response/fetch）。普通请求保留既有自定义行为。真实安装的 Axios adapter 与合成 native fetch 证明这些回调不能改写目标或在已发送后伪造“未发送”；不宣称抵御任意脚本替换浏览器原生全局对象。
 
-## 新鲜验证与范围
+## 历史 Task 1 验证与范围
 
 被测本地提交 `3abca4ae9a75c347636a6945153f173f993bc9d2`，tree `760f1dc49b9484e2d34f427b9ce20021cc6ffdd5`。
 
@@ -29,7 +64,7 @@
 
 本批未运行生产 build、浏览器、服务、数据库或提供方；最终集成后仍需新鲜构建和产物身份校验。上一个后端验证独立保留，不冒充本批重跑。未修改 main 或部署。
 
-## 明确限制与下一步
+## 历史 Task 1 限制与当时下一步
 
 exact-target 仅指浏览器可见的模式/API endpoint，不证明同 URL 背后的服务器未更换，不建立稳定的人类账户身份，也不固定服务端默认模型。此处为 Task 1 时的限制；Task 2 核心现已在下节记录，实际同 key/body 恢复界面与编辑器所有权仍待 Task 3。
 
@@ -38,7 +73,7 @@ exact-target 仅指浏览器可见的模式/API endpoint，不证明同 URL 背�
 决策：受约束请求只接受已捕获的默认平台环境和指定默认转换/状态验证回调，代价是这类内部调用不再支持任意自定义 Axios hook；普通请求不受此限制。
 
 
-## Task 2：有界操作身份、匹配与根 Provider
+## 历史 Task 2：有界操作身份、匹配与根 Provider
 
 - 每个 notebook 保留一个不可变请求，最多 8 槽与合计 1 MiB 请求 JSON 的 UTF-8 字节；不以 TTL/LRU 丢弃未知操作，不承诺整个 JavaScript 堆大小。没有网络、timer、凭据、答案正文、原始错误或 UI callbacks 存入 registry。
 - 初次提交、显式重试、检查同步占用同一个 busy latch；operation/context/attempt 全匹配才接受回执。未知结果不会被后来未发送抹除；已知原任务 ID 后只检查，不把重复 POST 当 worker restart。

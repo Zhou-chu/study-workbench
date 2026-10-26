@@ -24,7 +24,7 @@ function fixture(engine: 'independent' | 'notebooklm' = 'independent', origin: '
     ...(engine === 'independent' ? { idempotency_key: capture.operationId, generation_status: 'succeeded' } : { job_id: 'google:child' }),
     scope_snapshot: scope, evidence_ids: ['evidence:one'], citations: [{
       citation_id: 'c1', kind: 'local_evidence', source_version_id: 'version:a', evidence_id: 'evidence:one', source_title: 'Source',
-      locator: { page_index: 0, page_label: null, block_id: null, start_offset: 0, end_offset: 5, bbox: null }, quote: 'Quote', reference_validity: 'verified',
+      locator: { page_index: 0, page_label: null, block_id: 'page_0000', start_offset: 0, end_offset: 5, bbox: null }, quote: 'Quote', reference_validity: 'verified',
       // EvidenceService.validate_citation serializes these nullable fields. Mapped
       // Google references reuse that exact result and attach the remote reference.
       independent_support: null, provenance: null, reason: null,

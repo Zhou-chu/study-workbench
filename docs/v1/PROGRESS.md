@@ -1,5 +1,17 @@
 # StudyWorkbench V1 progress
 
+## 当前 F1 前端检查点：Tasks 1–3 已实现并通过各任务审查，2026-10-26 UTC
+
+[当前实现、审查与证据](FRONTEND_TURN_PROGRESS_2026-10-26.md)：Ask/Outline 的操作身份、显式同 key 恢复、只读检查、UI/editor 所有权和真实 JobsPanel 窄 fence 已接入。Task 3 完成读取/历史缓存新鲜度 P2 已修复并独立复审通过；覆盖完成时不在场、完成后 remount、替代视图先 remount 后旧 Check 完成三种顺序，断言实际答案与 Save Answer 可用、无重复 POST/generic job GET/新草稿覆盖；退役隐私/目标 context 不 invalidation。
+
+受测源码 `1f7bb9518fd6e4f65af05b0e550d5de67ffe3ffc` / tree `afbfba281185d890e30555313651cfc6984d069f`：前端 **1,733 单元 + 25 synthetic artifact identity**，定向 401；TypeScript/lint 通过（0 错误、7 个继承警告）。本次仅更新文档，不重跑测试；组合后端 **2,778 / 128 跳过**仍是 Task 2 历史证据，非本次后端重跑。
+
+**整项功能最终独立审查正在另行进行，生产 build 与真实产物关联待执行；不是浏览器、运行期、CI 或部署验收。** exact-target 仅指浏览器可见模式/API endpoint，不证明服务器或人类/Google 账户连续性；恢复仅在当前 document 内存，reload/crash/关 tab/sign-out/根 Provider 替换丢失 capture 不证明或停止远端工作。轻微 hook notebook-tagging P3 仅涉及未来同实例切换 notebookId；实际路由已 keyed remount，非当前阻塞。未修改 main、上游或部署。
+
+## 历史阶段记录
+
+以下保留当时检查点；“前端/恢复 UI 待实施”等旧限制与旧测试数不是当前状态，以本页顶部和链接页的当前检查点为准。
+
 ## F1 核心与关联读取组合验收：2026-10-26 UTC
 
 [Task 2 核心/Provider](FRONTEND_TURN_PROGRESS_2026-10-26.md)已通过独立复审，真实引用 null 兼容问题关闭；[NotebookLM 关联物理键](NOTEBOOKLM_LINK_IDENTITY_2026-10-26.md)已对齐并保护历史重绑定。组合后端 2,778 / 128 跳过，前端 1,701 单元 + 25 artifact，静态/类型/lint/OpenAPI 通过。实际恢复 UI、build、浏览器与部署仍未完成。

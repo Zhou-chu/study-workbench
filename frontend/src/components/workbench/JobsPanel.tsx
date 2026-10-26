@@ -35,17 +35,26 @@ function canPoll(job: BridgeJob | undefined) {
   return !!job && job.restored_history !== true && job.replay_allowed !== false && typeof job.operation === 'string' && Object.hasOwn(operationKeys, job.operation) && activeJob(job.state)
 }
 
-function JobCard({ job, onChanged }: { job: BridgeJob; onChanged: () => void }) {
+export type TurnFence = { key: string; parentJobId?: string; turnId?: string }
+function isFenced(job: BridgeJob, fence?: TurnFence): boolean {
+  if (!fence) return false
+  if (job.job_id === fence.parentJobId || (fence.turnId && job.turn_id === fence.turnId)) return true
+  const snapshot = job.request_snapshot && typeof job.request_snapshot === 'object' && !Array.isArray(job.request_snapshot) ? job.request_snapshot as Record<string, unknown> : null
+  const keys = [job.idempotency_key, snapshot?.idempotency_key].filter((key): key is string => typeof key === 'string' && !!key.trim())
+  if (keys.includes(fence.key)) return true
+  return (job.operation === 'chat' || job.operation === 'ask') && keys.length === 0
+}
+function JobCard({ job, onChanged, fenced }: { job: BridgeJob; onChanged: () => void; fenced: boolean }) {
   const { t } = useTranslation()
   const [audioUrl, setAudioUrl] = useState<string>()
-  const status = useQuery({ queryKey: QUERY_KEYS.personalJob(job.job_id), queryFn: () => workbenchApi.job(job.job_id), initialData: job, enabled: canPoll(job), retry: false, refetchInterval: query => !isAuthRecoveryError(query.state.error) && canPoll(query.state.data) ? 2000 : false })
-  const current = status.data || job
+  const status = useQuery({ queryKey: QUERY_KEYS.personalJob(job.job_id), queryFn: () => workbenchApi.job(job.job_id), initialData: job, enabled: !fenced && canPoll(job), retry: false, refetchInterval: query => !fenced && !isAuthRecoveryError(query.state.error) && canPoll(query.state.data) ? 2000 : false })
+  const current = fenced ? job : status.data || job
   const knownOperation = typeof current.operation === 'string' && Object.hasOwn(operationKeys, current.operation)
   const knownState = ['queued', 'running', 'waiting_remote', 'succeeded', 'failed', 'needs_reauth', 'submission_unknown', 'cancelled_local'].includes(current.state)
   const live = current.restored_history !== true && current.replay_allowed !== false
   const remoteWork = current.provider === 'notebooklm' || current.operation === 'chat'
   const canCancel = live && knownOperation && knownState && (current.state === 'queued' || (current.state === 'running' && current.operation === 'chat') || (activeJob(current.state) && current.provider === 'notebooklm'))
-  const cancel = useMutation({ mutationFn: () => workbenchApi.cancelJob(job.job_id), retry: false, onSuccess: () => { status.refetch(); onChanged() } })
+  const cancel = useMutation({ mutationFn: () => workbenchApi.cancelJob(job.job_id), retry: false, onSuccess: () => { if (!fenced) void status.refetch(); onChanged() } })
   const result = current.result && typeof current.result === 'object' && !Array.isArray(current.result) ? current.result as Record<string, unknown> : undefined
   const artifact = result?.artifact && typeof result.artifact === 'object' && !Array.isArray(result.artifact) ? result.artifact as Record<string, unknown> : undefined
   const artifactId = typeof artifact?.artifact_id === 'string' && artifact.artifact_id ? artifact.artifact_id : undefined
@@ -69,7 +78,7 @@ function JobCard({ job, onChanged }: { job: BridgeJob; onChanged: () => void }) 
     {result?.downloaded === false && <p className="text-muted-foreground">{t('workbench.artifactNotSaved')}</p>}
     {typeof result?.download_error === 'string' && <p className="text-muted-foreground">{result.download_error}</p>}
     {result?.import_report != null && <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words">{JSON.stringify(result.import_report, null, 2)}</pre>}
-    {(status.isError || cancel.isError || download.isError) && <p role="alert" className="text-destructive">{requestError(status.error || cancel.error || download.error) || t('workbench.error')}</p>}
+    {((!fenced && status.isError) || cancel.isError || download.isError) && <p role="alert" className="text-destructive">{requestError((!fenced && status.error) || cancel.error || download.error) || t('workbench.error')}</p>}
     {(current.remote_may_continue === true || (['running', 'waiting_remote'].includes(current.state) && remoteWork)) && <p className="text-muted-foreground">{t('workbench.remoteMayContinue')}</p>}
     {canCancel && <Button size="sm" variant="outline" disabled={cancel.isPending} onClick={() => cancel.mutate()}>{t('workbench.cancelWaiting')}</Button>}
     {downloadUrl && <div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" disabled={download.isPending} onClick={() => download.mutate(false)}>{t('workbench.downloadResult')}</Button>{audio && <Button size="sm" variant="outline" disabled={download.isPending} onClick={() => download.mutate(true)}>{t('workbench.playAudio')}</Button>}</div>}
@@ -85,7 +94,7 @@ function JobCard({ job, onChanged }: { job: BridgeJob; onChanged: () => void }) 
     {audioUrl && <audio className="w-full" controls src={audioUrl} />}
   </article>
 }
-export function JobsPanel({ jobs, onChanged }: { jobs: BridgeJob[]; onChanged: () => void }) {
+export function JobsPanel({ jobs, onChanged, turnFence }: { jobs: BridgeJob[]; onChanged: () => void; turnFence?: TurnFence }) {
   const { t } = useTranslation()
-  return <section className="space-y-3 border-t pt-3"><h3 className="font-semibold">{t('workbench.jobs')}</h3>{!jobs.length && <p className="text-xs text-muted-foreground">{t('workbench.noJobs')}</p>}{jobs.map(job => <JobCard key={job.job_id} job={job} onChanged={onChanged} />)}</section>
+  return <section className="space-y-3 border-t pt-3"><h3 className="font-semibold">{t('workbench.jobs')}</h3>{!jobs.length && <p className="text-xs text-muted-foreground">{t('workbench.noJobs')}</p>}{jobs.map(job => <JobCard key={job.job_id} job={job} onChanged={onChanged} fenced={isFenced(job, turnFence)} />)}</section>
 }

@@ -27,7 +27,7 @@ Normative rules for working on the Next.js frontend. Architecture and flow walkt
 - Cache invalidation is deliberately broad (e.g. `['sources']` hits all source queries) — a simplicity/perf trade-off, be precise only when it matters.
 - Dark mode requires the `dark` class on the document root, not just `prefers-color-scheme`. It's hand-rolled: the zustand `theme-store` (persisted as `theme-storage`) sets the class via `ThemeProvider` — no next-themes.
 - Dialogs don't auto-reset form state (parent clears it) and auto-focus the first input (layout shift risk with conditional inputs). Fixed overlays use `z-50`.
-- Provider nesting order in `app/layout.tsx` matters: ErrorBoundary → ThemeProvider → QueryProvider → I18nProvider → ConnectionGuard → Toaster. ErrorBoundary is a class component and uses the raw `enUS` locale object (no hooks).
+- Provider nesting order in `app/layout.tsx` matters: ErrorBoundary → ThemeProvider → QueryProvider → I18nProvider → TurnOperationProvider → ConnectionGuard → Toaster. ErrorBoundary is a class component and uses the raw `enUS` locale object (no hooks).
 - `i18n` runs with `useSuspense: false` (no SSR for translations).
 
 ## Deep dives
