@@ -15,6 +15,7 @@ from open_notebook.ai.connection_tester import normalize_anthropic_compatible_ba
 from open_notebook.database.repository import ensure_record_id, repo_query
 from open_notebook.domain.base import ObjectModel, RecordModel
 from open_notebook.exceptions import ConfigurationError, NotFoundError
+from open_notebook.utils.boundary_logging import log_boundary_failure
 from open_notebook.utils.url_validation import validate_url
 
 ModelType = Union[LanguageModel, EmbeddingModel, SpeechToTextModel, TextToSpeechModel]
@@ -355,11 +356,7 @@ class ModelManager:
         try:
             return await self.get_model(model_id, **kwargs)
         except (ValueError, ConfigurationError) as e:
-            logger.error(
-                f"Failed to load default model for type '{model_type}': {e}. "
-                f"The configured model_id '{model_id}' may have been deleted or misconfigured. "
-                f"Please go to Manage → Models and reconfigure the default model."
-            )
+            log_boundary_failure("default_model_load", e)
             return None
 
 

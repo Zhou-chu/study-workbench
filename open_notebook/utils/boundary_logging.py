@@ -11,6 +11,10 @@ from loguru import logger
 _OPERATIONS = frozenset(
     {
         "llm_error_classification",
+        "ask_stream",
+        "source_chat_stream",
+        "default_model_load",
+        "discard_unanswered_message",
         "repo_query",
         "repo_create",
         "repo_delete",
