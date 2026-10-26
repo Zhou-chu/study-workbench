@@ -262,6 +262,50 @@ def test_boundary_helper_does_not_call_exception_renderers(logs):
     assert_metadata_only(logs, "repo_query", "UnprintableError", "ERROR")
 
 
+@pytest.mark.parametrize("padding", ["", "x" * 400], ids=["short", "long"])
+@pytest.mark.parametrize(
+    "name,expected_type",
+    [
+        ("ProviderFailure", "ProviderFailure"),
+        ("E" * 80, "E" * 80),
+        ("E" * 81, "UnknownError"),
+        ("Error\n" + PAYLOAD, "UnknownError"),
+        ("éError", "UnknownError"),
+    ],
+)
+def test_unmatched_classifier_warning_is_metadata_only(
+    logs, padding, name, expected_type
+):
+    from open_notebook.utils.error_classifier import classify_error
+
+    error_class = type(name, (Exception,), {})
+    try:
+        raise error_class(PAYLOAD + padding) from ValueError(PAYLOAD)
+    except Exception as error:
+        # An active cause chain must not be attached to the selected sink.
+        classify_error(error)
+    assert len(logs) == 1
+    assert_metadata_only(logs, "llm_error_classification", expected_type, "WARNING")
+
+
+def test_boundary_helper_allows_classifier_operation_without_rendering(logs):
+    from open_notebook.utils.boundary_logging import log_boundary_failure
+
+    class UnprintableError(Exception):
+        def __str__(self):
+            raise AssertionError("Exception text must not reach the sink")
+
+        def __repr__(self):
+            raise AssertionError("Exception repr must not reach the sink")
+
+    log_boundary_failure(
+        "llm_error_classification", UnprintableError(PAYLOAD), level="WARNING"
+    )
+    assert_metadata_only(
+        logs, "llm_error_classification", "UnprintableError", "WARNING"
+    )
+
+
 @pytest.mark.asyncio
 async def test_save_keeps_transaction_runtime_error_identity(monkeypatch, logs):
     error = RuntimeError("transaction conflict " + PAYLOAD)

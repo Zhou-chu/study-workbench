@@ -1,4 +1,4 @@
-"""Metadata-only logging for explicitly migrated database/domain boundaries.
+"""Metadata-only logging for explicitly migrated shared error boundaries.
 
 This is not a general exception sanitizer: exception messages, arguments,
 causes, query inputs and model values must never be passed to the log sink.
@@ -10,6 +10,7 @@ from loguru import logger
 
 _OPERATIONS = frozenset(
     {
+        "llm_error_classification",
         "repo_query",
         "repo_create",
         "repo_delete",

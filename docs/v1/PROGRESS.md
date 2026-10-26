@@ -1,5 +1,9 @@
 # StudyWorkbench V1 progress
 
+## 提供方分类器边界：2026-10-26 UTC
+
+[本批实现与验证](PROVIDER_CLASSIFIER_BOUNDARY_2026-10-26.md)关闭分类器三条原文透传路径与未匹配警告日志，保留类型、规则顺序、cause 和结构化回执。新鲜完整离线后端 2,559 通过 / 128 跳过；Ruff、格式、mypy、OpenAPI 检查通过。其余四处选定日志出口与真实运行验收尚未完成，不宣称全局脱敏或上线。
+
 ## 原生原型分支对齐：2026-10-24 UTC
 
 [有界源码审查](NATIVE_BRANCH_ALIGNMENT_2026-10-24.md)核验 Core/UI 为叠加切片（UI ahead 1 / behind 0），共享 domain/fixture 与既有后端契约对齐；新宽松 workspace fixture 尚未覆盖。当前仍是 RN 内存原型，不是已连接或可安装应用；未运行新的原生测试/构建/设备验收，未发现新的高置信度生产结构缺陷。真实 port 与持久保存所有权设计保留为下一步。
