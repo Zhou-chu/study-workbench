@@ -529,9 +529,11 @@ class EvidenceService:
                 )
                 await self.store.put("version", version_id, version)
             return extraction
-        except Exception as exc:
+        except Exception:
             extraction.update(
-                status="failed", error=str(exc)[:500], completed_at=_now()
+                status="failed",
+                error="Source extraction could not be completed.",
+                completed_at=_now(),
             )
             async with self.store.project_lock(version["notebook_id"]):
                 await self.store.put("extraction", extraction_id, extraction)

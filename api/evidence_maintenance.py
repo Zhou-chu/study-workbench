@@ -198,10 +198,13 @@ class EvidenceMaintenanceService:
                         "evidence_count": len(extraction["evidence_ids"]),
                     }
                 update = {"state": "succeeded", "result": result, "completed_at": now()}
-            except Exception as exc:
+            except Exception:
                 update = {
                     "state": "failed",
-                    "error": {"code": type(exc).__name__, "message": str(exc)[:500]},
+                    "error": {
+                        "code": "EVIDENCE_MAINTENANCE_FAILED",
+                        "message": "Evidence maintenance could not be completed.",
+                    },
                     "completed_at": now(),
                 }
             async with self.store.project_lock(job["notebook_id"]):
