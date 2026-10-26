@@ -93,7 +93,7 @@ type SafePostOutcome =
   { kind: 'unknown'; reason: 'transport' | 'receipt' | 'conflict' | 'unavailable' } |
   { kind: 'bound'; jobId: string; turnId: string; state: ObservedTurnState; dispatchUnknown: boolean }
 type TurnMatch = { kind: 'unknown'; reason: UnknownTurnReason } |
-  { kind: 'bound'; jobId: string; turnId: string; state: ObservedTurnState } |
+  { kind: 'bound'; jobId: string; turnId: string; state: ObservedTurnState; reason?: UnknownTurnReason } |
   { kind: 'complete'; jobId: string; turnId: string; turn: TurnRecord }
 createTurnRegistry(): TurnRegistry
 // Registry methods:
@@ -107,7 +107,9 @@ releaseCompleted(operationId: string): void
 invalidate(): void
 getSnapshot(notebookId: string): TurnOperation | null
 subscribe(listener: () => void): () => void
-reconcileTurn(capture: TurnCapture, workspace: unknown, history: unknown): TurnMatch
+type TurnReceipt = Readonly<{jobId: string; turnId: string}>
+reconcileTurn(capture: TurnCapture, workspace: unknown, history: unknown, receipt?: TurnReceipt): TurnMatch
+readTurnPostOutcome(status: number, body: unknown, receipt?: TurnReceipt): SafePostOutcome
 ```
 
 `admit` revalidates its structurally typed input, creates one UUID for operationId/idempotency_key, and returns a token only after storing the copied capture. Define/export `TurnCapture` as `{operationId, sessionId, context, owner, dto: Readonly<TurnRequest>, bytes, googleConnectionId?}`. Define/export `TurnOperation` as `{capture: TurnCapture, token: AttemptToken, phase: 'posting'|'not-sent'|'unknown'|'bound'|'complete', busy: 'post'|'check'|null, postAttempts: number, everPossiblyDispatched: boolean, receipt?: {jobId:string;turnId:string}, observedState:ObservedTurnState, reason?:UnknownTurnReason}`. `TurnRegistry` is the interface of the listed methods; mutable Maps stay private. A complete match's turn stays in the hook's read/query data, not the registry. The pure registry compares passed tokens to captures; the provider/hook facade compares them to the current context signal before admission/read/settlement, in addition to its synchronous invalidation subscription.
@@ -116,12 +118,12 @@ Use readonly/deep-frozen allowlisted DTO/arrays, opaque operation ID, context ep
 
 Only a locally proven first-and-only POST attempt not dispatched (`postAttempts === 1`, no earlier uncertainty/receipt) exposes explicit **Abandon unsent request**. Read checks do not increment postAttempts. Any HTTP error, timeout/cancel, missing/malformed receipt, future state or later local-not-dispatched outcome leaves the original fence. No remote retry_safe flag, attempts=0, not_submitted, failed, needs_reauth or cancelled_local proves safe release.
 
-Valid 2xx IDs or a valid 400 WORKER_UNAVAILABLE sibling dispatch_receipt bind original parent job_id/turn_id without claiming completion. Validate receipt fields and consistency; absence, null, malformed/future values, retry_safe:true or conflicting IDs remain inconclusive. Do not overwrite previously known IDs on conflict. Keep fixed safe reason enums, not arbitrary server text.
+Valid 2xx IDs with absent optional dispatch_receipt, or a valid 400 WORKER_UNAVAILABLE sibling dispatch_receipt, bind original parent job_id/turn_id without claiming completion. Present null, malformed/future receipt values, retry_safe:true or conflicting IDs remain inconclusive; absence of the optional receipt on otherwise valid 2xx IDs is distinct from explicit null. Unknown top-level state binds only safe IDs with observedState unknown. Do not overwrite previously known IDs on conflict. Keep fixed safe reason enums, not arbitrary server text.
 
 **Matching algorithm (no serializer tightening):**
 1. Require captured workspace notebook. Examine raw jobs without collapsing duplicates. Identify parent candidates by key/known receipt IDs; only live `operation:chat` is eligible. Exclude known child `ask`, restored_history:true and replay_allowed:false. A candidate with malformed identity/flags, duplicate parent, conflicting known IDs or normalized request mismatch yields unknown, not a filtered-away success.
 2. Require unique parent notebook_id, chat_session_id, key and complete normalized request_snapshot equality. Normalize only documented request defaults; preserve array order; extra/invalid request fields are not ignored. Missing/malformed/unknown parent state never releases.
-3. Bind its turn_id to a unique canonical-history record with notebook/session/engine/message agreement. Google turns need not carry their own idempotency_key; if present it must agree. Missing turn or contradictory duplicate remains unknown. Do not merge/dedupe raw records before this check.
+3. Once unique live parent identity/request/known-ID checks pass, bind those IDs even before canonical history exists: a discovered parent is check-only, not another POST candidate. For succeeded parents, require a unique canonical-history record with notebook/session/engine/message agreement. Google turns need not carry their own idempotency_key; if present it must agree. Missing, malformed or contradictory answer evidence returns bound IDs with state unknown and a safe reason, never completion. Do not merge/dedupe raw records before this check; conflicting raw rows with newly discovered parent IDs also remain inconclusive.
 4. Completion requires parent state=succeeded, submission_state=confirmed, a succeeded result bound to the same turn, and canonical succeeded turn with a nonempty answer and consistent identity/content/scope/citations with the parent's result. Required completion fields must be well-typed; contradictory state/status never succeeds. A succeeded label with missing answer is **read recovery only**, never reason to POST.
 
 Parent result.job_id can legitimately be the Google child ID; do not treat it as the parent receipt job_id. Parent identity comes from the validated top-level job and its turn_id. For live markers, only absent/false restored_history and absent/true replay_allowed qualify; malformed values are inconclusive.
@@ -130,9 +132,11 @@ Do not compare canonical scope directly to DTO array order: independent executio
 
 Unknown/no parent stays fenced. Known receipt -> check only (minimal policy: do not offer another POST as a worker restart). No-receipt uncertainty -> explicit **Retry original request (POST)**, showing original engine/target/scope and warning it may submit work if no record exists. Send once per explicit action with same session/key/body. If a Google link/known connection target no longer matches the captured target, disable retry and allow same-backend reads/explanation; never swap target/engine. Selection/locale edits alone do not rewrite capture.
 
+**Task 2 interface rulings (2026-10-26):** Root approved the separate optional receipt argument because immutable TurnCapture cannot contain later receipt IDs, and approved separating proven parent identity from answer completion so missing history cannot accidentally preserve POST eligibility. Registry settlement independently rejects conflicting IDs. The pure POST projector consumes only status/body; locally branded not-dispatched recognition remains in Task 3's adapter. `googleConnectionId` is observed link metadata only, not a stable Google account identity.
+
 ### 3. Root ownership and UI
 
-Create `components/providers/TurnOperationProvider.tsx`: instantiate registry per provider, put it inside I18nProvider and **outside ConnectionGuard** in root `app/layout.tsx`. Subscribe synchronously to context invalidation and clear registry-owned payload references on epoch change/root unmount, not ordinary ready/unready changes. Its registry facade rejects an obsolete epoch, closing any subscription-setup gap. No process/global registry, Query-cache identity or persisted Zustand. Use stable external-store snapshots. Test StrictMode cleanup/re-setup; no construction/effect dispatch.
+Create `components/providers/TurnOperationProvider.tsx`: instantiate registry per provider, put it inside I18nProvider and **outside ConnectionGuard** in root `app/layout.tsx`. Subscribe synchronously to context invalidation and clear registry-owned payload references on epoch change/root unmount, not ordinary ready/unready changes. Its registry facade checks current epoch/target on every operation, closing any subscription-setup gap. Admission/retry/check additionally require ready context and authenticated dispatch phase; same-target readiness/auth recovery may still settle safe metadata without discarding the capture. No process/global registry, Query-cache identity or persisted Zustand. Use stable external-store snapshots. Test StrictMode cleanup/re-setup; no construction/effect dispatch.
 
 Create `lib/hooks/use-workbench-turn.ts`: expose `{operation, completion, submit, checkOriginal, retryOriginal, abandonUnsent, releaseCompleted}`. `submit(input)` performs admission synchronously; async continuations carry tokens, not component/editor callbacks. POST uses the existing API client once with retry:false. Reads use only captured workspace and canonical history, through TanStack Query with explicit context/operation-tagged results, retry:false and focus refetch disabled. Poll only acknowledged known-active work at existing 2,000 ms cadence while mounted; unknown states need explicit Check. Auth recovery/remount may resume reads but never writes. Do not accept untagged/stale ordinary workspace cache as completion evidence.
 
@@ -158,10 +162,12 @@ Task 1 独立审查与两轮 scoped 复审已通过；最终源码/验证及受�
 ### Task 2 — Prove bounded ownership and read-only reconciliation
 **Files:** new turn-operations.ts/.test.ts and turn-reconciliation.ts/.test.ts; provider + provider test; root layout.
 
-- [ ] RED: same-tick permutations, 8 slots and exact UTF-8 byte boundary, input mutation after capture, limits/defaults/order, no reading/credentials retention; retry/check double clicks; unknown followed by local not-sent; only first unsent abandonment; invalidation and stale attempt completion.
-- [ ] RED matcher table: child with same key; valid parent plus duplicate/wrong body/receipt ID; archive/replay prohibition; null/missing/future/contradictory fields; historical retry_safe:true; failed/needs_reauth/cancelled_local/unknown never release; confirmed exact parent/result/canonical turn succeeds; missing answer never authorizes POST. Include real-shaped independent sorted scope and Google resolved scope fixtures.
-- [ ] RED provider tests: route unmount/remount retains capture, root replacement loses it, root invalidation releases payload references, old promise cannot recreate it, StrictMode causes zero dispatch.
-- [ ] Run focused tests, implement, run GREEN and typecheck, review/commit. Core-only acceptance is explicitly not the finished feature.
+- [x] RED: same-tick permutations, 8 slots and exact UTF-8 byte boundary, input mutation after capture, limits/defaults/order, no reading/credentials retention; retry/check double clicks; unknown followed by local not-sent; only first unsent abandonment; invalidation and stale attempt completion.
+- [x] RED matcher table: child with same key; valid parent plus duplicate/wrong body/receipt ID; archive/replay prohibition; null/missing/future/contradictory fields; historical retry_safe:true; failed/needs_reauth/cancelled_local/unknown never release; confirmed exact parent/result/canonical turn succeeds; missing answer never authorizes POST. Include real-shaped independent sorted scope and Google resolved scope fixtures.
+- [x] RED provider tests: route unmount/remount retains capture, root replacement loses it, root invalidation releases payload references, old promise cannot recreate it, StrictMode causes zero dispatch.
+- [x] Run focused tests, implement, run GREEN and typecheck, review/commit. Core-only acceptance is explicitly not the finished feature.
+
+Task 2 core/provider implementation and local gates are recorded in the scoped change; independent root review/publication remains pending. StudyWorkbench, the feature hook, JobsPanel suppression and runtime acceptance are not delivered by this foundation.
 
 ### Task 3 — Integrate explicit recovery and editor ownership
 **Files:** new use-workbench-turn.ts/.test.tsx; StudyWorkbench.tsx/.test.tsx; JobsPanel.tsx/.test.tsx; locales/workbench.ts; existing locale parity tests.

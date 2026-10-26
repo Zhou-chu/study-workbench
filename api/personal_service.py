@@ -4,6 +4,7 @@ import hashlib
 import json
 from datetime import datetime, timezone
 
+from api.notebooklm_links import read_notebooklm_link
 from api.personal_store import get_store
 from open_notebook.exceptions import (
     InvalidInputError,
@@ -283,7 +284,7 @@ class PersonalService:
             "notes": notes,
             "turns": await self.store.list("turn", notebook_id=notebook_id),
             "jobs": await self.store.list("job", notebook_id=notebook_id),
-            "link": await self.store.get("link", notebook_id),
+            "link": await read_notebooklm_link(self.store, notebook_id),
             "selection": await self.store.get("selection", notebook_id),
             "legacy_history": await self.store.list(
                 "legacy_chat", notebook_id=notebook_id

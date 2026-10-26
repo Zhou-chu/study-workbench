@@ -28,7 +28,8 @@ export interface Locator {
 }
 export interface EvidenceCitation {
   citation_id: string
-  independent_support?: false
+  // Wire metadata only; no value proves independent corroboration.
+  independent_support?: boolean | null
   provenance?: SourceProvenance
   kind: 'local_evidence' | 'remote_text_snapshot' | 'remote_unmapped' | 'derived_snapshot'
   source_version_id: string | null
@@ -40,7 +41,8 @@ export interface EvidenceCitation {
   remote_reference?: { url?: string; [key: string]: unknown } | null
 }
 export interface EvidenceRecord {
-  independent_support?: false
+  // Wire metadata only; no value proves independent corroboration.
+  independent_support?: boolean | null
   provenance?: SourceProvenance
   reference_reason?: string | null
   reference_validity?: string

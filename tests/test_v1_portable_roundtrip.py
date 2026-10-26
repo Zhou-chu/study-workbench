@@ -15,6 +15,7 @@ from unittest.mock import AsyncMock
 import pytest
 import pytest_asyncio
 
+from api.notebooklm_links import read_notebooklm_link
 from api.portable_service import PortableService
 from open_notebook.exceptions import InvalidInputError
 
@@ -26,6 +27,14 @@ class MemoryStore:
 
     async def get(self, kind, identity):
         return copy.deepcopy(self.data.get((kind, identity)))
+
+    async def get_many(self, kind, identities):
+        return {
+            identity: {"payload": copy.deepcopy(self.data[(kind, identity)])}
+            if (kind, identity) in self.data
+            else None
+            for identity in identities
+        }
 
     async def list(self, kind, notebook_id=None, **filters):
         return [
@@ -245,6 +254,11 @@ async def test_fresh_restore_preserves_bytes_and_remaps_complete_graph(
     ] == "Visible old history"
     assert projects.restored[0]["notes"][0]["content"] == "Saved answer"
     assert (await store.list("source_link"))[0]["mapping_status"] == "unverified"
+    historical_links = await store.list("link")
+    assert historical_links[0]["requires_rebind"] is True
+    before_link_read = copy.deepcopy(store.data)
+    assert await read_notebooklm_link(store, result["notebook_id"]) is None
+    assert store.data == before_link_read
     assert (await store.list("job"))[0]["replay_allowed"] is False
     assert (await store.list("job"))[0]["state"] == "cancelled_local"
     assert await store.list("connection") == []

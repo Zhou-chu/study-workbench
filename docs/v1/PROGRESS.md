@@ -1,5 +1,9 @@
 # StudyWorkbench V1 progress
 
+## F1 核心与关联读取组合验收：2026-10-26 UTC
+
+[Task 2 核心/Provider](FRONTEND_TURN_PROGRESS_2026-10-26.md)已通过独立复审，真实引用 null 兼容问题关闭；[NotebookLM 关联物理键](NOTEBOOKLM_LINK_IDENTITY_2026-10-26.md)已对齐并保护历史重绑定。组合后端 2,778 / 128 跳过，前端 1,701 单元 + 25 artifact，静态/类型/lint/OpenAPI 通过。实际恢复 UI、build、浏览器与部署仍未完成。
+
 ## F1 前端基础边界：2026-10-26 UTC
 
 [Task 1 进展与证据](FRONTEND_TURN_PROGRESS_2026-10-26.md)加入可选 context-bound 请求保护、旧配置 generation 防护和显式退出/本人撤销同步失效。前端 1,499 单元 + 25 artifact 测试、类型/lint 通过；尚未接入 registry/恢复 UI，未运行新 build 或浏览器验收，不能声称重复提交风险已整体解决。

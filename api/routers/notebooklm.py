@@ -3,12 +3,12 @@
 import asyncio
 import hashlib
 from pathlib import Path
-from uuid import NAMESPACE_URL, uuid5
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 
+from api.notebooklm_links import notebooklm_link_id
 from api.notebooklm_service import get_notebooklm_service
 from api.personal_contracts import PersonalJobResponse
 from api.personal_store import data_root
@@ -170,7 +170,7 @@ async def link_notebook(
     await Notebook.get(notebook_id)
     await service._ensure_connection()
     await service.all_sources(request.remote_notebook_id)
-    link_id = "link_" + str(uuid5(NAMESPACE_URL, notebook_id))
+    link_id = notebooklm_link_id(notebook_id)
     record = {
         "link_id": link_id,
         "notebook_id": notebook_id,
