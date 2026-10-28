@@ -30,6 +30,7 @@ describe('portable restore confirmation', () => {
     vi.mocked(portableApi.limits).mockReturnValue(new Promise(() => {}))
     setup()()
     expect(confirm()).toBeDisabled()
+    expect(confirm().closest('[role="dialog"]')).toHaveAttribute('data-workbench-controls')
     expect(portableApi.limits).toHaveBeenCalledTimes(1)
     expect(portableApi.restore).not.toHaveBeenCalled()
   })

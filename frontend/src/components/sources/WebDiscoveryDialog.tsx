@@ -129,7 +129,7 @@ export function WebDiscoveryDialog({ notebookId, open, onOpenChange, onImported,
   }
 
   return <Dialog open={open} onOpenChange={close}>
-    <DialogContent className="!max-w-3xl max-h-[90dvh] flex flex-col gap-5 overflow-y-auto" aria-describedby="web-discovery-description" onCloseAutoFocus={onCloseAutoFocus}>
+    <DialogContent data-workbench-controls className="!max-w-3xl max-h-[90dvh] flex flex-col gap-5 overflow-y-auto" aria-describedby="web-discovery-description" onCloseAutoFocus={onCloseAutoFocus}>
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2"><Globe2 className="size-5 text-primary" aria-hidden />{t('webDiscovery.title')}</DialogTitle>
         <DialogDescription id="web-discovery-description">{t('webDiscovery.description')}</DialogDescription>
@@ -158,7 +158,9 @@ export function WebDiscoveryDialog({ notebookId, open, onOpenChange, onImported,
           <div className="space-y-3 overflow-y-auto min-h-0 pr-1">
             {results.map(result => <article key={result.id} className="rounded-xl border p-4 transition-colors hover:bg-muted/30">
               <div className="flex items-start gap-3">
-                <input type="checkbox" className="mt-1 size-4 accent-primary" aria-label={result.title} checked={selected.has(result.id)} disabled={batchActive || (!!imports[result.id] && imports[result.id].status !== 'importFailed') || (!selected.has(result.id) && selected.size >= 5)} onChange={event => setSelected(value => { const next = new Set(value); if (event.target.checked) next.add(result.id); else next.delete(result.id); return next })} />
+                <label className="flex shrink-0 cursor-pointer items-center justify-center rounded-sm">
+                  <input type="checkbox" className="size-4 accent-primary" aria-label={result.title} checked={selected.has(result.id)} disabled={batchActive || (!!imports[result.id] && imports[result.id].status !== 'importFailed') || (!selected.has(result.id) && selected.size >= 5)} onChange={event => setSelected(value => { const next = new Set(value); if (event.target.checked) next.add(result.id); else next.delete(result.id); return next })} />
+                </label>
                 <div className="min-w-0 flex-1 space-y-2">
                   <h3 className="font-medium leading-snug">{result.title}</h3>
                   <a href={result.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary break-all"><span>{result.url}</span><ExternalLink className="size-3 shrink-0" aria-hidden /></a>

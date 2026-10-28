@@ -87,3 +87,10 @@ it.each(scoped)('blocks deferred %s when an opaque origin unmounts the panel', a
   await waitFor(() => expect(client.isMutating()).toBe(0))
   expectNoScopedWrites()
 })
+
+it('preserves the workspace sizing scope in the nested integration confirmation portal', () => {
+  render(view(supported))
+  fireEvent.click(screen.getByRole('button', { name: 'workbench.syncSelected' }))
+  expect(screen.getByRole('button', { name: 'common.confirm' }).closest('[role="dialog"]')).toHaveAttribute('data-workbench-controls')
+  expectNoScopedWrites()
+})

@@ -49,3 +49,8 @@ describe('ConfirmDialog', () => {
     expect(cancelBtn).toBeDisabled()
   })
 })
+
+it('pairs destructive confirmation ink with the destructive semantic foreground', () => {
+  render(<ConfirmDialog open onOpenChange={vi.fn()} title="Delete" description="Synthetic" confirmVariant="destructive" onConfirm={vi.fn()} />)
+  expect(screen.getByRole('button', { name: 'common.confirm' })).toHaveClass('bg-destructive', 'text-destructive-foreground')
+})

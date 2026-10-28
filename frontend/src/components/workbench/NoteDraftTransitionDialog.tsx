@@ -15,7 +15,7 @@ export function NoteDraftTransitionDialog({ kind, onCancel, onConfirm, onCloseAu
 }) {
   const { t } = useTranslation()
   return <AlertDialog open={kind !== null} onOpenChange={open => { if (!open) onCancel() }}>
-    <AlertDialogContent onCloseAutoFocus={onCloseAutoFocus}>
+    <AlertDialogContent data-workbench-controls onCloseAutoFocus={onCloseAutoFocus}>
       <AlertDialogTitle>{t(titles[kind ?? 'new'])}</AlertDialogTitle>
       <AlertDialogDescription>{t(kind === 'outline' ? 'workbench.noteTransitionOutlineDescription' : 'workbench.noteTransitionReplaceDescription')}</AlertDialogDescription>
       <AlertDialogFooter>

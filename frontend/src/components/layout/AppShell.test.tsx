@@ -19,6 +19,8 @@ describe('AppShell responsive navigation', () => {
     fireEvent.click(trigger)
     const dialog = screen.getByRole('dialog', { name: 'workbench.navigation' })
     expect(trigger).toHaveAttribute('aria-expanded', 'true')
+    expect(trigger.closest('[data-workbench-controls]')).not.toBeNull()
+    expect(dialog).toHaveAttribute('data-workbench-controls')
     fireEvent.click(within(dialog).getByRole('link', { name: 'Notebooks' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(trigger).toHaveAttribute('aria-expanded', 'false')

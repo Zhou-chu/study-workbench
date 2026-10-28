@@ -41,6 +41,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive-tint: var(--danger-tint);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -194,6 +195,7 @@
   --primary-hover: #245740;
   --on-primary: #f1f8f3;
 
+  --on-destructive: #ffffff;
   --danger: #b0432d;
   --danger-deep: #93341f;
   --danger-tint: #f5e4df;
@@ -277,6 +279,7 @@
   --accent: var(--surface-sunken);
   --accent-foreground: var(--ink);
   --destructive: var(--danger);
+  --destructive-foreground: var(--on-destructive);
   --border: var(--line);
   --input: var(--line);
   --ring: var(--teal);
@@ -344,10 +347,11 @@
   --line-soft: #26282d;
   --line-strong: #ecedea;
 
-  --primary: #3d8e67;
-  --primary-hover: #479e74;
-  --on-primary: #ecf7f0;
+  --primary: var(--fern);
+  --primary-hover: var(--fern-deep);
+  --on-primary: #12251a;
 
+  --on-destructive: #31160f;
   --danger: #df7c63;
   --danger-deep: #e9937d;
   --danger-tint: #37231d;
@@ -445,5 +449,83 @@
 
   .w-md-editor-preview :where(.wmde-markdown ol) {
     list-style-type: decimal;
+  }
+}
+
+/* Workspace-owned constraints, including explicitly marked portal contents.
+   Unlayered min-sizes intentionally win over utility dimensions only in this
+   scope. Inline prose links are not independent toolbar targets. */
+[data-workbench-controls] :is(button, a, input, select, textarea, summary):focus-visible,
+[data-workbench-controls] label:has(input:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+[data-workbench-controls][data-slot="dialog-content"] > [data-slot="dialog-header"] {
+  padding-inline-end: 2.5rem;
+}
+
+.workbench-import-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.workbench-citation {
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  flex-shrink: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: start;
+}
+
+.workbench-region-tab {
+  position: relative;
+}
+
+/* Neutral persistent state cue, separate from transient keyboard focus. */
+.workbench-region-tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0.5rem;
+  bottom: 1px;
+  height: 3px;
+  background-color: var(--foreground);
+  pointer-events: none;
+}
+
+@media (min-width: 80rem) {
+  .workbench-side-pane {
+    /* Match Tailwind xl's initial-font-relative breakpoint. Percent is the
+       workspace row, excluding navigation. Reserve 340px prose + 3rem center
+       gutters + 2rem maximum card padding + 2px border + two 20px scrollbars.
+       This covers answers and the reader's nested extracted-text scroller. */
+    max-width: calc((100% - 382px - 5rem) / 2);
+  }
+}
+
+@media (max-width: 640px), (pointer: coarse) {
+  [data-workbench-controls] :is(button, select, textarea, summary, [data-workbench-target]),
+  [data-workbench-controls] input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  [data-workbench-controls] a:not(.prose a),
+  [data-workbench-controls] label:has(> input[type="checkbox"]),
+  [data-workbench-controls] label:has(> input[type="file"]) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  [data-workbench-controls] a:not(.prose a),
+  [data-workbench-controls] label:has(> input[type="file"]) {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  [data-workbench-controls] summary {
+    align-content: center;
   }
 }
