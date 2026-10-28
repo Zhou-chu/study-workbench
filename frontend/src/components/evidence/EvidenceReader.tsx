@@ -49,7 +49,16 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
   const locator = isLocalCitation ? canonicalLocator ?? (citation?.reference_validity === 'verified' ? citation.locator : undefined) : undefined
   const evidenceId = citation?.source_version_id === sourceVersionId ? citation?.evidence_id || savedEvidenceId : savedEvidenceId
   const citedPage = locator?.page_index
+  // Labels such as c1 are answer-local. Compare the original reference's
+  // content/location, not object identity or asynchronously verified location.
+  // Equivalent parent rerenders and ordinary reading movement keep the filter.
+  const filterCitationIdentity = citation ? JSON.stringify([
+    citation.citation_id, citation.kind, citation.source_version_id, citation.evidence_id, citation.quote,
+    citation.locator?.page_index, citation.locator?.page_label, citation.locator?.block_id,
+    citation.locator?.start_offset, citation.locator?.end_offset, citation.locator?.bbox,
+  ]) : null
 
+  useEffect(() => { setSearch('') }, [sourceVersionId, evidenceId, filterCitationIdentity])
   useEffect(() => { setPage(initialPage) }, [sourceVersionId, initialPage])
   useEffect(() => { if (citedPage != null) setPage(citedPage) }, [sourceVersionId, citation?.citation_id, citedPage])
   useEffect(() => {
@@ -151,14 +160,16 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
         <p className="text-xs text-muted-foreground">{t('workbench.highlightUnavailable')}</p>
         {pdfBlob ? <PdfCanvas blob={pdfBlob} pageIndex={page} fallbackText={blocks.filter(block => block.page_index === page).map(block => block.text).join('\n\n')} /> : error || detail.version.original_status !== 'available' ? <PdfTextFallback text={blocks.filter(block => block.page_index === page).map(block => block.text).join('\n\n')} /> : <p role="status" className="text-sm text-muted-foreground">{t('workbench.pdfRendering')}</p>}
       </>}
-      <label className="block text-sm" htmlFor="evidence-search">{t('workbench.searchEvidence')}</label>
-      <Input id="evidence-search" value={search} onChange={event => setSearch(event.target.value)} />
+      <div className="space-y-2">
+        <label className="block text-sm" htmlFor="evidence-search">{t('workbench.searchEvidence')}</label>
+        <div className="flex items-center gap-2"><Input id="evidence-search" value={search} onChange={event => setSearch(event.target.value)} />{search && <Button size="sm" variant="outline" onClick={() => setSearch('')}>{t('workbench.clearReaderSearch')}</Button>}</div>
+      </div>
       {citation && !range && detail.version.mime_type !== 'application/pdf' && <p className="text-xs text-muted-foreground">{t('workbench.quoteMismatch')}</p>}
       <div className="max-h-[55vh] overflow-y-auto space-y-3">
         {matchingBlocks.length ? matchingBlocks.map(block => <div key={block.block_id} className="rounded-md border p-3">
           {block.page_index != null && <Button size="sm" variant="ghost" onClick={() => changePage(block.page_index! + 1)}>{t('workbench.pageOf', { page: block.page_index + 1, count: detail.extraction?.page_count ?? undefined })}</Button>}
           <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-7">{range && block === quoteBlock ? <>{range.before}<mark className="bg-warn-tint text-foreground">{range.quote}</mark>{range.after}</> : block.text}</pre>
-        </div>) : <p className="text-sm text-muted-foreground">{t('workbench.noEvidence')}</p>}
+        </div>) : <p role="status" className="text-sm text-muted-foreground">{t(blocks.length ? 'workbench.readerNoMatches' : 'workbench.noEvidence')}</p>}
       </div>
     </>}
   </section>

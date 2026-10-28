@@ -22,6 +22,96 @@ describe('EvidenceReader', () => {
     vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:authenticated-pdf'), revokeObjectURL: vi.fn() })
   })
   afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks() })
+  it('distinguishes no matching blocks from missing extracted text and Clear restores the current document', async () => {
+    vi.mocked(evidenceApi.version).mockResolvedValue({ version: { ...version, mime_type: 'text/plain' }, extraction: { status: 'ready', warnings: [], text: 'Current document content' }, evidence: [] })
+    render(<EvidenceReader sourceVersionId="sv_old" onPositionChange={vi.fn()} />)
+    await screen.findByText('Current document content')
+    fireEvent.change(screen.getByLabelText('workbench.searchEvidence'), { target: { value: 'absent term' } })
+    expect(screen.getByText('workbench.readerNoMatches')).toBeVisible()
+    expect(screen.queryByText('workbench.noEvidence')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.clearReaderSearch' }))
+    expect(screen.getByLabelText('workbench.searchEvidence')).toHaveValue('')
+    expect(screen.getByText('Current document content')).toBeVisible()
+    expect(screen.queryByText('workbench.readerNoMatches')).not.toBeInTheDocument()
+    expect(evidenceApi.version).toHaveBeenCalledTimes(1)
+  })
+  it('does not claim no matches when the current document has no extracted text', async () => {
+    vi.mocked(evidenceApi.version).mockResolvedValue({ version: { ...version, mime_type: 'text/plain' }, extraction: null, evidence: [] })
+    render(<EvidenceReader sourceVersionId="sv_old" onPositionChange={vi.fn()} />)
+    await screen.findByText('workbench.noEvidence')
+    fireEvent.change(screen.getByLabelText('workbench.searchEvidence'), { target: { value: 'anything' } })
+    expect(screen.getByText('workbench.noEvidence')).toBeVisible()
+    expect(screen.queryByText('workbench.readerNoMatches')).not.toBeInTheDocument()
+  })
+  it('resets a document A filter before displaying document B without changing scope or reading position', async () => {
+    vi.mocked(evidenceApi.version).mockResolvedValue({ version: { ...version, mime_type: 'text/plain' }, extraction: { status: 'ready', warnings: [], text: 'Document A content' }, evidence: [] })
+    const position = vi.fn()
+    const { rerender } = render(<EvidenceReader sourceVersionId="sv_old" onPositionChange={position} />)
+    await screen.findByText('Document A content')
+    fireEvent.change(screen.getByLabelText('workbench.searchEvidence'), { target: { value: 'Document A' } })
+    vi.mocked(evidenceApi.version).mockResolvedValue({ version: { ...version, source_version_id: 'sv_new', mime_type: 'text/plain' }, extraction: { status: 'ready', warnings: [], text: 'Document B content' }, evidence: [] })
+    rerender(<EvidenceReader sourceVersionId="sv_new" onPositionChange={position} />)
+    expect(await screen.findByText('Document B content')).toBeVisible()
+    expect(screen.getByLabelText('workbench.searchEvidence')).toHaveValue('')
+    expect(position).not.toHaveBeenCalled()
+  })
+  it.each(['evidence', 'citation'] as const)('resets the filter for newly opened %s identity within the same document', async identity => {
+    vi.mocked(evidenceApi.version).mockResolvedValue({ version: { ...version, mime_type: 'text/plain' }, extraction: { status: 'ready', warnings: [], text: 'A full block unrelated to old filter' }, evidence: [] })
+    const props = { sourceVersionId: 'sv_old', evidenceId: 'ev1', citation, onPositionChange: vi.fn() }
+    const { rerender } = render(<EvidenceReader {...props} />)
+    await screen.findByText('A full block unrelated to old filter')
+    fireEvent.change(screen.getByLabelText('workbench.searchEvidence'), { target: { value: 'missing' } })
+    rerender(<EvidenceReader {...props} evidenceId={identity === 'evidence' ? 'ev2' : 'ev1'} citation={{ ...citation, citation_id: identity === 'citation' ? 'c2' : 'c1', evidence_id: identity === 'evidence' ? 'ev2' : 'ev1' }} />)
+    expect(await screen.findByText('A full block unrelated to old filter')).toBeVisible()
+    expect(screen.getByLabelText('workbench.searchEvidence')).toHaveValue('')
+    expect(props.onPositionChange).not.toHaveBeenCalled()
+  })
+  it.each([
+    { change: 'quote', quote: 'Second excerpt', start: 15, end: 29 },
+    { change: 'locator', quote: 'First excerpt', start: 31, end: 44 },
+  ])('resets a reused turn-local c1 for a different $change in the same evidence block', async ({ quote, start, end }) => {
+    const text = 'First excerpt. Second excerpt. First excerpt.'
+    vi.mocked(evidenceApi.version).mockResolvedValue({
+      version: { ...version, mime_type: 'text/plain' },
+      extraction: { extraction_id: 'ex_shared', status: 'ready', warnings: [], blocks: [{ block_id: 'shared_block', page_index: null, text }] },
+      evidence: [{ evidence_id: 'ev1', extraction_id: 'ex_shared', source_version_id: 'sv_old', quote: text, locator: { block_id: 'shared_block', start_offset: 0, end_offset: 45 } }],
+    })
+    const first: EvidenceCitation = { ...citation, citation_id: 'c1', quote: 'First excerpt', reference_validity: 'unverified', locator: { block_id: 'shared_block', start_offset: 0, end_offset: 13 } }
+    const second: EvidenceCitation = { ...first, quote, locator: { block_id: 'shared_block', start_offset: start, end_offset: end } }
+    const position = vi.fn()
+    const { rerender } = render(<EvidenceReader sourceVersionId="sv_old" citation={first} onPositionChange={position} />)
+    await screen.findByText('First excerpt', { selector: 'mark' })
+    fireEvent.change(screen.getByLabelText('workbench.searchEvidence'), { target: { value: 'absent term' } })
+    expect(screen.getByText('workbench.readerNoMatches')).toBeVisible()
+    rerender(<EvidenceReader sourceVersionId="sv_old" citation={second} onPositionChange={position} />)
+    expect(screen.getByLabelText('workbench.searchEvidence')).toHaveValue('')
+    expect(screen.queryByText('workbench.readerNoMatches')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'workbench.clearReaderSearch' })).not.toBeInTheDocument()
+    expect(screen.getByText(quote, { selector: 'mark' })).toBeVisible()
+    expect(screen.getByText('workbench.validity: unverified')).toBeVisible()
+    expect(evidenceApi.version).toHaveBeenCalledTimes(1)
+    expect(position).not.toHaveBeenCalled()
+  })
+  it('retains typed filters across equivalent citation objects and reading-only rerenders until explicit Clear', async () => {
+    vi.mocked(evidenceApi.version).mockResolvedValue({ version: { ...version, mime_type: 'text/plain' }, extraction: { status: 'ready', warnings: [], text: 'Current document content' }, evidence: [] })
+    const original: EvidenceCitation = { ...citation, locator: { page_index: 0, block_id: 'document', start_offset: 0, end_offset: 7, bbox: [1, 2, 3, 4] }, quote: 'Current' }
+    const position = vi.fn()
+    const { rerender } = render(<EvidenceReader sourceVersionId="sv_old" citation={original} onPositionChange={position} />)
+    await screen.findByText('Current', { selector: 'mark' })
+    fireEvent.change(screen.getByLabelText('workbench.searchEvidence'), { target: { value: 'absent' } })
+    fireEvent.change(screen.getByLabelText('workbench.searchEvidence'), { target: { value: 'absent term' } })
+    // The same citation may be reconstructed, with reordered locator keys, on
+    // ordinary parent updates. Neither that nor a reading page update opens it anew.
+    rerender(<EvidenceReader sourceVersionId="sv_old" citation={{ ...original, locator: { bbox: [1, 2, 3, 4], end_offset: 7, start_offset: 0, block_id: 'document', page_index: 0 } }} initialPage={2} onPositionChange={position} />)
+    expect(screen.getByLabelText('workbench.searchEvidence')).toHaveValue('absent term')
+    expect(screen.getByText('workbench.readerNoMatches')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.clearReaderSearch' }))
+    expect(screen.getByLabelText('workbench.searchEvidence')).toHaveValue('')
+    expect(screen.getByText('Current', { selector: 'mark' })).toBeVisible()
+    expect(screen.queryByText('workbench.readerNoMatches')).not.toBeInTheDocument()
+    expect(evidenceApi.version).toHaveBeenCalledTimes(1)
+    expect(position).not.toHaveBeenCalled()
+  })
   it.each(['available', 'missing'])('keeps technical version IDs inside collapsed details when the original is %s', async originalStatus => {
     vi.mocked(evidenceApi.version).mockResolvedValue({ version: { ...version, mime_type: 'text/plain', original_status: originalStatus, source_title: 'Readable source title' }, extraction: null, evidence: [] } as never)
     render(<EvidenceReader sourceVersionId="sv_old" onPositionChange={vi.fn()} />)

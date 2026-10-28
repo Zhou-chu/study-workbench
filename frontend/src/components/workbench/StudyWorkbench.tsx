@@ -7,6 +7,7 @@ import { evidenceApi } from '@/lib/api/evidence'
 import { useModelDefaults } from '@/lib/hooks/use-models'
 import { useNotebookLMStatus, useNotebookLMCapabilities } from '@/lib/hooks/use-notebooklm'
 import { useWorkbenchUploads } from '@/lib/hooks/use-workbench-uploads'
+import { useWorkbenchEvidenceSearch } from '@/lib/hooks/use-workbench-evidence-search'
 import { workbenchApi } from '@/lib/api/workbench'
 import { QUERY_KEYS } from '@/lib/api/query-client'
 import { useSaveWorkbenchSelection, useWorkbench } from '@/lib/hooks/use-workbench'
@@ -50,12 +51,12 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const connection = useNotebookLMStatus()
   const capabilities = useNotebookLMCapabilities()
   const modelDefaults = useModelDefaults()
-  const [searchText, setSearchText] = useState('')
   const data = workspace.data
   const saveSelection = useSaveWorkbenchSelection(notebookId)
   const [draft, setDraft] = useState<WorkspaceSelection | null>(null)
   const rawSelection = draft ?? data?.selection ?? null
   const selection = useMemo(() => projectWorkbenchSelection(rawSelection), [rawSelection])
+  const search = useWorkbenchEvidenceSearch(notebookId, rawSelection)
   const selectionRef = useRef(rawSelection)
   const citationRequest = useRef(0)
   useEffect(() => { selectionRef.current = rawSelection }, [rawSelection])
@@ -146,17 +147,13 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const updateSelection = (patch: Partial<WorkbenchSelection>) => {
     const next = { ...(selectionRef.current ?? emptySelection), ...patch }
     selectionRef.current = next
+    search.selectionChanged(next)
     setDraft(next)
     const view = projectWorkbenchSelection(next)
     if (!view.supported || !isKnownEngine(view.engine) || !isKnownSelectionOrigin(view.selection_origin)) return
     // The view is not the request: forward only supported, explicitly typed fields.
     saveSelection.mutate({ engine: view.engine, selection_origin: view.selection_origin, source_version_ids: view.source_version_ids, remote_source_ids: view.remote_source_ids, reading: view.reading })
   }
-  const canSearch = selection.supported && selection.selection_origin === 'local' && selection.source_version_ids.length > 0
-  const search = useMutation({ mutationFn: () => {
-    if (!canSearch) throw new Error(t('workbench.unavailable'))
-    return evidenceApi.search(searchText, [...selection.source_version_ids])
-  }, retry: false })
   const currentNoteScope: ScopeSnapshot | undefined = selection.supported && isKnownEngine(selection.engine) && isKnownSelectionOrigin(selection.selection_origin) ? { engine: selection.engine, selection_origin: selection.selection_origin, source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [], remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [] } : undefined
   const recovery = useWorkbenchTurn(notebookId, { independentAvailable: modelState === 'ready', googleAvailable: !connection.isError && !capabilities.isError && connection.data?.state === 'connected' && askCapability?.support === 'available', googleLink: data?.link ?? null })
   const turns = [...new Map([...(data?.turns || []), ...recovery.turns].map(turn => [turn.turn_id, turn])).values()]
@@ -375,11 +372,15 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
           {item.state === 'uploadUncertain' && <p className="text-muted-foreground">{t('workbench.uploadRecoveryHint')}</p>}
         </div>)}
         <p className="text-xs leading-5 text-muted-foreground">{t('learningWorkspace.sourcesHint')}</p>
-        {selection.selection_origin === 'remote' && <Button size="sm" variant="outline" onClick={openSettings}>{t('workbench.remoteScope')}</Button>}
-        <div className="flex flex-wrap gap-1"><Button size="sm" variant="ghost" onClick={() => updateSelection({ source_version_ids: data.sources.flatMap(source => newestSelectableVersionId(source.versions.map(projectWorkbenchVersion)) ?? []), selection_origin: 'local' })}>{t('workbench.selectAll')}</Button><Button size="sm" variant="ghost" onClick={() => updateSelection({ source_version_ids: [], remote_source_ids: [] })}>{t('workbench.clearSelection')}</Button></div>
-        <label htmlFor="workspace-search" className="text-xs flex items-center gap-1.5"><Search className="size-3.5" aria-hidden="true" />{t('learningWorkspace.sourceSearch')}</label><Input id="workspace-search" value={searchText} onChange={event => setSearchText(event.target.value)} /><Button size="sm" variant="outline" disabled={!searchText.trim() || !canSearch || search.isPending} onClick={() => search.mutate()}>{t('workbench.search')}</Button>
-        {search.isError && <p role="alert" className="text-xs text-destructive">{requestError(search.error) || t('workbench.error')}</p>}
-        {search.data?.hits.map(hit => <button key={hit.evidence_id} className="w-full rounded border p-2 text-left text-xs hover:bg-muted" onClick={() => openCitation({ citation_id: hit.evidence_id, evidence_id: hit.evidence_id, source_version_id: hit.source_version_id, source_title: hit.source_title || hit.source_version_id, kind: hit.evidence_kind === 'derived_snapshot' ? 'derived_snapshot' : hit.evidence_kind === 'remote_text_snapshot' ? 'remote_text_snapshot' : 'local_evidence', provenance: hit.provenance, independent_support: hit.independent_support, locator: hit.locator, quote: hit.quote, reference_validity: hit.reference_validity || 'unverified' })}>{hit.quote}</button>)}
+        <p className="text-xs leading-5 text-muted-foreground">{t('workbench.readingScopeHint')}</p>
+        {selection.selection_origin === 'remote' && <div className="space-y-2"><p className="text-xs leading-5 text-muted-foreground">{t('workbench.remoteLocalSelectionHint')}</p><Button size="sm" variant="outline" onClick={openSettings}>{t('workbench.remoteScope')}</Button></div>}
+        <div className="flex flex-wrap gap-1"><Button size="sm" variant="ghost" onClick={() => updateSelection({ source_version_ids: data.sources.flatMap(source => newestSelectableVersionId(source.versions.map(projectWorkbenchVersion)) ?? []) })}>{t('workbench.selectAll')}</Button><Button size="sm" variant="ghost" onClick={() => updateSelection({ source_version_ids: [], remote_source_ids: [] })}>{t('workbench.clearSelection')}</Button></div>
+        <div role="search" aria-label={t('workbench.searchSelectedSources')} className="space-y-2">
+          <label htmlFor="workspace-search" className="text-xs flex items-center gap-1.5"><Search className="size-3.5" aria-hidden="true" />{t('learningWorkspace.sourceSearch')}</label>
+          <div className="flex items-center gap-2"><Input id="workspace-search" className="min-w-0" value={search.query} onChange={event => search.setQuery(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); if (!event.nativeEvent.isComposing && event.keyCode !== 229) search.submit() } }} /><Button type="button" size="sm" variant="outline" disabled={!search.canSubmit} onClick={search.submit}>{t('workbench.search')}</Button></div>
+          <p role={search.status === 'error' ? 'alert' : 'status'} className="text-xs leading-5 text-muted-foreground">{t(!search.scopeAvailable ? 'workbench.searchSelectLocal' : !search.ready ? 'workbench.searchUnavailable' : search.status === 'loading' ? 'workbench.searchLoading' : search.status === 'error' ? 'workbench.searchFailed' : search.status === 'empty' ? 'workbench.searchNoResults' : search.status === 'obsolete' ? 'workbench.searchChanged' : search.status === 'success' ? 'workbench.searchResults' : 'workbench.searchPrompt')}</p>
+        </div>
+        {search.hits.map(hit => <button key={hit.evidence_id} className="w-full rounded border p-2 text-left text-xs hover:bg-muted" onClick={() => { if (search.isCurrent()) openCitation({ citation_id: hit.evidence_id, evidence_id: hit.evidence_id, source_version_id: hit.source_version_id, source_title: hit.source_title || hit.source_version_id, kind: hit.evidence_kind === 'derived_snapshot' ? 'derived_snapshot' : hit.evidence_kind === 'remote_text_snapshot' ? 'remote_text_snapshot' : 'local_evidence', provenance: hit.provenance, independent_support: hit.independent_support, locator: hit.locator, quote: hit.quote, reference_validity: hit.reference_validity || 'unverified' }) }}>{hit.quote}</button>)}
         {!data.sources.length && <p className="text-sm text-muted-foreground">{t('workbench.noSources')}</p>}
         <WorkbenchSourcesList notebookId={notebookId} sources={data.sources} selectedVersionIds={selection.source_version_ids} onSelectionChange={ids => updateSelection({ source_version_ids: ids })} onRead={id => { citationRequest.current++; setCitation(null); setReaderOpen(true); setTab('conversation'); focusReader(); updateSelection({ reading: { source_version_id: id, page_index: 0 } }) }} onUpload={(files, id) => { void upload(files, id) }} />
       </aside>
@@ -392,7 +393,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
         </div>}
         {(data.sources.length > 0 || readVersion || citation) && <div className={cn(!readerOpen && 'hidden')}><EvidenceReader sourceVersionId={readVersion} evidenceId={selection.reading?.evidence_id} citation={citation} initialPage={selection.reading?.page_index || 0} onPositionChange={reading => updateSelection({ reading })} onChanged={refresh} /></div>}
         <section className={cn("space-y-4", readerOpen && "hidden")} aria-label={t('workbench.conversation')}>
-          <div className="rounded-lg border bg-card p-4 space-y-3"><p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Layers className="size-3.5" aria-hidden="true" />{t('workbench.selectedCount', { count: selectedCount })}</p><label className="block text-sm font-semibold" htmlFor="workbench-question">{t('workbench.question')}</label><Textarea id="workbench-question" value={question} onChange={event => { questionRevision.current++; setQuestion(event.target.value) }} rows={3} />
+          <div className="rounded-lg border bg-card p-4 space-y-3"><div role="group" aria-label={t('workbench.askScope')} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground"><Layers className="size-3.5" aria-hidden="true" /><span>{t(knownEngine ? selection.engine === 'independent' ? 'workbench.independent' : 'workbench.notebooklm' : 'workbench.unknownEngine')}</span><span aria-hidden="true">·</span><span>{t(knownOrigin ? selection.selection_origin === 'local' ? 'workbench.localScope' : 'workbench.remoteScope' : 'workbench.unknownScope')}</span><span aria-hidden="true">·</span><span>{t('workbench.selectedCount', { count: selectedCount })}</span><Button type="button" size="sm" variant="ghost" onClick={openSettings}>{t('workbench.changeScope')}</Button></div><label className="block text-sm font-semibold" htmlFor="workbench-question">{t('workbench.question')}</label><Textarea id="workbench-question" value={question} onChange={event => { questionRevision.current++; setQuestion(event.target.value) }} rows={3} />
           {showModelStatus && <div className="space-y-2">
             <p id="workbench-model-status" role={modelState === 'error' ? 'alert' : 'status'} className="text-xs text-muted-foreground">{t(modelStatusKey)}</p>
             {modelState === 'error' && <Button size="sm" variant="outline" onClick={() => { void modelDefaults.refetch() }}>{t('workbench.retryModelCheck')}</Button>}
