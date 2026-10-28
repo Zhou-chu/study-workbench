@@ -15,7 +15,7 @@ import { useToast } from '@/lib/hooks/use-toast'
 import { newestSelectableVersionId, projectWorkbenchSelection, projectWorkbenchVersion } from '@/lib/utils/workbench-read-model'
 import { canonicalCitationLocator } from '@/lib/utils/evidence'
 import { requestError, stateKeys, connectionKeys, isKnownEngine, isKnownSelectionOrigin } from '@/lib/utils/workbench'
-import type { CreateWorkbenchNoteInput, EvidenceCitation, ScopeSnapshot, TurnRecord, WorkbenchNote, WorkbenchSelection, WorkspaceSelection } from '@/lib/types/personal'
+import type { CreateWorkbenchNoteInput, EvidenceCitation, ScopeSnapshot, TurnRecord, WorkbenchNote, WorkbenchSelection, Workspace, WorkspaceSelection } from '@/lib/types/personal'
 import { EvidenceReader } from '@/components/evidence/EvidenceReader'
 import { NotebookSettingsDialog } from './NotebookSettingsDialog'
 import { JobsPanel } from './JobsPanel'
@@ -30,6 +30,8 @@ import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { NoteDraftTransitionDialog, type NoteTransitionKind } from './NoteDraftTransitionDialog'
+import { readTurnContext } from '@/lib/workbench/turn-context'
 import { NoteConflictPanel } from '@/components/common/NoteConflictPanel'
 import { noteWriteProblem, canRetryNoteWrite, type NoteWriteProblem } from '@/lib/utils/note-conflict'
 import { cn } from '@/lib/utils'
@@ -38,6 +40,7 @@ const workspaceTabs = ['sources', 'conversation', 'notes'] as const
 const panelLabels = { sources: 'workbench.sources', conversation: 'workbench.readingAndQuestions', notes: 'workbench.notes' }
 const panelIcons = { sources: Files, conversation: MessageSquare, notes: NotebookPen }
 const emptySelection = { engine: 'notebooklm', selection_origin: 'local', source_version_ids: [], remote_source_ids: [] }
+type NoteTransitionIntent = { kind: NoteTransitionKind; notebookId: string; session: number; revision: number; saveEpoch: number; target: string; noteId?: string }
 type NoteSaveInput = CreateWorkbenchNoteInput & { noteId?: string; editorSession?: number; baseRevision?: number | null; answerTurnId?: string }
 export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const { t } = useTranslation()
@@ -80,6 +83,21 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   // A save may finish after New, Edit, or an outline replaced the draft.
   const noteEditorSession = useRef(0)
   const noteSavePending = useRef(false)
+  const noteSaveEpoch = useRef(0)
+  const noteProblemRef = useRef<NoteWriteProblem | null>(null)
+  const noteTitleInput = useRef<HTMLInputElement>(null)
+  const noteTransitionOpener = useRef<HTMLButtonElement | null>(null)
+  const noteTransitionRef = useRef<NoteTransitionIntent | null>(null)
+  const [noteTransition, setNoteTransition] = useState<NoteTransitionIntent | null>(null)
+  const [noteTransitionNotice, setNoteTransitionNotice] = useState<string | null>(null)
+  const [focusNoteEditor, setFocusNoteEditor] = useState(false)
+  const transitionFocus = useRef(false)
+  useEffect(() => {
+    if (focusNoteEditor && tab === 'notes' && !studioOpen) {
+      requestAnimationFrame(() => { noteTitleInput.current?.focus() })
+      setFocusNoteEditor(false)
+    }
+  }, [focusNoteEditor, tab, studioOpen])
   // One unresolved answer operation bounds retained snapshots. Until reviewed,
   // no further answer creation is offered; the independent editor stays usable.
   const answerSaveUncertain = useRef(false)
@@ -97,7 +115,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const [latestNotes, setLatestNotes] = useState<WorkbenchNote[] | null>(null)
   const [comparing, setComparing] = useState(false)
   const [compareFailed, setCompareFailed] = useState(false)
-  const resetNoteReview = () => { setNoteProblem(null); setLatestNotes(null); setComparing(false); setCompareFailed(false) }
+  const resetNoteReview = () => { noteSaveEpoch.current++; noteProblemRef.current = null; setNoteProblem(null); setLatestNotes(null); setComparing(false); setCompareFailed(false) }
   const [noteScope, setNoteScope] = useState<ScopeSnapshot | undefined>()
   const sessionId = `v1_${notebookId}`
   const refresh = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.workbench(notebookId) })
@@ -168,7 +186,9 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     if (operation.phase !== 'complete') return
     const completion = recovery.completion
     if (completion && recovery.isCurrent(completion.token)) {
-      if (originalMount && operation.capture.dto.task === 'outline' && owner.editor?.session === noteEditorSession.current && owner.editor.revision === noteEditorRevision.current) {
+      // A later save may require reconciliation even when no text was edited.
+      // Keep the completed answer in history rather than erase save evidence.
+      if (originalMount && operation.capture.dto.task === 'outline' && owner.editor?.session === noteEditorSession.current && owner.editor.revision === noteEditorRevision.current && !noteSavePending.current && canRetryNoteWrite(noteProblemRef.current)) {
         const outline = completion.turn
         noteEditorSession.current++
         setBaseRevision(null); resetNoteReview()
@@ -201,9 +221,9 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
       }
       toast({ title: t('workbench.saved') })
     },
-    onSettled: () => { noteSavePending.current = false },
+    onSettled: () => { noteSavePending.current = false; noteSaveEpoch.current++; setNoteTransitionNotice(null) },
     onError: (error, value) => {
-      if (value.editorSession !== undefined && value.editorSession === noteEditorSession.current) setNoteProblem(noteWriteProblem(error))
+      if (value.editorSession !== undefined && value.editorSession === noteEditorSession.current) { noteProblemRef.current = noteWriteProblem(error); setNoteProblem(noteProblemRef.current) }
       else if (value.answerTurnId && noteWriteProblem(error).kind === 'unknown') {
         answerSaveUncertain.current = true
         const { title, content, citations, scope_snapshot } = value
@@ -215,7 +235,57 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     // React Query's pending render can lag a second click in the same turn.
     if (noteSavePending.current || (value.answerTurnId && answerSaveUncertain.current)) return
     noteSavePending.current = true
+    noteSaveEpoch.current++
     note.mutate(value)
+  }
+  const latestTransitionWorkspace = () => queryClient.getQueryData<Workspace>(QUERY_KEYS.workbench(notebookId)) ?? data
+  const latestTransitionNote = (noteId?: string) => latestTransitionWorkspace()?.notes.find(saved => saved.id === noteId)
+  const noteTransitionTarget = (kind: NoteTransitionKind, noteId?: string) => {
+    if (kind === 'edit') return JSON.stringify(latestTransitionNote(noteId) ?? null)
+    if (kind === 'new') return JSON.stringify({ notebookId })
+    const scope = projectWorkbenchSelection(selectionRef.current)
+    const link = latestTransitionWorkspace()?.link
+    return JSON.stringify({ notebookId, engine: scope.engine, origin: scope.selection_origin, local: scope.source_version_ids, remote: scope.remote_source_ids, remoteNotebook: link?.remote_notebook_id, connectionId: link?.connection_id, epoch: readTurnContext()?.epoch })
+  }
+  const blockNoteTransition = () => {
+    const reason = noteSavePending.current ? 'workbench.noteTransitionSaving' : !canRetryNoteWrite(noteProblemRef.current) ? 'workbench.noteTransitionReview' : null
+    if (reason) { setNoteTransitionNotice(reason); setStudioOpen(false); setTab('notes') }
+    return !!reason
+  }
+  const applyNoteTransition = (intent: NoteTransitionIntent, confirmed = false) => {
+    if (blockNoteTransition()) return
+    if (intent.notebookId !== notebookId || intent.session !== noteEditorSession.current || intent.revision !== noteEditorRevision.current || intent.saveEpoch !== noteSaveEpoch.current || intent.target !== noteTransitionTarget(intent.kind, intent.noteId)) {
+      setNoteTransitionNotice('workbench.noteTransitionExpired')
+      return
+    }
+    if (intent.kind === 'outline') { submitTurn(true); return }
+    const saved = intent.kind === 'edit' ? latestTransitionNote(intent.noteId) : null
+    if (intent.kind === 'edit' && (!saved || !Number.isInteger(saved.revision))) { setNoteTransitionNotice('workbench.noteTransitionExpired'); return }
+    noteEditorSession.current++
+    setBaseRevision(saved?.revision ?? null); resetNoteReview(); setEditingNote(saved ?? null)
+    setNoteTitle(saved?.title ?? ''); setNoteContent(saved?.content ?? ''); setNoteScope(saved?.scope_snapshot)
+    transitionFocus.current = confirmed
+    setStudioOpen(false); setTab('notes'); setFocusNoteEditor(true)
+  }
+  const requestNoteTransition = (kind: NoteTransitionKind, opener: HTMLButtonElement, saved?: WorkbenchNote) => {
+    if (blockNoteTransition()) return
+    setNoteTransitionNotice(null)
+    transitionFocus.current = false
+    const intent: NoteTransitionIntent = { kind, notebookId, session: noteEditorSession.current, revision: noteEditorRevision.current, saveEpoch: noteSaveEpoch.current, target: kind === 'edit' ? JSON.stringify(saved ?? null) : noteTransitionTarget(kind), ...(saved ? { noteId: saved.id } : {}) }
+    // Compare with this editor's acknowledged base, never a refreshed list item.
+    // Empty native titles use the same fallback as the explicit Save payload.
+    const dirty = editingNote?.id ? noteContent !== (editingNote.content ?? '') || (noteTitle || t('common.note')) !== (editingNote.title || t('common.note')) : noteTitle !== '' || noteContent !== '' || !!editingNote
+    if (!dirty) { applyNoteTransition(intent); return }
+    noteTransitionOpener.current = opener
+    noteTransitionRef.current = intent
+    setNoteTransition(intent)
+  }
+  const closeNoteTransition = () => { noteTransitionRef.current = null; setNoteTransition(null) }
+  const confirmNoteTransition = () => {
+    // Consume synchronously: a second confirm cannot repeat a transition or POST.
+    const intent = noteTransitionRef.current
+    closeNoteTransition()
+    if (intent) applyNoteTransition(intent, true)
   }
   const compareAnswer = async () => {
     if (!uncertainAnswer || answerComparing) return
@@ -335,7 +405,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
           {selection.supported && knownEngine && selectedCount > 0 && !canAsk && !modelBlocked && <p className="text-xs text-muted-foreground">{googleBlocked || t(selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
           {selectedCount > 0 && googleBlocked && <Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button>}
           {mountId === null && <p role="status" className="text-xs text-muted-foreground">{t('workbench.unavailable')}</p>}
-          <div className="flex flex-wrap gap-2"><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} disabled={mountId === null || !canAsk || !question.trim() || !recovery.ready || !!recovery.operation} onClick={() => submitTurn(false)}>{t('workbench.ask')}</Button><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} variant="outline" disabled={mountId === null || !canAsk || !recovery.ready || !!recovery.operation} onClick={() => submitTurn(true)}>{t('workbench.outline')}</Button></div></div>
+          <div className="flex flex-wrap gap-2"><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} disabled={mountId === null || !canAsk || !question.trim() || !recovery.ready || !!recovery.operation} onClick={() => submitTurn(false)}>{t('workbench.ask')}</Button><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} variant="outline" disabled={mountId === null || !canAsk || !recovery.ready || !!recovery.operation} onClick={event => requestNoteTransition('outline', event.currentTarget)}>{t('workbench.outline')}</Button></div></div>
           {recovery.submissionFailed && <p role="alert" className="text-destructive">{t('workbench.answerFailure')}</p>}
           {unmappedSources && <div role="alert" className="space-y-2"><p className="text-sm leading-6 text-muted-foreground">{t('learningWorkspace.unmappedSources')}</p><Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button></div>}
           <TurnRecoveryPanel recovery={recovery} />
@@ -351,16 +421,24 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
         </section>
       </div>
       <aside id="workbench-panel-notes" aria-label={t('workbench.notes')} className={cn('min-h-0 overflow-auto border-l bg-card px-4 pb-5 space-y-4 w-full xl:block xl:w-72 2xl:w-80 xl:min-w-56 xl:max-w-[32vw] xl:shrink-0 xl:resize-x', tab !== 'notes' && 'hidden')}>
-        <div className="sticky top-0 z-10 flex justify-between items-center gap-2 border-b bg-card py-3"><div className="flex gap-1"><Button size="sm" variant={studioOpen ? 'ghost' : 'secondary'} aria-pressed={!studioOpen} onClick={() => setStudioOpen(false)}>{t('learningWorkspace.notesTab')}</Button><Button size="sm" variant={studioOpen ? 'secondary' : 'ghost'} aria-pressed={studioOpen} onClick={() => setStudioOpen(true)}>{t('learningWorkspace.studioTab')}</Button></div><Button size="sm" variant="ghost" onClick={() => { setStudioOpen(false); noteEditorSession.current++; setBaseRevision(null); resetNoteReview(); setEditingNote(null); setNoteContent(''); setNoteTitle(''); setNoteScope(undefined) }}>{t('common.new')}</Button></div>
-        <div className={cn("space-y-4", studioOpen && "hidden")}><label className="text-xs block" htmlFor="note-title">{t('workbench.noteTitle')}</label><Input id="note-title" value={noteTitle} onChange={event => { noteEditorRevision.current++; setNoteTitle(event.target.value) }} />
+        <div className="sticky top-0 z-10 flex justify-between items-center gap-2 border-b bg-card py-3"><div className="flex gap-1"><Button size="sm" variant={studioOpen ? 'ghost' : 'secondary'} aria-pressed={!studioOpen} onClick={() => setStudioOpen(false)}>{t('learningWorkspace.notesTab')}</Button><Button size="sm" variant={studioOpen ? 'secondary' : 'ghost'} aria-pressed={studioOpen} onClick={() => setStudioOpen(true)}>{t('learningWorkspace.studioTab')}</Button></div><Button size="sm" variant="ghost" onClick={event => requestNoteTransition('new', event.currentTarget)}>{t('common.new')}</Button></div>
+        {noteTransitionNotice && <p role="status" className="text-sm text-muted-foreground">{t(noteTransitionNotice)}</p>}
+        <div className={cn("space-y-4", studioOpen && "hidden")}><label className="text-xs block" htmlFor="note-title">{t('workbench.noteTitle')}</label><Input ref={noteTitleInput} id="note-title" value={noteTitle} onChange={event => { noteEditorRevision.current++; setNoteTitle(event.target.value) }} />
         <label className="text-xs block" htmlFor="note-content">{t('workbench.noteContent')}</label><Textarea id="note-content" className="bg-background leading-6" rows={8} value={noteContent} onChange={event => { noteEditorRevision.current++; setNoteContent(event.target.value) }} />
         <Button size="sm" disabled={!noteContent.trim() || note.isPending || !canRetryNoteWrite(noteProblem) || (!!editingNote?.id && baseRevision == null)} onClick={() => submitNote({ editorSession: noteEditorSession.current, baseRevision, noteId: editingNote?.id || undefined, title: noteTitle || t('common.note'), content: noteContent, citations: editingNote?.citations || [], scope_snapshot: noteScope || currentNoteScope })}>{t('workbench.saveNote')}</Button>
         {noteProblem && <NoteConflictPanel problem={noteProblem} baseRevision={baseRevision} draft={{ title: noteTitle, content: noteContent, citations: editingNote?.citations, scope_snapshot: noteScope }} latest={latestNotes} loading={comparing} readFailed={compareFailed} onCompare={compareNote} onReload={editingNote?.id ? reloadNote : undefined} />}
         {!data.notes.length && <p className="text-sm text-muted-foreground">{t('learningWorkspace.notesEmpty')}</p>}
-        {data.notes.map(saved => <article key={saved.id} className="rounded-md border p-3 space-y-2"><h3 className="font-medium">{saved.title}</h3><MarkdownRenderer>{saved.content || ''}</MarkdownRenderer>{saved.citations?.map(reference => <Button key={reference.citation_id} size="sm" variant="ghost" onClick={() => openCitation(reference)}>{reference.source_title} · {reference.citation_id}</Button>)}{Number.isInteger(saved.revision) && <Button size="sm" variant="outline" onClick={() => { noteEditorSession.current++; setBaseRevision(saved.revision); resetNoteReview(); setEditingNote(saved); setNoteTitle(saved.title || ''); setNoteContent(saved.content || ''); setNoteScope(saved.scope_snapshot) }}>{t('common.edit')}</Button>}{Number.isInteger(saved.revision) && <fieldset disabled={hasUnsavedNote(saved)}><SnapshotPromotionButton notebookId={notebookId} origin={{ kind: 'note', id: saved.id, revision: saved.revision }} onAdded={refresh} /></fieldset>}{hasUnsavedNote(saved) && <p className="text-xs text-muted-foreground">{t('sourceSnapshots.saveFirst')}</p>}</article>)}
+        {data.notes.map(saved => <article key={saved.id} className="rounded-md border p-3 space-y-2"><h3 className="font-medium">{saved.title}</h3><MarkdownRenderer>{saved.content || ''}</MarkdownRenderer>{saved.citations?.map(reference => <Button key={reference.citation_id} size="sm" variant="ghost" onClick={() => openCitation(reference)}>{reference.source_title} · {reference.citation_id}</Button>)}{Number.isInteger(saved.revision) && <Button size="sm" variant="outline" onClick={event => requestNoteTransition('edit', event.currentTarget, saved)}>{t('common.edit')}</Button>}{Number.isInteger(saved.revision) && <fieldset disabled={hasUnsavedNote(saved)}><SnapshotPromotionButton notebookId={notebookId} origin={{ kind: 'note', id: saved.id, revision: saved.revision }} onAdded={refresh} /></fieldset>}{hasUnsavedNote(saved) && <p className="text-xs text-muted-foreground">{t('sourceSnapshots.saveFirst')}</p>}</article>)}
         </div><div className={cn("space-y-4", !studioOpen && "hidden")}><p className="text-xs leading-5 text-muted-foreground">{t('learningWorkspace.studioDescription')}</p><JobsPanel jobs={data.jobs || []} onChanged={refresh} turnFence={recovery.operation ? { key: recovery.operation.capture.dto.idempotency_key, parentJobId: recovery.operation.receipt?.jobId, turnId: recovery.operation.receipt?.turnId } : undefined} /></div>
       </aside>
     </div>
+    <NoteDraftTransitionDialog kind={noteTransition?.kind ?? null} onCancel={closeNoteTransition} onConfirm={confirmNoteTransition} onCloseAutoFocus={event => {
+      event.preventDefault()
+      // Presence can retain the closing dialog across animation frames. Consume
+      // the confirmed destination only at the real FocusScope unmount callback.
+      if (transitionFocus.current) { transitionFocus.current = false; noteTitleInput.current?.focus() }
+      else noteTransitionOpener.current?.focus()
+    }} />
     <WebDiscoveryDialog key={notebookId} onCloseAutoFocus={event => { event.preventDefault(); discoveryOpener.current?.focus() }} notebookId={notebookId} open={discoverOpen} onOpenChange={setDiscoverOpen} onImported={refresh} />
     <NotebookSettingsDialog notebookId={notebookId} open={settingsOpen} onOpenChange={setSettingsOpen} onCloseAutoFocus={event => { event.preventDefault(); settingsOpener.current?.focus() }} selection={selection} onSelectionChange={updateSelection} link={data.link} onChanged={refresh} modelStatus={modelStatusKey} connectionStatus={connectionStatusKey} />
   </div>

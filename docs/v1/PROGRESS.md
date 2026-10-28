@@ -1,5 +1,11 @@
 # StudyWorkbench V1 progress
 
+## 产品体验修复进行中：2026-10-28 UTC
+
+[PM审查与分批验证](PM_UX_AUDIT_2026-10-28.md)和[自主实施计划](../superpowers/plans/2026-10-28-workbench-product-gates.md)：已确认草稿安全、范围/检索可信、阅读/保存反馈及视觉韧性问题；不重做既有绿色阅读风格。第一批草稿保护及动画关闭焦点修复独立复审通过，1,779前端单元 +25工具测试、类型/lint通过（7条继承警告）。后续批次正在推进。**完整PM门禁、当前浏览器验收与Taste安装尚未通过**，不以旧截图或单元测试替代。
+
+## 先前阶段记录
+
 ## F1 本轮最终源码与构建通过：2026-10-26 UTC
 
 [完整实现、审查裁定与验证](FRONTEND_TURN_PROGRESS_2026-10-26.md)及[精确验证记录](FRONTEND_TURN_VERIFICATION_2026-10-26.json)：Task 1–3 与整项最终审查修复完成；最后 UUID 能力异常时整页崩溃及 full-range whitespace 问题已独立复审关闭。受测源码 `152250609b142b12aa86dc0e7f1f2cc2436ef0f5`，tree `53ade43f81b08759ff445434023c030b92409981`。

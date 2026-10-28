@@ -349,6 +349,300 @@ describe('StudyWorkbench source snapshots', () => {
     fireEvent.click(screen.getByRole('button', { name: 'navigation.settings' }))
     expect(screen.getByLabelText('workbench.engine')).toHaveValue('independent')
   })
+  it.each(['new', 'edit', 'outline'] as const)('requires explicit consent before %s replaces a title-only new draft and restores focus on cancel', async action => {
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [{ id: 'note:other', revision: 1, title: 'Other', content: 'Other body' }] })
+    show()
+    await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteTitle'), { target: { value: 'Only my title' } })
+    const opener = screen.getByRole('button', { name: action === 'new' ? 'common.new' : action === 'edit' ? 'common.edit' : 'workbench.outline' })
+    opener.focus(); fireEvent.click(opener)
+    expect(screen.getByRole('alertdialog', { name: `workbench.noteTransition${action === 'new' ? 'New' : action === 'edit' ? 'Edit' : 'Outline'}Title` })).toBeInTheDocument()
+    expect(screen.getByLabelText('workbench.noteTitle')).toHaveValue('Only my title')
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('')
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+    expect(workbenchApi.saveNote).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }))
+    expect(screen.getByLabelText('workbench.noteTitle')).toHaveValue('Only my title')
+    await waitFor(() => expect(opener).toHaveFocus())
+  })
+  it.each(['new', 'edit', 'outline'] as const)('retains a dirty saved note and its base, citations and scope when %s confirmation is escaped', async action => {
+    const original: WorkbenchNote = { id: 'note:a', revision: 3, title: 'Original', content: 'Original body', citations: oldTurn.citations, scope_snapshot: oldTurn.scope_snapshot }
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [original] })
+    vi.mocked(workbenchApi.updateNote).mockResolvedValue({ ...original, revision: 4, title: 'My title', content: 'My draft' })
+    show(); await screen.findByText('Original body')
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }))
+    fireEvent.change(screen.getByLabelText('workbench.noteTitle'), { target: { value: 'My title' } })
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'My draft' } })
+    fireEvent.click(screen.getByRole('button', { name: action === 'new' ? 'common.new' : action === 'edit' ? 'common.edit' : 'workbench.outline' }))
+    fireEvent.keyDown(screen.getByRole('alertdialog'), { key: 'Escape', code: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument())
+    expect(screen.getByLabelText('workbench.noteTitle')).toHaveValue('My title')
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('My draft')
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await waitFor(() => expect(workbenchApi.updateNote).toHaveBeenCalledWith('notebook:1', 'note:a', { title: 'My title', content: 'My draft', expected_revision: 3, citations: oldTurn.citations, scope_snapshot: oldTurn.scope_snapshot }))
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+  })
+  it.each(['new', 'edit'] as const)('makes the editor visible and focuses its title after confirmed %s, without saving', async action => {
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [{ id: 'note:a', revision: 3, title: 'Saved title', content: 'Saved body' }] })
+    show(); await screen.findByText('Saved body')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Unsaved body' } })
+    fireEvent.click(screen.getByRole('button', { name: 'learningWorkspace.studioTab' }))
+    fireEvent.click(screen.getByRole('button', { name: action === 'new' ? 'common.new' : 'common.edit' }))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.noteTransitionReplace' }))
+    expect(screen.getByLabelText('workbench.noteTitle')).toHaveValue(action === 'new' ? '' : 'Saved title')
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue(action === 'new' ? '' : 'Saved body')
+    expect(screen.getByLabelText('workbench.noteTitle')).toBeVisible()
+    await waitFor(() => expect(screen.getByLabelText('workbench.noteTitle')).toHaveFocus())
+    expect(workbenchApi.saveNote).not.toHaveBeenCalled(); expect(workbenchApi.updateNote).not.toHaveBeenCalled()
+  })
+  it.each((['new', 'edit'] as const).flatMap(action => (['confirm', 'cancel', 'escape'] as const).map(outcome => ({ action, outcome }))))('keeps $action/$outcome focus through the actual Radix exit-animation unmount', async ({ action, outcome }) => {
+    // jsdom does not load Tailwind animations. Supply only the computed animation
+    // names; keep the real application dialog, Presence and FocusScope lifecycle.
+    const computedStyle = globalThis.getComputedStyle.bind(globalThis)
+    const styles = vi.spyOn(globalThis, 'getComputedStyle').mockImplementation(node => new Proxy(computedStyle(node), {
+      get(target, property) {
+        if (property === 'animationName' && node.getAttribute('role') === 'alertdialog') return node.getAttribute('data-state') === 'open' ? 'note-enter' : 'note-exit'
+        return Reflect.get(target, property, target)
+      },
+    }))
+    const frames: FrameRequestCallback[] = []
+    const animationFrame = vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation(callback => { frames.push(callback); return frames.length })
+    vi.stubGlobal('CSS', { escape: (name: string) => name })
+    try {
+      vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [{ id: 'note:a', revision: 3, title: 'Saved title', content: 'Saved body' }] })
+      show(); await screen.findByText('Saved body')
+      fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Unsaved body' } })
+      const opener = screen.getByRole('button', { name: action === 'new' ? 'common.new' : 'common.edit' })
+      opener.focus(); fireEvent.click(opener)
+      const dialog = screen.getByRole('alertdialog')
+      let closed = false
+      dialog.addEventListener('focusScope.autoFocusOnUnmount', () => { closed = true })
+      if (outcome === 'escape') fireEvent.keyDown(dialog, { key: 'Escape', code: 'Escape' })
+      else fireEvent.click(screen.getByRole('button', { name: outcome === 'confirm' ? 'workbench.noteTransitionReplace' : 'common.cancel' }))
+      act(() => { frames.splice(0).forEach(frame => frame(0)) })
+      expect(dialog).toBeInTheDocument()
+      expect(dialog).toHaveAttribute('data-state', 'closed')
+      expect(closed).toBe(false)
+      if (outcome === 'confirm') expect(screen.getByLabelText('workbench.noteTitle')).toHaveFocus()
+      const end = new Event('animationend', { bubbles: true })
+      Object.defineProperty(end, 'animationName', { value: 'note-exit' })
+      fireEvent(dialog, end)
+      await waitFor(() => expect(closed).toBe(true))
+      expect(dialog).not.toBeInTheDocument()
+      expect(outcome === 'confirm' ? screen.getByLabelText('workbench.noteTitle') : opener).toHaveFocus()
+      expect(screen.getByLabelText('workbench.noteContent')).toHaveValue(outcome !== 'confirm' ? 'Unsaved body' : action === 'new' ? '' : 'Saved body')
+    } finally {
+      styles.mockRestore(); animationFrame.mockRestore(); vi.unstubAllGlobals()
+    }
+  })
+  it.each([null, 'Saved text'])('keeps blank and unchanged saved notes one-click, including native text %s', async text => {
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [{ id: 'note:a', revision: 3, title: text, content: text }] })
+    show(); await screen.findByText('Lecture notes')
+    fireEvent.click(screen.getByRole('button', { name: 'common.new' }))
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.getByLabelText('workbench.noteTitle')).toHaveFocus())
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }))
+    await waitFor(() => expect(screen.getByLabelText('workbench.noteTitle')).toHaveFocus())
+    fireEvent.click(screen.getByRole('button', { name: 'common.new' }))
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.getByLabelText('workbench.noteTitle')).toHaveFocus())
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.outline' }))
+    await waitFor(() => expect(workbenchApi.turn).toHaveBeenCalledTimes(1))
+  })
+  it('confirms Outline before POST, keeps the old draft until trusted completion, and protects the generated draft', async () => {
+    const evidenceWorkspace = { ...structuredClone(fixture), notes: [{ id: 'note:other', revision: 1, title: 'Other', content: 'Other body' }] }
+    let finish!: (turns: TurnRecord[]) => void
+    vi.mocked(workbenchApi.workspace).mockResolvedValue(evidenceWorkspace)
+    vi.mocked(workbenchApi.turns).mockReturnValue(new Promise(resolve => { finish = resolve }))
+    show(); await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteTitle'), { target: { value: 'My title' } })
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'My draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.outline' }))
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+    const confirm = screen.getByRole('button', { name: 'workbench.noteTransitionGenerate' })
+    act(() => { fireEvent.click(confirm); fireEvent.click(confirm) })
+    await waitFor(() => expect(workbenchApi.turn).toHaveBeenCalledTimes(1))
+    expect(screen.getByLabelText('workbench.noteTitle')).toHaveValue('My title')
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('My draft')
+    const evidence = completedEvidence(vi.mocked(workbenchApi.turn).mock.calls[0][1])
+    evidenceWorkspace.jobs = [evidence.parent]
+    await waitFor(() => expect(workbenchApi.turns).toHaveBeenCalledTimes(1))
+    await act(async () => finish([evidence.turn]))
+    await waitFor(() => expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Generated outline'))
+    for (const name of ['common.new', 'common.edit', 'workbench.outline']) {
+      fireEvent.click(screen.getByRole('button', { name }))
+      expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }))
+      expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Generated outline')
+    }
+    expect(workbenchApi.turn).toHaveBeenCalledTimes(1)
+  })
+  it.each(['new', 'edit', 'outline'] as const)('expires %s confirmation after a newer edit, even if text is restored', async action => {
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [{ id: 'note:a', revision: 3, title: 'Saved title', content: 'Saved body' }] })
+    show(); await screen.findByText('Saved body')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Draft' } })
+    fireEvent.click(screen.getByRole('button', { name: action === 'new' ? 'common.new' : action === 'edit' ? 'common.edit' : 'workbench.outline' }))
+    const confirm = screen.getByRole('button', { name: action === 'outline' ? 'workbench.noteTransitionGenerate' : 'workbench.noteTransitionReplace' })
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Newer' } })
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Draft' } })
+    fireEvent.click(confirm)
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Draft')
+    expect(screen.getByText('workbench.noteTransitionExpired')).toBeInTheDocument()
+    expect(workbenchApi.turn).not.toHaveBeenCalled(); expect(workbenchApi.saveNote).not.toHaveBeenCalled()
+  })
+  it.each([
+    ['unknown', new Error('private lost ACK')],
+    ['conflict', { response: { status: 409, data: { detail: { code: 'NOTE_REVISION_CONFLICT', current_revision: 4 } } } }],
+    ['rejected', { response: { status: 422 } }],
+  ] as const)('blocks all draft transitions after %s save failure and retains read-only comparison', async (kind, error) => {
+    const original: WorkbenchNote = { id: 'note:a', revision: 3, title: 'Original', content: 'Original body', citations: oldTurn.citations, scope_snapshot: oldTurn.scope_snapshot }
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [original] })
+    vi.mocked(workbenchApi.updateNote).mockRejectedValue(error)
+    show(); await screen.findByText('Original body')
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }))
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'My draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await screen.findByText(`noteConflict.${kind}`)
+    fireEvent.click(screen.getByRole('button', { name: 'noteConflict.compare' }))
+    await screen.findByText('noteConflict.latest')
+    for (const name of ['common.new', 'common.edit', 'workbench.outline']) {
+      fireEvent.click(screen.getByRole('button', { name }))
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+      expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('My draft')
+      expect(screen.getByText('workbench.noteTransitionReview')).toBeInTheDocument()
+      expect(screen.getByText('noteConflict.latest')).toBeInTheDocument()
+      expect(screen.getByText(/noteConflict.baseRevision/)).toHaveTextContent('3')
+    }
+    expect(workbenchApi.updateNote).toHaveBeenCalledTimes(1); expect(workbenchApi.turn).not.toHaveBeenCalled()
+    expect(screen.queryByText(/private lost ACK/)).not.toBeInTheDocument()
+  })
+  it.each([
+    ['not-sent', new RequestNotDispatchedError('authentication')],
+    ['auth-rejected', { response: { status: 401, data: { error: { code: 'AUTH_REQUIRED' } } } }],
+  ] as const)('keeps explicit retry and guarded replacement available after %s', async (_kind, error) => {
+    vi.mocked(workbenchApi.saveNote).mockRejectedValue(error)
+    show(); await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Retryable draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'workbench.saveNote' })).toBeEnabled())
+    fireEvent.click(screen.getByRole('button', { name: 'common.new' }))
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }))
+    expect(screen.getByRole('button', { name: 'workbench.saveNote' })).toBeEnabled()
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledTimes(2))
+  })
+  it.each(['success', 'unknown'] as const)('expires a confirmation across a %s save outcome without replacing newer content', async outcome => {
+    let resolve!: (note: WorkbenchNote) => void; let reject!: (error: Error) => void
+    vi.mocked(workbenchApi.saveNote).mockReturnValueOnce(new Promise((done, fail) => { resolve = done; reject = fail }))
+    show(); await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Keep draft' } })
+    const save = screen.getByRole('button', { name: 'workbench.saveNote' })
+    fireEvent.click(screen.getByRole('button', { name: 'common.new' }))
+    const confirm = screen.getByRole('button', { name: 'workbench.noteTransitionReplace' })
+    fireEvent.click(save)
+    await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1))
+    await act(async () => { if (outcome === 'success') resolve({ id: 'note:a', revision: 1, title: 'common.note', content: 'Keep draft' }); else reject(new Error('Lost ACK')) })
+    fireEvent.click(confirm)
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Keep draft')
+    expect(screen.getByText(outcome === 'success' ? 'workbench.noteTransitionExpired' : 'workbench.noteTransitionReview')).toBeInTheDocument()
+    expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1)
+  })
+  it('expires Edit confirmation when its saved target revision changes', async () => {
+    const original = { id: 'note:a', revision: 3, title: 'Saved title', content: 'Saved body' }
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [original] })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={client}><TurnOperationProvider><StudyWorkbench notebookId="notebook:1" /></TurnOperationProvider></QueryClientProvider>)
+    await screen.findByText('Saved body')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Keep draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'common.edit' }))
+    act(() => { client.setQueryData(['personal', 'workspace', 'notebook:1'], { ...structuredClone(fixture), notes: [{ ...original, revision: 4, content: 'New saved body' }] }) })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.noteTransitionReplace' }))
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Keep draft')
+    expect(screen.getByText('workbench.noteTransitionExpired')).toBeInTheDocument()
+  })
+  it.each(['new', 'edit', 'outline'] as const)('blocks %s while a save is pending without losing the draft', async action => {
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [{ id: 'note:a', revision: 3, title: 'Saved', content: 'Saved body' }] })
+    vi.mocked(workbenchApi.saveNote).mockReturnValueOnce(new Promise(() => {}))
+    show(); await screen.findByText('Saved body')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Pending draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    fireEvent.click(screen.getByRole('button', { name: action === 'new' ? 'common.new' : action === 'edit' ? 'common.edit' : 'workbench.outline' }))
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Pending draft')
+    expect(screen.getByText('workbench.noteTransitionSaving')).toBeInTheDocument()
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+    await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1))
+  })
+  it('expires an open replacement confirmation after a trusted outline advances the editor session', async () => {
+    const evidenceWorkspace = structuredClone(fixture)
+    let finish!: (turns: TurnRecord[]) => void
+    vi.mocked(workbenchApi.workspace).mockResolvedValue(evidenceWorkspace)
+    vi.mocked(workbenchApi.turns).mockReturnValue(new Promise(resolve => { finish = resolve }))
+    show(); await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Original draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.outline' }))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.noteTransitionGenerate' }))
+    await waitFor(() => expect(workbenchApi.turns).toHaveBeenCalledTimes(1))
+    fireEvent.click(screen.getByRole('button', { name: 'common.new' }))
+    const evidence = completedEvidence(vi.mocked(workbenchApi.turn).mock.calls[0][1]); evidenceWorkspace.jobs = [evidence.parent]
+    await act(async () => finish([evidence.turn]))
+    await waitFor(() => expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Generated outline'))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.noteTransitionReplace' }))
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Generated outline')
+    expect(screen.getByText('workbench.noteTransitionExpired')).toBeInTheDocument()
+    expect(workbenchApi.turn).toHaveBeenCalledTimes(1)
+  })
+  it.each(['pending', 'unknown', 'conflict', 'rejected'] as const)('keeps %s save evidence if an already submitted outline finishes later', async outcome => {
+    const evidenceWorkspace = structuredClone(fixture)
+    let finish!: (turns: TurnRecord[]) => void; let fail!: (error: unknown) => void
+    vi.mocked(workbenchApi.workspace).mockResolvedValue(evidenceWorkspace)
+    vi.mocked(workbenchApi.turns).mockReturnValue(new Promise(resolve => { finish = resolve }))
+    vi.mocked(workbenchApi.saveNote).mockReturnValueOnce(new Promise((_done, reject) => { fail = reject }))
+    show(); await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Preserve saved draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.outline' }))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.noteTransitionGenerate' }))
+    await waitFor(() => expect(workbenchApi.turns).toHaveBeenCalledTimes(1))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1))
+    if (outcome !== 'pending') {
+      await act(async () => fail(outcome === 'unknown' ? new Error('Lost ACK') : outcome === 'conflict' ? { response: { status: 409, data: { detail: { code: 'NOTE_REVISION_CONFLICT', current_revision: 4 } } } } : { response: { status: 422 } }))
+      await screen.findByText(`noteConflict.${outcome}`)
+    }
+    const evidence = completedEvidence(vi.mocked(workbenchApi.turn).mock.calls[0][1]); evidenceWorkspace.jobs = [evidence.parent]
+    await act(async () => finish([evidence.turn]))
+    expect(await screen.findByRole('button', { name: 'workbench.saveAnswer' })).toBeInTheDocument()
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Preserve saved draft')
+    if (outcome !== 'pending') expect(screen.getByText(`noteConflict.${outcome}`)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'workbench.saveNote' })).toBeDisabled()
+    expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1)
+  })
+  it('clears a pending-transition notice after the save settles without clearing the draft', async () => {
+    let finish!: (note: WorkbenchNote) => void
+    vi.mocked(workbenchApi.saveNote).mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
+    show(); await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Pending draft' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
+    await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1))
+    fireEvent.click(screen.getByRole('button', { name: 'common.new' }))
+    expect(screen.getByText('workbench.noteTransitionSaving')).toBeInTheDocument()
+    await act(async () => finish({ id: 'note:a', revision: 1, content: 'Pending draft' }))
+    expect(screen.queryByText('workbench.noteTransitionSaving')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Pending draft')
+  })
+  it.each(['scope', 'privacy', 'server'] as const)('expires Outline confirmation when its %s target changes without a POST', async change => {
+    show(); await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Keep draft' } })
+    const source = screen.getByRole('checkbox', { name: 'My PDF · sv_new' })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.outline' }))
+    if (change === 'scope') fireEvent.click(source)
+    else act(() => { if (change === 'privacy') invalidateTurnContext(); else publishTurnTarget({ mode: 'legacy_password', apiBase: 'https://changed.example/api', protocol: null }, true) })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.noteTransitionGenerate' }))
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Keep draft')
+    expect(screen.getByText('workbench.noteTransitionExpired')).toBeInTheDocument()
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
+  })
   it('requires saving the current dirty note before promoting its saved snapshot', async () => {
     vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [{ id: 'note:classic', revision: 2, title: 'Classic note', content: 'Saved writing', citations: [] }] })
     show()
@@ -427,7 +721,7 @@ describe('StudyWorkbench source snapshots', () => {
     expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Keep this draft')
     expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1)
   })
-  it('does not rebase a dirty draft during workspace refresh or apply a late comparison to another editor', async () => {
+  it('does not rebase a dirty draft during refresh or let New bypass an in-flight conflict comparison', async () => {
     const original = { id: 'note:a', revision: 3, title: 'Original', content: 'Original body', citations: oldTurn.citations, scope_snapshot: oldTurn.scope_snapshot }
     vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), notes: [original] })
     vi.mocked(workbenchApi.updateNote).mockRejectedValue({ response: { status: 409, data: { detail: { code: 'NOTE_REVISION_CONFLICT', current_revision: 4 } } } })
@@ -446,10 +740,12 @@ describe('StudyWorkbench source snapshots', () => {
     vi.mocked(workbenchApi.workspace).mockReturnValueOnce(new Promise(done => { resolveCompare = done }))
     fireEvent.click(screen.getByRole('button', { name: 'noteConflict.compare' }))
     fireEvent.click(screen.getByRole('button', { name: 'common.new' }))
-    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Other draft' } })
+    expect(screen.getByText('workbench.noteTransitionReview')).toBeInTheDocument()
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Keep my draft')
     await act(async () => resolveCompare({ ...structuredClone(fixture), notes: [original] }))
-    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Other draft')
-    expect(screen.queryByText('noteConflict.latest')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Keep my draft')
+    expect(screen.getByText('noteConflict.latest')).toBeInTheDocument()
+    expect(screen.getByText(/noteConflict.baseRevision/)).toHaveTextContent('3')
   })
   it('does not submit the same editor twice while a save is pending', async () => {
     vi.mocked(workbenchApi.saveNote).mockReturnValueOnce(new Promise(() => {}))
@@ -616,7 +912,7 @@ describe('StudyWorkbench source snapshots', () => {
     expect(screen.getByText('workbench.uploadBlockedHint')).toBeInTheDocument()
     expect(screen.queryByText(/workbench.uploadAccepted/)).not.toBeInTheDocument()
   })
-  it.each(['new', 'edit'] as const)('does not retarget the %s draft when an earlier save completes', async action => {
+  it.each(['new', 'edit'] as const)('blocks a pending save transition and enters the %s editor only after acknowledgement and consent', async action => {
     const savedA: WorkbenchNote = { id: 'note:a', revision: 1, title: 'A', content: 'Draft A', citations: [], scope_snapshot: oldTurn.scope_snapshot }
     const existingC: WorkbenchNote = { ...savedA, id: 'note:c', title: 'C', content: 'Draft C' }
     let resolveSave!: (note: WorkbenchNote) => void
@@ -628,10 +924,15 @@ describe('StudyWorkbench source snapshots', () => {
     fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
     await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1))
     fireEvent.click(screen.getByRole('button', { name: action === 'new' ? 'common.new' : 'common.edit' }))
+    expect(screen.getByText('workbench.noteTransitionSaving')).toBeInTheDocument()
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Draft A')
     fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Current draft' } })
     await act(async () => resolveSave(savedA))
     expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Current draft')
     await waitFor(() => expect(screen.getByRole('button', { name: 'workbench.saveNote' })).not.toBeDisabled())
+    fireEvent.click(screen.getByRole('button', { name: action === 'new' ? 'common.new' : 'common.edit' }))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.noteTransitionReplace' }))
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Current draft' } })
     fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
     if (action === 'new') {
       await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledTimes(2))
@@ -656,9 +957,13 @@ describe('StudyWorkbench source snapshots', () => {
     fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Starting content' } })
     fireEvent.change(screen.getByLabelText('workbench.noteTitle'), { target: { value: 'Starting title' } })
     fireEvent.click(screen.getByRole('button', { name: 'workbench.outline' }))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.noteTransitionGenerate' }))
     await waitFor(() => expect(workbenchApi.turn).toHaveBeenCalledTimes(1))
     if (phase === 'history') await act(async () => resolveSubmission({ turn_id: 'new_turn', job_id: 'j1', state: 'queued' }))
-    if (action === 'new' || action === 'edit') fireEvent.click(screen.getByRole('button', { name: action === 'new' ? 'common.new' : 'common.edit' }))
+    if (action === 'new' || action === 'edit') {
+      fireEvent.click(screen.getByRole('button', { name: action === 'new' ? 'common.new' : 'common.edit' }))
+      fireEvent.click(screen.getByRole('button', { name: 'workbench.noteTransitionReplace' }))
+    }
     else fireEvent.change(screen.getByLabelText(action === 'content' ? 'workbench.noteContent' : 'workbench.noteTitle'), { target: { value: 'New unsaved text' } })
     const expectedContent = (screen.getByLabelText('workbench.noteContent') as HTMLTextAreaElement).value
     const expectedTitle = (screen.getByLabelText('workbench.noteTitle') as HTMLInputElement).value
@@ -674,7 +979,7 @@ describe('StudyWorkbench source snapshots', () => {
     expect(screen.getByRole('button', { name: 'workbench.saveAnswer' })).toBeEnabled()
     unmount()
   })
-  it('does not attach a pending note save to a newly generated outline draft', async () => {
+  it('blocks Outline during a pending save, then creates a separate draft after acknowledgement and consent', async () => {
     let resolveSave!: (note: WorkbenchNote) => void
     vi.mocked(workbenchApi.saveNote).mockImplementationOnce(() => new Promise(resolve => { resolveSave = resolve }))
     vi.mocked(workbenchApi.turns).mockImplementation(async () => [completedEvidence(vi.mocked(workbenchApi.turn).mock.calls[0][1]).turn])
@@ -685,8 +990,12 @@ describe('StudyWorkbench source snapshots', () => {
     fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
     await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenCalledTimes(1))
     fireEvent.click(screen.getByRole('button', { name: 'workbench.outline' }))
-    await waitFor(() => expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Generated outline'))
+    expect(screen.getByText('workbench.noteTransitionSaving')).toBeInTheDocument()
+    expect(workbenchApi.turn).not.toHaveBeenCalled()
     await act(async () => resolveSave({ id: 'note:a', revision: 1, title: 'A', content: 'Earlier draft', citations: [] }))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.outline' }))
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.noteTransitionGenerate' }))
+    await waitFor(() => expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Generated outline'))
     await waitFor(() => expect(screen.getByRole('button', { name: 'workbench.saveNote' })).not.toBeDisabled())
     fireEvent.click(screen.getByRole('button', { name: 'workbench.saveNote' }))
     await waitFor(() => expect(workbenchApi.saveNote).toHaveBeenLastCalledWith('notebook:1', expect.objectContaining({ content: 'Generated outline', citations: completedEvidence(vi.mocked(workbenchApi.turn).mock.calls[0][1]).turn.citations })))
