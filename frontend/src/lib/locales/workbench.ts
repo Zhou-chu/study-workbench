@@ -1,4 +1,14 @@
 export const workbenchEn = {
+  workspaceRefreshFailed: 'Refresh failed. Showing the last loaded workspace; local drafts are kept.',
+  retryWorkspaceRead: 'Retry workspace read',
+  selectionSaving: 'Saving current selection and reading position…',
+  selectionSaved: 'Current selection and reading position saved.',
+  selectionUnconfirmed: 'Selection and reading position are not confirmed saved. They remain here; an earlier request may have written them.',
+  selectionNotSent: 'This save attempt was not sent. Local selection and reading position remain here; earlier writes may have completed.',
+  selectionUnsupported: 'Repair the unsupported selection in Settings before saving.',
+  selectionConnectionRequired: 'Restore the connection before explicitly retrying the latest selection.',
+  retrySelectionSave: 'Retry latest selection save',
+
   askScope: 'Current question scope', changeScope: 'Change', unknownEngine: 'Unsupported engine', unknownScope: 'Unsupported source origin',
   remoteLocalSelectionHint: 'Local checkboxes do not change the current Google question scope. Choose local versions in Settings to search or ask about them.',
   searchSelectedSources: 'Search selected local sources',
@@ -113,6 +123,16 @@ export const workbenchEn = {
   states: { queued: 'Queued', running: 'Running', waiting_remote: 'Waiting for Google', succeeded: 'Succeeded', failed: 'Failed', needs_reauth: 'Sign-in required', submission_unknown: 'Submission uncertain', cancelled_local: 'Local waiting stopped', ready: 'Searchable', completed: 'Searchable', pending: 'Waiting', extracting: 'Extracting', needs_ocr: 'OCR needed', partial: 'Partially extracted', unsupported: 'Unsupported file', available: 'Available', missing: 'Missing', unverified: 'Unverified' },
 }
 export const workbenchZh: typeof workbenchEn = {
+  workspaceRefreshFailed: '刷新失败，正在显示上次加载的工作区；本地草稿已保留。',
+  retryWorkspaceRead: '重新读取工作区',
+  selectionSaving: '正在保存当前选择和阅读位置…',
+  selectionSaved: '当前选择和阅读位置已保存。',
+  selectionUnconfirmed: '尚未确认选择和阅读位置已保存。本地内容仍保留；此前请求可能已写入。',
+  selectionNotSent: '本次保存请求未发送。选择和阅读位置仍保留在本地；此前写入可能已完成。',
+  selectionUnsupported: '请先在设置中修复不支持的选择，再保存。',
+  selectionConnectionRequired: '请先恢复连接，再明确重试保存最新选择。',
+  retrySelectionSave: '重试保存最新选择',
+
   askScope: '当前提问范围', changeScope: '更改', unknownEngine: '不支持的引擎', unknownScope: '不支持的资料来源',
   remoteLocalSelectionHint: '本地勾选不会改变当前 Google 提问范围。如需搜索或使用本地版本提问，请在设置中选择本地范围。',
   searchSelectedSources: '搜索所选本地资料',

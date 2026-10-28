@@ -63,10 +63,10 @@
 
 **Interfaces:** Consumes existing useWorkbench query status and useSaveWorkbenchSelection mutation with its existing per-notebook serial scope. Server API contract unchanged. Extend `workbenchApi.saveSelection(notebookId, selection, context?: TurnContext)` internally and forward captured context using existing apiClient config; capture per explicit selection intent before the existing serial queue, rejecting retired target/privacy at final send. Ordinary callers remain compatible. Track latest supported local selection generation and its acknowledged/error state; keep draft separate from cached server selection. Any explicit retry uses latest supported complete selection, never an old failed payload.
 
-- [ ] Add RED: existing workspace data followed by failed refresh retains content/draft, exposes a stale/read-failed notice and explicit retry; retry performs workspace GET only and clears notice only after success. Empty initial failure remains separate.
-- [ ] Add RED: selection/read-position PATCH pending/error/success feedback, rapid A→B with A failure/B success and A success/B failure, same-tick duplicate retry, unsupported selection and authentication/context change; no old outcome mislabels latest draft, no automatic retry or new turn/upload.
-- [ ] Implement compact localized read failure and selection saving/unconfirmed-save status. Preserve current draft and mutation serialization, recheck latest valid state before explicit retry, retain failure until latest acknowledgement, and distinguish outcome unknown from proven not written. Do not create a second durable selection store or perform hidden synchronization.
-- [ ] Run GREEN focused hooks/components and all prior task regressions, full frontend tests/types/lint; CHANGELOG and commit for review.
+- [x] Add RED: existing workspace data followed by failed refresh retains content/draft, exposes a stale/read-failed notice and explicit retry; retry performs workspace GET only and clears notice only after success. Empty initial failure remains separate.
+- [x] Add RED: selection/read-position PATCH pending/error/success feedback, rapid A→B with A failure/B success and A success/B failure, same-tick duplicate retry, unsupported selection and authentication/context change; no old outcome mislabels latest draft, no automatic retry or new turn/upload.
+- [x] Implement compact localized read failure and selection saving/unconfirmed-save status. Preserve current draft and mutation serialization, recheck latest valid state before explicit retry, retain failure until latest acknowledgement, and distinguish outcome unknown from proven not written. Do not create a second durable selection store or perform hidden synchronization.
+- [x] Run GREEN focused hooks/components and all prior task regressions, full frontend tests/types/lint; CHANGELOG and commit for review.
 
 ### Task4: Repair readable action tokens and responsive content bounds
 

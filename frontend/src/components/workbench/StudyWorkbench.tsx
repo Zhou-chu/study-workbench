@@ -52,14 +52,20 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const capabilities = useNotebookLMCapabilities()
   const modelDefaults = useModelDefaults()
   const data = workspace.data
-  const saveSelection = useSaveWorkbenchSelection(notebookId)
-  const [draft, setDraft] = useState<WorkspaceSelection | null>(null)
-  const rawSelection = draft ?? data?.selection ?? null
+  const [draft, setDraft] = useState<{ notebookId: string; selection: WorkspaceSelection } | null>(null)
+  const rawSelection = (draft?.notebookId === notebookId ? draft.selection : null) ?? data?.selection ?? null
+  const saveSelection = useSaveWorkbenchSelection(notebookId, rawSelection)
   const selection = useMemo(() => projectWorkbenchSelection(rawSelection), [rawSelection])
   const search = useWorkbenchEvidenceSearch(notebookId, rawSelection)
   const selectionRef = useRef(rawSelection)
   const citationRequest = useRef(0)
-  useEffect(() => { selectionRef.current = rawSelection }, [rawSelection])
+  selectionRef.current = rawSelection
+  const workspaceReadPending = useRef(false)
+  const retryWorkspaceRead = () => {
+    if (workspaceReadPending.current || workspace.isFetching) return
+    workspaceReadPending.current = true
+    void workspace.refetch({ cancelRefetch: false }).finally(() => { workspaceReadPending.current = false })
+  }
   const [tab, setTab] = useState('conversation')
   const uploadInput = useRef<HTMLInputElement>(null)
   const [focusUpload, setFocusUpload] = useState(false)
@@ -145,14 +151,12 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const knownEngine = isKnownEngine(selection.engine)
   const canAsk = selection.supported && knownEngine && knownOrigin && selectedCount > 0 && !modelBlocked && !googleBlocked && !(selection.engine === 'independent' && selection.selection_origin === 'remote')
   const updateSelection = (patch: Partial<WorkbenchSelection>) => {
+    if (!saveSelection.ownsIntent()) return
     const next = { ...(selectionRef.current ?? emptySelection), ...patch }
     selectionRef.current = next
     search.selectionChanged(next)
-    setDraft(next)
-    const view = projectWorkbenchSelection(next)
-    if (!view.supported || !isKnownEngine(view.engine) || !isKnownSelectionOrigin(view.selection_origin)) return
-    // The view is not the request: forward only supported, explicitly typed fields.
-    saveSelection.mutate({ engine: view.engine, selection_origin: view.selection_origin, source_version_ids: view.source_version_ids, remote_source_ids: view.remote_source_ids, reading: view.reading })
+    setDraft({ notebookId, selection: next })
+    saveSelection.mutate(next)
   }
   const currentNoteScope: ScopeSnapshot | undefined = selection.supported && isKnownEngine(selection.engine) && isKnownSelectionOrigin(selection.selection_origin) ? { engine: selection.engine, selection_origin: selection.selection_origin, source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [], remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [] } : undefined
   const recovery = useWorkbenchTurn(notebookId, { independentAvailable: modelState === 'ready', googleAvailable: !connection.isError && !capabilities.isError && connection.data?.state === 'connected' && askCapability?.support === 'available', googleLink: data?.link ?? null })
@@ -325,13 +329,25 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   }
   const saveAnswer = (turn: TurnRecord) => submitNote({ answerTurnId: turn.turn_id, title: turn.message, content: turn.answer || '', citations: turn.citations || [], scope_snapshot: turn.scope_snapshot })
   if (workspace.isLoading) return <p className="p-6" role="status">{t('common.loading')}</p>
-  if (!data) return <div className="p-6 space-y-3"><p role="alert">{requestError(workspace.error) || t('workbench.serviceError')}</p><Button onClick={() => workspace.refetch()}>{t('workbench.retry')}</Button></div>
+  if (!data) return <div className="p-6 space-y-3"><p role="alert">{requestError(workspace.error) || t('workbench.serviceError')}</p><Button className="min-w-11 [@media(max-width:640px)]:min-h-11 [@media(pointer:coarse)]:min-h-11" disabled={workspace.isFetching} onClick={retryWorkspaceRead}>{t('workbench.retry')}</Button></div>
   const readVersion = citation?.kind === 'remote_unmapped' ? undefined : selection.reading?.source_version_id
   const hasRemoteContext = Boolean(data.link?.remote_notebook_id) || (selection.selection_origin === 'remote' && selection.remote_source_ids.length > 0)
   const unmappedSources = recovery.unmappedSources
   const hasUnsavedNote = (saved: WorkbenchNote) => editingNote?.id === saved.id && (note.isPending || !!noteProblem || baseRevision !== saved.revision || noteContent !== (saved.content || '') || (noteTitle || t('common.note')) !== (saved.title || t('common.note')))
   return <div aria-label={t('learningWorkspace.workspace')} className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
     <header className="shrink-0 border-b bg-card px-4 py-3 lg:px-6 space-y-3">
+      {workspace.isRefetchError && <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"><p role="alert">{t('workbench.workspaceRefreshFailed')}</p><Button type="button" size="sm" variant="outline" className="min-w-11 [@media(max-width:640px)]:min-h-11 [@media(pointer:coarse)]:min-h-11" disabled={workspace.isFetching} onClick={retryWorkspaceRead}>{t('workbench.retryWorkspaceRead')}</Button></div>}
+      {saveSelection.status !== 'idle' && <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <div role="status" aria-live="polite">
+          {saveSelection.unconfirmed && <p>{t(saveSelection.notDispatched ? 'workbench.selectionNotSent' : 'workbench.selectionUnconfirmed')}</p>}
+          {saveSelection.status === 'saving' && <p>{t('workbench.selectionSaving')}</p>}
+          {saveSelection.status === 'saved' && <p>{t('workbench.selectionSaved')}</p>}
+          {saveSelection.unconfirmed && !selection.supported && <p>{t('workbench.selectionUnsupported')}</p>}
+          {saveSelection.unconfirmed && !saveSelection.ready && <p>{t('workbench.selectionConnectionRequired')}</p>}
+        </div>
+        {saveSelection.unconfirmed && <Button type="button" size="sm" variant="outline" className="min-w-11 [@media(max-width:640px)]:min-h-11 [@media(pointer:coarse)]:min-h-11" disabled={!saveSelection.canRetry} onClick={saveSelection.retry}>{t('workbench.retrySelectionSave')}</Button>}
+      </div>}
+
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <Link href="/notebooks" aria-label={t('navigation.notebooks')} className="rounded-md p-2 text-muted-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><ArrowLeft className="size-4" aria-hidden="true" /></Link>

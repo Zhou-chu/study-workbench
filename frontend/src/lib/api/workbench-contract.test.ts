@@ -78,3 +78,34 @@ it.each(['turn', 'workspace', 'turns'] as const)('passes the context preconditio
   const pending = endpoint === 'turn' ? workbenchApi.turn('c', { notebook_id: 'n', engine: 'independent', message: 'Synthetic', task: 'question', selection_origin: 'local', source_version_ids: [], remote_source_ids: [], idempotency_key: 'k' }, context) : workbenchApi[endpoint]('n', context)
   await expect(pending).rejects.toMatchObject({ name: 'RequestNotDispatchedError' }); expect(native).not.toHaveBeenCalled()
 })
+
+
+it('guards selection PATCH with optional captured context and preserves the complete wire payload', async () => {
+  const native = vi.fn<typeof fetch>(async () => Response.json({}))
+  vi.stubGlobal('fetch', native); apiClient.defaults.adapter = 'fetch'
+  const context = readTurnContext()!
+  const body = { engine: 'independent' as const, selection_origin: 'local' as const, source_version_ids: ['sv:old'], remote_source_ids: [], reading: { source_version_id: 'sv:old', page_index: 8 } }
+  await workbenchApi.saveSelection('notebook:synthetic', body, context)
+  const wire = native.mock.calls[0][0] as Request
+  expect(wire.method).toBe('PATCH'); expect(wire.url).toBe('http://127.0.0.1:5055/api/personal/notebooks/notebook%3Asynthetic/selection')
+  expect(JSON.parse(await wire.text())).toEqual(body)
+  invalidateTurnContext()
+  await expect(workbenchApi.saveSelection('notebook:synthetic', body, context)).rejects.toMatchObject({ name: 'RequestNotDispatchedError' })
+  expect(native).toHaveBeenCalledTimes(1)
+})
+
+
+it('rechecks selection context at final native send after body preparation, without replay', async () => {
+  const native = vi.fn<typeof fetch>(async () => Response.json({}))
+  vi.stubGlobal('fetch', native); apiClient.defaults.adapter = 'fetch'
+  const context = readTurnContext()!
+  const selection = { engine: 'independent' as const, selection_origin: 'local' as const, source_version_ids: ['sv:old'], remote_source_ids: [], reading: { source_version_id: 'sv:old', page_index: 8 } }
+  const body = { ...selection, toJSON() { queueMicrotask(invalidateTurnContext); return selection } }
+  // The real adapter awaits body-length preparation only with a finite budget.
+  const budget = apiClient.defaults.maxBodyLength
+  apiClient.defaults.maxBodyLength = 4096
+  try {
+    await expect(workbenchApi.saveSelection('notebook:synthetic', body, context)).rejects.toMatchObject({ name: 'RequestNotDispatchedError' })
+    expect(native).not.toHaveBeenCalled()
+  } finally { apiClient.defaults.maxBodyLength = budget }
+})

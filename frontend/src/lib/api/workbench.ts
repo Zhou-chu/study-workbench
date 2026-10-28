@@ -5,7 +5,7 @@ const id = encodeURIComponent
 export const workbenchApi = {
   // Keep opaque workspace fields losslessly; consumers opt into the read projection.
   workspace: async (notebookId: string, context?: TurnContext) => (await apiClient.get<Workspace>(`/personal/notebooks/${id(notebookId)}/workspace`, { turnContext: context })).data,
-  saveSelection: async (notebookId: string, selection: WorkbenchSelection) => (await apiClient.patch(`/personal/notebooks/${id(notebookId)}/selection`, selection)).data,
+  saveSelection: async (notebookId: string, selection: WorkbenchSelection, context?: TurnContext) => (await apiClient.patch(`/personal/notebooks/${id(notebookId)}/selection`, selection, { turnContext: context })).data,
   upload: async (notebookId: string, file: File, idempotencyKey: string, sourceId?: string) => {
     const form = new FormData()
     form.append('file', file)
