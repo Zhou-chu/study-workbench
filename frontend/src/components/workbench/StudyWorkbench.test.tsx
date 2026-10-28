@@ -195,6 +195,24 @@ describe('StudyWorkbench source snapshots', () => {
     expect(screen.queryByRole('button', { name: 'workbench.retrySelectionSave' })).not.toBeInTheDocument()
     expect(screen.getByTestId('reader-position')).toHaveTextContent('sv_old:0')
   })
+  it('rejects a retired reader handler before it can retire a current pending canonical citation navigation', async () => {
+    let resolveEvidence!: (value: EvidenceRecord) => void
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), turns: [{ ...oldTurn, citations: [{ ...oldTurn.citations[0], reference_validity: 'unverified' }] }] })
+    vi.mocked(workbenchApi.saveSelection).mockResolvedValue({})
+    vi.mocked(evidenceApi.evidence).mockImplementationOnce(() => new Promise(yes => { resolveEvidence = yes }))
+    show(); await screen.findByText('Lecture notes')
+    const retiredPosition = readerEvents.position!
+    act(() => invalidateTurnContext())
+    fireEvent.click(screen.getByRole('button', { name: 'Old PDF · c1' }))
+    await screen.findByText('workbench.selectionSaved')
+    await act(async () => retiredPosition({ source_version_id: 'sv_old', page_index: 3 }))
+    expect(screen.getByTestId('reader-position')).toHaveTextContent('sv_old:0')
+    expect(workbenchApi.saveSelection).toHaveBeenCalledTimes(1)
+    await act(async () => resolveEvidence({ evidence_id: 'ev1', extraction_id: 'ex_old', source_version_id: 'sv_old', quote: 'evidence', locator: { page_index: 8 } }))
+    await waitFor(() => expect(workbenchApi.saveSelection).toHaveBeenCalledTimes(2))
+    expect(screen.getByTestId('reader-position')).toHaveTextContent('sv_old:8')
+    expect(vi.mocked(workbenchApi.saveSelection).mock.lastCall?.[1].reading?.page_index).toBe(8)
+  })
   it.each(['privacy', 'notebook', 'remount'] as const)('retires retained component reading handlers before local draft mutation after %s changes', async change => {
     vi.mocked(workbenchApi.workspace).mockImplementation(async notebookId => ({ ...structuredClone(fixture), notebook: { id: notebookId, name: notebookId }, selection: { ...fixture.selection, reading: { source_version_id: 'sv_old', page_index: 0 } } }))
     vi.mocked(workbenchApi.saveSelection).mockResolvedValue({})

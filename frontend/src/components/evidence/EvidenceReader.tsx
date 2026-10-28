@@ -124,7 +124,7 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
   const derivedSnapshot = detail?.version.origin === 'derived_snapshot' || detail?.version.provenance?.kind === 'derived'
   const canMaintain = detail?.version.original_status === 'available' || webSnapshot
   return <section className="space-y-3" aria-label={t('workbench.reader')}>
-    {citation && <div className="border-l-2 border-teal pl-4 py-1 space-y-2">
+    {citation && <div className="workbench-reader-citation border-l-2 border-teal pl-4 py-1 space-y-2">
       <p className="font-medium">{citation.source_title}</p>
       <p className="text-xs text-muted-foreground">{t('workbench.validity', { status: t(currentValidity === 'verified' ? 'workbench.referenceVerified' : currentValidity === 'out_of_scope' ? 'workbench.referenceOutOfScope' : currentValidity === 'invalid' ? 'workbench.referenceInvalid' : 'workbench.referenceUnverified') })}</p>
       <p className="text-xs text-muted-foreground">{t('workbench.verificationMeaning')}</p>

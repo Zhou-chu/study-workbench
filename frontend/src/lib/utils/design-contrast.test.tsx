@@ -10,6 +10,17 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 vi.mock('@/lib/hooks/use-credentials', () => ({ useCredentialStatus: () => ({ data: { encryption_configured: false, source: {} } }), useEnvStatus: () => ({ data: {} }) }))
 import { Button, buttonVariants } from '@/components/ui/button'
 import { workbenchRules } from '@/test/workbench-css'
+import { useForm, type Control, type FieldValues } from 'react-hook-form'
+import { SourceTypeStep } from '@/components/sources/steps/SourceTypeStep'
+import { WizardContainer } from '@/components/ui/wizard-container'
+
+type SourceFields = Parameters<typeof SourceTypeStep>[0]['control'] extends Control<infer Fields extends FieldValues> ? Fields : never
+function SourceValidationFixture() {
+  const form = useForm<SourceFields>({ defaultValues: { type: 'link', url: 'invalid URL', embed: false, async_processing: true } })
+  return <WizardContainer currentStep={1} steps={[]}>
+    <SourceTypeStep control={form.control} register={form.register} setValue={form.setValue} errors={{}} urlValidationErrors={[{ line: 7, url: 'invalid URL' }]} />
+  </WizardContainer>
+}
 
 // Source math, not browser/computed-style evidence. Resolve the actual aliases;
 // composite encoded sRGB before linearizing it for relative luminance.
@@ -71,6 +82,25 @@ describe.each([false, true])('enabled semantic text contrast (dark=%s)', dark =>
     expect(contrast(color('primary'), mix(color('primary'), color('muted'), 0.1))).toBeGreaterThanOrEqual(4.5)
     expect(contrast(color('primary'), color('fern-tint'))).toBeGreaterThanOrEqual(4.5)
     expect(contrast(color('destructive'), color('destructive-tint'))).toBeGreaterThanOrEqual(4.5)
+  })
+  it('keeps the actual classic importer line label readable through both nested danger washes over its wizard card', () => {
+    render(createElement(SourceValidationFixture))
+    const chip = screen.getByText('sources.lineLabel')
+    const outer = chip.closest('.bg-destructive\\/10')!
+    const card = chip.closest('.bg-card')!
+    expect(card).not.toBeNull()
+    expect(outer).not.toBeNull()
+    expect(screen.getByText('invalid URL')).toBeVisible()
+    const cardFill = utilityColor(card.className, 'bg-', color, color('background'))
+    const outerFill = utilityColor(outer.className, 'bg-', color, cardFill)
+    const chipFill = utilityColor(chip.className, 'bg-', color, outerFill)
+    // Font-size utilities are not colors. Read the actual nearest semantic ink,
+    // including inherited list-item ink, rather than assume a passing token.
+    let inkOwner: Element | null = chip
+    while (inkOwner && !/\btext-(foreground|destructive)\b/.test(inkOwner.className)) inkOwner = inkOwner.parentElement
+    expect(inkOwner).not.toBeNull()
+    const ink = utilityColor(inkOwner!.className, 'text-', color, chipFill)
+    expect(contrast(ink, chipFill), `line label on nested alpha/card (dark=${dark})`).toBeGreaterThanOrEqual(4.5)
   })
   it('keeps the setup documentation action readable on its danger tint while hovered', () => {
     render(createElement(SetupBanner))

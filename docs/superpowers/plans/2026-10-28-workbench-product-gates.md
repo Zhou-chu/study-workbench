@@ -85,10 +85,14 @@
 
 **Files:** `docs/v1/PM_UX_AUDIT_2026-10-28.md`, `docs/v1/PROGRESS.md`, a machine-readable gate record; existing isolated browser checks only if supported authorization and environment permit them.
 
-- [ ] Run fresh integrated frontend tests/types/lint and required backend offline/static/OpenAPI checks; run official `npm run build` and separate `build-artifact.mjs --verify` on frozen final source with sanitized environment/local assets.
-- [ ] Obtain independent whole-branch review of behavior, design constraints and test evidence. Apply one bounded final fix wave if necessary with scoped re-review; retain explicit rulings for any deferred minor findings.
+- [x] Run fresh integrated frontend tests/types/lint and required backend offline/static/OpenAPI checks; run official `npm run build` and separate `build-artifact.mjs --verify` on frozen final source with sanitized environment/local assets.
+- [x] Obtain independent whole-branch review of behavior, design constraints and test evidence. Apply one bounded final fix wave if necessary with scoped re-review; retain explicit rulings for any deferred minor findings.
 - [ ] In a supported authorized isolated environment, measure current screenshots/DOM at360/390/768/1024/1280/1440px, light/dark, English/Chinese; run G1–G5 scenarios and current design-token reference. Use test fixtures only. No fallback to unisolated services or old screenshots. If blocked, report exact unmet gate and required user/environment action; do not mark it passed or stop independent authorized fixes.
-- [ ] Record Taste installation separately from reference reading; no claim of installed skill unless verified. Publish only source/tests/sanitized gate report to authorized branch with tree/parent lease and readback; no main/deploy/user-data action.
+- [x] Record Taste installation separately from reference reading; no claim of installed skill unless verified. Publish only source/tests/sanitized gate report to authorized branch with tree/parent lease and readback; no main/deploy/user-data action.
+
+- [ ] Complete the requested Taste installation in a supported, authorized environment; the current launcher failed before execution. Reading the canonical reference is not installation.
+
+**Offline checkpoint completed, overall product gate blocked (2026-10-28):** final source `4f059899bd02159f98102ef449d354ce16a748a5` passed the whole-feature correction rereview; 1,959 unit +25 artifact checks, types/lint (7 inherited warnings), unchanged-backend 2,778/128 skipped and static/OpenAPI passed. Official build and separate artifact verification passed (`bba76ae3-faea-4653-b7e1-f0218d79e273`). Current browser/service/Taste checks above remain unchecked and must not be inferred from these results. See [final report](../../v1/PM_UX_AUDIT_2026-10-28.md) and [machine-readable gate record](../../v1/PM_UX_VERIFICATION_2026-10-28.json).
 
 ## Self-review
 

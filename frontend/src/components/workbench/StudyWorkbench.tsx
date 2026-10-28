@@ -16,7 +16,7 @@ import { useToast } from '@/lib/hooks/use-toast'
 import { newestSelectableVersionId, projectWorkbenchSelection, projectWorkbenchVersion } from '@/lib/utils/workbench-read-model'
 import { canonicalCitationLocator } from '@/lib/utils/evidence'
 import { requestError, stateKeys, connectionKeys, isKnownEngine, isKnownSelectionOrigin } from '@/lib/utils/workbench'
-import type { CreateWorkbenchNoteInput, EvidenceCitation, ScopeSnapshot, TurnRecord, WorkbenchNote, WorkbenchSelection, Workspace, WorkspaceSelection } from '@/lib/types/personal'
+import type { CreateWorkbenchNoteInput, EvidenceCitation, ReadingPosition, ScopeSnapshot, TurnRecord, WorkbenchNote, WorkbenchSelection, Workspace, WorkspaceSelection } from '@/lib/types/personal'
 import { EvidenceReader } from '@/components/evidence/EvidenceReader'
 import { NotebookSettingsDialog } from './NotebookSettingsDialog'
 import { JobsPanel } from './JobsPanel'
@@ -158,6 +158,13 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     search.selectionChanged(next)
     setDraft({ notebookId, selection: next })
     saveSelection.mutate(next)
+  }
+  const changeReadingPosition = (reading: ReadingPosition) => {
+    // Retired handlers cannot supersede a current citation jump. Once admitted,
+    // explicit reading navigation wins over any older pending locator lookup.
+    if (!saveSelection.ownsIntent()) return
+    citationRequest.current++
+    updateSelection({ reading })
   }
   const currentNoteScope: ScopeSnapshot | undefined = selection.supported && isKnownEngine(selection.engine) && isKnownSelectionOrigin(selection.selection_origin) ? { engine: selection.engine, selection_origin: selection.selection_origin, source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [], remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [] } : undefined
   const recovery = useWorkbenchTurn(notebookId, { independentAvailable: modelState === 'ready', googleAvailable: !connection.isError && !capabilities.isError && connection.data?.state === 'connected' && askCapability?.support === 'available', googleLink: data?.link ?? null })
@@ -409,7 +416,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
           <p className="text-sm text-muted-foreground">{t('workbench.localToolsHint')}</p>
           <Button size="sm" onClick={() => { setTab('sources'); setFocusUpload(true) }}><Upload className="size-4" aria-hidden="true" />{t('workbench.addStudyMaterials')}</Button>
         </div>}
-        {(data.sources.length > 0 || readVersion || citation) && <div className={cn(!readerOpen && 'hidden')}><EvidenceReader sourceVersionId={readVersion} evidenceId={selection.reading?.evidence_id} citation={citation} initialPage={selection.reading?.page_index || 0} onPositionChange={reading => updateSelection({ reading })} onChanged={refresh} /></div>}
+        {(data.sources.length > 0 || readVersion || citation) && <div className={cn(!readerOpen && 'hidden')}><EvidenceReader sourceVersionId={readVersion} evidenceId={selection.reading?.evidence_id} citation={citation} initialPage={selection.reading?.page_index || 0} onPositionChange={changeReadingPosition} onChanged={refresh} /></div>}
         <section className={cn("space-y-4", readerOpen && "hidden")} aria-label={t('workbench.conversation')}>
           <div className="rounded-lg border bg-card p-4 space-y-3"><div role="group" aria-label={t('workbench.askScope')} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground"><Layers className="size-3.5" aria-hidden="true" /><span>{t(knownEngine ? selection.engine === 'independent' ? 'workbench.independent' : 'workbench.notebooklm' : 'workbench.unknownEngine')}</span><span aria-hidden="true">·</span><span>{t(knownOrigin ? selection.selection_origin === 'local' ? 'workbench.localScope' : 'workbench.remoteScope' : 'workbench.unknownScope')}</span><span aria-hidden="true">·</span><span>{t('workbench.selectedCount', { count: selectedCount })}</span><Button type="button" size="sm" variant="ghost" onClick={openSettings}>{t('workbench.changeScope')}</Button></div><label className="block text-sm font-semibold" htmlFor="workbench-question">{t('workbench.question')}</label><Textarea id="workbench-question" value={question} onChange={event => { questionRevision.current++; setQuestion(event.target.value) }} rows={3} />
           {showModelStatus && <div className="space-y-2">

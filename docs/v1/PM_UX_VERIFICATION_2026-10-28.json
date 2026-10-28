@@ -1,0 +1,96 @@
+{
+  "schema": 1,
+  "verified_at_utc": "2026-10-28T10:25:08.991352+00:00",
+  "overall_product_manager_gate": "BLOCKED_NOT_PASSED",
+  "tested_local_commit": "4f059899bd02159f98102ef449d354ce16a748a5",
+  "tested_local_tree": "db6ab7b2ff0951a6b2639c3bf8c6bb9db05f6ed8",
+  "source_review": {
+    "tasks_1_to_4": "PASS after scoped corrections",
+    "whole_feature_final": "PASS after one bounded final fix wave and scoped rereview",
+    "final_findings_closed": [
+      "F1 latest manual reader navigation",
+      "F2 opened citation long-token containment",
+      "F3 nested validation chip contrast"
+    ],
+    "remaining_actionable_source_findings_in_reviewed_scope": 0
+  },
+  "frontend": {
+    "unit_passed": 1959,
+    "test_files": 108,
+    "artifact_tool_checks_passed": 25,
+    "root_independent_full_rerun": "PASS",
+    "typescript_exit": 0,
+    "lint_exit": 0,
+    "lint_errors": 0,
+    "inherited_lint_warnings": 7,
+    "full_branch_diff_check": "PASS"
+  },
+  "backend": {
+    "passed": 2778,
+    "skipped": 128,
+    "warnings": 2,
+    "ruff": "PASS",
+    "format": "PASS",
+    "mypy_files": 318,
+    "openapi_contract": "PASS",
+    "source_changed_by_final_frontend_fix": false
+  },
+  "production_build": {
+    "command": "npm run build",
+    "status": "PASS",
+    "separate_artifact_verify": "PASS",
+    "manifest_sha256": "148b9d9cfcd9b8abb1143dd3cc7754b51c98de9196a334633777560200cc87b5",
+    "build_id": "bba76ae3-faea-4653-b7e1-f0218d79e273",
+    "source_sha256": "e404df78b3d31216bff1fb5d188ab78724806909bf134b58eed11f5977c2f2d3",
+    "artifact_sha256": "0815ae2204640fceb7b8b8d9ea7e6cf6e43761e3ac7da0848569e7b361432b8f",
+    "generated_sha256": "52d6dbf123c1155f4ecf503800bea441b5473eaadfb3378c303edd079642711d",
+    "claim": "source-artifact-association-not-reproducibility"
+  },
+  "gate_status": {
+    "G1_draft_protection": {
+      "source": "PASS",
+      "current_browser": "BLOCKED"
+    },
+    "G2_scope_search_reading": {
+      "source": "PASS",
+      "current_browser": "BLOCKED"
+    },
+    "G3_readability": {
+      "source_math": "PASS for reviewed pairs",
+      "current_pixels": "BLOCKED"
+    },
+    "G4_responsive_touch": {
+      "source_invariants": "PASS for recorded cases",
+      "measured_geometry": "BLOCKED"
+    },
+    "G5_live_learning_journey": "BLOCKED_NOT_RUN",
+    "G6_offline_engineering": "PASS",
+    "G7_complete_requested_delivery": "BLOCKED_TASTE_INSTALL_AND_RUNTIME_PENDING"
+  },
+  "taste": {
+    "repository": "Leonxlnx/taste-skill",
+    "revision": "12af471f627f866411b4bd785b19646d3672784c",
+    "version": "2.1.5",
+    "name": "design-taste-frontend",
+    "product_app_reference_read": true,
+    "installed": false,
+    "installation_attempt": "launcher failed before execution",
+    "bundled_scripts_executed": false
+  },
+  "runtime": {
+    "browser_started": false,
+    "api_database_worker_started": false,
+    "provider_calls": false,
+    "current_screenshots_captured": false,
+    "alternative_test_workspace": "awaiting explicit user authorization",
+    "isolation_bypassed": false
+  },
+  "delivery_limits": {
+    "main_merged": false,
+    "deployed": false,
+    "ci_run": false,
+    "real_notebook_data_accessed": false,
+    "source_backup_is_not_user_data_backup": true,
+    "artifact_claim": "source-artifact association, not reproducible build or runtime acceptance"
+  }
+}

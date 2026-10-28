@@ -484,6 +484,12 @@
   text-align: start;
 }
 
+.workbench-reader-citation {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
 .workbench-region-tab {
   position: relative;
 }

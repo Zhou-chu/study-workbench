@@ -6,6 +6,7 @@ import { StrictMode, type ReactElement } from 'react'
 import { workbenchApi } from '@/lib/api/workbench'
 import { EvidenceReader } from './EvidenceReader'
 import { evidenceApi } from '@/lib/api/evidence'
+import { workbenchRules } from '@/test/workbench-css'
 
 vi.mock('@/lib/hooks/use-translation', () => ({ useTranslation: () => ({ t: (key: string, options?: { status?: string }) => key === 'workbench.validity' ? `${key}: ${options?.status}` : key === 'workbench.referenceVerified' ? 'verified' : key === 'workbench.referenceUnverified' ? 'unverified' : key }) }))
 vi.mock('./PdfCanvas', () => ({ PdfCanvas: ({ pageIndex }: { pageIndex: number }) => <canvas title="workbench.pdfReader" data-page-number={pageIndex + 1} />, PdfTextFallback: ({ text }: { text: string }) => <p>{text}</p> }))
@@ -22,6 +23,39 @@ describe('EvidenceReader', () => {
     vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:authenticated-pdf'), revokeObjectURL: vi.fn() })
   })
   afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks() })
+  it('wraps complete long citation text while preserving its frozen validity, locator, warnings, provenance and filter', async () => {
+    const reference: EvidenceCitation = {
+      ...citation, source_title: 'L'.repeat(120), quote: `https://fixture.example/${'q'.repeat(300)}\nComplete second line`,
+      reference_validity: 'out_of_scope', locator: { page_index: 7, page_label: 'viii', block_id: 'original_block' },
+      provenance: { kind: 'web', source_url: 'https://fixture.example/original', retrieved_at: '2026-10-22', provider: 'firecrawl' },
+    }
+    const snapshot = structuredClone(reference)
+    vi.mocked(evidenceApi.version).mockResolvedValue({ version, extraction: { status: 'ready', page_count: 10, warnings: ['Retained extraction warning'], text: 'Current document content' }, evidence: [] })
+    const position = vi.fn()
+    const { rerender } = render(<EvidenceReader sourceVersionId="sv_old" citation={reference} initialPage={2} onPositionChange={position} />)
+    await screen.findByText('Retained extraction warning')
+    const title = screen.getByText(reference.source_title!)
+    const quote = screen.getByText(reference.quote, { exact: true, normalizer: text => text })
+    for (const content of [title, quote]) {
+      const wrappingBlock = content.closest('.workbench-reader-citation')
+      expect(wrappingBlock).not.toBeNull()
+      if (wrappingBlock) expect(workbenchRules(wrappingBlock, 360)['overflow-wrap']).toBe('anywhere')
+      for (const clippingClass of ['truncate', 'line-clamp-1', 'overflow-hidden']) expect(content).not.toHaveClass(clippingClass)
+    }
+    expect(quote).toHaveClass('whitespace-pre-wrap')
+    expect(screen.getByText('workbench.validity: workbench.referenceOutOfScope')).toBeVisible()
+    expect(screen.getByText('workbench.verificationMeaning')).toBeVisible()
+    expect(screen.getByText('workbench.printPage')).toBeVisible()
+    expect(screen.getByRole('link', { name: 'https://fixture.example/original' })).toHaveAttribute('href', 'https://fixture.example/original')
+    fireEvent.change(screen.getByLabelText('workbench.searchEvidence'), { target: { value: 'absent term' } })
+    rerender(<EvidenceReader sourceVersionId="sv_old" citation={{ ...reference }} initialPage={3} onPositionChange={position} />)
+    expect(screen.getByLabelText('workbench.searchEvidence')).toHaveValue('absent term')
+    expect(screen.getByText('workbench.readerNoMatches')).toBeVisible()
+    expect(title).toBeVisible()
+    expect(quote.textContent).toBe(reference.quote)
+    expect(reference).toEqual(snapshot)
+    expect(position).not.toHaveBeenCalled()
+  })
   it('distinguishes no matching blocks from missing extracted text and Clear restores the current document', async () => {
     vi.mocked(evidenceApi.version).mockResolvedValue({ version: { ...version, mime_type: 'text/plain' }, extraction: { status: 'ready', warnings: [], text: 'Current document content' }, evidence: [] })
     render(<EvidenceReader sourceVersionId="sv_old" onPositionChange={vi.fn()} />)
