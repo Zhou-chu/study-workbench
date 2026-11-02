@@ -24,6 +24,8 @@ import { TurnRecoveryPanel } from './TurnRecoveryPanel'
 import { useWorkbenchTurn } from '@/lib/hooks/use-workbench-turn'
 import { PortableControls } from './PortableControls'
 import { TurnCoverage } from './TurnCoverage'
+import { selectedSourceBlockers } from '@/lib/utils/workbench-readiness'
+import { SelectedSourceReadiness } from './SelectedSourceReadiness'
 import { WorkbenchSourcesList } from './WorkbenchSourcesList'
 import { WorkbenchCitationButton } from './WorkbenchCitationButton'
 import { SnapshotPromotionButton } from './SnapshotPromotionButton'
@@ -57,7 +59,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const rawSelection = (draft?.notebookId === notebookId ? draft.selection : null) ?? data?.selection ?? null
   const saveSelection = useSaveWorkbenchSelection(notebookId, rawSelection)
   const selection = useMemo(() => projectWorkbenchSelection(rawSelection), [rawSelection])
-  const search = useWorkbenchEvidenceSearch(notebookId, rawSelection)
+  const search = useWorkbenchEvidenceSearch(notebookId, rawSelection, data?.sources)
   const selectionRef = useRef(rawSelection)
   const citationRequest = useRef(0)
   selectionRef.current = rawSelection
@@ -150,7 +152,8 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     !data?.link?.remote_notebook_id ? t('workbench.googleLinkRequired') : null
   ) : null
   const knownEngine = isKnownEngine(selection.engine)
-  const canAsk = selection.supported && knownEngine && knownOrigin && selectedCount > 0 && !modelBlocked && !googleBlocked && !(selection.engine === 'independent' && selection.selection_origin === 'remote')
+  const sourceBlockers = selection.selection_origin === 'local' ? selectedSourceBlockers(selection.source_version_ids, data?.sources) : []
+  const canAsk = sourceBlockers.length === 0 && selection.supported && knownEngine && knownOrigin && selectedCount > 0 && !modelBlocked && !googleBlocked && !(selection.engine === 'independent' && selection.selection_origin === 'remote')
   const updateSelection = (patch: Partial<WorkbenchSelection>) => {
     if (!saveSelection.ownsIntent()) return
     const next = { ...(selectionRef.current ?? emptySelection), ...patch }
@@ -170,13 +173,18 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const recovery = useWorkbenchTurn(notebookId, { independentAvailable: modelState === 'ready', googleAvailable: !connection.isError && !capabilities.isError && connection.data?.state === 'connected' && askCapability?.support === 'available', googleLink: data?.link ?? null })
   const turns = [...new Map([...(data?.turns || []), ...recovery.turns].map(turn => [turn.turn_id, turn])).values()]
   const submitTurn = (outline: boolean) => {
-    if (mountId === null || !canAsk || !isKnownEngine(selection.engine) || !isKnownSelectionOrigin(selection.selection_origin)) return
+    const current = projectWorkbenchSelection(selectionRef.current)
+    const latestWorkspace = queryClient.getQueryData<Workspace>(QUERY_KEYS.workbench(notebookId)) ?? data
+    // Engine/origin availability belongs to the rendered configuration; scope
+    // IDs must be read synchronously so a checkbox edit cannot submit old IDs.
+    if (mountId === null || !canAsk || !current.supported || !isKnownEngine(current.engine) || !isKnownSelectionOrigin(current.selection_origin) || current.engine !== selection.engine || current.selection_origin !== selection.selection_origin) return
+    if (current.selection_origin === 'local' ? !current.source_version_ids.length || selectedSourceBlockers(current.source_version_ids, latestWorkspace?.sources).length > 0 : !current.remote_source_ids.length) return
     recovery.submit({ sessionId, available: canAsk,
       owner: { mountId, ...(outline ? { editor: { session: noteEditorSession.current, revision: noteEditorRevision.current } } : { questionRevision: questionRevision.current }) },
       ...(data?.link?.connection_id ? { googleConnectionId: data.link.connection_id } : {}),
-      request: { task: outline ? 'outline' : 'question', notebook_id: notebookId, engine: selection.engine, selection_origin: selection.selection_origin,
-        source_version_ids: selection.selection_origin === 'local' ? [...selection.source_version_ids] : [],
-        remote_source_ids: selection.selection_origin === 'remote' ? [...selection.remote_source_ids] : [],
+      request: { task: outline ? 'outline' : 'question', notebook_id: notebookId, engine: current.engine, selection_origin: current.selection_origin,
+        source_version_ids: current.selection_origin === 'local' ? [...current.source_version_ids] : [],
+        remote_source_ids: current.selection_origin === 'remote' ? [...current.remote_source_ids] : [],
         remote_notebook_id: data?.link?.remote_notebook_id || null, message: outline ? t('workbench.outlinePrompt') : question.trim() },
     })
   }
@@ -403,6 +411,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
         <div role="search" aria-label={t('workbench.searchSelectedSources')} className="space-y-2">
           <label htmlFor="workspace-search" className="sr-only">{t('learningWorkspace.sourceSearch')}</label>
           <div className="flex items-center gap-2"><Input id="workspace-search" placeholder={t('learningWorkspace.sourceSearch')} className="min-w-0" value={search.query} onChange={event => search.setQuery(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); if (!event.nativeEvent.isComposing && event.keyCode !== 229) search.submit() } }} /><Button type="button" size="sm" variant="outline" disabled={!search.canSubmit} onClick={search.submit}>{t('workbench.search')}</Button></div>
+          <SelectedSourceReadiness blockers={search.sourceBlockers} />
           <p role={search.status === 'error' ? 'alert' : 'status'} className="text-xs leading-5 text-muted-foreground">{t(!search.scopeAvailable ? 'workbench.searchSelectLocal' : !search.ready ? 'workbench.searchUnavailable' : search.status === 'loading' ? 'workbench.searchLoading' : search.status === 'error' ? 'workbench.searchFailed' : search.status === 'empty' ? 'workbench.searchNoResults' : search.status === 'obsolete' ? 'workbench.searchChanged' : search.status === 'success' ? 'workbench.searchResults' : 'workbench.searchPrompt')}</p>
         </div>
         {search.hits.map(hit => <button key={hit.evidence_id} className="w-full rounded border p-2 text-left text-xs hover:bg-muted" onClick={() => { if (search.isCurrent()) openCitation({ citation_id: hit.evidence_id, evidence_id: hit.evidence_id, source_version_id: hit.source_version_id, source_title: hit.source_title || hit.source_version_id, kind: hit.evidence_kind === 'derived_snapshot' ? 'derived_snapshot' : hit.evidence_kind === 'remote_text_snapshot' ? 'remote_text_snapshot' : 'local_evidence', provenance: hit.provenance, independent_support: hit.independent_support, locator: hit.locator, quote: hit.quote, reference_validity: hit.reference_validity || 'unverified' }) }}>{hit.quote}</button>)}
@@ -419,6 +428,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
         {(data.sources.length > 0 || readVersion || citation) && <div className={cn(!readerOpen && 'hidden')}><EvidenceReader sourceVersionId={readVersion} evidenceId={selection.reading?.evidence_id} citation={citation} initialPage={selection.reading?.page_index || 0} onPositionChange={changeReadingPosition} onChanged={refresh} /></div>}
         <section className={cn("space-y-4", readerOpen && "hidden")} aria-label={t('workbench.conversation')}>
           <div className="rounded-lg border bg-card p-4 space-y-3"><div role="group" aria-label={t('workbench.askScope')} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground"><Layers className="size-3.5" aria-hidden="true" /><span>{t(knownEngine ? selection.engine === 'independent' ? 'workbench.independent' : 'workbench.notebooklm' : 'workbench.unknownEngine')}</span><span aria-hidden="true">·</span><span>{t(knownOrigin ? selection.selection_origin === 'local' ? 'workbench.localScope' : 'workbench.remoteScope' : 'workbench.unknownScope')}</span><span aria-hidden="true">·</span><span>{t('workbench.selectedCount', { count: selectedCount })}</span><Button type="button" size="sm" variant="ghost" onClick={openSettings}>{t('workbench.changeScope')}</Button></div><label className="block text-sm font-semibold" htmlFor="workbench-question">{t('workbench.question')}</label><Textarea id="workbench-question" value={question} onChange={event => { questionRevision.current++; setQuestion(event.target.value) }} rows={3} />
+          <SelectedSourceReadiness blockers={sourceBlockers} />
           {showModelStatus && <div className="space-y-2">
             <p id="workbench-model-status" role={modelState === 'error' ? 'alert' : 'status'} className="text-xs text-muted-foreground">{t(modelStatusKey)}</p>
             {modelState === 'error' && <Button size="sm" variant="outline" onClick={() => { void modelDefaults.refetch() }}>{t('workbench.retryModelCheck')}</Button>}
@@ -428,7 +438,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
           {!selection.supported && knownEngine && knownOrigin && <p role="status" className="text-xs text-muted-foreground">{t('workbench.scope')}: {t('workbench.unavailable')}</p>}
           {!knownEngine && <p role="status" className="text-xs text-muted-foreground">{t('workbench.engine')}: {typeof selection.engine === 'string' ? selection.engine : ''} — {t('workbench.unavailable')}</p>}
           {!knownOrigin && <p role="status" className="text-xs text-muted-foreground">{t('workbench.scope')}: {typeof selection.selection_origin === 'string' ? selection.selection_origin : ''} — {t('workbench.unavailable')}</p>}
-          {selection.supported && knownEngine && selectedCount > 0 && !canAsk && !modelBlocked && <p className="text-xs text-muted-foreground">{googleBlocked || t(selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
+          {selection.supported && knownEngine && selectedCount > 0 && !canAsk && !modelBlocked && sourceBlockers.length === 0 && <p className="text-xs text-muted-foreground">{googleBlocked || t(selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
           {selectedCount > 0 && googleBlocked && <Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button>}
           {mountId === null && <p role="status" className="text-xs text-muted-foreground">{t('workbench.unavailable')}</p>}
           <div className="flex flex-wrap gap-2"><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} disabled={mountId === null || !canAsk || !question.trim() || !recovery.ready || !!recovery.operation} onClick={() => submitTurn(false)}>{t('workbench.ask')}</Button><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} variant="outline" disabled={mountId === null || !canAsk || !recovery.ready || !!recovery.operation} onClick={event => requestNoteTransition('outline', event.currentTarget)}>{t('workbench.outline')}</Button></div></div>

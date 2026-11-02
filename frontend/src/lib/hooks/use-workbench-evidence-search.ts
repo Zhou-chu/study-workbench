@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useReducer, useRef, useState, useSyncExternalStore } from 'react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { QUERY_KEYS } from '@/lib/api/query-client'
 import { evidenceApi } from '@/lib/api/evidence'
 import { assertResourceDispatch, assertTurnDispatch, RequestNotDispatchedError } from '@/lib/api/browser-transport'
 import { sessionCoordinator } from '@/lib/auth/session-coordinator'
 import { useAuthStore } from '@/lib/stores/auth-store'
-import type { WorkspaceSelection } from '@/lib/types/personal'
+import type { Workspace, WorkspaceSelection } from '@/lib/types/personal'
+import { selectedSourceBlockers, selectedSourceReadinessFingerprint } from '@/lib/utils/workbench-readiness'
 import { projectWorkbenchSelection } from '@/lib/utils/workbench-read-model'
 import { readTurnContext, subscribeTurnContext, type TurnContext } from '@/lib/workbench/turn-context'
 
@@ -16,13 +18,23 @@ type SearchState = { capture: Capture; status: 'loading' | 'success' | 'empty' |
 const serverContext = () => null
 
 /** Explicit, document-local reads. Neither query observers nor reconnects submit searches. */
-export function useWorkbenchEvidenceSearch(notebookId: string, selection: WorkspaceSelection | null) {
+export function useWorkbenchEvidenceSearch(notebookId: string, selection: WorkspaceSelection | null, sources: Workspace['sources'] | undefined) {
+  const queryClient = useQueryClient()
   const context = useSyncExternalStore(subscribeTurnContext, readTurnContext, serverContext)
   const authPhase = useAuthStore(state => state.phase)
   const [query, setQueryState] = useState('')
   const queryRef = useRef('')
-  const latest = useRef({ notebookId, selection })
-  latest.current = { notebookId, selection }
+  const latest = useRef({ notebookId, selection, sources })
+  latest.current = { notebookId, selection, sources }
+  const cacheOwner = useRef({ notebookId, seen: false })
+  const currentSources = () => {
+    const id = latest.current.notebookId
+    if (cacheOwner.current.notebookId !== id) cacheOwner.current = { notebookId: id, seen: false }
+    const cached = queryClient.getQueryState<Workspace>(QUERY_KEYS.workbench(id))
+    if (cached) cacheOwner.current.seen = true
+    // A removed/empty authoritative cache cannot borrow an older observer prop.
+    return cached ? cached.data?.sources : cacheOwner.current.seen ? undefined : latest.current.sources
+  }
   const owner = useRef({ fingerprint: '', generation: 0 })
   const pending = useRef<Capture | null>(null)
   const mounted = useRef(false)
@@ -32,7 +44,7 @@ export function useWorkbenchEvidenceSearch(notebookId: string, selection: Worksp
   const sync = () => {
     const view = projectWorkbenchSelection(latest.current.selection)
     // Reading position deliberately does not belong to the search scope.
-    const fingerprint = JSON.stringify([latest.current.notebookId, queryRef.current, view.supported, view.engine, view.selection_origin, view.source_version_ids, view.remote_source_ids, readTurnContext(), useAuthStore.getState().phase, sessionCoordinator.resourcePhase()])
+    const fingerprint = JSON.stringify([latest.current.notebookId, queryRef.current, view.supported, view.engine, view.selection_origin, view.source_version_ids, view.remote_source_ids, view.selection_origin === 'local' ? selectedSourceReadinessFingerprint(view.source_version_ids, currentSources()) : null, readTurnContext(), useAuthStore.getState().phase, sessionCoordinator.resourcePhase()])
     if (owner.current.fingerprint !== fingerprint) {
       owner.current = { fingerprint, generation: owner.current.generation + 1 }
       pending.current = null
@@ -52,10 +64,19 @@ export function useWorkbenchEvidenceSearch(notebookId: string, selection: Worksp
     mounted.current = true
     const unsubscribeContext = subscribeTurnContext(() => { syncRef.current() })
     const unsubscribeAuth = useAuthStore.subscribe(() => { syncRef.current() })
-    return () => { mounted.current = false; pending.current = null; owner.current.generation++; unsubscribeContext(); unsubscribeAuth() }
-  }, [])
+    // Cache notifications are synchronous; React Query observer renders may
+    // coalesce ready → blocked → ready and must not erase either transition.
+    const unsubscribeCache = queryClient.getQueryCache().subscribe(event => {
+      if (event.type !== 'updated' && event.type !== 'removed') return
+      const key = QUERY_KEYS.workbench(latest.current.notebookId)
+      if (event.query.queryKey.length === key.length && key.every((part, index) => event.query.queryKey[index] === part)) syncRef.current()
+    })
+    return () => { mounted.current = false; pending.current = null; owner.current.generation++; unsubscribeContext(); unsubscribeAuth(); unsubscribeCache() }
+  }, [queryClient])
   const isCurrent = (capture: Capture) => {
     if (!mounted.current || sync() !== capture.generation) return false
+    const current = projectWorkbenchSelection(latest.current.selection)
+    if (current.selection_origin !== 'local' || selectedSourceBlockers(current.source_version_ids, currentSources()).length) return false
     try { assertTurnDispatch(capture.context); assertResourceDispatch() } catch { return false }
     return useAuthStore.getState().phase === 'authenticated'
   }
@@ -74,6 +95,7 @@ export function useWorkbenchEvidenceSearch(notebookId: string, selection: Worksp
     onSettled: (_result, _error, capture) => { if (pending.current === capture) pending.current = null },
   })
   const view = projectWorkbenchSelection(selection)
+  const sourceBlockers = view.selection_origin === 'local' ? selectedSourceBlockers(view.source_version_ids, currentSources()) : []
   const scopeAvailable = view.supported && view.selection_origin === 'local' && view.source_version_ids.length > 0
   const ready = !!context?.ready && authPhase === 'authenticated' && sessionCoordinator.resourcePhase() === 'authenticated'
   const currentState = state?.capture.generation === generation ? state : null
@@ -87,7 +109,7 @@ export function useWorkbenchEvidenceSearch(notebookId: string, selection: Worksp
     sync()
     const current = projectWorkbenchSelection(latest.current.selection)
     const liveContext = readTurnContext()
-    if (pending.current || !queryRef.current.trim() || !current.supported || current.selection_origin !== 'local' || !current.source_version_ids.length || !liveContext?.ready || useAuthStore.getState().phase !== 'authenticated' || sessionCoordinator.resourcePhase() !== 'authenticated') return
+    if (pending.current || !queryRef.current.trim() || !current.supported || current.selection_origin !== 'local' || !current.source_version_ids.length || selectedSourceBlockers(current.source_version_ids, currentSources()).length > 0 || !liveContext?.ready || useAuthStore.getState().phase !== 'authenticated' || sessionCoordinator.resourcePhase() !== 'authenticated') return
     const capture: Capture = Object.freeze({
       generation: ++owner.current.generation, notebookId: latest.current.notebookId, query: queryRef.current.trim(),
       versionIds: Object.freeze([...current.source_version_ids]),
@@ -98,8 +120,8 @@ export function useWorkbenchEvidenceSearch(notebookId: string, selection: Worksp
     mutation.mutate(capture)
   }
   return {
-    query, setQuery, selectionChanged, submit, scopeAvailable, ready, status,
-    canSubmit: scopeAvailable && ready && !!query.trim() && status !== 'loading',
+    query, setQuery, selectionChanged, submit, scopeAvailable, ready, status, sourceBlockers,
+    canSubmit: scopeAvailable && sourceBlockers.length === 0 && ready && !!query.trim() && status !== 'loading',
     hits: currentState?.hits ?? [],
     // A retired result handler must also recheck live context at activation.
     isCurrent: () => !!currentState && currentState.status === 'success' && isCurrent(currentState.capture),

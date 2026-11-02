@@ -8,6 +8,7 @@ import { useAuthStore } from '@/lib/stores/auth-store'
 import { RequestNotDispatchedError } from '@/lib/api/browser-transport'
 import { TurnOperationProvider, useTurnOperationSnapshot } from '@/components/providers/TurnOperationProvider'
 import { invalidateTurnContext, publishTurnTarget, readTurnContext } from '@/lib/workbench/turn-context'
+import { QUERY_KEYS } from '@/lib/api/query-client'
 import { sessionCoordinator } from '@/lib/auth/session-coordinator'
 const locale = vi.hoisted(() => ({ outlinePrompt: 'workbench.outlinePrompt' }))
 const readerEvents = vi.hoisted(() => ({ position: null as ((reading: { source_version_id: string; page_index: number }) => void) | null }))
@@ -46,7 +47,7 @@ function completedEvidence(request: TurnRequest, answer = 'Generated outline') {
   const parent = { job_id: 'j1', turn_id: 'new_turn', notebook_id: request.notebook_id, chat_session_id: 'v1_notebook:1', operation: 'chat', idempotency_key: request.idempotency_key, request_snapshot: { ...request, model_id: null }, state: 'succeeded', submission_state: 'confirmed', result: structuredClone(turn) }
   return { turn: turn as unknown as TurnRecord, parent }
 }
-function show() { return render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: 1, retryDelay: 0 } } })}><TurnOperationProvider><StudyWorkbench notebookId="notebook:1" /></TurnOperationProvider></QueryClientProvider>) }
+function show(client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: 1, retryDelay: 0 } } })) { return render(<QueryClientProvider client={client}><TurnOperationProvider><StudyWorkbench notebookId="notebook:1" /></TurnOperationProvider></QueryClientProvider>) }
 let restoreUuid: (() => void) | null = null
 function makeUuidUnavailable(mode: 'missing' | 'throws') {
   const descriptor = Object.getOwnPropertyDescriptor(crypto, 'randomUUID')
@@ -69,6 +70,79 @@ describe('StudyWorkbench source snapshots', () => {
     vi.mocked(workbenchApi.workspace).mockResolvedValue(structuredClone(fixture))
     vi.mocked(workbenchApi.turns).mockResolvedValue([])
     vi.mocked(workbenchApi.turn).mockResolvedValue({ turn_id: 'new_turn', job_id: 'j1', state: 'queued' })
+  })
+  it.each([null, 'completed', 'queued', 'extracting', 'needs_ocr', 'empty', 'failed', 'unsupported', 'unknown', 'missing', 'ambiguous'])('mixed_scope_blocks_question_outline_and_search_without_deselecting: %s', async status => {
+    const data = structuredClone(fixture)
+    data.selection!.source_version_ids = ['sv_old', 'sv_new']
+    if (status === 'missing') data.sources[0].versions.pop()
+    else if (status === 'ambiguous') data.sources[0].versions.push({ ...data.sources[0].versions[1] })
+    else { data.sources[0].versions[1].status = status; data.sources[0].versions[1].extraction_status = 'ready' }
+    vi.mocked(workbenchApi.workspace).mockResolvedValue(data)
+    show(); await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'Keep question' } })
+    fireEvent.change(screen.getByLabelText('learningWorkspace.sourceSearch'), { target: { value: 'Keep query' } })
+    for (const name of ['workbench.ask', 'workbench.outline', 'workbench.search']) {
+      const button = screen.getByRole('button', { name }); expect(button).toBeDisabled(); fireEvent.click(button)
+    }
+    fireEvent.keyDown(screen.getByLabelText('learningWorkspace.sourceSearch'), { key: 'Enter' })
+    const reason = status === 'missing' ? 'workbench.selectedSourceMissing' : status === 'ambiguous' ? 'workbench.selectedSourceAmbiguous' : status === null || status === 'unknown' ? 'workbench.unavailable' : `workbench.states.${status}`
+    const blockers = within(screen.getByRole('search', { name: 'workbench.searchSelectedSources' }))
+    expect(blockers.getByText('sv_new')).toBeVisible()
+    expect(blockers.getByText(reason)).toBeVisible()
+    if (status !== 'missing') expect(blockers.getByText('My PDF')).toBeVisible()
+    expect(blockers.getByText('workbench.selectedSourcesWaitOrDeselect')).toBeVisible()
+    if (status === 'empty') expect(blockers.getByText('workbench.emptySourceHint')).toBeVisible()
+    if (status === 'needs_ocr') expect(blockers.getByText('workbench.selectedSourceOcrHint')).toBeVisible()
+    for (const checkbox of screen.getAllByRole('checkbox')) { expect(checkbox).toBeChecked(); expect(checkbox).toBeEnabled() }
+    await act(async () => { await Promise.resolve() })
+    expect(workbenchApi.turn).not.toHaveBeenCalled(); expect(evidenceApi.search).not.toHaveBeenCalled(); expect(workbenchApi.saveSelection).not.toHaveBeenCalled()
+  })
+  it('readiness_refresh_preserves_note_draft and releases exact scope only for explicit submissions', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+    const data = structuredClone(fixture)
+    data.selection!.source_version_ids = ['sv_new', 'sv_old']; data.sources[0].versions[1].status = 'empty'
+    vi.mocked(workbenchApi.workspace).mockResolvedValue(data)
+    vi.mocked(evidenceApi.search).mockResolvedValue({ hits: [], retrieval_method: 'lexical' })
+    show(client); await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteTitle'), { target: { value: 'My draft title' } })
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'My unsaved body' } })
+    fireEvent.change(screen.getByLabelText('workbench.question'), { target: { value: 'Exact question' } })
+    fireEvent.change(screen.getByLabelText('learningWorkspace.sourceSearch'), { target: { value: 'Exact query' } })
+    const ready = structuredClone(data); ready.sources[0].versions[1].status = 'partial'
+    act(() => client.setQueryData(QUERY_KEYS.workbench('notebook:1'), ready))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'workbench.ask' })).toBeEnabled())
+    for (const name of ['workbench.outline', 'workbench.search']) expect(screen.getByRole('button', { name })).toBeEnabled()
+    expect(screen.getByLabelText('workbench.noteTitle')).toHaveValue('My draft title'); expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('My unsaved body')
+    expect(workbenchApi.turn).not.toHaveBeenCalled(); expect(evidenceApi.search).not.toHaveBeenCalled(); expect(workbenchApi.saveNote).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.search' }))
+    await waitFor(() => expect(evidenceApi.search).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(evidenceApi.search).mock.calls[0][1]).toEqual(['sv_new', 'sv_old'])
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.ask' }))
+    await waitFor(() => expect(workbenchApi.turn).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(workbenchApi.turn).mock.calls[0][1].source_version_ids).toEqual(['sv_new', 'sv_old'])
+    expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('My unsaved body')
+  })
+  it('allows explicit deselection of only the blocked ID without repairing scope automatically', async () => {
+    const data = structuredClone(fixture); data.selection!.source_version_ids = ['sv_old', 'sv_new']; data.sources[0].versions[1].status = 'failed'
+    vi.mocked(workbenchApi.workspace).mockResolvedValue(data)
+    vi.mocked(workbenchApi.saveSelection).mockResolvedValue({ ...data.selection!, source_version_ids: ['sv_old'] } as never)
+    show(); await screen.findByText('Lecture notes')
+    fireEvent.click(screen.getByRole('checkbox', { name: 'My PDF · sv_new' }))
+    expect(screen.getByRole('checkbox', { name: 'My PDF · sv_old' })).toBeChecked(); expect(screen.getByRole('checkbox', { name: 'My PDF · sv_new' })).not.toBeChecked()
+    await waitFor(() => expect(workbenchApi.saveSelection).toHaveBeenCalledWith('notebook:1', expect.objectContaining({ source_version_ids: ['sv_old'] }), readTurnContext()))
+    expect(screen.getByRole('button', { name: 'workbench.outline' })).toBeEnabled()
+    expect(workbenchApi.turn).not.toHaveBeenCalled(); expect(evidenceApi.search).not.toHaveBeenCalled()
+  })
+  it('rechecks latest readiness at deferred outline confirmation without replacing the draft', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+    show(client); await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('workbench.noteContent'), { target: { value: 'Draft stays' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.outline' }))
+    const confirm = screen.getByRole('button', { name: 'workbench.noteTransitionGenerate' })
+    const blocked = structuredClone(fixture); blocked.sources[0].versions[0].status = 'needs_ocr'
+    act(() => { client.setQueryData(QUERY_KEYS.workbench('notebook:1'), blocked); fireEvent.click(confirm) })
+    await act(async () => { await Promise.resolve() })
+    expect(workbenchApi.turn).not.toHaveBeenCalled(); expect(screen.getByLabelText('workbench.noteContent')).toHaveValue('Draft stays')
   })
   it('uses neutral selected/pressed navigation and retains roving keyboard focus', async () => {
     show(); await screen.findByText('Lecture notes')

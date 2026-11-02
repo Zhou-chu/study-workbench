@@ -24,3 +24,16 @@ it.each(['status', 'extraction_status'])('treats inherited object keys in opaque
   expect(screen.getAllByText('workbench.unavailable')).toHaveLength(3)
   expect(screen.getAllByRole('checkbox')).toHaveLength(3)
 })
+
+it('shows recoverable empty status and hint without disabling selected checkboxes', () => {
+  render(<WorkbenchSourcesList notebookId="notebook:synthetic" sources={[{ source_id: 'source:synthetic', title: 'Empty file', versions: [{ source_version_id: 'empty-version', status: 'empty', extraction_status: 'ready', original_status: 'available' }] }]} selectedVersionIds={['empty-version']} onRead={vi.fn()} onSelectionChange={vi.fn()} onUpload={vi.fn()} />)
+  expect(screen.getByText('workbench.states.empty')).toBeVisible()
+  expect(screen.getByText('workbench.emptySourceHint')).toBeVisible()
+  expect(screen.getByRole('checkbox')).toBeChecked(); expect(screen.getByRole('checkbox')).toBeEnabled()
+  expect(screen.queryByText('workbench.states.ready')).not.toBeInTheDocument()
+})
+it('keeps future statuses unavailable rather than authorizing extraction fallback', () => {
+  render(<WorkbenchSourcesList notebookId="notebook:synthetic" sources={[{ source_id: 'source:synthetic', title: 'Future file', versions: [{ source_version_id: 'future-version', status: 'future-status', extraction_status: 'ready', original_status: 'available', created_at: '2026-10-24' }] }]} selectedVersionIds={['future-version']} onRead={vi.fn()} onSelectionChange={vi.fn()} onUpload={vi.fn()} />)
+  expect(screen.getByText('workbench.unavailable')).toBeVisible()
+  expect(screen.queryByText('workbench.states.ready')).not.toBeInTheDocument()
+})
