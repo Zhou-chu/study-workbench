@@ -1,5 +1,6 @@
 import { act, fireEvent, render as rtlRender, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import type { PdfZoom } from './pdf-render-sizing'
 import type { EvidenceCitation } from '@/lib/types/personal'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StrictMode, type ReactElement } from 'react'
@@ -9,7 +10,7 @@ import { evidenceApi } from '@/lib/api/evidence'
 import { workbenchRules } from '@/test/workbench-css'
 
 vi.mock('@/lib/hooks/use-translation', () => ({ useTranslation: () => ({ t: (key: string, options?: { status?: string }) => key === 'workbench.validity' ? `${key}: ${options?.status}` : key === 'workbench.referenceVerified' ? 'verified' : key === 'workbench.referenceUnverified' ? 'unverified' : key }) }))
-vi.mock('./PdfCanvas', () => ({ PdfCanvas: ({ pageIndex }: { pageIndex: number }) => <canvas title="workbench.pdfReader" data-page-number={pageIndex + 1} />, PdfTextFallback: ({ text }: { text: string }) => <p>{text}</p> }))
+vi.mock('./PdfCanvas', () => ({ PdfCanvas: ({ pageIndex, blob, zoom, onZoomChange }: { pageIndex: number; blob: Blob; zoom: PdfZoom; onZoomChange: (zoom: PdfZoom) => void }) => <><canvas title="workbench.pdfReader" data-page-number={pageIndex + 1} data-zoom={zoom} data-blob-size={blob.size} /><button onClick={() => onZoomChange?.(2)}>Set PDF zoom 2</button></>, PdfTextFallback: ({ text }: { text: string }) => <p>{text}</p> }))
 vi.mock('@/lib/api/evidence', () => ({ evidenceApi: { download: vi.fn(), version: vi.fn(), reparse: vi.fn(), revalidate: vi.fn() } }))
 vi.mock('@/lib/api/workbench', () => ({ workbenchApi: { job: vi.fn() } }))
 function render(element: ReactElement) { const client = new QueryClient({ defaultOptions: { queries: { retry: false } } }); return rtlRender(element, { wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> }) }
@@ -23,6 +24,39 @@ describe('EvidenceReader', () => {
     vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:authenticated-pdf'), revokeObjectURL: vi.fn() })
   })
   afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks() })
+  it('zoom_survives_same_version_refetch_and_citation_jump', async () => {
+    const position = vi.fn()
+    const { rerender } = render(<EvidenceReader sourceVersionId="sv_old" onPositionChange={position} />)
+    const canvas = await screen.findByTitle('workbench.pdfReader')
+    expect(canvas).toHaveAttribute('data-zoom', 'fit')
+    fireEvent.click(screen.getByRole('button', { name: 'Set PDF zoom 2' }))
+    expect(canvas).toHaveAttribute('data-zoom', '2')
+    fireEvent.change(screen.getByLabelText('workbench.pdfPage'), { target: { value: '3' } })
+    expect(canvas).toHaveAttribute('data-page-number', '3')
+    expect(position.mock.calls).toEqual([[{ source_version_id: 'sv_old', page_index: 2 }]])
+    vi.mocked(evidenceApi.download).mockResolvedValue(new Blob(['replacement PDF blob']))
+    rerender(<EvidenceReader sourceVersionId="sv_old" evidenceId="ev_new" onPositionChange={position} />)
+    await waitFor(() => expect(screen.getByTitle('workbench.pdfReader')).toHaveAttribute('data-blob-size', '20'))
+    expect(screen.getByTitle('workbench.pdfReader')).toHaveAttribute('data-zoom', '2')
+    rerender(<EvidenceReader sourceVersionId="sv_old" citation={citation} onPositionChange={position} />)
+    await waitFor(() => expect(screen.getByTitle('workbench.pdfReader')).toHaveAttribute('data-page-number', '8'))
+    expect(screen.getByTitle('workbench.pdfReader')).toHaveAttribute('data-zoom', '2')
+    fireEvent.change(screen.getByLabelText('workbench.pdfPage'), { target: { value: '4' } })
+    expect(position.mock.calls[1]).toEqual([{ source_version_id: 'sv_old', page_index: 3, evidence_id: 'ev1' }])
+  })
+  it('zoom_resets_on_new_version', async () => {
+    const position = vi.fn()
+    const { rerender } = render(<EvidenceReader sourceVersionId="sv_old" onPositionChange={position} />)
+    await screen.findByTitle('workbench.pdfReader')
+    fireEvent.click(screen.getByRole('button', { name: 'Set PDF zoom 2' }))
+    expect(screen.getByTitle('workbench.pdfReader')).toHaveAttribute('data-zoom', '2')
+    vi.mocked(evidenceApi.version).mockResolvedValue({ version: { ...version, source_version_id: 'sv_new' }, extraction: { status: 'ready', page_count: 10, warnings: [] }, evidence: [] } as never)
+    rerender(<EvidenceReader sourceVersionId="sv_new" onPositionChange={position} />)
+    await waitFor(() => expect(screen.getByTitle('workbench.pdfReader')).toHaveAttribute('data-zoom', 'fit'))
+    expect(position).not.toHaveBeenCalled()
+    rerender(<EvidenceReader sourceVersionId="sv_old" onPositionChange={position} />)
+    await waitFor(() => expect(screen.getByTitle('workbench.pdfReader')).toHaveAttribute('data-zoom', 'fit'))
+  })
   it('wraps complete long citation text while preserving its frozen validity, locator, warnings, provenance and filter', async () => {
     const reference: EvidenceCitation = {
       ...citation, source_title: 'L'.repeat(120), quote: `https://fixture.example/${'q'.repeat(300)}\nComplete second line`,

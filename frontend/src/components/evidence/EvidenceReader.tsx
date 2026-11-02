@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { SourceProvenance } from './SourceProvenance'
 import { EvidenceMaintenance } from './EvidenceMaintenance'
 import { PdfCanvas, PdfTextFallback } from './PdfCanvas'
+import type { PdfZoom } from './pdf-render-sizing'
 
 interface Props {
   sourceVersionId?: string
@@ -26,6 +27,8 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
   const [revision, setRevision] = useState(0)
   const [detail, setDetail] = useState<VersionDetail | null>(null)
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null)
+  const [pdfZoom, setPdfZoom] = useState<{ versionId: string | undefined; zoom: PdfZoom }>({ versionId: sourceVersionId, zoom: 'fit' })
+  const zoom = pdfZoom.versionId === sourceVersionId ? pdfZoom.zoom : 'fit'
   const [page, setPage] = useState(initialPage)
   const [search, setSearch] = useState('')
   const [error, setError] = useState<'load' | 'pdf' | null>(null)
@@ -58,6 +61,9 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
     citation.locator?.start_offset, citation.locator?.end_offset, citation.locator?.bbox,
   ]) : null
 
+  useEffect(() => {
+    setPdfZoom(previous => previous.versionId === sourceVersionId ? previous : { versionId: sourceVersionId, zoom: 'fit' })
+  }, [sourceVersionId])
   useEffect(() => { setSearch('') }, [sourceVersionId, evidenceId, filterCitationIdentity])
   useEffect(() => { setPage(initialPage) }, [sourceVersionId, initialPage])
   useEffect(() => { if (citedPage != null) setPage(citedPage) }, [sourceVersionId, citation?.citation_id, citedPage])
@@ -158,7 +164,7 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
           <span className="text-xs">{t('workbench.pageOf', { page: page + 1, count: detail.extraction?.page_count ?? undefined })}</span>
         </div>
         <p className="text-xs text-muted-foreground">{t('workbench.highlightUnavailable')}</p>
-        {pdfBlob ? <PdfCanvas blob={pdfBlob} pageIndex={page} fallbackText={blocks.filter(block => block.page_index === page).map(block => block.text).join('\n\n')} /> : error || detail.version.original_status !== 'available' ? <PdfTextFallback text={blocks.filter(block => block.page_index === page).map(block => block.text).join('\n\n')} /> : <p role="status" className="text-sm text-muted-foreground">{t('workbench.pdfRendering')}</p>}
+        {pdfBlob ? <PdfCanvas blob={pdfBlob} pageIndex={page} zoom={zoom} onZoomChange={value => setPdfZoom({ versionId: sourceVersionId, zoom: value })} fallbackText={blocks.filter(block => block.page_index === page).map(block => block.text).join('\n\n')} /> : error || detail.version.original_status !== 'available' ? <PdfTextFallback text={blocks.filter(block => block.page_index === page).map(block => block.text).join('\n\n')} /> : <p role="status" className="text-sm text-muted-foreground">{t('workbench.pdfRendering')}</p>}
       </>}
       <div className="space-y-2">
         <label className="block text-sm" htmlFor="evidence-search">{t('workbench.searchEvidence')}</label>

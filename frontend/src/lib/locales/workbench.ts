@@ -1,4 +1,10 @@
 export const workbenchEn = {
+  pdfZoomControls: 'PDF zoom',
+  pdfFitWidth: 'Fit width',
+  pdfActualSize: '100%',
+  pdfZoomOut: 'Zoom out',
+  pdfZoomIn: 'Zoom in',
+  pdfZoomPercentage: '{{percent}}%',
   physicalPage: 'Physical page {{page}}',
   versionDetails: 'Full version ID',
   evidenceLocal: 'Local evidence',
@@ -133,6 +139,12 @@ export const workbenchEn = {
   states: { empty: 'No searchable text', queued: 'Queued', running: 'Running', waiting_remote: 'Waiting for Google', succeeded: 'Succeeded', failed: 'Failed', needs_reauth: 'Sign-in required', submission_unknown: 'Submission uncertain', cancelled_local: 'Local waiting stopped', ready: 'Searchable', completed: 'Completed', pending: 'Waiting', extracting: 'Extracting', needs_ocr: 'OCR needed', partial: 'Partially extracted', unsupported: 'Unsupported file', available: 'Available', missing: 'Missing', unverified: 'Unverified' },
 }
 export const workbenchZh: typeof workbenchEn = {
+  pdfZoomControls: 'PDF 缩放',
+  pdfFitWidth: '适合宽度',
+  pdfActualSize: '100%',
+  pdfZoomOut: '缩小',
+  pdfZoomIn: '放大',
+  pdfZoomPercentage: '{{percent}}%',
   physicalPage: '物理页 {{page}}',
   versionDetails: '完整版本 ID',
   evidenceLocal: '本地证据',
