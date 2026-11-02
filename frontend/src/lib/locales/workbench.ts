@@ -1,4 +1,8 @@
 export const workbenchEn = {
+  physicalPage: 'Physical page {{page}}',
+  versionDetails: 'Full version ID',
+  evidenceLocal: 'Local evidence',
+  evidenceRemoteSnapshot: 'Imported text snapshot',
   workspaceRefreshFailed: 'Refresh failed. Showing the last loaded workspace; local drafts are kept.',
   retryWorkspaceRead: 'Retry workspace read',
   selectionSaving: 'Saving current selection and reading position…',
@@ -129,6 +133,10 @@ export const workbenchEn = {
   states: { empty: 'No searchable text', queued: 'Queued', running: 'Running', waiting_remote: 'Waiting for Google', succeeded: 'Succeeded', failed: 'Failed', needs_reauth: 'Sign-in required', submission_unknown: 'Submission uncertain', cancelled_local: 'Local waiting stopped', ready: 'Searchable', completed: 'Completed', pending: 'Waiting', extracting: 'Extracting', needs_ocr: 'OCR needed', partial: 'Partially extracted', unsupported: 'Unsupported file', available: 'Available', missing: 'Missing', unverified: 'Unverified' },
 }
 export const workbenchZh: typeof workbenchEn = {
+  physicalPage: '物理页 {{page}}',
+  versionDetails: '完整版本 ID',
+  evidenceLocal: '本地证据',
+  evidenceRemoteSnapshot: '导入的文字快照',
   workspaceRefreshFailed: '刷新失败，正在显示上次加载的工作区；本地草稿已保留。',
   retryWorkspaceRead: '重新读取工作区',
   selectionSaving: '正在保存当前选择和阅读位置…',

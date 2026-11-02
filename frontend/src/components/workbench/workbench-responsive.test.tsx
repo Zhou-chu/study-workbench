@@ -27,7 +27,8 @@ describe('authored workspace touch constraints (not browser geometry)', () => {
   })
   it('keeps the full selection label clickable without triggering Read', () => {
     const { onRead, onSelectionChange } = setup()
-    fireEvent.click(screen.getByText('2026-10-28'))
+    const date = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date('2026-10-28T00:00:00Z'))
+    fireEvent.click(screen.getByText(date))
     expect(onSelectionChange).toHaveBeenCalledWith(['v1'])
     expect(onRead).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: 'workbench.read' }))

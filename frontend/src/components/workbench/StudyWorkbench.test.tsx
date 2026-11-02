@@ -448,6 +448,46 @@ describe('StudyWorkbench source snapshots', () => {
     expect(screen.getByRole('button', { name: 'workbench.search' })).toBeDisabled()
     expect(evidenceApi.search).not.toHaveBeenCalled()
   })
+  it('retains complete long tokens in question, saved-note and search headings/quotes with authored wrapping constraints', async () => {
+    const token = 'x'.repeat(500)
+    const question = `Question ${token}`, title = `Saved ${token}`
+    const hit: EvidenceRecord = { evidence_id: 'ev_long', extraction_id: 'ex_long', source_version_id: 'sv_old', source_title: `Hit ${token}`, quote: `Quote ${token}`, evidence_kind: 'local_evidence', locator: { page_index: 0 } }
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), turns: [{ ...oldTurn, message: question }], notes: [{ id: 'note:long', revision: 1, title, content: 'Saved body', citations: [] }] })
+    vi.mocked(evidenceApi.search).mockResolvedValue({ hits: [hit], retrieval_method: 'lexical' })
+    show()
+    await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('learningWorkspace.sourceSearch'), { target: { value: 'Evidence' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.search' }))
+    await screen.findByText(hit.quote)
+    for (const text of [question, title, hit.source_title!, hit.quote]) {
+      const consumer = screen.getByText(text)
+      expect(consumer.textContent).toBe(text)
+      expect(consumer).toHaveClass('min-w-0', '[overflow-wrap:anywhere]')
+      expect(consumer).not.toHaveClass('truncate')
+      expect(consumer.closest('article')).toHaveClass('min-w-0', '[overflow-wrap:anywhere]')
+    }
+    const result = screen.getByText(hit.quote).closest('button')!
+    expect(result).toHaveClass('min-w-0', '[overflow-wrap:anywhere]')
+    expect(result.querySelector('[class~="truncate"]')).toBeNull()
+  })
+  it('disambiguates search and row prefixes using source versions plus absent hit version IDs', async () => {
+    const data = structuredClone(fixture)
+    data.sources[0].versions = [{ ...data.sources[0].versions[0], source_version_id: 'abcdefgh1-full' }]
+    data.selection!.source_version_ids = ['abcdefgh1-full']
+    const hit: EvidenceRecord = { evidence_id: 'ev_absent', extraction_id: 'ex_absent', source_version_id: 'abcdefgh2-full', source_title: 'Absent hit source', quote: 'Absent version quote', locator: {} }
+    vi.mocked(workbenchApi.workspace).mockResolvedValue(data)
+    vi.mocked(evidenceApi.search).mockResolvedValue({ hits: [hit, { ...hit, evidence_id: 'ev_absent_second', quote: 'Another excerpt, same absent version' }], retrieval_method: 'lexical' })
+    show()
+    await screen.findByText('Lecture notes')
+    fireEvent.change(screen.getByLabelText('learningWorkspace.sourceSearch'), { target: { value: 'Evidence' } })
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.search' }))
+    await screen.findByText(hit.quote)
+    expect(within(screen.getByRole('checkbox').closest('label')!).getByText('abcdefgh1')).toBeVisible()
+    const result = screen.getByText(hit.quote).closest('button')!
+    expect(within(result).getByText('abcdefgh2')).toBeVisible()
+    expect(within(result).queryByText(hit.source_version_id)).not.toBeInTheDocument()
+    expect(evidenceApi.search).toHaveBeenCalledWith('Evidence', ['abcdefgh1-full'], expect.anything())
+  })
   it('submits search with Enter, not IME, synchronously latches repeated actions and shows loading/zero feedback', async () => {
     let finish!: (value: Awaited<ReturnType<typeof evidenceApi.search>>) => void
     vi.mocked(evidenceApi.search).mockReturnValue(new Promise(resolve => { finish = resolve }))
@@ -487,11 +527,11 @@ describe('StudyWorkbench source snapshots', () => {
     const input = screen.getByLabelText('learningWorkspace.sourceSearch')
     fireEvent.change(input, { target: { value: 'Evidence' } })
     fireEvent.click(screen.getByRole('button', { name: 'workbench.search' }))
-    const retired = await screen.findByRole('button', { name: hit.quote })
+    const retired = await screen.findByRole('button', { name: new RegExp(hit.quote) })
     if (change === 'query') { fireEvent.change(input, { target: { value: 'Other' } }); fireEvent.change(input, { target: { value: 'Evidence' } }) }
     else if (change === 'scope') { fireEvent.click(screen.getByRole('checkbox', { name: 'My PDF · sv_new' })); fireEvent.click(screen.getByRole('checkbox', { name: 'My PDF · sv_new' })) }
     else act(() => { invalidateTurnContext(); fireEvent.click(retired) })
-    expect(screen.queryByRole('button', { name: hit.quote })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: new RegExp(hit.quote) })).not.toBeInTheDocument()
     expect(screen.getByText('workbench.searchChanged')).toBeVisible()
     expect(evidenceApi.evidence).not.toHaveBeenCalled()
     expect(evidenceApi.search).toHaveBeenCalledTimes(1)
@@ -510,7 +550,7 @@ describe('StudyWorkbench source snapshots', () => {
     else if (change === 'scope') { fireEvent.click(screen.getByRole('checkbox', { name: 'My PDF · sv_new' })); fireEvent.click(screen.getByRole('checkbox', { name: 'My PDF · sv_new' })) }
     else act(() => invalidateTurnContext())
     await act(async () => finish({ hits: [hit], retrieval_method: 'lexical' }))
-    expect(screen.queryByRole('button', { name: hit.quote })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: new RegExp(hit.quote) })).not.toBeInTheDocument()
     expect(screen.getByText('workbench.searchChanged')).toBeVisible()
     expect(evidenceApi.search).toHaveBeenCalledTimes(1)
   })
@@ -521,9 +561,9 @@ describe('StudyWorkbench source snapshots', () => {
     await screen.findByText('Lecture notes')
     fireEvent.change(screen.getByLabelText('learningWorkspace.sourceSearch'), { target: { value: 'Evidence' } })
     fireEvent.click(screen.getByRole('button', { name: 'workbench.search' }))
-    await screen.findByRole('button', { name: hit.quote })
+    await screen.findByRole('button', { name: new RegExp(hit.quote) })
     fireEvent.click(screen.getAllByRole('button', { name: 'workbench.read' })[1])
-    expect(screen.getByRole('button', { name: hit.quote })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: new RegExp(hit.quote) })).toBeInTheDocument()
     expect(evidenceApi.search).toHaveBeenCalledTimes(1)
     expect(screen.getByRole('checkbox', { name: 'My PDF · sv_new' })).not.toBeChecked()
   })
@@ -1525,10 +1565,14 @@ describe('StudyWorkbench source snapshots', () => {
     fireEvent.click(screen.getByRole('button', { name: 'workbench.ask' }))
     await waitFor(() => expect(workbenchApi.turn).toHaveBeenCalledWith('v1_notebook:1', expect.objectContaining({ source_version_ids: ['sv_old'], engine: 'independent', message: 'Explain this', notebook_id: 'notebook:1', idempotency_key: expect.any(String) }), expect.objectContaining({ epoch: expect.any(Number), target: { mode: 'legacy_password', apiBase: 'https://fixture.example/api', protocol: null } })))
   })
-  it('keeps the full version ID accessible while visually truncating it under the source title', async () => {
+  it('exposes the exact version ID in its row disclosure without truncation', async () => {
     show()
     await screen.findByText('Lecture notes')
-    expect(screen.getByTitle('sv_old')).toHaveClass('truncate')
+    const fullId = screen.getAllByText('sv_old').find(element => element.closest('details'))!
+    const disclosure = fullId.closest('details')!
+    fireEvent.click(disclosure.querySelector('summary')!)
+    expect(fullId).toBeVisible()
+    expect(fullId).not.toHaveClass('truncate')
     expect(screen.getByRole('checkbox', { name: 'My PDF · sv_old' })).toBeInTheDocument()
   })
   it('shows stored per-turn coverage and bounded-outline warnings beside the answer', async () => {
@@ -1546,7 +1590,7 @@ describe('StudyWorkbench source snapshots', () => {
     await screen.findByText('Lecture notes')
     fireEvent.change(screen.getByLabelText('learningWorkspace.sourceSearch'), { target: { value: 'evidence' } })
     fireEvent.click(screen.getByRole('button', { name: 'workbench.search' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Search evidence quote' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Search evidence quote/ }))
     await waitFor(() => expect(screen.getByTestId('reader-validity')).toHaveTextContent(expected!))
   })
   it('never treats an empty selection as all sources', async () => {
