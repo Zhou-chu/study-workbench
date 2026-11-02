@@ -1,0 +1,41 @@
+{
+  "scope": "isolated pinned-source lexical retrieval probe; fixture store/citation validator; NOT live RAG or full tests",
+  "sha": "df94d8c18bfbae217aea5c9283b7a24d38844d24",
+  "cases": [
+    {
+      "case": "exact_english",
+      "query": "voltage drop",
+      "quote": "Line impedance causes voltage drop.",
+      "hits": 1,
+      "score": 7.2
+    },
+    {
+      "case": "exact_chinese",
+      "query": "潮流计算",
+      "quote": "牛顿法用于潮流计算。",
+      "hits": 1,
+      "score": 8.3
+    },
+    {
+      "case": "cross_language",
+      "query": "voltage drop",
+      "quote": "线路阻抗会导致电压下降。",
+      "hits": 0,
+      "score": null
+    },
+    {
+      "case": "paraphrase",
+      "query": "汽车",
+      "quote": "这辆轿车采用电驱动。",
+      "hits": 0,
+      "score": null
+    },
+    {
+      "case": "broad_summary",
+      "query": "总结这些资料",
+      "quote": "牛顿法采用雅可比矩阵计算节点电压。",
+      "hits": 0,
+      "score": null
+    }
+  ]
+}
