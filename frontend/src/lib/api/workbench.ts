@@ -18,6 +18,6 @@ export const workbenchApi = {
   turns: async (sessionId: string, context?: TurnContext) => (await apiClient.get<TurnRecord[]>(`/personal/chats/${id(sessionId)}/turns`, { turnContext: context })).data,
   saveNote: async (notebookId: string, note: CreateWorkbenchNoteInput) => (await apiClient.post<WorkbenchNote>(`/personal/notebooks/${id(notebookId)}/notes`, note)).data,
   updateNote: async (notebookId: string, noteId: string, note: UpdateWorkbenchNoteInput) => (await apiClient.patch<WorkbenchNote>(`/personal/notebooks/${id(notebookId)}/notes/${id(noteId)}`, note)).data,
-  job: async (jobId: string, signal?: AbortSignal) => (await apiClient.get<BridgeJob>(`/personal/jobs/${id(jobId)}`, { signal })).data,
-  cancelJob: async (jobId: string) => (await apiClient.post<BridgeJob>(`/personal/jobs/${id(jobId)}/cancel`)).data,
+  job: async (jobId: string, signal?: AbortSignal, context?: TurnContext) => (await apiClient.get<BridgeJob>(`/personal/jobs/${id(jobId)}`, { signal, turnContext: context })).data,
+  cancelJob: async (jobId: string, context?: TurnContext) => (await apiClient.post<BridgeJob>(`/personal/jobs/${id(jobId)}/cancel`, undefined, { turnContext: context })).data,
 }

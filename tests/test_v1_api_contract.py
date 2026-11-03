@@ -199,7 +199,7 @@ async def test_job_fixture_is_real_submission_with_stable_ids(monkeypatch):
     from api.routers.evidence import TurnRequest
 
     example = fixture("job")
-    request = TurnRequest.model_validate(example["request"]).model_dump()
+    request = TurnRequest.model_validate(example["request"]).dispatch_payload()
     monkeypatch.setattr("api.personal_service.now", lambda: "2026-01-01T00:00:00+00:00")
 
     async def submit(command, args):
@@ -440,3 +440,57 @@ def test_public_examples_are_explicit_synthetic_data_with_utc_timestamp():
                 "@gmail.com",
             )
         )
+
+
+def test_hybrid_turn_request_keeps_explicit_disclosure_and_legacy_defaults():
+    from api.routers.evidence import TurnRequest
+
+    legacy = fixture("job")["request"]
+    request = TurnRequest.model_validate(legacy)
+    assert request.retrieval_mode == "lexical"
+    assert "retrieval_mode" not in request.model_fields_set
+    modern = {
+        **legacy,
+        "retrieval_mode": "hybrid",
+        "embedding_profile_id": "p",
+        "acknowledge_query_processing": True,
+        "disclosed_profile_fingerprint": "a" * 64,
+        "destination_descriptor_version": "v1",
+    }
+    assert (
+        TurnRequest.model_validate(modern).model_dump()["disclosed_profile_fingerprint"]
+        == "a" * 64
+    )
+    for key in (
+        "embedding_profile_id",
+        "disclosed_profile_fingerprint",
+        "destination_descriptor_version",
+    ):
+        missing = dict(modern)
+        missing.pop(key)
+        with pytest.raises(ValueError):
+            TurnRequest.model_validate(missing)
+    with pytest.raises(ValueError):
+        TurnRequest.model_validate({**modern, "acknowledge_query_processing": "true"})
+
+
+def test_turn_dispatch_preserves_old_defaults_and_explicit_new_default_identity():
+    from api.routers.evidence import TurnRequest
+
+    legacy = {
+        "notebook_id": "notebook:synthetic",
+        "engine": "independent",
+        "message": "question",
+        "idempotency_key": "key",
+    }
+    omitted = TurnRequest.model_validate(legacy).dispatch_payload()
+    assert omitted["selection_origin"] == "local"
+    assert omitted["task"] == "question"
+    assert omitted["model_id"] is None
+    assert "retrieval_mode" not in omitted
+    explicit = TurnRequest.model_validate(
+        {**legacy, "retrieval_mode": "lexical", "acknowledge_query_processing": False}
+    ).dispatch_payload()
+    assert explicit["retrieval_mode"] == "lexical"
+    assert explicit["acknowledge_query_processing"] is False
+    assert explicit != omitted

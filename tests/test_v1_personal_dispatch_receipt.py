@@ -93,7 +93,7 @@ async def test_same_key_preserves_any_retained_receipt_without_dispatch(
         pytest.fail("Retained receipts must never authorize enqueue")
 
     service = PersonalService(store=store, submit=no_dispatch)
-    request = evidence.TurnRequest(**FIXTURE["request"]).model_dump()
+    request = evidence.TurnRequest(**FIXTURE["request"]).dispatch_payload()
 
     # Seed the exact existing identity/request hash through the real service,
     # with only the external queue seam replaced.

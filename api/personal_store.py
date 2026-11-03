@@ -8,7 +8,7 @@ sections; never hold it over a remote call or a CPU extraction.
 from __future__ import annotations
 
 import hashlib
-from typing import Any
+from typing import Any, List
 
 from surrealdb import RecordID
 
@@ -106,6 +106,18 @@ class PersonalStore:
     async def delete(self, kind: str, identity: str) -> None:
         await repo_query(
             "DELETE $target;", {"target": RecordID.parse(record_key(kind, identity))}
+        )
+
+    async def invalidate_evidence_scope(
+        self, notebook_id: str, version_ids: List[str], reason: str
+    ) -> None:
+        """Extraction publisher owns the same project lock; do not reacquire it."""
+        from open_notebook.database.evidence_embedding_repository import (
+            EvidenceEmbeddingRepository,
+        )
+
+        await EvidenceEmbeddingRepository(query=repo_query).invalidate_locked(
+            notebook_id, version_ids, reason
         )
 
     def project_lock(self, notebook_id: str):

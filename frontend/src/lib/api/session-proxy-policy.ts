@@ -131,6 +131,8 @@ const routeDefinitions: ReadonlyArray<readonly [string, string, RouteKind?]> = [
   ['GET POST', '/api/speaker-profiles'], ['PUT DELETE', '/api/speaker-profiles/{profile_id}'],
   ['POST', '/api/speaker-profiles/{profile_id}/duplicate'],
   ['GET', '/api/personal/notebooks/{notebook_id}/workspace'],
+  ['GET POST', '/api/personal/notebooks/{notebook_id}/semantic-index'],
+  ['POST', '/api/personal/notebooks/{notebook_id}/semantic-index/preview'],
   ['PATCH', '/api/personal/notebooks/{notebook_id}/selection'],
   ['POST', '/api/personal/notebooks/{notebook_id}/sources/upload', 'multipart'],
   ['GET', '/api/personal/web-search/status'], ['POST', '/api/personal/web-search'],

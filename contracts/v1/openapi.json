@@ -2005,6 +2005,121 @@
         "title": "EmbedResponse",
         "type": "object"
       },
+      "EmbeddingProfile": {
+        "additionalProperties": false,
+        "properties": {
+          "cosine_min_score": {
+            "maximum": 1.0,
+            "minimum": -1.0,
+            "title": "Cosine Min Score",
+            "type": "number"
+          },
+          "credential_binding_id": {
+            "minLength": 1,
+            "title": "Credential Binding Id",
+            "type": "string"
+          },
+          "destination_descriptor_version": {
+            "minLength": 1,
+            "title": "Destination Descriptor Version",
+            "type": "string"
+          },
+          "destination_kind": {
+            "default": "unknown",
+            "enum": [
+              "on_device",
+              "remote",
+              "unknown"
+            ],
+            "title": "Destination Kind",
+            "type": "string"
+          },
+          "dimension": {
+            "maximum": 4096.0,
+            "minimum": 1.0,
+            "title": "Dimension",
+            "type": "integer"
+          },
+          "document_prefix": {
+            "title": "Document Prefix",
+            "type": "string"
+          },
+          "endpoint": {
+            "minLength": 1,
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "endpoint_fingerprint": {
+            "readOnly": true,
+            "title": "Endpoint Fingerprint",
+            "type": "string"
+          },
+          "fingerprint": {
+            "readOnly": true,
+            "title": "Fingerprint",
+            "type": "string"
+          },
+          "max_input_bytes": {
+            "exclusiveMinimum": 0.0,
+            "title": "Max Input Bytes",
+            "type": "integer"
+          },
+          "model_id": {
+            "minLength": 1,
+            "title": "Model Id",
+            "type": "string"
+          },
+          "model_name": {
+            "minLength": 1,
+            "title": "Model Name",
+            "type": "string"
+          },
+          "preprocessing_revision": {
+            "const": "evidence-identity-v1",
+            "title": "Preprocessing Revision",
+            "type": "string"
+          },
+          "profile_id": {
+            "minLength": 1,
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "provider": {
+            "minLength": 1,
+            "title": "Provider",
+            "type": "string"
+          },
+          "query_prefix": {
+            "title": "Query Prefix",
+            "type": "string"
+          },
+          "revision": {
+            "minLength": 1,
+            "title": "Revision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "profile_id",
+          "model_id",
+          "provider",
+          "model_name",
+          "revision",
+          "endpoint",
+          "credential_binding_id",
+          "dimension",
+          "document_prefix",
+          "query_prefix",
+          "preprocessing_revision",
+          "max_input_bytes",
+          "cosine_min_score",
+          "destination_descriptor_version",
+          "endpoint_fingerprint",
+          "fingerprint"
+        ],
+        "title": "EmbeddingProfile",
+        "type": "object"
+      },
       "EpisodeProfileCreate": {
         "properties": {
           "default_briefing": {
@@ -2192,6 +2307,117 @@
         "title": "EpisodeProfileResponse",
         "type": "object"
       },
+      "EvidenceSearchRequest": {
+        "properties": {
+          "acknowledge_query_processing": {
+            "default": false,
+            "title": "Acknowledge Query Processing",
+            "type": "boolean"
+          },
+          "destination_descriptor_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination Descriptor Version"
+          },
+          "disclosed_profile_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disclosed Profile Fingerprint"
+          },
+          "embedding_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embedding Profile Id"
+          },
+          "limit": {
+            "default": 12,
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "notebook_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notebook Id"
+          },
+          "query": {
+            "default": "",
+            "title": "Query"
+          },
+          "retrieval_mode": {
+            "default": "lexical",
+            "enum": [
+              "lexical",
+              "hybrid"
+            ],
+            "title": "Retrieval Mode",
+            "type": "string"
+          },
+          "source_version_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Version Ids",
+            "type": "array"
+          }
+        },
+        "title": "EvidenceSearchRequest",
+        "type": "object"
+      },
+      "EvidenceSearchResponse": {
+        "additionalProperties": false,
+        "description": "Wire envelope; absent metadata preserves the legacy hits-only response.",
+        "properties": {
+          "hits": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Hits",
+            "type": "array"
+          },
+          "retrieval": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RetrievalMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "hits"
+        ],
+        "title": "EvidenceSearchResponse",
+        "type": "object"
+      },
       "ExecuteChatRequest": {
         "properties": {
           "context": {
@@ -2350,6 +2576,269 @@
           "remote_source_ids"
         ],
         "title": "ImportRequest",
+        "type": "object"
+      },
+      "IndexJobStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_evidence": {
+            "minimum": 0.0,
+            "title": "Completed Evidence",
+            "type": "integer"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "job_id": {
+            "minLength": 1,
+            "title": "Job Id",
+            "type": "string"
+          },
+          "remote_cancel_confirmed": {
+            "const": false,
+            "default": false,
+            "title": "Remote Cancel Confirmed",
+            "type": "boolean"
+          },
+          "retry_safe": {
+            "const": false,
+            "default": false,
+            "title": "Retry Safe",
+            "type": "boolean"
+          },
+          "source_version_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version Id"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "total_evidence": {
+            "minimum": 0.0,
+            "title": "Total Evidence",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "job_id",
+          "source_version_id",
+          "state",
+          "stage",
+          "completed_evidence",
+          "total_evidence"
+        ],
+        "title": "IndexJobStatus",
+        "type": "object"
+      },
+      "IndexPreview": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_count": {
+            "maximum": 5000.0,
+            "minimum": 0.0,
+            "title": "Evidence Count",
+            "type": "integer"
+          },
+          "input_bytes": {
+            "minimum": 0.0,
+            "title": "Input Bytes",
+            "type": "integer"
+          },
+          "preview_hash": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Preview Hash",
+            "type": "string"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/EmbeddingProfile"
+          },
+          "snapshot": {
+            "$ref": "#/components/schemas/ScopeSnapshot"
+          },
+          "warnings": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "snapshot",
+          "profile",
+          "preview_hash",
+          "evidence_count",
+          "input_bytes"
+        ],
+        "title": "IndexPreview",
+        "type": "object"
+      },
+      "IndexReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "group_id": {
+            "minLength": 1,
+            "title": "Group Id",
+            "type": "string"
+          },
+          "job_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Job Ids",
+            "type": "array"
+          },
+          "jobs": {
+            "items": {
+              "$ref": "#/components/schemas/IndexJobStatus"
+            },
+            "title": "Jobs",
+            "type": "array"
+          },
+          "notebook_id": {
+            "minLength": 1,
+            "title": "Notebook Id",
+            "type": "string"
+          },
+          "preview_hash": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Preview Hash",
+            "type": "string"
+          },
+          "profile_fingerprint": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Profile Fingerprint",
+            "type": "string"
+          },
+          "profile_id": {
+            "minLength": 1,
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "remote_cancel_confirmed": {
+            "const": false,
+            "default": false,
+            "title": "Remote Cancel Confirmed",
+            "type": "boolean"
+          },
+          "retry_safe": {
+            "const": false,
+            "default": false,
+            "title": "Retry Safe",
+            "type": "boolean"
+          },
+          "state": {
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed",
+              "submission_unknown",
+              "cancelled_local"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "group_id",
+          "notebook_id",
+          "profile_id",
+          "jobs",
+          "profile_fingerprint",
+          "preview_hash",
+          "job_ids",
+          "state"
+        ],
+        "title": "IndexReceipt",
+        "type": "object"
+      },
+      "IndexRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "acknowledge_duplicate_embedding_cost": {
+            "default": false,
+            "title": "Acknowledge Duplicate Embedding Cost",
+            "type": "boolean"
+          },
+          "acknowledge_external_processing": {
+            "default": false,
+            "title": "Acknowledge External Processing",
+            "type": "boolean"
+          },
+          "idempotency_key": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "preview_hash": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Preview Hash",
+            "type": "string"
+          },
+          "profile_id": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "retry_of_job_id": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry Of Job Id"
+          },
+          "source_version_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Source Version Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source_version_ids",
+          "profile_id",
+          "preview_hash",
+          "idempotency_key"
+        ],
+        "title": "IndexRequest",
         "type": "object"
       },
       "InsightCreationResponse": {
@@ -3469,6 +3958,32 @@
         "title": "PodcastGenerationResponse",
         "type": "object"
       },
+      "PreviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "profile_id": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "source_version_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Source Version Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source_version_ids",
+          "profile_id"
+        ],
+        "title": "PreviewRequest",
+        "type": "object"
+      },
       "ProviderAvailabilityResponse": {
         "properties": {
           "available": {
@@ -3909,6 +4424,76 @@
         "title": "ReparseRequest",
         "type": "object"
       },
+      "RetrievalMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "fallback_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Reason"
+          },
+          "indexed_version_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Indexed Version Count",
+            "type": "integer"
+          },
+          "profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Id"
+          },
+          "requested_method": {
+            "enum": [
+              "lexical",
+              "hybrid"
+            ],
+            "title": "Requested Method",
+            "type": "string"
+          },
+          "retrieval_method": {
+            "enum": [
+              "lexical",
+              "hybrid",
+              "lexical_fallback"
+            ],
+            "title": "Retrieval Method",
+            "type": "string"
+          },
+          "selected_version_count": {
+            "minimum": 0.0,
+            "title": "Selected Version Count",
+            "type": "integer"
+          },
+          "warnings": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "requested_method",
+          "retrieval_method",
+          "selected_version_count"
+        ],
+        "title": "RetrievalMetadata",
+        "type": "object"
+      },
       "RevalidationRequest": {
         "properties": {
           "extraction_id": {
@@ -3947,6 +4532,63 @@
           }
         },
         "title": "SaveAsNoteRequest",
+        "type": "object"
+      },
+      "ScopeEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "extraction_id": {
+            "minLength": 1,
+            "title": "Extraction Id",
+            "type": "string"
+          },
+          "manifest_hash": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Manifest Hash",
+            "type": "string"
+          },
+          "scope_epoch": {
+            "minimum": 0.0,
+            "title": "Scope Epoch",
+            "type": "integer"
+          },
+          "version_id": {
+            "minLength": 1,
+            "title": "Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version_id",
+          "extraction_id",
+          "manifest_hash",
+          "scope_epoch"
+        ],
+        "title": "ScopeEntry",
+        "type": "object"
+      },
+      "ScopeSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/ScopeEntry"
+            },
+            "minItems": 1,
+            "title": "Entries",
+            "type": "array"
+          },
+          "notebook_id": {
+            "minLength": 1,
+            "title": "Notebook Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "notebook_id",
+          "entries"
+        ],
+        "title": "ScopeSnapshot",
         "type": "object"
       },
       "SearchRequest": {
@@ -5620,6 +6262,44 @@
       },
       "TurnRequest": {
         "properties": {
+          "acknowledge_query_processing": {
+            "default": false,
+            "title": "Acknowledge Query Processing",
+            "type": "boolean"
+          },
+          "destination_descriptor_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination Descriptor Version"
+          },
+          "disclosed_profile_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disclosed Profile Fingerprint"
+          },
+          "embedding_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embedding Profile Id"
+          },
           "engine": {
             "enum": [
               "notebooklm",
@@ -5673,6 +6353,15 @@
             "maxItems": 20,
             "title": "Remote Source Ids",
             "type": "array"
+          },
+          "retrieval_mode": {
+            "default": "lexical",
+            "enum": [
+              "lexical",
+              "hybrid"
+            ],
+            "title": "Retrieval Mode",
+            "type": "string"
           },
           "selection_origin": {
             "default": "local",
@@ -11626,6 +12315,162 @@
         ]
       }
     },
+    "/api/personal/notebooks/{notebook_id}/semantic-index": {
+      "get": {
+        "operationId": "semantic_index_status_api_personal_notebooks__notebook_id__semantic_index_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notebook_id",
+            "required": true,
+            "schema": {
+              "title": "Notebook Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source_version_ids",
+            "required": true,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 20,
+              "minItems": 1,
+              "title": "Source Version Ids",
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Semantic Index Status",
+        "tags": [
+          "personal-evidence"
+        ]
+      },
+      "post": {
+        "operationId": "semantic_index_build_api_personal_notebooks__notebook_id__semantic_index_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notebook_id",
+            "required": true,
+            "schema": {
+              "title": "Notebook Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IndexRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Semantic Index Build",
+        "tags": [
+          "personal-evidence"
+        ]
+      }
+    },
+    "/api/personal/notebooks/{notebook_id}/semantic-index/preview": {
+      "post": {
+        "operationId": "semantic_index_preview_api_personal_notebooks__notebook_id__semantic_index_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notebook_id",
+            "required": true,
+            "schema": {
+              "title": "Notebook Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Semantic Index Preview",
+        "tags": [
+          "personal-evidence"
+        ]
+      }
+    },
     "/api/personal/notebooks/{notebook_id}/source-snapshots": {
       "post": {
         "operationId": "create_source_snapshot_api_personal_notebooks__notebook_id__source_snapshots_post",
@@ -11971,9 +12816,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "additionalProperties": true,
-                "title": "Value",
-                "type": "object"
+                "$ref": "#/components/schemas/EvidenceSearchRequest"
               }
             }
           },
@@ -11983,7 +12826,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceSearchResponse"
+                }
               }
             },
             "description": "Successful Response"

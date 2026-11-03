@@ -130,7 +130,9 @@ async def test_missing_scope_mapping_rejected_before_any_call():
 
 
 @pytest.mark.asyncio
-async def test_real_grounded_service_public_fixtures_and_scope_switch(tmp_path):
+async def test_real_grounded_service_public_fixtures_and_scope_switch(
+    tmp_path, monkeypatch
+):
     from test_v1_evidence_ingest import MemoryStore
 
     from api.evidence_service import EvidenceService
@@ -142,7 +144,11 @@ async def test_real_grounded_service_public_fixtures_and_scope_switch(tmp_path):
     payloads = []
     for alias, content in suite["sources"].items():
         version = await evidence.ingest(
-            "acceptance", alias, alias, content.encode(), filename=f"{alias}.txt"
+            "notebook:acceptance",
+            "source:" + alias,
+            alias,
+            content.encode(),
+            filename=f"{alias}.txt",
         )
         await evidence.extract(version["source_version_id"])
         mapping[alias] = version["source_version_id"]
@@ -162,6 +168,9 @@ async def test_real_grounded_service_public_fixtures_and_scope_switch(tmp_path):
             ],
         }
 
+    from workbench_scope_helpers import install_scope_database
+
+    install_scope_database(monkeypatch, evidence.store, tmp_path, "notebook:acceptance")
     service = GroundedChatService(evidence_service=evidence, model=fake_model)
     report = await run_acceptance(service, mapping, **policy())
     assert report["status"] == "simulation_complete_review_pending"

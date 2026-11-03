@@ -161,6 +161,17 @@ def _terms(text):
     return normalized, terms
 
 
+def _lexical_score(normalized_query, terms, quote):
+    """The unchanged V1 term/bigram algorithm, shared by explicit retrieval."""
+    normalized, _ = _terms(quote)
+    score = sum(
+        1 + min(normalized.count(term), 3) * 0.1 for term in terms if term in normalized
+    )
+    if normalized_query in normalized:
+        score += 5
+    return score
+
+
 def publish_snapshot_bytes(path, data, *, durability_root=None):
     """Publish deterministic bytes durably without overwriting a competing winner."""
     root = Path(durability_root or path.parent).resolve()
@@ -494,6 +505,13 @@ class EvidenceService:
             ).model_dump()
         )
         async with self.store.project_lock(version["notebook_id"]):
+            if prior_current_id and prior_current_id != extraction_id:
+                # The production metadata adapter revokes derived vector scope
+                # before publishing reparse state. Custom text-only stores keep
+                # their existing compatibility and need no derived DB tables.
+                invalidate = getattr(self.store, "invalidate_evidence_scope", None)
+                if invalidate is not None:
+                    await invalidate(version["notebook_id"], [version_id], "reparse")
             await self.store.put("extraction", extraction_id, extraction)
             version["status"] = "extracting"
             if not version.get("current_extraction_id"):
@@ -688,14 +706,7 @@ class EvidenceService:
             scoped.extend(await self.list_evidence(version_id))
         hits = []
         for record in scoped:
-            normalized, _ = _terms(record["quote"])
-            score = sum(
-                1 + min(normalized.count(term), 3) * 0.1
-                for term in terms
-                if term in normalized
-            )
-            if normalized_query in normalized:
-                score += 5
+            score = _lexical_score(normalized_query, terms, record["quote"])
             if score > 0:
                 hits.append({**record, "score": score, "retrieval_method": "lexical"})
         ranked = sorted(hits, key=lambda hit: (-hit["score"], hit["evidence_id"]))[

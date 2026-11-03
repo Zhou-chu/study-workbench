@@ -15,6 +15,8 @@ export const queryClient = new QueryClient({
 })
 
 export const QUERY_KEYS = {
+  semanticIndexAttempt: (id: string, jobId: string, identity: string, generation: number, epoch?: number) => ['personal', 'semantic-index-attempt', id, jobId, identity, generation, epoch ?? null] as const,
+  semanticIndex: (id: string, versions: readonly string[], epoch?: number) => ['personal', 'semantic-index', id, [...versions], epoch ?? null] as const,
   workbenchTurnCheck: (id: string) => ['personal', 'turn-check', id] as const,
   portableLimits: ['personal', 'portable', 'limits'] as const,
   workbench: (id: string) => ['personal', 'workspace', id] as const,

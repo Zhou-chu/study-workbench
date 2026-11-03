@@ -391,14 +391,23 @@ async def remove_source_from_notebook(notebook_id: str, source_id: str):
         # Verify the notebook exists (raises NotFoundError -> 404)
         await Notebook.get(notebook_id)
 
-        # Delete the reference record linking source to notebook
-        await repo_query(
-            "DELETE FROM reference WHERE out = $notebook_id AND in = $source_id",
-            {
-                "notebook_id": ensure_record_id(notebook_id),
-                "source_id": ensure_record_id(source_id),
-            },
+        from open_notebook.database.evidence_embedding_repository import (
+            EvidenceEmbeddingRepository,
         )
+        from open_notebook.database.project_locks import project_lock
+
+        async with project_lock(notebook_id):
+            await EvidenceEmbeddingRepository(query=repo_query).invalidate_source(
+                source_id, notebook_id=notebook_id, locked_notebook_id=notebook_id
+            )
+            # Tombstone precedes unlink; cleanup failures cannot undo revocation.
+            await repo_query(
+                "DELETE FROM reference WHERE out = $notebook_id AND in = $source_id",
+                {
+                    "notebook_id": ensure_record_id(notebook_id),
+                    "source_id": ensure_record_id(source_id),
+                },
+            )
 
         return {"message": "Source removed from notebook successfully"}
     except HTTPException:
@@ -407,13 +416,11 @@ async def remove_source_from_notebook(notebook_id: str, source_id: str):
         raise HTTPException(status_code=404, detail="Notebook not found")
     except OpenNotebookError:
         raise
-    except Exception as e:
-        logger.error(
-            f"Error removing source {source_id} from notebook {notebook_id}: {str(e)}"
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Error removing source from notebook: {str(e)}"
-        )
+    except Exception:
+        logger.error("Source removal failed")
+    raise HTTPException(
+        status_code=500, detail="Error removing source from notebook"
+    ) from None
 
 
 @router.delete("/notebooks/{notebook_id}", response_model=NotebookDeleteResponse)

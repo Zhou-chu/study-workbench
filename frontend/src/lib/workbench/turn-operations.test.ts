@@ -183,3 +183,11 @@ describe('bounded document turn registry', () => {
     unsubscribe(); admit(registry); expect(listener).toHaveBeenCalledTimes(2)
   })
 })
+
+
+it('rejects new hybrid capture with missing or untrusted recovery disclosure metadata', () => {
+  const value = input(); value.request = { ...value.request, retrieval_mode: 'hybrid', embedding_profile_id: 'p1', disclosed_profile_fingerprint: 'fp1', destination_descriptor_version: 'd1', acknowledge_query_processing: true }
+  expect(createTurnRegistry().admit(value)).toEqual({ ok: false, reason: 'invalid' })
+  Object.assign(value, { embeddingDisclosure: { profile_id: 'p1', profile_fingerprint: 'fp1', destination_descriptor_version: 'd1', provider: 'fake', model_id: 'model', model_name: 'fake', destination_kind: 'remote', endpoint: 'https://tampered.example/embed' } })
+  expect(createTurnRegistry().admit(value)).toEqual({ ok: false, reason: 'invalid' })
+})

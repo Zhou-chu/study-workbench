@@ -2,10 +2,12 @@
 
 import hashlib
 import json
+from copy import deepcopy
 from datetime import datetime, timezone
 
 from api.notebooklm_links import read_notebooklm_link
 from api.personal_store import get_store
+from api.personal_turn_admission import PersonalTurnAdmission
 from open_notebook.exceptions import (
     InvalidInputError,
     NotFoundError,
@@ -70,7 +72,29 @@ class PersonalService:
             await self.store.put("selection", notebook_id, selection)
         return selection
 
+    async def turn_receipt(self, chat_session_id, request):
+        """Read an exact retained intent, without admission, enqueue or replay.
+
+        New admission must still use submit_turn, whose locked hash check closes
+        races after this read. Mutable retrieval configuration is not a condition
+        for learning the outcome of an already accepted immutable request.
+        """
+        request = deepcopy(request)
+        notebook_id = request.get("notebook_id")
+        if not notebook_id or not request.get("idempotency_key"):
+            raise InvalidInputError("notebook_id and idempotency_key are required")
+        identity = "job_" + digest(
+            {"session": chat_session_id, "key": request["idempotency_key"]}
+        )
+        request_hash = digest(request)
+        async with self.store.project_lock(notebook_id):
+            retained = await self.store.get("job", identity)
+            if retained and retained["request_hash"] != request_hash:
+                raise InvalidInputError("IDEMPOTENCY_CONFLICT")
+            return retained
+
     async def submit_turn(self, chat_session_id, request):
+        request = deepcopy(request)
         notebook_id = request.get("notebook_id")
         if not notebook_id or not request.get("idempotency_key"):
             raise InvalidInputError("notebook_id and idempotency_key are required")
@@ -177,6 +201,11 @@ class PersonalService:
             await self.store.put("job", job_id, job)
         google_turn = None
         request = {**job["request_snapshot"], "_turn_id": job["turn_id"]}
+        parent_admission = (
+            PersonalTurnAdmission.capture(job)
+            if request["engine"] == "independent"
+            else None
+        )
         if request["engine"] == "notebooklm":
             google_turn = {
                 "turn_id": job["turn_id"],
@@ -207,7 +236,10 @@ class PersonalService:
                 from open_notebook.graphs.grounded_chat import GroundedChatService
 
                 result = await GroundedChatService(store=self.store).turn(
-                    job["notebook_id"], job["chat_session_id"], request
+                    job["notebook_id"],
+                    job["chat_session_id"],
+                    request,
+                    parent_admission=parent_admission,
                 )
             else:
                 from api.notebooklm_service import NotebookLMService
@@ -253,6 +285,15 @@ class PersonalService:
             current = await self.store.get("job", job_id)
             if current and current.get("state") == "cancelled_local":
                 return current
+            if parent_admission is not None:
+                # A different owner/attempt or stopped parent is not ours to
+                # overwrite, including after a rejected child admission.
+                try:
+                    await parent_admission.assert_locked(self.store)
+                except InvalidInputError:
+                    if current is None:
+                        raise NotFoundError("Job not found") from None
+                    return current
             merged = {**(current or {}), **job}
             if current and current.get("worker_job_id"):
                 merged["worker_job_id"] = current["worker_job_id"]

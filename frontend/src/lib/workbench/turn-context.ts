@@ -1,3 +1,4 @@
+import type { EmbeddingProfile, RetrievalOptions } from '@/lib/types/personal'
 import type { WebSessionMode } from '@/lib/types/config'
 
 /** Browser-visible destination only; not a credential or account identity. */
@@ -31,4 +32,18 @@ export function invalidateTurnContext(): void {
 export function subscribeTurnContext(listener: () => void): () => void {
   listeners.add(listener)
   return () => { listeners.delete(listener) }
+}
+
+/** Nonsecret immutable identity shared by consent, dispatch and recovery. */
+export const RETRIEVAL_FIELDS = ['retrieval_mode', 'embedding_profile_id', 'acknowledge_query_processing', 'disclosed_profile_fingerprint', 'destination_descriptor_version'] as const
+export function copyRetrievalOptions(value: RetrievalOptions): Readonly<RetrievalOptions> {
+  return Object.freeze(Object.fromEntries(RETRIEVAL_FIELDS.filter(key => value[key] !== undefined).map(key => [key, value[key]])))
+}
+export function validRetrievalOptions(value: RetrievalOptions): boolean {
+  if (value.acknowledge_query_processing !== undefined && typeof value.acknowledge_query_processing !== 'boolean') return false
+  if (value.retrieval_mode === 'hybrid') return [value.embedding_profile_id, value.disclosed_profile_fingerprint, value.destination_descriptor_version].every(id => typeof id === 'string' && !!id.trim())
+  return (value.retrieval_mode === undefined || value.retrieval_mode === 'lexical') && !value.acknowledge_query_processing && [value.embedding_profile_id, value.disclosed_profile_fingerprint, value.destination_descriptor_version].every(id => id === undefined || id === null)
+}
+export function queryDisclosureIdentity(profile: EmbeddingProfile): string {
+  return JSON.stringify([profile.profile_id, profile.fingerprint, profile.destination_descriptor_version, profile.destination_kind, profile.endpoint, profile.provider, profile.model_id, profile.model_name, profile.revision])
 }

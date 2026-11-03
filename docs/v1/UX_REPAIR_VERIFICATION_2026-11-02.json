@@ -1,0 +1,57 @@
+{
+  "date_utc": "2026-11-02",
+  "product_source_commit": "9fa6567b00bb86c20589aed0d41401cbd289255e",
+  "product_source_tree": "afd61e54d245f62cce6cc547396fd3bc097a8206",
+  "scope": "second red-team UX repairs, source/offline gates only",
+  "frontend": {
+    "unit_passed": 2069,
+    "unit_files": 112,
+    "artifact_tool_passed": 25,
+    "types": "passed",
+    "lint_errors": 0,
+    "lint_inherited_warnings": 7,
+    "test_stderr": "Known inherited React act warnings and intentional negative-path diagnostics; not pristine"
+  },
+  "backend": {
+    "passed": 2778,
+    "skipped": 128,
+    "warnings": 2,
+    "runtime": "isolated supported offline runner with fake DB/providers",
+    "duration_seconds": 77.74
+  },
+  "static": {
+    "ruff": "passed",
+    "format": "passed",
+    "mypy": "passed",
+    "python_files": 319
+  },
+  "build": {
+    "status": "passed",
+    "independent_verify": "passed",
+    "manifest_sha256": "7193fada4a5a44e1b7c5eb7157d104d4695d7383f1f49f6d66f2d722630c703e",
+    "build_id": "c86d8fa8-35da-4b15-b7b9-36820f64f501",
+    "source_sha256": "2ae10af1120cf258624e48d3baac01748c60f5e14de3dfd21dab0a4ac4222cff",
+    "artifact_sha256": "8e3937392f840956fc0261392da90f2458209020d18efc72d93d547cfa94e938",
+    "generated_sha256": "52d6dbf123c1155f4ecf503800bea441b5473eaadfb3378c303edd079642711d",
+    "claim": "source-artifact-association-not-reproducibility"
+  },
+  "review": {
+    "tasks": "all four spec/quality approved",
+    "integrated": "no product-code findings",
+    "documentation_finding": "P3 stale Task4 progress corrected in this publication"
+  },
+  "interrupted_attempts": {
+    "initial_build": "interrupted, not counted as pass",
+    "initial_final_backend": "interrupted, not counted as pass",
+    "recovery": "No surviving candidate build process; own empty stale lock removed; complete reruns succeeded"
+  },
+  "not_verified": [
+    "browser geometry/keyboard/touch/visual comfort",
+    "real PDF sharpness and worker behavior",
+    "optional StrictMode concurrent mocked import diagnostic",
+    "real database/worker/provider journey",
+    "hybrid retrieval implementation/quality",
+    "CI/main merge/deployment"
+  ],
+  "authorization_boundary": "Desktop test-workspace consent exists; platform task access disabled. No laptop/real notes/provider invocation."
+}

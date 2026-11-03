@@ -1,6 +1,7 @@
 'use client'
+import { readTurnContext, subscribeTurnContext } from '@/lib/workbench/turn-context'
 import { isAuthRecoveryError } from '@/lib/api/browser-transport'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { workbenchApi } from '@/lib/api/workbench'
 import { portableApi, saveBlob } from '@/lib/api/portable'
@@ -13,6 +14,9 @@ import { Button } from '@/components/ui/button'
 
 const operationKeys: Record<string, string> = {
   extract_evidence: 'workbench.jobOperations.extract',
+  index_evidence: 'workbench.semanticIndex',
+  index_evidence_group: 'workbench.semanticIndex',
+  index_evidence_preview: 'workbench.previewIndex',
   source_snapshot: 'sourceSnapshots.add',
   web_import: 'webDiscovery.imported',
   read: 'workbench.jobOperations.read',
@@ -32,7 +36,7 @@ const operationKeys: Record<string, string> = {
 }
 
 function canPoll(job: BridgeJob | undefined) {
-  return !!job && job.restored_history !== true && job.replay_allowed !== false && typeof job.operation === 'string' && Object.hasOwn(operationKeys, job.operation) && activeJob(job.state)
+  return !!job && job.restored_history !== true && (job.replay_allowed !== false || job.operation === 'index_evidence_group') && typeof job.operation === 'string' && Object.hasOwn(operationKeys, job.operation) && activeJob(job.state)
 }
 
 export type TurnFence = { key: string; parentJobId?: string; turnId?: string }
@@ -47,14 +51,19 @@ function isFenced(job: BridgeJob, fence?: TurnFence): boolean {
 function JobCard({ job, onChanged, fenced }: { job: BridgeJob; onChanged: () => void; fenced: boolean }) {
   const { t } = useTranslation()
   const [audioUrl, setAudioUrl] = useState<string>()
-  const status = useQuery({ queryKey: QUERY_KEYS.personalJob(job.job_id), queryFn: () => workbenchApi.job(job.job_id), initialData: job, enabled: !fenced && canPoll(job), retry: false, refetchInterval: query => !fenced && !isAuthRecoveryError(query.state.error) && canPoll(query.state.data) ? 2000 : false })
+  const context = useSyncExternalStore(subscribeTurnContext, readTurnContext, () => null)
+  const indexRequest = ['index_evidence', 'index_evidence_group'].includes(String(job.operation))
+  const status = useQuery({ queryKey: indexRequest ? [...QUERY_KEYS.personalJob(job.job_id), 'index', job.notebook_id ?? null, context?.epoch ?? null] : QUERY_KEYS.personalJob(job.job_id), queryFn: () => indexRequest ? workbenchApi.job(job.job_id, undefined, context ?? undefined) : workbenchApi.job(job.job_id), initialData: job, enabled: !fenced && canPoll(job) && (!indexRequest || !!context?.ready), retry: false, refetchInterval: query => !fenced && (!indexRequest || !!context?.ready) && !isAuthRecoveryError(query.state.error) && canPoll(query.state.data) ? 2000 : false })
   const current = fenced ? job : status.data || job
   const knownOperation = typeof current.operation === 'string' && Object.hasOwn(operationKeys, current.operation)
   const knownState = ['queued', 'running', 'waiting_remote', 'succeeded', 'failed', 'needs_reauth', 'submission_unknown', 'cancelled_local'].includes(current.state)
-  const live = current.restored_history !== true && current.replay_allowed !== false
+  const live = current.restored_history !== true && (current.replay_allowed !== false || current.operation === 'index_evidence_group')
+  const indexing = ['index_evidence', 'index_evidence_group'].includes(String(current.operation))
   const remoteWork = current.provider === 'notebooklm' || current.operation === 'chat'
-  const canCancel = live && knownOperation && knownState && (current.state === 'queued' || (current.state === 'running' && current.operation === 'chat') || (activeJob(current.state) && current.provider === 'notebooklm'))
-  const cancel = useMutation({ mutationFn: () => workbenchApi.cancelJob(job.job_id), retry: false, onSuccess: () => { if (!fenced) void status.refetch(); onChanged() } })
+  const canCancel = live && knownOperation && knownState && ((indexing && activeJob(current.state)) || current.state === 'queued' || (current.state === 'running' && current.operation === 'chat') || (activeJob(current.state) && current.provider === 'notebooklm'))
+  const cancel = useMutation({ networkMode: 'always', mutationFn: () => indexRequest ? workbenchApi.cancelJob(job.job_id, context ?? undefined) : workbenchApi.cancelJob(job.job_id), retry: false, onSuccess: () => { if (indexRequest && readTurnContext()?.epoch !== context?.epoch) return; if (!fenced) void status.refetch(); onChanged() } })
+  const childRows = new Map((Array.isArray(current.jobs) ? current.jobs : []).filter((value): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value) && typeof value.job_id === 'string').map(value => [value.job_id as string, value]))
+  const childIds = [...new Set([...(Array.isArray(current.job_ids) ? current.job_ids.filter((id): id is string => typeof id === 'string') : []), ...childRows.keys()])]
   const result = current.result && typeof current.result === 'object' && !Array.isArray(current.result) ? current.result as Record<string, unknown> : undefined
   const artifact = result?.artifact && typeof result.artifact === 'object' && !Array.isArray(result.artifact) ? result.artifact as Record<string, unknown> : undefined
   const artifactId = typeof artifact?.artifact_id === 'string' && artifact.artifact_id ? artifact.artifact_id : undefined
@@ -74,6 +83,11 @@ function JobCard({ job, onChanged, fenced }: { job: BridgeJob; onChanged: () => 
     <p className="font-medium">{t(knownOperation && typeof current.operation === 'string' ? operationKeys[current.operation] : 'workbench.jobOperations.other')}</p>
     <p role="status">{t(Object.hasOwn(stateKeys, current.state) ? stateKeys[current.state] : 'workbench.unavailable')}</p>
     {current.state === 'submission_unknown' && <p className="text-muted-foreground">{t('workbench.unknownSubmission')}</p>}
+    {indexing && <>
+      {typeof current.stage === 'string' && typeof current.completed_evidence === 'number' && typeof current.total_evidence === 'number' && <p>{t('workbench.indexJobProgress', { state: current.state, stage: current.stage, completed: current.completed_evidence, total: current.total_evidence })}</p>}
+      <p>{t('workbench.indexCancelMeaning')}</p><p>{t('workbench.indexJobsNotReadiness')}</p>
+      {current.operation === 'index_evidence_group' && <ul className="space-y-2">{childIds.map(id => { const child = childRows.get(id); return <li key={id} className="border-t pt-2 space-y-1"><p className="break-all">{id}</p>{typeof child?.source_version_id === 'string' && <p className="break-all">{child.source_version_id}</p>}<p>{t(typeof child?.state === 'string' && Object.hasOwn(stateKeys, child.state) ? stateKeys[child.state] : 'workbench.unavailable')}</p>{typeof child?.stage === 'string' && typeof child.completed_evidence === 'number' && typeof child.total_evidence === 'number' && <p>{t('workbench.indexJobProgress', { state: String(child.state), stage: child.stage, completed: child.completed_evidence, total: child.total_evidence })}</p>}{(!child || child.state === 'submission_unknown' || !Object.hasOwn(stateKeys, String(child.state))) && <p>{t('workbench.indexUnknown')}</p>}</li> })}</ul>}
+    </>}
     {errorText && <p className="text-destructive">{errorText}</p>}
     {result?.downloaded === false && <p className="text-muted-foreground">{t('workbench.artifactNotSaved')}</p>}
     {typeof result?.download_error === 'string' && <p className="text-muted-foreground">{result.download_error}</p>}

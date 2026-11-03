@@ -30,3 +30,5 @@ export const stateKeys: Record<string, string> = {
 export const connectionKeys: Record<string, string> = {
   disconnected: 'workbench.connectionStates.disconnected', awaiting_user_login: 'workbench.connectionStates.awaiting_user_login', verifying: 'workbench.connectionStates.verifying', connected: 'workbench.connectionStates.connected', needs_reauth: 'workbench.connectionStates.needs_reauth', unavailable: 'workbench.connectionStates.unavailable',
 }
+
+export const embeddingDestinationKeys = { on_device: 'workbench.destination_on_device', remote: 'workbench.destination_remote', unknown: 'workbench.destination_unknown' } as const

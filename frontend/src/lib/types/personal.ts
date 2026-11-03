@@ -117,7 +117,63 @@ export interface ScopeSnapshot {
   remote_notebook_id?: string | null
   scope_hash?: string
 }
+export interface RetrievalOptions {
+  retrieval_mode?: 'lexical' | 'hybrid'
+  embedding_profile_id?: string | null
+  acknowledge_query_processing?: boolean
+  disclosed_profile_fingerprint?: string | null
+  destination_descriptor_version?: string | null
+}
+export interface RetrievalResult {
+  hits: Array<EvidenceRecord & { score?: number }>
+  requested_method: 'lexical' | 'hybrid'
+  retrieval_method: 'lexical' | 'hybrid' | 'lexical_fallback'
+  fallback_reason: string | null
+  profile_id: string | null
+  indexed_version_count: number
+  selected_version_count: number
+  warnings: string[]
+}
+// Mirrors the backend EvidenceSearchResponse; legacy responses omit retrieval.
+export interface EvidenceSearchResponse {
+  hits: RetrievalResult['hits']
+  retrieval?: Omit<RetrievalResult, 'hits'> | null
+}
+export interface EmbeddingProfile {
+  profile_id: string; model_id: string; provider: string; model_name: string; revision: string
+  endpoint: string; credential_binding_id: string; dimension: number
+  document_prefix: string; query_prefix: string; preprocessing_revision: 'evidence-identity-v1'
+  max_input_bytes: number; cosine_min_score: number; destination_descriptor_version: string
+  destination_kind: 'on_device' | 'remote' | 'unknown'; endpoint_fingerprint: string; fingerprint: string
+}
+export interface SemanticScopeSnapshot {
+  notebook_id: string
+  entries: Array<{ version_id: string; extraction_id: string; manifest_hash: string; scope_epoch: number }>
+}
+export interface IndexPreview { snapshot: SemanticScopeSnapshot; profile: EmbeddingProfile; preview_hash: string; evidence_count: number; input_bytes: number; warnings: string[] }
+export interface IndexRequest {
+  source_version_ids: readonly string[]; profile_id: string; preview_hash: string
+  acknowledge_external_processing: boolean; idempotency_key: string
+  retry_of_job_id?: string | null; acknowledge_duplicate_embedding_cost: boolean
+}
+export interface IndexJobStatus {
+  job_id: string; source_version_id: string | null; state: JobState; stage: string
+  completed_evidence: number; total_evidence: number; error?: Record<string, string> | null
+  retry_safe: false; remote_cancel_confirmed: false
+}
+export interface IndexReceipt {
+  group_id: string; notebook_id: string; profile_id: string; profile_fingerprint: string; preview_hash: string
+  jobs: IndexJobStatus[]; job_ids: string[]; state: JobState; retry_safe: false; remote_cancel_confirmed: false
+}
+export interface SemanticStatus {
+  notebook_id: string; snapshot: SemanticScopeSnapshot; enabled: boolean
+  profiles: Array<{ profile: EmbeddingProfile; index: { state: string; indexed_version_count: number; selected_version_count: number; profile_id: string; manifests: unknown[] } }>
+  jobs: IndexJobStatus[]; retry_safe: false; remote_cancel_confirmed: false
+}
+export type TurnRetrieval = Omit<RetrievalResult, 'hits' | 'requested_method' | 'retrieval_method'> & { requested_method: 'lexical' | 'hybrid' | 'selected_overview'; retrieval_method: 'lexical' | 'hybrid' | 'lexical_fallback' | 'selected_overview' }
 export interface TurnRecord {
+  retrieval?: TurnRetrieval | null
+  retrieval_request?: RetrievalOptions
   coverage?: { selected_source_count: number; retrieved_source_count: number; evidence_count: number } | null
   warnings?: string[] | null
   turn_id: string
@@ -131,7 +187,7 @@ export interface TurnRecord {
   error?: unknown
   created_at?: string
 }
-export interface TurnRequest extends Omit<WorkbenchSelection, 'reading'> {
+export interface TurnRequest extends Omit<WorkbenchSelection, 'reading'>, RetrievalOptions {
   engine: KnownEngine
   task: 'question' | 'outline'
   notebook_id: string

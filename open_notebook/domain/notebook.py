@@ -244,6 +244,15 @@ class Notebook(ObjectModel):
             raise InvalidInputError("Cannot delete notebook without an ID")
 
         try:
+            from open_notebook.database.evidence_embedding_repository import (
+                EvidenceEmbeddingRepository,
+            )
+
+            # Revoke before the first cascade operation, even if cleanup fails.
+            # The caller owns the existing notebook mutation/project barrier.
+            await EvidenceEmbeddingRepository(
+                query=repo_query
+            ).invalidate_notebook_locked(str(self.id))
             notebook_id = ensure_record_id(self.id)
             deleted_notes = 0
             deleted_sources = 0
@@ -275,7 +284,7 @@ class Notebook(ObjectModel):
                         # Exclusive source - delete it
                         try:
                             source = await Source.get(str(source_id))
-                            await source.delete()
+                            await source._delete_under_notebook_barrier()
                             deleted_sources += 1
                         except Exception as e:
                             logger.warning(
@@ -677,7 +686,37 @@ class Source(ObjectModel):
         return data
 
     async def delete(self) -> bool:
-        """Delete source and clean up associated file, embeddings, and insights."""
+        """Revoke every retained semantic scope before ordinary source cleanup."""
+        from open_notebook.database.evidence_embedding_repository import (
+            EvidenceEmbeddingRepository,
+        )
+
+        if not self.id:
+            raise InvalidInputError("Cannot delete source without an ID")
+        async with EvidenceEmbeddingRepository(
+            query=repo_query
+        ).source_deletion_barrier(str(self.id)):
+            return await self._delete_after_scope_revocation()
+
+    async def _delete_under_notebook_barrier(self) -> bool:
+        """Cascade owns its barrier; DB guard writes revoke ALL retained scopes.
+
+        Do not reacquire project locks here. Epoch/CAS writes are the authority
+        for other notebooks/independent data roots, including unlinked history.
+        """
+        from open_notebook.database.evidence_embedding_repository import (
+            EvidenceEmbeddingRepository,
+        )
+
+        if not self.id:
+            raise InvalidInputError("Cannot delete source without an ID")
+        await EvidenceEmbeddingRepository(query=repo_query).invalidate_source_locked(
+            str(self.id)
+        )
+        return await self._delete_after_scope_revocation()
+
+    async def _delete_after_scope_revocation(self) -> bool:
+        """Common classic cleanup; scope revocation must already be acknowledged."""
         # Clean up uploaded file if it exists
         if self.asset and self.asset.file_path:
             file_path = Path(self.asset.file_path)

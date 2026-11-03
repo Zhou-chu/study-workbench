@@ -1,0 +1,12 @@
+-- Derived-only exact scoped scan. No ANN index or canonical evidence changes.
+DEFINE TABLE evidence_embedding_profile SCHEMALESS;
+DEFINE TABLE evidence_embedding_scope SCHEMALESS;
+DEFINE TABLE evidence_embedding_attempt SCHEMALESS;
+DEFINE TABLE evidence_embedding_manifest SCHEMALESS;
+DEFINE TABLE evidence_embedding_vector SCHEMALESS;
+DEFINE INDEX evidence_scope_identity ON evidence_embedding_scope FIELDS notebook_id, version_id UNIQUE;
+DEFINE INDEX evidence_attempt_identity ON evidence_embedding_attempt FIELDS attempt_id UNIQUE;
+DEFINE INDEX evidence_manifest_identity ON evidence_embedding_manifest FIELDS notebook_id, version_id, namespace, dimension, preprocessing_revision UNIQUE;
+DEFINE INDEX evidence_vector_scope ON evidence_embedding_vector FIELDS notebook_id, namespace, dimension, preprocessing_revision, version_id, extraction_id, attempt_id;
+DEFINE INDEX evidence_vector_identity ON evidence_embedding_vector FIELDS row_key UNIQUE;
+DEFINE INDEX evidence_vector_attempt ON evidence_embedding_vector FIELDS attempt_id;

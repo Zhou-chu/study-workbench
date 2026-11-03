@@ -4,15 +4,19 @@ import asyncio
 import json
 from typing import Any, Literal
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, Query, UploadFile
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
+from api.evidence_indexing import EvidenceIndexingService, IndexRequest, PreviewRequest
 from api.evidence_maintenance import EvidenceMaintenanceService
 from api.evidence_reads import EvidenceReadContext
+from api.evidence_retrieval import EvidenceRetrievalService
 from api.evidence_service import EvidenceService
 from api.personal_contracts import (
+    RETRIEVAL_FIELDS,
+    EvidenceSearchRequest,
     NoteConflictResponse,
     NoteCreateRequest,
     NoteRequiredResponse,
@@ -21,6 +25,7 @@ from api.personal_contracts import (
     PersonalNoteResponse,
     PersonalTurnDispatchUnknownResponse,
     PersonalTurnInvalidInputResponse,
+    RetrievalOptions,
     SelectionResponse,
     TurnSubmissionResponse,
     WorkspaceResponse,
@@ -28,14 +33,20 @@ from api.personal_contracts import (
 from api.personal_service import PersonalService, digest, now, submit_job
 from api.personal_store import get_store
 from api.personal_transport_contracts import TURN_EVENTS_RESPONSES, transport_responses
+from open_notebook.ai.evidence_embeddings import EmbeddingUnavailable
 from open_notebook.database.repository import repo_delete, repo_relate
+from open_notebook.domain.evidence_retrieval import (
+    EvidenceSearchResponse,
+    IndexPreview,
+    IndexReceipt,
+)
 from open_notebook.domain.notebook import Notebook, Source
 from open_notebook.exceptions import InvalidInputError, NotFoundError
 
 router = APIRouter(prefix="/personal", tags=["personal-evidence"])
 
 
-class TurnRequest(BaseModel):
+class TurnRequest(RetrievalOptions):
     notebook_id: str
     engine: Literal["notebooklm", "independent"]
     message: str = Field(min_length=1, max_length=50000)
@@ -46,6 +57,19 @@ class TurnRequest(BaseModel):
     idempotency_key: str = Field(min_length=1, max_length=200)
     model_id: str | None = None
     task: Literal["question", "outline"] = "question"
+
+    @model_validator(mode="after")
+    def validate_hybrid_scope(self):
+        if self.retrieval_mode == "hybrid" and (
+            self.engine != "independent"
+            or self.selection_origin != "local"
+            or self.remote_source_ids
+            or self.task != "question"
+        ):
+            raise ValueError(
+                "RETRIEVAL_MODE_INVALID: hybrid requires local independent questions"
+            )
+        return self
 
 
 @router.get(
@@ -278,12 +302,30 @@ async def evidence(evidence_id: str):
     }
 
 
-@router.post("/search")
-async def search(value: dict[str, Any]):
+@router.post(
+    "/search", response_model=EvidenceSearchResponse, response_model_exclude_unset=True
+)
+async def search(value: EvidenceSearchRequest):
+    if isinstance(value, dict):
+        value = EvidenceSearchRequest.model_validate(value)
+    if value.notebook_id is None and not (RETRIEVAL_FIELDS & value.model_fields_set):
+        return {
+            "hits": await EvidenceService().retrieve(
+                str(value.query), value.source_version_ids
+            )
+        }
+    if not value.notebook_id or not value.notebook_id.strip():
+        raise InvalidInputError("RETRIEVAL_NOTEBOOK_REQUIRED")
+    result = await EvidenceRetrievalService().retrieve(
+        value.query,
+        value.notebook_id,
+        value.source_version_ids,
+        limit=value.limit,
+        **value.retrieval_arguments(),
+    )
     return {
-        "hits": await EvidenceService().retrieve(
-            str(value.get("query", "")), value.get("source_version_ids", [])
-        )
+        "hits": result.hits,
+        "retrieval": result.model_dump(mode="json", exclude={"hits"}),
     }
 
 
@@ -303,12 +345,48 @@ async def search(value: dict[str, Any]):
     },
 )
 async def turn(chat_session_id: str, request: TurnRequest):
+    request = request.model_copy(deep=True)
+    payload = request.dispatch_payload()
     await Notebook.get(request.notebook_id)
-    service = EvidenceService()
-    for identity in request.source_version_ids:
-        if (await service.version(identity))["notebook_id"] != request.notebook_id:
-            raise InvalidInputError("SOURCE_OUT_OF_SCOPE")
-    job = await PersonalService().submit_turn(chat_session_id, request.model_dump())
+    personal = PersonalService()
+    job = await personal.turn_receipt(chat_session_id, payload)
+    if job is None:
+        if (
+            request.engine == "independent"
+            and request.selection_origin == "local"
+            and RETRIEVAL_FIELDS & request.model_fields_set
+        ):
+            retrieval = EvidenceRetrievalService()
+            await retrieval.repository.capture_scope(
+                request.notebook_id, request.source_version_ids
+            )
+            if request.retrieval_mode == "hybrid":
+                assert request.embedding_profile_id is not None  # request validated
+                try:
+                    profile = retrieval.embeddings.resolve_profile(
+                        request.embedding_profile_id
+                    )
+                except EmbeddingUnavailable:
+                    # Missing configuration remains an explicit worker-side fallback;
+                    # it never chooses another profile or authorizes provider work.
+                    pass
+                else:
+                    retrieval._disclosure(
+                        profile,
+                        request.disclosed_profile_fingerprint,
+                        request.destination_descriptor_version,
+                        request.acknowledge_query_processing,
+                    )
+        else:
+            service = EvidenceService()
+            for identity in request.source_version_ids:
+                # Legacy admission reads metadata only; active membership/readiness
+                # and extraction/epoch checks occur before worker content retrieval.
+                if (await service._version(identity))[
+                    "notebook_id"
+                ] != request.notebook_id:
+                    raise InvalidInputError("SOURCE_OUT_OF_SCOPE")
+        job = await personal.submit_turn(chat_session_id, payload)
     response = {
         "job_id": job["job_id"],
         "turn_id": job["turn_id"],
@@ -435,3 +513,24 @@ async def note_capabilities():
     return NoteWriteCapabilities(
         expected_revision_required=get_note_write_mode() == "multiclient"
     )
+
+
+@router.get("/notebooks/{notebook_id}/semantic-index")
+async def semantic_index_status(
+    notebook_id: str, source_version_ids: list[str] = Query(min_length=1, max_length=20)
+):
+    return await EvidenceIndexingService().status(notebook_id, source_version_ids)
+
+
+@router.post(
+    "/notebooks/{notebook_id}/semantic-index/preview", response_model=IndexPreview
+)
+async def semantic_index_preview(notebook_id: str, request: PreviewRequest):
+    return await EvidenceIndexingService().preview(
+        notebook_id, request.source_version_ids, request.profile_id
+    )
+
+
+@router.post("/notebooks/{notebook_id}/semantic-index", response_model=IndexReceipt)
+async def semantic_index_build(notebook_id: str, request: IndexRequest):
+    return await EvidenceIndexingService().submit(notebook_id, request)

@@ -10,6 +10,7 @@ import { sessionCoordinator } from '@/lib/auth/session-coordinator'
 import { useAuthStore } from '@/lib/stores/auth-store'
 import { readTurnContext, subscribeTurnContext } from '@/lib/workbench/turn-context'
 import { readTurnPostOutcome, reconcileTurn } from '@/lib/workbench/turn-reconciliation'
+import { canReplayCapturedTurn } from '@/lib/workbench/turn-operations'
 import type { AdmissionResult, AttemptToken, SafePostOutcome, TurnOperation, ValidatedTurnCapture } from '@/lib/workbench/turn-operations'
 import type { TurnRecord } from '@/lib/types/personal'
 import { requestErrorCode } from '@/lib/utils/workbench'
@@ -119,8 +120,10 @@ export function useWorkbenchTurn(notebookId: string, environment: TurnEnvironmen
     return () => clearTimeout(timer)
   }, [ready, operation, checkOriginal])
 
-  const canReplay = (value: TurnOperation) => value.capture.dto.engine === 'independent' ? environment.independentAvailable :
-    environment.googleAvailable && !!environment.googleLink && environment.googleLink.remote_notebook_id === value.capture.dto.remote_notebook_id && environment.googleLink.connection_id === value.capture.googleConnectionId
+  // Replay intentionally uses the frozen original DTO/disclosure, never current
+  // UI mode/profile/ack. The server may recover its exact receipt after rotation.
+  const canReplay = (value: TurnOperation) => canReplayCapturedTurn(value.capture) && (value.capture.dto.engine === 'independent' ? environment.independentAvailable :
+    environment.googleAvailable && !!environment.googleLink && environment.googleLink.remote_notebook_id === value.capture.dto.remote_notebook_id && environment.googleLink.connection_id === value.capture.googleConnectionId)
   const submit = (input: SubmitInput): AdmissionResult => {
     const context = readTurnContext()
     const result: AdmissionResult = !input.available ? { ok: false, reason: 'invalid' } : !context ? { ok: false, reason: 'unavailable' } : registry.admit({ ...input, context })

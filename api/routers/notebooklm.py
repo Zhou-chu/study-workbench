@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 
+from api.evidence_indexing import INDEX_OPERATIONS, EvidenceIndexingService
 from api.notebooklm_links import notebooklm_link_id
 from api.notebooklm_service import get_notebooklm_service
 from api.personal_contracts import PersonalJobResponse
@@ -314,6 +315,8 @@ async def job_status(job_id: str, service=Depends(get_notebooklm_service)):
     job = await service.store.get("job", job_id)
     if not job:
         raise NotFoundError("Job not found")
+    if job.get("operation") in INDEX_OPERATIONS:
+        return await EvidenceIndexingService(store=service.store).reconcile(job_id)
     if job.get("provider") == "notebooklm":
         await service._dispatch(job)
         job = await service.job(job_id)
@@ -333,6 +336,8 @@ async def cancel_job(job_id: str, service=Depends(get_notebooklm_service)):
     job = await service.store.get("job", job_id)
     if not job:
         raise NotFoundError("Job not found")
+    if job.get("operation") in INDEX_OPERATIONS:
+        return await EvidenceIndexingService(store=service.store).cancel(job_id)
     if job.get("provider") == "notebooklm":
         return await service.cancel_job(job_id)
     async with service.store.project_lock(job["notebook_id"]):

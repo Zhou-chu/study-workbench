@@ -103,3 +103,36 @@ describe('scoped turn recovery fence', () => {
     expect(workbenchApi.job).toHaveBeenCalledTimes(2)
   })
 })
+
+it('reads nonexecutable index-group progress separately and allows explicit local cancellation without treating it as replayable', async () => {
+  vi.clearAllMocks()
+  const { publishTurnTarget } = await import('@/lib/workbench/turn-context')
+  publishTurnTarget({ mode: 'legacy_password', apiBase: 'https://fixture.example/api', protocol: null }, true)
+  const group = { job_id: 'index-group', notebook_id: 'notebook:one', operation: 'index_evidence_group', state: 'queued', replay_allowed: false }
+  vi.mocked(workbenchApi.job).mockResolvedValue({ ...group, state: 'running', jobs: [{ job_id: 'index-child', source_version_id: 'version:one', state: 'running', stage: 'embedding', completed_evidence: 16, total_evidence: 32, retry_safe: false, remote_cancel_confirmed: false }] })
+  vi.mocked(workbenchApi.cancelJob).mockResolvedValue({ ...group, state: 'cancelled_local' })
+  render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><JobsPanel jobs={[group]} onChanged={vi.fn()} /></QueryClientProvider>)
+  await waitFor(() => expect(workbenchApi.job).toHaveBeenCalled())
+  expect(await screen.findByText('version:one')).toBeVisible()
+  expect(screen.getByRole('button', { name: 'workbench.cancelWaiting' })).toBeEnabled()
+  expect(screen.getByText('workbench.indexCancelMeaning')).toBeVisible()
+  fireEvent.click(screen.getByRole('button', { name: 'workbench.cancelWaiting' }))
+  await waitFor(() => expect(workbenchApi.cancelJob).toHaveBeenCalledWith('index-group', expect.objectContaining({ ready: true })))
+  expect(vi.mocked(workbenchApi.job).mock.calls.every(call => call[0] === 'index-group')).toBe(true)
+  expect(screen.queryByRole('button', { name: /retry/i })).not.toBeInTheDocument()
+})
+
+it('retains every index-group child ID including partial success, missing and unknown children without declaring readiness or enqueueing', () => {
+  vi.clearAllMocks()
+  const group = { job_id: 'mixed-index-group', operation: 'index_evidence_group', state: 'submission_unknown', replay_allowed: false, job_ids: ['done-child', 'unknown-child', 'missing-child'], jobs: [
+    { job_id: 'done-child', source_version_id: 'version:done', state: 'succeeded', stage: 'completed', completed_evidence: 32, total_evidence: 32 },
+    { job_id: 'unknown-child', source_version_id: 'version:unknown', state: 'submission_unknown', stage: 'unknown', completed_evidence: 16, total_evidence: 32 },
+  ] }
+  render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><JobsPanel jobs={[group]} onChanged={vi.fn()} /></QueryClientProvider>)
+  for (const id of group.job_ids) expect(screen.getByText(id)).toBeVisible()
+  expect(screen.getAllByText('workbench.indexUnknown')).toHaveLength(2)
+  expect(screen.getByText('workbench.indexJobsNotReadiness')).toBeVisible()
+  expect(screen.queryByText('workbench.semanticReady')).not.toBeInTheDocument()
+  expect(workbenchApi.job).not.toHaveBeenCalled(); expect(workbenchApi.cancelJob).not.toHaveBeenCalled()
+  expect(screen.queryByRole('button', { name: /retry/i })).not.toBeInTheDocument()
+})

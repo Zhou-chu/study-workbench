@@ -1,3 +1,4 @@
+import { RETRIEVAL_FIELDS, copyRetrievalOptions, validRetrievalOptions } from './turn-context'
 import type { TurnRecord } from '@/lib/types/personal'
 import { observedTurnState, type SafePostOutcome, type TurnCapture, type TurnMatch, type TurnReceipt, type UnknownTurnReason } from './turn-operations'
 
@@ -47,11 +48,12 @@ function sameJson(a: unknown, b: unknown): boolean {
   const keys = Object.keys(a)
   return keys.length === Object.keys(b).length && keys.every(key => has(b, key) && sameJson(a[key], b[key]))
 }
-const requestFields = new Set(['notebook_id', 'engine', 'message', 'selection_origin', 'source_version_ids', 'remote_notebook_id', 'remote_source_ids', 'idempotency_key', 'model_id', 'task'])
+const requestFields = new Set(['notebook_id', 'engine', 'message', 'selection_origin', 'source_version_ids', 'remote_notebook_id', 'remote_source_ids', 'idempotency_key', 'model_id', 'task', ...RETRIEVAL_FIELDS])
 function normalizedRequest(value: unknown): Row | null {
   if (!record(value) || Object.keys(value).some(key => !requestFields.has(key))) return null
   // These are the defaults in api.routers.evidence.TurnRequest, not hash logic.
   const request: Row = { selection_origin: 'local', source_version_ids: [], remote_notebook_id: null, remote_source_ids: [], model_id: null, task: 'question', ...value }
+  if (!validRetrievalOptions(request)) return null
   if (!text(request.notebook_id) || !['independent', 'notebooklm'].includes(request.engine as string) || !text(request.message) || [...request.message].length > 50_000) return null
   if (!text(request.idempotency_key) || [...request.idempotency_key].length > 200 || !['question', 'outline'].includes(request.task as string) || !['local', 'remote'].includes(request.selection_origin as string)) return null
   if (!ids(request.source_version_ids) || request.source_version_ids.length > 20 || !ids(request.remote_source_ids) || request.remote_source_ids.length > 20 || !nullableText(request.remote_notebook_id) || !nullableText(request.model_id)) return null
@@ -157,6 +159,11 @@ export function reconcileTurn(capture: TurnCapture, workspace: unknown, history:
   if (!record(result) || !succeeded(result)) return incomplete('unconfirmed')
   // Google result.job_id is the child ID; the top-level parent already owns binding.
   if (!turnIdentity(result, capture, parent.turn_id)) return incomplete('mismatch')
+  if (capture.dto.engine === 'independent' && RETRIEVAL_FIELDS.some(field => has(capture.dto as unknown as Row, field))) {
+    const original = copyRetrievalOptions(capture.dto)
+    if (!sameJson(turn.retrieval_request, original) || !sameJson(result.retrieval_request, original)) return incomplete('mismatch')
+  }
+  if ((has(turn, 'retrieval') || has(result, 'retrieval')) && !sameJson(turn.retrieval, result.retrieval)) return incomplete('mismatch')
   if (!text(turn.answer) || !text(result.answer)) return incomplete('answer-unavailable')
   if (!validScope(turn.scope_snapshot, capture) || !validScope(result.scope_snapshot, capture) || !validCitations(turn.citations) || !validCitations(result.citations)) return incomplete('malformed')
   if (turn.answer !== result.answer || !sameJson(turn.scope_snapshot, result.scope_snapshot) || !sameJson(turn.citations, result.citations)) return incomplete('mismatch')

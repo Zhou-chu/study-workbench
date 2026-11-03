@@ -267,3 +267,29 @@ describe('safe POST outcome projection', () => {
     expect(readTurnPostOutcome(200, value)).toEqual({ kind: 'bound', ...receipt, state: 'queued', dispatchUnknown: false })
   })
 })
+
+it('requires modern recovered answer disclosure to match the exact captured request and parent result', () => {
+  const f = fixture()
+  const fields = { retrieval_mode: 'hybrid' as const, embedding_profile_id: 'profile:old', acknowledge_query_processing: true, disclosed_profile_fingerprint: 'old-fingerprint', destination_descriptor_version: 'd1' }
+  const capture = { ...f.capture, dto: Object.freeze({ ...f.capture.dto, ...fields }) }
+  f.parent.request_snapshot = { ...capture.dto, model_id: null }
+  f.turn.retrieval_request = { ...fields }
+  f.parent.result = structuredClone(f.turn)
+  expect(reconcileTurn(capture, f.workspace, f.history, receipt).kind).toBe('complete')
+  f.turn.retrieval_request = { ...fields, disclosed_profile_fingerprint: 'rotated' }
+  expect(reconcileTurn(capture, f.workspace, f.history, receipt)).toEqual(boundUnknown('mismatch'))
+})
+it('does not accept missing pinned disclosure on a modern completed result', () => {
+  const f = fixture()
+  const capture = { ...f.capture, dto: Object.freeze({ ...f.capture.dto, retrieval_mode: 'lexical' as const }) }
+  f.parent.request_snapshot = { ...capture.dto, model_id: null }
+  expect(reconcileTurn(capture, f.workspace, f.history, receipt)).toEqual(boundUnknown('mismatch'))
+})
+
+it('retains actual NotebookLM result compatibility: explicit lexical request fields exist only in its parent snapshot', () => {
+  const f = fixture('notebooklm')
+  const capture = { ...f.capture, dto: Object.freeze({ ...f.capture.dto, retrieval_mode: 'lexical' as const }) }
+  f.parent.request_snapshot = { ...capture.dto, model_id: null }
+  expect(f.turn).not.toHaveProperty('retrieval_request')
+  expect(reconcileTurn(capture, f.workspace, f.history, receipt).kind).toBe('complete')
+})

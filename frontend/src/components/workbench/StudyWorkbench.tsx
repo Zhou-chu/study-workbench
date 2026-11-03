@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, BookOpen, Files, MessageSquare, NotebookPen, Upload, Layers, Settings2, MoreHorizontal, Globe2 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -7,6 +7,10 @@ import { evidenceApi } from '@/lib/api/evidence'
 import { useModelDefaults } from '@/lib/hooks/use-models'
 import { useNotebookLMStatus, useNotebookLMCapabilities } from '@/lib/hooks/use-notebooklm'
 import { useWorkbenchUploads } from '@/lib/hooks/use-workbench-uploads'
+import { EmbeddingIdentity } from './EmbeddingIdentity'
+import { SemanticIndexPanel } from './SemanticIndexPanel'
+import { useWorkbenchRetrieval } from '@/lib/hooks/use-workbench-retrieval'
+import { semanticOptionsAllowed } from '@/lib/hooks/use-semantic-status'
 import { useWorkbenchEvidenceSearch } from '@/lib/hooks/use-workbench-evidence-search'
 import { workbenchApi } from '@/lib/api/workbench'
 import { QUERY_KEYS } from '@/lib/api/query-client'
@@ -15,7 +19,7 @@ import { useTranslation } from '@/lib/hooks/use-translation'
 import { useToast } from '@/lib/hooks/use-toast'
 import { newestSelectableVersionId, projectWorkbenchSelection, projectWorkbenchVersion } from '@/lib/utils/workbench-read-model'
 import { canonicalCitationLocator } from '@/lib/utils/evidence'
-import { requestError, stateKeys, connectionKeys, isKnownEngine, isKnownSelectionOrigin } from '@/lib/utils/workbench'
+import { requestError, stateKeys, embeddingDestinationKeys, connectionKeys, isKnownEngine, isKnownSelectionOrigin } from '@/lib/utils/workbench'
 import type { CreateWorkbenchNoteInput, EvidenceCitation, ReadingPosition, ScopeSnapshot, TurnRecord, WorkbenchNote, WorkbenchSelection, Workspace, WorkspaceSelection } from '@/lib/types/personal'
 import { EvidenceReader } from '@/components/evidence/EvidenceReader'
 import { NotebookSettingsDialog } from './NotebookSettingsDialog'
@@ -61,7 +65,9 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   const rawSelection = (draft?.notebookId === notebookId ? draft.selection : null) ?? data?.selection ?? null
   const saveSelection = useSaveWorkbenchSelection(notebookId, rawSelection)
   const selection = useMemo(() => projectWorkbenchSelection(rawSelection), [rawSelection])
-  const search = useWorkbenchEvidenceSearch(notebookId, rawSelection, data?.sources)
+  const localRetrieval = selection.engine === 'independent' && selection.selection_origin === 'local'
+  const retrieval = useWorkbenchRetrieval(notebookId, localRetrieval ? selection.source_version_ids : [])
+  const search = useWorkbenchEvidenceSearch(notebookId, rawSelection, data?.sources, localRetrieval ? retrieval.options : undefined, retrieval.readGeneration)
   const selectionRef = useRef(rawSelection)
   const citationRequest = useRef(0)
   selectionRef.current = rawSelection
@@ -92,6 +98,14 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
   })
   const [question, setQuestion] = useState('')
   const questionRevision = useRef(0)
+  const requestView = useRef({ fingerprint: '', generation: 0 })
+  const currentRequestGeneration = useCallback(() => {
+    const view = projectWorkbenchSelection(selectionRef.current)
+    const fingerprint = JSON.stringify([notebookId, view.engine, view.selection_origin, view.source_version_ids, view.remote_source_ids, retrieval.readGeneration()])
+    if (requestView.current.fingerprint !== fingerprint) requestView.current = { fingerprint, generation: requestView.current.generation + 1 }
+    return requestView.current.generation
+  }, [notebookId, retrieval])
+  currentRequestGeneration()
   // A save may finish after New, Edit, or an outline replaced the draft.
   const noteEditorSession = useRef(0)
   const noteSavePending = useRef(false)
@@ -165,6 +179,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     const next = { ...(selectionRef.current ?? emptySelection), ...patch }
     selectionRef.current = next
     search.selectionChanged(next)
+    currentRequestGeneration()
     setDraft({ notebookId, selection: next })
     saveSelection.mutate(next)
   }
@@ -185,10 +200,15 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     // IDs must be read synchronously so a checkbox edit cannot submit old IDs.
     if (mountId === null || !canAsk || !current.supported || !isKnownEngine(current.engine) || !isKnownSelectionOrigin(current.selection_origin) || current.engine !== selection.engine || current.selection_origin !== selection.selection_origin) return
     if (current.selection_origin === 'local' ? !current.source_version_ids.length || selectedSourceBlockers(current.source_version_ids, latestWorkspace?.sources).length > 0 : !current.remote_source_ids.length) return
-    recovery.submit({ sessionId, available: canAsk,
-      owner: { mountId, ...(outline ? { editor: { session: noteEditorSession.current, revision: noteEditorRevision.current } } : { questionRevision: questionRevision.current }) },
+    const localOptions = current.engine === 'independent' && current.selection_origin === 'local'
+    const options = localOptions ? retrieval.readOptions() : {}
+    if ((outline && options.retrieval_mode === 'hybrid') || !semanticOptionsAllowed(queryClient, notebookId, current.source_version_ids, options)) return
+    const embeddingDisclosure = options.retrieval_mode === 'hybrid' ? retrieval.readDisclosure() : null
+    if (options.retrieval_mode === 'hybrid' && !embeddingDisclosure) return
+    recovery.submit({ sessionId, ...(embeddingDisclosure ? { embeddingDisclosure } : {}), available: canAsk && (!localOptions || retrieval.available),
+      owner: { mountId, requestGeneration: currentRequestGeneration(), ...(outline ? { editor: { session: noteEditorSession.current, revision: noteEditorRevision.current } } : { questionRevision: questionRevision.current }) },
       ...(data?.link?.connection_id ? { googleConnectionId: data.link.connection_id } : {}),
-      request: { task: outline ? 'outline' : 'question', notebook_id: notebookId, engine: current.engine, selection_origin: current.selection_origin,
+      request: { ...options, task: outline ? 'outline' : 'question', notebook_id: notebookId, engine: current.engine, selection_origin: current.selection_origin,
         source_version_ids: current.selection_origin === 'local' ? [...current.source_version_ids] : [],
         remote_source_ids: current.selection_origin === 'remote' ? [...current.remote_source_ids] : [],
         remote_notebook_id: data?.link?.remote_notebook_id || null, message: outline ? t('workbench.outlinePrompt') : question.trim() },
@@ -200,9 +220,10 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     const owner = operation.capture.owner
     // A failed allocation is never an owner, even across failed remounts.
     const originalMount = mountId !== null && owner.mountId === mountId
+    const originalView = owner.requestGeneration === currentRequestGeneration()
     // Acceptance belongs to a draft generation, not to text equality. Trusted
     // completion can also acknowledge an Ask whose original POST ACK was lost.
-    if ((recovery.acceptance || recovery.completion) && originalMount && operation.capture.dto.task === 'question' && owner.questionRevision === questionRevision.current) {
+    if ((recovery.acceptance || recovery.completion) && originalMount && originalView && operation.capture.dto.task === 'question' && owner.questionRevision === questionRevision.current) {
       questionRevision.current++
       setQuestion('')
     }
@@ -211,7 +232,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
     if (completion && recovery.isCurrent(completion.token)) {
       // A later save may require reconciliation even when no text was edited.
       // Keep the completed answer in history rather than erase save evidence.
-      if (originalMount && operation.capture.dto.task === 'outline' && owner.editor?.session === noteEditorSession.current && owner.editor.revision === noteEditorRevision.current && !noteSavePending.current && canRetryNoteWrite(noteProblemRef.current)) {
+      if (originalMount && originalView && operation.capture.dto.task === 'outline' && owner.editor?.session === noteEditorSession.current && owner.editor.revision === noteEditorRevision.current && !noteSavePending.current && canRetryNoteWrite(noteProblemRef.current)) {
         const outline = completion.turn
         noteEditorSession.current++
         setBaseRevision(null); resetNoteReview()
@@ -225,7 +246,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
       // could consume the answer. Never apply that old answer to a new editor.
       recovery.releaseCompleted(operation.token)
     }
-  }, [recovery, mountId, t])
+  }, [recovery, mountId, t, currentRequestGeneration])
   const note = useMutation({
     mutationFn: (value: NoteSaveInput) => {
       const payload = { title: value.title, content: value.content, citations: value.citations, scope_snapshot: value.scope_snapshot }
@@ -414,11 +435,16 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
         <p className="text-xs leading-5 text-muted-foreground">{t('workbench.readingScopeHint')}</p>
         {selection.selection_origin === 'remote' && <div className="space-y-2"><p className="text-xs leading-5 text-muted-foreground">{t('workbench.remoteLocalSelectionHint')}</p><Button size="sm" variant="outline" onClick={openSettings}>{t('workbench.remoteScope')}</Button></div>}
         <div role="group" aria-label={t('learningWorkspace.sourcesHint')} className="flex flex-wrap gap-1"><Button size="sm" variant="ghost" onClick={() => updateSelection({ source_version_ids: data.sources.flatMap(source => newestSelectableVersionId(source.versions.map(projectWorkbenchVersion)) ?? []) })}>{t('workbench.selectAll')}</Button><Button size="sm" variant="ghost" onClick={() => updateSelection({ source_version_ids: [], remote_source_ids: [] })}>{t('workbench.clearSelection')}</Button></div>
+        {localRetrieval && <SemanticIndexPanel notebookId={notebookId} sourceVersionIds={selection.source_version_ids} profileId={retrieval.profileId} retrievalMode={retrieval.mode} readRequestScope={() => ({ sourceVersionIds: projectWorkbenchSelection(selectionRef.current).selection_origin === 'local' ? projectWorkbenchSelection(selectionRef.current).source_version_ids : [], profileId: retrieval.readChoice().profileId, retrievalMode: retrieval.readChoice().mode })} onProfileChange={id => { questionRevision.current++; retrieval.setProfile(id); search.retrievalChanged(retrieval.readOptions(), retrieval.readGeneration) }} />}
+        {localRetrieval && <fieldset className="space-y-2 text-xs"><legend>{t('workbench.retrievalMode')}</legend><label className="flex gap-2"><input type="radio" name="retrieval-mode" checked={retrieval.mode === 'lexical'} onChange={() => { questionRevision.current++; retrieval.setMode('lexical'); search.retrievalChanged(retrieval.readOptions(), retrieval.readGeneration) }} />{t('workbench.lexicalOnly')}</label><label className="flex gap-2"><input type="radio" name="retrieval-mode" checked={retrieval.mode === 'hybrid'} onChange={() => { questionRevision.current++; retrieval.setMode('hybrid'); search.retrievalChanged(retrieval.readOptions(), retrieval.readGeneration) }} />{t('workbench.hybridMode')}</label>
+          {retrieval.mode === 'hybrid' && <><p>{t('workbench.documentQuerySeparate')}</p><EmbeddingIdentity disclosure={retrieval.disclosure} />{retrieval.disclosure && <p className="break-all">{retrieval.disclosure.endpoint} · {t(embeddingDestinationKeys[retrieval.disclosure.destination_kind] ?? embeddingDestinationKeys.unknown)} · {retrieval.disclosure.destination_descriptor_version}</p>}<label className="flex gap-2"><input type="checkbox" checked={retrieval.queryAcknowledged} disabled={!retrieval.disclosure} onChange={event => { questionRevision.current++; retrieval.acknowledge(event.target.checked); search.retrievalChanged(retrieval.readOptions(), retrieval.readGeneration) }} />{t('workbench.ackQueryProcessing')}</label>{!retrieval.available && <p role="status">{t('workbench.hybridQueryUnavailable')}</p>}</>}
+        </fieldset>}
         <div role="search" aria-label={t('workbench.searchSelectedSources')} className="space-y-2">
           <label htmlFor="workspace-search" className="sr-only">{t('learningWorkspace.sourceSearch')}</label>
           <div className="flex items-center gap-2"><Input id="workspace-search" placeholder={t('learningWorkspace.sourceSearch')} className="min-w-0" value={search.query} onChange={event => search.setQuery(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); if (!event.nativeEvent.isComposing && event.keyCode !== 229) search.submit() } }} /><Button type="button" size="sm" variant="outline" disabled={!search.canSubmit} onClick={search.submit}>{t('workbench.search')}</Button></div>
           <SelectedSourceReadiness blockers={search.sourceBlockers} />
           <p role={search.status === 'error' ? 'alert' : 'status'} className="text-xs leading-5 text-muted-foreground">{t(!search.scopeAvailable ? 'workbench.searchSelectLocal' : !search.ready ? 'workbench.searchUnavailable' : search.status === 'loading' ? 'workbench.searchLoading' : search.status === 'error' ? 'workbench.searchFailed' : search.status === 'empty' ? 'workbench.searchNoResults' : search.status === 'obsolete' ? 'workbench.searchChanged' : search.status === 'success' ? 'workbench.searchResults' : 'workbench.searchPrompt')}</p>
+        {search.metadata && <><p className="text-xs text-muted-foreground">{t('workbench.effectiveRetrieval', { method: t(search.metadata.retrieval_method === 'hybrid' ? 'workbench.hybridMode' : 'workbench.lexicalOnly') })}</p>{search.metadata.retrieval_method === 'lexical_fallback' && <p className="text-xs text-muted-foreground">{t('workbench.retrievalFallback', { reason: search.metadata.fallback_reason ?? t('workbench.unavailable') })}</p>}{search.metadata.selected_version_count !== undefined && <p className="text-xs text-muted-foreground">{t('workbench.retrievalCoverage', { indexed: search.metadata.indexed_version_count ?? 0, selected: search.metadata.selected_version_count })}</p>}{search.status === 'empty' && <p className="text-xs text-muted-foreground">{t('workbench.noSupportingExcerpts')}</p>}{search.metadata.warnings?.map((warning, index) => <p className="text-xs text-muted-foreground" key={index}>{warning}</p>)}</>}
         </div>
         {search.hits.map(hit => <WorkbenchSearchResult key={hit.evidence_id} hit={hit} versionLabel={versionPrefix(hit.source_version_id, displayedVersionIds)} onOpen={hit => { if (search.isCurrent()) openCitation({ citation_id: hit.evidence_id, evidence_id: hit.evidence_id, source_version_id: hit.source_version_id, source_title: hit.source_title || hit.source_version_id, kind: hit.evidence_kind === 'derived_snapshot' ? 'derived_snapshot' : hit.evidence_kind === 'remote_text_snapshot' ? 'remote_text_snapshot' : 'local_evidence', provenance: hit.provenance, independent_support: hit.independent_support, locator: hit.locator, quote: hit.quote, reference_validity: hit.reference_validity || 'unverified' }) }} />)}
         {!data.sources.length && <p className="text-sm text-muted-foreground">{t('workbench.noSources')}</p>}
@@ -447,7 +473,8 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
           {selection.supported && knownEngine && selectedCount > 0 && !canAsk && !modelBlocked && sourceBlockers.length === 0 && <p className="text-xs text-muted-foreground">{googleBlocked || t(selection.engine === 'independent' && selection.selection_origin === 'remote' ? 'workbench.independentLocalOnly' : 'workbench.emptySelection')}</p>}
           {selectedCount > 0 && googleBlocked && <Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button>}
           {mountId === null && <p role="status" className="text-xs text-muted-foreground">{t('workbench.unavailable')}</p>}
-          <div className="flex flex-wrap gap-2"><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} disabled={mountId === null || !canAsk || !question.trim() || !recovery.ready || !!recovery.operation} onClick={() => submitTurn(false)}>{t('workbench.ask')}</Button><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} variant="outline" disabled={mountId === null || !canAsk || !recovery.ready || !!recovery.operation} onClick={event => requestNoteTransition('outline', event.currentTarget)}>{t('workbench.outline')}</Button></div></div>
+          <div className="flex flex-wrap gap-2"><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} disabled={mountId === null || !canAsk || (localRetrieval && !retrieval.available) || !question.trim() || !recovery.ready || !!recovery.operation} onClick={() => submitTurn(false)}>{t('workbench.ask')}</Button><Button aria-describedby={showModelStatus ? 'workbench-model-status' : undefined} variant="outline" disabled={mountId === null || !canAsk || (localRetrieval && retrieval.mode === 'hybrid') || !recovery.ready || !!recovery.operation} onClick={event => requestNoteTransition('outline', event.currentTarget)}>{t('workbench.outline')}</Button></div></div>
+          {localRetrieval && retrieval.mode === 'hybrid' && <p className="text-xs text-muted-foreground">{t('workbench.hybridOutlineUnavailable')}</p>}
           {recovery.submissionFailed && <p role="alert" className="text-destructive">{t('workbench.answerFailure')}</p>}
           {unmappedSources && <div role="alert" className="space-y-2"><p className="text-sm leading-6 text-muted-foreground">{t('learningWorkspace.unmappedSources')}</p><Button size="sm" variant="outline" onClick={openSettings}>{t('navigation.settings')}</Button></div>}
           <TurnRecoveryPanel recovery={recovery} />
@@ -459,7 +486,7 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
           {!turns.length && <div className="space-y-2 py-6"><h2 className="text-base font-medium">{t(selectedCount ? 'workbench.conversation' : 'learningWorkspace.selectSources')}</h2><p className="max-w-prose text-sm leading-6 text-muted-foreground">{t('learningWorkspace.chatEmpty')}</p></div>}
           {!!turns.length && <h2 className="text-sm font-semibold text-muted-foreground">{t('workbench.history')}</h2>}
           {data.legacy_history?.map(session => <details className="rounded-md border p-3 space-y-2" key={session.chat_session_id}><summary className="text-sm">{t('workbench.importedHistory')}</summary>{session.messages?.map((message, index) => <div key={index} className="border-t py-2 text-sm"><p className="text-xs text-muted-foreground">{message.role}</p>{typeof message.content === 'string' && <MarkdownRenderer>{message.content}</MarkdownRenderer>}</div>)}</details>)}
-          {turns.map(turn => <article className="min-w-0 rounded-md border p-4 space-y-3 [overflow-wrap:anywhere]" key={turn.turn_id}><h3 className="min-w-0 font-medium [overflow-wrap:anywhere]">{turn.message}</h3><details className="text-xs text-muted-foreground"><summary>{t('workbench.turnScope')} · {isKnownEngine(turn.engine) ? t(turn.engine === 'independent' ? 'workbench.independent' : 'workbench.notebooklm') : typeof turn.engine === 'string' ? turn.engine : t('workbench.unavailable')}</summary><p className="break-all">{[...(turn.scope_snapshot?.source_version_ids || []), ...(turn.scope_snapshot?.remote_source_ids || [])].join(', ')}</p></details><TurnCoverage coverage={turn.coverage} warnings={turn.warnings} />{turn.answer && <MarkdownRenderer>{turn.answer}</MarkdownRenderer>}{!turn.answer && <p className="text-sm">{t(stateKeys[turn.state || turn.status || 'pending'] || 'workbench.unavailable')}</p>}{!!turn.error && <p className="text-xs text-destructive">{typeof turn.error === 'string' ? turn.error : (turn.error as { message?: string; code?: string }).message || (turn.error as { code?: string }).code || t('workbench.error')}</p>}{turn.state === 'submission_unknown' && <p className="text-sm text-muted-foreground">{t('workbench.unknownSubmission')}</p>}<div className="flex flex-wrap gap-2">{turn.citations?.map(reference => <WorkbenchCitationButton key={reference.citation_id} citation={reference} onOpen={openCitation} />)}</div>{turn.answer && <Button size="sm" variant="outline" disabled={note.isPending || !!uncertainAnswer} onClick={() => saveAnswer(turn)}>{t('workbench.saveAnswer')}</Button>}{turn.answer && (!turn.state || turn.state === 'succeeded') && (!turn.status || turn.status === 'succeeded') && <SnapshotPromotionButton notebookId={notebookId} origin={{ kind: 'turn', id: turn.turn_id }} onAdded={refresh} />}</article>)}
+          {turns.map(turn => <article className="min-w-0 rounded-md border p-4 space-y-3 [overflow-wrap:anywhere]" key={turn.turn_id}><h3 className="min-w-0 font-medium [overflow-wrap:anywhere]">{turn.message}</h3><details className="text-xs text-muted-foreground"><summary>{t('workbench.turnScope')} · {isKnownEngine(turn.engine) ? t(turn.engine === 'independent' ? 'workbench.independent' : 'workbench.notebooklm') : typeof turn.engine === 'string' ? turn.engine : t('workbench.unavailable')}</summary><p className="break-all">{[...(turn.scope_snapshot?.source_version_ids || []), ...(turn.scope_snapshot?.remote_source_ids || [])].join(', ')}</p></details><TurnCoverage coverage={turn.coverage} warnings={turn.warnings} retrieval={turn.retrieval} />{turn.answer && <MarkdownRenderer>{turn.answer}</MarkdownRenderer>}{!turn.answer && <p className="text-sm">{t(stateKeys[turn.state || turn.status || 'pending'] || 'workbench.unavailable')}</p>}{!!turn.error && <p className="text-xs text-destructive">{typeof turn.error === 'string' ? turn.error : (turn.error as { message?: string; code?: string }).message || (turn.error as { code?: string }).code || t('workbench.error')}</p>}{turn.state === 'submission_unknown' && <p className="text-sm text-muted-foreground">{t('workbench.unknownSubmission')}</p>}<div className="flex flex-wrap gap-2">{turn.citations?.map(reference => <WorkbenchCitationButton key={reference.citation_id} citation={reference} onOpen={openCitation} />)}</div>{turn.answer && <Button size="sm" variant="outline" disabled={note.isPending || !!uncertainAnswer} onClick={() => saveAnswer(turn)}>{t('workbench.saveAnswer')}</Button>}{turn.answer && (!turn.state || turn.state === 'succeeded') && (!turn.status || turn.status === 'succeeded') && <SnapshotPromotionButton notebookId={notebookId} origin={{ kind: 'turn', id: turn.turn_id }} onAdded={refresh} />}</article>)}
         </section>
       </div>
       <aside id="workbench-panel-notes" aria-label={t('workbench.notes')} className={cn('workbench-side-pane min-w-0 min-h-0 overflow-auto border-l bg-card px-4 pb-5 space-y-4 w-full xl:block xl:w-72 2xl:w-80 xl:min-w-56 xl:shrink-0 xl:resize-x', tab !== 'notes' && 'hidden')}>

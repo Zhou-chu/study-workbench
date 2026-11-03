@@ -8,7 +8,7 @@ import { invalidateTurnContext, publishTurnTarget, readTurnContext, type TurnCon
 vi.mock('@/lib/config', () => ({ getConfig: vi.fn(async () => ({ authMode: 'legacy_password', apiUrl: 'https://fixture.example', webSessionProtocol: null })) }))
 vi.mock('@/lib/auth-token', () => ({ getAuthToken: () => null }))
 const target = { mode: 'legacy_password' as const, apiBase: 'https://fixture.example/api', protocol: null }
-const result = { hits: [], retrieval_method: 'lexical' }
+const result = { hits: [] }
 const original = apiClient.defaults.adapter
 beforeEach(() => {
   vi.mocked(getConfig).mockReset().mockResolvedValue({ authMode: 'legacy_password', apiUrl: 'https://fixture.example', webSessionProtocol: null } as never)
@@ -51,4 +51,28 @@ it('rejects a target change during asynchronous transport preparation instead of
   finish({ authMode: 'legacy_password', apiUrl: 'https://other.example', webSessionProtocol: null } as never)
   await expect(pending).rejects.toMatchObject({ name: 'RequestNotDispatchedError' })
   expect(native).not.toHaveBeenCalled()
+})
+
+it('sends explicit notebook-scoped hybrid disclosure without replacing its captured identities', async () => {
+  const native = vi.fn<typeof fetch>(async () => Response.json(result)); vi.stubGlobal('fetch', native)
+  const options = { notebook_id: 'notebook:1', retrieval_mode: 'hybrid' as const, embedding_profile_id: 'profile:one', acknowledge_query_processing: true, disclosed_profile_fingerprint: 'original-fingerprint', destination_descriptor_version: 'original-descriptor' }
+  await evidenceApi.search('exact query', ['version:1'], readTurnContext()!, options)
+  expect(JSON.parse(await (native.mock.calls[0][0] as Request).text())).toEqual({ query: 'exact query', source_version_ids: ['version:1'], ...options })
+})
+it('uses repeated status scope parameters and preview stays metadata-only', async () => {
+  const native = vi.fn<typeof fetch>(async () => Response.json({})); vi.stubGlobal('fetch', native)
+  await evidenceApi.semanticStatus('notebook:1', ['version:one', 'version:two'], readTurnContext()!)
+  const status = native.mock.calls[0][0] as Request
+  expect(new URL(status.url).searchParams.getAll('source_version_ids')).toEqual(['version:one', 'version:two'])
+  expect(status.method).toBe('GET')
+  await evidenceApi.previewSemanticIndex('notebook:1', ['version:one'], 'profile:one', readTurnContext()!)
+  const preview = native.mock.calls[1][0] as Request
+  expect(JSON.parse(await preview.text())).toEqual({ source_version_ids: ['version:one'], profile_id: 'profile:one' })
+  expect(native).toHaveBeenCalledTimes(2)
+})
+it('sends the exact full-version duplicate-cost retry request using the original key', async () => {
+  const native = vi.fn<typeof fetch>(async () => Response.json({})); vi.stubGlobal('fetch', native)
+  const request = { source_version_ids: ['version:one'], profile_id: 'profile:one', preview_hash: 'a'.repeat(64), acknowledge_external_processing: true, idempotency_key: 'original-key', retry_of_job_id: 'job:old', acknowledge_duplicate_embedding_cost: true }
+  await evidenceApi.buildSemanticIndex('notebook:1', request, readTurnContext()!)
+  expect(JSON.parse(await (native.mock.calls[0][0] as Request).text())).toEqual(request)
 })

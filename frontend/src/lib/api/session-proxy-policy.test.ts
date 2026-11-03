@@ -180,6 +180,8 @@ const browserRoutes: Array<[string, string, string?]> = [
   ['GET POST', '/api/speaker-profiles'], ['PUT DELETE', '/api/speaker-profiles/{profile_id}'],
   ['POST', '/api/speaker-profiles/{profile_id}/duplicate'],
   ['GET', '/api/personal/notebooks/{notebook_id}/workspace'],
+  ['GET POST', '/api/personal/notebooks/{notebook_id}/semantic-index'],
+  ['POST', '/api/personal/notebooks/{notebook_id}/semantic-index/preview'],
   ['PATCH', '/api/personal/notebooks/{notebook_id}/selection'],
   ['POST', '/api/personal/notebooks/{notebook_id}/sources/upload', 'multipart'],
   ['GET', '/api/personal/web-search/status'], ['POST', '/api/personal/web-search'],
@@ -264,6 +266,11 @@ describe('matchApiRoute', () => {
   })
 
   it.each([
+    ['PUT', '/api/personal/notebooks/n/semantic-index'], ['PATCH', '/api/personal/notebooks/n/semantic-index'],
+    ['DELETE', '/api/personal/notebooks/n/semantic-index'], ['HEAD', '/api/personal/notebooks/n/semantic-index'],
+    ['OPTIONS', '/api/personal/notebooks/n/semantic-index'], ['GET', '/api/personal/notebooks/n/semantic-index/preview'],
+    ['POST', '/api/personal/notebooks/n/semantic-index/retry'], ['POST', '/api/personal/notebooks/n/semantic-index/preview/extra'],
+    ['POST', '/api/personal/notebooks/n/semantic%2dindex'], ['POST', '/api/personal/notebooks/n%2Fother/semantic-index'],
     ['GET', '/api/commands/registry/debug'], ['POST', '/api/commands/jobs'],
     ['GET', '/api/models/not-an-implemented-route'], ['GET', '/api/unknown'],
     ['TRACE', '/api/notebooks'], ['OPTIONS', '/api/notebooks'], ['HEAD', '/api/notebooks'],

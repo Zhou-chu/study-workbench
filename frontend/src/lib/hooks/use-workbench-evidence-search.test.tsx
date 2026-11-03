@@ -17,7 +17,7 @@ type Result = Awaited<ReturnType<typeof evidenceApi.search>>
 const target = { mode: 'legacy_password' as const, apiBase: 'https://fixture.example/api', protocol: null }
 const selection: WorkspaceSelection = { engine: 'independent', selection_origin: 'local', source_version_ids: ['sv_old'], remote_source_ids: [] }
 const hit = { evidence_id: 'ev:1', extraction_id: 'ex:1', source_version_id: 'sv_old', quote: 'Current evidence', locator: { page_index: 2 } }
-const found: Result = { hits: [hit], retrieval_method: 'lexical' }
+const found: Result = { hits: [hit] }
 function deferred() { let resolve!: (value: Result) => void; let reject!: (error: unknown) => void; const promise = new Promise<Result>((yes, no) => { resolve = yes; reject = no }); return { promise, resolve, reject } }
 const readySources = (scope: WorkspaceSelection): Workspace['sources'] => [{ source_id: 'source:fixture', title: 'Fixture', versions: (scope.source_version_ids as string[]).map(source_version_id => ({ source_version_id, status: 'ready' })) }]
 function show(notebookId = 'notebook:1', scope = structuredClone(selection)) {
@@ -223,7 +223,7 @@ describe('explicit workbench evidence search ownership', () => {
     await waitFor(() => expect(evidenceApi.search).toHaveBeenCalledTimes(2))
     await act(async () => current.resolve(found))
     await waitFor(() => expect(result.current.status).toBe('success'))
-    await act(async () => { if (oldOutcome === 'success') old.resolve({ hits: [{ ...hit, quote: 'Retired result' }], retrieval_method: 'lexical' }); else old.reject(new Error('Retired private error')) })
+    await act(async () => { if (oldOutcome === 'success') old.resolve({ hits: [{ ...hit, quote: 'Retired result' }] }); else old.reject(new Error('Retired private error')) })
     expect(result.current.status).toBe('success'); expect(result.current.hits).toEqual([hit]); expect(result.current.isCurrent()).toBe(true)
   })
   it('does not let an older settlement unlock the current pending latch', async () => {
@@ -297,4 +297,47 @@ describe('explicit workbench evidence search ownership', () => {
     unmount(); await act(async () => pending.resolve(found))
     expect(activate()).toBe(false); expect(evidenceApi.search).toHaveBeenCalledTimes(1)
   })
+})
+
+
+describe('hybrid search disclosure ownership', () => {
+  beforeEach(() => {
+    vi.resetAllMocks(); invalidateTurnContext(); publishTurnTarget(target, true)
+    sessionCoordinator.setPhase('authenticated'); useAuthStore.setState({ phase: 'authenticated' })
+    vi.mocked(evidenceApi.search).mockResolvedValue(found)
+  })
+  it('defaults to lexical and sends no request from typing', async () => {
+    const { result } = show()
+    expect(result.current.retrievalMode).toBe('lexical')
+    act(() => result.current.setQuery('typed only'))
+    expect(evidenceApi.search).not.toHaveBeenCalled()
+    act(() => result.current.submit())
+    await waitFor(() => expect(evidenceApi.search).toHaveBeenCalledTimes(1))
+  })
+  it('fences mode/profile/disclosure ABA before a late result becomes current', async () => {
+    const pending = deferred(); vi.mocked(evidenceApi.search).mockReturnValue(pending.promise)
+    const { result } = show()
+    act(() => { result.current.setQuery('query'); result.current.submit() })
+    await waitFor(() => expect(evidenceApi.search).toHaveBeenCalledTimes(1))
+    act(() => {
+      result.current.retrievalChanged({ retrieval_mode: 'hybrid', embedding_profile_id: 'profile:old', acknowledge_query_processing: true, disclosed_profile_fingerprint: 'fp1', destination_descriptor_version: 'd1' })
+      result.current.retrievalChanged(undefined)
+    })
+    await act(async () => pending.resolve(found))
+    expect(result.current.hits).toEqual([]); expect(result.current.status).toBe('obsolete')
+  })
+})
+
+it('retires lexical results when the selected embedding-profile generation changes without adding forbidden lexical profile fields', async () => {
+  vi.resetAllMocks(); invalidateTurnContext(); publishTurnTarget(target, true)
+  sessionCoordinator.setPhase('authenticated'); useAuthStore.setState({ phase: 'authenticated' })
+  const pending = deferred(); vi.mocked(evidenceApi.search).mockReturnValue(pending.promise)
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const { result, rerender } = renderHook(({ generation }) => useWorkbenchEvidenceSearch('notebook:1', selection, readySources(selection), { retrieval_mode: 'lexical' }, generation), { initialProps: { generation: 1 }, wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> })
+  act(() => { result.current.setQuery('query'); result.current.submit() })
+  await waitFor(() => expect(evidenceApi.search).toHaveBeenCalledTimes(1))
+  rerender({ generation: 2 })
+  await act(async () => pending.resolve(found))
+  expect(result.current.hits).toEqual([]); expect(result.current.status).toBe('obsolete')
+  expect(vi.mocked(evidenceApi.search).mock.calls[0][3]).toEqual({ notebook_id: 'notebook:1', retrieval_mode: 'lexical' })
 })

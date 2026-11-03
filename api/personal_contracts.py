@@ -2,9 +2,71 @@
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from open_notebook.database.note_contract import Revision
+
+RETRIEVAL_FIELDS = frozenset(
+    {
+        "retrieval_mode",
+        "embedding_profile_id",
+        "acknowledge_query_processing",
+        "disclosed_profile_fingerprint",
+        "destination_descriptor_version",
+    }
+)
+
+
+class RetrievalOptions(BaseModel):
+    retrieval_mode: Literal["lexical", "hybrid"] = "lexical"
+    embedding_profile_id: str | None = None
+    acknowledge_query_processing: bool = Field(default=False, strict=True)
+    disclosed_profile_fingerprint: str | None = None
+    destination_descriptor_version: str | None = None
+
+    @model_validator(mode="after")
+    def validate_retrieval(self):
+        identities = (
+            self.embedding_profile_id,
+            self.disclosed_profile_fingerprint,
+            self.destination_descriptor_version,
+        )
+        if self.retrieval_mode == "hybrid":
+            if not all(isinstance(v, str) and v.strip() for v in identities):
+                raise ValueError("EMBEDDING_DISCLOSURE_REQUIRED")
+        elif (
+            any(v is not None for v in identities) or self.acknowledge_query_processing
+        ):
+            raise ValueError("RETRIEVAL_MODE_INVALID")
+        return self
+
+    def retrieval_arguments(self):
+        return {
+            "mode": self.retrieval_mode,
+            "profile_id": self.embedding_profile_id,
+            "acknowledge_query_processing": self.acknowledge_query_processing,
+            "disclosed_profile_fingerprint": self.disclosed_profile_fingerprint,
+            "destination_descriptor_version": self.destination_descriptor_version,
+        }
+
+    def dispatch_payload(self):
+        # Keep every old default, but do not invent new fields in legacy hashes.
+        return self.model_dump(exclude=set(RETRIEVAL_FIELDS - self.model_fields_set))
+
+
+class EvidenceSearchRequest(RetrievalOptions):
+    notebook_id: str | None = None
+    query: Any = ""
+    source_version_ids: list[str] = Field(default_factory=list)
+    limit: int = Field(default=12, strict=True, ge=1, le=100)
+
+    @model_validator(mode="after")
+    def validate_notebook(self):
+        if (
+            self.retrieval_mode == "hybrid" or RETRIEVAL_FIELDS & self.model_fields_set
+        ) and not (isinstance(self.notebook_id, str) and self.notebook_id.strip()):
+            raise ValueError("RETRIEVAL_NOTEBOOK_REQUIRED")
+        return self
 
 
 class NoteCreateRequest(BaseModel):

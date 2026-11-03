@@ -15,24 +15,47 @@ def data_root() -> Path:
 
 
 @asynccontextmanager
-async def project_lock(notebook_id: str, root: Path | None = None):
+async def _project_lock(notebook_id: str, root: Path | None, *, wait: bool):
     folder = (root or data_root()) / ".locks"
     folder.mkdir(parents=True, exist_ok=True)
     path = folder / (hashlib.sha256(notebook_id.encode()).hexdigest() + ".lock")
     handle = path.open("a+b")
-    # A polling nonblocking lock avoids leaking a lock held by a cancelled
-    # to_thread operation. No remote call or worker wait lives inside this lock.
+    # Never offload flock to a thread: cancellation must not leak ownership.
+    acquired = False
     try:
         while True:
             try:
                 fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                acquired = True
                 break
             except BlockingIOError:
+                if not wait:
+                    yield False
+                    return
                 await asyncio.sleep(0.01)
-        yield
+        yield True
     finally:
-        fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        if acquired:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
         handle.close()
+
+
+@asynccontextmanager
+async def project_lock(notebook_id: str, root: Path | None = None):
+    async with _project_lock(notebook_id, root, wait=True):
+        yield
+
+
+@asynccontextmanager
+async def try_project_lock(notebook_id: str, root: Path | None = None):
+    """Probe/acquire the SAME shared lock without waiting for its live owner.
+
+    Holding the returned ownership through reconciliation prevents a new run
+    from racing the interrupted-state update. Requires one shared data root;
+    this is not a distributed lease or proof about independent filesystems.
+    """
+    async with _project_lock(notebook_id, root, wait=False) as acquired:
+        yield acquired
 
 
 def note_mutation_lock(root: Path | None = None):

@@ -1,14 +1,15 @@
+import { matchesEmbeddingDisclosure, queryDisclosureIdentityFromRequest, type EmbeddingDisclosure } from './embedding-disclosure'
 import type { KnownJobState, TurnRecord, TurnRequest } from '@/lib/types/personal'
-import type { TurnContext } from './turn-context'
+import { copyRetrievalOptions, validRetrievalOptions, type TurnContext } from './turn-context'
 
 export const MAX_PENDING_NOTEBOOKS = 8
 export const MAX_CAPTURE_BYTES = 1_048_576
-export type TurnOwner = Readonly<{ mountId: string; questionRevision?: number; editor?: Readonly<{ session: number; revision: number }> }>
+export type TurnOwner = Readonly<{ mountId: string; questionRevision?: number; requestGeneration?: number; editor?: Readonly<{ session: number; revision: number }> }>
 export type AttemptToken = Readonly<{ notebookId: string; operationId: string; epoch: number; attempt: number }>
 /** Availability/model/capability checks belong to the admitting feature; the core revalidates the DTO. */
 export type ValidatedTurnCapture = Readonly<{
   sessionId: string; context: TurnContext; owner: TurnOwner
-  request: Omit<TurnRequest, 'idempotency_key'>; googleConnectionId?: string
+  request: Omit<TurnRequest, 'idempotency_key'>; googleConnectionId?: string; embeddingDisclosure?: EmbeddingDisclosure
 }>
 export type AdmissionResult = { ok: true; token: AttemptToken } | { ok: false; reason: 'busy' | 'unavailable' | 'invalid' | 'capacity' | 'size' }
 export type ObservedTurnState = KnownJobState | 'unknown'
@@ -22,7 +23,7 @@ export type TurnMatch = { kind: 'unknown'; reason: UnknownTurnReason } |
   { kind: 'complete'; jobId: string; turnId: string; turn: TurnRecord }
 export type TurnCapture = Readonly<{
   operationId: string; sessionId: string; context: TurnContext; owner: TurnOwner
-  dto: Readonly<TurnRequest>; bytes: number; googleConnectionId?: string
+  dto: Readonly<TurnRequest>; bytes: number; googleConnectionId?: string; embeddingDisclosure?: EmbeddingDisclosure
 }>
 export type TurnOperation = Readonly<{
   capture: TurnCapture; token: AttemptToken; phase: 'posting' | 'not-sent' | 'unknown' | 'bound' | 'complete'
@@ -52,6 +53,7 @@ const revision = (value: unknown): value is number => Number.isSafeInteger(value
 function validInput(input: ValidatedTurnCapture): boolean {
   if (!input || !nonempty(input.sessionId) || !input.owner || !nonempty(input.owner.mountId)) return false
   const { owner, context, request } = input
+  if (owner.requestGeneration !== undefined && !revision(owner.requestGeneration)) return false
   if (owner.questionRevision !== undefined && !revision(owner.questionRevision)) return false
   if (owner.editor !== undefined && (!owner.editor || !revision(owner.editor.session) || !revision(owner.editor.revision))) return false
   if (input.googleConnectionId !== undefined && !nonempty(input.googleConnectionId)) return false
@@ -62,12 +64,14 @@ function validInput(input: ValidatedTurnCapture): boolean {
     const url = new URL(target.apiBase)
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) return false
   } catch { return false }
-  if (!request || !nonempty(request.notebook_id) || !['question', 'outline'].includes(request.task) || !['independent', 'notebooklm'].includes(request.engine)) return false
+  if (!request || !validRetrievalOptions(request) || !nonempty(request.notebook_id) || !['question', 'outline'].includes(request.task) || !['independent', 'notebooklm'].includes(request.engine)) return false
   if (!['local', 'remote'].includes(request.selection_origin) || !nonempty(request.message) || [...request.message].length > 50_000) return false
   if (![request.source_version_ids, request.remote_source_ids].every(ids => Array.isArray(ids) && ids.length <= 20 && Array.from(ids).every(nonempty))) return false
   if (request.remote_notebook_id !== undefined && request.remote_notebook_id !== null && !nonempty(request.remote_notebook_id)) return false
   if (request.selection_origin === 'local' ? !request.source_version_ids.length || !!request.remote_source_ids.length : !request.remote_source_ids.length || !!request.source_version_ids.length) return false
   if (request.engine === 'independent' && request.selection_origin !== 'local') return false
+  if (request.retrieval_mode === 'hybrid' && !matchesEmbeddingDisclosure(input.embeddingDisclosure, queryDisclosureIdentityFromRequest(request))) return false
+  if (request.retrieval_mode === 'hybrid' && (request.engine !== 'independent' || request.selection_origin !== 'local' || request.task !== 'question')) return false
   return request.engine !== 'notebooklm' || nonempty(request.remote_notebook_id)
 }
 function copyCapture(input: ValidatedTurnCapture, operationId: string): TurnCapture {
@@ -76,20 +80,26 @@ function copyCapture(input: ValidatedTurnCapture, operationId: string): TurnCapt
     task: request.task, notebook_id: request.notebook_id, engine: request.engine, selection_origin: request.selection_origin,
     source_version_ids: [...request.source_version_ids], remote_source_ids: [...request.remote_source_ids],
     ...(request.remote_notebook_id !== undefined ? { remote_notebook_id: request.remote_notebook_id } : {}),
-    message: request.message, idempotency_key: operationId,
+    message: request.message, idempotency_key: operationId, ...copyRetrievalOptions(request),
   }
   Object.freeze(dto.source_version_ids); Object.freeze(dto.remote_source_ids); Object.freeze(dto)
   const { epoch, ready, target } = input.context
   const context = Object.freeze({ epoch, ready, target: Object.freeze({ mode: target.mode, apiBase: target.apiBase, protocol: target.protocol }) })
   const owner = Object.freeze({
     mountId: input.owner.mountId,
+    ...(input.owner.requestGeneration !== undefined ? { requestGeneration: input.owner.requestGeneration } : {}),
     ...(input.owner.questionRevision !== undefined ? { questionRevision: input.owner.questionRevision } : {}),
     ...(input.owner.editor ? { editor: Object.freeze({ session: input.owner.editor.session, revision: input.owner.editor.revision }) } : {}),
   })
   return Object.freeze({ operationId, sessionId: input.sessionId, context, owner, dto,
-    bytes: new TextEncoder().encode(JSON.stringify(dto)).byteLength,
+    bytes: new TextEncoder().encode(JSON.stringify(dto)).byteLength + (request.retrieval_mode === 'hybrid' && input.embeddingDisclosure ? new TextEncoder().encode(JSON.stringify(input.embeddingDisclosure)).byteLength : 0),
+    ...(request.retrieval_mode === 'hybrid' && input.embeddingDisclosure ? { embeddingDisclosure: input.embeddingDisclosure } : {}),
     ...(input.googleConnectionId !== undefined ? { googleConnectionId: input.googleConnectionId } : {}),
   })
+}
+
+export function canReplayCapturedTurn(capture: Pick<TurnCapture, 'dto' | 'embeddingDisclosure'>): boolean {
+  return validRetrievalOptions(capture.dto) && (capture.dto.retrieval_mode !== 'hybrid' || matchesEmbeddingDisclosure(capture.embeddingDisclosure, queryDisclosureIdentityFromRequest(capture.dto)))
 }
 
 /** Pure, document-owned metadata. No timer, transport, persistence or answer payload. */
@@ -109,7 +119,7 @@ export function createTurnRegistry(): TurnRegistry {
   const canAbandon = (operation: TurnOperation) => operation.postAttempts === 1 && !operation.everPossiblyDispatched && !operation.receipt && operation.phase === 'not-sent'
   const begin = (operationId: string, busy: 'post' | 'check'): AttemptToken | null => {
     const operation = find(operationId)
-    if (!operation || operation.busy || operation.phase === 'complete' || (busy === 'post' && operation.receipt)) return null
+    if (!operation || operation.busy || operation.phase === 'complete' || (busy === 'post' && (operation.receipt || !canReplayCapturedTurn(operation.capture)))) return null
     const token = Object.freeze({ ...operation.token, attempt: operation.token.attempt + 1 })
     save({ ...operation, token, busy, phase: busy === 'post' ? 'posting' : operation.phase, postAttempts: operation.postAttempts + (busy === 'post' ? 1 : 0), reason: undefined })
     return token

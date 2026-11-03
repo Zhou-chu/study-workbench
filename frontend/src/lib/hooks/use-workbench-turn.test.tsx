@@ -1,3 +1,5 @@
+import wire from '../../../../contracts/v1/fixtures/hybrid-turn-requests.json'
+import { captureEmbeddingDisclosure } from '@/lib/workbench/embedding-disclosure'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -191,4 +193,21 @@ describe('mounted known-active polling and new-request state', () => {
     act(() => { result.current.submit(input()) })
     expect(result.current.readFailed).toBe(false)
   })
+})
+
+
+it('retains pinned hybrid fields for exact uncertain same-key recovery after caller rotation', async () => {
+  vi.mocked(workbenchApi.turn).mockRejectedValue(new Error('lost ack'))
+  const { result } = setup()
+  const embeddingDisclosure = captureEmbeddingDisclosure({ ...wire.profile, preprocessing_revision: 'evidence-identity-v1', profile_id: 'profile:old', fingerprint: 'old-fingerprint', destination_descriptor_version: 'old-descriptor', provider: 'fixture', model_id: 'model:old', model_name: 'Original model', destination_kind: 'remote', endpoint: 'https://old.example/embed' })!
+  const original = { ...input(), embeddingDisclosure, request: { ...input().request, retrieval_mode: 'hybrid' as const, embedding_profile_id: 'profile:old', acknowledge_query_processing: true, disclosed_profile_fingerprint: 'old-fingerprint', destination_descriptor_version: 'old-descriptor' } }
+  act(() => { result.current.submit(original) })
+  await waitFor(() => expect(result.current.operation?.phase).toBe('unknown'))
+  expect(vi.mocked(workbenchApi.turn).mock.calls[0][1]).toMatchObject(original.request)
+  const sent = vi.mocked(workbenchApi.turn).mock.calls[0]
+  original.request.embedding_profile_id = 'profile:new'; original.request.disclosed_profile_fingerprint = 'new-fingerprint'; original.request.destination_descriptor_version = 'new-descriptor'; original.request.retrieval_mode = 'lexical' as never
+  act(() => result.current.retryOriginal())
+  await waitFor(() => expect(workbenchApi.turn).toHaveBeenCalledTimes(2))
+  expect(vi.mocked(workbenchApi.turn).mock.calls[1]).toEqual(sent)
+  expect(result.current.operation?.capture.dto).toMatchObject({ retrieval_mode: 'hybrid', embedding_profile_id: 'profile:old', disclosed_profile_fingerprint: 'old-fingerprint', destination_descriptor_version: 'old-descriptor' })
 })
