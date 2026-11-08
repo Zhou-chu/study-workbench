@@ -4222,6 +4222,20 @@
             ],
             "title": "Content"
           },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
           "projection_status": {
             "anyOf": [
               {
@@ -4250,6 +4264,34 @@
               }
             ],
             "title": "Role"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type"
           }
         },
         "title": "LegacyMessageView",
@@ -5263,6 +5305,20 @@
               }
             ],
             "title": "Note Id"
+          },
+          "note_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note Type"
           },
           "notebook_id": {
             "anyOf": [

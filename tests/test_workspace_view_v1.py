@@ -309,3 +309,33 @@ def test_receipt_view_union_has_exact_branches(value):
 
     with pytest.raises(ValidationError):
         TypeAdapter(DispatchReceiptView).validate_python(value)
+
+
+def test_reviewed_note_authorship_and_history_producer_fields_remain_readable():
+    raw = example()["raw_workspace"]
+    wire = project_workspace_view(raw).model_dump(exclude_unset=True)
+    assert wire["notes"] == raw["notes"]
+    assert wire["notes"][0]["note_type"] == "ai"
+    assert "note_type" not in wire["notes"][1]
+    assert wire["notes"][2]["note_type"] == "human"
+    assert wire["notes"][3]["note_type"] is None
+    assert wire["legacy_history"] == raw["legacy_history"]
+    messages = wire["legacy_history"][0]["messages"]
+    assert messages[0]["type"] == "human"
+    assert messages[1]["type"] == "ai"
+    assert "role" not in messages[0]
+    assert messages[0]["timestamp"] is None
+    assert "timestamp" not in messages[2]
+    assert messages[4]["id"] is None
+    assert messages[4]["type"] is None
+
+
+@pytest.mark.parametrize(
+    "case", example()["malformed_turns"], ids=lambda case: case["name"]
+)
+def test_malformed_reserved_markers_preserve_identifiable_history_rows(case):
+    raw = example()["raw_workspace"]
+    raw["turns"] = [case["raw_turn"], {"turn_id": "adjacent-safe"}]
+    wire = project_workspace_view(raw).model_dump(exclude_unset=True)
+    assert wire["turns"] == [case["turn_view"], {"turn_id": "adjacent-safe"}]
+    assert wire["projection_status"] == "invalid"

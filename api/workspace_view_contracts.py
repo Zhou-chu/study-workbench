@@ -166,6 +166,7 @@ class SourceView(PublicView):
 
 
 class NoteView(PublicView):
+    note_type: str | None | NonActionableValue = None
     id: str | None | NonActionableValue = None
     note_id: str | None | NonActionableValue = None
     notebook_id: str | None | NonActionableValue = None
@@ -367,6 +368,9 @@ class LinkView(PublicView):
 
 
 class LegacyMessageView(PublicView):
+    id: str | None | NonActionableValue = None
+    type: str | None | NonActionableValue = None
+    timestamp: str | None | NonActionableValue = None
     role: str | None | NonActionableValue = None
     content: str | None | NonActionableValue = None
 

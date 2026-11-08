@@ -1,5 +1,5 @@
 import { expect, expectTypeOf, it } from 'vitest'
-import type { TurnRequest, CreateWorkbenchNoteInput, UpdateWorkbenchNoteInput, WorkbenchNote, SourceSnapshotRequest, SourceSnapshotResult, EvidenceCitation, ScopeSnapshot, OperationReceipt, OperationState } from './index.js'
+import type { TurnRequest, CreateWorkbenchNoteInput, UpdateWorkbenchNoteInput, WorkbenchNote, SourceSnapshotRequest, SourceSnapshotResult, EvidenceCitation, ScopeSnapshot, OperationReceipt, OperationState, NoteView, LegacyMessageView, NonActionableValue } from './index.js'
 
 it('exports the existing turn/note/snapshot write DTO dependency closure', () => {
   const scope: ScopeSnapshot = { source_version_ids: ['synthetic-version'] }
@@ -17,4 +17,14 @@ it('exports the existing turn/note/snapshot write DTO dependency closure', () =>
   // @ts-expect-error Read-only note views are not conditional-update DTOs.
   const invalidUpdate: UpdateWorkbenchNoteInput = note
   expect(invalidUpdate).toBe(note)
+})
+
+it('exports producer-compatible public note and historical message metadata', () => {
+  const note: NoteView = { id: 'note:synthetic', note_type: 'ai' }
+  const message: LegacyMessageView = { id: 'message:synthetic', type: 'human', content: 'Synthetic', timestamp: null }
+  expectTypeOf<NoteView['note_type']>().toEqualTypeOf<string | null | NonActionableValue | undefined>()
+  expectTypeOf<LegacyMessageView['id']>().toEqualTypeOf<string | null | NonActionableValue | undefined>()
+  expectTypeOf<LegacyMessageView['type']>().toEqualTypeOf<string | null | NonActionableValue | undefined>()
+  expectTypeOf<LegacyMessageView['timestamp']>().toEqualTypeOf<string | null | NonActionableValue | undefined>()
+  expect([note.note_type, message.type, message.timestamp]).toEqual(['ai', 'human', null])
 })

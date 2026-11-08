@@ -84,3 +84,27 @@ it('keeps actual grounded turn public metadata and scope mapping version', () =>
   expect(turn).toMatchObject({ grounding_status: 'references_verified', scope_snapshot: { mapping_version: 1 } })
   expect(JSON.stringify(turn)).not.toContain('internal-hash')
 })
+
+it('retains reviewed note authorship and id/type/content/timestamp history without translation', () => {
+  const view = parseWorkspaceView(fixture.workspace_view)
+  expect(view.notes).toEqual(fixture.raw_workspace.notes)
+  expect(view.notes[0]).toMatchObject({ note_type: 'ai' })
+  expect(view.notes[1]).not.toHaveProperty('note_type')
+  expect(view.notes[2]).toMatchObject({ note_type: 'human' })
+  expect(view.notes[3]).toMatchObject({ note_type: null })
+  expect(view.legacy_history).toEqual(fixture.raw_workspace.legacy_history)
+  expect(view.legacy_history[0]).toMatchObject({ messages: [
+    { id: 'message:human', type: 'human', content: 'Synthetic human archive', timestamp: null },
+    { id: 'message:ai', type: 'ai', content: 'Synthetic AI archive', timestamp: '2026-11-08T00:00:00Z' },
+    { id: 'message:missing-time', type: 'human', content: 'Synthetic older archive' },
+    { role: 'user', content: 'Synthetic role-only archive' },
+    { id: null, type: null, content: 'Synthetic nullable metadata', timestamp: null },
+  ] })
+})
+
+it.each(z.array(z.object({ name: z.string(), raw_turn: z.unknown(), turn_view: z.unknown() })).parse(fixture.malformed_turns))('retains non-actionable malformed turn markers without aborting history: $name', (testCase) => {
+  expect(parseTurnView(testCase.raw_turn)).toEqual(testCase.turn_view)
+  const view = parseWorkspaceView({ ...fixture.workspace_view, turns: [testCase.raw_turn, { turn_id: 'adjacent-safe' }] })
+  expect(view.turns).toEqual([testCase.turn_view, { turn_id: 'adjacent-safe' }])
+  expect(view.projection_status).toBe('invalid')
+})

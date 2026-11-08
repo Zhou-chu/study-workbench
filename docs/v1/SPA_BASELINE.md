@@ -114,3 +114,9 @@ Full existing offline backend/frontend regressions and static checks are run bef
 commit. This is not browser/visual, provider/Google, real DB/worker, Docker or
 production acceptance. Running services, ports, settings, Cloudflare, credentials,
 deployment snapshots and existing user data are untouched.
+
+### Reviewed note and portable-history metadata
+
+NoteView retains the existing `note_type` authorship field. LegacyMessageView retains the producer's `id`, `type`, `content`, and `timestamp`; it does not rename `type` to `role`. The older `role` field remains readable when present. These public fields preserve omission and explicit null independently; unknown strings are not rewritten. Native note authorship and portable restored human/AI history therefore remain distinguishable without inventing identities or timestamps.
+
+A malformed reserved `projection_status` value (anything except `unknown`, `invalid`, or null) is normalized to `invalid` before TS field validation, matching the Python projection and preserving safe row identities. Explicit null remains conservatively `unknown`; omission is not an action proof. This also applies to nested job results and to malformed neighboring rows within readable history.

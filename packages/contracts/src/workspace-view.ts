@@ -118,6 +118,7 @@ export interface SourceView extends PublicView {
 }
 
 export interface NoteView extends PublicView {
+  note_type?: string | null | NonActionableValue | undefined
   id?: string | null | NonActionableValue | undefined
   note_id?: string | null | NonActionableValue | undefined
   notebook_id?: string | null | NonActionableValue | undefined
@@ -305,6 +306,9 @@ export interface LinkView extends PublicView {
 }
 
 export interface LegacyMessageView extends PublicView {
+  id?: string | null | NonActionableValue | undefined
+  type?: string | null | NonActionableValue | undefined
+  timestamp?: string | null | NonActionableValue | undefined
   role?: string | null | NonActionableValue | undefined
   content?: string | null | NonActionableValue | undefined
 }
@@ -365,7 +369,10 @@ function clean(value: unknown, keys: string[], omitted: string[] = []): Record<s
   for (const key of ['error', 'download_error']) {
     if (Object.hasOwn(result, key) && result[key] !== null) result[key] = unknownValue
   }
-  if ((hasUnknown || (Object.hasOwn(value, 'projection_status') && value.projection_status === null)) && result.projection_status !== 'invalid') result.projection_status = 'unknown'
+  if (Object.hasOwn(value, 'projection_status') && value.projection_status !== 'unknown' && value.projection_status !== 'invalid') {
+    result.projection_status = value.projection_status === null ? 'unknown' : 'invalid'
+  }
+  if (hasUnknown && result.projection_status !== 'invalid') result.projection_status = 'unknown'
   return result
 }
 function view<S extends z.ZodRawShape>(shape: S, omitted: string[] = []) {
@@ -510,6 +517,7 @@ const SourceViewShape = () => ({
 const SourceViewSchema: z.ZodType<SourceView> = z.lazy(() => view(SourceViewShape(), []))
 
 const NoteViewShape = () => ({
+  note_type: field(z.string()),
   id: field(z.string()),
   note_id: field(z.string()),
   notebook_id: field(z.string()),
@@ -672,6 +680,9 @@ const LinkViewShape = () => ({
 const LinkViewSchema: z.ZodType<LinkView> = z.lazy(() => view(LinkViewShape(), []))
 
 const LegacyMessageViewShape = () => ({
+  id: field(z.string()),
+  type: field(z.string()),
+  timestamp: field(z.string()),
   role: field(z.string()),
   content: field(z.string()),
 })
