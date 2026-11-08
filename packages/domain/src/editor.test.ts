@@ -34,3 +34,17 @@ it('emits only existing note DTO fields, never caller extensions or a local UUID
   const editor = reduceEditor(createEditor('n',input),{ type:'begin-save',operationId:'local-only' })
   expect(editor.pending?.payload).toEqual(draft)
 })
+
+it.each(['save-unknown', 'save-rejected', 'save-conflict'] as const)('cannot downgrade %s using a later not-sent event', type => {
+  const started = reduceEditor(createEditor('notebook:one', draft), { type: 'begin-save', operationId: 'original-create' })
+  const uncertain = reduceEditor(started, { type, operationId: 'original-create', status: 409 })
+  const late = reduceEditor(uncertain, { type: 'save-not-sent', operationId: 'original-create' })
+  expect(late).toBe(uncertain); expect(late.pending?.operationId).toBe('original-create')
+  expect(reduceEditor(late, { type: 'begin-save', operationId: 'new-key' })).toBe(uncertain)
+})
+it('allows initial local not-sent evidence to release only the still-saving attempt', () => {
+  const started = reduceEditor(createEditor('n', draft), { type: 'begin-save', operationId: 'not-sent' })
+  const notSent = reduceEditor(started, { type: 'save-not-sent', operationId: 'not-sent' })
+  expect(notSent.saveResult).toBe('idle'); expect(notSent.pending).toBeNull()
+  expect(reduceEditor(notSent, { type: 'begin-save', operationId: 'next' }).pending?.operationId).toBe('next')
+})

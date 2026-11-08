@@ -35,6 +35,6 @@ export function reduceEditor(state: EditorModel, event: EditorEvent): EditorMode
     const base = copyDraft({ title: event.note.title ?? payload.title, content: event.note.content ?? payload.content, citations: event.note.citations ?? payload.citations, ...(event.note.scope_snapshot ?? payload.scope_snapshot ? { scope_snapshot: event.note.scope_snapshot ?? payload.scope_snapshot } : {}) })
     return update({ noteId: event.note.id, baseRevision: event.note.revision, base, pending: null, saveResult: 'saved', dirty: state.title !== base.title || state.content !== base.content })
   }
-  if (event.type === 'save-not-sent') return update({ pending: null, saveResult: 'idle' })
+  if (event.type === 'save-not-sent') return state.saveResult === 'saving' ? update({ pending: null, saveResult: 'idle' }) : state
   return update({ saveResult: event.type === 'save-conflict' ? 'conflict' : event.type === 'save-rejected' ? 'rejected' : 'unknown' })
 }
