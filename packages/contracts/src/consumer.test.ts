@@ -1,5 +1,5 @@
 import { expect, expectTypeOf, it } from 'vitest'
-import type { TurnRequest, CreateWorkbenchNoteInput, UpdateWorkbenchNoteInput, WorkbenchNote, SourceSnapshotRequest, SourceSnapshotResult, EvidenceCitation, ScopeSnapshot, OperationReceipt, OperationState, NoteView, LegacyMessageView, NonActionableValue } from './index.js'
+import type { TurnRequest, CreateWorkbenchNoteInput, UpdateWorkbenchNoteInput, WorkbenchNote, SourceSnapshotRequest, SourceSnapshotResult, EvidenceCitation, SourceProvenance, ScopeSnapshot, OperationReceipt, OperationState, NoteView, LegacyMessageView, NonActionableValue } from './index.js'
 
 it('exports the existing turn/note/snapshot write DTO dependency closure', () => {
   const scope: ScopeSnapshot = { source_version_ids: ['synthetic-version'] }
@@ -27,4 +27,16 @@ it('exports producer-compatible public note and historical message metadata', ()
   expectTypeOf<LegacyMessageView['type']>().toEqualTypeOf<string | null | NonActionableValue | undefined>()
   expectTypeOf<LegacyMessageView['timestamp']>().toEqualTypeOf<string | null | NonActionableValue | undefined>()
   expect([note.note_type, message.type, message.timestamp]).toEqual(['ai', 'human', null])
+})
+
+it('types producer-nullable citation metadata and retained mapping provenance without loose objects', () => {
+  const citation: EvidenceCitation = { citation_id:'c1',kind:'local_evidence',source_version_id:'v',evidence_id:'e',source_title:'Synthetic',quote:'Quote',reference_validity:'unverified',provenance:null,reason:'Restored archive evidence',independent_support:null }
+  const mapping: NonNullable<ScopeSnapshot['mappings']>[number] = {source_link_id:null,remote_source_id:'remote',source_version_id:null,mapping_method:null,last_checked_at:null}
+  const scope: ScopeSnapshot = {source_version_ids:[],mappings:[mapping]}
+  expectTypeOf<EvidenceCitation['provenance']>().toEqualTypeOf<SourceProvenance | null | undefined>()
+  expectTypeOf<EvidenceCitation['reason']>().toEqualTypeOf<string | null | undefined>()
+  expect(scope.mappings?.[0]).toEqual(mapping)
+  // @ts-expect-error Unknown reason structures are not valid citation metadata.
+  const invalid: EvidenceCitation = {...citation,reason:{projection_status:'unknown'}}
+  expect(invalid.reason).toEqual({projection_status:'unknown'})
 })

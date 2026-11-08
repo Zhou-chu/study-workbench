@@ -18,7 +18,7 @@ const keys = (r: Record<string, unknown>, allowed: string[]) => {
 };
 export function parseScope(value: unknown): ScopeSnapshot {
     const r = rec(value);
-    keys(r, ['engine', 'selection_origin', 'source_version_ids', 'remote_source_ids', 'remote_notebook_id', 'scope_hash']);
+    keys(r, ['engine', 'selection_origin', 'source_version_ids', 'remote_source_ids', 'remote_notebook_id', 'scope_hash', 'mappings']);
     const result: ScopeSnapshot = { source_version_ids: strings(r.source_version_ids) };
     if (r.engine !== undefined) {
         if (!['independent', 'notebooklm'].includes(String(r.engine)))
@@ -36,6 +36,11 @@ export function parseScope(value: unknown): ScopeSnapshot {
         result.remote_notebook_id = nullable(r.remote_notebook_id);
     if (r.scope_hash !== undefined)
         result.scope_hash = text(r.scope_hash);
+    if (r.mappings !== undefined) result.mappings = list(r.mappings).map(value => {
+        const mapping = rec(value);
+        keys(mapping, ['source_link_id','remote_source_id','source_version_id','mapping_method','last_checked_at']);
+        return {source_link_id:nullable(mapping.source_link_id),remote_source_id:nullable(mapping.remote_source_id),source_version_id:nullable(mapping.source_version_id),mapping_method:nullable(mapping.mapping_method),last_checked_at:nullable(mapping.last_checked_at)};
+    });
     return result;
 }
 function provenance(value: unknown, depth = 0): EvidenceCitation['provenance'] {
@@ -71,7 +76,7 @@ function provenance(value: unknown, depth = 0): EvidenceCitation['provenance'] {
 }
 export function parseCitation(value: unknown, depth = 0): EvidenceCitation {
     const r = rec(value);
-    keys(r, ['citation_id', 'independent_support', 'provenance', 'kind', 'source_version_id', 'evidence_id', 'source_title', 'locator', 'quote', 'reference_validity', 'remote_reference']);
+    keys(r, ['citation_id', 'independent_support', 'provenance', 'reason', 'kind', 'source_version_id', 'evidence_id', 'source_title', 'locator', 'quote', 'reference_validity', 'remote_reference']);
     id(r.citation_id);
     if (!['local_evidence', 'remote_text_snapshot', 'remote_unmapped', 'derived_snapshot'].includes(String(r.kind)))
         invalid();
@@ -94,8 +99,9 @@ export function parseCitation(value: unknown, depth = 0): EvidenceCitation {
         if (l.bbox != null && !list(l.bbox).every(v => typeof v === 'number' && Number.isFinite(v)))
             invalid();
     }
-    if (r.provenance !== undefined)
+    if (r.provenance !== undefined && r.provenance !== null)
         provenance(r.provenance, depth);
+    if (r.reason !== undefined) nullable(r.reason);
     if (r.remote_reference != null)
         rec(r.remote_reference);
     return structuredClone(r) as unknown as EvidenceCitation;

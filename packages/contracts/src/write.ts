@@ -24,7 +24,8 @@ export interface EvidenceCitation {
   citation_id: string
   // Wire metadata only; no value proves independent corroboration.
   independent_support?: boolean | null
-  provenance?: SourceProvenance
+  provenance?: SourceProvenance | null
+  reason?: string | null
   kind: 'local_evidence' | 'remote_text_snapshot' | 'remote_unmapped' | 'derived_snapshot'
   source_version_id: string | null
   evidence_id: string | null
@@ -43,6 +44,14 @@ export interface WorkbenchSelection {
   remote_source_ids: string[]
   reading?: ReadingPosition | null
 }
+/** Retained scope provenance emitted by NotebookLM; never current mapping authority. */
+export interface ScopeMappingSnapshot {
+  source_link_id: string | null
+  remote_source_id: string | null
+  source_version_id: string | null
+  mapping_method: string | null
+  last_checked_at: string | null
+}
 export interface ScopeSnapshot {
   engine?: Engine
   selection_origin?: 'local' | 'remote'
@@ -50,6 +59,7 @@ export interface ScopeSnapshot {
   remote_source_ids?: string[]
   remote_notebook_id?: string | null
   scope_hash?: string
+  mappings?: ScopeMappingSnapshot[]
 }
 export interface RetrievalOptions {
   retrieval_mode?: 'lexical' | 'hybrid'

@@ -87,7 +87,7 @@ export function StudioPanel({ notebookId, workspace, onCitation }: {
     const notes = workspace.notes;
     const localArtifacts: ArtifactView[] = [];
     for (const job of workspace.jobs) {
-        if ('result' in job && job.state === 'succeeded' && job.result && 'downloaded' in job.result && job.result.downloaded === true && 'artifact' in job.result) {
+        if ('result' in job && job.result && !job.result.projection_status && 'downloaded' in job.result && job.result.downloaded === true && 'artifact' in job.result) {
             try {
                 localArtifacts.push(parseLocalArtifact(job.result.artifact, notebookId));
             }

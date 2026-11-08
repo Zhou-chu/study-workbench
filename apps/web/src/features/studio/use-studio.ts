@@ -52,8 +52,9 @@ export function useStudio(notebookId: string, onChanged?: () => void) {
             return false;
         }
     }
-    async function run(id: string, admit: () => boolean = () => true) {
-        if (!ready || !api || !admit() || store.getOperation(id)?.notebookId !== notebookId)
+    const admission = (id:string,admit?:()=>boolean) => {const kind=store.getOperation(id)?.payload.kind;return admit?admit():kind!=='audio'&&kind!=='download';};
+    async function run(id: string, admit?: () => boolean) {
+        if (!ready || !api || !admission(id,admit) || store.getOperation(id)?.notebookId !== notebookId)
             return;
         const a = store.begin(id, readTurnContext(), sessionCoordinator.current());
         if (!a?.operation.token || a.notebookId !== notebookId)
@@ -79,14 +80,14 @@ export function useStudio(notebookId: string, onChanged?: () => void) {
         catch (e) {
             outcome = asRequestNotDispatchedError(e) ? { kind: 'not-sent' } : e instanceof StudioError && e.kind === 'rejected' ? { kind: 'rejected' } : { kind: 'unknown' };
         }
-        if (!admit())
+        if (!admission(id,admit))
             outcome = { kind: 'unknown' };
         store.settle(id, token, outcome, readTurnContext(), sessionCoordinator.current());
         if (store.getOperation(id)?.operation.state === 'succeeded')
             onChanged?.();
     }
-    async function observe(id: string, cancel = false, admit: () => boolean = () => true) {
-        if (!ready || !api || !admit())
+    async function observe(id: string, cancel = false, admit?: () => boolean) {
+        if (!ready || !api || !admission(id,admit))
             return;
         const a = store.beginObserve(id, readTurnContext(), sessionCoordinator.current());
         if (!a?.job || !a.operation.token)
@@ -99,7 +100,7 @@ export function useStudio(notebookId: string, onChanged?: () => void) {
             job = await (cancel ? api.cancel(binding, a.operation.context) : api.job(binding, a.operation.context));
         }
         catch { /* A known receipt is retained, never replayed. */ }
-        store.observed(id, a.operation.token, admit() ? job : null, readTurnContext(), sessionCoordinator.current());
+        store.observed(id, a.operation.token, admission(id,admit) ? job : null, readTurnContext(), sessionCoordinator.current());
     }
     function saveAnswer(turn: TurnView) {
         const c = readTurnContext();

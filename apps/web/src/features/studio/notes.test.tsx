@@ -44,3 +44,6 @@ it('clears only acknowledged per-field classic edits after a conflict re-edit re
     expect(store.get(id)?.editor.dirty).toBe(false);
     expect(store.beginSave(id, c, g)).toBeNull();
 });
+
+import { producerCitation, producerScope } from '../../test/studio-fixtures';
+it.each([false,true])('captures answer and outline mapped scope and nullable citations without losing provenance (%s)',populated=>{const c=sourceContext(),g=sessionCoordinator.current(),store=createStudioStore(()=>{}),scope=producerScope(populated),citation=producerCitation('Restored archive evidence has not been verified by a fresh local extraction'),turn={turn_id:'mapped-turn',notebook_id:'n',status:'succeeded',message:'Mapped question',answer:'Mapped body',citations:[citation],scope_snapshot:scope};const origin={notebookId:'n',sessionId:'v1_n',turnId:'mapped-turn',operationId:'outline:1',owner:{mountId:'owner',questionRevision:1}};for(const [key,o] of [['answer:1',undefined],['outline:1',origin]] as const){const id=store.captureTurn('n',turn,c,g,key,o)!;expect(id).toBeTruthy();expect(store.get(id)?.editor.base).toMatchObject({scope_snapshot:scope,citations:[citation]});expect(Object.isFrozen(store.get(id)?.editor.base.scope_snapshot)).toBe(true);}expect(scope.mappings).toEqual(producerScope(populated).mappings);});
