@@ -6,7 +6,7 @@ import { AppRoutes } from '../app/router';
 import { sourceServer } from './source-harness';
 import { json } from './notebook-fixtures';
 import { legacySource, sourceDetail, insight, notebook, libraryWorkspace } from './library-fixtures';
-export function libraryServer(handler?: (request: Request) => Response | undefined | Promise<Response | undefined>) {
+export function libraryServer(handler?: (request: Request) => Response | undefined | Promise<Response | undefined>, workspace: () => Response = () => json(libraryWorkspace())) {
     return sourceServer(async (r) => {
         const custom = await handler?.(r);
         if (custom !== undefined)
@@ -35,7 +35,7 @@ export function libraryServer(handler?: (request: Request) => Response | undefin
         if (p.endsWith('/status'))
             return json({ status: null, message: 'Legacy source', command_id: null, processing_info: null });
         return json({});
-    }, () => json(libraryWorkspace()));
+    }, workspace);
 }
 export async function renderLibrary(route = '/sources', history?: {
     entries: string[];

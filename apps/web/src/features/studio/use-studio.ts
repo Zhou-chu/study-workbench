@@ -1,3 +1,5 @@
+import type { LibrarySource } from '../../data/library-api';
+import type { NativeSession } from '../../data/native-chat';
 import { useMemo, useSyncExternalStore } from 'react';
 import { canDispatch, readTurnContext, subscribeTurnContext, sessionCoordinator, asRequestNotDispatchedError } from '@study/web-transport';
 import type { UpdateWorkbenchNoteInput, TurnView } from '@study/contracts';
@@ -19,7 +21,7 @@ export function useStudio(notebookId: string, onChanged?: () => void) {
         const token = a.operation.token, p = a.editor.pending.payload;
         let outcome: SaveOutcome;
         try {
-            const note = a.mode === 'classic' ? (a.editor.noteId ? await api.updateClassic(a.editor.noteId, a.classic!.pending!.patch!, a.context) : await api.createClassic(notebookId, { title: p.title, content: p.content, note_type: 'human' }, a.context)) : (a.editor.noteId ? await api.updateNote(notebookId, a.editor.noteId, p as UpdateWorkbenchNoteInput, a.context) : await api.createNote(notebookId, p, a.context));
+            const note = a.mode === 'classic' ? (a.editor.noteId ? await api.updateClassic(a.editor.noteId, a.classic!.pending!.patch!, a.context) : await api.createClassic(a.notebookId, { ...(a.omitClassicTitle ? {} : { title: p.title }), content: p.content, note_type: a.noteType ?? 'human' }, a.context)) : (a.editor.noteId ? await api.updateNote(notebookId, a.editor.noteId, p as UpdateWorkbenchNoteInput, a.context) : await api.createNote(notebookId, p, a.context));
             outcome = { kind: 'saved', note };
         }
         catch (e) {
@@ -52,9 +54,9 @@ export function useStudio(notebookId: string, onChanged?: () => void) {
             return false;
         }
     }
-    const admission = (id:string,admit?:()=>boolean) => {const kind=store.getOperation(id)?.payload.kind;return admit?admit():kind!=='audio'&&kind!=='download';};
+    const admission = (id: string, admit?: () => boolean) => { const kind = store.getOperation(id)?.payload.kind; return admit ? admit() : kind !== 'audio' && kind !== 'download'; };
     async function run(id: string, admit?: () => boolean) {
-        if (!ready || !api || !admission(id,admit) || store.getOperation(id)?.notebookId !== notebookId)
+        if (!ready || !api || !admission(id, admit) || store.getOperation(id)?.notebookId !== notebookId)
             return;
         const a = store.begin(id, readTurnContext(), sessionCoordinator.current());
         if (!a?.operation.token || a.notebookId !== notebookId)
@@ -80,14 +82,14 @@ export function useStudio(notebookId: string, onChanged?: () => void) {
         catch (e) {
             outcome = asRequestNotDispatchedError(e) ? { kind: 'not-sent' } : e instanceof StudioError && e.kind === 'rejected' ? { kind: 'rejected' } : { kind: 'unknown' };
         }
-        if (!admission(id,admit))
+        if (!admission(id, admit))
             outcome = { kind: 'unknown' };
         store.settle(id, token, outcome, readTurnContext(), sessionCoordinator.current());
         if (store.getOperation(id)?.operation.state === 'succeeded')
             onChanged?.();
     }
     async function observe(id: string, cancel = false, admit?: () => boolean) {
-        if (!ready || !api || !admission(id,admit))
+        if (!ready || !api || !admission(id, admit))
             return;
         const a = store.beginObserve(id, readTurnContext(), sessionCoordinator.current());
         if (!a?.job || !a.operation.token)
@@ -100,7 +102,29 @@ export function useStudio(notebookId: string, onChanged?: () => void) {
             job = await (cancel ? api.cancel(binding, a.operation.context) : api.job(binding, a.operation.context));
         }
         catch { /* A known receipt is retained, never replayed. */ }
-        store.observed(id, a.operation.token, admission(id,admit) ? job : null, readTurnContext(), sessionCoordinator.current());
+        store.observed(id, a.operation.token, admission(id, admit) ? job : null, readTurnContext(), sessionCoordinator.current());
+    }
+    function saveSourceMessage(source: LibrarySource, session: NativeSession, content: string, originKey: string) {
+        const c = readTurnContext();
+        if (!ready || !c)
+            return;
+        const id = store.captureSourceMessage(notebookId, source, session, content, c, sessionCoordinator.current(), originKey);
+        if (id) {
+            const row = store.get(id)!;
+            if (!row.editor.noteId && !row.editor.pending && row.editor.saveResult === 'idle')
+                void save(id);
+        }
+    }
+    function saveClassicMessage(session: NativeSession, content: string, originKey: string) {
+        const c = readTurnContext();
+        if (!ready || !c)
+            return;
+        const id = store.captureClassicMessage(notebookId, session, content, c, sessionCoordinator.current(), originKey);
+        if (id) {
+            const row = store.get(id)!;
+            if (!row.editor.noteId && !row.editor.pending && row.editor.saveResult === 'idle')
+                void save(id);
+        }
     }
     function saveAnswer(turn: TurnView) {
         const c = readTurnContext();
@@ -113,6 +137,6 @@ export function useStudio(notebookId: string, onChanged?: () => void) {
         if (!row.editor.noteId && !row.editor.pending && row.editor.saveResult === 'idle')
             void save(id);
     }
-    return { ...session, api, context, ready, store, snapshot, save, compare, run, observe, saveAnswer, notes: snapshot.notes.filter(n => n.notebookId === notebookId), operations: snapshot.operations.filter(r => r.notebookId === notebookId) };
+    return { ...session, api, context, ready, store, snapshot, save, compare, run, observe, saveAnswer, saveClassicMessage, saveSourceMessage, notes: snapshot.notes.filter(n => n.notebookId === notebookId), operations: snapshot.operations.filter(r => r.notebookId === notebookId) };
 }
 export type StudioConnection = ReturnType<typeof useStudio>;

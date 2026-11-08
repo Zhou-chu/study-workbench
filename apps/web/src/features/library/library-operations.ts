@@ -133,6 +133,8 @@ export async function executeLibraryDraft(store: LibraryStore, id: string, api: 
             finish('succeeded');
             return;
         }
+        if (p.kind !== 'action')
+            throw new LibraryError('invalid');
         if (p.action === 'delete')
             await api.sources.delete(p.sourceId, c, id);
         else if (p.action === 'unlink' && p.notebookId)

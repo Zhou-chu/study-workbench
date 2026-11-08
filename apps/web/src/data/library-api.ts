@@ -1,3 +1,4 @@
+import { session, messages, parentId, type NativeParent, type ContextConfig } from './native-chat';
 import { isRecord } from '@study/contracts';
 import { canDispatch, freezeDispatchContext, readTurnContext, sessionCoordinator, RequestNotDispatchedError, TransportResponseError, type DispatchContext, type WebTransport } from '@study/web-transport';
 export type SourceSort = 'type' | 'title' | 'created' | 'updated' | 'insights_count' | 'embedded';
@@ -140,7 +141,32 @@ export function createLibraryApi(transport: WebTransport) {
         return value;
     }
     const sourcePath = (s: string) => '/sources/' + encodeURIComponent(id(s));
+    const nativePath = (p: NativeParent, sid?: string) => (p.kind === 'notebook' ? '/chat/sessions' : sourcePath(p.sourceId) + '/chat/sessions') + (sid ? '/' + encodeURIComponent(id(sid)) : '');
+    const native = (kind: 'notebook' | 'source') => ({
+        async list(p: NativeParent, c: DispatchContext, signal?: AbortSignal) { if (p.kind !== kind)
+            throw new LibraryError('invalid'); return array(await request('GET', nativePath(p) + (p.kind === 'notebook' ? '?notebook_id=' + encodeURIComponent(p.notebookId) : ''), c, signal)).map(v => session(v, p)); },
+        async get(p: NativeParent, sid: string, c: DispatchContext, signal?: AbortSignal) { return session(await request('GET', nativePath(p, sid), c, signal), p, sid, true); },
+        async create(p: NativeParent, input: {
+            title?: string;
+            model_override?: string | null;
+        }, c: DispatchContext, key: string) { const body = { ...input, ...(p.kind === 'notebook' ? { notebook_id: p.notebookId } : { source_id: p.sourceId.startsWith('source:') ? p.sourceId.slice(7) : p.sourceId }) }; return session(await request('POST', nativePath(p), c, undefined, JSON.stringify(body), key), p); },
+        async update(p: NativeParent, sid: string, input: {
+            title?: string;
+            model_override?: string | null;
+        }, c: DispatchContext, key: string) { return session(await request('PUT', nativePath(p, sid), c, undefined, JSON.stringify(input), key), p, sid); },
+        async delete(p: NativeParent, sid: string, c: DispatchContext, key: string) { const r = record(await request('DELETE', nativePath(p, sid), c, undefined, undefined, key)); if (r.success !== true)
+            throw new LibraryError('invalid'); }
+    });
     return {
+        notebookChat: { ...native('notebook'), async execute(sid: string, message: string, context: {
+                sources: unknown[];
+                notes: unknown[];
+            }, model: string | null, c: DispatchContext, key: string, signal?: AbortSignal) { const r = record(await request('POST', '/chat/execute', c, signal, JSON.stringify({ session_id: sid, message, context, ...(model === null ? {} : { model_override: model }) }), key)); if (r.session_id !== sid)
+                throw new LibraryError('invalid'); return messages(r.messages); } },
+        sourceChat: { ...native('source'), async send(p: NativeParent, sid: string, message: string, model: string | null, c: DispatchContext, key: string, signal: AbortSignal) { if (p.kind !== 'source')
+                throw new LibraryError('invalid'); const { res } = await response('POST', nativePath(p, sid) + '/messages', c, signal, JSON.stringify({ message, ...(model === null ? {} : { model_override: model }) }), key); return res; } },
+        async context(p: NativeParent, config: ContextConfig, c: DispatchContext, signal?: AbortSignal) { if (p.kind !== 'notebook')
+            throw new LibraryError('invalid'); const r = record(await request('POST', '/chat/context', c, signal, JSON.stringify({ notebook_id: parentId(p), context_config: { sources: { ...config.sources }, notes: { ...config.notes } } }))); const data = record(r.context); return { context: { sources: array(data.sources), notes: array(data.notes) }, token_count: nonnegative(r.token_count), char_count: nonnegative(r.char_count) }; },
         sources: {
             async list(params: {
                 notebook_id?: string;
@@ -256,6 +282,7 @@ export function createLibraryApi(transport: WebTransport) {
             return { job_id: commandId, status: str(r.status) };
         },
         metadata: {
+            async defaults(c: DispatchContext, signal?: AbortSignal) { const r = record(await request('GET', '/models/defaults', c, signal)); return { default_chat_model: nullable(r.default_chat_model) }; },
             async transformations(c: DispatchContext, signal?: AbortSignal) { return array(await request('GET', '/transformations', c, signal)).map(v => { const r = record(v); return { id: id(r.id), title: str(r.title), description: str(r.description), apply_default: boolean(r.apply_default) }; }); },
             async models(c: DispatchContext, signal?: AbortSignal) { return array(await request('GET', '/models', c, signal)).map(v => { const r = record(v); return { id: id(r.id), name: str(r.name), type: str(r.type) }; }); }
         }

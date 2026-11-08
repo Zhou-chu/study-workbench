@@ -36,11 +36,12 @@ export function parseScope(value: unknown): ScopeSnapshot {
         result.remote_notebook_id = nullable(r.remote_notebook_id);
     if (r.scope_hash !== undefined)
         result.scope_hash = text(r.scope_hash);
-    if (r.mappings !== undefined) result.mappings = list(r.mappings).map(value => {
-        const mapping = rec(value);
-        keys(mapping, ['source_link_id','remote_source_id','source_version_id','mapping_method','last_checked_at']);
-        return {source_link_id:nullable(mapping.source_link_id),remote_source_id:nullable(mapping.remote_source_id),source_version_id:nullable(mapping.source_version_id),mapping_method:nullable(mapping.mapping_method),last_checked_at:nullable(mapping.last_checked_at)};
-    });
+    if (r.mappings !== undefined)
+        result.mappings = list(r.mappings).map(value => {
+            const mapping = rec(value);
+            keys(mapping, ['source_link_id', 'remote_source_id', 'source_version_id', 'mapping_method', 'last_checked_at']);
+            return { source_link_id: nullable(mapping.source_link_id), remote_source_id: nullable(mapping.remote_source_id), source_version_id: nullable(mapping.source_version_id), mapping_method: nullable(mapping.mapping_method), last_checked_at: nullable(mapping.last_checked_at) };
+        });
     return result;
 }
 function provenance(value: unknown, depth = 0): EvidenceCitation['provenance'] {
@@ -101,7 +102,8 @@ export function parseCitation(value: unknown, depth = 0): EvidenceCitation {
     }
     if (r.provenance !== undefined && r.provenance !== null)
         provenance(r.provenance, depth);
-    if (r.reason !== undefined) nullable(r.reason);
+    if (r.reason !== undefined)
+        nullable(r.reason);
     if (r.remote_reference != null)
         rec(r.remote_reference);
     return structuredClone(r) as unknown as EvidenceCitation;
@@ -328,7 +330,7 @@ export function createStudioApi(transport: WebTransport) {
         async listClassic(n: string, c: DispatchContext) { return list(await request('GET', `/notes?notebook_id=${encodeURIComponent(n)}`, c)).map(classic); },
         async readClassic(noteId: string, c: DispatchContext) { return classic(await request('GET', `/notes/${encodeURIComponent(noteId)}`, c)); },
         async createClassic(n: string, p: {
-            title: string;
+            title?: string;
             content: string;
             note_type: string;
         }, c: DispatchContext) { return classic(await request('POST', '/notes', c, JSON.stringify({ ...p, notebook_id: n }))); },

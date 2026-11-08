@@ -1,3 +1,5 @@
+import type { LibrarySource } from '../../data/library-api';
+import type { NativeSession } from '../../data/native-chat';
 import type { OutlineOrigin } from '../chat/ConversationPanel';
 import { createEditor, reduceEditor, createOperation, reduceOperation, canDispatch, freezeDispatchContext, type EditorModel, type OperationModel, type OperationToken, type DispatchContext } from '@study/domain';
 import type { CreateWorkbenchNoteInput, WorkbenchNote, SnapshotOrigin, SourceSnapshotResult, TurnView } from '@study/contracts';
@@ -47,6 +49,7 @@ export type NoteSession = Readonly<{
     retired: boolean;
     mode: 'personal' | 'classic';
     noteType: string | null;
+    omitClassicTitle?: boolean;
     classic?: ClassicDraft;
     latest?: WorkbenchNote | undefined;
     comparison?: readonly WorkbenchNote[] | undefined;
@@ -65,9 +68,7 @@ function canonical(value: unknown): unknown { return Array.isArray(value) ? valu
 const optionalCitationNullFields = new Set(['remote_reference', 'independent_support', 'provenance', 'reason']);
 /** F43: comparison-only equivalence for these top-level fields, never nested metadata or wire data. */
 function comparableCitations(citations: WorkbenchNote['citations']): unknown {
-    return citations?.map(citation => Object.fromEntries(
-        Object.entries(citation).filter(([key, value]) => value !== null || !optionalCitationNullFields.has(key))
-    ));
+    return citations?.map(citation => Object.fromEntries(Object.entries(citation).filter(([key, value]) => value !== null || !optionalCitationNullFields.has(key))));
 }
 export function compatibleNoteMetadata(row: NoteSession): boolean {
     if (!row.latest)
@@ -84,7 +85,10 @@ export type NoteReadToken = Readonly<{
     ticket: number;
 }>;
 /** Memory-only admission identity; not a remote request field or provider capability. */
-export type RemoteTargetAdmission = Readonly<{ownerId:string;revision:number}>;
+export type RemoteTargetAdmission = Readonly<{
+    ownerId: string;
+    revision: number;
+}>;
 export type StudioPayload = {
     kind: 'export';
 } | {
@@ -131,19 +135,24 @@ export type StudioOperation = Readonly<{
     imported?: PortableImport;
     promoted?: SourceSnapshotResult;
 }>;
-function jobMatches(row:StudioOperation,job:StudioJob):boolean {
-    const operation=row.payload.kind==='export'?'portable_export':row.payload.kind;
-    return job.notebookId===row.notebookId&&job.operation===operation&&job.idempotencyKey===row.id&&(!row.job||row.job.jobId===job.jobId);
+function jobMatches(row: StudioOperation, job: StudioJob): boolean {
+    const operation = row.payload.kind === 'export' ? 'portable_export' : row.payload.kind;
+    return job.notebookId === row.notebookId && job.operation === operation && job.idempotencyKey === row.id && (!row.job || row.job.jobId === job.jobId);
 }
 /** Exact receipts can reconcile an observation error; they never authorize replay. */
-function applyJobReceipt(row:StudioOperation,token:OperationToken,job:StudioJob):OperationModel {
-    let operation=reduceOperation(row.operation,{type:'accepted',token,receipt:{job_id:job.jobId,state:job.state}});
-    if(operation.state!=='accepted')return operation;
-    if(job.state==='cancelled_local')return reduceOperation(operation,{type:'stop-waiting'});
-    if(job.submissionState==='unknown'||job.remoteMayContinue)return reduceOperation(operation,{type:'unknown',token});
-    if(job.state==='succeeded'||job.state==='failed')return reduceOperation(operation,{type:job.state,token});
-    if(job.state==='running'||job.state==='waiting_remote')return reduceOperation(operation,{type:'running',token});
-    return job.state==='queued'?operation:reduceOperation(operation,{type:'unknown',token});
+function applyJobReceipt(row: StudioOperation, token: OperationToken, job: StudioJob): OperationModel {
+    let operation = reduceOperation(row.operation, { type: 'accepted', token, receipt: { job_id: job.jobId, state: job.state } });
+    if (operation.state !== 'accepted')
+        return operation;
+    if (job.state === 'cancelled_local')
+        return reduceOperation(operation, { type: 'stop-waiting' });
+    if (job.submissionState === 'unknown' || job.remoteMayContinue)
+        return reduceOperation(operation, { type: 'unknown', token });
+    if (job.state === 'succeeded' || job.state === 'failed')
+        return reduceOperation(operation, { type: job.state, token });
+    if (job.state === 'running' || job.state === 'waiting_remote')
+        return reduceOperation(operation, { type: 'running', token });
+    return job.state === 'queued' ? operation : reduceOperation(operation, { type: 'unknown', token });
 }
 export function createStudioStore(onChange: () => void) {
     const notes = new Map<string, NoteSession>(), ops = new Map<string, StudioOperation>(), active = new Map<string, string>(), retired = new Set<number>();
@@ -191,6 +200,24 @@ export function createStudioStore(onChange: () => void) {
             comparisons.delete(id);
             emit();
             return true;
+        },
+        captureSourceMessage(notebookId: string, source: LibrarySource, session: NativeSession, content: string, context: DispatchContext, generation: number, originKey: string) {
+            if (session.source_id !== source.id || !source.notebooks?.includes(notebookId) || !content.trim() || !session.id || !context.ready)
+                return null;
+            const id = open(notebookId, { title: '', content, citations: [] }, context, generation, undefined, 'classic', 'ai', originKey);
+            const row = notes.get(id)!;
+            if (!row.omitClassicTitle)
+                immutable({ ...row, omitClassicTitle: true });
+            return id;
+        },
+        captureClassicMessage(notebookId: string, session: NativeSession, content: string, context: DispatchContext, generation: number, originKey: string) {
+            if (session.notebook_id !== notebookId || !content.trim() || !session.id || !context.ready)
+                return null;
+            const id = open(notebookId, { title: '', content, citations: [] }, context, generation, undefined, 'classic', 'ai', originKey);
+            const row = notes.get(id)!;
+            if (!row.omitClassicTitle)
+                immutable({ ...row, omitClassicTitle: true });
+            return id;
         },
         captureTurn(notebookId: string, turn: TurnView, context: DispatchContext, generation: number, originKey: string, outlineOrigin?: OutlineOrigin) {
             try {
@@ -316,7 +343,7 @@ export function createStudioStore(onChange: () => void) {
         },
         promotion(id: string): SnapshotOrigin | null { const r = notes.get(id); return r && !r.retired && !r.editor.dirty && !r.editor.pending && r.editor.noteId && r.editor.baseRevision && !['unknown', 'conflict', 'rejected'].includes(r.editor.saveResult) ? { kind: 'note', id: r.editor.noteId, revision: r.editor.baseRevision } : null; },
         capture(notebookId: string, payload: StudioPayload, context: DispatchContext, generation: number) {
-            const existing = [...ops.values()].find(r => r.notebookId === notebookId && r.operation.context.epoch === context.epoch && r.payload.kind === payload.kind && !(['export','audio','download'].includes(r.payload.kind)&&['succeeded','failed'].includes(r.operation.state)) && (payload.kind === 'import' ? r.payload.kind === 'import' && r.payload.file === payload.file : payload.kind === 'promote' ? r.payload.kind === 'promote' && JSON.stringify(r.payload.origin) === JSON.stringify(payload.origin) : payload.kind === 'download' ? r.payload.kind === 'download' && r.payload.remoteArtifactId === payload.remoteArtifactId && r.payload.remoteNotebookId === payload.remoteNotebookId : payload.kind === 'delete' ? r.payload.kind === 'delete' && r.payload.noteId === payload.noteId : !['succeeded', 'failed'].includes(r.operation.state)));
+            const existing = [...ops.values()].find(r => r.notebookId === notebookId && r.operation.context.epoch === context.epoch && r.payload.kind === payload.kind && !(['export', 'audio', 'download'].includes(r.payload.kind) && ['succeeded', 'failed'].includes(r.operation.state)) && (payload.kind === 'import' ? r.payload.kind === 'import' && r.payload.file === payload.file : payload.kind === 'promote' ? r.payload.kind === 'promote' && JSON.stringify(r.payload.origin) === JSON.stringify(payload.origin) : payload.kind === 'download' ? r.payload.kind === 'download' && r.payload.remoteArtifactId === payload.remoteArtifactId && r.payload.remoteNotebookId === payload.remoteNotebookId : payload.kind === 'delete' ? r.payload.kind === 'delete' && r.payload.noteId === payload.noteId : !['succeeded', 'failed'].includes(r.operation.state)));
             if (existing)
                 return existing.id;
             const id = crypto.randomUUID();
@@ -350,10 +377,10 @@ export function createStudioStore(onChange: () => void) {
             if (!r || r.operation.token !== token || r.operation.state !== 'submitting')
                 return;
             const ok = !r.retired && canDispatch(r.operation.context, c) && token.sessionGeneration === g;
-            const result = ok && (outcome.kind!=='job'||jobMatches(r,outcome.job)) ? outcome : { kind: 'unknown' as const };
+            const result = ok && (outcome.kind !== 'job' || jobMatches(r, outcome.job)) ? outcome : { kind: 'unknown' as const };
             let operation = r.operation, extra: Partial<StudioOperation> = {};
             if (result.kind === 'job') {
-                operation = applyJobReceipt(r,token,result.job);
+                operation = applyJobReceipt(r, token, result.job);
                 extra = { job: freezeValue(result.job) };
             }
             else {
@@ -378,8 +405,8 @@ export function createStudioStore(onChange: () => void) {
             const r = ops.get(id);
             if (!r || r.operation.token !== token)
                 return;
-            const valid = !r.retired && canDispatch(r.operation.context, c) && token.sessionGeneration === g && !!job && jobMatches(r,job);
-            ops.set(id, Object.freeze({ ...r, busy: false, ...(valid ? { job: freezeValue(job!) } : {}), operation: valid ? applyJobReceipt(r,token,job!) : reduceOperation(r.operation, { type: 'unknown', token }) }));
+            const valid = !r.retired && canDispatch(r.operation.context, c) && token.sessionGeneration === g && !!job && jobMatches(r, job);
+            ops.set(id, Object.freeze({ ...r, busy: false, ...(valid ? { job: freezeValue(job!) } : {}), operation: valid ? applyJobReceipt(r, token, job!) : reduceOperation(r.operation, { type: 'unknown', token }) }));
             emit();
         },
         retire(epoch: number) {

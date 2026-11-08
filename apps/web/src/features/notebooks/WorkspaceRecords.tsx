@@ -1,3 +1,4 @@
+import { LegacyHistory } from '../library/LegacyHistory';
 import { Link } from 'react-router';
 import type { WorkspaceViewV1 } from '@study/contracts';
 import { useI18n } from '../../i18n';
@@ -12,8 +13,7 @@ export function WorkspaceSources({ workspace }: {
 export function WorkspaceHistory({ workspace }: {
     workspace: WorkspaceViewV1;
 }) {
-    const { t } = useI18n();
-    return <>{workspace.legacy_history.length > 0 && <section className="workspace-history" aria-label={t.workbench.importedHistory}><h3>{t.workbench.importedHistory}</h3>{workspace.legacy_history.map((history, i) => <article key={i}>{'messages' in history && Array.isArray(history.messages) ? history.messages.map((message, j) => <p key={j}>{'content' in message && text(message.content) ? message.content : t.common.unknown}</p>) : <p>{t.common.unknown}</p>}</article>)}</section>}</>;
+    return <LegacyHistory history={workspace.legacy_history}/>;
 }
 export function WorkspaceScope({ workspace }: {
     workspace: WorkspaceViewV1;

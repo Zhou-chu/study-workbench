@@ -33,17 +33,23 @@ it('keeps lifecycle writes and unfinished study/classic/advanced features pendin
     }
     for (const op of ['notebooks.archive', 'notebooks.unarchive', 'notebooks.preview_delete', 'notebooks.confirm_delete', 'notebooks.keep_exclusive_sources', 'notebooks.delete_exclusive_sources', 'notebooks.cancel_delete'])
         expect(routeCoverage.find(e => e.coveredOperations.includes(op))).toMatchObject({ ownerTask: 'B9', status: 'pending' });
-    for (const op of ['classic.chat.send', 'credentials.create', 'advanced.start_rebuild'])
+    for (const op of ['credentials.create', 'advanced.start_rebuild'])
         expect(routeCoverage.find(e => e.coveredOperations.includes(op))?.status).toBe('pending');
 });
-
-it('records actual recent-source detail wiring without reassigning B2 authentication',()=>{expect(routeCoverage.find(e=>e.coveredOperations.includes('notebooks.open_recent_source'))).toMatchObject({ownerTask:'B8',status:'implemented'});expect(routeCoverage.find(e=>e.coveredOperations.includes('auth.login'))).toMatchObject({ownerTask:'B2',status:'implemented'});});
-
-it('marks exactly the 70 real B8a source operations implemented while all later slices remain pending',()=>{
- const doc=readFileSync('../../docs/v1/B8A_SOURCE_ACCEPTANCE.md','utf8');
- const allocated=[...doc.matchAll(/^\| \x60([a-z0-9_.]+)\x60 \|/gm)].map(m=>m[1]);
- expect(allocated).toHaveLength(70);expect(new Set(allocated).size).toBe(70);
- const b8=routeCoverage.filter(r=>r.ownerTask==='B8');expect(b8).toHaveLength(172);
- for(const row of b8)expect(row.status).toBe(row.coveredOperations.some(op=>allocated.includes(op))?'implemented':'pending');
- expect(b8.filter(r=>r.status==='pending')).toHaveLength(102);expect(isCoverageComplete(routeCoverage)).toBe(false);
+it('records actual recent-source detail wiring without reassigning B2 authentication', () => { expect(routeCoverage.find(e => e.coveredOperations.includes('notebooks.open_recent_source'))).toMatchObject({ ownerTask: 'B8', status: 'implemented' }); expect(routeCoverage.find(e => e.coveredOperations.includes('auth.login'))).toMatchObject({ ownerTask: 'B2', status: 'implemented' }); });
+it('retains the 70 B8a source operations and 29 B8b classic operations without claiming later slices', () => {
+    const doc = readFileSync('../../docs/v1/B8A_SOURCE_ACCEPTANCE.md', 'utf8');
+    const allocated = [...doc.matchAll(/^\| \x60([a-z0-9_.]+)\x60 \|/gm)].map(m => m[1]);
+    expect(allocated).toHaveLength(70);
+    expect(new Set(allocated).size).toBe(70);
+    const classicDoc = readFileSync('../../docs/v1/B8B_CLASSIC_ACCEPTANCE.md', 'utf8');
+    const classic = [...classicDoc.matchAll(/^\| \x60([a-z0-9_.]+)\x60 \|/gm)].map(m => m[1]);
+    expect(classic).toHaveLength(29);
+    expect(new Set(classic).size).toBe(29);
+    const b8 = routeCoverage.filter(r => r.ownerTask === 'B8');
+    expect(b8).toHaveLength(172);
+    for (const row of b8)
+        expect(row.status).toBe(row.coveredOperations.some(op => allocated.includes(op) || classic.includes(op)) ? 'implemented' : 'pending');
+    expect(b8.filter(r => r.status === 'pending')).toHaveLength(73);
+    expect(isCoverageComplete(routeCoverage)).toBe(false);
 });

@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import { useI18n } from '../../i18n';
 import { Button } from '../../ui/Button';
 import { Markdown } from '../../ui/Markdown';
-import type { LibrarySource } from '../../data/library-api';
+import type { LibrarySource, SourceInsight } from '../../data/library-api';
 import { useLibraryState } from './use-library-state';
 import { SourceActionConfirm } from './SourceActionConfirm';
 import { OperationStatus } from './OperationStatus';
@@ -48,6 +48,9 @@ export function SourceInsights({ source }: {
  {!source.full_text?.trim() && <p>{t.apiErrors.sourceHasNoText}</p>}{(list.isError || transformations.isError || detail.isError) && <p role="alert">{t.common.contentUnavailable.errorTitle}</p>}
  <OperationStatus row={c.row}/><FreshLibraryIntent row={c.row} input={{ kind: "action", action: "insight", sourceId: source.id, transformationId: "" }} onFresh={setOperation}/>
  <ul className="library-list">{list.data?.map(item => <li key={item.id}><Button onClick={() => setSelected(item.id)}>{item.insight_type}</Button><span className="meta">{item.created ?? t.common.unknown}</span><SourceActionConfirm source={source} action="delete-insight" insightId={item.id} after={() => setSelected(null)}/></li>)}</ul>
- {list.data?.length === 0 && <p>{t.sources.noInsightsYet}</p>}{detail.data && <article><h3>{detail.data.insight_type}</h3><Markdown>{detail.data.content}</Markdown><Link className="button" to={sourceHref(detail.data.source_id)}>{t.sources.viewSource}</Link></article>}
+ {list.data?.length === 0 && <p>{t.sources.noInsightsYet}</p>}{detail.data && <InsightContent insight={detail.data}/>}
  </section>;
 }
+export function InsightContent({ insight }: {
+    insight: SourceInsight;
+}) { const { t } = useI18n(); return <article><h3>{insight.insight_type}</h3><Markdown>{insight.content}</Markdown><Link className="button" to={sourceHref(insight.source_id)}>{t.sources.viewSource}</Link></article>; }

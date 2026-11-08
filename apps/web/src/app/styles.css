@@ -258,3 +258,13 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .classic-sources { margin-block: 24px; border-top: 1px solid var(--interactive-border); padding-top: 16px; }
 .classic-sources .library-list > li { display: block; }
 @media (max-width: 700px) { .common-navigation { padding: 12px 16px; } .library-list > li { display: block; } .library-row-actions { margin-top: 12px; } }
+
+/* Native conversations share paper/ink tokens; original source media is not restyled. */
+.native-chat, .classic-context { min-width: 0; padding-block: 16px; overflow-wrap: anywhere; }
+.native-chat label, .classic-context-mode { display: grid; gap: 6px; margin-block: 12px; }
+.native-chat input, .native-chat textarea, .native-chat select, .classic-context-mode select { box-sizing: border-box; min-height: 44px; min-width: 44px; max-width: 100%; width: 100%; padding: 10px; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--interactive-border); border-radius: 2px; }
+.native-chat textarea { min-height: 128px; resize: vertical; line-height: 1.6; }
+.native-transcript > article { padding-block: 20px; border-top: 1px solid var(--decorative-line); }
+.native-chat summary, .classic-context summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.classic-context pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 24rem; overflow: auto; }
+.native-chat [role=alert] { border-inline-start: 3px solid var(--interactive-border); padding-inline-start: 12px; font-weight: 600; }

@@ -1,3 +1,4 @@
+import { nativeMessages, type NativeMessages } from './native-messages';
 import { libraryMessages, type LibraryMessages } from './library-messages';
 import { studioMessages } from './studio-messages';
 import { readerMessages } from './reader-messages';
@@ -17,16 +18,29 @@ export type ShellMessages = {
 };
 type I18nValue = {
     library: LibraryMessages;
-    studio: {[K in keyof typeof studioMessages['en-US']]: string};
-    reader: {[K in keyof typeof readerMessages['en-US']]: string};
-    chat: {[K in keyof typeof chatMessages['en-US']]: string};
+    native: NativeMessages;
+    studio: {
+        [K in keyof typeof studioMessages['en-US']]: string;
+    };
+    reader: {
+        [K in keyof typeof readerMessages['en-US']]: string;
+    };
+    chat: {
+        [K in keyof typeof chatMessages['en-US']]: string;
+    };
     locale: LanguageCode;
     setLocale(value: LanguageCode): void;
     t: TranslationKeys;
     shell: ShellMessages;
-    session: {[K in keyof typeof sessionMessages['en-US']]: string};
-    source: {[K in keyof typeof sourceMessages['en-US']]: string};
-    notebook: {[K in keyof typeof notebookMessages['en-US']]: string};
+    session: {
+        [K in keyof typeof sessionMessages['en-US']]: string;
+    };
+    source: {
+        [K in keyof typeof sourceMessages['en-US']]: string;
+    };
+    notebook: {
+        [K in keyof typeof notebookMessages['en-US']]: string;
+    };
 };
 const Context = createContext<I18nValue | null>(null);
 export function detectLocale(value = typeof navigator === 'undefined' ? 'en-US' : navigator.language): LanguageCode {
@@ -42,7 +56,11 @@ export function I18nProvider({ children, initialLocale = detectLocale() }: {
     useEffect(() => { document.documentElement.lang = locale; }, [locale]);
     // Shape type only: parity is tested; this never substitutes English content.
     const t = resources[locale].translation as TranslationKeys;
-    return <Context.Provider value={{ library: libraryMessages[locale], studio: studioMessages[locale], reader: readerMessages[locale], locale, setLocale, t, chat: chatMessages[locale], shell: shellMessages[locale], session: sessionMessages[locale], notebook: notebookMessages[locale], source: sourceMessages[locale] }}>{children}</Context.Provider>;
+    return <Context.Provider value={{ native: nativeMessages[locale], library: libraryMessages[locale], studio: studioMessages[locale], reader: readerMessages[locale], locale, setLocale, t, chat: chatMessages[locale], shell: shellMessages[locale], session: sessionMessages[locale], notebook: notebookMessages[locale], source: sourceMessages[locale] }}>{children}</Context.Provider>;
 }
-export function useI18n(): I18nValue { const value = useContext(Context); if (!value)
-    throw new Error('I18nProvider required'); return value; }
+export function useI18n(): I18nValue {
+    const value = useContext(Context);
+    if (!value)
+        throw new Error('I18nProvider required');
+    return value;
+}

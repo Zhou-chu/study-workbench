@@ -180,7 +180,8 @@ export function createNavigationController(registry: DraftRegistry) {
     };
     const resourceRows = () => [...resourceOwners].flatMap(id => {const row=registry.library.get(id);return row?[row]:[];});
     const resourceDecision = (rows: readonly LibraryDraft[]): NavigationDecision => {
-        const notebook = active ? decision(registry.get(active)) : 'allow';
+        // Source-origin Studio saves still block navigation when no notebook pane is mounted.
+        const notebook = decision(active ? registry.get(active) : undefined);
         if (notebook === 'blocked') return 'blocked';
         if (notebook === 'retain' || rows.some(r=>['pending','accepted','unknown'].includes(r.status))) return 'retain';
         return notebook === 'confirm' || rows.some(r=>r.dirty) ? 'confirm' : 'allow';
