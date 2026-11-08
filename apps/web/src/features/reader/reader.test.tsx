@@ -7,7 +7,7 @@ import { sourceContext } from '../../test/source-fixtures';
 import { citation, readerDetail, deferred } from '../../test/reader-fixtures';
 import { json } from '../../test/notebook-fixtures';
 import { sessionCoordinator } from '@study/web-transport';
-function setup(response: Promise<Response> | Response = json(readerDetail()), source = false) { const context = sourceContext(); const nav = createReaderNavigation({ notebookId: 'n', context, generation: sessionCoordinator.current() }); const send = vi.fn(async () => (await response).clone()); const onPositionChange = vi.fn(); const onClose = vi.fn(); const intent = source ? nav.openSource({ source_version_id: 'v-old' }) : nav.openCitation(citation(), { turnId: 't1', focusKey: 'origin' }); const props = { intent, onClose, onPositionChange }; const wrapper = ({ children }: {
+function setup(response: Promise<Response> | Response = json(readerDetail()), source = false, value = citation()) { const context = sourceContext(); const nav = createReaderNavigation({ notebookId: 'n', context, generation: sessionCoordinator.current() }); const send = vi.fn(async () => (await response).clone()); const onPositionChange = vi.fn(); const onClose = vi.fn(); const intent = source ? nav.openSource({ source_version_id: 'v-old' }) : nav.openCitation(value, { turnId: 't1', focusKey: 'origin' }); const props = { intent, onClose, onPositionChange }; const wrapper = ({ children }: {
     children: React.ReactNode;
 }) => <AppProviders locale="en-US" transport={{ send }}>{children}</AppProviders>; const view = render(<ReaderPane {...props}/>, { wrapper }); return { ...view, nav, intent, send, onPositionChange, onClose, props }; }
 it('keeps the later manual page over a late citation response without selecting sources', async () => { const d = deferred<Response>(); const h = setup(d.promise); fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '4' } }); await act(async () => d.resolve(json(readerDetail()))); expect(await screen.findByDisplayValue('4')).toBeInTheDocument(); expect(h.onPositionChange).toHaveBeenLastCalledWith({ source_version_id: 'v-old', page_index: 3 }); expect(h.send).toHaveBeenCalledTimes(1); });
@@ -92,4 +92,48 @@ it('defers an unseen text position until the same history reader is shown', asyn
     h.rerender(tree(false));
     expect(scroll.scrollTop).toBe(1000);
     expect(transport.send).toHaveBeenCalledOnce();
+});
+
+function longCitationContext() {
+    const quote = 'A long retained quote that can be read before extraction arrives.\n'.repeat(100);
+    const detail = longTextDetail();
+    const locator = { block_id: 'b', page_index: 8, start_offset: 1, end_offset: 1 + Array.from(quote).length };
+    detail.evidence[0]!.quote = quote;
+    detail.evidence[0]!.locator = locator;
+    detail.extraction.blocks[18]!.text = `A${quote}Z`;
+    return { detail, value: { ...citation(quote), locator } };
+}
+it('preserves newer scrolling of visible citation context when retained text arrives late', async () => {
+    textGeometry();
+    const pending = deferred<Response>();
+    const { detail, value } = longCitationContext();
+    const h = setup(pending.promise, false, value);
+    const quote = document.querySelector('.citation-context blockquote');
+    expect(quote).toBeVisible();
+    expect(quote?.textContent).toBe(value.quote);
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+    const scroll = document.querySelector<HTMLElement>('.reader-scroll')!;
+    scroll.scrollTop = 900;
+    fireEvent.scroll(scroll);
+    await act(async () => pending.resolve(json(detail)));
+    await screen.findByRole('searchbox');
+    expect(document.querySelector('mark')?.textContent).toBe(value.quote);
+    expect(scroll.scrollTop).toBe(900);
+    expect(h.onPositionChange).not.toHaveBeenCalled();
+    // Retiring the old automatic request must not disable newer explicit ones.
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '4' } });
+    expect(scroll.scrollTop).toBe(600);
+    expect(h.onPositionChange).toHaveBeenCalledExactlyOnceWith({ source_version_id: 'v-old', page_index: 3 });
+});
+it('still reveals deferred deep text when visible citation context has not been scrolled', async () => {
+    textGeometry();
+    const pending = deferred<Response>();
+    const { detail, value } = longCitationContext();
+    const h = setup(pending.promise, false, value);
+    expect(document.querySelector('.citation-context blockquote')).toBeVisible();
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+    await act(async () => pending.resolve(json(detail)));
+    await screen.findByRole('searchbox');
+    expect(document.querySelector<HTMLElement>('.reader-scroll')!.scrollTop).toBe(3000);
+    expect(h.onPositionChange).not.toHaveBeenCalled();
 });

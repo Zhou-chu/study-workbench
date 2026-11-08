@@ -78,6 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Preserve manual scrolling of an already-visible citation while retained text is loading, without disabling a later explicit reader page request.
+
 - Reveal retained text citations within the Notebook reader without overriding later manual navigation, and keep explicit reading-position recovery inside the narrow reader keyboard focus scope.
 
 - Keep Google answers in their original conversation position when remote/local mapping resolution enriches the completed source scope. Preserve selected-source identity and conflicting or unknown historical rows; recovery proof is unchanged.
