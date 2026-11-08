@@ -1,3 +1,4 @@
+import { mergeTurnHistory } from './turn-history';
 import { readySources, originalScopeAvailable } from './chat-admission';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Link } from 'react-router';
@@ -20,6 +21,7 @@ export type ConversationRetrieval = Readonly<{
     options: Readonly<RetrievalOptions>;
     disclosure?: EmbeddingDisclosure;
     available: boolean;
+    /** Bound to this original options/disclosure revision, including after replacement or route unmount. Never retarget to current controls. */
     isCurrent(): boolean;
 }>;
 export type OutlineOrigin = Readonly<{
@@ -60,6 +62,8 @@ export function ConversationPanel({ notebookId, workspace, onCitation, onSaveAns
         if (!api || !context?.ready || !state?.ready)
             return;
         const captured = freezeDispatchContext(context), generation = sessionCoordinator.current(), ticket = ++modelTicket.current;
+        // A replacement metadata read cannot renew evidence attached to an older request.
+        runtime.retireModelAdmission(notebookId);
         setModelBusy(true);
         setModelError(false);
         setModel(null);
@@ -122,7 +126,7 @@ export function ConversationPanel({ notebookId, workspace, onCitation, onSaveAns
     const options = selection?.engine === 'independent' ? (retrieval?.options ?? { retrieval_mode: 'lexical' as const }) : {};
     const availability = () => ready && !draft.retired && !unconfirmed && drafts.sources.getSnapshot() === sourceRevision && !!selection && (selection.selection_origin === 'local' ? readySources(workspace, selection.source_version_ids) : selection.remote_source_ids.length > 0) && (selection.engine === 'independent' ? selection.selection_origin === 'local' && validEvidence(model) && model!.available && !modelBusy : validEvidence(google, true) && google!.available && !!remote) && (!retrieval || selection.engine !== 'independent' || retrieval.available && retrieval.isCurrent());
     const canAsk = availability();
-    const retryAvailable = () => { const op = runtime.registry.getSnapshot(notebookId); return !!op && availability() && originalScopeAvailable(op.capture, workspace); };
+    const retryAvailable = () => { const op = runtime.registry.getSnapshot(notebookId); return !!op && ready && !draft.retired && !unconfirmed && drafts.sources.getSnapshot() === sourceRevision && originalScopeAvailable(op.capture, workspace); };
     const submit = (task: 'question' | 'outline') => {
         if (!api || !selection || !availability() || runtime.hasPending(notebookId) || task === 'outline' && options.retrieval_mode === 'hybrid')
             return;
@@ -137,19 +141,19 @@ export function ConversationPanel({ notebookId, workspace, onCitation, onSaveAns
         }
         const revision = savedDraft?.questionRevision ?? 0, id = draft.id;
         const valid = () => g === sessionCoordinator.current() && canDispatch(captured, readTurnContext()) && controller?.getSnapshot().ready === true && (request.engine !== 'notebooklm' || controller.getSnapshot().providerEvidenceRevision === providerRevision && !controller.getSnapshot().providerNeedsReauth && !controller.getSnapshot().providerChecking);
+        // Bind admission to the original engine evidence and retrieval callback, never later UI settings.
+        const originalEvidence = request.engine === 'independent' ? model : google;
+        const retrievalAvailable = retrieval?.available, retrievalCurrent = retrieval?.isCurrent.bind(retrieval);
+        const admission = () => validEvidence(originalEvidence, request.engine === 'notebooklm') && originalEvidence!.available && (request.engine !== 'independent' || !retrievalCurrent || retrievalAvailable === true && retrievalCurrent());
         const result = runtime.start({ sessionId: notebookChatSessionId(notebookId), context: captured, request, owner: { mountId: id.editorSession, questionRevision: revision, requestGeneration: g }, ...(connectionId ? { googleConnectionId: connectionId } : {}), ...(retrieval?.disclosure ? { embeddingDisclosure: retrieval.disclosure } : {}) }, api, valid, () => {
             if (task === 'question')
                 drafts.clearQuestion(id, revision);
-        }, () => { const checkGeneration = sessionCoordinator.current(), checkRevision = controller?.getSnapshot().providerEvidenceRevision; return () => canDispatch(captured, readTurnContext()) && checkGeneration === sessionCoordinator.current() && controller?.getSnapshot().ready === true && controller.getSnapshot().providerEvidenceRevision === checkRevision; });
+        }, () => { const checkGeneration = sessionCoordinator.current(), checkRevision = controller?.getSnapshot().providerEvidenceRevision; return () => canDispatch(captured, readTurnContext()) && checkGeneration === sessionCoordinator.current() && controller?.getSnapshot().ready === true && controller.getSnapshot().providerEvidenceRevision === checkRevision; }, admission);
         setRejection(!result.ok);
     };
     const currentHistory = history && context?.epoch === history.context.epoch ? history.turns : [];
-    // Keep unknown rows and legacy-only turns. Canonical history is separate from recovery proof.
-    const canonicalIds = new Set(currentHistory.flatMap(turn => typeof turn.turn_id === 'string' ? [turn.turn_id] : []));
-    const turns = [...workspace.turns.filter(turn => !('turn_id' in turn) || typeof turn.turn_id !== 'string' || !canonicalIds.has(turn.turn_id)), ...currentHistory];
-    for (const turn of snapshot.turns)
-        if (!turns.some(old => 'turn_id' in old && old.turn_id === turn.turn_id))
-            turns.push(turn);
+    // Completion advances the existing message; ambiguous/unknown rows are not hidden by an ID collision.
+    const turns = mergeTurnHistory(workspace.turns, currentHistory, snapshot.turns);
     useEffect(() => {
         if (!onOutlineReady || snapshot.retired || !ready)
             return;

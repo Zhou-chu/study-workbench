@@ -5,6 +5,8 @@ import type { TurnApi } from '../../data/turn-api';
 import { observeTurn } from './turn-observer';
 type Entry = {
     readFence: () => (() => boolean);
+    admission: () => boolean;
+    admissionRetired: boolean;
     api: TurnApi;
     valid: () => boolean;
     accepted: () => void;
@@ -101,7 +103,7 @@ export function createTurnRuntime(notifyDrafts: () => void = () => { }) {
         const op = registry.getSnapshot(n);
         if (!op || op.token !== token)
             return;
-        const outcome = current(n, e) ? await e.api.submit(op.capture.sessionId, op.capture.dto, op.capture.context) : { kind: 'not-dispatched' as const };
+        const outcome = current(n, e) && !e.admissionRetired && e.admission() ? await e.api.submit(op.capture.sessionId, op.capture.dto, op.capture.context) : { kind: 'not-dispatched' as const };
         if (registry.getSnapshot(n)?.token !== token)
             return;
         const valid = current(n, e);
@@ -121,21 +123,29 @@ export function createTurnRuntime(notifyDrafts: () => void = () => { }) {
         }
         publish(n);
     }
-    const canRetry = (n: string, available: () => boolean) => { const op = registry.getSnapshot(n), e = entries.get(n); return !!e && !!op && op.phase === 'not-sent' && !op.everPossiblyDispatched && current(n, e) && available(); };
+    const canRetry = (n: string, available: () => boolean) => { const op = registry.getSnapshot(n), e = entries.get(n); return !!e && !!op && op.phase === 'not-sent' && !op.everPossiblyDispatched && current(n, e) && !e.admissionRetired && e.admission() && available(); };
     return {
         registry,
         canRetry,
+        /** Replacement model metadata is a new intent's evidence, not a renewal of the original engine capture. */
+        retireModelAdmission(n: string) {
+            const e = entries.get(n), op = registry.getSnapshot(n);
+            if (e && op?.capture.dto.engine === 'independent' && !e.admissionRetired) {
+                e.admissionRetired = true;
+                publish(n);
+            }
+        },
         getSnapshot: (n: string) => snapshots.get(n) ?? empty,
         subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
-        start(capture: ValidatedTurnCapture, api: TurnApi, valid: () => boolean, accepted: () => void, readFence: () => (() => boolean) = () => valid): AdmissionResult {
-            if (!valid() || !canDispatch(capture.context, readTurnContext()))
+        start(capture: ValidatedTurnCapture, api: TurnApi, valid: () => boolean, accepted: () => void, readFence: () => (() => boolean) = () => valid, admission: () => boolean = () => true): AdmissionResult {
+            if (!valid() || !admission() || !canDispatch(capture.context, readTurnContext()))
                 return { ok: false, reason: 'unavailable' };
             const result = registry.admit(capture);
             if (!result.ok)
                 return result;
             const n = capture.request.notebook_id, generation = sessionCoordinator.current();
             const model = reduceOperation(createOperation(capture.context, result.token.operationId, { serverIdempotency: true, sessionGeneration: generation }), { type: 'begin', context: capture.context, sessionGeneration: generation });
-            const e: Entry = { api, readFence, valid: () => valid() && generation === sessionCoordinator.current(), accepted, operation: model, stage: 'unknown', retired: false, waiting: false, authorized: false };
+            const e: Entry = { api, readFence, admission, admissionRetired: false, valid: () => valid() && generation === sessionCoordinator.current(), accepted, operation: model, stage: 'unknown', retired: false, waiting: false, authorized: false };
             entries.set(n, e);
             publish(n);
             void post(n, result.token, e);

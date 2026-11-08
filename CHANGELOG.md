@@ -76,6 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Notebook conversation recovery review fixes (2026-11-08).** Advance matching empty running-history rows in place when their completed answer is confirmed, while keeping conflicting and unknown history visible. Bind retries to the original engine/retrieval admission evidence so new controls or refreshed model metadata cannot renew an older disclosure. Read-only recovery remains separate; browser acceptance is still pending.
+
 - Reconcile successful Notebook selection edits with newer fenced workspace reads, prevent stale file-picker hashing from submitting an earlier choice, and retire Google pages and confirmations across provider recovery without disabling local uploads.
 
 - Keep Google connection recovery separate from application sign-in, ignore stale recovery responses, and offer an explicit fresh question draft after authentication.

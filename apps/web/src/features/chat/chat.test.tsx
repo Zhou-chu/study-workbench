@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { readTurnContext } from '@study/web-transport';
+import { readTurnContext, RequestNotDispatchedError } from '@study/web-transport';
+import { captureEmbeddingDisclosure } from '@study/domain';
+import * as turnApi from '../../data/turn-api';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { ConversationPanel } from './ConversationPanel';
@@ -274,4 +276,141 @@ it('submits an explicit outline and retains its completed B7 handoff until a con
 
 it('does not claim a parent task is known when the POST receipt is missing',async()=>{
  await setup();fireEvent.change(screen.getByRole('textbox',{name:'Question'}),{target:{value:'Missing receipt'}});fireEvent.click(screen.getByRole('button',{name:'Ask selected sources'}));await waitFor(()=>expect(screen.getByRole('button',{name:'Check original request (read only)'})).toBeEnabled());expect(screen.queryByText(/A parent task is known/)).not.toBeInTheDocument();expect(screen.queryByRole('button',{name:'Retry original request (sends POST)'})).not.toBeInTheDocument();
+});
+
+
+it('replaces a persisted running Google row in place with the original strictly confirmed completion after remount', async () => {
+    let dto: Record<string, unknown> = {}, finished = false, events!: ReadableStreamDefaultController<Uint8Array>;
+    const w = sourceWorkspace();
+    w.selection = { engine: 'notebooklm', selection_origin: 'remote', source_version_ids: [], remote_source_ids: ['remote'] };
+    w.link = { remote_notebook_id: 'rn', connection_id: 'connection' };
+    const turn = () => ({ turn_id: 'google-turn', notebook_id: 'n', chat_session_id: 'v1_n', engine: 'notebooklm', message: String(dto.message), status: finished ? 'succeeded' : 'running', answer: finished ? 'Verified Google answer' : null, scope_snapshot: { ...(finished ? { engine: 'notebooklm' } : {}), selection_origin: 'remote', source_version_ids: [], remote_source_ids: ['remote'], remote_notebook_id: 'rn' }, citations: [] });
+    function Consumer() { const [shown, setShown] = useState(true); return <><button onClick={() => setShown(!shown)}>Toggle panel</button>{shown && <ConversationPanel notebookId="n" workspace={{ ...w, turns: Object.keys(dto).length ? [turn(), { turn_id: 'after', message: 'Following message', answer: 'Following answer', status: 'succeeded' }] : [] }}/>}</>; }
+    const requests = sourceServer(async r => {
+        const path = new URL(r.url).pathname;
+        if (path.endsWith('/models/defaults')) return json({ default_chat_model: 'm' });
+        if (path.endsWith('/connections/notebooklm')) return json({ state: 'connected' });
+        if (path.endsWith('/notebooklm/capabilities')) return json({ operations: [{ name: 'ask', support: 'available' }] });
+        if (path.endsWith('/turns')) {
+            if (r.method === 'POST') { dto = await r.json(); return json({ job_id: 'j', turn_id: 'google-turn', state: 'running' }); }
+            return json(Object.keys(dto).length ? [turn()] : []);
+        }
+        if (path.endsWith('/events')) return new Response(new ReadableStream({ start(c) { events = c; } }), { headers: { 'content-type': 'text/event-stream' } });
+        return json({});
+    }, () => json({ ...w, jobs: [{ operation: 'chat', job_id: 'j', turn_id: 'google-turn', notebook_id: 'n', chat_session_id: 'v1_n', idempotency_key: dto.idempotency_key, state: 'succeeded', submission_state: 'confirmed', request_snapshot: dto, result: turn() }] }));
+    await renderSourceFeature(<Consumer />);
+    fireEvent.click(screen.getByRole('button', { name: 'Verify Google connection' }));
+    await screen.findByText('Google login verified');
+    fireEvent.change(screen.getByRole('textbox', { name: 'Question' }), { target: { value: 'Original Google question' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ask selected sources' }));
+    await waitFor(() => expect(events).toBeDefined());
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle panel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle panel' }));
+    await screen.findByText('Following answer');
+    await waitFor(() => expect(requests.filter(r => r.method === 'GET' && new URL(r.url).pathname.endsWith('/turns'))).toHaveLength(2));
+    await act(async () => { finished = true; events.enqueue(new TextEncoder().encode('event: final\ndata: {"turn_id":"google-turn","status":"succeeded"}\n\n')); });
+    await screen.findByText('Verified Google answer');
+    expect(screen.queryByRole('button', { name: 'Check original request (read only)' })).not.toBeInTheDocument();
+    expect([...document.querySelectorAll('.chat-message .chat-question')].map(n => n.textContent)).toEqual(['Original Google question', 'Following message']);
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
+    expect(requests.filter(r => new URL(r.url).pathname.endsWith('/events'))).toHaveLength(1);
+    expect(requests.some(r => r.url.includes('/jobs/'))).toBe(false);
+});
+
+it('shows refreshed completed workspace history instead of an older canonical running row while preserving conflicts and unknown rows', async () => {
+    const identity = { turn_id: 'shared', notebook_id: 'n', chat_session_id: 'v1_n', engine: 'independent', message: 'Same question', idempotency_key: 'key', scope_snapshot: { engine: 'independent', selection_origin: 'local', source_version_ids: ['v-old'], remote_source_ids: [], remote_notebook_id: null }, citations: [] };
+    const running = { ...identity, status: 'running', answer: null };
+    function Consumer() { const [done, setDone] = useState(false); return <><button onClick={() => setDone(true)}>Refresh workspace</button><ConversationPanel notebookId="n" workspace={{ ...sourceWorkspace(), turns: [done ? { ...identity, status: 'succeeded', answer: 'Refreshed answer' } : running, { ...identity, message: 'Conflicting question', answer: 'Conflicting answer', status: 'succeeded' }, { ...identity, projection_status: 'unknown', answer: 'Unknown historical answer' }] }}/></>; }
+    sourceServer(r => new URL(r.url).pathname.endsWith('/models/defaults') ? json({ default_chat_model: 'm' }) : json([running]));
+    await renderSourceFeature(<Consumer />);
+    await screen.findByText(/A model is selected/);
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh workspace' }));
+    await screen.findByText('Refreshed answer');
+    expect(screen.getByText('Conflicting answer')).toBeInTheDocument();
+    expect(screen.getByText('Unknown historical answer')).toBeInTheDocument();
+    expect(screen.getAllByText('Same question')).toHaveLength(2);
+});
+
+function neverDispatchTurns() {
+    const create = turnApi.createTurnApi;
+    const attempts: string[] = [];
+    vi.spyOn(turnApi, 'createTurnApi').mockImplementation(transport => create({ send: async request => {
+        if (request.method === 'POST' && request.path.endsWith('/turns')) { attempts.push(String(request.body)); throw new RequestNotDispatchedError('duplicate'); }
+        return transport.send(request);
+    } }));
+    return attempts;
+}
+it.each(['lexical', 'different-profile'] as const)('does not revive stale original hybrid disclosure with fresh %s settings', async next => {
+    const attempts = neverDispatchTurns();
+    const disclosure = captureEmbeddingDisclosure({ profile_id: 'p1', fingerprint: 'fp1', destination_descriptor_version: 'd1', provider: 'fixture', model_id: 'm', model_name: 'Original', revision: 'r1', destination_kind: 'remote', endpoint: 'https://example.invalid/embed' })!;
+    let originalCurrent = true;
+    function Consumer() {
+        const [changed, setChanged] = useState(false);
+        const original = { options: { retrieval_mode: 'hybrid' as const, embedding_profile_id: 'p1', disclosed_profile_fingerprint: 'fp1', destination_descriptor_version: 'd1', acknowledge_query_processing: true }, disclosure, available: true, isCurrent: () => originalCurrent };
+        const fresh = next === 'lexical' ? { options: { retrieval_mode: 'lexical' as const }, available: true, isCurrent: () => true } : { ...original, options: { ...original.options, embedding_profile_id: 'p2' }, disclosure: captureEmbeddingDisclosure({ profile_id: 'p2', fingerprint: 'fp1', destination_descriptor_version: 'd1', provider: 'fixture', model_id: 'm2', model_name: 'Fresh', revision: 'r2', destination_kind: 'remote', endpoint: 'https://example.invalid/embed' })!, isCurrent: () => true };
+        return <><button onClick={() => { originalCurrent = false; setChanged(true); }}>Change retrieval</button><ConversationPanel notebookId="n" workspace={sourceWorkspace()} retrieval={changed ? fresh : original}/></>;
+    }
+    sourceServer(r => new URL(r.url).pathname.endsWith('/models/defaults') ? json({ default_chat_model: 'm' }) : json([]));
+    const view = await renderSourceFeature(<Consumer />);
+    await screen.findByText(/A model is selected/);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Question' }), { target: { value: 'Original hybrid question' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ask selected sources' }));
+    const retry = await screen.findByRole('button', { name: 'Retry original request (sends POST)' });
+    expect(retry).toBeEnabled();
+    const original = view.workbench.drafts.turns.getSnapshot('n').operation!.capture;
+    fireEvent.click(screen.getByRole('button', { name: 'Change retrieval' }));
+    expect(retry).toBeDisabled();
+    fireEvent.click(retry);
+    expect(attempts).toHaveLength(1);
+    expect(view.workbench.drafts.turns.getSnapshot('n').operation!.capture).toBe(original);
+    expect(JSON.parse(attempts[0]!)).toMatchObject({ retrieval_mode: 'hybrid', embedding_profile_id: 'p1' });
+    expect(screen.getByRole('button', { name: 'Check original request (read only)' })).toBeEnabled();
+});
+
+it.each([false, true])('does not substitute fresh Google availability for retired original model evidence on retry (remount: %s)', async remount => {
+    const attempts = neverDispatchTurns();
+    let configured = true;
+    function Consumer() { const [google, setGoogle] = useState(false), [shown, setShown] = useState(true); const w = sourceWorkspace(); if (google) { w.selection = { engine: 'notebooklm', selection_origin: 'remote', source_version_ids: [], remote_source_ids: ['remote'] }; w.link = { remote_notebook_id: 'rn', connection_id: 'c' }; } return <><button onClick={() => setGoogle(true)}>Select Google</button><button onClick={() => setShown(!shown)}>Toggle model panel</button>{shown && <ConversationPanel notebookId="n" workspace={w}/>}</>; }
+    sourceServer(r => { const p = new URL(r.url).pathname; if (p.endsWith('/models/defaults')) return json({ default_chat_model: configured ? 'm' : null }); if (p.endsWith('/connections/notebooklm')) return json({ state: 'connected' }); if (p.endsWith('/notebooklm/capabilities')) return json({ operations: [{ name: 'ask', support: 'available' }] }); return json([]); });
+    await renderSourceFeature(<Consumer />);
+    await screen.findByText(/A model is selected/);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Question' }), { target: { value: 'Local question' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ask selected sources' }));
+    await screen.findByRole('button', { name: 'Retry original request (sends POST)' });
+    configured = false;
+    if (remount) { fireEvent.click(screen.getByRole('button', { name: 'Toggle model panel' })); fireEvent.click(screen.getByRole('button', { name: 'Toggle model panel' })); }
+    else fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await screen.findByText(/Reading your sources does not need a model/);
+    fireEvent.click(screen.getByRole('button', { name: 'Select Google' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Verify Google connection' }));
+    await screen.findByText('Google login verified');
+    const currentRetry = screen.getByRole('button', { name: 'Retry original request (sends POST)' });
+    expect(currentRetry).toBeDisabled();
+    fireEvent.click(currentRetry);
+    expect(attempts).toHaveLength(1);
+});
+
+it('retries the original Google engine even when the current independent engine is unavailable', async () => {
+    const attempts = neverDispatchTurns();
+    function Consumer() {
+        const [local, setLocal] = useState(false), w = sourceWorkspace();
+        w.link = { remote_notebook_id: 'rn', connection_id: 'c' };
+        if (!local) w.selection = { engine: 'notebooklm', selection_origin: 'remote', source_version_ids: [], remote_source_ids: ['remote'] };
+        return <><button onClick={() => setLocal(true)}>Select independent</button><ConversationPanel notebookId="n" workspace={w}/></>;
+    }
+    sourceServer(r => { const p = new URL(r.url).pathname; if (p.endsWith('/models/defaults')) return json({ default_chat_model: null }); if (p.endsWith('/connections/notebooklm')) return json({ state: 'connected' }); if (p.endsWith('/notebooklm/capabilities')) return json({ operations: [{ name: 'ask', support: 'available' }] }); return json([]); });
+    await renderSourceFeature(<Consumer />);
+    fireEvent.click(screen.getByRole('button', { name: 'Verify Google connection' }));
+    await screen.findByText('Google login verified');
+    fireEvent.change(screen.getByRole('textbox', { name: 'Question' }), { target: { value: 'Original Google question' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Ask selected sources' }));
+    await screen.findByRole('button', { name: 'Retry original request (sends POST)' });
+    fireEvent.click(screen.getByRole('button', { name: 'Select independent' }));
+    expect(screen.getByRole('button', { name: 'Ask selected sources' })).toBeDisabled();
+    const retry = screen.getByRole('button', { name: 'Retry original request (sends POST)' });
+    expect(retry).toBeEnabled();
+    fireEvent.click(retry);
+    await waitFor(() => expect(attempts).toHaveLength(2));
+    expect(attempts[1]).toBe(attempts[0]);
+    expect(JSON.parse(attempts[1]!)).toMatchObject({ engine: 'notebooklm', remote_source_ids: ['remote'] });
 });

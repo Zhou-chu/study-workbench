@@ -116,3 +116,32 @@ it('keeps retry disabled after provider evidence changes even when the same endp
     x.runtime.abandon('n');
     expect(x.runtime.hasPending('n')).toBe(false);
 });
+
+it('keeps original retry admission evidence separate from fresh read-only recovery fences', async () => {
+    const x = setup(); let originalAdmission = true;
+    vi.mocked(x.api.submit).mockResolvedValue({ kind: 'not-dispatched' });
+    x.runtime.start(x.capture, x.api, x.valid, x.accepted, () => () => true, () => originalAdmission);
+    await vi.waitFor(() => expect(x.runtime.getSnapshot('n').operation?.phase).toBe('not-sent'));
+    expect(x.runtime.canRetry('n', () => true)).toBe(true);
+    const original = x.runtime.getSnapshot('n').operation!.capture;
+    originalAdmission = false;
+    expect(x.runtime.canRetry('n', () => true)).toBe(false);
+    x.runtime.retry('n', () => true);
+    expect(x.api.submit).toHaveBeenCalledTimes(1);
+    await x.runtime.check('n');
+    expect(x.api.check).toHaveBeenCalledTimes(1);
+    expect(x.runtime.getSnapshot('n').operation!.capture).toBe(original);
+    expect(x.api.events).not.toHaveBeenCalled(); expect(x.api.job).not.toHaveBeenCalled();
+});
+
+it('checks original admission again at the send boundary without rebinding its capture', async () => {
+    const x = setup(); let admissionCalls = 0;
+    x.runtime.start(x.capture, x.api, x.valid, x.accepted, () => () => true, () => ++admissionCalls === 1);
+    await vi.waitFor(() => expect(x.runtime.getSnapshot('n').operation?.phase).toBe('not-sent'));
+    expect(x.api.submit).not.toHaveBeenCalled();
+    expect(x.runtime.canRetry('n', () => true)).toBe(false);
+    const original = x.runtime.getSnapshot('n').operation!.capture;
+    await x.runtime.check('n');
+    expect(x.api.check).toHaveBeenCalledTimes(1);
+    expect(x.runtime.getSnapshot('n').operation!.capture).toBe(original);
+});
