@@ -164,3 +164,6 @@ history.txt
 .env.v1*
 *.secret
 !.env.v1.example
+
+# Local implementation coordination artifacts
+.superpowers/
