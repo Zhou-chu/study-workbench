@@ -15,3 +15,79 @@ it('provider reauth on a mixed job path disables Google work without disabling l
 it('unknown or missing per-operation capability cannot be replaced by app readiness', async () => { sourceServer(r => json(r.url.endsWith('/capabilities') ? { operations: [{ name: 'list_sources', support: 'unverified' }] } : { state: 'connected' })); await renderSourceFeature(<RemoteImportPanel notebookId="n" workspace={{ ...sourceWorkspace(), link: { remote_notebook_id: 'remote-n' } }} selection={selection} onRemoteSelection={() => { }} onChanged={() => { }}/>); fireEvent.click(screen.getByRole('button', { name: 'Verify Google connection' })); await screen.findByText('list_sources: unverified'); expect(screen.getByRole('button', { name: 'List linked notebook sources' })).toBeDisabled(); expect(screen.getByRole('button', { name: 'Sync selected originals to Google' })).toBeDisabled(); });
 it('a changed linked notebook retires the loaded remote source page and its pending confirmation', async () => { let change!: (id: string) => void; const requests = sourceServer(r => json(r.url.endsWith('/capabilities') ? { operations: [{ name: 'list_sources', support: 'available' }, { name: 'upload_source', support: 'available' }, { name: 'fetch_source_text', support: 'available' }] } : r.url.endsWith('/connections/notebooklm') ? { state: 'connected' } : { items: [{ id: 'rs', title: 'Remote source A' }], next_cursor: 'cursor-a', listing_complete: false })); function Panel() { const [remote, setRemote] = useState('A'); change = setRemote; return <RemoteImportPanel notebookId="n" workspace={{ ...sourceWorkspace(), link: { remote_notebook_id: remote } }} selection={selection} onRemoteSelection={() => { }} onChanged={() => { }}/>; } await renderSourceFeature(<Panel />); fireEvent.click(screen.getByRole('button', { name: 'Verify Google connection' })); await waitFor(() => expect(screen.getByRole('button', { name: 'List linked notebook sources' })).toBeEnabled()); fireEvent.click(screen.getByRole('button', { name: 'List linked notebook sources' })); await screen.findByText('Remote source A'); fireEvent.click(screen.getByRole('button', { name: 'Sync selected originals to Google' })); await act(async () => change('B')); expect(screen.queryByText('Remote source A')).not.toBeInTheDocument(); await act(async () => change('A')); expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' })).toBeDisabled(); expect(requests.some(r => r.method === 'POST')).toBe(false); });
 it('selecting one remote source keeps the authoritative page available for selecting the next', async () => { sourceServer(r => json(r.url.endsWith('/capabilities') ? { operations: [{ name: 'list_sources', support: 'available' }, { name: 'fetch_source_text', support: 'available' }] } : r.url.endsWith('/connections/notebooklm') ? { state: 'connected' } : { items: [{ id: 'r1', title: 'Remote one' }, { id: 'r2', title: 'Remote two' }], next_cursor: null, listing_complete: true })); function Panel() { const [value, setValue] = useState(selection); return <RemoteImportPanel notebookId="n" workspace={{ ...sourceWorkspace(), link: { remote_notebook_id: 'A' } }} selection={value} onRemoteSelection={ids => setValue({ ...value, remote_source_ids: ids })} onChanged={() => { }}/>; } await renderSourceFeature(<Panel />); fireEvent.click(screen.getByRole('button', { name: 'Verify Google connection' })); await waitFor(() => expect(screen.getByRole('button', { name: 'List linked notebook sources' })).toBeEnabled()); fireEvent.click(screen.getByRole('button', { name: 'List linked notebook sources' })); await screen.findByRole('checkbox', { name: 'Remote one' }); fireEvent.click(screen.getByRole('checkbox', { name: 'Remote one' })); fireEvent.click(screen.getByRole('checkbox', { name: 'Remote two' })); expect(screen.getByRole('checkbox', { name: 'Remote one' })).toBeChecked(); expect(screen.getByRole('checkbox', { name: 'Remote two' })).toBeChecked(); });
+
+const remoteCapabilities = { operations: [{ name: 'list_sources', support: 'available' }, { name: 'upload_source', support: 'available' }, { name: 'fetch_source_text', support: 'available' }] };
+const remotePanel = <RemoteImportPanel notebookId="n" workspace={{ ...sourceWorkspace(), link: { remote_notebook_id: 'remote-n' } }} selection={{ ...selection, remote_source_ids: ['rs'] }} onRemoteSelection={() => { }} onChanged={() => { }} />;
+const remoteRegion = () => within(screen.getByRole('region', { name: 'Google connection' }));
+async function verifyRemote() {
+    fireEvent.click(remoteRegion().getByRole('button', { name: 'Verify Google connection' }));
+    await waitFor(() => expect(remoteRegion().getByRole('button', { name: 'List linked notebook sources' })).toBeEnabled());
+}
+it.each(['reauth', 'explicit-reverify'] as const)('retires loaded Google data and an open confirmation across %s, even with rapid flag recovery', async change => {
+    const requests = sourceServer(request => json(request.url.includes('/jobs/') ? { error: { code: 'NEEDS_REAUTH' } } : request.url.endsWith('/capabilities') ? remoteCapabilities : request.url.endsWith('/connections/notebooklm') ? { state: 'connected' } : { items: [{ id: 'rs', title: 'Original remote page' }], next_cursor: null, listing_complete: true }, request.url.includes('/jobs/') ? 401 : 200));
+    const h = await renderSourceFeature(remotePanel);
+    await verifyRemote();
+    fireEvent.click(remoteRegion().getByRole('button', { name: 'List linked notebook sources' }));
+    await screen.findByText('Original remote page');
+    fireEvent.click(screen.getByRole('button', { name: 'Sync selected originals to Google' }));
+    expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' })).toBeEnabled();
+    await act(async () => {
+        if (change === 'reauth') {
+            await h.workbench.transport.send({ method: 'GET', path: '/personal/jobs/mixed', context: readTurnContext()! });
+            await h.workbench.transport.send({ method: 'GET', path: '/personal/jobs/mixed', context: readTurnContext()! });
+        }
+        expect(await h.workbench.controller.verifyProviderConnection()).toBe(true);
+    });
+    expect(h.workbench.controller.getSnapshot()).toMatchObject({ ready: true, providerNeedsReauth: false });
+    expect(screen.queryByText('Original remote page')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' })).toBeDisabled();
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' }));
+    expect(requests.some(request => request.method === 'POST')).toBe(false);
+});
+
+it('rejects an outstanding pre-reauth source list after verification and requires a fresh listing', async () => {
+    let finish!: (response: Response) => void, lists = 0;
+    const requests = sourceServer(request => {
+        if (request.url.includes('/jobs/')) return json({ error: { code: 'NEEDS_REAUTH' } }, 401);
+        if (request.url.endsWith('/capabilities')) return json(remoteCapabilities);
+        if (request.url.endsWith('/connections/notebooklm')) return json({ state: 'connected' });
+        lists++;
+        return lists === 1 ? new Promise(resolve => { finish = resolve; }) : json({ items: [{ id: 'fresh', title: 'Fresh remote page' }], next_cursor: null, listing_complete: true });
+    });
+    const h = await renderSourceFeature(remotePanel);
+    await verifyRemote();
+    fireEvent.click(remoteRegion().getByRole('button', { name: 'List linked notebook sources' }));
+    await waitFor(() => expect(finish).toBeTypeOf('function'));
+    await act(async () => {
+        await h.workbench.transport.send({ method: 'GET', path: '/personal/jobs/mixed', context: readTurnContext()! });
+        expect(await h.workbench.controller.verifyProviderConnection()).toBe(true);
+        finish(json({ items: [{ id: 'rs', title: 'Stale remote page' }], next_cursor: null, listing_complete: true }));
+    });
+    await waitFor(() => expect(remoteRegion().getByRole('button', { name: 'Verify Google connection' })).toBeEnabled());
+    expect(screen.queryByText('Stale remote page')).not.toBeInTheDocument();
+    expect(lists).toBe(1);
+    await verifyRemote();
+    expect(remoteRegion().getByRole('button', { name: 'Import selected Google text' })).toBeDisabled();
+    fireEvent.click(remoteRegion().getByRole('button', { name: 'List linked notebook sources' }));
+    await screen.findByText('Fresh remote page');
+    expect(remoteRegion().getByRole('button', { name: 'Import selected Google text' })).toBeDisabled();
+    expect(lists).toBe(2);
+    expect(requests.some(request => request.method === 'POST')).toBe(false);
+});
+
+it('keeps a remote mutation unknown if its provider evidence retires before the receipt', async () => {
+    let finish!: (response: Response) => void;
+    sourceServer(request => request.method === 'POST' ? new Promise(resolve => { finish = resolve; }) : json(request.url.includes('/jobs/') ? { error: { code: 'NEEDS_REAUTH' } } : request.url.endsWith('/capabilities') ? remoteCapabilities : { state: 'connected' }, request.url.includes('/jobs/') ? 401 : 200));
+    const h = await renderSourceFeature(remotePanel);
+    await verifyRemote();
+    fireEvent.click(screen.getByRole('button', { name: 'Sync selected originals to Google' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' }));
+    await waitFor(() => expect(finish).toBeTypeOf('function'));
+    await act(async () => {
+        await h.workbench.transport.send({ method: 'GET', path: '/personal/jobs/mixed', context: readTurnContext()! });
+        await h.workbench.controller.verifyProviderConnection();
+        finish(json({ job_id: 'accepted-old', state: 'queued' }));
+    });
+    await waitFor(() => expect(h.workbench.drafts.sources.getSnapshot()[0]?.operation.state).toBe('unknown'));
+    expect(h.workbench.controller.getSnapshot().ready).toBe(true);
+});

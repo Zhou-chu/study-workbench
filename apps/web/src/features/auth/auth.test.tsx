@@ -462,3 +462,33 @@ it('keeps the original filled question in its retired registry entry when starti
     expect(value!.drafts.get(old)).toMatchObject({ question: 'original draft', retired: true });
     expect(question).toHaveValue('new draft');
 });
+
+it('publishes monotonic provider evidence fences for repeated invalidation and explicit verification without changing app scope', async () => {
+    let invalid = true;
+    const requests = server({ resource: () => invalid ? json({ error: { code: 'NEEDS_REAUTH' } }, 401) : json({ state: 'connected' }) });
+    const controller = createSessionController();
+    await controller.start();
+    const context = readTurnContext()!, generation = sessionCoordinator.current();
+    const initial = controller.getSnapshot().providerEvidenceRevision;
+    await controller.transport.send({ method: 'GET', path: '/personal/jobs/mixed', context });
+    const first = controller.getSnapshot().providerEvidenceRevision;
+    expect(first).toBeGreaterThan(initial);
+    await controller.transport.send({ method: 'GET', path: '/personal/jobs/mixed', context });
+    expect(controller.getSnapshot().providerEvidenceRevision).toBeGreaterThan(first);
+    invalid = false;
+    const beforeVerify = controller.getSnapshot().providerEvidenceRevision;
+    const verifying = controller.verifyProviderConnection();
+    const duringVerify = controller.getSnapshot().providerEvidenceRevision;
+    expect(duringVerify).toBeGreaterThan(beforeVerify);
+    expect(controller.getSnapshot().providerChecking).toBe(true);
+    expect(await verifying).toBe(true);
+    const confirmed = controller.getSnapshot().providerEvidenceRevision;
+    expect(confirmed).toBeGreaterThan(duringVerify);
+    expect(controller.getSnapshot()).toMatchObject({ ready: true, providerNeedsReauth: false, providerChecking: false });
+    await controller.verifyProviderConnection();
+    expect(controller.getSnapshot().providerEvidenceRevision).toBeGreaterThan(confirmed);
+    expect(readTurnContext()?.epoch).toBe(context.epoch);
+    expect(sessionCoordinator.current()).toBe(generation);
+    expect(requests.every(request => request.method === 'GET')).toBe(true);
+    controller.dispose();
+});

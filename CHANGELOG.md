@@ -73,6 +73,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Reconcile successful Notebook selection edits with newer fenced workspace reads, prevent stale file-picker hashing from submitting an earlier choice, and retire Google pages and confirmations across provider recovery without disabling local uploads.
+
 - Keep Google connection recovery separate from application sign-in, ignore stale recovery responses, and offer an explicit fresh question draft after authentication.
 - Preserve standalone BFF incremental streams, exact binary multipart/download bytes and distinct refresh-loss recovery. Chunked oversized auth bodies now deliver structured rejection, while unexpected HTML is sanitized without logging out or replaying; valid opaque HTML artifact attachments retain their existing contract. Synthetic HTTP coverage does not activate device mode or change the live deployment.
 - **Same-origin private-ingress compatibility (2026-11-07).** Preserve ingress cookies for legacy browser API requests only when their destination exactly matches the page origin. Cross-origin requests still omit cookies; application Bearer authentication, redirect rejection and device-session custody remain unchanged.

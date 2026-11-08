@@ -37,6 +37,17 @@ export type SourceCheckToken = Readonly<{
     context: DispatchContext;
     generation: number;
 }>;
+/** A read-start fence, not a server revision or permission to retry a write. */
+export type SourceWorkspaceReadToken = Readonly<{
+    notebookId: string;
+    context: DispatchContext;
+    generation: number;
+    selectionOperation: SourceOperation | undefined;
+}>;
+export type SourceSelectionRead = Readonly<{
+    token: SourceWorkspaceReadToken;
+    selection: WorkbenchSelection | null;
+}>;
 export type SourceOutcome = {
     kind: 'unknown' | 'not-sent' | 'succeeded';
 } | {
@@ -60,11 +71,31 @@ function freezePayload(p: SourcePayload): SourcePayload { if (p.kind === 'select
 export function createSourceOperations(onChange: () => void) {
     const retiredEpochs = new Set<number>();
     const rows = new Map<string, SourceOperation>();
+    const workspaceReads = new Map<string, SourceWorkspaceReadToken>();
+    const selectionReads = new Map<string, SourceSelectionRead>();
+    const latestSelection = (notebookId: string, epoch: number) => [...rows.values()].reverse().find(row => row.notebookId === notebookId && row.payload.kind === 'selection' && !row.retired && row.operation.context.epoch === epoch);
+
     let snapshot: readonly SourceOperation[] = Object.freeze([]);
     const listeners = new Set<() => void>();
     const emit = () => { snapshot = Object.freeze([...rows.values()]); listeners.forEach(fn => fn()); onChange(); };
     const add = (notebookId: string, payload: SourcePayload, context: DispatchContext, generation: number, file: File | null = null, signature: string | null = null) => { const id = crypto.randomUUID(); rows.set(id, Object.freeze({ id, notebookId, file, fileSignature: signature, payload: freezePayload(payload), operation: createOperation(context, id, { serverIdempotency: false, sessionGeneration: generation }), retired: retiredEpochs.has(context.epoch), hidden: false })); emit(); return id; };
     return { get: (id: string) => rows.get(id), getSnapshot: () => snapshot, subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
+        getSelectionRead: (notebookId: string) => selectionReads.get(notebookId),
+        beginWorkspaceRead(notebookId: string, context: DispatchContext, generation: number): SourceWorkspaceReadToken {
+            const token = Object.freeze({ notebookId, context: freezeDispatchContext(context), generation, selectionOperation: latestSelection(notebookId, context.epoch) });
+            workspaceReads.set(notebookId, token);
+            return token;
+        },
+        acceptWorkspaceRead(token: SourceWorkspaceReadToken, workspace: WorkspaceViewV1, current: DispatchContext | null, generation: number) {
+            const operation = latestSelection(token.notebookId, token.context.epoch);
+            if (workspaceReads.get(token.notebookId) !== token || !canDispatch(token.context, current) || token.generation !== generation || workspace.notebook.id !== token.notebookId || workspace.notebook.projection_status || token.selectionOperation !== operation || operation && operation.operation.state !== 'succeeded')
+                return false;
+            const parsed = selectionFromView(workspace.selection);
+            const payload = parsed ? freezePayload({ kind: 'selection', selection: parsed }) : null;
+            selectionReads.set(token.notebookId, Object.freeze({ token, selection: payload?.kind === 'selection' ? payload.selection : null }));
+            emit();
+            return true;
+        },
         async captureUpload(notebookId: string, file: File | null, context: DispatchContext, generation: number, sourceId?: string) { const captured = freezeDispatchContext(context); const signature = await fileSignature(file); const existing = [...rows.values()].find(r => r.payload.kind === 'upload' && r.notebookId === notebookId && r.payload.sourceId === sourceId && signature !== null && r.fileSignature === signature); if (existing)
             return existing.id; return add(notebookId, { kind: 'upload', ...(sourceId ? { sourceId } : {}) }, captured, generation, file, signature); },
         capture(notebookId: string, payload: Exclude<SourcePayload, {

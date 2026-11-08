@@ -47,6 +47,7 @@ export function useSourceOperations(notebookId: string, onChanged?: () => void) 
         catch (error) {
             outcome = { kind: asRequestNotDispatchedError(error) ? 'not-sent' : 'unknown' };
         }
+        if (active.payload.kind === 'remote' && !admit()) outcome = { kind: 'unknown' };
         store.settle(id, token, outcome, readTurnContext(), sessionCoordinator.current());
         if (store.get(id)?.operation.state === 'succeeded')
             onChanged?.();

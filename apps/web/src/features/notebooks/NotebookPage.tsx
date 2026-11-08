@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'react-router';
 import { notebookIdFromPathname } from '../../app/notebook-route';
-import { freezeDispatchContext } from '@study/web-transport';
-import { AppDataBoundary, useAppData } from '../../app/providers';
+import { freezeDispatchContext, readTurnContext, sessionCoordinator } from '@study/web-transport';
+import { AppDataBoundary, useAppData, useAppDrafts } from '../../app/providers';
 import { useNotebookConnection } from '../../data/use-notebook-connection';
 import { useI18n } from '../../i18n';
 import { Button } from '../../ui/Button';
@@ -11,10 +11,13 @@ export function NotebookPage() {
     const notebookId = notebookIdFromPathname(useLocation().pathname) ?? '';
     const { api, context, ready, scope } = useNotebookConnection();
     const injected = useAppData();
+    const sourceStore = useAppDrafts().sources;
     const { t, shell } = useI18n();
     const workspace = useQuery({ queryKey: ['workspace', scope, notebookId], enabled: ready && !!notebookId, queryFn: async ({ signal }) => {
             const captured = freezeDispatchContext(context!);
+            const read = sourceStore.beginWorkspaceRead(notebookId, captured, sessionCoordinator.current());
             const value = await api!.workspace(notebookId, captured, signal);
+            sourceStore.acceptWorkspaceRead(read, value, readTurnContext(), sessionCoordinator.current());
             // A route open, never a list prefetch. Stamp failure must not hide a successful read.
             void api!.recordOpen(notebookId, captured, signal).catch(() => { });
             return value;

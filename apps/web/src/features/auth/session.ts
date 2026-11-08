@@ -10,12 +10,14 @@ export type SessionSnapshot = Readonly<{
     privacyChanged: boolean;
     providerNeedsReauth: boolean;
     providerChecking: boolean;
+    /** Monotonic invalidation/verification fence, never provider-account identity. */
+    providerEvidenceRevision: number;
     issue: ConnectionIssue;
     capabilities: ClientCapabilitiesV1 | null;
 }>;
 /** One mounted application owns the coordinator. Metadata is not identity or authority. */
 export function createSessionController(onRetire: (epoch: number) => void = () => { }) {
-    let snapshot: SessionSnapshot = { phase: 'bootstrapping', ready: false, busy: false, hasWorkspace: false, privacyChanged: false, providerNeedsReauth: false, providerChecking: false, issue: null, capabilities: null };
+    let snapshot: SessionSnapshot = { phase: 'bootstrapping', ready: false, busy: false, hasWorkspace: false, privacyChanged: false, providerNeedsReauth: false, providerChecking: false, providerEvidenceRevision: 0, issue: null, capabilities: null };
     let config: RuntimeConfig | null = null;
     let client: SessionClient | null = null;
     let raw: WebTransport | null = null;
@@ -289,7 +291,7 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
                         throw new TransportResponseError('retired');
                     if (code === 'NEEDS_REAUTH' && authEvidence === sessionCoordinator.evidence() && snapshot.phase === 'authenticated' && snapshot.ready) {
                         providerRevision++;
-                        update({ providerNeedsReauth: true });
+                        update({ providerNeedsReauth: true, providerEvidenceRevision: providerRevision });
                     }
                     else if (response.status === 401 && ['LEGACY_INVALID_PASSWORD', 'AUTH_REQUIRED', 'REFRESH_REJECTED'].includes(code ?? '')) {
                         suspend();
@@ -315,8 +317,8 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
         if (!context?.ready)
             return false;
         const evidence = sessionCoordinator.evidence();
-        const revision = providerRevision;
-        update({ providerChecking: true });
+        const revision = ++providerRevision;
+        update({ providerChecking: true, providerEvidenceRevision: revision });
         const task = (async () => {
             try {
                 // Deliberate verification only: this existing GET may resume confirmed read-phase jobs.
@@ -331,7 +333,8 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
                 const data = value as Record<string, unknown>;
                 if (data.state !== 'connected' || !['reason', 'last_verified_at', 'account_label'].every(key => data[key] === undefined || data[key] === null || typeof data[key] === 'string') || (data.quota !== undefined && data.quota !== null && (!Number.isSafeInteger(data.quota) || (data.quota as number) < 0)))
                     return false;
-                update({ providerNeedsReauth: false });
+                providerRevision++;
+                update({ providerNeedsReauth: false, providerEvidenceRevision: providerRevision });
                 return true;
             }
             catch {
