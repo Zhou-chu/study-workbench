@@ -1,0 +1,30 @@
+{
+  "name": "@study/bff",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/server.d.ts",
+      "node": {
+        "import": "./dist/server.js"
+      },
+      "default": null
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --project tsconfig.build.json",
+    "lint": "eslint src/ test/",
+    "start": "node dist/cli.js",
+    "pretypecheck": "npm -w @study/contracts run build",
+    "prebuild": "npm -w @study/contracts run build"
+  },
+  "dependencies": {
+    "@study/contracts": "0.1.0"
+  }
+}
