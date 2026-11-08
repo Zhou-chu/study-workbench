@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, createEvent, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { libraryServer, renderLibrary } from '../../test/library-harness';
 import { legacySource, sourceDetail, insight } from '../../test/library-fixtures';
@@ -253,6 +253,11 @@ it.each([1, 2])('I4 implicit submit at import step %s cannot dispatch before opt
     const h = await renderLibrary();
     fireEvent.click(await screen.findByRole('button', { name: 'Add Source' }));
     fireEvent.change(screen.getByLabelText('URL(s) *'), { target: { value: 'https://source.example/review' } });
+    const title = within(screen.getByRole('dialog')).getByRole('textbox', { name: 'Import title' });
+    fireEvent.keyDown(title, { key: 'Enter' });
+    fireEvent.submit(title.closest('form')!);
+    await act(async () => { });
+    expect(requests.some(r => r.method === 'POST')).toBe(false);
     if (step === 2)
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     const form = screen.getByRole('dialog').querySelector('form')!;
@@ -276,7 +281,9 @@ it('I4 final review rejects composing and over-limit submissions, then latches o
     fireEvent.click(screen.getByLabelText('Embed Content'));
     const form = screen.getByRole('dialog').querySelector('form')!;
     fireEvent.compositionStart(form);
-    fireEvent.keyDown(form, { key: 'Enter', isComposing: true, keyCode: 229 });
+    const composingEnter = createEvent.keyDown(form, { key: 'Enter', isComposing: true, keyCode: 229, bubbles: true, cancelable: true });
+    fireEvent(form, composingEnter);
+    expect(composingEnter.defaultPrevented).toBe(true);
     fireEvent.submit(form);
     await act(async () => { });
     expect(requests.some(r => r.method === 'POST')).toBe(false);
@@ -296,4 +303,49 @@ it('I4 final review rejects composing and over-limit submissions, then latches o
     expect(body.get('transformations')).toBe('["transformation:summary"]');
     expect(body.get('embed')).toBe('true');
     await act(async () => release(json(sourceDetail)));
+});
+it.each([['link', false], ['link', true], ['text', false], ['text', true]] as const)('R1 %s textarea preserves Enter default action; shift=%s', async (type, shiftKey) => {
+    const requests = libraryServer();
+    const h = await renderLibrary();
+    fireEvent.click(await screen.findByRole('button', { name: 'Add Source' }));
+    if (type === 'text')
+        fireEvent.click(screen.getByRole('button', { name: 'Enter Text' }));
+    const textarea = screen.getByLabelText(type === 'link' ? 'URL(s) *' : 'Source text');
+    fireEvent.change(textarea, { target: { value: type === 'link' ? 'https://source.example/first' : 'First paragraph' } });
+    textarea.focus();
+    const enter = createEvent.keyDown(textarea, { key: 'Enter', code: 'Enter', shiftKey, bubbles: true, cancelable: true });
+    expect(fireEvent(textarea, enter)).toBe(true);
+    expect(enter.defaultPrevented).toBe(false);
+    fireEvent.keyUp(textarea, { key: 'Enter', code: 'Enter', shiftKey });
+    await act(async () => { });
+    expect(requests.some(r => r.method === 'POST')).toBe(false);
+    expect(h.workbench.drafts.library.getSnapshot().find(r => r.input.kind === 'import')?.attempt).toBe(0);
+    // JSDOM does not insert native textarea newlines; this checks the actual bubbling cancellation boundary.
+});
+it('R1 ordinary Enter permits type, Next and Back button activation without submitting', async () => {
+    const requests = libraryServer();
+    const h = await renderLibrary();
+    fireEvent.click(await screen.findByRole('button', { name: 'Add Source' }));
+    const activate = (button: HTMLElement) => {
+        expect(button).toHaveAttribute('type', 'button');
+        button.focus();
+        const enter = createEvent.keyDown(button, { key: 'Enter', code: 'Enter', bubbles: true, cancelable: true });
+        expect(fireEvent(button, enter)).toBe(true);
+        expect(enter.defaultPrevented).toBe(false);
+        fireEvent.keyUp(button, { key: 'Enter', code: 'Enter' });
+        // JSDOM has no native keyboard-to-click default action. Model the permitted keyboard click explicitly.
+        fireEvent.click(button, { detail: 0 });
+    };
+    activate(screen.getByRole('button', { name: 'Enter Text' }));
+    fireEvent.change(screen.getByLabelText('Source text'), { target: { value: 'Reviewed keyboard input' } });
+    activate(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText('2 / 3')).toBeVisible();
+    activate(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.getByText('1 / 3')).toBeVisible();
+    activate(screen.getByRole('button', { name: 'Next' }));
+    activate(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText('3 / 3')).toBeVisible();
+    await act(async () => { });
+    expect(requests.some(r => r.method === 'POST')).toBe(false);
+    expect(h.workbench.drafts.library.getSnapshot().find(r => r.input.kind === 'import')?.attempt).toBe(0);
 });

@@ -46,7 +46,8 @@ export function SourceImportDialog({ notebookId, open: controlled, onOpenChange,
                 if (id && latest?.kind === 'import' && !composing.current && validImportInput(latest) && reviewedOptions(latest) && !locked)
                     void c.run(id);
             }} onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }} onKeyDown={e => {
-                if (e.key === 'Enter' && (p.step !== 3 || composing.current || e.nativeEvent.isComposing || e.keyCode === 229))
+                // Keep ordinary textarea/button defaults; onSubmit enforces final review.
+                if (e.key === 'Enter' && (composing.current || e.nativeEvent.isComposing || e.keyCode === 229))
                     e.preventDefault();
             }}>
  <fieldset disabled={locked}><legend>{p.step} / 3</legend>
