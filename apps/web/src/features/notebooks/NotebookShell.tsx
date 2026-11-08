@@ -1,5 +1,8 @@
 import { useState, type ReactNode } from 'react';
-import { useParams } from 'react-router';
+import { useLocation } from 'react-router';
+import { notebookIdFromPathname } from '../../app/notebook-route';
+import { SourcesPanel } from '../sources/SourcesPanel';
+import type { SourceReadIntent } from '../sources/source-selection';
 import { useWorkbenchDraft } from '../../app/WorkbenchSession';
 import { AppChrome } from '../../app/AppChrome';
 import { WorkspaceLayout } from '../../app/WorkspaceLayout';
@@ -9,17 +12,17 @@ import { useI18n } from '../../i18n';
 import { StatusBadge } from '../../ui/StatusBadge';
 import { SourceScaffold, ConversationScaffold, StudioScaffold, ReaderScaffold } from './ScaffoldPanels';
 import type { PreviewContent } from './ScaffoldPanels';
-import { WorkspaceSources, WorkspaceHistory, WorkspaceScope } from './WorkspaceRecords';
+import { WorkspaceHistory, WorkspaceScope } from './WorkspaceRecords';
 
-/** B1 scaffolding only. No source/selection mutations or model requests. */
-export function NotebookShell({ previewContent, readStatus, notebookId: routeNotebookId }: { previewContent?: PreviewContent; readStatus?: ReactNode; notebookId?: string }) {
+/** Source controls are live; conversation, studio and reader integration have separate owners. */
+export function NotebookShell({ previewContent, readStatus, notebookId: routeNotebookId, onSourceRead }: { onSourceRead?: (intent: SourceReadIntent) => void; previewContent?: PreviewContent; readStatus?: ReactNode; notebookId?: string }) {
   const { workspace } = useAppData();
   const { shell, t } = useI18n();
   const [activeSection, setSection] = useState<WorkspaceSection>('conversation');
   const [readerOpen, setReaderOpen] = useState(false);
   const [previewQuestion, setPreviewQuestion] = useState('');
-  const params=useParams();
-  const notebookId=routeNotebookId??params.notebookId;
+  const location=useLocation();
+  const notebookId=routeNotebookId??notebookIdFromPathname(location.pathname)??undefined;
   const [questionSession,setQuestionSession]=useState('question');
   const draft=useWorkbenchDraft(notebookId??'preview',questionSession);
   const question=draft.connected?(draft.draft?.question??''):previewQuestion;
@@ -29,7 +32,7 @@ export function NotebookShell({ previewContent, readStatus, notebookId: routeNot
   return <AppChrome title={name}>
     <div className="workspace-heading">
       <div><span className="eyebrow">Notebook / {workspace ? '01' : '00'}</span><h1>{name}</h1></div>
-      <StatusBadge state="unknown" label={shell.notConnected} />
+      {!workspace && <StatusBadge state="unknown" label={shell.notConnected} />}
     </div>
     {readStatus}
     {workspace && <WorkspaceScope workspace={workspace}/>}
@@ -37,7 +40,7 @@ export function NotebookShell({ previewContent, readStatus, notebookId: routeNot
       activeSection={activeSection}
       onSectionChange={setSection}
       readerOpen={readerOpen}
-      sources={workspace ? <WorkspaceSources workspace={workspace}/> : <SourceScaffold {...contentProps} onRead={() => setReaderOpen(true)} />}
+      sources={workspace ? <SourcesPanel key={notebookId} notebookId={notebookId??'preview'} workspace={workspace} onRead={intent=>{onSourceRead?.(intent);setReaderOpen(true);}}/> : <SourceScaffold {...contentProps} onRead={() => setReaderOpen(true)} />}
       conversation={<ConversationScaffold history={workspace ? <WorkspaceHistory workspace={workspace}/> : undefined} {...contentProps} question={question} readOnly={draft.retired} onNewDraft={()=>setQuestionSession(`question:${crypto.randomUUID()}`)} onQuestionChange={setQuestion} onRead={() => setReaderOpen(true)} />}
       studio={<StudioScaffold />}
       reader={<ReaderScaffold {...contentProps} onClose={() => setReaderOpen(false)} />}

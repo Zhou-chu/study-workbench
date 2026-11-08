@@ -68,3 +68,10 @@ export function useNotebookCreationDrafts() {
     }, [workbench, id]);
     return { drafts, state, activate: (value: DraftId) => workbench?.navigation.activate(value), navigationPending: () => !!workbench?.navigation.getSnapshot().status };
 }
+
+/** Read-only subscription: provider reauthentication is independent of app readiness. */
+export function useWorkbenchSnapshot() {
+ const value=useContext(Context);
+ const state=useSyncExternalStore(value?.controller.subscribe??(()=>()=>{}),value?.controller.getSnapshot??(()=>null),()=>null);
+ return {state,controller:value?.controller};
+}
