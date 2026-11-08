@@ -1,3 +1,7 @@
+import type { TurnView } from '@study/contracts';
+import type { CitationHandler } from '../chat/Message';
+import type { ConversationRetrieval, OutlineOrigin } from '../chat/ConversationPanel';
+import { ConversationPanel } from '../chat/ConversationPanel';
 import { useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import { notebookIdFromPathname } from '../../app/notebook-route';
@@ -12,10 +16,10 @@ import { useI18n } from '../../i18n';
 import { StatusBadge } from '../../ui/StatusBadge';
 import { SourceScaffold, ConversationScaffold, StudioScaffold, ReaderScaffold } from './ScaffoldPanels';
 import type { PreviewContent } from './ScaffoldPanels';
-import { WorkspaceHistory, WorkspaceScope } from './WorkspaceRecords';
+import { WorkspaceScope } from './WorkspaceRecords';
 
-/** Source controls are live; conversation, studio and reader integration have separate owners. */
-export function NotebookShell({ previewContent, readStatus, notebookId: routeNotebookId, onSourceRead }: { onSourceRead?: (intent: SourceReadIntent) => void; previewContent?: PreviewContent; readStatus?: ReactNode; notebookId?: string }) {
+/** Sources and conversation are live; Reader and Studio adapters have explicit downstream seams. */
+export function NotebookShell({ previewContent, readStatus, notebookId: routeNotebookId, onSourceRead, onCitation, onSaveAnswer, onOutlineReady, retrieval }: { onCitation?: CitationHandler; onSaveAnswer?: (turn:TurnView)=>void; onOutlineReady?: (turn:TurnView,origin:OutlineOrigin)=>void; retrieval?: ConversationRetrieval; onSourceRead?: (intent: SourceReadIntent) => void; previewContent?: PreviewContent; readStatus?: ReactNode; notebookId?: string }) {
   const { workspace } = useAppData();
   const { shell, t } = useI18n();
   const [activeSection, setSection] = useState<WorkspaceSection>('conversation');
@@ -41,7 +45,7 @@ export function NotebookShell({ previewContent, readStatus, notebookId: routeNot
       onSectionChange={setSection}
       readerOpen={readerOpen}
       sources={workspace ? <SourcesPanel key={notebookId} notebookId={notebookId??'preview'} workspace={workspace} onRead={intent=>{onSourceRead?.(intent);setReaderOpen(true);}}/> : <SourceScaffold {...contentProps} onRead={() => setReaderOpen(true)} />}
-      conversation={<ConversationScaffold history={workspace ? <WorkspaceHistory workspace={workspace}/> : undefined} {...contentProps} question={question} readOnly={draft.retired} onNewDraft={()=>setQuestionSession(`question:${crypto.randomUUID()}`)} onQuestionChange={setQuestion} onRead={() => setReaderOpen(true)} />}
+      conversation={workspace ? <ConversationPanel key={notebookId} notebookId={notebookId??'preview'} workspace={workspace} onCitation={onCitation} onSaveAnswer={onSaveAnswer} onOutlineReady={onOutlineReady} retrieval={retrieval}/> : <ConversationScaffold history={undefined} {...contentProps} question={question} readOnly={draft.retired} onNewDraft={()=>setQuestionSession(`question:${crypto.randomUUID()}`)} onQuestionChange={setQuestion} onRead={() => setReaderOpen(true)} />}
       studio={<StudioScaffold />}
       reader={<ReaderScaffold {...contentProps} onClose={() => setReaderOpen(false)} />}
     />

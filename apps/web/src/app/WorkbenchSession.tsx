@@ -10,7 +10,7 @@ import { ConnectionState } from '../features/auth/ConnectionState';
 import { RouterNavigationGuard, UnsavedNavigationDialog } from './UnsavedNavigationDialog';
 import { AppDataBoundary, useAppData, useAppDrafts } from './providers';
 import { useI18n } from '../i18n';
-function createWorkbench(drafts: DraftRegistry, clearServerData: () => void) { return { drafts, navigation: createNavigationController(drafts), controller: createSessionController(epoch => { drafts.retireContext(epoch); clearServerData(); }) }; }
+function createWorkbench(drafts: DraftRegistry, clearServerData: () => void) { const controller=createSessionController(epoch => { drafts.retireContext(epoch); clearServerData(); }); controller.subscribe(()=>drafts.turns.refreshFences()); return { drafts, navigation: createNavigationController(drafts), controller }; }
 type Workbench = ReturnType<typeof createWorkbench>;
 const Context = createContext<Workbench | null>(null);
 export function WorkbenchSession({ children }: {

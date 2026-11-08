@@ -172,3 +172,26 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .selected-search label,.dialog-content form label {display:grid;gap:.5rem;}
 .selected-search input,.dialog-content form input {min-height:44px;width:100%;padding:.5rem;background:var(--surface);color:var(--text);border:1px solid var(--interactive-border);}
 .remote-sources summary {min-height:44px;cursor:pointer;}
+
+/* Conversation content scrolls locally; controls retain the shell's 44px targets. */
+.chat-message { padding: 24px; border-bottom: 1px solid var(--decorative-line); overflow-wrap: anywhere; }
+.chat-question { font-weight: 650; white-space: pre-wrap; }
+.chat-answer { white-space: pre-wrap; line-height: 1.7; margin: 16px 0; }
+.chat-citations { list-style: none; margin: 16px 0; padding: 0; }
+.chat-citations li { border-left: 2px solid var(--interactive-border); padding-left: 12px; margin-bottom: 16px; }
+.chat-message details summary, .chat-scope summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.chat-message button { margin: 4px 8px 4px 0; }
+.chat-warning { border-left: 2px solid var(--interactive-border); padding-left: 12px; font-weight: 600; }
+.chat-scope { margin-bottom: 12px; }
+.chat-scope p { margin: 4px 0; font-size: 14px; }
+.chat-admission { padding: 8px 24px; border-top: 1px solid var(--decorative-line); max-height: 25vh; overflow: auto; }
+.chat-admission p { font-size: 14px; margin: 6px 0; }
+.chat-outline-hint { padding: 0 24px; margin: 4px 0 12px; }
+@media (max-width: 767px) { .chat-message { padding: 16px; } .composer-footer { flex-wrap: wrap; } .chat-admission { padding: 8px 16px; } }
+
+.markdown { white-space: normal; overflow-wrap: anywhere; }
+.markdown pre, .markdown-table, .markdown .katex-display { max-width: 100%; overflow-x: auto; }
+.markdown pre { background: var(--surface); border: 1px solid var(--decorative-line); padding: 12px; }
+.markdown table { border-collapse: collapse; }
+.markdown th, .markdown td { border: 1px solid var(--interactive-border); padding: 8px 12px; }
+.markdown a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }

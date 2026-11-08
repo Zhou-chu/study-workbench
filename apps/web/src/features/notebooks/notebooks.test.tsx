@@ -127,14 +127,14 @@ it('retains workspace and the same question node on refresh failure and theme ch
     let fail = false;
     mount('/notebooks/notebook%3Aalpha', r => r.path.endsWith('/workspace-view') && fail ? Promise.resolve(json({}, 503)) : Promise.resolve(undefined));
     await screen.findByText('Raw original');
-    const draft = screen.getByRole('textbox', { name: 'Question draft' });
+    const draft = screen.getByRole('textbox', { name: 'Question' });
     fireEvent.change(draft, { target: { value: 'Keep question' } });
     fail = true;
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     await screen.findByRole('alert');
     fireEvent.click(screen.getByRole('button', { name: 'Dark' }));
     expect(screen.getByText('Classic without versions')).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Question draft' })).toBe(draft);
+    expect(screen.getByRole('textbox', { name: 'Question' })).toBe(draft);
     expect(draft).toHaveValue('Keep question');
 });
 it('keeps every retained pending route and search deep link instead of falling back to home or issuing provider work', async () => {
@@ -219,6 +219,9 @@ it('connects the real B2 capability-gated session and A4 transport to home and A
             return json({ contract_version: 'client-capabilities-v1', supported_contracts: ['workspace-view-v1'], limits: { source_upload_max_bytes: 50, portable: { max_archive_bytes: 10, max_expanded_bytes: 20, max_entity_bytes: 10, max_manifest_bytes: 10, max_request_bytes: 30, multipart_overhead_bytes: 10, max_entries: 2, max_compression_ratio: 5 } } });
         if (path === '/api/notebooks')
             return json(notebookRows);
+        // Live B5 entry reads only configuration and canonical history.
+        if (path === '/api/models/defaults') return json({default_chat_model:null});
+        if (path.startsWith('/api/personal/chats/') && path.endsWith('/turns') && request.method==='GET') return json([]);
         if (path === '/api/recently-viewed')
             return json([]);
         if (path === '/api/personal/notebooks/notebook%3Aalpha/workspace-view')
@@ -333,6 +336,9 @@ it('makes the old form usable as a new blank intent only after actual B2 applica
             return json({ contract_version: 'client-capabilities-v1', supported_contracts: ['workspace-view-v1'], limits: { source_upload_max_bytes: 50, portable: { max_archive_bytes: 10, max_expanded_bytes: 20, max_entity_bytes: 10, max_manifest_bytes: 10, max_request_bytes: 30, multipart_overhead_bytes: 10, max_entries: 2, max_compression_ratio: 5 } } });
         if (path === '/api/notebooks')
             return failRead ? json({ error: { code: 'AUTH_REQUIRED' } }, 401) : json(notebookRows);
+        // Live B5 entry reads only configuration and canonical history.
+        if (path === '/api/models/defaults') return json({default_chat_model:null});
+        if (path.startsWith('/api/personal/chats/') && path.endsWith('/turns') && request.method==='GET') return json([]);
         if (path === '/api/recently-viewed')
             return json([]);
         throw new Error(`Unexpected ${request.method} ${path}`);
@@ -378,6 +384,9 @@ function mountRealCreation(initialEntries = ['/notebooks'], initialIndex = initi
             return json({ contract_version: 'client-capabilities-v1', supported_contracts: ['workspace-view-v1'], limits: { source_upload_max_bytes: 50, portable: { max_archive_bytes: 10, max_expanded_bytes: 20, max_entity_bytes: 10, max_manifest_bytes: 10, max_request_bytes: 30, multipart_overhead_bytes: 10, max_entries: 2, max_compression_ratio: 5 } } });
         if (path === '/api/notebooks')
             return request.method === 'POST' ? (post ? post(request) : json({ ...notebookRows[0], id: 'notebook:fresh-result' })) : json(notebookRows);
+        // Live B5 entry reads only configuration and canonical history.
+        if (path === '/api/models/defaults') return json({default_chat_model:null});
+        if (path.startsWith('/api/personal/chats/') && path.endsWith('/turns') && request.method==='GET') return json([]);
         if (path === '/api/recently-viewed')
             return json([]);
         if (path.endsWith('/workspace-view'))

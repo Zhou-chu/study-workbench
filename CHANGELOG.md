@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Conversation-first Notebook SPA (2026-11-08).** Add continuous, safely rendered Markdown answers, exact-scope Ask/Outline, IME-safe composition and revision-bound draft clearing across all 14 locales. Application-owned bounded turn recovery preserves uncertain writes across route changes, observes one known operation with genuine SSE stages, and checks canonical history without replay or generic job recovery. Google verification and fresh app/provider fences stay separate; Reader/Studio and hybrid controls keep explicit downstream seams. Real browser/provider/runtime acceptance remains pending. Pin the migrated workspace KaTeX tree to 0.18.2 for GHSA-238p-pmpm-9mq7; retained legacy frontend dependencies are unchanged.
+
+
 - Rebuild Notebook sources, version details, explicit question selection, local uploads, web discovery and capability-gated Google source actions. Retain original files and operation identities in app memory, reconcile uncertain uploads through read-only workspace evidence, and keep source reading separate from question scope. Real browser upload acceptance remains pending.
 
 - Connect the independent Notebook home, name search, server-backed recent activity, exact-ID creation/navigation and public workspace reads. Preserve classic source/history visibility and publish an operation-level migration ledger; unfinished study and settings features remain explicitly pending. Retired creation drafts have an explicit separate blank-form action, app-lifetime input/uncertainty retention across routes, and captured keep-and-continue navigation without unlocking uncertain requests.
