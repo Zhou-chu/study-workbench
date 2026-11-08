@@ -279,12 +279,13 @@ it('does not claim a parent task is known when the POST receipt is missing',asyn
 });
 
 
-it('replaces a persisted running Google row in place with the original strictly confirmed completion after remount', async () => {
+it.each(['unmapped', 'remote', 'local'] as const)('replaces a persisted running Google row in place with the original strictly confirmed completion after remount (%s mapping)', async mapping => {
     let dto: Record<string, unknown> = {}, finished = false, events!: ReadableStreamDefaultController<Uint8Array>;
-    const w = sourceWorkspace();
-    w.selection = { engine: 'notebooklm', selection_origin: 'remote', source_version_ids: [], remote_source_ids: ['remote'] };
+    const w = sourceWorkspace(), local = mapping === 'local';
+    const originalScope = { selection_origin: local ? 'local' : 'remote', source_version_ids: local ? ['v-old'] : [], remote_source_ids: local ? [] : ['remote'], remote_notebook_id: 'rn' };
+    w.selection = { engine: 'notebooklm', ...originalScope };
     w.link = { remote_notebook_id: 'rn', connection_id: 'connection' };
-    const turn = () => ({ turn_id: 'google-turn', notebook_id: 'n', chat_session_id: 'v1_n', engine: 'notebooklm', message: String(dto.message), status: finished ? 'succeeded' : 'running', answer: finished ? 'Verified Google answer' : null, scope_snapshot: { ...(finished ? { engine: 'notebooklm' } : {}), selection_origin: 'remote', source_version_ids: [], remote_source_ids: ['remote'], remote_notebook_id: 'rn' }, citations: [] });
+    const turn = () => ({ turn_id: 'google-turn', notebook_id: 'n', chat_session_id: 'v1_n', engine: 'notebooklm', message: String(dto.message), status: finished ? 'succeeded' : 'running', answer: finished ? 'Verified Google answer' : null, scope_snapshot: finished ? { ...originalScope, engine: 'notebooklm', ...(mapping === 'unmapped' ? {} : { source_version_ids: ['v-old'], remote_source_ids: ['remote'] }), mappings: mapping === 'unmapped' ? [] : [{ source_link_id: 'sl', source_version_id: 'v-old', remote_source_id: 'remote', mapping_method: 'upload_hash', last_checked_at: null }], scope_hash: 'resolved-scope' } : originalScope, citations: [], evidence_ids: [], created_at: '2026-11-08T10:00:00Z' });
     function Consumer() { const [shown, setShown] = useState(true); return <><button onClick={() => setShown(!shown)}>Toggle panel</button>{shown && <ConversationPanel notebookId="n" workspace={{ ...w, turns: Object.keys(dto).length ? [turn(), { turn_id: 'after', message: 'Following message', answer: 'Following answer', status: 'succeeded' }] : [] }}/>}</>; }
     const requests = sourceServer(async r => {
         const path = new URL(r.url).pathname;
@@ -312,6 +313,8 @@ it('replaces a persisted running Google row in place with the original strictly 
     await screen.findByText('Verified Google answer');
     expect(screen.queryByRole('button', { name: 'Check original request (read only)' })).not.toBeInTheDocument();
     expect([...document.querySelectorAll('.chat-message .chat-question')].map(n => n.textContent)).toEqual(['Original Google question', 'Following message']);
+    expect(dto.source_version_ids).toEqual(originalScope.source_version_ids);
+    expect(dto.remote_source_ids).toEqual(originalScope.remote_source_ids);
     expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
     expect(requests.filter(r => new URL(r.url).pathname.endsWith('/events'))).toHaveLength(1);
     expect(requests.some(r => r.url.includes('/jobs/'))).toBe(false);
