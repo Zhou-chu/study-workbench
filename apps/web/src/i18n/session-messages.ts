@@ -19,7 +19,10 @@ export const sessionMessages = {
     "leave": "Leave without saving",
     "blocked": "This save needs checking first. Pending or uncertain results cannot be discarded here.",
     "skipMain": "Skip to main content",
-    "studyNotice": "Study actions are still being connected."
+    "studyNotice": "Study actions are still being connected.",
+    "newQuestion": "Start a new question draft",
+    "retiredDraft": "This editor belongs to an earlier sign-in. Its draft stays unchanged.",
+    "verifyGoogle": "Verify Google connection"
   },
   "zh-CN": {
     "signIn": "登录",
@@ -41,7 +44,10 @@ export const sessionMessages = {
     "leave": "不保存并离开",
     "blocked": "请先核对保存结果，不能在此丢弃待处理或不确定的操作。",
     "skipMain": "跳到主要内容",
-    "studyNotice": "学习功能仍在接入中。"
+    "studyNotice": "学习功能仍在接入中。",
+    "newQuestion": "开始新的问题草稿",
+    "retiredDraft": "此编辑器属于先前的登录范围，原草稿保持不变。",
+    "verifyGoogle": "验证 Google 连接"
   },
   "zh-TW": {
     "signIn": "登入",
@@ -63,7 +69,10 @@ export const sessionMessages = {
     "leave": "不儲存並離開",
     "blocked": "請先核對儲存結果，不能在此捨棄待處理或不確定的操作。",
     "skipMain": "跳至主要內容",
-    "studyNotice": "學習功能仍在接入中。"
+    "studyNotice": "學習功能仍在接入中。",
+    "newQuestion": "開始新的問題草稿",
+    "retiredDraft": "此編輯器屬於先前的登入範圍，原草稿保持不變。",
+    "verifyGoogle": "驗證 Google 連線"
   },
   "pt-BR": {
     "signIn": "Entrar",
@@ -85,7 +94,10 @@ export const sessionMessages = {
     "leave": "Sair sem salvar",
     "blocked": "Verifique primeiro o resultado do salvamento. Resultados pendentes ou incertos não podem ser descartados aqui.",
     "skipMain": "Ir para o conteúdo principal",
-    "studyNotice": "As funções de estudo ainda estão sendo conectadas."
+    "studyNotice": "As funções de estudo ainda estão sendo conectadas.",
+    "newQuestion": "Iniciar novo rascunho de pergunta",
+    "retiredDraft": "Este editor pertence a um acesso anterior. Seu rascunho permanece inalterado.",
+    "verifyGoogle": "Verificar conexão com o Google"
   },
   "ja-JP": {
     "signIn": "ログイン",
@@ -107,7 +119,10 @@ export const sessionMessages = {
     "leave": "保存せずに離れる",
     "blocked": "先に保存結果を確認してください。処理中や不確定な結果はここで破棄できません。",
     "skipMain": "メインコンテンツへ移動",
-    "studyNotice": "学習機能はまだ接続作業中です。"
+    "studyNotice": "学習機能はまだ接続作業中です。",
+    "newQuestion": "新しい質問の下書きを始める",
+    "retiredDraft": "このエディターは以前のログイン範囲に属します。元の下書きは変更されません。",
+    "verifyGoogle": "Google 接続を確認"
   },
   "it-IT": {
     "signIn": "Accedi",
@@ -129,7 +144,10 @@ export const sessionMessages = {
     "leave": "Esci senza salvare",
     "blocked": "Verifica prima il salvataggio. I risultati in sospeso o incerti non possono essere scartati qui.",
     "skipMain": "Vai al contenuto principale",
-    "studyNotice": "Le funzioni di studio sono ancora in fase di collegamento."
+    "studyNotice": "Le funzioni di studio sono ancora in fase di collegamento.",
+    "newQuestion": "Inizia una nuova bozza di domanda",
+    "retiredDraft": "Questo editor appartiene a un accesso precedente. La sua bozza resta invariata.",
+    "verifyGoogle": "Verifica la connessione a Google"
   },
   "fr-FR": {
     "signIn": "Se connecter",
@@ -151,7 +169,10 @@ export const sessionMessages = {
     "leave": "Quitter sans enregistrer",
     "blocked": "Vérifiez d’abord l’enregistrement. Les résultats en attente ou incertains ne peuvent pas être abandonnés ici.",
     "skipMain": "Aller au contenu principal",
-    "studyNotice": "Les fonctions d’étude sont encore en cours de connexion."
+    "studyNotice": "Les fonctions d’étude sont encore en cours de connexion.",
+    "newQuestion": "Créer un nouveau brouillon de question",
+    "retiredDraft": "Cet éditeur appartient à une connexion précédente. Son brouillon reste inchangé.",
+    "verifyGoogle": "Vérifier la connexion Google"
   },
   "ru-RU": {
     "signIn": "Войти",
@@ -173,7 +194,10 @@ export const sessionMessages = {
     "leave": "Выйти без сохранения",
     "blocked": "Сначала проверьте сохранение. Ожидающие или неопределённые результаты нельзя отбросить здесь.",
     "skipMain": "Перейти к основному содержимому",
-    "studyNotice": "Учебные функции ещё подключаются."
+    "studyNotice": "Учебные функции ещё подключаются.",
+    "newQuestion": "Начать новый черновик вопроса",
+    "retiredDraft": "Этот редактор относится к прежнему входу. Его черновик остаётся без изменений.",
+    "verifyGoogle": "Проверить соединение с Google"
   },
   "bn-IN": {
     "signIn": "প্রবেশ করুন",
@@ -195,7 +219,10 @@ export const sessionMessages = {
     "leave": "সংরক্ষণ না করে চলে যান",
     "blocked": "আগে সংরক্ষণের ফল যাচাই করুন। অপেক্ষমাণ বা অনিশ্চিত ফল এখানে বাতিল করা যায় না।",
     "skipMain": "মূল বিষয়বস্তুতে যান",
-    "studyNotice": "পড়াশোনার সুবিধাগুলি এখনও সংযুক্ত করা হচ্ছে।"
+    "studyNotice": "পড়াশোনার সুবিধাগুলি এখনও সংযুক্ত করা হচ্ছে।",
+    "newQuestion": "নতুন প্রশ্নের খসড়া শুরু করুন",
+    "retiredDraft": "এই সম্পাদক আগের লগইনের অন্তর্গত। তার খসড়া অপরিবর্তিত থাকবে।",
+    "verifyGoogle": "Google সংযোগ যাচাই করুন"
   },
   "ca-ES": {
     "signIn": "Inicia la sessió",
@@ -217,7 +244,10 @@ export const sessionMessages = {
     "leave": "Surt sense desar",
     "blocked": "Comprova primer el desament. Els resultats pendents o incerts no es poden descartar aquí.",
     "skipMain": "Ves al contingut principal",
-    "studyNotice": "Les funcions d’estudi encara s’estan connectant."
+    "studyNotice": "Les funcions d’estudi encara s’estan connectant.",
+    "newQuestion": "Inicia un esborrany de pregunta nou",
+    "retiredDraft": "Aquest editor pertany a un accés anterior. El seu esborrany es manté intacte.",
+    "verifyGoogle": "Verifica la connexió amb Google"
   },
   "es-ES": {
     "signIn": "Iniciar sesión",
@@ -239,7 +269,10 @@ export const sessionMessages = {
     "leave": "Salir sin guardar",
     "blocked": "Comprueba primero el guardado. Los resultados pendientes o inciertos no pueden descartarse aquí.",
     "skipMain": "Saltar al contenido principal",
-    "studyNotice": "Las funciones de estudio aún se están conectando."
+    "studyNotice": "Las funciones de estudio aún se están conectando.",
+    "newQuestion": "Iniciar un nuevo borrador de pregunta",
+    "retiredDraft": "Este editor pertenece a un acceso anterior. Su borrador se mantiene intacto.",
+    "verifyGoogle": "Verificar conexión con Google"
   },
   "de-DE": {
     "signIn": "Anmelden",
@@ -261,7 +294,10 @@ export const sessionMessages = {
     "leave": "Ohne Speichern verlassen",
     "blocked": "Zuerst das Speichern prüfen. Ausstehende oder unklare Ergebnisse können hier nicht verworfen werden.",
     "skipMain": "Zum Hauptinhalt springen",
-    "studyNotice": "Die Lernfunktionen werden noch verbunden."
+    "studyNotice": "Die Lernfunktionen werden noch verbunden.",
+    "newQuestion": "Neuen Frageentwurf beginnen",
+    "retiredDraft": "Dieser Editor gehört zu einer früheren Anmeldung. Sein Entwurf bleibt unverändert.",
+    "verifyGoogle": "Google-Verbindung überprüfen"
   },
   "pl-PL": {
     "signIn": "Zaloguj się",
@@ -283,7 +319,10 @@ export const sessionMessages = {
     "leave": "Wyjdź bez zapisywania",
     "blocked": "Najpierw sprawdź zapis. Oczekujących lub niepewnych wyników nie można tutaj odrzucić.",
     "skipMain": "Przejdź do głównej treści",
-    "studyNotice": "Funkcje nauki są nadal podłączane."
+    "studyNotice": "Funkcje nauki są nadal podłączane.",
+    "newQuestion": "Rozpocznij nowy szkic pytania",
+    "retiredDraft": "Ten edytor należy do wcześniejszego logowania. Jego szkic pozostaje bez zmian.",
+    "verifyGoogle": "Zweryfikuj połączenie z Google"
   },
   "tr-TR": {
     "signIn": "Oturum aç",
@@ -305,6 +344,9 @@ export const sessionMessages = {
     "leave": "Kaydetmeden çık",
     "blocked": "Önce kaydetme sonucunu kontrol edin. Bekleyen veya belirsiz sonuçlar burada atılamaz.",
     "skipMain": "Ana içeriğe atla",
-    "studyNotice": "Çalışma özellikleri hâlâ bağlanıyor."
+    "studyNotice": "Çalışma özellikleri hâlâ bağlanıyor.",
+    "newQuestion": "Yeni soru taslağı başlat",
+    "retiredDraft": "Bu düzenleyici önceki oturuma aittir. Taslağı değişmeden kalır.",
+    "verifyGoogle": "Google bağlantısını doğrula"
   }
 } as const;

@@ -1,19 +1,21 @@
 import type { ClientCapabilitiesV1, RuntimeConfig } from '@study/contracts';
 import { classifyAuthFailure, createSessionClient, createWebTransport, invalidateTurnContext, publishTurnTarget, readTurnContext, sessionCoordinator, suspendTurnTarget, TransportResponseError, RequestNotDispatchedError, type AuthPhase, type SessionClient, type RequestSpec, type WebTransport } from '@study/web-transport';
 import { ConfigurationError, errorCode, loadRuntimeConfig, loadClientCapabilities, parseSessionMetadata, parseWebStatus, type SessionMetadata } from '../../data/config';
-export type ConnectionIssue = 'configuration' | 'capabilities' | 'ingress' | 'connection' | 'google' | 'invalid-password' | null;
+export type ConnectionIssue = 'configuration' | 'capabilities' | 'ingress' | 'connection' | 'invalid-password' | null;
 export type SessionSnapshot = Readonly<{
     phase: AuthPhase;
     ready: boolean;
     busy: boolean;
     hasWorkspace: boolean;
     privacyChanged: boolean;
+    providerNeedsReauth: boolean;
+    providerChecking: boolean;
     issue: ConnectionIssue;
     capabilities: ClientCapabilitiesV1 | null;
 }>;
 /** One mounted application owns the coordinator. Metadata is not identity or authority. */
 export function createSessionController(onRetire: (epoch: number) => void = () => { }) {
-    let snapshot: SessionSnapshot = { phase: 'bootstrapping', ready: false, busy: false, hasWorkspace: false, privacyChanged: false, issue: null, capabilities: null };
+    let snapshot: SessionSnapshot = { phase: 'bootstrapping', ready: false, busy: false, hasWorkspace: false, privacyChanged: false, providerNeedsReauth: false, providerChecking: false, issue: null, capabilities: null };
     let config: RuntimeConfig | null = null;
     let client: SessionClient | null = null;
     let raw: WebTransport | null = null;
@@ -22,7 +24,11 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
     let ticket = 0;
     let flight: Promise<void> | null = null;
     let signedOut = false;
-    let googleBlocked = false;
+    let providerRevision = 0;
+    let providerFlight: {
+        ticket: number;
+        promise: Promise<boolean>;
+    } | null = null;
     let loginRequired = false;
     const listeners = new Set<() => void>();
     const update = (patch: Partial<SessionSnapshot>) => {
@@ -105,11 +111,6 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
                 return;
             if (disposed || own !== ticket || !sessionCoordinator.isCurrent(operation))
                 return;
-            if (googleBlocked) {
-                suspend();
-                update({ issue: 'google' });
-                return;
-            }
             update({ ready: true, capabilities, hasWorkspace: true, issue: null });
         }
         catch (error) {
@@ -182,7 +183,7 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
         }
         const own = ++ticket;
         const operation = sessionCoordinator.begin();
-        update({ busy: true, issue: null });
+        update({ busy: true, providerChecking: false, issue: null });
         suspend();
         const task = (async () => {
             let stage: 'configuration' | 'capabilities' | 'connection' = 'configuration';
@@ -277,6 +278,7 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
             if (!snapshot.ready || !raw)
                 throw new RequestNotDispatchedError('configuration');
             const own = ticket;
+            const authEvidence = sessionCoordinator.evidence();
             try {
                 const response = await raw.send(request);
                 if (disposed || own !== ticket)
@@ -285,11 +287,9 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
                     const code = await errorCode(response);
                     if (disposed || own !== ticket)
                         throw new TransportResponseError('retired');
-                    if (code === 'NEEDS_REAUTH') {
-                        googleBlocked = true;
-                        suspend();
-                        phase('authenticated');
-                        update({ issue: 'google' });
+                    if (code === 'NEEDS_REAUTH' && authEvidence === sessionCoordinator.evidence() && snapshot.phase === 'authenticated' && snapshot.ready) {
+                        providerRevision++;
+                        update({ providerNeedsReauth: true });
                     }
                     else if (response.status === 401 && ['LEGACY_INVALID_PASSWORD', 'AUTH_REQUIRED', 'REFRESH_REJECTED'].includes(code ?? '')) {
                         suspend();
@@ -305,7 +305,55 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
                 throw error;
             }
         } });
+    async function verifyProviderConnection(): Promise<boolean> {
+        if (disposed || !snapshot.ready || snapshot.phase !== 'authenticated')
+            return false;
+        if (providerFlight?.ticket === ticket)
+            return providerFlight.promise;
+        const own = ticket;
+        const context = readTurnContext();
+        if (!context?.ready)
+            return false;
+        const evidence = sessionCoordinator.evidence();
+        const revision = providerRevision;
+        update({ providerChecking: true });
+        const task = (async () => {
+            try {
+                // Deliberate verification only: this existing GET may resume confirmed read-phase jobs.
+                const response = await transport.send({ method: 'GET', path: '/personal/connections/notebooklm', context });
+                if (!response.ok)
+                    return false;
+                const value: unknown = await response.json();
+                if (disposed || own !== ticket || evidence !== sessionCoordinator.evidence() || revision !== providerRevision || readTurnContext()?.epoch !== context.epoch || !snapshot.ready || snapshot.phase !== 'authenticated')
+                    return false;
+                if (!value || typeof value !== 'object' || Array.isArray(value))
+                    return false;
+                const data = value as Record<string, unknown>;
+                if (data.state !== 'connected' || !['reason', 'last_verified_at', 'account_label'].every(key => data[key] === undefined || data[key] === null || typeof data[key] === 'string') || (data.quota !== undefined && data.quota !== null && (!Number.isSafeInteger(data.quota) || (data.quota as number) < 0)))
+                    return false;
+                update({ providerNeedsReauth: false });
+                return true;
+            }
+            catch {
+                return false;
+            }
+            finally {
+                if (!disposed && own === ticket)
+                    update({ providerChecking: false });
+            }
+        })();
+        const entry = { ticket: own, promise: task };
+        providerFlight = entry;
+        try {
+            return await task;
+        }
+        finally {
+            if (providerFlight === entry)
+                providerFlight = null;
+        }
+    }
     return { getSnapshot: () => snapshot, subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; }, transport,
+        verifyProviderConnection,
         start: () => run('check'), check: () => run('check'), login: (password: string) => run('login', password), refresh: () => run('refresh'),
         async signoutLocal() {
             if (!client || disposed)
@@ -326,7 +374,7 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
             }
         },
         // Explicit provider-account boundary notification only; never infer continuity from a URL.
-        retirePrivacyContext() { ++ticket; sessionCoordinator.begin(); flight = null; googleBlocked = false; retire(); update({ busy: false }); },
+        retirePrivacyContext() { ++ticket; sessionCoordinator.begin(); flight = null; retire(); update({ busy: false, providerChecking: false }); },
         dispose() { disposed = true; ++ticket; unsubscribe(); window.removeEventListener('storage', storageChanged); listeners.clear(); suspendTurnTarget(); },
     };
 }

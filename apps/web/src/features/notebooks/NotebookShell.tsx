@@ -18,7 +18,8 @@ export function NotebookShell({ previewContent }: { previewContent?: PreviewCont
   const [readerOpen, setReaderOpen] = useState(false);
   const [previewQuestion, setPreviewQuestion] = useState('');
   const {notebookId}=useParams();
-  const draft=useWorkbenchDraft(notebookId??'preview','question');
+  const [questionSession,setQuestionSession]=useState('question');
+  const draft=useWorkbenchDraft(notebookId??'preview',questionSession);
   const question=draft.connected?(draft.draft?.question??''):previewQuestion;
   const setQuestion=(value:string)=>{if(draft.connected)draft.update({question:value});else setPreviewQuestion(value);};
   const name = typeof workspace?.notebook.name === 'string' ? workspace.notebook.name : t.common.notebook;
@@ -33,7 +34,7 @@ export function NotebookShell({ previewContent }: { previewContent?: PreviewCont
       onSectionChange={setSection}
       readerOpen={readerOpen}
       sources={<SourceScaffold {...contentProps} onRead={() => setReaderOpen(true)} />}
-      conversation={<ConversationScaffold {...contentProps} question={question} readOnly={draft.draft?.retired??false} onQuestionChange={setQuestion} onRead={() => setReaderOpen(true)} />}
+      conversation={<ConversationScaffold {...contentProps} question={question} readOnly={draft.retired} onNewDraft={()=>setQuestionSession(`question:${crypto.randomUUID()}`)} onQuestionChange={setQuestion} onRead={() => setReaderOpen(true)} />}
       studio={<StudioScaffold />}
       reader={<ReaderScaffold {...contentProps} onClose={() => setReaderOpen(false)} />}
     />

@@ -20,10 +20,10 @@ export function SourceScaffold({ content, onRead }: { content?: PreviewContent; 
   </>;
 }
 
-export function ConversationScaffold({ content, question, readOnly, onQuestionChange, onRead }: {
-  content?: PreviewContent; question: string; readOnly?: boolean; onQuestionChange(value: string): void; onRead(): void;
+export function ConversationScaffold({ content, question, readOnly, onNewDraft, onQuestionChange, onRead }: {
+  content?: PreviewContent; question: string; readOnly?: boolean; onNewDraft?(): void; onQuestionChange(value: string): void; onRead(): void;
 }) {
-  const { shell } = useI18n();
+  const { shell, session } = useI18n();
   return <>
     <div className="panel-heading"><h2>{shell.conversation}</h2><span aria-hidden="true">↳</span></div>
     <div className="conversation-scroll">
@@ -38,6 +38,7 @@ export function ConversationScaffold({ content, question, readOnly, onQuestionCh
     <div className="composer">
       <label htmlFor="question">{shell.question}</label>
       <textarea id="question" value={question} readOnly={readOnly} onChange={event => onQuestionChange(event.target.value)} placeholder={shell.question} aria-describedby="draft-hint" />
+      {readOnly&&<div><p className="panel-hint">{session.retiredDraft}</p><Button onClick={onNewDraft}>{session.newQuestion}</Button></div>}
       <div className="composer-footer">
         <p id="draft-hint">{shell.draftHint}</p>
         <Button variant="primary" disabled aria-label={shell.notConnected}><span aria-hidden="true">↑</span></Button>

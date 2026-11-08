@@ -57,13 +57,13 @@ it.each([
     expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
     session.dispose();
 });
-it('keeps Google reauth separate from application reauth and freezes the old scope', async () => {
+it('keeps Google availability separate without suspending app readiness or retiring the scope', async () => {
     server({ resource: () => json({ error: { code: 'NEEDS_REAUTH' } }, 401) });
     const session = createSessionController();
     await session.start();
     const before = readTurnContext()!;
     await session.transport.send({ method: 'GET', path: '/personal/notebooklm/capabilities', context: before });
-    expect(session.getSnapshot()).toMatchObject({ phase: 'authenticated', issue: 'google', ready: false });
+    expect(session.getSnapshot()).toMatchObject({ phase: 'authenticated', providerNeedsReauth: true, ready: true });
     expect(readTurnContext()?.epoch).toBe(before.epoch);
     session.dispose();
 });
@@ -261,4 +261,204 @@ it.each([['AUTH_PENDING', 'pending'], ['ACCESS_EXPIRED', 'refresh-needed'], ['AU
     await session.start();
     expect(session.getSnapshot()).toMatchObject({ phase: expected, ready: false });
     session.dispose();
+});
+it('keeps repair routes usable and clears provider recovery only after explicit verified status', async () => {
+    const requests = server();
+    const base = globalThis.fetch;
+    let providerState = 'needs_reauth';
+    vi.stubGlobal('fetch', async (input: Request) => {
+        const path = new URL(input.url).pathname;
+        if (path === '/api/personal/notebooklm/notebooks') {
+            requests.push(input);
+            return json({ error: { code: 'NEEDS_REAUTH' } }, 401);
+        }
+        if (path === '/api/personal/connections/notebooklm') {
+            requests.push(input);
+            return json({ state: providerState, reason: null, last_verified_at: null, account_label: null, quota: null });
+        }
+        if (path === '/api/personal/connections/notebooklm/reconnect') {
+            requests.push(input);
+            return json({ flow_id: 'synthetic-flow', state: 'awaiting_user_login' });
+        }
+        if (path === '/api/personal/connections/notebooklm/connect/synthetic-flow') {
+            requests.push(input);
+            return json({ flow_id: 'synthetic-flow', state: 'awaiting_user_login' });
+        }
+        return base(input);
+    });
+    const session = createSessionController();
+    await session.start();
+    const epoch = readTurnContext()!.epoch;
+    await session.transport.send({ method: 'GET', path: '/personal/notebooklm/notebooks', context: readTurnContext()! });
+    expect(session.getSnapshot()).toMatchObject({ phase: 'authenticated', ready: true, providerNeedsReauth: true });
+    for (const [method, path] of [['GET', '/personal/connections/notebooklm'], ['POST', '/personal/connections/notebooklm/reconnect'], ['GET', '/personal/connections/notebooklm/connect/synthetic-flow']] as const) {
+        await expect(session.transport.send({ method, path, context: readTurnContext()! })).resolves.toBeInstanceOf(Response);
+    }
+    await session.check();
+    expect(session.getSnapshot().providerNeedsReauth).toBe(true);
+    expect(readTurnContext()!.epoch).toBe(epoch);
+    providerState = 'connected';
+    await session.transport.send({ method: 'GET', path: '/personal/connections/notebooklm', context: readTurnContext()! });
+    expect(session.getSnapshot().providerNeedsReauth).toBe(true);
+    await session.verifyProviderConnection();
+    expect(session.getSnapshot().providerNeedsReauth).toBe(false);
+    expect(readTurnContext()!.epoch).toBe(epoch);
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
+    session.dispose();
+});
+it('keeps malformed or unavailable provider verification unresolved without revoking application readiness', async () => {
+    let verification: unknown = { state: 'needs_reauth' };
+    const requests = server();
+    const base = globalThis.fetch;
+    vi.stubGlobal('fetch', async (input: Request) => new URL(input.url).pathname === '/api/personal/connections/notebooklm' ? (requests.push(input), json(verification)) : new URL(input.url).pathname === '/api/personal/notebooklm/notebooks' ? json({ error: { code: 'NEEDS_REAUTH' } }, 401) : base(input));
+    const session = createSessionController();
+    await session.start();
+    await session.transport.send({ method: 'GET', path: '/personal/notebooklm/notebooks', context: readTurnContext()! });
+    expect(session.getSnapshot().ready).toBe(true);
+    for (const value of [{ state: 'connected', account_label: 7 }, { state: 'future' }, null, { state: 'unavailable', reason: null, last_verified_at: null, account_label: null, quota: null }]) {
+        verification = value;
+        await session.verifyProviderConnection();
+        expect(session.getSnapshot()).toMatchObject({ ready: true, providerNeedsReauth: true });
+    }
+    await session.login('synthetic');
+    expect(session.getSnapshot()).toMatchObject({ ready: true, providerNeedsReauth: true });
+    session.retirePrivacyContext();
+    await session.check();
+    expect(session.getSnapshot().providerNeedsReauth).toBe(true);
+    session.dispose();
+});
+it('does not let late Google decoding overwrite newer application-auth evidence', async () => {
+    let release!: (value: unknown) => void;
+    let decoding = false;
+    const requests = server();
+    const base = globalThis.fetch;
+    vi.stubGlobal('fetch', async (input: Request) => {
+        const path = new URL(input.url).pathname;
+        if (path === '/api/personal/notebooklm/notebooks') {
+            requests.push(input);
+            const response = json({ error: { code: 'NEEDS_REAUTH' } }, 401);
+            const nativeClone = response.clone.bind(response);
+            vi.spyOn(response, 'clone').mockImplementation(() => { const copy = nativeClone(); vi.spyOn(copy, 'json').mockImplementation(() => { decoding = true; return new Promise<unknown>(resolve => { release = resolve; }); }); return copy; });
+            return response;
+        }
+        if (path === '/api/private-read') {
+            requests.push(input);
+            return json({ error: { code: 'AUTH_REQUIRED' } }, 401);
+        }
+        return base(input);
+    });
+    const session = createSessionController();
+    await session.start();
+    const context = readTurnContext()!;
+    const google = session.transport.send({ method: 'GET', path: '/personal/notebooklm/notebooks', context });
+    await waitFor(() => expect(decoding).toBe(true));
+    await session.transport.send({ method: 'GET', path: '/private-read', context });
+    expect(session.getSnapshot()).toMatchObject({ phase: 'reauth-required', ready: false });
+    release({ error: { code: 'NEEDS_REAUTH' } });
+    await google;
+    expect(session.getSnapshot()).toMatchObject({ phase: 'reauth-required', ready: false });
+    expect(session.getSnapshot().issue).not.toBe('google');
+    expect(requests.every(r => r.method === 'GET')).toBe(true);
+    session.dispose();
+});
+it('marks an untouched old-scope question read-only and opens a fresh editor only on explicit intent', async () => {
+    server();
+    let controller: ReturnType<typeof useWorkbenchSession>['controller'] | undefined;
+    function Probe() { controller = useWorkbenchSession().controller; return <AppRoutes />; }
+    render(<AppProviders locale="en-US"><MemoryRouter initialEntries={['/notebooks/A']}><WorkbenchSession><Probe /></WorkbenchSession></MemoryRouter></AppProviders>);
+    const question = await screen.findByLabelText('Question draft');
+    expect(question).not.toHaveAttribute('readonly');
+    await act(async () => { await controller!.login('synthetic'); });
+    expect(screen.getByLabelText('Question draft')).toBe(question);
+    expect(question).toHaveAttribute('readonly');
+    fireEvent.click(screen.getByRole('button', { name: 'Start a new question draft' }));
+    expect(question).not.toHaveAttribute('readonly');
+    fireEvent.change(question, { target: { value: 'first new-scope keystrokes' } });
+    expect(question).toHaveValue('first new-scope keystrokes');
+});
+it('renders an actionable provider warning without making the workspace inert or prefetching verification', async () => {
+    const requests = server();
+    const base = globalThis.fetch;
+    let controller: ReturnType<typeof useWorkbenchSession>['controller'] | undefined;
+    vi.stubGlobal('fetch', async (input: Request) => {
+        const path = new URL(input.url).pathname;
+        if (path === '/api/personal/notebooklm/notebooks') {
+            requests.push(input);
+            return json({ error: { code: 'NEEDS_REAUTH' } }, 401);
+        }
+        if (path === '/api/personal/connections/notebooklm') {
+            requests.push(input);
+            return json({ state: 'connected', account_label: null, last_verified_at: null, reason: null, quota: null });
+        }
+        return base(input);
+    });
+    function Child() { controller = useWorkbenchSession().controller; return <textarea aria-label="Local draft"/>; }
+    render(<AppProviders locale="en-US"><MemoryRouter><WorkbenchSession><Child /></WorkbenchSession></MemoryRouter></AppProviders>);
+    const field = await screen.findByLabelText('Local draft');
+    await act(async () => { await controller!.transport.send({ method: 'GET', path: '/personal/notebooklm/notebooks', context: readTurnContext()! }); });
+    expect(document.querySelector('.session-workspace')).not.toHaveAttribute('inert');
+    fireEvent.change(field, { target: { value: 'still editable' } });
+    expect(field).toHaveValue('still editable');
+    expect(requests.filter(r => new URL(r.url).pathname === '/api/personal/connections/notebooklm')).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Verify Google connection' }));
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Verify Google connection' })).not.toBeInTheDocument());
+    expect(requests.filter(r => new URL(r.url).pathname === '/api/personal/connections/notebooklm')).toHaveLength(1);
+    expect(requests.every(r => r.method === 'GET')).toBe(true);
+});
+it.each(['auth-loss', 'new-provider-error', 'new-auth-check'] as const)('does not accept late provider verification after %s', async (change) => {
+    const requests = server();
+    const base = globalThis.fetch;
+    let body: ReadableStreamDefaultController<Uint8Array> | undefined;
+    vi.stubGlobal('fetch', async (input: Request) => {
+        const path = new URL(input.url).pathname;
+        if (path === '/api/personal/notebooklm/notebooks')
+            return json({ error: { code: 'NEEDS_REAUTH' } }, 401);
+        if (path === '/api/private-read')
+            return json({ error: { code: 'AUTH_REQUIRED' } }, 401);
+        if (path === '/api/personal/connections/notebooklm') {
+            requests.push(input);
+            return new Response(new ReadableStream<Uint8Array>({ start(value) { body = value; } }), { headers: { 'content-type': 'application/json' } });
+        }
+        return base(input);
+    });
+    const session = createSessionController();
+    await session.start();
+    await session.transport.send({ method: 'GET', path: '/personal/notebooklm/notebooks', context: readTurnContext()! });
+    const verify = session.verifyProviderConnection();
+    const duplicate = session.verifyProviderConnection();
+    await waitFor(() => expect(body).toBeDefined());
+    if (change === 'new-auth-check')
+        await session.check();
+    else
+        await session.transport.send({ method: 'GET', path: change === 'auth-loss' ? '/private-read' : '/personal/notebooklm/notebooks', context: readTurnContext()! });
+    body!.enqueue(new TextEncoder().encode(JSON.stringify({ state: 'connected', reason: null, account_label: null, last_verified_at: null, quota: null })));
+    body!.close();
+    expect(await verify).toBe(false);
+    expect(await duplicate).toBe(false);
+    expect(session.getSnapshot().providerNeedsReauth).toBe(true);
+    expect(requests.filter(r => new URL(r.url).pathname === '/api/personal/connections/notebooklm')).toHaveLength(1);
+    session.dispose();
+});
+it('never bypasses application capability guards for explicit provider verification', async () => {
+    const requests = server({ capStatus: 404 });
+    const session = createSessionController();
+    await session.start();
+    expect(await session.verifyProviderConnection()).toBe(false);
+    await expect(session.transport.send({ method: 'POST', path: '/personal/connections/notebooklm/reconnect', context: readTurnContext()! })).rejects.toThrow();
+    expect(requests.some(r => new URL(r.url).pathname.startsWith('/api/personal/connections/'))).toBe(false);
+    session.dispose();
+});
+it('keeps the original filled question in its retired registry entry when starting a new editor', async () => {
+    server();
+    let value: ReturnType<typeof useWorkbenchSession> | undefined;
+    function Probe() { value = useWorkbenchSession(); return <AppRoutes />; }
+    render(<AppProviders locale="en-US"><MemoryRouter initialEntries={['/notebooks/A']}><WorkbenchSession><Probe /></WorkbenchSession></MemoryRouter></AppProviders>);
+    const question = await screen.findByLabelText('Question draft');
+    const old = { epoch: readTurnContext()!.epoch, notebookId: 'A', editorSession: 'question' };
+    fireEvent.change(question, { target: { value: 'original draft' } });
+    await act(async () => { await value!.controller.login('synthetic'); });
+    fireEvent.click(screen.getByRole('button', { name: 'Start a new question draft' }));
+    fireEvent.change(question, { target: { value: 'new draft' } });
+    expect(value!.drafts.get(old)).toMatchObject({ question: 'original draft', retired: true });
+    expect(question).toHaveValue('new draft');
 });

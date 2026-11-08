@@ -17,7 +17,7 @@ export function createDraftRegistry() {
     const retired = new Set<number>();
     const listeners = new Set<() => void>();
     const notify = () => listeners.forEach(fn => fn());
-    return { get: (id: DraftId) => drafts.get(key(id)), update(id: DraftId, patch: Partial<Pick<DraftState, 'editor' | 'question' | 'file'>>) {
+    return { get: (id: DraftId) => drafts.get(key(id)), isRetired: (id: DraftId) => retired.has(id.epoch), update(id: DraftId, patch: Partial<Pick<DraftState, 'editor' | 'question' | 'file'>>) {
             if (retired.has(id.epoch) || patch.editor && patch.editor.notebookId !== id.notebookId)
                 return;
             drafts.set(key(id), Object.freeze({ ...drafts.get(key(id)), ...patch, id: Object.freeze({ ...id }), retired: false }));

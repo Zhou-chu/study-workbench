@@ -28,13 +28,17 @@ export function WorkbenchSession({ children }: {
    {state.hasWorkspace && <div className="session-workspace" inert={login || !state.ready || undefined}>{children}</div>}
    {!state.hasWorkspace && login && <LoginPage controller={value.controller} state={state}/>}
    {state.hasWorkspace && login && <ReauthLayer controller={value.controller} state={state}/>}
-   {!login && !state.ready && <ConnectionState controller={value.controller} state={state}/>}
+   {!login && (!state.ready || state.providerNeedsReauth) && <ConnectionState controller={value.controller} state={state}/>}
    {state.hasWorkspace && state.privacyChanged && <p role="status" className="connection-state">{session.privacy}</p>}
    {dataRouter && <RouterNavigationGuard navigation={value.navigation}/>}<UnsavedNavigationDialog navigation={value.navigation}/>
  </AppDataBoundary></Context.Provider>;
 }
-export function useWorkbenchSession() { const value = useContext(Context); if (!value)
-    throw new Error('WorkbenchSession required'); return { ...value, transport: value.controller.transport }; }
+export function useWorkbenchSession() {
+    const value = useContext(Context);
+    if (!value)
+        throw new Error('WorkbenchSession required');
+    return { ...value, transport: value.controller.transport };
+}
 /** A draft retains its original scope through reauth; only a new editor intent captures a new scope. */
 export function useWorkbenchDraft(notebookId: string, editorSession: string) {
     const value = useContext(Context);
@@ -43,6 +47,7 @@ export function useWorkbenchDraft(notebookId: string, editorSession: string) {
         capture.current = Object.freeze({ notebookId, editorSession, epoch: readTurnContext()?.epoch ?? -1 });
     const id = capture.current;
     const draft = useSyncExternalStore(value?.drafts.subscribe ?? (() => () => { }), () => value?.drafts.get(id));
+    const retired = useSyncExternalStore(value?.drafts.subscribe ?? (() => () => { }), () => value?.drafts.isRetired(id) ?? false);
     useEffect(() => { value?.navigation.activate(id); return () => value?.navigation.activate(null); }, [value, id]);
-    return { id, draft, connected: !!value, update: (patch: Partial<Pick<DraftState, 'editor' | 'question' | 'file'>>) => value?.drafts.update(id, patch) };
+    return { id, draft, retired, connected: !!value, update: (patch: Partial<Pick<DraftState, 'editor' | 'question' | 'file'>>) => value?.drafts.update(id, patch) };
 }

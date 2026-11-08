@@ -110,3 +110,15 @@ it('guards Forward and rejects confirmation if the draft changed while the dialo
     expect(router.state.location.pathname).toBe('/A');
     expect(registry.get(id)?.editor?.content).toBe('newer');
 });
+it('exposes retired context even when no draft was ever created', () => {
+    const registry = createDraftRegistry();
+    expect(registry.get(id)).toBeUndefined();
+    registry.retireContext(id.epoch);
+    expect(registry.isRetired(id)).toBe(true);
+    registry.update(id, { question: 'late write' });
+    expect(registry.get(id)).toBeUndefined();
+    const next = { ...id, epoch: 2, editorSession: 'new-explicit-editor' };
+    registry.update(next, { question: 'new work' });
+    expect(registry.isRetired(next)).toBe(false);
+    expect(registry.get(next)?.question).toBe('new work');
+});

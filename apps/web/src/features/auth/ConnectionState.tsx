@@ -7,6 +7,7 @@ export function ConnectionState({ controller, state }: {
     state: SessionSnapshot;
 }) {
     const { session } = useI18n();
+    const provider = state.ready && state.providerNeedsReauth;
     const issue = state.issue === 'invalid-password' ? null : state.issue;
-    return <section className="connection-state" aria-live="polite"><StatusBadge state={issue ? 'warning' : 'pending'} label={issue ? session[issue] : session.pending}/><p>{session.memoryHint}</p>{state.phase !== 'bootstrapping' && issue !== 'google' && <Button disabled={state.busy} onClick={() => { void (state.phase === 'refresh-needed' ? controller.refresh() : controller.check()); }}>{session.check}</Button>}</section>;
+    return <section className="connection-state" aria-live="polite"><StatusBadge state={provider || issue ? 'warning' : 'pending'} label={provider ? session.google : issue ? session[issue] : session.pending}/><p>{session.memoryHint}</p>{state.phase !== 'bootstrapping' && <Button disabled={state.busy || state.providerChecking} onClick={() => { void (provider ? controller.verifyProviderConnection() : state.phase === 'refresh-needed' ? controller.refresh() : controller.check()); }}>{provider ? session.verifyGoogle : session.check}</Button>}</section>;
 }
