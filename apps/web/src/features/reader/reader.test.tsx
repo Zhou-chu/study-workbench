@@ -23,3 +23,73 @@ it('reports an inexact quote instead of silently pretending a location was verif
 it('contains keyboard focus in the narrow fullscreen reader', async () => { vi.mocked(window.matchMedia).mockImplementation(query => ({ matches: query === '(max-width: 899px)', media: query, onchange: null, addListener() { }, removeListener() { }, dispatchEvent() { return true; }, addEventListener() { }, removeEventListener() { } } as MediaQueryList)); setup(); const dialog = await screen.findByRole('dialog', { name: 'Reader' }); expect(dialog).toHaveAttribute('aria-modal', 'true'); await screen.findByRole('searchbox'); const first = screen.getByRole('button', { name: 'Close' }); first.focus(); fireEvent.keyDown(dialog, { key: 'Tab', shiftKey: true }); expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Physical page 9' })); });
 
 it('keeps future citation kinds displayable without making their locator actionable',()=>{const context=sourceContext();const nav=createReaderNavigation({notebookId:'n',context,generation:sessionCoordinator.current()});const value={...citation(),kind:'future_kind'};const intent=nav.openCitation(value,{turnId:'old',focusKey:'old'});expect(intent.citation?.quote).toBe('😀 proof');expect(intent.source_version_id).toBeNull();});
+
+// JSDOM has no layout. Supply only DOM geometry; the real reader must choose
+// the verified node and update its own scroll container, never the outer page.
+function longTextDetail() {
+    const detail = readerDetail();
+    detail.extraction.blocks = [
+        ...Array.from({ length: 18 }, (_, i) => ({ block_id: `chapter-${i}`, page_index: i === 3 ? 3 : 0, text: `Chapter ${i + 1}` })),
+        { block_id: 'b', page_index: 8, text: 'A😀 proofZ' },
+        { block_id: 'tail', page_index: 9, text: 'After the cited passage' }
+    ];
+    return detail;
+}
+function textGeometry() {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+        const scroll = this.closest<HTMLElement>('.reader-scroll');
+        const top = this.tagName === 'MARK' ? 3000 : this.classList.contains('reader-block') && this.textContent?.includes('Chapter 4') ? 600 : 0;
+        return new DOMRect(0, top - (this === scroll ? 0 : scroll?.scrollTop ?? 0), 100, 20);
+    });
+}
+it('reveals the exact retained passage deep in text once per intent without disturbing later scrolling', async () => {
+    textGeometry();
+    const h = setup(json(longTextDetail()));
+    await screen.findByRole('searchbox');
+    const scroll = document.querySelector<HTMLElement>('.reader-scroll')!;
+    expect(scroll.scrollTop).toBe(3000);
+    expect(document.scrollingElement?.scrollTop ?? 0).toBe(0);
+    scroll.scrollTop = 1200;
+    h.rerender(<ReaderPane {...h.props}/>);
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Chapter' } });
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: '' } });
+    expect(scroll.scrollTop).toBe(1200);
+    expect(h.onPositionChange).not.toHaveBeenCalled();
+});
+it('reveals a later manual text page instead of a citation when retained detail arrives late', async () => {
+    textGeometry();
+    const pending = deferred<Response>();
+    const h = setup(pending.promise);
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '4' } });
+    await act(async () => pending.resolve(json(longTextDetail())));
+    expect(document.querySelector<HTMLElement>('.reader-scroll')!.scrollTop).toBe(600);
+    expect(screen.getByRole('spinbutton')).toHaveValue(4);
+    expect(h.onPositionChange).toHaveBeenCalledExactlyOnceWith({ source_version_id: 'v-old', page_index: 3 });
+});
+it('lets a manual text page replace the revealed passage without reapplying its locator', async () => {
+    textGeometry();
+    setup(json(longTextDetail()));
+    await screen.findByRole('searchbox');
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '4' } });
+    expect(document.querySelector<HTMLElement>('.reader-scroll')!.scrollTop).toBe(600);
+});
+
+it('defers an unseen text position until the same history reader is shown', async () => {
+    textGeometry();
+    const context = sourceContext();
+    const nav = createReaderNavigation({ notebookId: 'n', context, generation: sessionCoordinator.current() });
+    const intent = nav.openCitation(citation(), { turnId: 't1', focusKey: 'origin' });
+    const transport = { send: vi.fn(async () => json(longTextDetail())) };
+    const tree = (hidden: boolean) => <AppProviders locale="en-US" transport={transport}><div hidden={hidden}><ReaderPane intent={intent} onClose={() => {}} onPositionChange={() => {}}/></div></AppProviders>;
+    const h = render(tree(true));
+    await waitFor(() => expect(document.querySelector('mark')).toHaveTextContent('😀 proof'));
+    const scroll = document.querySelector<HTMLElement>('.reader-scroll')!;
+    expect(scroll.scrollTop).toBe(0);
+    h.rerender(tree(false));
+    expect(scroll.scrollTop).toBe(3000);
+    scroll.scrollTop = 1000;
+    h.rerender(tree(true));
+    h.rerender(tree(false));
+    expect(scroll.scrollTop).toBe(1000);
+    expect(transport.send).toHaveBeenCalledOnce();
+});

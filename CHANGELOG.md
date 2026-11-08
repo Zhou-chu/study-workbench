@@ -78,6 +78,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Reveal retained text citations within the Notebook reader without overriding later manual navigation, and keep explicit reading-position recovery inside the narrow reader keyboard focus scope.
+
 - Keep Google answers in their original conversation position when remote/local mapping resolution enriches the completed source scope. Preserve selected-source identity and conflicting or unknown historical rows; recovery proof is unchanged.
 
 - **Notebook conversation recovery review fixes (2026-11-08).** Advance matching empty running-history rows in place when their completed answer is confirmed, while keeping conflicting and unknown history visible. Bind retries to the original engine/retrieval admission evidence so new controls or refreshed model metadata cannot renew an older disclosure. Read-only recovery remains separate; browser acceptance is still pending.
