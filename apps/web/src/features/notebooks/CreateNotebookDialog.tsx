@@ -7,13 +7,14 @@ import { useNotebookConnection } from '../../data/use-notebook-connection';
 import { useI18n } from '../../i18n';
 import { Button } from '../../ui/Button';
 import { useNotebookCreationDrafts } from '../../app/WorkbenchSession';
-export function CreateNotebookDialog() {
+export function CreateNotebookDialog({request = 0, hideTrigger = false}: {request?: number; hideTrigger?: boolean} = {}) {
     const { t, notebook: messages, session } = useI18n();
     const { api, context, ready } = useNotebookConnection();
     const navigate = useNavigate();
     const queries = useQueryClient();
     const [open, setOpen] = useState(false);
-    const { drafts, state, activate, navigationPending } = useNotebookCreationDrafts();
+    const [participating, setParticipating] = useState(false);
+    const { drafts, state, activate, navigationPending } = useNotebookCreationDrafts(participating);
     const active = state.active;
     const creation = active?.creation;
     const name = creation?.name ?? '';
@@ -39,6 +40,7 @@ export function CreateNotebookDialog() {
         if (busy)
             return;
         if (value && context) {
+            setParticipating(true);
             const id = drafts.openNotebookCreation(context);
             if (id)
                 activate(id);
@@ -79,8 +81,9 @@ export function CreateNotebookDialog() {
             drafts.settleNotebookCreation(active.id, asRequestNotDispatchedError(error) ? 'not-sent' : 'unknown', readTurnContext());
         }
     }
+    useEffect(() => { if (request > 0) changeOpen(true); }, [request]);
     return <Radix.Root open={open} onOpenChange={changeOpen}>
-        <Radix.Trigger asChild><Button variant="primary" disabled={!ready}>{t.notebooks.newNotebook}</Button></Radix.Trigger>
+        {!hideTrigger && <Radix.Trigger asChild><Button variant="primary" disabled={!ready}>{t.notebooks.newNotebook}</Button></Radix.Trigger>}
         <Radix.Portal>
             <Radix.Overlay className="dialog-overlay"/>
             <Radix.Content className="dialog-content" onEscapeKeyDown={event => {

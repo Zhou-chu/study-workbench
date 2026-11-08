@@ -1,3 +1,4 @@
+import { CommonNavigation } from './CommonNavigation';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { ThemeControl } from '../theme/ThemeControl';
@@ -33,6 +34,7 @@ export function AppChrome({ children, title }: { children: ReactNode; title?: st
     <div className="preview-notice">
       <StatusBadge state="pending" label={shell.previewTitle} /><span>{shell.previewNotice}</span>
     </div>
+    <CommonNavigation/>
     <main id="main-content" tabIndex={-1}>{children}</main>
   </>;
 }

@@ -1,7 +1,8 @@
+import { LibraryCommandObservers } from '../features/library/LibraryCommandObservers';
 import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { UNSAFE_DataRouterContext } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { readTurnContext } from '@study/web-transport';
+import { readTurnContext, sessionCoordinator } from '@study/web-transport';
 import { createNavigationController, type DraftRegistry, type DraftId, type DraftState } from './drafts';
 import { createSessionController } from '../features/auth/session';
 import { LoginPage } from '../features/auth/LoginPage';
@@ -10,7 +11,7 @@ import { ConnectionState } from '../features/auth/ConnectionState';
 import { RouterNavigationGuard, UnsavedNavigationDialog } from './UnsavedNavigationDialog';
 import { AppDataBoundary, useAppData, useAppDrafts } from './providers';
 import { useI18n } from '../i18n';
-function createWorkbench(drafts: DraftRegistry, clearServerData: () => void) { const controller=createSessionController(epoch => { drafts.retireContext(epoch); clearServerData(); }); controller.subscribe(()=>drafts.turns.refreshFences()); return { drafts, navigation: createNavigationController(drafts), controller }; }
+function createWorkbench(drafts: DraftRegistry, clearServerData: () => void) { const controller=createSessionController(epoch => { drafts.retireContext(epoch); clearServerData(); }); controller.subscribe(()=>{drafts.turns.refreshFences();drafts.library.refreshFences(readTurnContext(), sessionCoordinator.current());}); return { drafts, navigation: createNavigationController(drafts), controller }; }
 type Workbench = ReturnType<typeof createWorkbench>;
 const Context = createContext<Workbench | null>(null);
 export function WorkbenchSession({ children }: {
@@ -26,7 +27,7 @@ export function WorkbenchSession({ children }: {
     useEffect(() => { void value.controller.start(); return () => value.controller.dispose(); }, [value]);
     const login = ['anonymous', 'reauth-required'].includes(state.phase);
     return <Context.Provider value={value}><AppDataBoundary transport={value.controller.transport} workspace={data.workspace}>
-   {state.hasWorkspace && <div className="session-workspace" inert={login || !state.ready || undefined}>{children}</div>}
+   {state.hasWorkspace && <div className="session-workspace" inert={login || !state.ready || undefined}>{children}<LibraryCommandObservers/></div>}
    {!state.hasWorkspace && login && <LoginPage controller={value.controller} state={state}/>}
    {state.hasWorkspace && login && <ReauthLayer controller={value.controller} state={state}/>}
    {!login && (!state.ready || state.providerNeedsReauth) && <ConnectionState controller={value.controller} state={state}/>}
@@ -53,19 +54,19 @@ export function useWorkbenchDraft(notebookId: string, editorSession: string) {
     return { id, draft, retired, connected: !!value, update: (patch: Partial<Pick<DraftState, 'editor' | 'question' | 'file'>>) => value?.drafts.update(id, patch) };
 }
 /** App-lifetime creation records share the session's one navigation controller. */
-export function useNotebookCreationDrafts() {
+export function useNotebookCreationDrafts(activated = true) {
     const workbench = useContext(Context);
     const drafts = useAppDrafts();
     const state = useSyncExternalStore(drafts.subscribe, drafts.getNotebookCreationSnapshot);
     const id = state.active?.id;
     useEffect(() => {
-        if (id)
+        if (id && activated)
             workbench?.navigation.activate(id);
         return () => {
-            if (id)
+            if (id && activated)
                 workbench?.navigation.deactivate(id);
         };
-    }, [workbench, id]);
+    }, [workbench, id, activated]);
     return { drafts, state, activate: (value: DraftId) => workbench?.navigation.activate(value), navigationPending: () => !!workbench?.navigation.getSnapshot().status };
 }
 
@@ -75,3 +76,6 @@ export function useWorkbenchSnapshot() {
  const state=useSyncExternalStore(value?.controller.subscribe??(()=>()=>{}),value?.controller.getSnapshot??(()=>null),()=>null);
  return {state,controller:value?.controller};
 }
+
+/** Optional owner access for synthetic previews; real routes use the one session navigation owner. */
+export function useResourceNavigation() { return useContext(Context)?.navigation; }

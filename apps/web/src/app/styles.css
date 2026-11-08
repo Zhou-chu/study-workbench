@@ -232,3 +232,29 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .studio-panel audio { display: block; max-width: 100%; margin-block: .75rem; }
 .studio-panel dl div { display: flex; justify-content: space-between; gap: .5rem; }
 .studio-panel a.button { display: inline-flex; min-height: 44px; min-width: 44px; align-items: center; padding: .5rem; }
+
+/* Source library: the same monochrome tokens, with original media left intact. */
+.common-navigation { padding: 12px 32px; border-bottom: 1px solid var(--decorative-line); }
+.common-navigation nav, .library-actions, .library-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.common-navigation nav { margin-top: 12px; }
+.library-page { max-width: 1440px; margin-inline: auto; }
+.library-toolbar { margin-block: 24px; align-items: end; }
+.library-list { list-style: none; padding: 0; margin: 16px 0; }
+.library-list > li { display: flex; justify-content: space-between; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--decorative-line); }
+.library-list a { display: inline-flex; min-height: 44px; min-width: 44px; align-items: center; font-weight: 650; }
+.library-row-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: start; }
+.library-dialog { max-height: 85dvh; overflow: auto; }
+.library-dialog fieldset, .library-details fieldset { border: 0; padding: 0; display: grid; gap: 16px; }
+.library-dialog label, .library-details label { display: grid; gap: 6px; margin-block: 12px; }
+.library-dialog input, .library-dialog textarea, .library-details input, .library-toolbar select { width: 100%; padding: 10px; background: var(--surface); border: 1px solid var(--interactive-border); border-radius: 2px; }
+.library-dialog textarea { min-height: 160px; }
+.library-dialog .library-check { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.library-check input { width: 44px; min-width: 44px; height: 44px; accent-color: var(--text); }
+.library-operation { padding: 16px; margin-block: 16px; border: 1px dotted var(--interactive-border); }
+.library-details { display: grid; gap: 24px; }
+.library-assets { margin-block: 24px; }
+.source-media { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; margin-block: 24px; }
+.command-options { display: grid; gap: 8px; }
+.classic-sources { margin-block: 24px; border-top: 1px solid var(--interactive-border); padding-top: 16px; }
+.classic-sources .library-list > li { display: block; }
+@media (max-width: 700px) { .common-navigation { padding: 12px 16px; } .library-list > li { display: block; } .library-row-actions { margin-top: 12px; } }

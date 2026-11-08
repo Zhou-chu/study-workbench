@@ -1,3 +1,5 @@
+import { LibraryPage } from '../features/library/LibraryPage';
+import { SourcePage } from '../features/library/SourcePage';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router';
 import { NotebookHome } from '../features/notebooks/NotebookHome';
 import { NotebookPage } from '../features/notebooks/NotebookPage';
@@ -22,7 +24,7 @@ export function AppRoutes({ previewContent }: {
 }) {
     return <Routes>
  <Route path="/" element={<Navigate to="/notebooks" replace/>}/><Route path="/notebooks" element={<NotebookHome />}/><Route path="/notebooks/:notebookId" element={<NotebookPage />}/><Route path="/notebooks/:notebookId/study" element={<StudyAlias />}/>
- <Route path="/sources" element={<PendingRoute kind="sources"/>}/><Route path="/sources/:sourceId" element={<PendingRoute kind="sources"/>}/><Route path="/search" element={<PendingRoute kind="search"/>}/><Route path="/podcasts" element={<PendingRoute kind="podcasts"/>}/><Route path="/settings" element={<PendingRoute kind="settings"/>}/><Route path="/settings/models" element={<PendingRoute kind="models"/>}/><Route path="/transformations" element={<PendingRoute kind="transformations"/>}/><Route path="/advanced" element={<PendingRoute kind="advanced"/>}/><Route path="/login" element={<PendingRoute kind="login"/>}/>
+ <Route path="/sources" element={<LibraryPage/>}/><Route path="/sources/:sourceId" element={<SourcePage/>}/><Route path="/search" element={<PendingRoute kind="search"/>}/><Route path="/podcasts" element={<PendingRoute kind="podcasts"/>}/><Route path="/settings" element={<PendingRoute kind="settings"/>}/><Route path="/settings/models" element={<PendingRoute kind="models"/>}/><Route path="/transformations" element={<PendingRoute kind="transformations"/>}/><Route path="/advanced" element={<PendingRoute kind="advanced"/>}/><Route path="/login" element={<PendingRoute kind="login"/>}/>
  {import.meta.env.DEV && <Route path="/__preview/workspace" element={<NotebookShell {...(previewContent ? { previewContent } : {})}/>}/>}
  <Route path="*" element={<PendingRoute kind="missing"/>}/>
  </Routes>;

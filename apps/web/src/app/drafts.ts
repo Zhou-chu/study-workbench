@@ -1,3 +1,4 @@
+import { createLibraryStore, type LibraryDraft } from '../features/library/library-store';
 import { createStudioStore } from '../features/studio/studio-store';
 import { createTurnRuntime } from '../features/chat/turn-runtime';
 import { createSourceOperations } from '../features/sources/source-operations';
@@ -48,6 +49,7 @@ export function createDraftRegistry() {
         creationSnapshot = Object.freeze({ active, retained: Object.freeze(retained) });
         listeners.forEach(fn => fn());
     };
+    const library = createLibraryStore(notify);
     const sources = createSourceOperations(notify);
     const turns = createTurnRuntime(notify);
     const studio = createStudioStore(notify);
@@ -58,7 +60,7 @@ export function createDraftRegistry() {
         notify();
         return id;
     };
-    return { sources, turns, studio, clearQuestion(id: DraftId, revision: number) {
+    return { sources, turns, studio, library, clearQuestion(id: DraftId, revision: number) {
             const draft=drafts.get(key(id));
             if (!draft || draft.retired || retired.has(id.epoch) || draft.questionRevision !== revision) return;
             drafts.set(key(id),Object.freeze({...draft,question:'',questionRevision:revision+1})); notify();
@@ -113,6 +115,7 @@ export function createDraftRegistry() {
             notify();
         }, retireContext(epoch: number) {
             retired.add(epoch);
+            library.retire(epoch);
             sources.retire(epoch);
             turns.retire(epoch);
             studio.retire(epoch);
@@ -121,7 +124,7 @@ export function createDraftRegistry() {
                     drafts.set(k, Object.freeze({ ...draft, retired: true, ...(draft.creation ? { creation: Object.freeze({ ...draft.creation, status: draft.creation.status === 'pending' ? 'unknown' as const : draft.creation.status }) } : {}) }));
             notify();
         },
-        hasUnsaved: () => studio.hasUnsaved() || turns.hasPending() || sources.hasUnsaved() || [...drafts.values()].some(d => !!(d.editor?.dirty || d.editor?.pending || d.question || d.file || d.creation && d.creation.status !== 'succeeded' && (d.creation.name || d.creation.description || ['pending', 'unknown'].includes(d.creation.status)))),
+        hasUnsaved: () => library.hasUnsaved() || studio.hasUnsaved() || turns.hasPending() || sources.hasUnsaved() || [...drafts.values()].some(d => !!(d.editor?.dirty || d.editor?.pending || d.question || d.file || d.creation && d.creation.status !== 'succeeded' && (d.creation.name || d.creation.description || ['pending', 'unknown'].includes(d.creation.status)))),
         subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; } };
 }
 export type DraftRegistry = ReturnType<typeof createDraftRegistry>;
@@ -130,7 +133,7 @@ export type NavigationIntent = Readonly<{
     opener?: HTMLElement | null;
 }>;
 export type NavigationDecision = 'allow' | 'confirm' | 'blocked' | 'retain';
-type Capture = Readonly<{
+type NotebookCapture = Readonly<{
     decision: Exclude<NavigationDecision, 'allow'>;
     id: DraftId;
     revision: number | undefined;
@@ -138,8 +141,11 @@ type Capture = Readonly<{
     activation: number;
     intent: NavigationIntent;
 }>;
+type ResourceCapture = Readonly<{decision: Exclude<NavigationDecision, 'allow'>; resourceId: string; resourceDraft: LibraryDraft; notebookDraft: DraftState | undefined; activation: number; intent: NavigationIntent}>;
+type Capture = NotebookCapture | ResourceCapture;
 export function createNavigationController(registry: DraftRegistry) {
     let active: DraftId | null = null;
+    let resourceActive: string | null = null;
     let activation = 0;
     let capture: Capture | null = null;
     let status: 'confirm' | 'blocked' | 'retain' | null = null;
@@ -150,14 +156,17 @@ export function createNavigationController(registry: DraftRegistry) {
     }> = { status: null, capture: null };
     const notify = () => { snapshot = Object.freeze({ status, capture }); listeners.forEach(fn => fn()); };
     const activate = (id: DraftId | null) => {
-        if ((active && id ? key(active) === key(id) : active === id))
+        if (resourceActive === null && (active && id ? key(active) === key(id) : active === id))
             return;
+        resourceActive = null;
         active = id ? Object.freeze({ ...id }) : null;
         activation++;
         capture = null;
         status = null;
         notify();
     };
+    const activateResource = (id: string | null) => { if (resourceActive === id) return; resourceActive = id; activation++; capture = null; status = null; notify(); };
+    const resourceDecision = (r: LibraryDraft | undefined): NavigationDecision => { const notebook = active ? decision(registry.get(active)) : 'allow'; if (notebook === 'blocked') return 'blocked'; if (notebook === 'retain' || r && ['pending', 'accepted', 'unknown'].includes(r.status)) return 'retain'; return notebook === 'confirm' || r?.dirty ? 'confirm' : 'allow'; };
     const decision = (draft: DraftState | undefined): NavigationDecision => {
         if (registry.studio.blocked(active?.notebookId)) return 'blocked';
         if (active && (registry.sources.pending(active.notebookId) || registry.turns.hasPending(active.notebookId))) return 'blocked';
@@ -171,12 +180,18 @@ export function createNavigationController(registry: DraftRegistry) {
             unknown: !!draft?.editor && ['unknown', 'conflict', 'rejected'].includes(draft.editor.saveResult) || draft?.creation?.status === 'unknown' });
     };
     return { registry, getSnapshot: () => snapshot, subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
-        activate,
+        activate, activateResource,
+        deactivateResource(id: string) { if (resourceActive === id) activateResource(null); },
         deactivate(id: DraftId) {
             if (active && key(active) === key(id))
                 activate(null);
         },
         requestNavigation(intent: NavigationIntent): NavigationDecision {
+            if (resourceActive) {
+                const row = registry.library.get(resourceActive), result = resourceDecision(row);
+                capture = row && result !== 'allow' ? Object.freeze({decision: result, resourceId: resourceActive, resourceDraft: row, notebookDraft: active ? registry.get(active) : undefined, activation, intent: Object.freeze({...intent})}) : null;
+                status = result === 'allow' ? null : result; notify(); return result;
+            }
             const draft = active ? registry.get(active) : undefined;
             const result = decision(draft);
             capture = active && draft && result !== 'allow' ? Object.freeze({ decision: result, id: active, revision: draft.editor?.revision, draft, activation, intent: Object.freeze({ ...intent }) }) : null;
@@ -190,6 +205,10 @@ export function createNavigationController(registry: DraftRegistry) {
             capture = null;
             status = null;
             notify();
+            if (original && 'resourceId' in original) {
+                if (resourceActive !== original.resourceId || activation !== original.activation || registry.library.get(original.resourceId) !== original.resourceDraft || original.notebookDraft !== (active ? registry.get(active) : undefined) || !['confirm','retain'].includes(original.decision) || resourceDecision(original.resourceDraft) !== original.decision) return null;
+                return original.intent;
+            }
             if (!original || !active || activation !== original.activation || key(active) !== key(original.id))
                 return null;
             const draft = registry.get(active);

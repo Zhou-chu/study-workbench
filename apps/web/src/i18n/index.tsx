@@ -1,3 +1,4 @@
+import { libraryMessages, type LibraryMessages } from './library-messages';
 import { studioMessages } from './studio-messages';
 import { readerMessages } from './reader-messages';
 import { chatMessages } from './chat-messages';
@@ -15,6 +16,7 @@ export type ShellMessages = {
     [K in keyof typeof shellMessages['en-US']]: string;
 };
 type I18nValue = {
+    library: LibraryMessages;
     studio: {[K in keyof typeof studioMessages['en-US']]: string};
     reader: {[K in keyof typeof readerMessages['en-US']]: string};
     chat: {[K in keyof typeof chatMessages['en-US']]: string};
@@ -40,7 +42,7 @@ export function I18nProvider({ children, initialLocale = detectLocale() }: {
     useEffect(() => { document.documentElement.lang = locale; }, [locale]);
     // Shape type only: parity is tested; this never substitutes English content.
     const t = resources[locale].translation as TranslationKeys;
-    return <Context.Provider value={{ studio: studioMessages[locale], reader: readerMessages[locale], locale, setLocale, t, chat: chatMessages[locale], shell: shellMessages[locale], session: sessionMessages[locale], notebook: notebookMessages[locale], source: sourceMessages[locale] }}>{children}</Context.Provider>;
+    return <Context.Provider value={{ library: libraryMessages[locale], studio: studioMessages[locale], reader: readerMessages[locale], locale, setLocale, t, chat: chatMessages[locale], shell: shellMessages[locale], session: sessionMessages[locale], notebook: notebookMessages[locale], source: sourceMessages[locale] }}>{children}</Context.Provider>;
 }
 export function useI18n(): I18nValue { const value = useContext(Context); if (!value)
     throw new Error('I18nProvider required'); return value; }

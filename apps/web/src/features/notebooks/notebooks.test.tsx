@@ -16,6 +16,7 @@ function mount(route = '/notebooks', reply?: (r: RequestSpec) => Response | unde
                 if (result)
                     return result;
             }
+            if (r.path.startsWith('/sources?')) return json([]);
             if (r.path.startsWith('/recently-viewed'))
                 return json([{ type: 'notebook', id: 'notebook:beta', title: 'Recently opened Beta', last_viewed_at: '2026-11-08T02:03:04+00:00' }, { type: 'source', id: 'source:classic', title: 'Recent classic source', last_viewed_at: '2026-11-07' }]);
             if (r.path.startsWith('/notebooks?'))
@@ -142,7 +143,7 @@ it('keeps every retained pending route and search deep link instead of falling b
     expect(await screen.findByRole('heading', { name: 'Ask and Search', level: 1 })).toBeVisible();
     expect(router.state.location.search).toBe('?q=synthetic&mode=ask');
     expect(requests).toHaveLength(0);
-    for (const route of ['/sources', '/sources/source%3Aclassic', '/podcasts', '/settings', '/settings/models', '/transformations', '/advanced']) {
+    for (const route of ['/podcasts', '/settings', '/settings/models', '/transformations', '/advanced']) {
         await act(async () => router.navigate(route));
         expect(screen.getByText(/This page is being rebuilt/)).toBeVisible();
         expect(router.state.location.pathname).toBe(route);
@@ -387,6 +388,7 @@ function mountRealCreation(initialEntries = ['/notebooks'], initialIndex = initi
         // Live B5 entry reads only configuration and canonical history.
         if (path === '/api/models/defaults') return json({default_chat_model:null});
         if (path.startsWith('/api/personal/chats/') && path.endsWith('/turns') && request.method==='GET') return json([]);
+        if (path === '/api/sources' && request.method === 'GET') return json([]);
         if (path === '/api/recently-viewed')
             return json([]);
         if (path.endsWith('/workspace-view'))

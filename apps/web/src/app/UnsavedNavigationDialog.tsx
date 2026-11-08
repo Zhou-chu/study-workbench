@@ -8,7 +8,7 @@ export function UnsavedNavigationDialog({ navigation }: {
     navigation: NavigationController;
 }) {
     const state = useSyncExternalStore(navigation.subscribe, navigation.getSnapshot);
-    const { session, notebook } = useI18n();
+    const { session, notebook, library } = useI18n();
     useEffect(() => {
         const warn = (event: BeforeUnloadEvent) => {
             if (navigation.registry.hasUnsaved()) {
@@ -22,7 +22,7 @@ export function UnsavedNavigationDialog({ navigation }: {
     return <Dialog.Root open={state.status !== null} onOpenChange={open => {
             if (!open)
                 navigation.cancel(state.capture);
-        }}><Dialog.Portal><Dialog.Overlay className="dialog-overlay"/><Dialog.Content className="dialog-content" onCloseAutoFocus={event => event.preventDefault()}><Dialog.Title>{session.unsavedTitle}</Dialog.Title><Dialog.Description>{state.status === 'retain' ? notebook.retainCreationHint : state.status === 'blocked' ? session.blocked : session.unsavedHint}</Dialog.Description><div className="dialog-actions"><Button onClick={() => navigation.cancel(state.capture)}>{session.keepEditing}</Button>{state.status === 'confirm' && <Button variant="danger" onClick={() => navigation.confirm(state.capture)}>{session.leave}</Button>}{state.status === 'retain' && <Button onClick={() => navigation.confirm(state.capture)}>{notebook.retainCreation}</Button>}</div></Dialog.Content></Dialog.Portal></Dialog.Root>;
+        }}><Dialog.Portal><Dialog.Overlay className="dialog-overlay"/><Dialog.Content className="dialog-content" onCloseAutoFocus={event => event.preventDefault()}><Dialog.Title>{session.unsavedTitle}</Dialog.Title><Dialog.Description>{state.status === 'retain' ? (state.capture && 'resourceId' in state.capture ? library.retainHint : notebook.retainCreationHint) : state.status === 'blocked' ? session.blocked : session.unsavedHint}</Dialog.Description><div className="dialog-actions"><Button onClick={() => navigation.cancel(state.capture)}>{session.keepEditing}</Button>{state.status === 'confirm' && <Button variant="danger" onClick={() => navigation.confirm(state.capture)}>{session.leave}</Button>}{state.status === 'retain' && <Button onClick={() => navigation.confirm(state.capture)}>{state.capture && 'resourceId' in state.capture ? library.continueRetained : notebook.retainCreation}</Button>}</div></Dialog.Content></Dialog.Portal></Dialog.Root>;
 }
 export function RouterNavigationGuard({ navigation }: {
     navigation: NavigationController;

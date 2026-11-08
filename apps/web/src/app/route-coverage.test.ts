@@ -37,4 +37,13 @@ it('keeps lifecycle writes and unfinished study/classic/advanced features pendin
         expect(routeCoverage.find(e => e.coveredOperations.includes(op))?.status).toBe('pending');
 });
 
-it('does not call recent-source placeholder navigation complete or reassign implemented B2 authentication to B9',()=>{expect(routeCoverage.find(e=>e.coveredOperations.includes('notebooks.open_recent_source'))).toMatchObject({ownerTask:'B8',status:'pending'});expect(routeCoverage.find(e=>e.coveredOperations.includes('auth.login'))).toMatchObject({ownerTask:'B2',status:'implemented'});});
+it('records actual recent-source detail wiring without reassigning B2 authentication',()=>{expect(routeCoverage.find(e=>e.coveredOperations.includes('notebooks.open_recent_source'))).toMatchObject({ownerTask:'B8',status:'implemented'});expect(routeCoverage.find(e=>e.coveredOperations.includes('auth.login'))).toMatchObject({ownerTask:'B2',status:'implemented'});});
+
+it('marks exactly the 70 real B8a source operations implemented while all later slices remain pending',()=>{
+ const doc=readFileSync('../../docs/v1/B8A_SOURCE_ACCEPTANCE.md','utf8');
+ const allocated=[...doc.matchAll(/^\| \x60([a-z0-9_.]+)\x60 \|/gm)].map(m=>m[1]);
+ expect(allocated).toHaveLength(70);expect(new Set(allocated).size).toBe(70);
+ const b8=routeCoverage.filter(r=>r.ownerTask==='B8');expect(b8).toHaveLength(172);
+ for(const row of b8)expect(row.status).toBe(row.coveredOperations.some(op=>allocated.includes(op))?'implemented':'pending');
+ expect(b8.filter(r=>r.status==='pending')).toHaveLength(102);expect(isCoverageComplete(routeCoverage)).toBe(false);
+});
