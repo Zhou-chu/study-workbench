@@ -66,10 +66,12 @@ export interface TurnRequest extends Omit<WorkbenchSelection, 'reading'>, Retrie
   remote_notebook_id?: string | null
   idempotency_key: string
 }
-export interface CreateWorkbenchNoteInput { title: string; content: string; citations: EvidenceCitation[]; scope_snapshot?: ScopeSnapshot }
+/** Exact Python legacy empty scope, valid only on note wire records. */
+export type NoteScopeSnapshot = ScopeSnapshot | Record<string, never>
+export interface CreateWorkbenchNoteInput { title: string; content: string; citations: EvidenceCitation[]; scope_snapshot?: NoteScopeSnapshot }
 export interface UpdateWorkbenchNoteInput extends CreateWorkbenchNoteInput { expected_revision: number }
 // Workspace native-only notes do not necessarily have personal snapshot metadata.
-export interface WorkbenchNote { id: string; revision: number; title?: string | null; content?: string | null; citations?: EvidenceCitation[]; scope_snapshot?: ScopeSnapshot }
+export interface WorkbenchNote { id: string; revision: number; title?: string | null; content?: string | null; citations?: EvidenceCitation[]; scope_snapshot?: NoteScopeSnapshot }
 
 export type SnapshotOrigin =
   | { kind: 'note'; id: string; revision: number }

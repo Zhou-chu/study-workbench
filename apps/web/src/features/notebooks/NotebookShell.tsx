@@ -1,3 +1,6 @@
+import { StudioPanel } from '../studio/StudioPanel';
+import { useStudio } from '../studio/use-studio';
+import { readTurnContext, sessionCoordinator } from '@study/web-transport';
 import { ReaderPane } from '../reader/ReaderPane';
 import { useNotebookReader } from '../reader/use-notebook-reader';
 import type { TurnView } from '@study/contracts';
@@ -19,7 +22,7 @@ import { StatusBadge } from '../../ui/StatusBadge';
 import { SourceScaffold, ConversationScaffold, StudioScaffold, ReaderScaffold } from './ScaffoldPanels';
 import type { PreviewContent } from './ScaffoldPanels';
 import { WorkspaceScope } from './WorkspaceRecords';
-/** Sources, conversation and contextual reading are live; Studio retains its downstream seam. */
+/** Sources, conversation and contextual reading are live; Studio is wired through app-lifetime draft custody. */
 export function NotebookShell({ previewContent, readStatus, notebookId: routeNotebookId, onSourceRead, onCitation, onSaveAnswer, onOutlineReady, retrieval }: {
     onCitation?: CitationHandler;
     onSaveAnswer?: (turn: TurnView) => void;
@@ -38,6 +41,9 @@ export function NotebookShell({ previewContent, readStatus, notebookId: routeNot
     const location = useLocation();
     const notebookId = routeNotebookId ?? notebookIdFromPathname(location.pathname) ?? undefined;
     const reader = useNotebookReader(notebookId ?? 'preview', workspace);
+    const studio = useStudio(notebookId ?? 'preview');
+    const saveAnswer = onSaveAnswer ?? studio.saveAnswer;
+    const acceptOutline = onOutlineReady ?? ((turn:TurnView, origin:OutlineOrigin) => {const context=readTurnContext();if(!context?.ready||origin.notebookId!==notebookId)return;const id=studio.store.captureTurn(origin.notebookId,turn,context,sessionCoordinator.current(),`outline:${origin.operationId}`,origin);if(id&&!studio.store.getSnapshot().active.get(origin.notebookId))studio.store.select(origin.notebookId,id);});
     const readerOpen = workspace ? reader.open : previewReaderOpen;
     const [questionSession, setQuestionSession] = useState('question');
     const draft = useWorkbenchDraft(notebookId ?? 'preview', questionSession);
@@ -55,6 +61,6 @@ export function NotebookShell({ previewContent, readStatus, notebookId: routeNot
     </div>
     {readStatus}
     {workspace && <WorkspaceScope workspace={workspace}/>}
-    <WorkspaceLayout activeSection={activeSection} onSectionChange={setSection} readerOpen={readerOpen} sources={workspace ? <SourcesPanel key={notebookId} notebookId={notebookId ?? 'preview'} workspace={workspace} onRead={intent => { onSourceRead?.(intent); reader.openSource(intent); }}/> : <SourceScaffold {...contentProps} onRead={() => setReaderOpen(true)}/>} conversation={workspace ? <ConversationPanel key={notebookId} notebookId={notebookId ?? 'preview'} workspace={workspace} onCitation={(citation, origin) => { onCitation?.(citation, origin); reader.openCitation(citation, origin); }} onSaveAnswer={onSaveAnswer} onOutlineReady={onOutlineReady} retrieval={retrieval}/> : <ConversationScaffold history={undefined} {...contentProps} question={question} readOnly={draft.retired} onNewDraft={() => setQuestionSession(`question:${crypto.randomUUID()}`)} onQuestionChange={setQuestion} onRead={() => setReaderOpen(true)}/>} studio={<StudioScaffold />} reader={reader.intent ? <ReaderPane intent={reader.intent} onClose={reader.close} onPositionChange={reader.onPositionChange} {...(reader.unsavedPosition ? { positionSave: { blocked: reader.positionSaveBlocked, onSave: reader.savePosition } } : {})}/> : <ReaderScaffold {...contentProps} onClose={() => setReaderOpen(false)}/>}/>
+    <WorkspaceLayout activeSection={activeSection} onSectionChange={setSection} readerOpen={readerOpen} sources={workspace ? <SourcesPanel key={notebookId} notebookId={notebookId ?? 'preview'} workspace={workspace} onRead={intent => { onSourceRead?.(intent); reader.openSource(intent); }}/> : <SourceScaffold {...contentProps} onRead={() => setReaderOpen(true)}/>} conversation={workspace ? <ConversationPanel key={notebookId} notebookId={notebookId ?? 'preview'} workspace={workspace} onCitation={(citation, origin) => { onCitation?.(citation, origin); reader.openCitation(citation, origin); }} onSaveAnswer={saveAnswer} onOutlineReady={acceptOutline} retrieval={retrieval}/> : <ConversationScaffold history={undefined} {...contentProps} question={question} readOnly={draft.retired} onNewDraft={() => setQuestionSession(`question:${crypto.randomUUID()}`)} onQuestionChange={setQuestion} onRead={() => setReaderOpen(true)}/>} studio={workspace?<StudioPanel key={notebookId} notebookId={notebookId ?? 'preview'} workspace={workspace} onCitation={reader.openNoteCitation}/>:<StudioScaffold />} reader={reader.intent ? <ReaderPane intent={reader.intent} onClose={reader.close} onPositionChange={reader.onPositionChange} {...(reader.unsavedPosition ? { positionSave: { blocked: reader.positionSaveBlocked, onSave: reader.savePosition } } : {})}/> : <ReaderScaffold {...contentProps} onClose={() => setReaderOpen(false)}/>}/>
   </AppChrome>;
 }

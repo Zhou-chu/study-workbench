@@ -43,3 +43,6 @@ it('provides explicit conversation limits and recovery copy in every locale',()=
 
 import { readerMessages } from './reader-messages';
 it('provides every reader integrity and historical-version label in all fourteen locales',()=>{expect(Object.keys(readerMessages).sort()).toEqual([...codes].sort());for(const row of Object.values(readerMessages)){expect(Object.keys(row).sort()).toEqual(['invalid','retired','savePosition','unavailable','unsaved']);for(const value of Object.values(row))expect(value.trim()).not.toBe('');}});
+
+import { studioMessages } from './studio-messages';
+it('provides explicit Studio uncertainty, compatibility and download labels in all fourteen locales',()=>{expect(Object.keys(studioMessages).sort()).toEqual([...codes].sort());const keys=Object.keys(studioMessages['en-US']).sort();expect(keys).toHaveLength(12);for(const row of Object.values(studioMessages)){expect(Object.keys(row).sort()).toEqual(keys);for(const value of Object.values(row))expect(value.trim()).not.toBe('');}});

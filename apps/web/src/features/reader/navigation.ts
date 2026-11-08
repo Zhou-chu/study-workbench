@@ -8,6 +8,8 @@ export interface ReaderCapture {
     context: DispatchContext;
     generation: number;
 }
+export type NoteCitationOrigin = Readonly<{kind:'note';noteId:string;noteRevision:number;focusKey:string}>;
+export type ReaderOrigin = CitationOrigin | NoteCitationOrigin | Readonly<{kind:'source';focusKey:string}>;
 export type ReaderIntent = Readonly<ReaderCapture & {
     key: string;
     source_version_id: string | null;
@@ -15,16 +17,18 @@ export type ReaderIntent = Readonly<ReaderCapture & {
     extraction_id: string | null;
     initialPage: number;
     citation: EvidenceCitationView | null;
-    origin: CitationOrigin | null;
+    origin: ReaderOrigin | null;
 }>;
 const positive = (v: unknown): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;
 export function readerIsCurrent(intent: ReaderIntent) { return canDispatch(intent.context, readTurnContext()) && intent.generation === sessionCoordinator.current(); }
 /** A bound controller supplies notebook, target and generation without global selection inference. */
 export function createReaderNavigation(capture: ReaderCapture) {
     const frozen = { ...capture, context: freezeDispatchContext(capture.context) };
+    const openEvidence = (citation: EvidenceCitationView, origin: ReaderOrigin): ReaderIntent => { const parsed = parseTurnView({ citations: [citation] }).citations; const c = Array.isArray(parsed) ? parsed[0] as EvidenceCitationView : undefined; const valid = c && !c.projection_status && ['local_evidence', 'remote_text_snapshot', 'derived_snapshot'].includes(String(c.kind)) && typeof c.source_version_id === 'string' && !!c.source_version_id && typeof c.evidence_id === 'string' && !!c.evidence_id; return Object.freeze({ ...frozen, key: crypto.randomUUID(), source_version_id: valid && typeof c.source_version_id === 'string' ? c.source_version_id : null, evidence_id: valid && typeof c.evidence_id === 'string' ? c.evidence_id : null, extraction_id: null, initialPage: valid && c.locator && 'page_index' in c.locator && positive(c.locator.page_index) ? c.locator.page_index : 0, citation: c ?? { projection_status: 'invalid' as const }, origin: Object.freeze({ ...origin }) }); };
     return {
-        openCitation(citation: EvidenceCitationView, origin: CitationOrigin): ReaderIntent { const parsed = parseTurnView({ citations: [citation] }).citations; const c = Array.isArray(parsed) ? parsed[0] as EvidenceCitationView : undefined; const valid = c && !c.projection_status && ['local_evidence', 'remote_text_snapshot', 'derived_snapshot'].includes(String(c.kind)) && typeof c.source_version_id === 'string' && !!c.source_version_id && typeof c.evidence_id === 'string' && !!c.evidence_id; return Object.freeze({ ...frozen, key: crypto.randomUUID(), source_version_id: valid && typeof c.source_version_id === 'string' ? c.source_version_id : null, evidence_id: valid && typeof c.evidence_id === 'string' ? c.evidence_id : null, extraction_id: null, initialPage: valid && c.locator && 'page_index' in c.locator && positive(c.locator.page_index) ? c.locator.page_index : 0, citation: c ?? { projection_status: 'invalid' as const }, origin: { ...origin } }); },
-        openSource(source: SourceReadIntent, origin: Pick<CitationOrigin, 'focusKey'> | null = null): ReaderIntent { return Object.freeze({ ...frozen, key: crypto.randomUUID(), source_version_id: source.source_version_id || null, evidence_id: source.evidence_id ?? null, extraction_id: null, initialPage: positive(source.page_index) ? source.page_index : 0, citation: null, origin: origin ? { turnId: '', focusKey: origin.focusKey } : null }); }
+        openCitation: (citation:EvidenceCitationView,origin:CitationOrigin)=>openEvidence(citation,origin),
+        openNoteCitation(citation:EvidenceCitationView,origin:NoteCitationOrigin):ReaderIntent|null {if(!origin.noteId.trim()||!origin.focusKey.trim()||!Number.isSafeInteger(origin.noteRevision)||origin.noteRevision<1)return null;return openEvidence(citation,origin);},
+        openSource(source: SourceReadIntent, origin: Pick<CitationOrigin, 'focusKey'> | null = null): ReaderIntent { return Object.freeze({ ...frozen, key: crypto.randomUUID(), source_version_id: source.source_version_id || null, evidence_id: source.evidence_id ?? null, extraction_id: null, initialPage: positive(source.page_index) ? source.page_index : 0, citation: null, origin: origin ? { kind:'source' as const, focusKey: origin.focusKey } : null }); }
     };
 }
 export function restoreReaderFocus(intent: ReaderIntent) { if (intent.origin?.focusKey)

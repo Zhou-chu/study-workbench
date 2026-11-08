@@ -218,3 +218,17 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .pdf-canvas[hidden] { display: none; }
 
 .reader-save-notice { padding: 8px 16px; border-bottom: 1px dashed var(--interactive-border); }
+
+/* Studio: paper/ink controls, bounded scroll and retained editorial state. */
+.studio-panel { min-width: 0; overflow-wrap: anywhere; }
+.studio-panel > section, .artifact-card, .note-editor, .note-conflict { padding: 1rem; margin-block: .75rem; border: 1px solid var(--interactive-border); border-radius: .5rem; }
+.studio-panel h3, .studio-panel h4 { margin-block: .5rem; }
+.studio-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: .75rem; }
+.studio-panel input, .studio-panel textarea { box-sizing: border-box; width: 100%; min-height: 44px; padding: .75rem; color: var(--text); background: var(--surface); border: 1px solid var(--interactive-border); border-radius: .25rem; font: inherit; }
+.studio-panel label { display: block; margin-block: .5rem; }
+.studio-panel textarea { min-height: 14rem; resize: vertical; line-height: 1.6; }
+.studio-panel pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 20rem; overflow: auto; }
+.studio-panel summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.studio-panel audio { display: block; max-width: 100%; margin-block: .75rem; }
+.studio-panel dl div { display: flex; justify-content: space-between; gap: .5rem; }
+.studio-panel a.button { display: inline-flex; min-height: 44px; min-width: 44px; align-items: center; padding: .5rem; }

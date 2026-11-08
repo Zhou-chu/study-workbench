@@ -5,7 +5,7 @@ import { readTurnContext, sessionCoordinator } from '@study/web-transport';
 import { useSourceOperations } from '../sources/use-source-operations';
 import { selectionFromView, type SourceReadIntent } from '../sources/source-selection';
 import type { CitationOrigin } from '../chat/Message';
-import { createReaderNavigation, readerIsCurrent, restoreReaderFocus, type ReaderIntent } from './navigation';
+import { createReaderNavigation, readerIsCurrent, restoreReaderFocus, type ReaderIntent, type NoteCitationOrigin } from './navigation';
 /** Read history contains opaque handles only, never document text, credentials or pending writes. */
 export function useNotebookReader(notebookId: string, workspace: WorkspaceViewV1 | undefined) {
     const location = useLocation(), navigate = useNavigate(), ops = useSourceOperations(notebookId);
@@ -34,6 +34,7 @@ export function useNotebookReader(notebookId: string, workspace: WorkspaceViewV1
     return { intent: valid ? intent : null, open,
         openCitation(c: EvidenceCitationView, origin: CitationOrigin) { const next = controller()?.openCitation(c, origin); if (next)
             show(next); },
+        openNoteCitation(c: EvidenceCitationView, origin:NoteCitationOrigin) {const next=controller()?.openNoteCitation(c,origin);if(next)show(next);},
         openSource(source: SourceReadIntent) { const element = document.activeElement; if (element instanceof HTMLElement && !element.id)
             element.id = 'reader-origin:' + crypto.randomUUID(); const next = controller()?.openSource(source, element instanceof HTMLElement ? { focusKey: element.id } : null); if (next)
             show(next); },

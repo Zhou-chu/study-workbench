@@ -1,3 +1,4 @@
+import { createStudioStore } from '../features/studio/studio-store';
 import { createTurnRuntime } from '../features/chat/turn-runtime';
 import { createSourceOperations } from '../features/sources/source-operations';
 import { navigationDecision, freezeDispatchContext, canDispatch, type DispatchContext, type EditorModel } from '@study/domain';
@@ -49,6 +50,7 @@ export function createDraftRegistry() {
     };
     const sources = createSourceOperations(notify);
     const turns = createTurnRuntime(notify);
+    const studio = createStudioStore(notify);
     const startCreation = (context: DispatchContext) => {
         const id: DraftId = Object.freeze({ epoch: context.epoch, notebookId: '@notebook-creation', editorSession: crypto.randomUUID() });
         activeCreation = id;
@@ -56,7 +58,7 @@ export function createDraftRegistry() {
         notify();
         return id;
     };
-    return { sources, turns, clearQuestion(id: DraftId, revision: number) {
+    return { sources, turns, studio, clearQuestion(id: DraftId, revision: number) {
             const draft=drafts.get(key(id));
             if (!draft || draft.retired || retired.has(id.epoch) || draft.questionRevision !== revision) return;
             drafts.set(key(id),Object.freeze({...draft,question:'',questionRevision:revision+1})); notify();
@@ -113,12 +115,13 @@ export function createDraftRegistry() {
             retired.add(epoch);
             sources.retire(epoch);
             turns.retire(epoch);
+            studio.retire(epoch);
             for (const [k, draft] of drafts)
                 if (draft.id.epoch === epoch)
                     drafts.set(k, Object.freeze({ ...draft, retired: true, ...(draft.creation ? { creation: Object.freeze({ ...draft.creation, status: draft.creation.status === 'pending' ? 'unknown' as const : draft.creation.status }) } : {}) }));
             notify();
         },
-        hasUnsaved: () => turns.hasPending() || sources.hasUnsaved() || [...drafts.values()].some(d => !!(d.editor?.dirty || d.editor?.pending || d.question || d.file || d.creation && d.creation.status !== 'succeeded' && (d.creation.name || d.creation.description || ['pending', 'unknown'].includes(d.creation.status)))),
+        hasUnsaved: () => studio.hasUnsaved() || turns.hasPending() || sources.hasUnsaved() || [...drafts.values()].some(d => !!(d.editor?.dirty || d.editor?.pending || d.question || d.file || d.creation && d.creation.status !== 'succeeded' && (d.creation.name || d.creation.description || ['pending', 'unknown'].includes(d.creation.status)))),
         subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; } };
 }
 export type DraftRegistry = ReturnType<typeof createDraftRegistry>;
@@ -156,13 +159,14 @@ export function createNavigationController(registry: DraftRegistry) {
         notify();
     };
     const decision = (draft: DraftState | undefined): NavigationDecision => {
+        if (registry.studio.blocked(active?.notebookId)) return 'blocked';
         if (active && (registry.sources.pending(active.notebookId) || registry.turns.hasPending(active.notebookId))) return 'blocked';
         const editorBlocked = !!draft?.editor?.pending || !!draft?.editor && ['unknown', 'conflict', 'rejected'].includes(draft.editor.saveResult);
         // F26: creation alone may continue only after explicit retention, never by generic discard.
         if (!editorBlocked && draft?.creation && ['pending', 'unknown'].includes(draft.creation.status))
             return 'retain';
         return navigationDecision({ targetChanged: true,
-            dirty: !!(draft?.editor?.dirty || draft?.question || draft?.file || draft?.creation && draft.creation.status !== 'succeeded' && (draft.creation.name || draft.creation.description)),
+            dirty: registry.studio.dirty(active?.notebookId) || !!(draft?.editor?.dirty || draft?.question || draft?.file || draft?.creation && draft.creation.status !== 'succeeded' && (draft.creation.name || draft.creation.description)),
             saving: !!draft?.editor?.pending || draft?.creation?.status === 'pending',
             unknown: !!draft?.editor && ['unknown', 'conflict', 'rejected'].includes(draft.editor.saveResult) || draft?.creation?.status === 'unknown' });
     };
