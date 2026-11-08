@@ -507,8 +507,8 @@ describe('resource streaming and exact HTTP equivalence', () => {
   it.each([403, 409, 429, 503, 401])('retains non-auth resource %s errors exactly without retrying/retiring', async status => {
     const { proxy, fetchMock } = fixture()
     const cookie = await active(proxy)
-    const body = status === 401 ? '<html>private ingress login</html>' : JSON.stringify({ detail: 'original-resource-error', revision: 8 })
-    fetchMock.mockClear().mockImplementation(async url => url.endsWith('/status') ? ready() : new Response(body, { status, headers: { 'content-type': status === 401 ? 'text/html' : 'application/json', 'retry-after': '999', 'x-internal': 'private-sentinel' } }))
+    const body = JSON.stringify({ detail: 'original-resource-error', revision: 8 })
+    fetchMock.mockClear().mockImplementation(async url => url.endsWith('/status') ? ready() : new Response(body, { status, headers: { 'content-type': 'application/json', 'retry-after': '999', 'x-internal': 'private-sentinel' } }))
     const response = await proxy.dispatch(request('/api/notes/note%3Aone', 'PUT', { cookie }, '{"content":"draft"}'))
     expect(response.status).toBe(status)
     expect(await response.text()).toBe(body)

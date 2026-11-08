@@ -34,7 +34,7 @@ function requestBody(req: IncomingMessage): ReadableStream<Uint8Array> {
     let iterator: AsyncIterator<Buffer> | undefined;
     return new ReadableStream<Uint8Array>({
         async pull(controller) {
-            iterator ??= req[Symbol.asyncIterator]();
+            iterator ??= req.iterator({ destroyOnReturn: false });
             try {
                 const chunk = await iterator.next();
                 if (chunk.done)
@@ -46,7 +46,9 @@ function requestBody(req: IncomingMessage): ReadableStream<Uint8Array> {
                 controller.error(error);
             }
         },
-        cancel() { req.destroy(); },
+        // Stop application reads without destroying the response socket. A
+        // bounded auth rejection must still deliver its structured 413 reply.
+        async cancel() { await iterator?.return?.(); },
     }, { highWaterMark: 0 });
 }
 function drain(res: ServerResponse): Promise<void> {

@@ -4,6 +4,7 @@ import {
   type AccessSnapshot, type AuthOutcome, type BffSessionOptions, type NativeCalls,
   type RecordRef,
 } from './session-store.js'
+import { classifyIngressResponse } from './public-config.js'
 import { validateBffConfig, type WebSessionConfig } from './config.js'
 import { gateRequestTarget, isAllowedWebRead, matchApiRoute, type RoutePolicy } from './policy.js'
 
@@ -185,6 +186,37 @@ function requestHeaders(req: Request, route: RoutePolicy, access?: string, nativ
   else if (native && req.headers.has('authorization')) headers.set('Authorization', req.headers.get('authorization')!)
   if (route.kind === 'sse') headers.set('Accept', 'text/event-stream')
   return headers
+}
+/** Only the existing variable-MIME artifact contract admits opaque HTML.
+ * Attachment syntax is a compatibility boundary, never authentication evidence.
+ */
+function htmlArtifactAttachment(response: Response, route: RoutePolicy): boolean {
+  if (route.template !== '/api/personal/artifacts/{artifact_id}/download'
+    || ![200, 206].includes(response.status) || response.headers.has('location')) return false
+  const disposition = response.headers.get('content-disposition')?.trim()
+  if (!disposition || !/^attachment(?=\s*(?:;|$))/i.test(disposition)) return false
+  let rest = disposition.slice('attachment'.length).trim()
+  const names = new Set<string>()
+  while (rest) {
+    const part = /^;\s*([!#$%&'*+.^_`|~0-9a-z-]+)\s*=\s*("(?:[\x20-\x21\x23-\x5b\x5d-\x7e]|\\[\x20-\x7e])*"|[!#$%&'*+.^_`|~0-9a-z-]+)\s*/i.exec(rest)
+    if (!part) return false
+    const name = part[1]!.toLowerCase(), value = part[2]!
+    if (names.has(name)) return false
+    names.add(name)
+    if (name === 'filename*') {
+      if (!/^utf-8''(?:[!#$&+.^_`|~0-9a-z-]|%[0-9a-f]{2})+$/i.test(value)) return false
+      try { decodeURIComponent(value.slice(7)) } catch { return false }
+    }
+    rest = rest.slice(part[0].length)
+  }
+  return true
+}
+function rejectUnexpectedIngress(response: Response, route: RoutePolicy): void {
+  const classification = classifyIngressResponse(response.status, response.headers.get('content-type'), response.headers.get('location'))
+  if (classification !== 'expected' && !htmlArtifactAttachment(response, route)) {
+    cancelBody(response.body)
+    throw new ProxyFailure('UPSTREAM_UNAVAILABLE', 502)
+  }
 }
 function isRedirect(response: Response): boolean { return response.status >= 300 && response.status < 400 && response.status !== 304 }
 function transportFailure(context: RequestContext | undefined, error: ProxyFailure): never {
@@ -413,6 +445,7 @@ export function createSessionProxy(inputConfig: WebSessionConfig, options: Proxy
     if (!SAFE.has(req.method) && req.body) { init.body = req.body; init.duplex = 'half' }
     const upstream = await fetcher(`${config.internalOrigin}${path}`, init)
     if (isRedirect(upstream)) { cancelBody(upstream.body); throw new ProxyFailure('UPSTREAM_UNAVAILABLE', 502) }
+    rejectUnexpectedIngress(upstream, route)
     const body = access ? await observeResourceError(upstream, access, store) : upstream.body
     return new Response(req.method === 'HEAD' || [204, 205, 304].includes(upstream.status) ? null : body,
       { status: upstream.status, headers: responseHeaders(upstream, route) })
@@ -456,7 +489,13 @@ export function createSessionProxy(inputConfig: WebSessionConfig, options: Proxy
       ...(body ? { body: JSON.stringify(body) } : {}), cache: 'no-store', redirect: 'manual' })
     if (isRedirect(response)) { cancelBody(response.body); throw new ProxyFailure('UPSTREAM_UNAVAILABLE', 502) }
     if (!response.ok) throw await upstreamError(response)
-    return new Response([204, 205, 304].includes(response.status) ? null : response.body, { status: response.status, headers: responseHeaders(response, route) })
+    const responseHeader = responseHeaders(response, route)
+    if ([204, 205, 304].includes(response.status)) return new Response(null, { status: response.status, headers: responseHeader })
+    // Explicit native auth still uses the same bounded JSON/media boundary.
+    // Native token JSON is returned only in this already-classified branch.
+    const value = await nativeJson(response, req.method === 'GET' && route.template === '/api/auth/sessions' ? LIST_BYTES : AUTH_BYTES)
+    responseHeader.delete('content-length') // JSON serialization owns its new length.
+    return json(value, response.status, responseHeader)
   }
   async function publicConfig(req: Request, path: string): Promise<Response> {
     if (!isAllowedWebRead(req.headers, config.publicOrigin)) throw new ProxyFailure('CROSS_SITE_REQUEST')
