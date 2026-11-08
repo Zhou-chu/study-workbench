@@ -77,3 +77,7 @@ The exact-session post-success read cannot overwrite subsequent edits or another
 - I3: An exact native notebook read with `notebook_id:null` is kept as a separate `inspection`, not verified session ownership. Known messages/roles/timestamps remain visible with a fourteen-locale parent-unavailable reason. Send/model/rename/delete/save remain disabled; foreign or malformed identities remain fenced. Reading orphaned history never adopts it or infers note-save authority.
 
 The correction report records exact RED/GREEN and aggregate commands. B8b deferred dense-JSX and bulk-default documentation findings remain deferred; browser/runtime/provider acceptance is unchanged.
+
+## Independent review correction round 2
+
+An unknown notebook send keeps its original transcript and operation evidence unchanged while an exact nullable-parent GET is displayed in a separate read-only inspection region. The region uses the existing localized Check original session label and ownership explanation, known roles/timestamps, Markdown and verified reference consumers. It has no note-save or session mutation controls. Mounted tests cover both no prior local output and retained confirmed output through explicit check and remount, compare original input/token/receipts/status/transcript identity, and verify no replay or parent authority. This resolves the residual I3 display branch; I1/I2 and producer/store ownership semantics are unchanged.

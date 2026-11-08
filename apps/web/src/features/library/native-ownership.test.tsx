@@ -186,3 +186,70 @@ it.each(['foreign-session','malformed-message'] as const)('I3 null parent never 
     expect(screen.getByLabelText('Conversation model')).toBeDisabled();
     expect(screen.queryByRole('button',{name:'Save message to note'})).not.toBeInTheDocument();
 });
+
+it.each([false, true])('I3 unknown notebook send exposes orphan inspection separately without changing original evidence; prior output=%s', async priorOutput => {
+    let sends=0, uncertain=false, orphanReads=0;
+    const inspectionMessages=[
+        {id:'human:inspection',type:'human',content:'Fetched orphan question',timestamp:'2026-11-08T12:00:00Z'},
+        {id:'ai:inspection',type:'ai',content:'Fetched orphan answer',timestamp:'2026-11-08T12:01:00Z'}
+    ];
+    const requests=classicServer(r=>{
+        const path=decodeURIComponent(new URL(r.url).pathname);
+        if(path==='/api/chat/execute'){
+            sends++;
+            if(priorOutput&&sends===1)return json({session_id:nativeSession.id,messages:nativeMessages});
+            uncertain=true;return json({detail:'Synthetic uncertain send'},500);
+        }
+        if(r.method==='GET'&&path.endsWith('/chat/sessions/'+nativeSession.id)){
+            if(uncertain){orphanReads++;return json({...nativeSession,notebook_id:null,messages:inspectionMessages});}
+            return json({...nativeSession,messages:sends?nativeMessages:[]});
+        }
+    });
+    const h=await classic();
+    if(priorOutput){
+        fireEvent.change(screen.getByLabelText('Classic message'),{target:{value:'Confirmed original question'}});
+        fireEvent.click(screen.getByRole('button',{name:'Send classic message'}));
+        await screen.findByText('Whole answer');
+        await waitFor(()=>expect(screen.getByLabelText('Classic message')).toHaveValue(''));
+        await waitFor(()=>expect(screen.getByLabelText('Classic message')).toBeEnabled());
+    }
+    fireEvent.change(screen.getByLabelText('Classic message'),{target:{value:'Uncertain original question'}});
+    fireEvent.click(screen.getByRole('button',{name:'Send classic message'}));
+    await screen.findByText('Outcome unknown. Check the original session; do not resend.');
+    const store=h.workbench.drafts.library;
+    const original=store.getSnapshot().find(r=>r.input.kind==='native-chat'&&r.input.message==='Uncertain original question')!;
+    expect(original.status).toBe('unknown');
+    expect(original.native?.messages??[]).toEqual(priorOutput?nativeMessages:[]);
+    fireEvent.click(screen.getByRole('button',{name:'Check original session'}));
+    await waitFor(()=>expect(orphanReads).toBe(1));
+    const assertInspection=()=>{
+        const region=screen.getByRole('region',{name:'Check original session'});
+        expect(within(region).getByText('Fetched orphan question')).toBeVisible();
+        expect(within(region).getByText('Fetched orphan answer')).toBeVisible();
+        expect(within(region).getByText(/human.*2026-11-08T12:00:00Z/)).toBeVisible();
+        expect(within(region).getByText(/ai.*2026-11-08T12:01:00Z/)).toBeVisible();
+        expect(within(region).queryByRole('button',{name:'Save message to note'})).not.toBeInTheDocument();
+        expect(screen.getByText('Notebook ownership is unavailable. This session is read-only.')).toBeVisible();
+        const retained=store.get(original.id)!;
+        expect(retained.input).toBe(original.input);expect(retained.token).toBe(original.token);
+        expect(retained.receipts).toBe(original.receipts);expect(retained.status).toBe('unknown');
+        expect(retained.native?.messages).toBe(original.native?.messages);
+        expect(retained.native?.inspection?.messages).toEqual(inspectionMessages);
+        expect(screen.getByLabelText('Classic message')).toHaveValue('Uncertain original question');
+        const transcript=h.container.querySelector('.native-transcript')!;
+        expect(within(transcript as HTMLElement).queryByText('Fetched orphan answer')).not.toBeInTheDocument();
+        if(priorOutput)expect(within(transcript as HTMLElement).getByText('Whole answer')).toBeVisible();
+        else expect(transcript.querySelectorAll('article')).toHaveLength(0);
+        for(const name of ['Send classic message','Rename session','Delete session'])expect(screen.getByRole('button',{name})).toBeDisabled();
+        expect(screen.getByLabelText('Conversation model')).toBeDisabled();
+        expect(screen.queryByRole('button',{name:'Save message to note'})).not.toBeInTheDocument();
+        expect(store.begin(original.id,original.context,original.generation)).toBeNull();
+    };
+    assertInspection();
+    fireEvent.click(screen.getByRole('button',{name:'Personal conversation'}));
+    fireEvent.click(screen.getByRole('button',{name:'Classic conversation'}));
+    await waitFor(()=>expect(orphanReads).toBeGreaterThanOrEqual(2));
+    assertInspection();
+    expect(requests.filter(r=>r.url.endsWith('/chat/execute'))).toHaveLength(priorOutput?2:1);
+    expect(requests.some(r=>r.method==='PUT'||r.method==='DELETE'||r.method==='POST'&&r.url.endsWith('/notes'))).toBe(false);
+});

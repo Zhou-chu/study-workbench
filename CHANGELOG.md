@@ -84,6 +84,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Show separately fetched read-only orphan history after an uncertain classic send, preserving the original transcript and no-replay lock.
+
 - Preserve confirmed classic/source transcripts while composing follow-ups, capture exact immutable native-session retry intents, and show null-parent notebook history as explicitly read-only without granting send or note-save authority.
 
 - Preserve Enter and Shift+Enter for multiline source imports and keyboard activation of wizard buttons, while retaining final-review, IME and single-submission guards.

@@ -107,8 +107,14 @@ it('I3 null-parent inspection is separate from verified ownership and cannot rep
     const a = store.begin(id, c, g)!;
     store.nativeOutput(id, a.token!, { messages: nativeMessages }, c, g);
     store.stopNative(id);
-    store.nativeHydrate(id, store.nativeRead(id, c, g)!, { ...nativeSession, notebook_id: null, messages: [] }, c, g);
-    expect(store.get(id)?.native?.messages).toEqual(nativeMessages);
+    const original = store.get(id)!;
+    const fetched = [{ id: 'ai:orphan', type: 'ai', content: 'Separate fetched answer', timestamp: '2026-11-08T12:01:00Z' }];
+    store.nativeHydrate(id, store.nativeRead(id, c, g)!, { ...nativeSession, notebook_id: null, messages: fetched }, c, g);
+    expect(store.get(id)?.native?.messages).toBe(original.native?.messages);
+    expect(store.get(id)?.native?.inspection?.messages).toEqual(fetched);
+    expect(store.get(id)?.input).toBe(original.input);
+    expect(store.get(id)?.token).toBe(original.token);
+    expect(store.get(id)?.receipts).toBe(original.receipts);
     expect(store.get(id)?.status).toBe('unknown');
     const retained = store.get(id)?.native?.inspection;
     store.nativeHydrate(id, store.nativeRead(id, c, g)!, { ...nativeSession, id: 'foreign', notebook_id: null, messages: [] }, c, g);
