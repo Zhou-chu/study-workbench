@@ -195,3 +195,26 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .markdown table { border-collapse: collapse; }
 .markdown th, .markdown td { border: 1px solid var(--interactive-border); padding: 8px 12px; }
 .markdown a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Contextual reader: content retains original colors and zoom scrolls locally. */
+.reader-pane { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+.reader-header { flex: 0 0 auto; border-bottom: 1px solid var(--interactive-border); }
+.reader-header h2 { overflow-wrap: anywhere; }
+.reader-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px; }
+.reader-controls label { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.reader-controls input { min-height: 44px; max-width: 100%; background: var(--surface); color: var(--text); border: 1px solid var(--interactive-border); padding: 8px; }
+.reader-controls input[type=number] { width: 5.5rem; }
+.reader-controls input[type=search] { width: 18rem; }
+.reader-pane .reader-scroll { padding: 16px; overflow-x: hidden; }
+.citation-context { border-inline-start: 3px solid var(--interactive-border); padding-inline-start: 12px; margin-bottom: 16px; }
+.citation-context blockquote { margin: 12px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.reader-identity { overflow-wrap: anywhere; font-size: .8rem; }
+.reader-block { padding: 12px 0; border-top: 1px solid var(--decorative-line); }
+.reader-text { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; line-height: 1.8; }
+.reader-text mark { color: var(--text); background: var(--selected); text-decoration: underline; text-decoration-thickness: 2px; }
+.pdf-view { min-width: 0; width: 100%; }
+.pdf-scroll { min-width: 0; width: 100%; max-height: 70dvh; overflow: auto; overscroll-behavior: contain; }
+.pdf-canvas { display: block; background: white; }
+.pdf-canvas[hidden] { display: none; }
+
+.reader-save-notice { padding: 8px 16px; border-bottom: 1px dashed var(--interactive-border); }

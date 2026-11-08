@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the contextual Notebook citation/source reader with retained extraction identity, exact Unicode quote locations, protected size/hash-verified originals, local PDF.js assets and bounded cancel-safe rendering. Reading stays separate from question membership; history/focus, explicit unsaved-position recovery and all 14 locales are covered synthetically. Browser clarity, mobile and deployed-service acceptance remain pending. Evidence maintenance stays B9-owned; legacy detail wire fields still require cutover review.
+
 - **Conversation-first Notebook SPA (2026-11-08).** Add continuous, safely rendered Markdown answers, exact-scope Ask/Outline, IME-safe composition and revision-bound draft clearing across all 14 locales. Application-owned bounded turn recovery preserves uncertain writes across route changes, observes one known operation with genuine SSE stages, and checks canonical history without replay or generic job recovery. Google verification and fresh app/provider fences stay separate; Reader/Studio and hybrid controls keep explicit downstream seams. Real browser/provider/runtime acceptance remains pending. Pin the migrated workspace KaTeX tree to 0.18.2 for GHSA-238p-pmpm-9mq7; retained legacy frontend dependencies are unchanged.
 
 

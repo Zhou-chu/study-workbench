@@ -1,0 +1,26 @@
+import { expect, it, vi } from 'vitest';
+import { createEvidenceApi, parseReaderDetail } from './evidence-api';
+import { sourceContext } from '../test/source-fixtures';
+import { readerDetail } from '../test/reader-fixtures';
+import { json } from '../test/notebook-fixtures';
+import { sessionCoordinator, type RequestSpec } from '@study/web-transport';
+import { createHash } from 'node:crypto';
+const request = { notebookId: 'n', source_version_id: 'v-old', evidence_id: 'e-old', extraction_id: null };
+it('allowlists the retained extraction and rejects mismatched evidence, version or notebook', () => { const parsed = parseReaderDetail(readerDetail(), request); expect(parsed.extraction?.extraction_id).toBe('x-old'); expect(JSON.stringify(parsed)).not.toMatch(/private|secret|file_path|credentials|error/); for (const field of ['source_version_id', 'notebook_id']) {
+    const d = readerDetail();
+    Object.assign(d.version, { [field]: 'wrong' });
+    expect(() => parseReaderDetail(d, request)).toThrow();
+} const d = readerDetail(); d.evidence[0]!.extraction_id = 'x-new'; expect(() => parseReaderDetail(d, request)).toThrow(); });
+it('sends encoded exact identity selectors and rechecks after deferred JSON', async () => { const c = sourceContext(); let controller!: ReadableStreamDefaultController<Uint8Array>; const response = new Response(new ReadableStream<Uint8Array>({ start(value) { controller = value; } })); const send = vi.fn(async (_request: RequestSpec) => response); const api = createEvidenceApi({ send }); const p = api.detail({ ...request, source_version_id: 'v/a', extraction_id: 'x/old' }, c, sessionCoordinator.current()); await Promise.resolve(); sessionCoordinator.begin(); controller.enqueue(new TextEncoder().encode(JSON.stringify(readerDetail()))); controller.close(); await expect(p).rejects.toMatchObject({ kind: 'retired' }); expect(send.mock.calls[0]?.[0]).toMatchObject({ path: '/personal/source-versions/v%2Fa?evidence_id=e-old&extraction_id=x%2Fold' }); });
+const bytes = new TextEncoder().encode('%PDF-1.7\nfixture');
+const version = { source_version_id: 'v-old', mime_type: 'application/pdf', byte_size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
+it('materializes only bounded MIME and SHA256-verified protected bytes', async () => { const c = sourceContext(); const api = createEvidenceApi({ send: async () => new Response(bytes, { headers: { 'Content-Type': 'application/pdf' } }) }); const blob = await api.download(version, c, sessionCoordinator.current()); expect(blob.size).toBe(bytes.length); expect(blob.type).toBe('application/pdf'); });
+it('rejects missing, HTML, oversized, truncated and hash-mismatched originals distinctly', async () => { for (const [response, expected] of [[json({}, 404), 'missing'], [new Response('<html/>', { headers: { 'Content-Type': 'text/html' } }), 'invalid'], [new Response(bytes, { headers: { 'Content-Type': 'application/pdf', 'Content-Length': '999999999' } }), 'invalid'], [new Response(bytes.slice(0, 4), { headers: { 'Content-Type': 'application/pdf' } }), 'interrupted'], [new Response(bytes, { headers: { 'Content-Type': 'application/pdf' } }), 'invalid']] as const) {
+    const c = sourceContext();
+    const api = createEvidenceApi({ send: async () => response });
+    await expect(api.download(expected === 'invalid' && response.headers.get('Content-Length') === null && response.headers.get('Content-Type') === 'application/pdf' ? { ...version, sha256: '0'.repeat(64) } : version, c, sessionCoordinator.current())).rejects.toMatchObject({ reason: expected });
+} });
+it('cancels oversized streaming bodies instead of blindly buffering them', async () => { let cancelled = false; const c = sourceContext(); const stream = new ReadableStream<Uint8Array>({ start(s) { s.enqueue(new Uint8Array(100)); }, cancel() { cancelled = true; } }); const api = createEvidenceApi({ send: async () => new Response(stream, { headers: { 'Content-Type': 'application/pdf' } }) }); await expect(api.download(version, c, sessionCoordinator.current())).rejects.toMatchObject({ reason: 'invalid' }); expect(cancelled).toBe(true); });
+it('rejects a stale download after hashing, not only after headers', async () => { const c = sourceContext(); const digest = crypto.subtle.digest.bind(crypto.subtle); vi.spyOn(crypto.subtle, 'digest').mockImplementation(async (...args) => { const result = await digest(...args); sessionCoordinator.begin(); return result; }); const api = createEvidenceApi({ send: async () => new Response(bytes, { headers: { 'Content-Type': 'application/pdf' } }) }); await expect(api.download(version, c, sessionCoordinator.current())).rejects.toMatchObject({ kind: 'retired' }); });
+
+it('retains safe evidence provenance and non-independent semantics while stripping raw extras',()=>{const value=readerDetail();Object.assign(value.evidence[0]!,{provenance:{kind:'derived',origin_kind:'note',origin_id:'note-old',note_revision:3,authorship:'user',origin_title:'Synthetic note'},independent_support:false,credentials:'do-not-retain'});const detail=parseReaderDetail(value,request);expect(detail.evidence[0]).toMatchObject({independent_support:false,provenance:{kind:'derived',origin_id:'note-old',note_revision:3}});expect(JSON.stringify(detail)).not.toContain('do-not-retain');});

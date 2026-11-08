@@ -40,3 +40,6 @@ it('provides every notebook integration label explicitly in all fourteen languag
 it('provides every source safety and operation label in all fourteen languages',()=>{const keys=Object.keys(sourceMessages['en-US']).sort();for(const code of codes){const messages=sourceMessages[code as keyof typeof sourceMessages];expect(Object.keys(messages).sort()).toEqual(keys);for(const value of Object.values(messages))expect(value.trim()).not.toBe('');}});
 
 it('provides explicit conversation limits and recovery copy in every locale',()=>{const keys=Object.keys(chatMessages['en-US']).sort();expect(Object.keys(chatMessages).sort()).toEqual([...codes].sort());for(const code of codes){const messages=chatMessages[code as keyof typeof chatMessages];expect(Object.keys(messages).sort()).toEqual(keys);for(const value of Object.values(messages))expect(value.trim()).not.toBe('');}});
+
+import { readerMessages } from './reader-messages';
+it('provides every reader integrity and historical-version label in all fourteen locales',()=>{expect(Object.keys(readerMessages).sort()).toEqual([...codes].sort());for(const row of Object.values(readerMessages)){expect(Object.keys(row).sort()).toEqual(['invalid','retired','savePosition','unavailable','unsaved']);for(const value of Object.values(row))expect(value.trim()).not.toBe('');}});

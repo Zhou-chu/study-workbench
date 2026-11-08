@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "test": "vitest run",
+    "test": "node --test scripts/*.test.mjs && vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "build": "tsc --noEmit && vite build",
-    "contrast": "node scripts/check-contrast.mjs"
+    "contrast": "node scripts/check-contrast.mjs",
+    "prebuild": "node scripts/prepare-pdf-assets.mjs",
+    "predev": "node scripts/prepare-pdf-assets.mjs",
+    "pdf:check": "node scripts/prepare-pdf-assets.mjs --check"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "1.1.23",
@@ -19,6 +22,7 @@
     "@study/web-transport": "0.1.0",
     "@tanstack/react-query": "5.103.3",
     "katex": "0.18.2",
+    "pdfjs-dist": "6.4.299",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-markdown": "10.1.0",
