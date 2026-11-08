@@ -1,6 +1,7 @@
 import type {LanguageCode} from './locales';
 export const nativeMessages = {
   "en-US": {
+    "parentUnavailable": "Notebook ownership is unavailable. This session is read-only.",
     "classic": "Classic conversation",
     "personal": "Personal conversation",
     "message": "Classic message",
@@ -36,6 +37,7 @@ export const nativeMessages = {
     "rejected": "Request rejected. The draft is retained."
   },
   "zh-CN": {
+    "parentUnavailable": "无法确认所属笔记本。此会话仅供阅读。",
     "classic": "经典对话",
     "personal": "个人对话",
     "message": "经典消息",
@@ -71,6 +73,7 @@ export const nativeMessages = {
     "rejected": "请求被拒绝，草稿已保留。"
   },
   "zh-TW": {
+    "parentUnavailable": "無法確認所屬筆記本。此對話僅供閱讀。",
     "classic": "經典對話",
     "personal": "個人對話",
     "message": "經典訊息",
@@ -106,6 +109,7 @@ export const nativeMessages = {
     "rejected": "請求遭拒，草稿已保留。"
   },
   "ja-JP": {
+    "parentUnavailable": "所属するノートブックを確認できません。このセッションは読み取り専用です。",
     "classic": "クラシック会話",
     "personal": "個人の会話",
     "message": "クラシックメッセージ",
@@ -141,6 +145,7 @@ export const nativeMessages = {
     "rejected": "リクエストは拒否されました。下書きは保持されています。"
   },
   "pt-BR": {
+    "parentUnavailable": "Não é possível confirmar o caderno de origem. Esta sessão é somente leitura.",
     "classic": "Conversa clássica",
     "personal": "Conversa pessoal",
     "message": "Mensagem clássica",
@@ -176,6 +181,7 @@ export const nativeMessages = {
     "rejected": "Solicitação rejeitada. O rascunho foi mantido."
   },
   "it-IT": {
+    "parentUnavailable": "Impossibile confermare il taccuino di origine. Questa sessione è di sola lettura.",
     "classic": "Conversazione classica",
     "personal": "Conversazione personale",
     "message": "Messaggio classico",
@@ -211,6 +217,7 @@ export const nativeMessages = {
     "rejected": "Richiesta rifiutata. La bozza è conservata."
   },
   "fr-FR": {
+    "parentUnavailable": "Le carnet d’origine ne peut pas être confirmé. Cette session est en lecture seule.",
     "classic": "Conversation classique",
     "personal": "Conversation personnelle",
     "message": "Message classique",
@@ -246,6 +253,7 @@ export const nativeMessages = {
     "rejected": "Demande rejetée. Le brouillon est conservé."
   },
   "ru-RU": {
+    "parentUnavailable": "Не удалось подтвердить принадлежность блокноту. Этот сеанс доступен только для чтения.",
     "classic": "Классический разговор",
     "personal": "Личный разговор",
     "message": "Классическое сообщение",
@@ -281,6 +289,7 @@ export const nativeMessages = {
     "rejected": "Запрос отклонён. Черновик сохранён."
   },
   "bn-IN": {
+    "parentUnavailable": "সংশ্লিষ্ট নোটবুক নিশ্চিত করা যায়নি। এই সেশনটি শুধু পড়া যাবে।",
     "classic": "ক্লাসিক কথোপকথন",
     "personal": "ব্যক্তিগত কথোপকথন",
     "message": "ক্লাসিক বার্তা",
@@ -316,6 +325,7 @@ export const nativeMessages = {
     "rejected": "অনুরোধ প্রত্যাখ্যাত। খসড়া রাখা হয়েছে।"
   },
   "ca-ES": {
+    "parentUnavailable": "No es pot confirmar el quadern d’origen. Aquesta sessió és només de lectura.",
     "classic": "Conversa clàssica",
     "personal": "Conversa personal",
     "message": "Missatge clàssic",
@@ -351,6 +361,7 @@ export const nativeMessages = {
     "rejected": "Petició rebutjada. Es conserva l’esborrany."
   },
   "es-ES": {
+    "parentUnavailable": "No se puede confirmar el cuaderno de origen. Esta sesión es de solo lectura.",
     "classic": "Conversación clásica",
     "personal": "Conversación personal",
     "message": "Mensaje clásico",
@@ -386,6 +397,7 @@ export const nativeMessages = {
     "rejected": "Solicitud rechazada. Se conserva el borrador."
   },
   "de-DE": {
+    "parentUnavailable": "Das zugehörige Notizbuch kann nicht bestätigt werden. Diese Sitzung ist schreibgeschützt.",
     "classic": "Klassisches Gespräch",
     "personal": "Persönliches Gespräch",
     "message": "Klassische Nachricht",
@@ -421,6 +433,7 @@ export const nativeMessages = {
     "rejected": "Anfrage abgelehnt. Der Entwurf bleibt erhalten."
   },
   "pl-PL": {
+    "parentUnavailable": "Nie można potwierdzić powiązanego notatnika. Ta sesja jest tylko do odczytu.",
     "classic": "Rozmowa klasyczna",
     "personal": "Rozmowa osobista",
     "message": "Wiadomość klasyczna",
@@ -456,6 +469,7 @@ export const nativeMessages = {
     "rejected": "Żądanie odrzucone. Szkic został zachowany."
   },
   "tr-TR": {
+    "parentUnavailable": "Bağlı not defteri doğrulanamıyor. Bu oturum salt okunurdur.",
     "classic": "Klasik konuşma",
     "personal": "Kişisel konuşma",
     "message": "Klasik mesaj",

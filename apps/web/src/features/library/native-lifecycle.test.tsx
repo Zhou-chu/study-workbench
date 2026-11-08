@@ -11,8 +11,11 @@ function send(label = 'Source message') { fireEvent.change(screen.getByLabelText
 function controlled() { let controller!: ReadableStreamDefaultController<Uint8Array>; const cancel = vi.fn(); const body = new ReadableStream<Uint8Array>({ start(c) { controller = c; }, cancel }); return { response: new Response(body, { headers: { 'content-type': 'text/event-stream' } }), write(v: unknown) { controller.enqueue(new TextEncoder().encode('data: ' + JSON.stringify(v) + '\n\n')); }, cancel }; }
 it('replaces repeated whole answers, handles split UTF8/CRLF, and keeps confirmed output when follow-up read is empty', async () => {
     const bytes = new TextEncoder().encode('data: ' + JSON.stringify({ type: 'ai_message', content: 'First' }) + '\r\n\r\ndata: ' + JSON.stringify({ type: 'ai_message', content: 'Whole 答案' }) + '\r\n\r\ndata: ' + JSON.stringify({ type: 'complete' }) + '\r\n\r\n');
-    const requests = classicServer(r => r.url.endsWith('/messages') ? new Response(new ReadableStream({ start(c) { for (let i = 0; i < bytes.length; i += 2)
-            c.enqueue(bytes.slice(i, i + 2)); c.close(); } }), { headers: { 'content-type': 'text/event-stream' } }) : undefined);
+    const requests = classicServer(r => r.url.endsWith('/messages') ? new Response(new ReadableStream({ start(c) {
+            for (let i = 0; i < bytes.length; i += 2)
+                c.enqueue(bytes.slice(i, i + 2));
+            c.close();
+        } }), { headers: { 'content-type': 'text/event-stream' } }) : undefined);
     await source();
     send();
     await screen.findByText('Whole 答案');
@@ -47,10 +50,15 @@ it('complete without AI does not invent an answer', async () => {
 });
 it('switching native sessions cancels observation and preserves old unknown across A B A', async () => {
     const live = controlled(), second = { ...sourceSession, id: 'chat_session:second', title: 'Second' };
-    const requests = classicServer(r => { const p = decodeURIComponent(new URL(r.url).pathname); if (p.endsWith('/chat/sessions') && r.method === 'GET')
-        return json([sourceSession, second]); if (p.endsWith('/' + second.id))
-        return json({ ...second, messages: [], context_indicators: null }); if (p.endsWith('/messages'))
-        return live.response; });
+    const requests = classicServer(r => {
+        const p = decodeURIComponent(new URL(r.url).pathname);
+        if (p.endsWith('/chat/sessions') && r.method === 'GET')
+            return json([sourceSession, second]);
+        if (p.endsWith('/' + second.id))
+            return json({ ...second, messages: [], context_indicators: null });
+        if (p.endsWith('/messages'))
+            return live.response;
+    });
     await source();
     send();
     await waitFor(() => expect(requests.some(r => r.url.endsWith('/messages'))).toBe(true));
@@ -81,9 +89,12 @@ it('delete during source send tombstones the native target and retains the origi
 });
 it('a late auto-create receipt remains with the original parent and cannot send after unmount', async () => {
     let resolve!: (r: Response) => void;
-    const requests = classicServer(r => { if (r.url.endsWith('/chat/sessions') && r.method === 'GET')
-        return json([]); if (r.url.endsWith('/chat/sessions') && r.method === 'POST')
-        return new Promise<Response>(yes => resolve = yes); });
+    const requests = classicServer(r => {
+        if (r.url.endsWith('/chat/sessions') && r.method === 'GET')
+            return json([]);
+        if (r.url.endsWith('/chat/sessions') && r.method === 'POST')
+            return new Promise<Response>(yes => resolve = yes);
+    });
     const h = await source();
     send();
     await waitFor(() => expect(resolve).toBeTypeOf('function'));
@@ -136,4 +147,55 @@ it('a readiness loss tears down an active reader immediately without waiting for
     act(() => sessionCoordinator.report('reauth-required', sessionCoordinator.current()));
     await waitFor(() => expect(live.cancel).toHaveBeenCalledOnce());
     expect(requests.filter(r => r.url.endsWith('/messages'))).toHaveLength(1);
+});
+it.each(['notebook', 'source'] as const)('I1 %s confirmed transcript survives successor draft, stale reads, remount and explicit follow-up', async (kind) => {
+    const native = kind === 'notebook' ? nativeSession : sourceSession;
+    const label = kind === 'notebook' ? 'Classic message' : 'Source message';
+    const button = kind === 'notebook' ? 'Send classic message' : 'Send source message';
+    let reads = 0, sends = 0;
+    const finalMessages = [...nativeMessages, { id: 'human:2', type: 'human', content: 'Next explicit draft' }, { id: 'ai:2', type: 'ai', content: 'Second confirmed answer' }];
+    const requests = classicServer(r => {
+        const p = decodeURIComponent(new URL(r.url).pathname);
+        if (r.method === 'GET' && p.endsWith('/' + native.id)) {
+            reads++;
+            return json({ ...native, messages: reads === 2 ? nativeMessages : reads > 3 ? nativeMessages.slice(0, 1) : [] });
+        }
+        if (p.endsWith('/chat/execute')) {
+            sends++;
+            return json({ session_id: native.id, messages: sends === 1 ? nativeMessages : finalMessages });
+        }
+        if (p.endsWith('/messages')) {
+            sends++;
+            return stream({ type: 'ai_message', content: sends === 1 ? 'Whole answer' : 'Second confirmed answer' }, { type: 'complete' });
+        }
+    });
+    const h = kind === 'notebook' ? await classic() : await source();
+    send(label);
+    await screen.findByText('Whole answer');
+    await waitFor(() => expect(reads).toBe(2));
+    await waitFor(() => expect(screen.getByLabelText(label)).toBeEnabled());
+    fireEvent.change(screen.getByLabelText(label), { target: { value: 'Next explicit draft' } });
+    await waitFor(() => expect(reads).toBe(3));
+    expect(screen.getByText('Whole answer')).toBeVisible();
+    expect(screen.getByLabelText(label)).toHaveValue('Next explicit draft');
+    const draft = h.workbench.drafts.library.getSnapshot().find(r => r.input.kind === 'native-chat' && r.input.message === 'Next explicit draft')!;
+    expect(draft.native?.messages).toEqual(nativeMessages);
+    if (kind === 'notebook') {
+        fireEvent.click(screen.getByRole('button', { name: 'Personal conversation' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Classic conversation' }));
+    }
+    else {
+        fireEvent.click(screen.getByRole('button', { name: 'Chat with source' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Chat with source' }));
+    }
+    await waitFor(() => expect(reads).toBeGreaterThanOrEqual(4));
+    expect(screen.getByText('Whole answer')).toBeVisible();
+    expect(screen.getByLabelText(label)).toHaveValue('Next explicit draft');
+    expect(sends).toBe(1);
+    fireEvent.click(screen.getByRole('button', { name: button }));
+    await screen.findByText('Second confirmed answer');
+    expect(screen.getByText('Whole answer')).toBeVisible();
+    expect(sends).toBe(2);
+    const sent = requests.filter(r => r.url.endsWith(kind === 'notebook' ? '/chat/execute' : '/messages'));
+    expect(await sent[1]!.clone().json()).toMatchObject({ message: 'Next explicit draft' });
 });

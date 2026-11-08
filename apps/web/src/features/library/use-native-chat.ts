@@ -13,6 +13,7 @@ export function useNativeChat(parent: NativeParent, config: ContextConfig = empt
         abort: AbortController;
     } | null>(null), configRef = useRef(config);
     configRef.current = config;
+    const readable = (value: NativeSession) => ownsSession(parent, value) || parent.kind === 'notebook' && value.notebook_id === null;
     const native = parent.kind === 'notebook' ? api?.notebookChat : api?.sourceChat;
     const list = useQuery({ queryKey: ['library', 'native-sessions', scope, key], enabled: s.ready, queryFn: ({ signal }) => native!.list(parent, context!, signal) });
     const models = useQuery({ queryKey: ['library', 'models', scope], enabled: s.ready, queryFn: ({ signal }) => api!.metadata.models(context!, signal) });
@@ -66,7 +67,7 @@ export function useNativeChat(parent: NativeParent, config: ContextConfig = empt
         const read = store.nativeRead(id, readTurnContext(), sessionCoordinator.current()), abort = new AbortController();
         if (read)
             void native.get(parent, selected, context, abort.signal).then(value => {
-                if (!ownsSession(parent, value))
+                if (!readable(value))
                     throw new Error('Unowned native session');
                 store.nativeHydrate(id, read, value, readTurnContext(), sessionCoordinator.current());
                 setError(false);
@@ -77,13 +78,13 @@ export function useNativeChat(parent: NativeParent, config: ContextConfig = empt
         return () => abort.abort();
     }, [id, key, selected, scope]);
     // Every unresolved operation owned by this mounted surface stays in the navigation capture.
-    const held = s.rows.filter(r => (r.input.kind === 'native-chat' || r.input.kind === 'native-session') && parentKey(r.input.parent) === key && (r.dirty || ['pending', 'unknown'].includes(r.status))).map(r => r.id).join('|');
+    const held = s.rows.filter(r => !store.isSuperseded(r.id) && (r.input.kind === 'native-chat' || r.input.kind === 'native-session') && parentKey(r.input.parent) === key && (r.dirty || ['pending', 'unknown'].includes(r.status))).map(r => r.id).join('|');
     useEffect(() => { const release = held.split('|').filter(Boolean).map(v => navigation?.holdResource(v)); return () => release.forEach(f => f?.()); }, [held, navigation]);
     const row = s.row, input = row?.input.kind === 'native-chat' ? row.input : undefined;
-    const session = row?.native?.session;
+    const session = row?.native?.session, inspection = row?.native?.inspection;
     const selectedListed = list.data?.find(v => v.id === selected);
     const matching = !!input && parentKey(input.parent) === key && (input.sessionId === selected || !!selected && session?.id === selected);
-    const owned = matching && !!row && store.current(row, context, generation) && !!session && ownsSession(parent, session) && (!selected || session.id === selected);
+    const owned = !error && !inspection && matching && !!row && store.current(row, context, generation) && !!session && ownsSession(parent, session) && (!selected || session.id === selected);
     const locked = !s.ready || !row || !matching || list.isPending || !!row && (!store.current(row, context, generation) || libraryDraftLocked(row) && row.status !== 'succeeded') || !!selected && !owned || error;
     function edit(patch: Partial<NativeChatInput>) {
         if (!id || !input || !context || !row || !store.current(row, readTurnContext(), sessionCoordinator.current()))
@@ -94,11 +95,6 @@ export function useNativeChat(parent: NativeParent, config: ContextConfig = empt
             if (sid && sid !== selected)
                 choose(sid);
             target = store.open(sid ? { kind: 'session', parent, sessionId: sid } : parent, { kind: 'native-chat', parent, sessionId: sid, message: '', model: session ? session.model_override ?? null : input.model, title: '' }, context, generation);
-            if (session) {
-                const read = store.nativeRead(target, readTurnContext(), sessionCoordinator.current());
-                if (read)
-                    store.nativeHydrate(target, read, { ...session, messages: row.native?.messages ?? [] }, context, generation);
-            }
             setId(target);
         }
         store.edit(target, patch);
@@ -125,7 +121,7 @@ export function useNativeChat(parent: NativeParent, config: ContextConfig = empt
             return;
         try {
             const value = await native.get(parent, session.id, context);
-            if (!ownsSession(parent, value))
+            if (!readable(value))
                 throw new Error('Unowned');
             store.nativeHydrate(id, read, value, readTurnContext(), sessionCoordinator.current());
         }
@@ -141,21 +137,23 @@ export function useNativeChat(parent: NativeParent, config: ContextConfig = empt
             return;
         if (parent.kind === 'source' && action === 'model' && value === null)
             return;
-        const payload: NativeSessionInput = { kind: 'native-session', parent, sessionId: action === 'create' ? null : sid, action, ...(action === 'create' || action === 'rename' ? { title: value ?? '' } : {}), ...(action === 'model' ? { model: value ?? null } : {}) };
+        const payload: NativeSessionInput = { kind: 'native-session', parent, sessionId: action === 'create' ? null : sid, action,
+            ...(action === 'create' ? { ...(value?.trim() ? { title: value.trim() } : {}), model: session ? session.model_override ?? null : input?.model ?? null } : {}),
+            ...(action === 'rename' ? { title: value ?? '' } : {}), ...(action === 'model' ? { model: value ?? null } : {}) };
         const op = store.open(action === 'create' ? parent : { kind: 'session', parent, sessionId: sid! }, payload, context, generation);
         navigation?.activateResource(op);
         const a = store.begin(op, readTurnContext(), sessionCoordinator.current());
-        if (!a?.token)
+        if (!a?.token || a.input.kind !== 'native-session')
             return;
-        const token = a.token, activation = active.current;
+        const p = a.input, token = a.token, activation = active.current;
         let result: NativeSession | undefined;
         try {
-            if (action === 'create')
-                result = await native.create(parent, { ...(value?.trim() ? { title: value.trim() } : {}), ...(input?.model ? { model_override: input.model } : {}) }, a.context, a.id);
-            else if (action === 'delete')
-                await native.delete(parent, sid!, a.context, a.id);
+            if (p.action === 'create')
+                result = await native.create(p.parent, { ...(p.title !== undefined ? { title: p.title } : {}), ...(p.model != null ? { model_override: p.model } : {}) }, a.context, a.id);
+            else if (p.action === 'delete')
+                await native.delete(p.parent, p.sessionId!, a.context, a.id);
             else
-                result = await native.update(parent, sid!, action === 'rename' ? { title: value ?? '' } : { model_override: value ?? null }, a.context, a.id);
+                result = await native.update(p.parent, p.sessionId!, p.action === 'rename' ? { title: p.title! } : { model_override: p.model ?? null }, a.context, a.id);
             if (result && !ownsSession(parent, result))
                 throw new Error('Unowned native session');
             if (result)
@@ -242,7 +240,7 @@ export function useNativeChat(parent: NativeParent, config: ContextConfig = empt
             if (read) {
                 try {
                     const detail = await native.get(parent, sid, a.context, abort.signal);
-                    if (ownsSession(parent, detail))
+                    if (readable(detail))
                         store.nativeHydrate(id, read, detail, readTurnContext(), sessionCoordinator.current());
                 }
                 catch { /* Keep the confirmed transcript. */ }
@@ -269,5 +267,5 @@ export function useNativeChat(parent: NativeParent, config: ContextConfig = empt
         }
     }
     const mutations = s.rows.filter(r => r.input.kind === 'native-session' && parentKey(r.input.parent) === key);
-    return { ...s, row, input, session, selectedListed, selected, list, models, defaults, error, locked, owned, edit, choose, mutate, send, stop, check, mutations, onFresh: setId, messages: row?.native?.messages ?? [] };
+    return { ...s, row, input, session, inspection, selectedListed, selected, list, models, defaults, error, locked, owned, edit, choose, mutate, send, stop, check, mutations, onFresh: setId, messages: row?.status !== 'unknown' && inspection ? inspection.messages ?? [] : row?.native?.messages ?? [] };
 }

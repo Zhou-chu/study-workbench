@@ -83,6 +83,12 @@ export type ClassicContextInput = {
     config: ContextConfig;
 };
 export type NativeState = {
+    inspection?: NativeSession;
+    confirmed?: {
+        sessionId: string;
+        messages: NativeMessage[];
+        token: LibraryToken;
+    };
     session?: NativeSession;
     messages?: NativeMessage[];
     indicators?: Indicators | null;
@@ -162,7 +168,7 @@ export function createLibraryStore(onChange: () => void) {
     const match = (r: LibraryDraft | undefined, t: LibraryToken) => !!r && r.token === t;
     return {
         get: (id: string) => records.get(id), getSnapshot: () => snapshot, subscribe(f: () => void) { listeners.add(f); return () => { listeners.delete(f); }; },
-        current, canFresh,
+        current, canFresh, isSuperseded: (id: string) => superseded.has(id),
         rememberNotebookSource(sourceId: string, notebookId: string, c: DispatchContext, g: number) {
             const id = crypto.randomUUID();
             notebookOrigins.set(id, { sourceId, notebookId, context: freezeDispatchContext(c), generation: g });
@@ -170,24 +176,44 @@ export function createLibraryStore(onChange: () => void) {
         },
         sourceNotebookOrigin(id: unknown, sourceId: string, c: DispatchContext | null, g: number) { const r = typeof id === 'string' ? notebookOrigins.get(id) : undefined; return r && r.sourceId === sourceId && canDispatch(r.context, c) && r.generation === g && !retiredEpochs.has(r.context.epoch) ? r.notebookId : undefined; },
         nativeDeleted(p: NativeParent, sid: string) { return deletedSessions.has(parentKey(p) + sid); },
-        deleteNative(p: NativeParent, sid: string) { deletedSessions.add(parentKey(p) + sid); if (nativeSelections.get(parentKey(p)) === sid)
-            nativeSelections.set(parentKey(p), null); emit(); },
+        deleteNative(p: NativeParent, sid: string) {
+            deletedSessions.add(parentKey(p) + sid);
+            if (nativeSelections.get(parentKey(p)) === sid)
+                nativeSelections.set(parentKey(p), null);
+            emit();
+        },
         nativeSelection(p: NativeParent) { return nativeSelections.get(parentKey(p)) ?? null; },
         selectNative(p: NativeParent, sid: string | null) { nativeSelections.set(parentKey(p), sid); emit(); },
-        nativeRead(id: string, c: DispatchContext | null, g: number) { const r = records.get(id); if (!r || !current(r, c, g))
-            return null; const sequence = (r.native?.readSequence ?? 0) + 1; set({ ...r, native: { ...r.native, readSequence: sequence } }); return { sequence, revision: r.revision }; },
+        nativeRead(id: string, c: DispatchContext | null, g: number) {
+            const r = records.get(id);
+            if (!r || !current(r, c, g))
+                return null;
+            const sequence = (r.native?.readSequence ?? 0) + 1;
+            set({ ...r, native: { ...r.native, readSequence: sequence } });
+            return { sequence, revision: r.revision };
+        },
         nativeHydrate(id: string, read: {
             sequence: number;
             revision: number;
         }, value: NativeSession, c: DispatchContext | null, g: number) {
             const r = records.get(id);
-            if (!r || r.input.kind !== 'native-chat' || !ownsSession(r.input.parent, value) || (r.input.sessionId ?? r.native?.session?.id) !== value.id || !current(r, c, g) || r.native?.readSequence !== read.sequence || r.revision !== read.revision || r.status === 'pending')
+            if (!r || r.input.kind !== 'native-chat' || (r.input.sessionId ?? r.native?.session?.id) !== value.id || !current(r, c, g) || r.native?.readSequence !== read.sequence || r.revision !== read.revision || r.status === 'pending')
                 return;
-            if (r.status === 'unknown') {
-                set({ ...r, native: { ...r.native, checked: value.messages ?? [] } });
+            if (!ownsSession(r.input.parent, value)) {
+                if (r.input.parent.kind === 'notebook' && value.notebook_id === null)
+                    set({ ...r, native: { ...r.native, inspection: value } });
                 return;
             }
-            set({ ...r, native: { ...r.native, session: value, messages: r.status === 'succeeded' && (value.messages?.length ?? 0) < (r.native?.messages?.length ?? 0) ? r.native?.messages ?? [] : value.messages ?? [], indicators: value.context_indicators ?? null } });
+            const verifiedState = { ...r.native };
+            delete verifiedState.inspection;
+            if (r.status === 'unknown') {
+                set({ ...r, native: { ...verifiedState, checked: value.messages ?? [] } });
+                return;
+            }
+            const baseline = r.native?.confirmed;
+            const incoming = value.messages ?? [];
+            const kept = baseline?.sessionId === value.id && incoming.length < baseline.messages.length ? r.native?.messages ?? baseline.messages : incoming;
+            set({ ...r, native: { ...verifiedState, session: value, messages: kept, indicators: value.context_indicators ?? null } });
         },
         nativeOutput(id: string, t: LibraryToken, patch: NativeState, c: DispatchContext | null, g: number) {
             const r = records.get(id);
@@ -195,20 +221,31 @@ export function createLibraryStore(onChange: () => void) {
                 return;
             set({ ...r, native: { ...r.native, ...patch, readSequence: (r.native?.readSequence ?? 0) + 1 } });
         },
-        nativeReceipt(id: string, t: LibraryToken, value: NativeSession) { const r = records.get(id); if (r && match(r, t) && ['pending', 'unknown'].includes(r.status))
-            set({ ...r, native: { ...r.native, session: value } }); },
-        stopNative(id: string) { const r = records.get(id); if (r?.input.kind === 'native-chat' && r.status === 'pending')
-            set({ ...r, status: 'unknown', stopRequested: true }); },
+        nativeReceipt(id: string, t: LibraryToken, value: NativeSession) {
+            const r = records.get(id);
+            if (r && match(r, t) && ['pending', 'unknown'].includes(r.status))
+                set({ ...r, native: { ...r.native, session: value } });
+        },
+        stopNative(id: string) {
+            const r = records.get(id);
+            if (r?.input.kind === 'native-chat' && r.status === 'pending')
+                set({ ...r, status: 'unknown', stopRequested: true });
+        },
         open(owner: LibraryOwner, input: LibraryInput, c: DispatchContext, g: number) {
             const existing = [...records.values()].reverse().find(r => !superseded.has(r.id) && ownerKey(r.owner) === ownerKey(owner) && sameInput(r.input, input) && !['succeeded', 'failed'].includes(r.status));
             if (existing) {
                 const pristine = existing.status === 'editing' && !existing.dirty && existing.attempt === 0 && existing.receipts.length === 0;
-                if (!pristine || !canFresh(existing, c, g))
+                const nativeRetry = input.kind === 'native-session' && current(existing, c, g) && ['not-sent', 'rejected'].includes(existing.status) && definitelyUnsent(existing);
+                if (!nativeRetry && (!pristine || !canFresh(existing, c, g)))
                     return existing.id;
+                // Explicit native retries get a new owner/token; the prior captured attempt is immutable.
                 superseded.add(existing.id);
             }
             const id = crypto.randomUUID();
-            set({ id, owner: { ...owner }, context: freezeDispatchContext(c), generation: g, revision: 0, input: { ...input }, status: 'editing', retired: retiredEpochs.has(c.epoch), dirty: input.kind === 'import' && !!(input.title || input.text || input.urls || input.files.length), attempt: 0, token: null, receipts: [], stopRequested: false });
+            // A successor editor carries completion evidence, not a claim that its later GET is fresh.
+            const predecessor = input.kind === 'native-chat' && input.sessionId ? [...records.values()].reverse().find(r => r.input.kind === 'native-chat' && parentKey(r.input.parent) === parentKey(input.parent) && r.status === 'succeeded' && current(r, c, g) && r.native?.confirmed?.sessionId === input.sessionId) : undefined;
+            const native = predecessor?.native ? { ...predecessor.native, readSequence: 0 } : undefined;
+            set({ ...(native ? { native } : {}), id, owner: { ...owner }, context: freezeDispatchContext(c), generation: g, revision: 0, input: { ...input }, status: 'editing', retired: retiredEpochs.has(c.epoch), dirty: input.kind === 'import' && !!(input.title || input.text || input.urls || input.files.length), attempt: 0, token: null, receipts: [], stopRequested: false });
             return id;
         },
         fresh(id: string, input: LibraryInput, c: DispatchContext, g: number) {
@@ -250,7 +287,8 @@ export function createLibraryStore(onChange: () => void) {
             if (!match(r, t) || !r || !['pending', 'accepted', 'unknown'].includes(r.status))
                 return;
             const next = r.status !== 'unknown' && current(r, c, g) ? status : 'unknown';
-            set({ ...r, status: next, dirty: !['succeeded', 'failed'].includes(next), ...(commandId ? { commandId } : {}), ...(next === 'accepted' ? { observation: 'pending' } : {}) });
+            const confirmed = next === 'succeeded' && r.input.kind === 'native-chat' && r.native?.session && ownsSession(r.input.parent, r.native.session) ? { sessionId: r.native.session.id, messages: r.native.messages ?? [], token: t } : undefined;
+            set({ ...r, ...(confirmed ? { native: { ...r.native, confirmed } } : {}), status: next, dirty: !['succeeded', 'failed'].includes(next), ...(commandId ? { commandId } : {}), ...(next === 'accepted' ? { observation: 'pending' } : {}) });
         },
         observe(id: string, t: LibraryToken, status: string, c: DispatchContext | null, g: number) {
             const r = records.get(id);

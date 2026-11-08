@@ -125,10 +125,15 @@ it('clearing notebook model after a completed send omits the previous override f
 it('a confirmed late delete tombstones only its original native session after the user switches', async () => {
     let finish!: (r: Response) => void;
     const second = { ...sourceSession, id: 'chat_session:second', title: 'Second' };
-    classicServer(r => { const p = decodeURIComponent(new URL(r.url).pathname); if (p.endsWith('/chat/sessions') && r.method === 'GET')
-        return json([sourceSession, second]); if (p.endsWith('/' + second.id))
-        return json({ ...second, messages: [] }); if (r.method === 'DELETE')
-        return new Promise<Response>(yes => finish = yes); });
+    classicServer(r => {
+        const p = decodeURIComponent(new URL(r.url).pathname);
+        if (p.endsWith('/chat/sessions') && r.method === 'GET')
+            return json([sourceSession, second]);
+        if (p.endsWith('/' + second.id))
+            return json({ ...second, messages: [] });
+        if (r.method === 'DELETE')
+            return new Promise<Response>(yes => finish = yes);
+    });
     await renderLibrary('/sources/source%3Aalpha%3Afull');
     fireEvent.click(await screen.findByRole('button', { name: 'Chat with source' }));
     await waitFor(() => expect(screen.getByLabelText('Source message')).toBeEnabled());
@@ -147,4 +152,37 @@ it('an existing unlisted native model remains explicit instead of appearing as t
     await classic();
     expect(screen.getByLabelText('Conversation model')).toHaveValue('model:unlisted');
     expect(within(screen.getByLabelText('Conversation model')).getByRole('option', { name: 'model:unlisted · Unknown' })).toHaveProperty('selected', true);
+});
+it('I3 displays null-parent notebook history as explained inspection only, never as mutation authority', async () => {
+    const historical = nativeMessages.map((m, i) => ({ ...m, timestamp: '2026-11-08T10:0' + i + ':00Z' }));
+    const requests = classicServer(r => decodeURIComponent(r.url).endsWith('/chat/sessions/' + nativeSession.id) ? json({ ...nativeSession, notebook_id: null, messages: historical }) : undefined);
+    await renderLibrary('/notebooks/n');
+    fireEvent.click(await screen.findByRole('button', { name: 'Classic conversation' }));
+    await screen.findByText('Whole answer');
+    expect(screen.getByText('Question')).toBeVisible();
+    expect(screen.getByText(/human.*2026-11-08T10:00:00Z/)).toBeVisible();
+    expect(screen.getByText(/ai.*2026-11-08T10:01:00Z/)).toBeVisible();
+    expect(screen.getByText('Notebook ownership is unavailable. This session is read-only.')).toBeVisible();
+    for (const name of ['Send classic message', 'Rename session', 'Delete session'])
+        expect(screen.getByRole('button', { name })).toBeDisabled();
+    expect(screen.getByLabelText('Conversation model')).toBeDisabled();
+    expect(screen.getByLabelText('Classic message')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Save message to note' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Personal conversation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Classic conversation' }));
+    await screen.findByText('Whole answer');
+    expect(requests.filter(r => r.method === 'PUT' || r.method === 'DELETE' || r.url.endsWith('/chat/execute') || r.method === 'POST' && r.url.endsWith('/notes'))).toHaveLength(0);
+});
+
+it.each(['foreign-session','malformed-message'] as const)('I3 null parent never admits a %s inspection', async variant => {
+    const detail={...nativeSession,notebook_id:null,messages:nativeMessages};
+    classicServer(r => decodeURIComponent(r.url).endsWith('/chat/sessions/'+nativeSession.id) ? json(variant === 'foreign-session' ? {...detail,id:'chat_session:foreign'} : {...detail,messages:[{...nativeMessages[1],id:null}]}) : undefined);
+    await renderLibrary('/notebooks/n');
+    fireEvent.click(await screen.findByRole('button',{name:'Classic conversation'}));
+    await waitFor(() => expect(screen.getAllByRole('alert').length).toBeGreaterThan(0));
+    expect(screen.queryByText('Whole answer')).not.toBeInTheDocument();
+    expect(screen.queryByText('Notebook ownership is unavailable. This session is read-only.')).not.toBeInTheDocument();
+    for(const name of ['Send classic message','Rename session','Delete session']) expect(screen.getByRole('button',{name})).toBeDisabled();
+    expect(screen.getByLabelText('Conversation model')).toBeDisabled();
+    expect(screen.queryByRole('button',{name:'Save message to note'})).not.toBeInTheDocument();
 });
