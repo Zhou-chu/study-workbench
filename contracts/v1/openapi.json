@@ -28,6 +28,273 @@
         "title": "AllProvidersSyncResponse",
         "type": "object"
       },
+      "ArtifactResultView": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArtifactView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact"
+          },
+          "download_error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "downloaded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Downloaded"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "remote_artifact_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Artifact Id"
+          }
+        },
+        "title": "ArtifactResultView",
+        "type": "object"
+      },
+      "ArtifactView": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Id"
+          },
+          "byte_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Byte Size"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "mime_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mime Type"
+          },
+          "notebook_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notebook Id"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "remote_artifact_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Artifact Id"
+          },
+          "remote_source_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Source Ids"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "ArtifactView",
+        "type": "object"
+      },
       "AskRequest": {
         "properties": {
           "answer_model": {
@@ -399,6 +666,112 @@
         "title": "Body_upload_api_personal_notebooks__notebook_id__sources_upload_post",
         "type": "object"
       },
+      "BudgetView": {
+        "additionalProperties": false,
+        "properties": {
+          "context_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Tokens"
+          },
+          "estimated_input_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Input Tokens"
+          },
+          "estimator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimator"
+          },
+          "included_evidence_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Included Evidence Count"
+          },
+          "output_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Tokens"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "retrieved_evidence_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieved Evidence Count"
+          }
+        },
+        "title": "BudgetView",
+        "type": "object"
+      },
       "BuildContextRequest": {
         "properties": {
           "context_config": {
@@ -656,6 +1029,50 @@
         "title": "ChatSessionWithMessagesResponse",
         "type": "object"
       },
+      "ClientCapabilitiesV1": {
+        "properties": {
+          "contract_version": {
+            "const": "client-capabilities-v1",
+            "default": "client-capabilities-v1",
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/ClientLimitsV1"
+          },
+          "supported_contracts": {
+            "items": {
+              "const": "workspace-view-v1",
+              "type": "string"
+            },
+            "title": "Supported Contracts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "supported_contracts",
+          "limits"
+        ],
+        "title": "ClientCapabilitiesV1",
+        "type": "object"
+      },
+      "ClientLimitsV1": {
+        "properties": {
+          "portable": {
+            "$ref": "#/components/schemas/PortableLimitsPublic"
+          },
+          "source_upload_max_bytes": {
+            "title": "Source Upload Max Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "source_upload_max_bytes",
+          "portable"
+        ],
+        "title": "ClientLimitsV1",
+        "type": "object"
+      },
       "CommandExecutionRequest": {
         "properties": {
           "app": {
@@ -809,6 +1226,70 @@
           }
         },
         "title": "ContextIndicator",
+        "type": "object"
+      },
+      "CoverageView": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Count"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "retrieved_source_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieved Source Count"
+          },
+          "selected_source_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Source Count"
+          }
+        },
+        "title": "CoverageView",
         "type": "object"
       },
       "CreateCredentialRequest": {
@@ -2307,6 +2788,196 @@
         "title": "EpisodeProfileResponse",
         "type": "object"
       },
+      "EvidenceCitationView": {
+        "additionalProperties": false,
+        "properties": {
+          "citation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Citation Id"
+          },
+          "evidence_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Id"
+          },
+          "independent_support": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Independent Support"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "locator": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocatorView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locator"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProvenanceView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provenance"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "reference_validity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Validity"
+          },
+          "remote_reference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RemoteReferenceView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Reference"
+          },
+          "source_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Title"
+          },
+          "source_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version Id"
+          }
+        },
+        "title": "EvidenceCitationView",
+        "type": "object"
+      },
       "EvidenceSearchRequest": {
         "properties": {
           "acknowledge_query_processing": {
@@ -2882,6 +3553,492 @@
         "title": "InsightCreationResponse",
         "type": "object"
       },
+      "JobView": {
+        "additionalProperties": false,
+        "properties": {
+          "attempts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempts"
+          },
+          "cancel_requested": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancel Requested"
+          },
+          "chat_session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chat Session Id"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "dispatch_receipt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ValidDispatchReceiptView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableDispatchReceiptView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dispatch Receipt"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "extraction_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extraction Id"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "next_dispatch_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Dispatch At"
+          },
+          "next_poll_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Poll At"
+          },
+          "notebook_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notebook Id"
+          },
+          "operation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation"
+          },
+          "poll_attempts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poll Attempts"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "remote_may_continue": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote May Continue"
+          },
+          "remote_task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Task Id"
+          },
+          "replay_allowed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replay Allowed"
+          },
+          "request_snapshot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RequestSnapshotView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Snapshot"
+          },
+          "restored_history": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restored History"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TurnView"
+              },
+              {
+                "$ref": "#/components/schemas/SourceResultView"
+              },
+              {
+                "$ref": "#/components/schemas/MaintenanceResultView"
+              },
+              {
+                "$ref": "#/components/schemas/ArtifactResultView"
+              },
+              {
+                "$ref": "#/components/schemas/RemoteNotebookResultView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "source_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version Id"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "submission_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submission State"
+          },
+          "turn_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turn Id"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "title": "JobView",
+        "type": "object"
+      },
+      "KnownDispatchReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "dispatch_ack": {
+            "const": "unknown",
+            "title": "Dispatch Ack",
+            "type": "string"
+          },
+          "job_id": {
+            "minLength": 1,
+            "title": "Job Id",
+            "type": "string"
+          },
+          "retry_safe": {
+            "const": false,
+            "title": "Retry Safe",
+            "type": "boolean"
+          },
+          "turn_id": {
+            "minLength": 1,
+            "title": "Turn Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dispatch_ack",
+          "job_id",
+          "turn_id",
+          "retry_safe"
+        ],
+        "title": "KnownDispatchReceipt",
+        "type": "object"
+      },
       "LanguageResponse": {
         "properties": {
           "code": {
@@ -2918,6 +4075,186 @@
         "title": "LegacyAuthStatus",
         "type": "object"
       },
+      "LegacyHistoryView": {
+        "additionalProperties": false,
+        "properties": {
+          "chat_session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chat Session Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "history_origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History Origin"
+          },
+          "messages": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/LegacyMessageView"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NonActionableValue"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Messages"
+          },
+          "notebook_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notebook Id"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "replay_allowed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replay Allowed"
+          },
+          "restored_history": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restored History"
+          }
+        },
+        "title": "LegacyHistoryView",
+        "type": "object"
+      },
+      "LegacyMessageView": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          }
+        },
+        "title": "LegacyMessageView",
+        "type": "object"
+      },
       "LinkRequest": {
         "additionalProperties": false,
         "properties": {
@@ -2932,6 +4269,391 @@
           "remote_notebook_id"
         ],
         "title": "LinkRequest",
+        "type": "object"
+      },
+      "LinkView": {
+        "additionalProperties": false,
+        "properties": {
+          "connection_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connection Id"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "remote_notebook_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Notebook Id"
+          }
+        },
+        "title": "LinkView",
+        "type": "object"
+      },
+      "LocatorView": {
+        "additionalProperties": false,
+        "properties": {
+          "bbox": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bbox"
+          },
+          "block_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Block Id"
+          },
+          "end_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Offset"
+          },
+          "page_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Index"
+          },
+          "page_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Label"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "start_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Offset"
+          }
+        },
+        "title": "LocatorView",
+        "type": "object"
+      },
+      "MaintenanceResultView": {
+        "additionalProperties": false,
+        "properties": {
+          "checked_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked Count"
+          },
+          "evidence_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Count"
+          },
+          "extraction_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extraction Id"
+          },
+          "fresh_extraction_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fresh Extraction Id"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "source_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "unverified_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unverified Count"
+          },
+          "verified_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified Count"
+          }
+        },
+        "title": "MaintenanceResultView",
+        "type": "object"
+      },
+      "MappingView": {
+        "additionalProperties": false,
+        "properties": {
+          "last_checked_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Checked At"
+          },
+          "mapping_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mapping Method"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "remote_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Source Id"
+          },
+          "source_link_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Link Id"
+          },
+          "source_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version Id"
+          }
+        },
+        "title": "MappingView",
         "type": "object"
       },
       "ModelCreate": {
@@ -3049,6 +4771,42 @@
           "message"
         ],
         "title": "ModelTestResponse",
+        "type": "object"
+      },
+      "NonActionableDispatchReceiptView": {
+        "additionalProperties": false,
+        "properties": {
+          "validity": {
+            "enum": [
+              "unknown",
+              "invalid"
+            ],
+            "title": "Validity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "validity"
+        ],
+        "title": "NonActionableDispatchReceiptView",
+        "type": "object"
+      },
+      "NonActionableValue": {
+        "additionalProperties": false,
+        "properties": {
+          "projection_status": {
+            "enum": [
+              "unknown",
+              "invalid"
+            ],
+            "title": "Projection Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "projection_status"
+        ],
+        "title": "NonActionableValue",
         "type": "object"
       },
       "NoteConflictDetail": {
@@ -3409,6 +5167,220 @@
         "title": "NoteUpdateRequest",
         "type": "object"
       },
+      "NoteView": {
+        "additionalProperties": false,
+        "properties": {
+          "citations": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/EvidenceCitationView"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NonActionableValue"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Citations"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "created": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "note_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note Id"
+          },
+          "notebook_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notebook Id"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProvenanceView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provenance"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revision"
+          },
+          "scope_snapshot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScopeView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Snapshot"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "updated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "title": "NoteView",
+        "type": "object"
+      },
       "NoteWriteCapabilities": {
         "properties": {
           "conditional_writes": {
@@ -3618,6 +5590,56 @@
           }
         },
         "title": "NotebookUpdate",
+        "type": "object"
+      },
+      "NotebookView": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          }
+        },
+        "title": "NotebookView",
         "type": "object"
       },
       "PersonalNoteResponse": {
@@ -3958,6 +5980,55 @@
         "title": "PodcastGenerationResponse",
         "type": "object"
       },
+      "PortableLimitsPublic": {
+        "additionalProperties": false,
+        "properties": {
+          "max_archive_bytes": {
+            "title": "Max Archive Bytes",
+            "type": "integer"
+          },
+          "max_compression_ratio": {
+            "title": "Max Compression Ratio",
+            "type": "integer"
+          },
+          "max_entity_bytes": {
+            "title": "Max Entity Bytes",
+            "type": "integer"
+          },
+          "max_entries": {
+            "title": "Max Entries",
+            "type": "integer"
+          },
+          "max_expanded_bytes": {
+            "title": "Max Expanded Bytes",
+            "type": "integer"
+          },
+          "max_manifest_bytes": {
+            "title": "Max Manifest Bytes",
+            "type": "integer"
+          },
+          "max_request_bytes": {
+            "title": "Max Request Bytes",
+            "type": "integer"
+          },
+          "multipart_overhead_bytes": {
+            "title": "Multipart Overhead Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "max_archive_bytes",
+          "max_expanded_bytes",
+          "max_entity_bytes",
+          "max_manifest_bytes",
+          "max_request_bytes",
+          "multipart_overhead_bytes",
+          "max_entries",
+          "max_compression_ratio"
+        ],
+        "title": "PortableLimitsPublic",
+        "type": "object"
+      },
       "PreviewRequest": {
         "additionalProperties": false,
         "properties": {
@@ -3982,6 +6053,262 @@
           "profile_id"
         ],
         "title": "PreviewRequest",
+        "type": "object"
+      },
+      "ProvenanceView": {
+        "additionalProperties": false,
+        "properties": {
+          "authorship": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authorship"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "citations": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/EvidenceCitationView"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NonActionableValue"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Citations"
+          },
+          "content_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Sha256"
+          },
+          "historical_url_omitted": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Historical Url Omitted"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "note_revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note Revision"
+          },
+          "origin_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin Id"
+          },
+          "origin_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin Kind"
+          },
+          "origin_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin Title"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "retrieved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieved At"
+          },
+          "scope_snapshot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScopeView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Snapshot"
+          },
+          "search_result_snippet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Result Snippet"
+          },
+          "search_result_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Result Title"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          }
+        },
+        "title": "ProvenanceView",
         "type": "object"
       },
       "ProviderAvailabilityResponse": {
@@ -4124,6 +6451,70 @@
           "existing"
         ],
         "title": "ProviderSyncResponse",
+        "type": "object"
+      },
+      "ReadingView": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Id"
+          },
+          "page_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Index"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "source_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version Id"
+          }
+        },
+        "title": "ReadingView",
         "type": "object"
       },
       "RebuildProgress": {
@@ -4409,6 +6800,120 @@
         "title": "RegisterModelsResponse",
         "type": "object"
       },
+      "RemoteNotebookResultView": {
+        "additionalProperties": false,
+        "properties": {
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "remote_notebook_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Notebook Id"
+          }
+        },
+        "title": "RemoteNotebookResultView",
+        "type": "object"
+      },
+      "RemoteReferenceView": {
+        "additionalProperties": false,
+        "properties": {
+          "citation_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Citation Number"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote"
+          },
+          "remote_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Source Id"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "title": "RemoteReferenceView",
+        "type": "object"
+      },
       "ReparseRequest": {
         "properties": {
           "idempotency_key": {
@@ -4422,6 +6927,244 @@
           "idempotency_key"
         ],
         "title": "ReparseRequest",
+        "type": "object"
+      },
+      "RequestSnapshotView": {
+        "additionalProperties": false,
+        "properties": {
+          "acknowledge_query_processing": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acknowledge Query Processing"
+          },
+          "destination_descriptor_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination Descriptor Version"
+          },
+          "disclosed_profile_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disclosed Profile Fingerprint"
+          },
+          "embedding_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embedding Profile Id"
+          },
+          "engine": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engine"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "notebook_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notebook Id"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "remote_notebook_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Notebook Id"
+          },
+          "remote_source_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Source Ids"
+          },
+          "retrieval_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieval Mode"
+          },
+          "selection_origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selection Origin"
+          },
+          "source_version_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version Ids"
+          },
+          "task": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task"
+          }
+        },
+        "title": "RequestSnapshotView",
         "type": "object"
       },
       "RetrievalMetadata": {
@@ -4492,6 +7235,221 @@
           "selected_version_count"
         ],
         "title": "RetrievalMetadata",
+        "type": "object"
+      },
+      "RetrievalRequestView": {
+        "additionalProperties": false,
+        "properties": {
+          "acknowledge_query_processing": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acknowledge Query Processing"
+          },
+          "destination_descriptor_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination Descriptor Version"
+          },
+          "disclosed_profile_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disclosed Profile Fingerprint"
+          },
+          "embedding_profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embedding Profile Id"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "retrieval_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieval Mode"
+          }
+        },
+        "title": "RetrievalRequestView",
+        "type": "object"
+      },
+      "RetrievalView": {
+        "additionalProperties": false,
+        "properties": {
+          "fallback_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Reason"
+          },
+          "indexed_version_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Indexed Version Count"
+          },
+          "profile_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Id"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "requested_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Method"
+          },
+          "retrieval_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieval Method"
+          },
+          "selected_version_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Version Count"
+          },
+          "warnings": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warnings"
+          }
+        },
+        "title": "RetrievalView",
         "type": "object"
       },
       "RevalidationRequest": {
@@ -4589,6 +7547,156 @@
           "entries"
         ],
         "title": "ScopeSnapshot",
+        "type": "object"
+      },
+      "ScopeView": {
+        "additionalProperties": false,
+        "properties": {
+          "engine": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engine"
+          },
+          "mapping_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mapping Version"
+          },
+          "mappings": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/MappingView"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NonActionableValue"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mappings"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "remote_notebook_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Notebook Id"
+          },
+          "remote_source_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Source Ids"
+          },
+          "scope_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Hash"
+          },
+          "selection_origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selection Origin"
+          },
+          "source_version_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version Ids"
+          }
+        },
+        "title": "ScopeView",
         "type": "object"
       },
       "SearchRequest": {
@@ -4732,6 +7840,146 @@
           "updated_at"
         ],
         "title": "SelectionResponse",
+        "type": "object"
+      },
+      "SelectionView": {
+        "additionalProperties": false,
+        "properties": {
+          "engine": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engine"
+          },
+          "notebook_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notebook Id"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "reading": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReadingView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reading"
+          },
+          "remote_notebook_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Notebook Id"
+          },
+          "remote_source_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remote Source Ids"
+          },
+          "selection_origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selection Origin"
+          },
+          "source_version_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version Ids"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "title": "SelectionView",
         "type": "object"
       },
       "SendMessageRequest": {
@@ -5743,6 +8991,126 @@
         "title": "SourceResponse",
         "type": "object"
       },
+      "SourceResultView": {
+        "additionalProperties": false,
+        "properties": {
+          "embedding_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embedding Status"
+          },
+          "existing": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Existing"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProvenanceView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provenance"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "source_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "title": "SourceResultView",
+        "type": "object"
+      },
       "SourceSnapshotResponse": {
         "properties": {
           "embedding_status": {
@@ -5869,6 +9237,312 @@
           }
         },
         "title": "SourceUpdate",
+        "type": "object"
+      },
+      "SourceVersionView": {
+        "additionalProperties": false,
+        "properties": {
+          "byte_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Byte Size"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "current_extraction_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Extraction Id"
+          },
+          "extraction_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extraction Status"
+          },
+          "mime_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mime Type"
+          },
+          "notebook_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notebook Id"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin"
+          },
+          "original_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Status"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProvenanceView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provenance"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "source_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Title"
+          },
+          "source_version_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Version Id"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "title": "SourceVersionView",
+        "type": "object"
+      },
+      "SourceView": {
+        "additionalProperties": false,
+        "properties": {
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "versions": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/SourceVersionView"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NonActionableValue"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Versions"
+          }
+        },
+        "title": "SourceView",
         "type": "object"
       },
       "SpeakerProfileCreate": {
@@ -6458,6 +10132,432 @@
         "title": "TurnSubmissionResponse",
         "type": "object"
       },
+      "TurnView": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "budget": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BudgetView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget"
+          },
+          "chat_session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chat Session Id"
+          },
+          "citations": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/EvidenceCitationView"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NonActionableValue"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Citations"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "connector_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connector Version"
+          },
+          "conversation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Id"
+          },
+          "coverage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CoverageView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "engine": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engine"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidence_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Ids"
+          },
+          "generation_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generation Status"
+          },
+          "grounding_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grounding Status"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "notebook_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notebook Id"
+          },
+          "pipeline_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipeline Version"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "retrieval": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RetrievalView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieval"
+          },
+          "retrieval_request": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RetrievalRequestView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieval Request"
+          },
+          "scope_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Hash"
+          },
+          "scope_snapshot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScopeView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Snapshot"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "turn_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turn Id"
+          },
+          "warnings": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warnings"
+          }
+        },
+        "title": "TurnView",
+        "type": "object"
+      },
       "UpdateCredentialRequest": {
         "description": "Request to update an existing credential.",
         "properties": {
@@ -6694,6 +10794,25 @@
           }
         },
         "title": "UpdateSourceChatSessionRequest",
+        "type": "object"
+      },
+      "ValidDispatchReceiptView": {
+        "additionalProperties": false,
+        "properties": {
+          "receipt": {
+            "$ref": "#/components/schemas/KnownDispatchReceipt"
+          },
+          "validity": {
+            "const": "valid",
+            "title": "Validity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "validity",
+          "receipt"
+        ],
+        "title": "ValidDispatchReceiptView",
         "type": "object"
       },
       "ValidationError": {
@@ -7212,6 +11331,145 @@
           "versions"
         ],
         "title": "WorkspaceSourceResponse",
+        "type": "object"
+      },
+      "WorkspaceViewV1": {
+        "additionalProperties": false,
+        "properties": {
+          "jobs": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/JobView"
+                },
+                {
+                  "$ref": "#/components/schemas/NonActionableValue"
+                }
+              ]
+            },
+            "title": "Jobs",
+            "type": "array"
+          },
+          "legacy_history": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LegacyHistoryView"
+                },
+                {
+                  "$ref": "#/components/schemas/NonActionableValue"
+                }
+              ]
+            },
+            "title": "Legacy History",
+            "type": "array"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LinkView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
+          },
+          "notebook": {
+            "$ref": "#/components/schemas/NotebookView"
+          },
+          "notes": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/NoteView"
+                },
+                {
+                  "$ref": "#/components/schemas/NonActionableValue"
+                }
+              ]
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "projection_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "unknown",
+                  "invalid"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Status"
+          },
+          "schema_version": {
+            "const": "workspace-view-v1",
+            "default": "workspace-view-v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "selection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SelectionView"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selection"
+          },
+          "sources": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SourceView"
+                },
+                {
+                  "$ref": "#/components/schemas/NonActionableValue"
+                }
+              ]
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "turns": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TurnView"
+                },
+                {
+                  "$ref": "#/components/schemas/NonActionableValue"
+                }
+              ]
+            },
+            "title": "Turns",
+            "type": "array"
+          }
+        },
+        "required": [
+          "notebook",
+          "sources",
+          "notes",
+          "turns",
+          "jobs",
+          "selection",
+          "link",
+          "legacy_history"
+        ],
+        "title": "WorkspaceViewV1",
         "type": "object"
       },
       "api__models__DiscoveredModelResponse": {
@@ -11095,6 +15353,27 @@
         ]
       }
     },
+    "/api/personal/client-capabilities": {
+      "get": {
+        "operationId": "client_capabilities_api_personal_client_capabilities_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientCapabilitiesV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Client Capabilities",
+        "tags": [
+          "personal-evidence"
+        ]
+      }
+    },
     "/api/personal/connections/notebooklm": {
       "delete": {
         "operationId": "disconnect_api_personal_connections_notebooklm_delete",
@@ -12785,6 +17064,48 @@
           }
         },
         "summary": "Workspace",
+        "tags": [
+          "personal-evidence"
+        ]
+      }
+    },
+    "/api/personal/notebooks/{notebook_id}/workspace-view": {
+      "get": {
+        "operationId": "workspace_view_api_personal_notebooks__notebook_id__workspace_view_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notebook_id",
+            "required": true,
+            "schema": {
+              "title": "Notebook Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Workspace View",
         "tags": [
           "personal-evidence"
         ]

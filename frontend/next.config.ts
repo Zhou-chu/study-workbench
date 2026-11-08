@@ -11,6 +11,9 @@ const allowedDevOrigins = process.env.NEXT_ALLOWED_DEV_ORIGINS
 const nextConfig: NextConfig = {
   // Enable standalone output for optimized Docker deployment
   output: "standalone",
+  // Keep this independently built legacy app local after adding root workspaces.
+  // Otherwise Next infers the repository root and relocates standalone/server.js.
+  outputFileTracingRoot: __dirname,
 
   ...(allowedDevOrigins && allowedDevOrigins.length > 0 ? { allowedDevOrigins } : {}),
 

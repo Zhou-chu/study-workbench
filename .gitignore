@@ -167,3 +167,8 @@ history.txt
 
 # Local implementation coordination artifacts
 .superpowers/
+
+# Independent SPA workspace dependencies
+/node_modules/
+/apps/*/node_modules/
+/packages/*/node_modules/

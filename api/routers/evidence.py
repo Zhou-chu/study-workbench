@@ -33,6 +33,10 @@ from api.personal_contracts import (
 from api.personal_service import PersonalService, digest, now, submit_job
 from api.personal_store import get_store
 from api.personal_transport_contracts import TURN_EVENTS_RESPONSES, transport_responses
+from api.portable_limits import get_portable_limits
+from api.source_upload_limits import get_source_upload_max_bytes
+from api.workspace_view_contracts import ClientCapabilitiesV1, WorkspaceViewV1
+from api.workspace_view_projection import project_workspace_view
 from open_notebook.ai.evidence_embeddings import EmbeddingUnavailable
 from open_notebook.database.repository import repo_delete, repo_relate
 from open_notebook.domain.evidence_retrieval import (
@@ -82,6 +86,29 @@ async def workspace(notebook_id: str):
     return jsonable_encoder(await PersonalService().workspace(notebook_id))
 
 
+@router.get(
+    "/notebooks/{notebook_id}/workspace-view",
+    response_model=WorkspaceViewV1,
+    response_model_exclude_unset=True,
+)
+async def workspace_view(notebook_id: str):
+    return project_workspace_view(
+        jsonable_encoder(await PersonalService().workspace(notebook_id))
+    )
+
+
+@router.get("/client-capabilities", response_model=ClientCapabilitiesV1)
+async def client_capabilities():
+    return {
+        "contract_version": "client-capabilities-v1",
+        "supported_contracts": ["workspace-view-v1"],
+        "limits": {
+            "source_upload_max_bytes": get_source_upload_max_bytes(),
+            "portable": get_portable_limits().public(),
+        },
+    }
+
+
 @router.patch(
     "/notebooks/{notebook_id}/selection",
     response_model=SelectionResponse,
@@ -104,11 +131,7 @@ async def upload(
     if not idempotency_key or len(idempotency_key) > 200:
         raise InvalidInputError("INVALID_IDEMPOTENCY_KEY")
     service = EvidenceService()
-    import os
-
-    size_limit = int(
-        float(os.getenv("STUDY_WORKBENCH_MAX_FILE_MB", "50")) * 1024 * 1024
-    )
+    size_limit = get_source_upload_max_bytes()
     data = await file.read(size_limit + 1)
     if len(data) > size_limit:
         raise InvalidInputError("FILE_TOO_LARGE")

@@ -181,3 +181,18 @@ test('missing and malformed manifests fail closed', async t => {
   await rm(path.join(artifact, 'artifact-manifest.json'))
   await assert.rejects(() => lib.verifyArtifact(source, artifact))
 })
+
+
+test('legacy standalone tracing root stays local when repository workspaces exist', async () => {
+  const { createRequire } = await import('node:module')
+  const { fileURLToPath } = await import('node:url')
+  const require = createRequire(import.meta.url)
+  const loadConfig = require('next/dist/server/config.js').default
+  const { PHASE_PRODUCTION_BUILD } = require('next/constants')
+  const source = fileURLToPath(new URL('../', import.meta.url)).replace(/\/$/, '')
+  const rootPackage = JSON.parse(await readFile(path.join(source, '../package.json'), 'utf8'))
+  assert.deepEqual(rootPackage.workspaces, ['apps/*', 'packages/*'])
+  assert.ok((await readFile(path.join(source, '../package-lock.json'))).length)
+  const config = await loadConfig(PHASE_PRODUCTION_BUILD, source, { silent: true })
+  assert.equal(config.outputFileTracingRoot, source)
+})

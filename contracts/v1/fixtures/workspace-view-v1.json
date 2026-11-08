@@ -1,0 +1,5811 @@
+{
+  "raw_workspace": {
+    "notebook": {
+      "id": "notebook:synthetic",
+      "name": "Synthetic"
+    },
+    "sources": [
+      {
+        "source_id": "source:synthetic",
+        "title": null,
+        "versions": [
+          {
+            "source_version_id": "sv_a",
+            "source_id": "source:synthetic",
+            "origin": "derived_snapshot",
+            "file_path": "synthetic-internal-path",
+            "provenance": {
+              "kind": "derived",
+              "origin_kind": "note",
+              "origin_id": "note:synthetic",
+              "note_revision": 1,
+              "origin_title": "Synthetic note",
+              "authorship": "human",
+              "captured_at": "2026-11-08T00:00:00+00:00",
+              "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "scope_snapshot": {
+                "engine": "independent",
+                "selection_origin": "local",
+                "source_version_ids": [
+                  "sv_a",
+                  "sv_b"
+                ],
+                "remote_source_ids": [],
+                "remote_notebook_id": null
+              },
+              "citations": [
+                {
+                  "citation_id": "c1",
+                  "kind": "local_evidence",
+                  "quote": "Synthetic quote",
+                  "reference_validity": "verified",
+                  "source_version_id": "sv_a",
+                  "evidence_id": "ev_synthetic",
+                  "source_title": null,
+                  "locator": {
+                    "page_index": 0,
+                    "page_label": null,
+                    "block_id": "b1",
+                    "start_offset": 0,
+                    "end_offset": 15,
+                    "bbox": null
+                  },
+                  "independent_support": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "source_id": "source:classic",
+        "title": "Classic source",
+        "versions": [
+          {}
+        ]
+      }
+    ],
+    "notes": [
+      {
+        "id": "note:null",
+        "revision": 1,
+        "title": null,
+        "content": null
+      },
+      {
+        "id": "note:native",
+        "revision": 2
+      }
+    ],
+    "turns": [
+      {
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "engine": "independent",
+        "message": "Synthetic question",
+        "idempotency_key": "synthetic-key",
+        "status": "succeeded",
+        "answer": "Synthetic answer",
+        "scope_snapshot": {
+          "engine": "independent",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_source_ids": [],
+          "remote_notebook_id": null
+        },
+        "citations": [
+          {
+            "citation_id": "c1",
+            "kind": "local_evidence",
+            "quote": "Synthetic quote",
+            "reference_validity": "verified",
+            "source_version_id": "sv_a",
+            "evidence_id": "ev_synthetic",
+            "source_title": null,
+            "locator": {
+              "page_index": 0,
+              "page_label": null,
+              "block_id": "b1",
+              "start_offset": 0,
+              "end_offset": 15,
+              "bbox": null
+            },
+            "independent_support": null
+          }
+        ]
+      }
+    ],
+    "jobs": [
+      {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      }
+    ],
+    "selection": {
+      "engine": "future-engine",
+      "selection_origin": null,
+      "source_version_ids": null
+    },
+    "link": null,
+    "legacy_history": [
+      {
+        "chat_session_id": "chat:archive",
+        "history_origin": "restored",
+        "restored_history": true,
+        "replay_allowed": false,
+        "messages": [
+          {
+            "role": "user",
+            "content": "Synthetic archive"
+          }
+        ]
+      }
+    ]
+  },
+  "workspace_view": {
+    "notebook": {
+      "id": "notebook:synthetic",
+      "name": "Synthetic"
+    },
+    "sources": [
+      {
+        "source_id": "source:synthetic",
+        "title": null,
+        "versions": [
+          {
+            "source_version_id": "sv_a",
+            "source_id": "source:synthetic",
+            "origin": "derived_snapshot",
+            "provenance": {
+              "kind": "derived",
+              "origin_kind": "note",
+              "origin_id": "note:synthetic",
+              "note_revision": 1,
+              "origin_title": "Synthetic note",
+              "authorship": "human",
+              "captured_at": "2026-11-08T00:00:00+00:00",
+              "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "scope_snapshot": {
+                "engine": "independent",
+                "selection_origin": "local",
+                "source_version_ids": [
+                  "sv_a",
+                  "sv_b"
+                ],
+                "remote_source_ids": [],
+                "remote_notebook_id": null
+              },
+              "citations": [
+                {
+                  "citation_id": "c1",
+                  "kind": "local_evidence",
+                  "quote": "Synthetic quote",
+                  "reference_validity": "verified",
+                  "source_version_id": "sv_a",
+                  "evidence_id": "ev_synthetic",
+                  "source_title": null,
+                  "locator": {
+                    "page_index": 0,
+                    "page_label": null,
+                    "block_id": "b1",
+                    "start_offset": 0,
+                    "end_offset": 15,
+                    "bbox": null
+                  },
+                  "independent_support": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "source_id": "source:classic",
+        "title": "Classic source",
+        "versions": [
+          {}
+        ]
+      }
+    ],
+    "notes": [
+      {
+        "id": "note:null",
+        "revision": 1,
+        "title": null,
+        "content": null
+      },
+      {
+        "id": "note:native",
+        "revision": 2
+      }
+    ],
+    "turns": [
+      {
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "engine": "independent",
+        "message": "Synthetic question",
+        "idempotency_key": "synthetic-key",
+        "status": "succeeded",
+        "answer": "Synthetic answer",
+        "scope_snapshot": {
+          "engine": "independent",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_source_ids": [],
+          "remote_notebook_id": null
+        },
+        "citations": [
+          {
+            "citation_id": "c1",
+            "kind": "local_evidence",
+            "quote": "Synthetic quote",
+            "reference_validity": "verified",
+            "source_version_id": "sv_a",
+            "evidence_id": "ev_synthetic",
+            "source_title": null,
+            "locator": {
+              "page_index": 0,
+              "page_label": null,
+              "block_id": "b1",
+              "start_offset": 0,
+              "end_offset": 15,
+              "bbox": null
+            },
+            "independent_support": null
+          }
+        ]
+      }
+    ],
+    "jobs": [
+      {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      }
+    ],
+    "selection": {
+      "engine": "future-engine",
+      "selection_origin": null,
+      "source_version_ids": null
+    },
+    "link": null,
+    "legacy_history": [
+      {
+        "chat_session_id": "chat:archive",
+        "history_origin": "restored",
+        "restored_history": true,
+        "replay_allowed": false,
+        "messages": [
+          {
+            "role": "user",
+            "content": "Synthetic archive"
+          }
+        ]
+      }
+    ],
+    "schema_version": "workspace-view-v1"
+  },
+  "recovery_jobs": [
+    {
+      "name": "lost_2xx_no_receipt",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "dispatch_null",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": null,
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "projection_status": "invalid",
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": null,
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "dispatch_malformed",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {},
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "projection_status": "invalid",
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "invalid"
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "dispatch_future_field",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false,
+          "future": "SYNTHETIC_PRIVATE_EXTENSION"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "projection_status": "unknown",
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "unknown"
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "dispatch_mismatched_id",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "other",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "projection_status": "invalid",
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "invalid"
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "dispatch_retry_true",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": true
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "projection_status": "invalid",
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "invalid"
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "request_future_field",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question",
+          "future": "SYNTHETIC_PRIVATE_EXTENSION"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "projection_status": "unknown",
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "projection_status": "unknown",
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "unknown_state_is_verbatim",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "future-state",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "future-state",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "restored_non_replayable",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        },
+        "restored_history": true,
+        "replay_allowed": false
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "restored_history": true,
+        "replay_allowed": false,
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "same_key_google_child_is_not_parent",
+      "raw_job": {
+        "operation": "ask",
+        "job_id": "child",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": null,
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "projection_status": "invalid",
+        "operation": "ask",
+        "job_id": "child",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": null,
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "projection_status": "unknown"
+        }
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "child_result_id_does_not_bind_parent",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ],
+          "job_id": "child"
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ],
+          "job_id": "child"
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "unconfirmed_parent",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "unknown",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "unknown",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "result_notebook_id_disagreement",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:other",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:other",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "result_chat_session_id_disagreement",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:other",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:other",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "result_message_disagreement",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Different question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Different question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "result_status_disagreement",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "failed",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "failed",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "result_state_disagreement",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ],
+          "state": "running"
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "state": "running",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "result_generation_status_disagreement",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ],
+          "generation_status": "failed"
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "generation_status": "failed",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "result_answer_disagreement",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Different answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Different answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "scope_array_order_disagreement",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_b",
+              "sv_a"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_b",
+              "sv_a"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "scope_future_field",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null,
+            "future": "SYNTHETIC_PRIVATE_EXTENSION"
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "projection_status": "unknown",
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "projection_status": "unknown",
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "projection_status": "unknown",
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "citation_quote_disagreement",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Different quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Different quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "citation_future_field",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null,
+              "future": "SYNTHETIC_PRIVATE_EXTENSION"
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "projection_status": "unknown",
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "projection_status": "unknown",
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "projection_status": "unknown",
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "locator_future_field",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null,
+                "future": "SYNTHETIC_PRIVATE_EXTENSION"
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "projection_status": "unknown",
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "projection_status": "unknown",
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "projection_status": "unknown",
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "projection_status": "unknown",
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "remote_reference_future_field",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null,
+              "remote_reference": {
+                "remote_source_id": "remote-synthetic",
+                "quote": null,
+                "future": "SYNTHETIC_PRIVATE_EXTENSION"
+              }
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "projection_status": "unknown",
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "projection_status": "unknown",
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "projection_status": "unknown",
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "remote_reference": {
+                "projection_status": "unknown",
+                "remote_source_id": "remote-synthetic",
+                "quote": null
+              },
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "retrieval_null_not_omission",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ],
+          "retrieval": null
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ],
+          "retrieval": null
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "retrieval_future_field",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ],
+          "retrieval": {
+            "requested_method": "lexical",
+            "retrieval_method": "lexical",
+            "future": "SYNTHETIC_PRIVATE_EXTENSION"
+          }
+        }
+      },
+      "job_view": {
+        "projection_status": "unknown",
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "projection_status": "unknown",
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ],
+          "retrieval": {
+            "projection_status": "unknown",
+            "requested_method": "lexical",
+            "retrieval_method": "lexical"
+          }
+        }
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "raw_provider_error_removed",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        },
+        "error": {
+          "code": "PROVIDER_ERROR",
+          "message": "SYNTHETIC_PROVIDER_ERROR"
+        }
+      },
+      "job_view": {
+        "projection_status": "unknown",
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        },
+        "error": {
+          "projection_status": "unknown"
+        }
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "modern_disclosure_exact",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question",
+          "retrieval_mode": "hybrid",
+          "embedding_profile_id": "synthetic-profile",
+          "acknowledge_query_processing": true,
+          "disclosed_profile_fingerprint": "synthetic-fingerprint",
+          "destination_descriptor_version": "v1"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ],
+          "retrieval_request": {
+            "retrieval_mode": "hybrid",
+            "embedding_profile_id": "synthetic-profile",
+            "acknowledge_query_processing": true,
+            "disclosed_profile_fingerprint": "synthetic-fingerprint",
+            "destination_descriptor_version": "v1"
+          },
+          "retrieval": {
+            "requested_method": "hybrid",
+            "retrieval_method": "lexical_fallback",
+            "fallback_reason": "unavailable",
+            "profile_id": null,
+            "indexed_version_count": 0,
+            "selected_version_count": 2,
+            "warnings": []
+          }
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question",
+          "retrieval_mode": "hybrid",
+          "embedding_profile_id": "synthetic-profile",
+          "acknowledge_query_processing": true,
+          "disclosed_profile_fingerprint": "synthetic-fingerprint",
+          "destination_descriptor_version": "v1"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ],
+          "retrieval_request": {
+            "retrieval_mode": "hybrid",
+            "embedding_profile_id": "synthetic-profile",
+            "acknowledge_query_processing": true,
+            "disclosed_profile_fingerprint": "synthetic-fingerprint",
+            "destination_descriptor_version": "v1"
+          },
+          "retrieval": {
+            "requested_method": "hybrid",
+            "retrieval_method": "lexical_fallback",
+            "fallback_reason": "unavailable",
+            "profile_id": null,
+            "indexed_version_count": 0,
+            "selected_version_count": 2,
+            "warnings": []
+          }
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "notebooklm_lexical_omission",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "notebooklm",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": "remote-synthetic",
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "notebooklm",
+          "message": "Synthetic question",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "notebooklm",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": "remote-synthetic",
+            "mappings": []
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "notebooklm",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": "remote-synthetic",
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "notebooklm",
+          "message": "Synthetic question",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "notebooklm",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": "remote-synthetic",
+            "mappings": []
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ]
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "legacy_forged_projection_wrapper",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "validity": "unknown"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        },
+        "projection_status": "unknown"
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "dispatch_numeric_zero",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": 0
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "validity": "invalid"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        },
+        "projection_status": "invalid"
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "dispatch_string_false",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": "false"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "validity": "invalid"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        },
+        "projection_status": "invalid"
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "raw_reserved_marker_null",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question",
+          "projection_status": null
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question",
+          "projection_status": "unknown"
+        },
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ]
+        },
+        "projection_status": "unknown"
+      },
+      "non_actionable": true
+    },
+    {
+      "name": "actual_grounded_turn_metadata",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "dispatch_ack": "unknown",
+          "job_id": "parent",
+          "turn_id": "turn",
+          "retry_safe": false
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null,
+            "mapping_version": 1
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ],
+          "scope_hash": "synthetic-scope",
+          "request_hash": "synthetic-internal-hash",
+          "model_id": "model:synthetic",
+          "pipeline_version": "1",
+          "grounding_status": "references_verified",
+          "usage": {
+            "private": "SYNTHETIC_PROVIDER_USAGE"
+          },
+          "budget": {
+            "context_tokens": 8192,
+            "output_tokens": 2048,
+            "estimated_input_tokens": 1000,
+            "estimator": "utf8_byte_upper_bound",
+            "retrieved_evidence_count": 2,
+            "included_evidence_count": 2
+          }
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "dispatch_receipt": {
+          "validity": "valid",
+          "receipt": {
+            "dispatch_ack": "unknown",
+            "job_id": "parent",
+            "turn_id": "turn",
+            "retry_safe": false
+          }
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null,
+            "mapping_version": 1
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ],
+          "scope_hash": "synthetic-scope",
+          "model_id": "model:synthetic",
+          "pipeline_version": "1",
+          "grounding_status": "references_verified",
+          "budget": {
+            "context_tokens": 8192,
+            "output_tokens": 2048,
+            "estimated_input_tokens": 1000,
+            "estimator": "utf8_byte_upper_bound",
+            "retrieved_evidence_count": 2,
+            "included_evidence_count": 2
+          }
+        }
+      },
+      "non_actionable": false
+    },
+    {
+      "name": "raw_result_reserved_marker_null",
+      "raw_job": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              },
+              "independent_support": null
+            }
+          ],
+          "projection_status": null
+        }
+      },
+      "job_view": {
+        "operation": "chat",
+        "job_id": "parent",
+        "turn_id": "turn",
+        "notebook_id": "notebook:synthetic",
+        "chat_session_id": "chat:synthetic",
+        "idempotency_key": "synthetic-key",
+        "state": "succeeded",
+        "submission_state": "confirmed",
+        "request_snapshot": {
+          "notebook_id": "notebook:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "selection_origin": "local",
+          "source_version_ids": [
+            "sv_a",
+            "sv_b"
+          ],
+          "remote_notebook_id": null,
+          "remote_source_ids": [],
+          "idempotency_key": "synthetic-key",
+          "model_id": null,
+          "task": "question"
+        },
+        "result": {
+          "turn_id": "turn",
+          "notebook_id": "notebook:synthetic",
+          "chat_session_id": "chat:synthetic",
+          "engine": "independent",
+          "message": "Synthetic question",
+          "idempotency_key": "synthetic-key",
+          "status": "succeeded",
+          "answer": "Synthetic answer",
+          "scope_snapshot": {
+            "engine": "independent",
+            "selection_origin": "local",
+            "source_version_ids": [
+              "sv_a",
+              "sv_b"
+            ],
+            "remote_source_ids": [],
+            "remote_notebook_id": null
+          },
+          "citations": [
+            {
+              "citation_id": "c1",
+              "kind": "local_evidence",
+              "quote": "Synthetic quote",
+              "reference_validity": "verified",
+              "source_version_id": "sv_a",
+              "evidence_id": "ev_synthetic",
+              "source_title": null,
+              "independent_support": null,
+              "locator": {
+                "page_index": 0,
+                "page_label": null,
+                "block_id": "b1",
+                "start_offset": 0,
+                "end_offset": 15,
+                "bbox": null
+              }
+            }
+          ],
+          "projection_status": "unknown"
+        },
+        "projection_status": "unknown"
+      },
+      "non_actionable": true
+    }
+  ]
+}
