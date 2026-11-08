@@ -14,14 +14,14 @@
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "build": "npm run build --workspace @study/contracts && npm run build --workspace @study/domain && npm run build --workspace @study/web-transport && npm run build --workspace @study/bff",
-    "pretest": "npm run build --workspace @study/contracts && npm run build --workspace @study/domain",
-    "pretypecheck": "npm run build --workspace @study/contracts && npm run build --workspace @study/domain"
+    "build": "npm run build --workspace @study/contracts && npm run build --workspace @study/domain && npm run build --workspace @study/web-transport && npm run build --workspace @study/bff && npm run build --workspace @study/web",
+    "pretest": "npm run build --workspace @study/contracts && npm run build --workspace @study/domain && npm run build --workspace @study/web-transport",
+    "pretypecheck": "npm run build --workspace @study/contracts && npm run build --workspace @study/domain && npm run build --workspace @study/web-transport"
   },
   "devDependencies": {
     "typescript": "5.8.3",
-    "vitest": "4.1.9",
-    "vite": "7.3.5",
+    "vitest": "4.1.12",
+    "vite": "7.3.7",
     "eslint": "9.31.0",
     "@typescript-eslint/parser": "8.37.0",
     "@typescript-eslint/eslint-plugin": "8.37.0",
@@ -32,6 +32,7 @@
     "brace-expansion": "1.1.21",
     "ajv": "6.15.0",
     "@eslint/plugin-kit": "0.7.2",
-    "postcss": "8.5.23"
+    "postcss": "8.5.23",
+    "source-map-js": "1.2.2"
   }
 }

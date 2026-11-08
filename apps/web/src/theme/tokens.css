@@ -1,0 +1,27 @@
+:root {
+  --background: #EEEEEB;
+  --surface: #FFFFFF;
+  --text: #151515;
+  --muted: #5A5A55;
+  --interactive-border: #70706C;
+  --decorative-line: #D4D4CE;
+  --primary: #151515;
+  --on-primary: #FFFFFF;
+  --selected: #EEEEEB;
+  --focus: #151515;
+  --heading-font: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono-font: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+:root[data-theme="dark"] {
+  --background: #121212;
+  --surface: #191919;
+  --text: #E8E8E4;
+  --muted: #A3A39D;
+  --interactive-border: #777771;
+  --decorative-line: #383836;
+  --primary: #E8E8E4;
+  --on-primary: #121212;
+  --selected: #30302D;
+  --focus: #E8E8E4;
+}

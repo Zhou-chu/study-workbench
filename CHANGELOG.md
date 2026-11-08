@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the independent Notebook SPA scaffold with paper-and-ink monochrome themes, accessible responsive workspace regions and the full language registry. Authentication and study actions remain explicitly unconnected in this scaffold.
+
 - Add an independent, import-inert Node BFF with guarded same-origin runtime metadata, reviewed route/method gates in both auth modes, fixed trusted-origin configuration, server-held device sessions and streaming HTTP adapters. The legacy reference frontend and live deployment remain unchanged.
 - Add an authenticated, allowlisted workspace-view-v1 read contract and real API client capabilities, with independently buildable typed SPA contracts and compatibility fixtures.
 - **Explicit indexing and hybrid controls (2026-11-03).** Add metadata-only semantic status and previews, separately acknowledged document/query processing, pinned submit-only lexical/hybrid Search and Ask, immutable grouped index receipts and exact original-request recovery. Full-version retries require a current preview and duplicate-cost acknowledgment; scope/profile/disclosure/cache generation fences retire late results. Display effective fallback/coverage and local-cancellation limits without equating extraction, configuration or partial index coverage with tested semantic readiness. Hybrid remains disabled; real browser/provider/database acceptance is not implied.
@@ -130,6 +132,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.env.example` names the chunking variables Open Notebook actually reads (`OPEN_NOTEBOOK_CHUNK_SIZE` / `OPEN_NOTEBOOK_CHUNK_OVERLAP`)
 
 ### Security
+
+- Patch the independent SPA workspace Zod runtime and Vite/Vitest/source-map-js tooling dependencies to reviewed official versions. The legacy frontend lock is unchanged.
 - **Fresh hybrid query admission (2026-11-02).** Revalidate selected scope after the actual embedding-slot wait and before provisioning/send; preserve immutable extraction archive origins through canonical rereads, and reject disappearing accepted profiles as stale disclosure rather than ordinary fallback. Query admission is call-local and never changes document/indexing behavior. Hybrid remains disabled and runtime/provider acceptance is still pending.
 - **Indexing lifecycle review fixes (2026-11-02).** Durably stop grouped creators before cancellation/retry and fence each child queue claim against that stop. Reconcile dead-worker and unacknowledged queue ownership from shared nonblocking ownership evidence without replay, while preserving live workers, immutable submission receipts and last-good manifests. Hybrid remains disabled; real database/queue/provider acceptance is still pending.
 - **Evidence vector boundary review fixes (2026-11-02).** Require complete operation-bound commit receipts, validate canonical physical metadata identities, sanitize query failures and wrapped diagnostic chains, and reject corrupted index counts instead of treating them as ordinary size fallback. Hybrid remains disabled; isolated database acceptance is still pending.
