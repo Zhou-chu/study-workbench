@@ -78,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Preserve manual scrolling of an already-visible citation while retained text is loading, without disabling a later explicit reader page request.
+- Preserve manual scrolling of an already-visible citation while retained text is loading, cancelling older pending page jumps while allowing a newer explicit reader page request.
 
 - Reveal retained text citations within the Notebook reader without overriding later manual navigation, and keep explicit reading-position recovery inside the narrow reader keyboard focus scope.
 

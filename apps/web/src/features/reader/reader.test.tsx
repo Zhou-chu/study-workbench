@@ -137,3 +137,25 @@ it('still reveals deferred deep text when visible citation context has not been 
     expect(document.querySelector<HTMLElement>('.reader-scroll')!.scrollTop).toBe(3000);
     expect(h.onPositionChange).not.toHaveBeenCalled();
 });
+
+it('lets a newer context scroll retire an older explicit page request still waiting for detail', async () => {
+    textGeometry();
+    const pending = deferred<Response>();
+    const { detail, value } = longCitationContext();
+    const h = setup(pending.promise, false, value);
+    expect(document.querySelector('.citation-context blockquote')).toBeVisible();
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '1' } });
+    const scroll = document.querySelector<HTMLElement>('.reader-scroll')!;
+    scroll.scrollTop = 900;
+    fireEvent.scroll(scroll);
+    await act(async () => pending.resolve(json(detail)));
+    await screen.findByRole('searchbox');
+    expect(scroll.scrollTop).toBe(900);
+    expect(screen.getByRole('spinbutton')).toHaveValue(1);
+    expect(h.onPositionChange).toHaveBeenCalledExactlyOnceWith({ source_version_id: 'v-old', page_index: 0 });
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '4' } });
+    expect(scroll.scrollTop).toBe(600);
+    expect(h.onPositionChange).toHaveBeenCalledTimes(2);
+    expect(h.onPositionChange).toHaveBeenLastCalledWith({ source_version_id: 'v-old', page_index: 3 });
+});

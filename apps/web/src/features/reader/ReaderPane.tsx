@@ -23,8 +23,7 @@ function ReaderDocument({ intent, onClose, onPositionChange, positionSave }: Rea
     const api = useMemo(() => transport ? createEvidenceApi(transport) : null, [transport]);
     const [detail, setDetail] = useState<ReaderDetail | null>(null), [blob, setBlob] = useState<Blob | null>(null), [page, setPage] = useState(intent.initialPage), [search, setSearch] = useState(''), [zoom, setZoom] = useState<PdfZoom>('fit'), [revision, setRevision] = useState(0), [loading, setLoading] = useState(false), [failure, setFailure] = useState<string | null>(null), [downloadFailure, setDownloadFailure] = useState<string | null>(null), [downloading, setDownloading] = useState(false);
     const pane = useRef<HTMLElement>(null);
-    const initialTextPosition = useRef<TextPosition>(intent.evidence_id ? { kind: 'locator' } : { kind: 'page', page: intent.initialPage });
-    const [textPosition, setTextPosition] = useState<TextPosition | null>(initialTextPosition.current);
+    const [textPosition, setTextPosition] = useState<TextPosition | null>(() => intent.evidence_id ? { kind: 'locator' } : { kind: 'page', page: intent.initialPage });
     const [narrow, setNarrow] = useState(() => window.matchMedia('(max-width: 899px)').matches);
     useEffect(() => { const media = window.matchMedia('(max-width: 899px)'); const update = () => setNarrow(media.matches); media.addEventListener('change', update); return () => media.removeEventListener('change', update); }, []);
     const manual = useRef(false), owner = useRef<AbortController | null>(null), boundExtraction = useRef(intent.extraction_id);
@@ -103,11 +102,11 @@ function ReaderDocument({ intent, onClose, onPositionChange, positionSave }: Rea
             first?.focus();
         }
     } }}><ReaderHeader title={detail && typeof detail.version.source_title === 'string' ? detail.version.source_title : t.workbench.reader} page={page} pageCount={pageCount} onPage={changePage} onClose={close}/><div className="reader-scroll" onScroll={event => {
-        // CitationContext is already scrollable before TextView exists. Any
-        // newer reader scroll retires only the original automatic request;
-        // a subsequent explicit page request has its own identity and survives.
+        // CitationContext is scrollable before TextView exists. This newer
+        // scroll supersedes any pending reveal, including an older page request.
+        // A later explicit page action can still supply a fresh request.
         if (event.target === event.currentTarget)
-            setTextPosition(position => position === initialTextPosition.current ? null : position);
+            setTextPosition(null);
     }}><CitationContext citation={intent.citation} provenance={evidence?.provenance ?? detail?.version.provenance} independentSupport={evidence?.independent_support}/>{!intent.source_version_id && <p role="status">{intent.citation?.kind === 'remote_unmapped' ? t.workbench.remoteUnmapped : m.unavailable}</p>}{loading && <p role="status">{t.common.loading}</p>}{failure && <p role="alert">{failure === 'unavailable' ? m.unavailable : t.workbench.readerLoadFailed}</p>}{(failure || downloadFailure) && <Button disabled={loading} onClick={() => { setDownloadFailure(null); setRevision(n => n + 1); }}>{t.workbench.retry}</Button>}{downloadFailure && <p role="alert">{downloadFailure === 'missing' ? t.workbench.originalMissing : downloadFailure === 'invalid' ? m.invalid : t.workbench.readerDownloadFailed}</p>}{detail && <><details><summary>{t.workbench.versionDetails}</summary><p className="reader-identity">{detail.version.source_version_id}</p><p className="reader-identity">{detail.extraction?.extraction_id ?? t.common.unknown}</p></details>{detail.version.original_status !== 'available' ? <p role="status">{t.workbench.originalMissing}</p> : <Button disabled={downloading} onClick={() => { void download(); }}>{t.workbench.downloadOriginal}</Button>}{detail.version.mime_type === 'application/pdf' && <>{blob ? <PdfView blob={blob} pageIndex={page} zoom={zoom} onZoomChange={setZoom} fallbackText={blocks.filter(b => b.page_index === page).map(b => b.text).join('\n')}/> : !loading && <PdfTextFallback text={blocks.filter(b => b.page_index === page).map(b => b.text).join('\n')}/>}<p className="panel-hint">{t.workbench.highlightUnavailable}</p></>}{intent.citation && !locator && <p className="panel-hint">{t.workbench.quoteMismatch}</p>}<TextView position={detail.version.mime_type === 'application/pdf' ? null : textPosition} blocks={blocks} search={search} onSearchChange={setSearch} locator={locator} quote={typeof intent.citation?.quote === 'string' ? intent.citation.quote : null} onPage={changePage}/></>}</div>{positionSave && <div className="reader-save-notice"><p role="status">{m.unsaved}</p><Button disabled={positionSave.blocked} onClick={() => {
         positionSave.onSave();
         // Keep focus in the reader when successful recovery removes this action.
