@@ -25,3 +25,6 @@ export function AppProviders({ children, transport, workspace, locale }: AppProv
 }
 export function useAppData(): AppData { const value = useContext(Context); if (!value)
     throw new Error('AppProviders required'); return value; }
+
+/** Nested session boundary changes the adapter without rebuilding presentation providers. */
+export function AppDataBoundary({children,transport,workspace}:{children:ReactNode;transport:WebTransport;workspace:WorkspaceViewV1|undefined}) {return <Context.Provider value={{transport,workspace}}>{children}</Context.Provider>;}

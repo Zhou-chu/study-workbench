@@ -1,0 +1,333 @@
+import type { ClientCapabilitiesV1, RuntimeConfig } from '@study/contracts';
+import { classifyAuthFailure, createSessionClient, createWebTransport, invalidateTurnContext, publishTurnTarget, readTurnContext, sessionCoordinator, suspendTurnTarget, TransportResponseError, RequestNotDispatchedError, type AuthPhase, type SessionClient, type RequestSpec, type WebTransport } from '@study/web-transport';
+import { ConfigurationError, errorCode, loadRuntimeConfig, loadClientCapabilities, parseSessionMetadata, parseWebStatus, type SessionMetadata } from '../../data/config';
+export type ConnectionIssue = 'configuration' | 'capabilities' | 'ingress' | 'connection' | 'google' | 'invalid-password' | null;
+export type SessionSnapshot = Readonly<{
+    phase: AuthPhase;
+    ready: boolean;
+    busy: boolean;
+    hasWorkspace: boolean;
+    privacyChanged: boolean;
+    issue: ConnectionIssue;
+    capabilities: ClientCapabilitiesV1 | null;
+}>;
+/** One mounted application owns the coordinator. Metadata is not identity or authority. */
+export function createSessionController(onRetire: (epoch: number) => void = () => { }) {
+    let snapshot: SessionSnapshot = { phase: 'bootstrapping', ready: false, busy: false, hasWorkspace: false, privacyChanged: false, issue: null, capabilities: null };
+    let config: RuntimeConfig | null = null;
+    let client: SessionClient | null = null;
+    let raw: WebTransport | null = null;
+    let metadata: SessionMetadata | null = null;
+    let disposed = false;
+    let ticket = 0;
+    let flight: Promise<void> | null = null;
+    let signedOut = false;
+    let googleBlocked = false;
+    let loginRequired = false;
+    const listeners = new Set<() => void>();
+    const update = (patch: Partial<SessionSnapshot>) => {
+        if (disposed)
+            return;
+        snapshot = Object.freeze({ ...snapshot, ...patch });
+        listeners.forEach(fn => fn());
+    };
+    const phase = (next: AuthPhase) => {
+        if (next === 'reauth-required' || next === 'anonymous' && snapshot.hasWorkspace && !signedOut)
+            loginRequired = true;
+        sessionCoordinator.setPhase(next);
+        update({ phase: next });
+    };
+    const suspend = () => { suspendTurnTarget(); update({ ready: false, capabilities: null }); };
+    const retire = () => {
+        const old = readTurnContext();
+        suspend();
+        invalidateTurnContext();
+        if (old)
+            onRetire(old.epoch);
+        if (snapshot.hasWorkspace)
+            update({ privacyChanged: true });
+    };
+    const storageChanged = (event: StorageEvent) => {
+        if (config?.auth_mode === 'legacy_password' && (event.key === 'auth-storage' || event.key === null)) {
+            ++ticket;
+            sessionCoordinator.begin();
+            flight = null;
+            retire();
+            phase('reauth-required');
+            update({ busy: false, issue: null });
+        }
+    };
+    let unsubscribe = () => { };
+    let listening = false;
+    const listen = () => {
+        if (listening)
+            return;
+        listening = true;
+        window.addEventListener('storage', storageChanged);
+        unsubscribe = sessionCoordinator.subscribe(next => {
+            if (disposed || signedOut)
+                return;
+            suspend();
+            phase(next);
+            update({ issue: next === 'unavailable' ? 'connection' : null });
+        });
+    };
+    const authFailure = (status: number, code: string | null) => {
+        const next = classifyAuthFailure(status, { error: { code } });
+        if (!next)
+            return false;
+        suspend();
+        phase(next);
+        update({ issue: next === 'unavailable' ? 'connection' : null });
+        return true;
+    };
+    const fail = (error: unknown, stage: 'configuration' | 'capabilities' | 'connection') => {
+        if (error instanceof TransportResponseError && error.kind === 'retired')
+            return;
+        suspend();
+        update({ issue: error instanceof TransportResponseError ? (error.kind === 'ingress-unavailable' ? 'ingress' : 'connection') : stage });
+        if (stage !== 'capabilities')
+            phase('unavailable');
+    };
+    async function accept(operation: number, own: number) {
+        if (disposed || own !== ticket || !sessionCoordinator.isCurrent(operation))
+            return;
+        sessionCoordinator.confirmed();
+        phase('authenticated');
+        const current = readTurnContext();
+        if (!current)
+            throw new ConfigurationError();
+        publishTurnTarget(current.target, true);
+        try {
+            const context = readTurnContext()!;
+            const capabilities = await loadClientCapabilities(context);
+            if (readTurnContext()?.epoch !== context.epoch)
+                return;
+            if (disposed || own !== ticket || !sessionCoordinator.isCurrent(operation))
+                return;
+            if (googleBlocked) {
+                suspend();
+                update({ issue: 'google' });
+                return;
+            }
+            update({ ready: true, capabilities, hasWorkspace: true, issue: null });
+        }
+        catch (error) {
+            if (own === ticket && !disposed) {
+                if (snapshot.phase === 'authenticated')
+                    fail(error, 'capabilities');
+            }
+        }
+    }
+    async function checkStatus(operation: number, own: number) {
+        if (!client || !config)
+            return;
+        const response = await client.status(operation);
+        if (disposed || own !== ticket)
+            return;
+        if (!response.ok) {
+            const code = await errorCode(response);
+            if (disposed || own !== ticket)
+                return;
+            if (authFailure(response.status, code))
+                return;
+            throw new ConfigurationError();
+        }
+        const data: unknown = await response.json();
+        if (disposed || own !== ticket)
+            return;
+        if (config.auth_mode === 'device_sessions') {
+            const result = parseWebStatus(data);
+            if (metadata && result.session && metadata.session_id !== result.session.session_id)
+                retire();
+            metadata = result.session;
+            phase(result.phase);
+            if (result.phase === 'authenticated')
+                await accept(operation, own);
+            else
+                suspend();
+        }
+        else {
+            if (!data || typeof data !== 'object' || !('auth_enabled' in data) || typeof data.auth_enabled !== 'boolean')
+                throw new ConfigurationError();
+            if (data.auth_enabled) {
+                const probe = await client.probeLegacy(operation);
+                if (disposed || own !== ticket)
+                    return;
+                if (!probe.ok) {
+                    const code = await errorCode(probe);
+                    if (disposed || own !== ticket)
+                        return;
+                    if (probe.status === 401 && ['LEGACY_INVALID_PASSWORD', 'AUTH_REQUIRED', 'AUTH_INVALID_CREDENTIALS'].includes(code ?? '')) {
+                        phase(snapshot.hasWorkspace ? 'reauth-required' : 'anonymous');
+                        update({ issue: null });
+                        suspend();
+                        return;
+                    }
+                    if (authFailure(probe.status, code))
+                        return;
+                    throw new ConfigurationError();
+                }
+            }
+            await accept(operation, own);
+        }
+    }
+    async function run(kind: 'check' | 'login' | 'refresh', password?: string) {
+        if (disposed || flight)
+            return flight ?? Promise.resolve();
+        listen();
+        if (kind !== 'login' && loginRequired) {
+            phase('reauth-required');
+            return;
+        }
+        const own = ++ticket;
+        const operation = sessionCoordinator.begin();
+        update({ busy: true, issue: null });
+        suspend();
+        const task = (async () => {
+            let stage: 'configuration' | 'capabilities' | 'connection' = 'configuration';
+            try {
+                const selected = await loadRuntimeConfig();
+                if (disposed || own !== ticket)
+                    return;
+                if (config && (config.auth_mode !== selected.auth_mode || config.web_session_protocol !== selected.web_session_protocol))
+                    retire();
+                config = selected;
+                raw = createWebTransport(config);
+                client = createSessionClient(config);
+                stage = 'connection';
+                if (kind === 'login') {
+                    const response = await client.login(password ?? '', undefined, operation);
+                    if (disposed || own !== ticket)
+                        return;
+                    if (!response.ok) {
+                        const code = await errorCode(response);
+                        if (disposed || own !== ticket)
+                            return;
+                        if (['LEGACY_INVALID_PASSWORD', 'AUTH_INVALID_CREDENTIALS'].includes(code ?? '')) {
+                            phase(snapshot.hasWorkspace ? 'reauth-required' : 'anonymous');
+                            update({ issue: 'invalid-password' });
+                            return;
+                        }
+                        if (authFailure(response.status, code))
+                            return;
+                        throw new ConfigurationError();
+                    }
+                    if (config.auth_mode === 'device_sessions') {
+                        if (response.status !== 201)
+                            throw new ConfigurationError();
+                        const parsed = parseSessionMetadata(await response.json());
+                        if (disposed || own !== ticket)
+                            return;
+                        metadata = parsed;
+                    }
+                    // A fresh successful login gives no proof of continuity with an old identity.
+                    if (snapshot.hasWorkspace)
+                        retire();
+                    signedOut = false;
+                    loginRequired = false;
+                    if (config.auth_mode === 'legacy_password')
+                        await accept(operation, own);
+                    else
+                        await checkStatus(operation, own);
+                }
+                else if (signedOut) {
+                    phase('anonymous');
+                }
+                else if (kind === 'refresh' && config.auth_mode === 'device_sessions') {
+                    const response = await client.refresh(operation);
+                    if (disposed || own !== ticket)
+                        return;
+                    if (!response.ok) {
+                        const code = await errorCode(response);
+                        if (disposed || own !== ticket)
+                            return;
+                        if (authFailure(response.status, code))
+                            return;
+                        throw new ConfigurationError();
+                    }
+                    if (response.status !== 200)
+                        throw new ConfigurationError();
+                    const next = parseSessionMetadata(await response.json());
+                    if (disposed || own !== ticket)
+                        return;
+                    if (metadata && next.session_id !== metadata.session_id)
+                        retire();
+                    metadata = next;
+                    await checkStatus(operation, own);
+                }
+                else
+                    await checkStatus(operation, own);
+            }
+            catch (error) {
+                if (!disposed && own === ticket)
+                    fail(error, stage);
+            }
+            finally {
+                if (!disposed && own === ticket)
+                    update({ busy: false });
+            }
+        })();
+        flight = task;
+        await task;
+        if (flight === task)
+            flight = null;
+    }
+    const transport: WebTransport = Object.freeze({ async send(request: RequestSpec) {
+            if (!snapshot.ready || !raw)
+                throw new RequestNotDispatchedError('configuration');
+            const own = ticket;
+            try {
+                const response = await raw.send(request);
+                if (disposed || own !== ticket)
+                    throw new TransportResponseError('retired');
+                if (!response.ok) {
+                    const code = await errorCode(response);
+                    if (disposed || own !== ticket)
+                        throw new TransportResponseError('retired');
+                    if (code === 'NEEDS_REAUTH') {
+                        googleBlocked = true;
+                        suspend();
+                        phase('authenticated');
+                        update({ issue: 'google' });
+                    }
+                    else if (response.status === 401 && ['LEGACY_INVALID_PASSWORD', 'AUTH_REQUIRED', 'REFRESH_REJECTED'].includes(code ?? '')) {
+                        suspend();
+                        phase('reauth-required');
+                        update({ issue: null });
+                    }
+                }
+                return response;
+            }
+            catch (error) {
+                if (!disposed && own === ticket && !(error instanceof RequestNotDispatchedError))
+                    fail(error, 'connection');
+                throw error;
+            }
+        } });
+    return { getSnapshot: () => snapshot, subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; }, transport,
+        start: () => run('check'), check: () => run('check'), login: (password: string) => run('login', password), refresh: () => run('refresh'),
+        async signoutLocal() {
+            if (!client || disposed)
+                return;
+            ++ticket;
+            flight = null;
+            const operation = sessionCoordinator.begin();
+            signedOut = true;
+            loginRequired = false;
+            retire();
+            phase('anonymous');
+            update({ busy: false });
+            try {
+                await client.signoutLocal(operation);
+            }
+            catch {
+                update({ issue: 'connection' });
+            }
+        },
+        // Explicit provider-account boundary notification only; never infer continuity from a URL.
+        retirePrivacyContext() { ++ticket; sessionCoordinator.begin(); flight = null; googleBlocked = false; retire(); update({ busy: false }); },
+        dispose() { disposed = true; ++ticket; unsubscribe(); window.removeEventListener('storage', storageChanged); listeners.clear(); suspendTurnTarget(); },
+    };
+}
+export type SessionController = ReturnType<typeof createSessionController>;

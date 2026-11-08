@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useParams } from 'react-router';
+import { useWorkbenchDraft } from '../../app/WorkbenchSession';
 import { AppChrome } from '../../app/AppChrome';
 import { WorkspaceLayout } from '../../app/WorkspaceLayout';
 import type { WorkspaceSection } from '../../app/WorkspaceLayout';
@@ -14,7 +16,11 @@ export function NotebookShell({ previewContent }: { previewContent?: PreviewCont
   const { shell, t } = useI18n();
   const [activeSection, setSection] = useState<WorkspaceSection>('conversation');
   const [readerOpen, setReaderOpen] = useState(false);
-  const [question, setQuestion] = useState('');
+  const [previewQuestion, setPreviewQuestion] = useState('');
+  const {notebookId}=useParams();
+  const draft=useWorkbenchDraft(notebookId??'preview','question');
+  const question=draft.connected?(draft.draft?.question??''):previewQuestion;
+  const setQuestion=(value:string)=>{if(draft.connected)draft.update({question:value});else setPreviewQuestion(value);};
   const name = typeof workspace?.notebook.name === 'string' ? workspace.notebook.name : t.common.notebook;
   const contentProps = previewContent ? { content: previewContent } : {};
   return <AppChrome title={name}>
@@ -27,7 +33,7 @@ export function NotebookShell({ previewContent }: { previewContent?: PreviewCont
       onSectionChange={setSection}
       readerOpen={readerOpen}
       sources={<SourceScaffold {...contentProps} onRead={() => setReaderOpen(true)} />}
-      conversation={<ConversationScaffold {...contentProps} question={question} onQuestionChange={setQuestion} onRead={() => setReaderOpen(true)} />}
+      conversation={<ConversationScaffold {...contentProps} question={question} readOnly={draft.draft?.retired??false} onQuestionChange={setQuestion} onRead={() => setReaderOpen(true)} />}
       studio={<StudioScaffold />}
       reader={<ReaderScaffold {...contentProps} onClose={() => setReaderOpen(false)} />}
     />

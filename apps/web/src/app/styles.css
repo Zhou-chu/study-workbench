@@ -119,3 +119,12 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
  .composer { padding: 16px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
+
+.auth-page { min-height: 100dvh; padding: 24px; display: grid; align-content: center; gap: 32px; }
+.auth-appearance { justify-self: end; }
+.auth-card { width: min(100%, 440px); margin: auto; padding: 32px; background: var(--surface); border: 1px solid var(--interactive-border); display: grid; gap: 24px; }
+.auth-form { display: grid; gap: 12px; }
+.auth-form input { min-width: 0; width: 100%; padding: 8px 12px; background: var(--background); border: 1px solid var(--interactive-border); border-radius: 2px; }
+.connection-state { margin: 16px; padding: 16px; display: grid; gap: 12px; border: 1px dashed var(--interactive-border); }
+.dialog-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.session-workspace[inert] { pointer-events: none; }

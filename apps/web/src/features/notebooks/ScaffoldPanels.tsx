@@ -20,8 +20,8 @@ export function SourceScaffold({ content, onRead }: { content?: PreviewContent; 
   </>;
 }
 
-export function ConversationScaffold({ content, question, onQuestionChange, onRead }: {
-  content?: PreviewContent; question: string; onQuestionChange(value: string): void; onRead(): void;
+export function ConversationScaffold({ content, question, readOnly, onQuestionChange, onRead }: {
+  content?: PreviewContent; question: string; readOnly?: boolean; onQuestionChange(value: string): void; onRead(): void;
 }) {
   const { shell } = useI18n();
   return <>
@@ -37,7 +37,7 @@ export function ConversationScaffold({ content, question, onQuestionChange, onRe
     </div>
     <div className="composer">
       <label htmlFor="question">{shell.question}</label>
-      <textarea id="question" value={question} onChange={event => onQuestionChange(event.target.value)} placeholder={shell.question} aria-describedby="draft-hint" />
+      <textarea id="question" value={question} readOnly={readOnly} onChange={event => onQuestionChange(event.target.value)} placeholder={shell.question} aria-describedby="draft-hint" />
       <div className="composer-footer">
         <p id="draft-hint">{shell.draftHint}</p>
         <Button variant="primary" disabled aria-label={shell.notConnected}><span aria-hidden="true">↑</span></Button>

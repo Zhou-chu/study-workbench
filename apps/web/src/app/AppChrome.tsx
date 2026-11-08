@@ -7,9 +7,9 @@ import type { LanguageCode } from '../i18n';
 import { StatusBadge } from '../ui/StatusBadge';
 
 export function AppChrome({ children, title }: { children: ReactNode; title?: string }) {
-  const { t, shell, locale, setLocale } = useI18n();
+  const { t, shell, session, locale, setLocale } = useI18n();
   return <>
-    <a className="skip-link" href="#main-content">{shell.conversation}</a>
+    <a className="skip-link" href="#main-content">{session.skipMain}</a>
     <header className="app-header">
       <Link className="brand" to="/" aria-label={shell.homeTitle}>
         <span className="brand-mark" aria-hidden="true">▥</span><span>Notebook</span>
@@ -33,6 +33,6 @@ export function AppChrome({ children, title }: { children: ReactNode; title?: st
     <div className="preview-notice">
       <StatusBadge state="pending" label={shell.previewTitle} /><span>{shell.previewNotice}</span>
     </div>
-    <main id="main-content">{children}</main>
+    <main id="main-content" tabIndex={-1}>{children}</main>
   </>;
 }

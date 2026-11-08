@@ -19,7 +19,8 @@
     "react-router": "7.18.5",
     "@tanstack/react-query": "5.103.3",
     "@radix-ui/react-dialog": "1.1.23",
-    "@radix-ui/react-tabs": "1.1.21"
+    "@radix-ui/react-tabs": "1.1.21",
+    "@study/domain": "0.1.0"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

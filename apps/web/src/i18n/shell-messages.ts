@@ -1,7 +1,7 @@
 export const shellMessages = {
     "en-US": {
         "previewTitle": "Scaffold preview",
-        "previewNotice": "Authentication and study actions are not connected yet.",
+        "previewNotice": "Study actions are still being connected.",
         "homeTitle": "My notebooks",
         "homeEmpty": "Your notebooks will appear here.",
         "sources": "Sources",
@@ -25,7 +25,7 @@ export const shellMessages = {
     },
     "zh-CN": {
         "previewTitle": "界面骨架预览",
-        "previewNotice": "登录与学习功能尚未接入。",
+        "previewNotice": "学习功能仍在接入中。",
         "homeTitle": "我的笔记本",
         "homeEmpty": "你的笔记本将在这里显示。",
         "sources": "资料",
@@ -49,7 +49,7 @@ export const shellMessages = {
     },
     "zh-TW": {
         "previewTitle": "介面骨架預覽",
-        "previewNotice": "登入與學習功能尚未接入。",
+        "previewNotice": "學習功能仍在接入中。",
         "homeTitle": "我的筆記本",
         "homeEmpty": "你的筆記本將在這裡顯示。",
         "sources": "資料",
@@ -73,7 +73,7 @@ export const shellMessages = {
     },
     "pt-BR": {
         "previewTitle": "Prévia da estrutura",
-        "previewNotice": "A autenticação e as ações de estudo ainda não estão conectadas.",
+        "previewNotice": "As funções de estudo ainda estão sendo conectadas.",
         "homeTitle": "Meus cadernos",
         "homeEmpty": "Seus cadernos aparecerão aqui.",
         "sources": "Fontes",
@@ -97,7 +97,7 @@ export const shellMessages = {
     },
     "ja-JP": {
         "previewTitle": "画面構成のプレビュー",
-        "previewNotice": "認証と学習機能はまだ接続されていません。",
+        "previewNotice": "学習機能はまだ接続作業中です。",
         "homeTitle": "マイノートブック",
         "homeEmpty": "ノートブックはここに表示されます。",
         "sources": "資料",
@@ -121,7 +121,7 @@ export const shellMessages = {
     },
     "it-IT": {
         "previewTitle": "Anteprima della struttura",
-        "previewNotice": "Autenticazione e funzioni di studio non sono ancora collegate.",
+        "previewNotice": "Le funzioni di studio sono ancora in fase di collegamento.",
         "homeTitle": "I miei quaderni",
         "homeEmpty": "I tuoi quaderni appariranno qui.",
         "sources": "Fonti",
@@ -145,7 +145,7 @@ export const shellMessages = {
     },
     "fr-FR": {
         "previewTitle": "Aperçu de la structure",
-        "previewNotice": "L’authentification et les fonctions d’étude ne sont pas encore connectées.",
+        "previewNotice": "Les fonctions d’étude sont encore en cours de connexion.",
         "homeTitle": "Mes carnets",
         "homeEmpty": "Vos carnets apparaîtront ici.",
         "sources": "Sources",
@@ -169,7 +169,7 @@ export const shellMessages = {
     },
     "ru-RU": {
         "previewTitle": "Предпросмотр каркаса",
-        "previewNotice": "Авторизация и учебные функции ещё не подключены.",
+        "previewNotice": "Учебные функции ещё подключаются.",
         "homeTitle": "Мои блокноты",
         "homeEmpty": "Здесь появятся ваши блокноты.",
         "sources": "Источники",
@@ -193,7 +193,7 @@ export const shellMessages = {
     },
     "bn-IN": {
         "previewTitle": "কাঠামোর পূর্বরূপ",
-        "previewNotice": "পরিচয় যাচাই ও পড়াশোনার কাজ এখনও সংযুক্ত নয়।",
+        "previewNotice": "পড়াশোনার সুবিধাগুলি এখনও সংযুক্ত করা হচ্ছে।",
         "homeTitle": "আমার নোটবই",
         "homeEmpty": "আপনার নোটবই এখানে দেখা যাবে।",
         "sources": "উৎস",
@@ -217,7 +217,7 @@ export const shellMessages = {
     },
     "ca-ES": {
         "previewTitle": "Vista prèvia de l’estructura",
-        "previewNotice": "L’autenticació i les funcions d’estudi encara no estan connectades.",
+        "previewNotice": "Les funcions d’estudi encara s’estan connectant.",
         "homeTitle": "Les meves llibretes",
         "homeEmpty": "Les teves llibretes apareixeran aquí.",
         "sources": "Fonts",
@@ -241,7 +241,7 @@ export const shellMessages = {
     },
     "es-ES": {
         "previewTitle": "Vista previa de la estructura",
-        "previewNotice": "La autenticación y las funciones de estudio aún no están conectadas.",
+        "previewNotice": "Las funciones de estudio aún se están conectando.",
         "homeTitle": "Mis cuadernos",
         "homeEmpty": "Tus cuadernos aparecerán aquí.",
         "sources": "Fuentes",
@@ -265,7 +265,7 @@ export const shellMessages = {
     },
     "de-DE": {
         "previewTitle": "Strukturvorschau",
-        "previewNotice": "Anmeldung und Lernfunktionen sind noch nicht verbunden.",
+        "previewNotice": "Die Lernfunktionen werden noch verbunden.",
         "homeTitle": "Meine Notizbücher",
         "homeEmpty": "Deine Notizbücher erscheinen hier.",
         "sources": "Quellen",
@@ -289,7 +289,7 @@ export const shellMessages = {
     },
     "pl-PL": {
         "previewTitle": "Podgląd struktury",
-        "previewNotice": "Logowanie i funkcje nauki nie są jeszcze połączone.",
+        "previewNotice": "Funkcje nauki są nadal podłączane.",
         "homeTitle": "Moje notatniki",
         "homeEmpty": "Tutaj pojawią się Twoje notatniki.",
         "sources": "Źródła",
@@ -313,7 +313,7 @@ export const shellMessages = {
     },
     "tr-TR": {
         "previewTitle": "İskelet önizlemesi",
-        "previewNotice": "Kimlik doğrulama ve çalışma işlemleri henüz bağlı değil.",
+        "previewNotice": "Çalışma özellikleri hâlâ bağlanıyor.",
         "homeTitle": "Defterlerim",
         "homeEmpty": "Defterleriniz burada görünecek.",
         "sources": "Kaynaklar",

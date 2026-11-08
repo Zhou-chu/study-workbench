@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Connect the new Notebook web login and recovery flow, validate authenticated API capabilities before writes, and retain scoped in-memory drafts through reauthentication with guarded navigation.
+
 - Add the independent Notebook SPA scaffold with paper-and-ink monochrome themes, accessible responsive workspace regions and the full language registry. Authentication and study actions remain explicitly unconnected in this scaffold.
 
 - Add an independent, import-inert Node BFF with guarded same-origin runtime metadata, reviewed route/method gates in both auth modes, fixed trusted-origin configuration, server-held device sessions and streaming HTTP adapters. The legacy reference frontend and live deployment remain unchanged.

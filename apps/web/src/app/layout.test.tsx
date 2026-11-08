@@ -36,3 +36,8 @@ it('wraps the real router/providers without fabricating auth or dispatching', ()
     expect(requests).toBe(0);
     expect(Object.keys(localStorage)).toEqual(['study-workbench.appearance.v1']);
 });
+
+it('names the generic skip target correctly on home and makes main focusable',()=>{
+ renderApp();const link=screen.getByRole('link',{name:'Skip to main content'});expect(link).toHaveAttribute('href','#main-content');
+ const main=screen.getByRole('main');main.focus();expect(main).toHaveFocus();
+});
