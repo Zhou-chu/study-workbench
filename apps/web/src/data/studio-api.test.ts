@@ -22,3 +22,22 @@ it('still rejects unknown or malformed citation provenance/reason',()=>{for(cons
 
 it.each([false,true])('preserves the producer mapped scope through note reads and writes (populated=%s)',async populated=>{const scope=producerScope(populated),citation=producerCitation(),note={id:'note:mapped',notebook_id:'n',revision:8,title:'Mapped',content:'Body',citations:[citation],scope_snapshot:scope};expect(parseScope(scope)).toEqual(scope);expect(noteForEditor(note)?.draft.scope_snapshot).toEqual(scope);const requests:unknown[]=[];const api=createStudioApi({send:async r=>{requests.push(JSON.parse(String(r.body)));return json(note);}});const c=sourceContext(),payload={title:note.title,content:note.content,citations:note.citations,scope_snapshot:scope};expect((await api.createNote('n',payload,c)).scope_snapshot).toEqual(scope);expect((await api.updateNote('n',note.id,{...payload,expected_revision:7},c)).scope_snapshot).toEqual(scope);expect(requests).toEqual([payload,{...payload,expected_revision:7}]);});
 it('rejects unknown or malformed mapped-scope structures without discarding them',()=>{for(const mappings of [null,[{projection_status:'unknown'}],[{...producerMapping(),unexpected:true}],[{...producerMapping(),last_checked_at:7}]])expect(()=>parseScope({...producerScope(),mappings})).toThrow();});
+
+import { parseWorkspaceView } from '@study/contracts';
+import { sourceWorkspace } from '../test/source-fixtures';
+import { producerCitationRepresentations } from '../test/studio-fixtures';
+it('preserves ACK nulls and persisted-workspace omissions through projection and note adapters', () => {
+    const { withNulls, withoutNulls } = producerCitationRepresentations();
+    const note = { id: 'note:wire', revision: 7, title: 'Cited', content: 'Body', scope_snapshot: { source_version_ids: ['v-old'] } };
+    const ack = parseWorkbenchNote({ ...note, citations: [withNulls] });
+    const projected = parseWorkspaceView({ ...sourceWorkspace(), notes: [{ ...note, citations: [withoutNulls] }] });
+    const read = noteForEditor(projected.notes[0]!)!;
+    expect(ack.citations).toEqual([withNulls]);
+    expect(read.note.citations).toEqual([withoutNulls]);
+    expect(read.draft.citations).toEqual([withoutNulls]);
+    for (const key of ['remote_reference', 'independent_support', 'provenance', 'reason']) {
+        expect(ack.citations?.[0]).toHaveProperty(key, null);
+        expect(projected.notes[0] && 'citations' in projected.notes[0] ? projected.notes[0].citations : []).toEqual([withoutNulls]);
+        expect(read.note.citations?.[0]).not.toHaveProperty(key);
+    }
+});

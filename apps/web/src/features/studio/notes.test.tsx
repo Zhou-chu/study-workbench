@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { createStudioStore } from './studio-store';
+import { createStudioStore, compatibleNoteMetadata } from './studio-store';
 import { NoteEditor } from './NoteEditor';
 import { AppProviders } from '../../app/providers';
 import { createStudioApi, noteForEditor } from '../../data/studio-api';
@@ -47,3 +47,114 @@ it('clears only acknowledged per-field classic edits after a conflict re-edit re
 
 import { producerCitation, producerScope } from '../../test/studio-fixtures';
 it.each([false,true])('captures answer and outline mapped scope and nullable citations without losing provenance (%s)',populated=>{const c=sourceContext(),g=sessionCoordinator.current(),store=createStudioStore(()=>{}),scope=producerScope(populated),citation=producerCitation('Restored archive evidence has not been verified by a fresh local extraction'),turn={turn_id:'mapped-turn',notebook_id:'n',status:'succeeded',message:'Mapped question',answer:'Mapped body',citations:[citation],scope_snapshot:scope};const origin={notebookId:'n',sessionId:'v1_n',turnId:'mapped-turn',operationId:'outline:1',owner:{mountId:'owner',questionRevision:1}};for(const [key,o] of [['answer:1',undefined],['outline:1',origin]] as const){const id=store.captureTurn('n',turn,c,g,key,o)!;expect(id).toBeTruthy();expect(store.get(id)?.editor.base).toMatchObject({scope_snapshot:scope,citations:[citation]});expect(Object.isFrozen(store.get(id)?.editor.base.scope_snapshot)).toBe(true);}expect(scope.mappings).toEqual(producerScope(populated).mappings);});
+
+import { parseWorkspaceView, type EvidenceCitation, type WorkbenchNote } from '@study/contracts';
+import { producerCitationRepresentations } from '../../test/studio-fixtures';
+import { sourceWorkspace } from '../../test/source-fixtures';
+const nullableCitationFields = ['remote_reference', 'independent_support', 'provenance', 'reason'] as const;
+function conflictWithCitations(citations: EvidenceCitation[], scope = producerScope()) {
+    const c = sourceContext(), g = sessionCoordinator.current(), store = createStudioStore(() => {});
+    const base = { title: 'Cited base', content: 'Original body', citations, scope_snapshot: scope };
+    const id = store.open('n', base, c, g, { id: 'note:1', revision: 7 });
+    store.edit(id, { content: 'Retained reasoning' });
+    const attempt = store.beginSave(id, c, g)!;
+    store.settleSave(id, attempt.operation.token!, { kind: 'conflict', status: 409 }, c, g);
+    return { store, id, c, g, base };
+}
+const omissionCases = nullableCitationFields.map(field => [field]).concat([[...nullableCitationFields]]);
+it.each(omissionCases.flatMap(fields => [false, true].map(reverse => ({ fields, reverse }))))(
+    'permits only the approved null/absence comparison for $fields (reverse=$reverse) while retaining both raw captures',
+    ({ fields, reverse }) => {
+        const { withNulls } = producerCitationRepresentations();
+        const omitted: EvidenceCitation = { ...withNulls };
+        for (const field of fields) delete omitted[field];
+        const original = reverse ? omitted : withNulls, latestCitation = reverse ? withNulls : omitted;
+        const { store, id, c, g, base } = conflictWithCitations([original]);
+        const latest = { id: 'note:1', revision: 8, ...base, content: 'External body', citations: [latestCitation] };
+        const originalJson = JSON.stringify(original), latestJson = JSON.stringify(latest);
+        store.compare(store.beginCompare(id, c, g)!, [latest], c, g);
+        const before = store.get(id)!;
+        expect(compatibleNoteMetadata(before)).toBe(true);
+        expect(store.beginSave(id, c, g)).toBeNull();
+        expect(store.reedit(id, before, c, g)).toBe(true);
+        const after = store.get(id)!;
+        expect(after.editor).toMatchObject({ baseRevision: 8, content: 'Retained reasoning', saveResult: 'idle' });
+        expect(after.editor.base.citations).toEqual([original]);
+        expect(after.editor.base.scope_snapshot).toEqual(base.scope_snapshot);
+        expect(after.history[0]?.editor).toBe(before.editor);
+        expect(after.history[0]).toMatchObject({ latest, comparison: [latest] });
+        expect(Object.isFrozen(after.editor.base.citations[0])).toBe(true);
+        expect(JSON.stringify(original)).toBe(originalJson);
+        expect(JSON.stringify(latest)).toBe(latestJson);
+        expect(before.latest).toEqual(latest);
+        const next = store.beginSave(id, c, g)!;
+        expect(next.editor.pending?.payload).toMatchObject({ expected_revision: 8, citations: [original], scope_snapshot: base.scope_snapshot });
+    }
+);
+
+it('does not unlock an unknown save even when the four optional fields are comparison-equivalent', () => {
+    const { withNulls, withoutNulls } = producerCitationRepresentations();
+    const c = sourceContext(), g = sessionCoordinator.current(), store = createStudioStore(() => {});
+    const base = { ...draft, citations: [withNulls] }, id = store.open('n', base, c, g, { id: 'note:1', revision: 7 });
+    const attempt = store.beginSave(id, c, g)!;
+    store.settleSave(id, attempt.operation.token!, { kind: 'unknown' }, c, g);
+    store.compare(store.beginCompare(id, c, g)!, [{ id: 'note:1', revision: 8, ...base, citations: [withoutNulls] }], c, g);
+    const retained = store.get(id)!;
+    expect(compatibleNoteMetadata(retained)).toBe(true);
+    expect(store.reedit(id, retained, c, g)).toBe(false);
+    expect(store.reload(id, retained, c, g)).toBe(false);
+    expect(store.beginSave(id, c, g)).toBeNull();
+    expect(store.get(id)?.operation.token).toBe(attempt.operation.token);
+    expect(store.get(id)?.editor.base.citations).toEqual([withNulls]);
+});
+
+const unchangedCitation = producerCitationRepresentations().withNulls;
+const strictCitationChanges: [string, Record<string, unknown>][] = [
+    ['independent support false', { independent_support: false }],
+    ['independent support true', { independent_support: true }],
+    ['reason string', { reason: 'Restored archive evidence' }],
+    ['reason empty string', { reason: '' }],
+    ['remote reference object', { remote_reference: {} }],
+    ['provenance object', { provenance: { kind: 'web', source_url: null, retrieved_at: '2026-11-08', provider: 'firecrawl' } }],
+    ['validity', { reference_validity: 'unverified' }],
+    ['kind', { kind: 'derived_snapshot' }],
+    ['citation identity', { citation_id: 'different' }],
+    ['evidence identity', { evidence_id: 'different' }],
+    ['version identity', { source_version_id: 'different' }],
+    ['source title', { source_title: 'Different title' }],
+    ['quote', { quote: 'Different quote' }],
+    ['locator', { locator: { ...unchangedCitation.locator, page_label: null } }],
+    ['unknown citation key', { unexpected: null }],
+    ['unknown citation marker', { projection_status: 'unknown' }],
+    ['unknown provenance marker', { provenance: { projection_status: 'unknown' } }]
+];
+it.each(strictCitationChanges)('keeps %s strict despite optional-null equivalence', (_label, patch) => {
+    const { store, id, c, g, base } = conflictWithCitations([unchangedCitation]);
+    const raw = { id: 'note:1', revision: 8, ...base, citations: [{ ...unchangedCitation, ...patch }] };
+    const view = parseWorkspaceView({ ...sourceWorkspace(), notes: [raw] }).notes[0]!;
+    const parsed = noteForEditor(view);
+    store.compare(store.beginCompare(id, c, g)!, parsed ? [parsed.note] : [], c, g);
+    const before = store.get(id)!;
+    expect(compatibleNoteMetadata(before)).toBe(false);
+    expect(store.reedit(id, before, c, g)).toBe(false);
+    expect(store.get(id)?.editor.base).toEqual(base);
+});
+it.each(['count', 'order', 'scope', 'mapping', 'nested null omission'] as const)('never applies the four-field exception to %s', change => {
+    const first: EvidenceCitation = { ...unchangedCitation, provenance: { kind: 'web', source_url: null, retrieved_at: '2026-11-08', provider: 'firecrawl', search_result_title: null } };
+    const second = { ...unchangedCitation, citation_id: 'c2' };
+    const { store, id, c, g, base } = conflictWithCitations([first, second]);
+    const latest: WorkbenchNote = structuredClone({ id: 'note:1', revision: 8, ...base });
+    if (change === 'count') latest.citations = [first];
+    if (change === 'order') latest.citations = [second, first];
+    if (change === 'scope') latest.scope_snapshot = { ...base.scope_snapshot, source_version_ids: ['other'] };
+    if (change === 'mapping') latest.scope_snapshot = { ...base.scope_snapshot, mappings: [{ ...base.scope_snapshot.mappings[0]!, mapping_method: 'other' }] };
+    if (change === 'nested null omission') {
+        const p = latest.citations![0]!.provenance;
+        if (p?.kind === 'web') delete p.search_result_title;
+    }
+    store.compare(store.beginCompare(id, c, g)!, [latest], c, g);
+    const before = store.get(id)!;
+    expect(compatibleNoteMetadata(before)).toBe(false);
+    expect(store.reedit(id, before, c, g)).toBe(false);
+    expect(store.get(id)?.editor.base).toEqual(base);
+});

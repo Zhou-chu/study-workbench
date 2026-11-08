@@ -54,18 +54,27 @@ export type NoteSession = Readonly<{
         editor: EditorModel;
         operation: OperationModel;
         classic?: ClassicDraft;
+        latest?: WorkbenchNote;
+        comparison?: readonly WorkbenchNote[];
     }[];
     originKey?: string;
     outlineOrigin?: OutlineOrigin;
 }>;
 /** Compare JSON metadata without changing array order, null, or absent fields. */
 function canonical(value: unknown): unknown { return Array.isArray(value) ? value.map(canonical) : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => [k, canonical(v)])) : value; }
+const optionalCitationNullFields = new Set(['remote_reference', 'independent_support', 'provenance', 'reason']);
+/** F43: comparison-only equivalence for these top-level fields, never nested metadata or wire data. */
+function comparableCitations(citations: WorkbenchNote['citations']): unknown {
+    return citations?.map(citation => Object.fromEntries(
+        Object.entries(citation).filter(([key, value]) => value !== null || !optionalCitationNullFields.has(key))
+    ));
+}
 export function compatibleNoteMetadata(row: NoteSession): boolean {
     if (!row.latest)
         return false;
     if (row.mode === 'classic')
         return row.latest.citations === undefined && row.latest.scope_snapshot === undefined;
-    return JSON.stringify(canonical({ citations: row.editor.base.citations, scope_snapshot: row.editor.base.scope_snapshot })) === JSON.stringify(canonical({ citations: row.latest.citations, scope_snapshot: row.latest.scope_snapshot }));
+    return JSON.stringify(canonical({ citations: comparableCitations(row.editor.base.citations), scope_snapshot: row.editor.base.scope_snapshot })) === JSON.stringify(canonical({ citations: comparableCitations(row.latest.citations), scope_snapshot: row.latest.scope_snapshot }));
 }
 export type NoteReadToken = Readonly<{
     id: string;
@@ -288,9 +297,11 @@ export function createStudioStore(onChange: () => void) {
             const parsed = noteForEditor(r.latest);
             if (!parsed || parsed.mode !== r.mode || !compatibleNoteMetadata(r))
                 return false;
-            let editor = createEditor(r.notebookId, parsed.draft, r.latest);
+            // Adopt only the latest revision/editorial base; retain the original captured evidence representation.
+            const draft = r.mode === 'personal' ? { ...r.editor.base, title: parsed.draft.title, content: parsed.draft.content } : parsed.draft;
+            let editor = createEditor(r.notebookId, draft, r.latest);
             editor = reduceEditor(editor, { type: 'edit', ...(r.classic ? { ...(r.classic.edits.title !== undefined ? { title: r.editor.title } : {}), ...(r.classic.edits.content !== undefined ? { content: r.editor.content } : {}) } : { title: r.editor.title, content: r.editor.content }) });
-            immutable({ ...r, editor, ...(r.classic ? { classic: freezeValue({ base: structuredClone(r.latest), edits: r.classic.edits }) } : {}), latest: undefined, comparison: undefined, history: [...r.history, { editor: r.editor, operation: r.operation, ...(r.classic ? { classic: r.classic } : {}) }], operation: createOperation(r.context, crypto.randomUUID(), { serverIdempotency: false, sessionGeneration: r.generation }) });
+            immutable({ ...r, editor, ...(r.classic ? { classic: freezeValue({ base: structuredClone(r.latest), edits: r.classic.edits }) } : {}), latest: undefined, comparison: undefined, history: [...r.history, { editor: r.editor, operation: r.operation, latest: r.latest, ...(r.comparison ? { comparison: r.comparison } : {}), ...(r.classic ? { classic: r.classic } : {}) }], operation: createOperation(r.context, crypto.randomUUID(), { serverIdempotency: false, sessionGeneration: r.generation }) });
             return true;
         },
         reload(id: string, expected: NoteSession, c: DispatchContext | null, g: number) {

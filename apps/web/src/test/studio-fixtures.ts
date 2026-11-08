@@ -2,3 +2,15 @@
 export function producerCitation(reason:string|null=null){return {citation_id:'c1',kind:'local_evidence' as const,source_version_id:'v-old',evidence_id:'e-old',source_title:'Synthetic source',locator:{page_index:0,block_id:'b1',start_offset:0,end_offset:5},quote:'Quote',reference_validity:reason===null?'verified':'unverified',provenance:null,independent_support:null,reason};}
 export function producerMapping(){return {source_link_id:'source-link:1',remote_source_id:'remote-source:1',source_version_id:'v-old',mapping_method:'manual_confirmed',last_checked_at:null};}
 export function producerScope(populated=true){return {engine:'notebooklm' as const,selection_origin:'remote' as const,source_version_ids:populated?['v-old']:[],remote_notebook_id:'remote-notebook:1',remote_source_ids:['remote-source:1'],mappings:populated?[producerMapping()]:[],scope_hash:'synthetic-scope-hash'};}
+
+/** The observed ACK and persisted-workspace representations of the same four optional fields. */
+export function producerCitationRepresentations() {
+    const withNulls = { ...producerCitation(), remote_reference: null };
+    const withoutNulls = {
+        citation_id: 'c1', kind: 'local_evidence' as const, source_version_id: 'v-old',
+        evidence_id: 'e-old', source_title: 'Synthetic source',
+        locator: { page_index: 0, block_id: 'b1', start_offset: 0, end_offset: 5 },
+        quote: 'Quote', reference_validity: 'verified'
+    };
+    return { withNulls, withoutNulls };
+}
