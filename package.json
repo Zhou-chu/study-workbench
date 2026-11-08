@@ -14,7 +14,9 @@
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present"
+    "build": "npm run build --workspace @study/contracts && npm run build --workspace @study/domain && npm run build --workspace @study/web-transport && npm run build --workspace @study/bff",
+    "pretest": "npm run build --workspace @study/contracts && npm run build --workspace @study/domain",
+    "pretypecheck": "npm run build --workspace @study/contracts && npm run build --workspace @study/domain"
   },
   "devDependencies": {
     "typescript": "5.8.3",

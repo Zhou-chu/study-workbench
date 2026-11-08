@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **StudyWorkbench local evidence maintenance (2026-10-20).** Durable authenticated reparse and historical-citation revalidation endpoints and reader controls compare retained originals with a fresh CPU extraction. Historical IDs and locators remain stable; mismatches stay unverified, and imported revalidation claims are discarded.
 
 ### Changed
+
+- Isolate browser-only same-origin transport, session credential custody, conservative ingress recovery, and UI-free turn, editor, scope and navigation state for the new Notebook frontend. Preserve unknown-operation identities and revision-protected saves.
 - **Self-hosted recovered fonts.** Serve seven locally recovered, hash-pinned font subsets with complete OFL notices, preserving font faces, fallback metrics and three Latin preloads without build-time Google Fonts requests. This establishes a new recovered asset baseline, not equality to lost artifacts.
 - **Explicit historical database gates (2026-10-22).** Exercise previously skipped repository/session/portable cases on owned synthetic databases, distinguish repeated offline tests, and unwind SIGTERM through identity-checked test/database cleanup. No external provider or user database is required for this gate.
 - **Isolated verification entrypoints (2026-10-22).** Disable implicit test dotenv loading and provide an explicit sanitized backend test subprocess with temporary storage, a verified existing token cache and a Python network tripwire. Share pinned-process cleanup and ownership-before-probe across native acceptance and disposable database fixtures. These are not OS sandboxes or proof of production authentication.
