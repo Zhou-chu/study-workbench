@@ -4,7 +4,8 @@ import { resources, languages } from './locales';
 import type { LanguageCode, TranslationKeys } from './locales';
 import { shellMessages } from './shell-messages';
 import { sessionMessages } from './session-messages';
-export { resources, languages, shellMessages, sessionMessages };
+import { notebookMessages } from './locales/notebook-home';
+export { resources, languages, shellMessages, sessionMessages, notebookMessages };
 export type { LanguageCode, TranslationKeys };
 export type ShellMessages = {
     [K in keyof typeof shellMessages['en-US']]: string;
@@ -15,6 +16,7 @@ type I18nValue = {
     t: TranslationKeys;
     shell: ShellMessages;
     session: {[K in keyof typeof sessionMessages['en-US']]: string};
+    notebook: {[K in keyof typeof notebookMessages['en-US']]: string};
 };
 const Context = createContext<I18nValue | null>(null);
 export function detectLocale(value = typeof navigator === 'undefined' ? 'en-US' : navigator.language): LanguageCode {
@@ -30,7 +32,7 @@ export function I18nProvider({ children, initialLocale = detectLocale() }: {
     useEffect(() => { document.documentElement.lang = locale; }, [locale]);
     // Shape type only: parity is tested; this never substitutes English content.
     const t = resources[locale].translation as TranslationKeys;
-    return <Context.Provider value={{ locale, setLocale, t, shell: shellMessages[locale], session: sessionMessages[locale] }}>{children}</Context.Provider>;
+    return <Context.Provider value={{ locale, setLocale, t, shell: shellMessages[locale], session: sessionMessages[locale], notebook: notebookMessages[locale] }}>{children}</Context.Provider>;
 }
 export function useI18n(): I18nValue { const value = useContext(Context); if (!value)
     throw new Error('I18nProvider required'); return value; }

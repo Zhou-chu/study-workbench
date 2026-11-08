@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { resources, languages, shellMessages, sessionMessages } from './index';
+import { resources, languages, shellMessages, sessionMessages, notebookMessages } from './index';
 const codes = ['zh-CN', 'en-US', 'zh-TW', 'pt-BR', 'ja-JP', 'it-IT', 'fr-FR', 'ru-RU', 'bn-IN', 'ca-ES', 'es-ES', 'de-DE', 'pl-PL', 'tr-TR'];
 function leaves(value: unknown, prefix = ''): Record<string, string> { const out: Record<string, string> = {}; if (value && typeof value === 'object')
     for (const [key, child] of Object.entries(value)) {
@@ -34,3 +34,5 @@ it('provides every authentication/navigation label in all fourteen languages exp
  const reference=Object.keys(sessionMessages['en-US']).sort();
  for(const code of codes){const messages=sessionMessages[code as keyof typeof sessionMessages];expect(Object.keys(messages).sort()).toEqual(reference);for(const value of Object.values(messages))expect(value.trim()).not.toBe('');}
 });
+
+it('provides every notebook integration label explicitly in all fourteen languages',()=>{const keys=Object.keys(notebookMessages['en-US']).sort();for(const code of codes){const messages=notebookMessages[code as keyof typeof notebookMessages];expect(Object.keys(messages).sort()).toEqual(keys);for(const value of Object.values(messages))expect(value.trim()).not.toBe('');}});

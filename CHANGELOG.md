@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Connect the independent Notebook home, name search, server-backed recent activity, exact-ID creation/navigation and public workspace reads. Preserve classic source/history visibility and publish an operation-level migration ledger; unfinished study and settings features remain explicitly pending.
+
 - Connect the new Notebook web login and recovery flow, validate authenticated API capabilities before writes, and retain scoped in-memory drafts through reauthentication with guarded navigation.
 
 - Add the independent Notebook SPA scaffold with paper-and-ink monochrome themes, accessible responsive workspace regions and the full language registry. Authentication and study actions remain explicitly unconnected in this scaffold.

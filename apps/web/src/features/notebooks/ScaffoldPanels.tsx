@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useI18n } from '../../i18n';
 import { Button } from '../../ui/Button';
 import { EmptyState } from '../../ui/EmptyState';
@@ -20,13 +21,14 @@ export function SourceScaffold({ content, onRead }: { content?: PreviewContent; 
   </>;
 }
 
-export function ConversationScaffold({ content, question, readOnly, onNewDraft, onQuestionChange, onRead }: {
-  content?: PreviewContent; question: string; readOnly?: boolean; onNewDraft?(): void; onQuestionChange(value: string): void; onRead(): void;
+export function ConversationScaffold({ content, history, question, readOnly, onNewDraft, onQuestionChange, onRead }: {
+  content?: PreviewContent; history?: ReactNode; question: string; readOnly?: boolean; onNewDraft?(): void; onQuestionChange(value: string): void; onRead(): void;
 }) {
   const { shell, session } = useI18n();
   return <>
     <div className="panel-heading"><h2>{shell.conversation}</h2><span aria-hidden="true">↳</span></div>
     <div className="conversation-scroll">
+      {history}
       {content ? <article className="sample-article">
         <span className="eyebrow">{shell.sample}</span>
         <h2>{content.title}</h2>
