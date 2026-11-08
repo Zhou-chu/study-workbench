@@ -91,7 +91,13 @@ export async function prepareBrowserRequest(method: string, url: string) {
   const base = config.apiUrl ? target.apiBase.slice(0, -4) : ''
   const token = getAuthToken('legacy_password')
   if (token) headers.Authorization = `Bearer ${token}`
-  return { url: `${base}/api${path}`, headers, credentials: 'omit' as const, redirect: 'error' as const, mode: config.authMode, target }
+  const requestUrl = `${base}/api${path}`
+  // A private ingress may authenticate the same-origin browser with a cookie.
+  // Keep application Bearer auth and never send cookies to another origin.
+  const credentials = typeof window !== 'undefined' &&
+    new URL(requestUrl, window.location.href).origin === window.location.origin
+    ? 'same-origin' as const : 'omit' as const
+  return { url: requestUrl, headers, credentials, redirect: 'error' as const, mode: config.authMode, target }
 }
 
 async function boundedError(body: unknown): Promise<unknown> {

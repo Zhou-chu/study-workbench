@@ -104,8 +104,8 @@ apiClient.interceptors.request.use(async (config) => {
   config.headers.delete('X-StudyWorkbench-CSRF')
   Object.entries(policy.headers).forEach(([name, value]) => config.headers.set(name, value))
   // The installed fetch adapter defaults undefined to same-origin; false means
-  // omit (legacy). Force both policies after all per-call options are merged.
-  config.withCredentials = policy.mode === 'device_sessions' ? undefined : false
+  // omit. Force the shared origin boundary after per-call options are merged.
+  config.withCredentials = policy.credentials === 'same-origin' ? undefined : false
   const fetchOptions = { ...config.fetchOptions, redirect: 'error' } as RequestInit & { [TURN_DISPATCH_OPTION]?: TurnDispatch }
   config.fetchOptions = fetchOptions
   // Caller-supplied metadata never establishes a precondition, even for ordinary requests.

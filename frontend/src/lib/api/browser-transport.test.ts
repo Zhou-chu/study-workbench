@@ -120,3 +120,35 @@ it('recognizes only locally branded not-dispatched errors through own cause chai
   const getter = vi.fn(() => local)
   expect(asRequestNotDispatchedError(Object.defineProperty({}, 'cause', { get: getter }))).toBeNull(); expect(getter).not.toHaveBeenCalled()
 })
+
+describe('legacy private-ingress cookie boundary', () => {
+  it.each(['', window.location.origin])('retains only same-origin ingress cookies for %s', async apiUrl => {
+    metadata.authMode = 'legacy_password'; metadata.apiUrl = apiUrl
+    localStorage.setItem('auth-storage', JSON.stringify({ state: { token: 'synthetic-app-password' } }))
+    const policy = await prepareBrowserRequest('POST', '/api/search/ask')
+    expect(policy.credentials).toBe('same-origin')
+    expect(policy.redirect).toBe('error')
+    expect(new Headers(policy.headers).get('Authorization')).toBe('Bearer synthetic-app-password')
+    expect(new Headers(policy.headers).has('X-StudyWorkbench-CSRF')).toBe(false)
+  })
+  it.each(['https://outside.example', 'https://localhost', 'http://localhost:9999'])('omits cookies for different origin %s', async apiUrl => {
+    metadata.authMode = 'legacy_password'; metadata.apiUrl = apiUrl
+    expect((await prepareBrowserRequest('GET', '/api/auth/status')).credentials).toBe('omit')
+  })
+  it('preserves legacy SSE body, signal and stream with same-origin cookies', async () => {
+    const { browserFetch } = await import('./browser-transport')
+    const { sessionCoordinator } = await import('@/lib/auth/session-coordinator')
+    sessionCoordinator.setPhase('authenticated')
+    metadata.authMode = 'legacy_password'; metadata.apiUrl = window.location.origin
+    const body = new ReadableStream<Uint8Array>({ start(c) { c.enqueue(new TextEncoder().encode('data: synthetic\n\n')); c.close() } })
+    const fetcher = vi.fn<typeof fetch>(async () => new Response(body))
+    vi.stubGlobal('fetch', fetcher)
+    const signal = new AbortController().signal
+    try {
+      const response = await browserFetch('/search/ask', { method: 'POST', body: 'synthetic', signal })
+      expect(response.body).toBe(body)
+      expect(fetcher).toHaveBeenCalledTimes(1)
+      expect(fetcher.mock.calls[0][1]).toMatchObject({ body: 'synthetic', signal, credentials: 'same-origin', redirect: 'error' })
+    } finally { vi.unstubAllGlobals() }
+  })
+})

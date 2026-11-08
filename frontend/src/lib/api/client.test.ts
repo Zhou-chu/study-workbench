@@ -392,3 +392,20 @@ describe('constrained turns use the installed fetch adapter, with a final native
   })
 
 })
+
+it.each([
+  ['', 'same-origin'], [window.location.origin, 'same-origin'],
+  ['https://outside.example', 'omit'], ['http://localhost:9999', 'omit'],
+])('legacy actual fetch adapter enforces cookie boundary for %s', async (apiUrl, credentials) => {
+  config.authMode = 'legacy_password'; config.apiUrl = apiUrl
+  localStorage.setItem('auth-storage', JSON.stringify({ state: { token: 'synthetic-app-password' } }))
+  const requestFetch = vi.fn(async (request: Request) => {
+    expect(request.credentials).toBe(credentials)
+    expect(request.redirect).toBe('error')
+    expect(request.headers.get('Authorization')).toBe('Bearer synthetic-app-password')
+    expect(request.headers.has('X-StudyWorkbench-CSRF')).toBe(false)
+    return new Response('{}', { headers: { 'content-type': 'application/json' } })
+  })
+  await apiClient.get('/notebooks', { adapter: 'fetch', env: { fetch: requestFetch as typeof fetch, Request: BrowserRequest }, withCredentials: true, fetchOptions: { credentials: 'include', redirect: 'follow' } })
+  expect(requestFetch).toHaveBeenCalledTimes(1)
+})
