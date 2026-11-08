@@ -445,6 +445,7 @@ export const routeCoverage:RouteCoverageEntry[] = [
   {"legacyPath": "/transformations", "newPath": "/transformations", "ownerTask": "B9", "status": "pending", "coveredOperations": ["route.transformations"]},
   {"legacyPath": "/advanced", "newPath": "/advanced", "ownerTask": "B9", "status": "pending", "coveredOperations": ["route.advanced"]},
   {"legacyPath": "/podcasts", "newPath": "/podcasts", "ownerTask": "B8", "status": "pending", "coveredOperations": ["podcasts.download"]},
+  {"legacyPath": "/notebooks", "newPath": "/notebooks", "ownerTask": "B3", "status": "implemented", "coveredOperations": ["notebooks.start_fresh_creation"], "evidence": "apps/web/src/features/notebooks/notebooks.test.tsx F25 synthetic reauthentication/retired/unknown/late-settlement checks; C2 browser not_run"},
 ];
 export function isCoverageComplete(entries:readonly RouteCoverageEntry[]):boolean {
  return entries.length>0&&entries.every(entry=>entry.status==='verified'&&!!entry.evidence?.trim()&&entry.coveredOperations.length>0);

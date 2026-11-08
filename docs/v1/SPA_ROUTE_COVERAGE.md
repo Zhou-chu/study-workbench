@@ -10,6 +10,8 @@ B3 connects the home active/archive list, name filter, in-memory tile/list choic
 
 F23: archive/unarchive, deletion preview, keep/delete-exclusive-source choices, confirm and cancel delete belong to B9 NotebookSettings. No lifecycle writes were added by B3. F24: broader shell navigation, sidebar/palette, global Source/Podcast creation, and search deep-link consumption belong to B8; tool links and visible auth/connection controls belong to B9 using B1/B2 implementations. Nothing remains owner B3 merely because an unfinished shell entry was listed there originally. Existing mounted login/bootstrap/recovery checks retain B2 ownership and synthetic implementation evidence; unmounted sign-out/close/global entry controls remain pending B9.
 
+F25: a retired creation form offers an explicit separate blank-form action. Prior name/description/capture and any uncertain submission remain retained and check-only, never copied/rebound/retried. No list absence is treated as proof of non-creation.
+
 B3 retains read-projected raw/web/derived/classic-no-version sources and imported classic transcript text. It does not fabricate versions, select scopes, call providers, replace canonical turn history with workspace turns, or claim B4/B5/B8 controls complete. Classic active chat, context modes, sessions and legacy notes remain pending, with their existing supported APIs preserved for those owners. Unknown scope values stay visible and do not authorize an action.
 
 Source citations below are transcribed from the reviewed 2026-11-08 inventory. Abbreviations: F=`frontend/src`, D=`frontend/src/app/(dashboard)`, C=`frontend/src/components`, API=`frontend/src/lib/api`. Each operation is explicit, not inferred from filenames. New destinations denote actual routes or future panels within them, not invented wire protocols.
@@ -462,6 +464,7 @@ Source citations below are transcribed from the reviewed 2026-11-08 inventory. A
 | `/transformations` | `/transformations` | `route.transformations` | B9 | pending | Route source inventory §1; pending routes are not feature coverage.  |
 | `/advanced` | `/advanced` | `route.advanced` | B9 | pending | Route source inventory §1; pending routes are not feature coverage.  |
 | `/podcasts` | `/podcasts` | `podcasts.download` | B8 | pending | Plan-required explicit download enhancement; no existing app button.  |
+| `/notebooks` | `/notebooks` | `notebooks.start_fresh_creation` | B3 | implemented | F25: an explicit new blank intent captures current ready scope while retaining old input/capture and unknown lock in memory. Synthetic notebooks.test.tsx covers real B2 reauth, unknown and pending old attempts; C2 browser not_run. |
 
 ## Explicit exclusions and non-page handlers
 

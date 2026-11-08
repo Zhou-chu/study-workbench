@@ -1,9 +1,9 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
-import { invalidateTurnContext, publishTurnTarget, type RequestSpec, type WebTransport } from '@study/web-transport';
+import { invalidateTurnContext, publishTurnTarget, readTurnContext, type RequestSpec, type WebTransport } from '@study/web-transport';
 import { AppRoutes } from '../../app/router';
-import { WorkbenchSession } from '../../app/WorkbenchSession';
+import { WorkbenchSession, useWorkbenchSession } from '../../app/WorkbenchSession';
 import { AppProviders } from '../../app/providers';
 import { notebookRows, notebookWorkspace, json } from '../../test/notebook-fixtures';
 beforeEach(() => { invalidateTurnContext(); publishTurnTarget({ mode: 'legacy_password', apiBase: 'http://localhost:3000/api', protocol: null }, true); });
@@ -233,4 +233,37 @@ it('does not show the prior privacy-epoch notebook list while a new authorized l
     expect(screen.queryByRole('link', { name: 'Alpha feedback' })).not.toBeInTheDocument();
     await act(async () => finish(json([])));
     await screen.findByText('Your notebooks will appear here.');
+});
+
+it('starts only an explicit new blank creation intent after retirement and retains the earlier input',async()=>{
+ const {requests}=mount();await screen.findByRole('link',{name:'Alpha feedback'});fireEvent.click(screen.getByRole('button',{name:'New Notebook'}));
+ const oldEpoch=readTurnContext()!.epoch;fireEvent.change(screen.getByRole('textbox',{name:'Name'}),{target:{value:'Retired notebook name'}});fireEvent.change(screen.getByRole('textbox',{name:'Description (Optional)'}),{target:{value:'Retired description'}});
+ await act(async()=>invalidateTurnContext());expect(screen.getByRole('textbox',{name:'Name'})).toHaveValue('Retired notebook name');expect(screen.getByRole('textbox',{name:'Name'})).toHaveAttribute('readonly');expect(requests.filter(r=>r.method==='POST')).toHaveLength(0);
+ fireEvent.click(screen.getByRole('button',{name:'Start a new notebook draft'}));expect(screen.getByRole('textbox',{name:'Name'})).toHaveValue('');expect(screen.getByRole('textbox',{name:'Name'})).not.toHaveAttribute('readonly');expect(screen.getByRole('textbox',{name:'Description (Optional)'})).toHaveValue('');expect(screen.getByText('Retired notebook name')).toBeVisible();expect(screen.getByText('Retired description')).toBeVisible();
+ expect(requests.filter(r=>r.method==='POST')).toHaveLength(0);fireEvent.change(screen.getByRole('textbox',{name:'Name'}),{target:{value:'Independent new notebook'}});fireEvent.submit(screen.getByRole('textbox',{name:'Name'}).closest('form')!);await waitFor(()=>expect(requests.filter(r=>r.method==='POST')).toHaveLength(1));const sent=requests.find(r=>r.method==='POST')!;expect(sent.context.epoch).not.toBe(oldEpoch);expect(sent.context.epoch).toBe(readTurnContext()!.epoch);expect(JSON.parse(sent.body as string)).toEqual({name:'Independent new notebook'});
+});
+it('never unlocks or retries an uncertain creation while a new retired-scope intent is started and cancelled',async()=>{
+ const {requests}=mount('/notebooks',r=>r.method==='POST'?json({},503):undefined);await screen.findByRole('link',{name:'Alpha feedback'});fireEvent.click(screen.getByRole('button',{name:'New Notebook'}));fireEvent.change(screen.getByRole('textbox',{name:'Name'}),{target:{value:'Uncertain original'}});fireEvent.change(screen.getByRole('textbox',{name:'Description (Optional)'}),{target:{value:'Original uncertain description'}});fireEvent.submit(screen.getByRole('textbox',{name:'Name'}).closest('form')!);await screen.findByText(/Creation could not be confirmed/);const original=requests.find(r=>r.method==='POST')!;
+ await act(async()=>invalidateTurnContext());fireEvent.click(screen.getByRole('button',{name:'Start a new notebook draft'}));expect(screen.getByText('Uncertain original')).toBeVisible();expect(screen.getByText('Original uncertain description')).toBeVisible();expect(screen.getByText(/Creation could not be confirmed/)).toBeVisible();expect(screen.getByRole('textbox',{name:'Name'})).toHaveValue('');fireEvent.submit(screen.getByRole('textbox',{name:'Name'}).closest('form')!);expect(requests.filter(r=>r.method==='POST')).toHaveLength(1);
+ fireEvent.click(screen.getByRole('button',{name:'Cancel'}));fireEvent.click(screen.getByRole('button',{name:'Refresh'}));await waitFor(()=>expect(screen.getByRole('button',{name:'Refresh'})).toBeEnabled());fireEvent.click(screen.getByRole('button',{name:'New Notebook'}));expect(screen.getByText('Uncertain original')).toBeVisible();expect(screen.getByText(/Creation could not be confirmed/)).toBeVisible();expect(requests.filter(r=>r.method==='POST')).toEqual([original]);
+});
+it('does not let a delayed retired create settle into or navigate away from the deliberate fresh intent',async()=>{
+ let finish!:(r:Response)=>void;const {requests,router}=mount('/notebooks',r=>r.method==='POST'?new Promise(resolve=>{finish=resolve;}):undefined);await screen.findByRole('link',{name:'Alpha feedback'});fireEvent.click(screen.getByRole('button',{name:'New Notebook'}));fireEvent.change(screen.getByRole('textbox',{name:'Name'}),{target:{value:'Pending old intent'}});fireEvent.submit(screen.getByRole('textbox',{name:'Name'}).closest('form')!);await waitFor(()=>expect(requests.filter(r=>r.method==='POST')).toHaveLength(1));
+ await act(async()=>invalidateTurnContext());fireEvent.click(screen.getByRole('button',{name:'Start a new notebook draft'}));const name=screen.getByRole('textbox',{name:'Name'});fireEvent.change(name,{target:{value:'Fresh unsent intent'}});await act(async()=>finish(json({...notebookRows[0],id:'notebook:old-result'})));expect(router.state.location.pathname).toBe('/notebooks');expect(name).toHaveValue('Fresh unsent intent');expect(name).not.toHaveAttribute('readonly');expect(screen.getByText('Pending old intent')).toBeVisible();expect(screen.getByText(/Creation could not be confirmed/)).toBeVisible();expect(requests.filter(r=>r.method==='POST')).toHaveLength(1);
+});
+
+it('makes the old form usable as a new blank intent only after actual B2 application reauthentication',async()=>{
+ let failRead=false;const requests:Request[]=[];vi.stubGlobal('fetch',async(input:Request|string)=>{
+  const request=input instanceof Request?input:new Request(new URL(input,window.location.href));requests.push(request);const path=new URL(request.url).pathname;
+  if(path==='/config')return json({apiUrl:'',auth_mode:'legacy_password',web_session_protocol:null,client_contracts:['workspace-view-v1'],ui_transport_protocol:1});
+  if(path==='/api/auth/status')return json({auth_enabled:false});
+  if(path==='/api/personal/client-capabilities')return json({contract_version:'client-capabilities-v1',supported_contracts:['workspace-view-v1'],limits:{source_upload_max_bytes:50,portable:{max_archive_bytes:10,max_expanded_bytes:20,max_entity_bytes:10,max_manifest_bytes:10,max_request_bytes:30,multipart_overhead_bytes:10,max_entries:2,max_compression_ratio:5}}});
+  if(path==='/api/notebooks')return failRead?json({error:{code:'AUTH_REQUIRED'}},401):json(notebookRows);
+  if(path==='/api/recently-viewed')return json([]);throw new Error(`Unexpected ${request.method} ${path}`);
+ });
+ let session:ReturnType<typeof useWorkbenchSession>|undefined;function Observe(){session=useWorkbenchSession();return <AppRoutes/>;}
+ const router=createMemoryRouter([{path:'*',element:<AppProviders locale="en-US"><WorkbenchSession><Observe/></WorkbenchSession></AppProviders>}],{initialEntries:['/notebooks']});render(<RouterProvider router={router}/>);
+ await screen.findByRole('link',{name:'Alpha feedback'});fireEvent.click(screen.getByRole('button',{name:'New Notebook'}));const field=screen.getByRole('textbox',{name:'Name'});fireEvent.change(field,{target:{value:'Before actual reauth'}});const old=readTurnContext()!;
+ failRead=true;await act(async()=>{await session!.transport.send({method:'GET',path:'/notebooks',context:old});});await screen.findByRole('dialog',{name:'Sign in again'});expect(field).toHaveValue('Before actual reauth');failRead=false;fireEvent.change(screen.getByLabelText('Password'),{target:{value:'synthetic-only'}});fireEvent.click(screen.getByRole('button',{name:'Sign in'}));await waitFor(()=>expect(screen.queryByRole('dialog',{name:'Sign in again'})).not.toBeInTheDocument());
+ expect(readTurnContext()!.epoch).not.toBe(old.epoch);expect(screen.getByRole('textbox',{name:'Name'})).toBe(field);expect(field).toHaveAttribute('readonly');fireEvent.click(screen.getByRole('button',{name:'Start a new notebook draft'}));expect(screen.getByRole('textbox',{name:'Name'})).toHaveValue('');expect(screen.getByRole('textbox',{name:'Name'})).not.toHaveAttribute('readonly');expect(screen.getByText('Before actual reauth')).toBeVisible();expect(requests.some(r=>r.method==='POST')).toBe(false);
 });

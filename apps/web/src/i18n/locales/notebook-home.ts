@@ -7,7 +7,10 @@ export const notebookMessages = {
     "createUnknown": "Creation could not be confirmed. Check the notebook list before creating again. This request will not be repeated.",
     "createNotSent": "This creation was not sent. You can try again when connected.",
     "pending": "This page is being rebuilt. Its features are not connected yet.",
-    "notFound": "This page could not be found."
+    "notFound": "This page could not be found.",
+    "freshCreation": "Start a new notebook draft",
+    "freshCreationHint": "Start a separate blank draft. Earlier input and uncertain requests are kept and are not copied or retried.",
+    "retainedCreations": "Retained earlier drafts"
   },
   "zh-CN": {
     "homeHint": "将资料、问题与想法收在一起。",
@@ -17,7 +20,10 @@ export const notebookMessages = {
     "createUnknown": "无法确认是否创建成功。再次创建前请检查笔记本列表，本次请求不会重发。",
     "createNotSent": "本次创建未发送，恢复连接后可重试。",
     "pending": "此页面正在重建，功能尚未接入。",
-    "notFound": "找不到此页面。"
+    "notFound": "找不到此页面。",
+    "freshCreation": "开始新的笔记本草稿",
+    "freshCreationHint": "开始一份独立的空白草稿。原有输入和不确定请求会保留，不会复制或重试。",
+    "retainedCreations": "保留的先前草稿"
   },
   "zh-TW": {
     "homeHint": "將資料、問題與想法收在一起。",
@@ -27,7 +33,10 @@ export const notebookMessages = {
     "createUnknown": "無法確認是否建立成功。再次建立前請檢查筆記本清單，本次請求不會重送。",
     "createNotSent": "本次建立未送出，恢復連線後可重試。",
     "pending": "此頁面正在重建，功能尚未接入。",
-    "notFound": "找不到此頁面。"
+    "notFound": "找不到此頁面。",
+    "freshCreation": "開始新的筆記本草稿",
+    "freshCreationHint": "開始一份獨立的空白草稿。原有輸入和不確定請求會保留，不會複製或重試。",
+    "retainedCreations": "保留的先前草稿"
   },
   "pt-BR": {
     "homeHint": "Reúna suas fontes, perguntas e ideias.",
@@ -37,7 +46,10 @@ export const notebookMessages = {
     "createUnknown": "Não foi possível confirmar a criação. Confira a lista de cadernos antes de criar novamente. A solicitação não será repetida.",
     "createNotSent": "A criação não foi enviada. Tente novamente quando houver conexão.",
     "pending": "Esta página está sendo reconstruída. Os recursos ainda não estão conectados.",
-    "notFound": "Esta página não foi encontrada."
+    "notFound": "Esta página não foi encontrada.",
+    "freshCreation": "Iniciar um novo rascunho de caderno",
+    "freshCreationHint": "Inicie um rascunho em branco separado. Os dados anteriores e as solicitações incertas são mantidos, sem cópia ou nova tentativa.",
+    "retainedCreations": "Rascunhos anteriores mantidos"
   },
   "ja-JP": {
     "homeHint": "資料、質問、アイデアを一つにまとめましょう。",
@@ -47,7 +59,10 @@ export const notebookMessages = {
     "createUnknown": "作成を確認できませんでした。再作成する前にノートブック一覧を確認してください。このリクエストは再送されません。",
     "createNotSent": "作成リクエストは送信されませんでした。接続後に再試行できます。",
     "pending": "このページは再構築中です。機能はまだ接続されていません。",
-    "notFound": "このページは見つかりませんでした。"
+    "notFound": "このページは見つかりませんでした。",
+    "freshCreation": "新しいノートブックの下書きを開始",
+    "freshCreationHint": "別の空白の下書きを開始します。以前の入力と結果不明のリクエストは保持され、コピーや再送はされません。",
+    "retainedCreations": "保持された以前の下書き"
   },
   "it-IT": {
     "homeHint": "Riunisci fonti, domande e idee.",
@@ -57,7 +72,10 @@ export const notebookMessages = {
     "createUnknown": "Impossibile confermare la creazione. Controlla l’elenco dei taccuini prima di creare di nuovo. La richiesta non verrà ripetuta.",
     "createNotSent": "La richiesta di creazione non è stata inviata. Riprova quando sei connesso.",
     "pending": "Questa pagina è in ricostruzione. Le funzionalità non sono ancora collegate.",
-    "notFound": "Pagina non trovata."
+    "notFound": "Pagina non trovata.",
+    "freshCreation": "Inizia una nuova bozza di taccuino",
+    "freshCreationHint": "Inizia una bozza vuota separata. I dati precedenti e le richieste incerte vengono conservati, senza copiarli o ripeterli.",
+    "retainedCreations": "Bozze precedenti conservate"
   },
   "fr-FR": {
     "homeHint": "Réunissez vos sources, questions et idées.",
@@ -67,7 +85,10 @@ export const notebookMessages = {
     "createUnknown": "La création n’a pas pu être confirmée. Consultez la liste des carnets avant de recommencer. Cette demande ne sera pas répétée.",
     "createNotSent": "La demande de création n’a pas été envoyée. Réessayez une fois connecté.",
     "pending": "Cette page est en cours de reconstruction. Ses fonctionnalités ne sont pas encore connectées.",
-    "notFound": "Cette page est introuvable."
+    "notFound": "Cette page est introuvable.",
+    "freshCreation": "Commencer un nouveau brouillon de carnet",
+    "freshCreationHint": "Commencez un brouillon vide distinct. Les saisies précédentes et les demandes incertaines sont conservées, sans copie ni nouvelle tentative.",
+    "retainedCreations": "Brouillons précédents conservés"
   },
   "ru-RU": {
     "homeHint": "Соберите источники, вопросы и идеи вместе.",
@@ -77,7 +98,10 @@ export const notebookMessages = {
     "createUnknown": "Не удалось подтвердить создание. Проверьте список блокнотов перед повторным созданием. Этот запрос не будет повторён.",
     "createNotSent": "Запрос на создание не отправлен. Повторите попытку после подключения.",
     "pending": "Эта страница перестраивается. Функции пока не подключены.",
-    "notFound": "Страница не найдена."
+    "notFound": "Страница не найдена.",
+    "freshCreation": "Начать новый черновик блокнота",
+    "freshCreationHint": "Начните отдельный пустой черновик. Прежний ввод и неопределённые запросы сохраняются, не копируются и не повторяются.",
+    "retainedCreations": "Сохранённые прежние черновики"
   },
   "bn-IN": {
     "homeHint": "উৎস, প্রশ্ন ও ভাবনা একসঙ্গে রাখুন।",
@@ -87,7 +111,10 @@ export const notebookMessages = {
     "createUnknown": "তৈরি হয়েছে কি না নিশ্চিত নয়। আবার তৈরির আগে নোটবুক তালিকা দেখুন। এই অনুরোধ পুনরায় পাঠানো হবে না।",
     "createNotSent": "তৈরির অনুরোধ পাঠানো হয়নি। সংযোগ ফিরলে আবার চেষ্টা করুন।",
     "pending": "এই পৃষ্ঠাটি নতুন করে তৈরি হচ্ছে। বৈশিষ্ট্যগুলি এখনও যুক্ত হয়নি।",
-    "notFound": "এই পৃষ্ঠাটি পাওয়া যায়নি।"
+    "notFound": "এই পৃষ্ঠাটি পাওয়া যায়নি।",
+    "freshCreation": "নতুন নোটবুকের খসড়া শুরু করুন",
+    "freshCreationHint": "আলাদা একটি ফাঁকা খসড়া শুরু করুন। আগের লেখা ও অনিশ্চিত অনুরোধ রাখা হবে; সেগুলি কপি বা আবার পাঠানো হবে না।",
+    "retainedCreations": "সংরক্ষিত আগের খসড়াগুলি"
   },
   "ca-ES": {
     "homeHint": "Reuneix les teves fonts, preguntes i idees.",
@@ -97,7 +124,10 @@ export const notebookMessages = {
     "createUnknown": "No s’ha pogut confirmar la creació. Revisa la llista de llibretes abans de tornar-ho a intentar. No es repetirà aquesta sol·licitud.",
     "createNotSent": "La sol·licitud de creació no s’ha enviat. Torna-ho a provar quan hi hagi connexió.",
     "pending": "Aquesta pàgina s’està reconstruint. Les funcions encara no estan connectades.",
-    "notFound": "No s’ha trobat aquesta pàgina."
+    "notFound": "No s’ha trobat aquesta pàgina.",
+    "freshCreation": "Inicia un nou esborrany de llibreta",
+    "freshCreationHint": "Inicia un esborrany buit independent. Les dades anteriors i les sol·licituds incertes es conserven, sense copiar-les ni repetir-les.",
+    "retainedCreations": "Esborranys anteriors conservats"
   },
   "es-ES": {
     "homeHint": "Reúne tus fuentes, preguntas e ideas.",
@@ -107,7 +137,10 @@ export const notebookMessages = {
     "createUnknown": "No se pudo confirmar la creación. Revisa la lista de cuadernos antes de crear de nuevo. Esta solicitud no se repetirá.",
     "createNotSent": "La solicitud de creación no se envió. Inténtalo de nuevo cuando haya conexión.",
     "pending": "Esta página se está reconstruyendo. Sus funciones aún no están conectadas.",
-    "notFound": "No se encontró esta página."
+    "notFound": "No se encontró esta página.",
+    "freshCreation": "Iniciar un nuevo borrador de cuaderno",
+    "freshCreationHint": "Inicia un borrador vacío independiente. Las entradas anteriores y las solicitudes inciertas se conservan, sin copiarlas ni repetirlas.",
+    "retainedCreations": "Borradores anteriores conservados"
   },
   "de-DE": {
     "homeHint": "Sammle Quellen, Fragen und Ideen an einem Ort.",
@@ -117,7 +150,10 @@ export const notebookMessages = {
     "createUnknown": "Die Erstellung konnte nicht bestätigt werden. Prüfe die Notizbuchliste vor einer erneuten Erstellung. Diese Anfrage wird nicht wiederholt.",
     "createNotSent": "Die Erstellungsanfrage wurde nicht gesendet. Versuche es erneut, wenn die Verbindung steht.",
     "pending": "Diese Seite wird neu aufgebaut. Die Funktionen sind noch nicht verbunden.",
-    "notFound": "Diese Seite wurde nicht gefunden."
+    "notFound": "Diese Seite wurde nicht gefunden.",
+    "freshCreation": "Neuen Notizbuchentwurf beginnen",
+    "freshCreationHint": "Beginne einen separaten leeren Entwurf. Frühere Eingaben und unklare Anfragen bleiben erhalten und werden weder kopiert noch wiederholt.",
+    "retainedCreations": "Aufbewahrte frühere Entwürfe"
   },
   "pl-PL": {
     "homeHint": "Zbierz źródła, pytania i pomysły w jednym miejscu.",
@@ -127,7 +163,10 @@ export const notebookMessages = {
     "createUnknown": "Nie można potwierdzić utworzenia. Przed ponownym utworzeniem sprawdź listę notatników. To żądanie nie zostanie powtórzone.",
     "createNotSent": "Żądanie utworzenia nie zostało wysłane. Spróbuj ponownie po połączeniu.",
     "pending": "Ta strona jest przebudowywana. Funkcje nie są jeszcze połączone.",
-    "notFound": "Nie znaleziono tej strony."
+    "notFound": "Nie znaleziono tej strony.",
+    "freshCreation": "Rozpocznij nowy szkic notatnika",
+    "freshCreationHint": "Rozpocznij osobny pusty szkic. Poprzednie dane i niepewne żądania zostają zachowane, bez kopiowania ani ponawiania.",
+    "retainedCreations": "Zachowane wcześniejsze szkice"
   },
   "tr-TR": {
     "homeHint": "Kaynaklarınızı, sorularınızı ve fikirlerinizi bir arada tutun.",
@@ -137,6 +176,9 @@ export const notebookMessages = {
     "createUnknown": "Oluşturma doğrulanamadı. Yeniden oluşturmadan önce not defteri listesini kontrol edin. Bu istek tekrarlanmayacak.",
     "createNotSent": "Oluşturma isteği gönderilmedi. Bağlantı kurulduğunda yeniden deneyebilirsiniz.",
     "pending": "Bu sayfa yeniden oluşturuluyor. Özellikler henüz bağlı değil.",
-    "notFound": "Bu sayfa bulunamadı."
+    "notFound": "Bu sayfa bulunamadı.",
+    "freshCreation": "Yeni bir not defteri taslağı başlat",
+    "freshCreationHint": "Ayrı ve boş bir taslak başlatın. Önceki girdiler ve belirsiz istekler korunur; kopyalanmaz veya yeniden denenmez.",
+    "retainedCreations": "Korunan önceki taslaklar"
   }
 } as const;
