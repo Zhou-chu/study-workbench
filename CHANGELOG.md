@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Connect the independent Notebook home, name search, server-backed recent activity, exact-ID creation/navigation and public workspace reads. Preserve classic source/history visibility and publish an operation-level migration ledger; unfinished study and settings features remain explicitly pending. Retired creation drafts now have an explicit separate blank-form action that preserves earlier inputs and uncertain-request locks.
+- Connect the independent Notebook home, name search, server-backed recent activity, exact-ID creation/navigation and public workspace reads. Preserve classic source/history visibility and publish an operation-level migration ledger; unfinished study and settings features remain explicitly pending. Retired creation drafts have an explicit separate blank-form action, app-lifetime input/uncertainty retention across routes, and captured keep-and-continue navigation without unlocking uncertain requests.
 
 - Connect the new Notebook web login and recovery flow, validate authenticated API capabilities before writes, and retain scoped in-memory drafts through reauthentication with guarded navigation.
 

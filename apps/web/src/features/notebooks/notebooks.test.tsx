@@ -9,16 +9,23 @@ import { notebookRows, notebookWorkspace, json } from '../../test/notebook-fixtu
 beforeEach(() => { invalidateTurnContext(); publishTurnTarget({ mode: 'legacy_password', apiBase: 'http://localhost:3000/api', protocol: null }, true); });
 function mount(route = '/notebooks', reply?: (r: RequestSpec) => Response | undefined | Promise<Response | undefined>) {
     const requests: RequestSpec[] = [];
-    const transport: WebTransport = { send: async (r) => { requests.push(r); if (reply) {
-            const result = await reply(r);
-            if (result)
-                return result;
-        } if (r.path.startsWith('/recently-viewed'))
-            return json([{ type: 'notebook', id: 'notebook:beta', title: 'Recently opened Beta', last_viewed_at: '2026-11-08T02:03:04+00:00' }, { type: 'source', id: 'source:classic', title: 'Recent classic source', last_viewed_at: '2026-11-07' }]); if (r.path.startsWith('/notebooks?'))
-            return json(notebookRows); if (r.path.endsWith('/workspace-view')) {
-            const id = decodeURIComponent(r.path.split('/')[3]!);
-            return json(notebookWorkspace(id));
-        } return json(notebookRows[0]); } };
+    const transport: WebTransport = { send: async (r) => {
+            requests.push(r);
+            if (reply) {
+                const result = await reply(r);
+                if (result)
+                    return result;
+            }
+            if (r.path.startsWith('/recently-viewed'))
+                return json([{ type: 'notebook', id: 'notebook:beta', title: 'Recently opened Beta', last_viewed_at: '2026-11-08T02:03:04+00:00' }, { type: 'source', id: 'source:classic', title: 'Recent classic source', last_viewed_at: '2026-11-07' }]);
+            if (r.path.startsWith('/notebooks?'))
+                return json(notebookRows);
+            if (r.path.endsWith('/workspace-view')) {
+                const id = decodeURIComponent(r.path.split('/')[3]!);
+                return json(notebookWorkspace(id));
+            }
+            return json(notebookRows[0]);
+        } };
     const router = createMemoryRouter([{ path: '*', element: <AppProviders transport={transport} locale="en-US"><AppRoutes /></AppProviders> }], { initialEntries: [route] });
     render(<RouterProvider router={router}/>);
     return { router, requests };
@@ -50,8 +57,11 @@ it('uses server recent notebook/source identities and supports collapse without 
 });
 it('creates with only a name, latches repeated submit and enters the exact returned notebook ID', async () => {
     let finish!: (r: Response) => void;
-    const { router, requests } = mount('/notebooks', async (r) => { if (r.method === 'POST')
-        return new Promise(resolve => { finish = resolve; }); return undefined; });
+    const { router, requests } = mount('/notebooks', async (r) => {
+        if (r.method === 'POST')
+            return new Promise(resolve => { finish = resolve; });
+        return undefined;
+    });
     await screen.findByRole('link', { name: 'Alpha feedback' });
     fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
     const dialog = screen.getByRole('dialog');
@@ -66,8 +76,11 @@ it('creates with only a name, latches repeated submit and enters the exact retur
 });
 it('preserves last good active/archive/recent data after explicit refresh failure', async () => {
     let fail = false;
-    mount('/notebooks', r => { if (fail)
-        return Promise.resolve(json({}, 503)); return Promise.resolve(r.path.startsWith('/recently-viewed') ? json([{ type: 'notebook', id: 'notebook:beta', title: 'Keep recent Beta', last_viewed_at: '2026-11-08' }]) : json(notebookRows)); });
+    mount('/notebooks', r => {
+        if (fail)
+            return Promise.resolve(json({}, 503));
+        return Promise.resolve(r.path.startsWith('/recently-viewed') ? json([{ type: 'notebook', id: 'notebook:beta', title: 'Keep recent Beta', last_viewed_at: '2026-11-08' }]) : json(notebookRows));
+    });
     await screen.findByRole('link', { name: 'Alpha feedback' });
     fail = true;
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
@@ -234,36 +247,262 @@ it('does not show the prior privacy-epoch notebook list while a new authorized l
     await act(async () => finish(json([])));
     await screen.findByText('Your notebooks will appear here.');
 });
-
-it('starts only an explicit new blank creation intent after retirement and retains the earlier input',async()=>{
- const {requests}=mount();await screen.findByRole('link',{name:'Alpha feedback'});fireEvent.click(screen.getByRole('button',{name:'New Notebook'}));
- const oldEpoch=readTurnContext()!.epoch;fireEvent.change(screen.getByRole('textbox',{name:'Name'}),{target:{value:'Retired notebook name'}});fireEvent.change(screen.getByRole('textbox',{name:'Description (Optional)'}),{target:{value:'Retired description'}});
- await act(async()=>invalidateTurnContext());expect(screen.getByRole('textbox',{name:'Name'})).toHaveValue('Retired notebook name');expect(screen.getByRole('textbox',{name:'Name'})).toHaveAttribute('readonly');expect(requests.filter(r=>r.method==='POST')).toHaveLength(0);
- fireEvent.click(screen.getByRole('button',{name:'Start a new notebook draft'}));expect(screen.getByRole('textbox',{name:'Name'})).toHaveValue('');expect(screen.getByRole('textbox',{name:'Name'})).not.toHaveAttribute('readonly');expect(screen.getByRole('textbox',{name:'Description (Optional)'})).toHaveValue('');expect(screen.getByText('Retired notebook name')).toBeVisible();expect(screen.getByText('Retired description')).toBeVisible();
- expect(requests.filter(r=>r.method==='POST')).toHaveLength(0);fireEvent.change(screen.getByRole('textbox',{name:'Name'}),{target:{value:'Independent new notebook'}});fireEvent.submit(screen.getByRole('textbox',{name:'Name'}).closest('form')!);await waitFor(()=>expect(requests.filter(r=>r.method==='POST')).toHaveLength(1));const sent=requests.find(r=>r.method==='POST')!;expect(sent.context.epoch).not.toBe(oldEpoch);expect(sent.context.epoch).toBe(readTurnContext()!.epoch);expect(JSON.parse(sent.body as string)).toEqual({name:'Independent new notebook'});
+it('starts only an explicit new blank creation intent after retirement and retains the earlier input', async () => {
+    const { requests } = mount();
+    await screen.findByRole('link', { name: 'Alpha feedback' });
+    fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
+    const oldEpoch = readTurnContext()!.epoch;
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Retired notebook name' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Description (Optional)' }), { target: { value: 'Retired description' } });
+    await act(async () => invalidateTurnContext());
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Retired notebook name');
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveAttribute('readonly');
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Start a new notebook draft' }));
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('');
+    expect(screen.getByRole('textbox', { name: 'Name' })).not.toHaveAttribute('readonly');
+    expect(screen.getByRole('textbox', { name: 'Description (Optional)' })).toHaveValue('');
+    expect(screen.getByText('Retired notebook name')).toBeVisible();
+    expect(screen.getByText('Retired description')).toBeVisible();
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(0);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Independent new notebook' } });
+    fireEvent.submit(screen.getByRole('textbox', { name: 'Name' }).closest('form')!);
+    await waitFor(() => expect(requests.filter(r => r.method === 'POST')).toHaveLength(1));
+    const sent = requests.find(r => r.method === 'POST')!;
+    expect(sent.context.epoch).not.toBe(oldEpoch);
+    expect(sent.context.epoch).toBe(readTurnContext()!.epoch);
+    expect(JSON.parse(sent.body as string)).toEqual({ name: 'Independent new notebook' });
 });
-it('never unlocks or retries an uncertain creation while a new retired-scope intent is started and cancelled',async()=>{
- const {requests}=mount('/notebooks',r=>r.method==='POST'?json({},503):undefined);await screen.findByRole('link',{name:'Alpha feedback'});fireEvent.click(screen.getByRole('button',{name:'New Notebook'}));fireEvent.change(screen.getByRole('textbox',{name:'Name'}),{target:{value:'Uncertain original'}});fireEvent.change(screen.getByRole('textbox',{name:'Description (Optional)'}),{target:{value:'Original uncertain description'}});fireEvent.submit(screen.getByRole('textbox',{name:'Name'}).closest('form')!);await screen.findByText(/Creation could not be confirmed/);const original=requests.find(r=>r.method==='POST')!;
- await act(async()=>invalidateTurnContext());fireEvent.click(screen.getByRole('button',{name:'Start a new notebook draft'}));expect(screen.getByText('Uncertain original')).toBeVisible();expect(screen.getByText('Original uncertain description')).toBeVisible();expect(screen.getByText(/Creation could not be confirmed/)).toBeVisible();expect(screen.getByRole('textbox',{name:'Name'})).toHaveValue('');fireEvent.submit(screen.getByRole('textbox',{name:'Name'}).closest('form')!);expect(requests.filter(r=>r.method==='POST')).toHaveLength(1);
- fireEvent.click(screen.getByRole('button',{name:'Cancel'}));fireEvent.click(screen.getByRole('button',{name:'Refresh'}));await waitFor(()=>expect(screen.getByRole('button',{name:'Refresh'})).toBeEnabled());fireEvent.click(screen.getByRole('button',{name:'New Notebook'}));expect(screen.getByText('Uncertain original')).toBeVisible();expect(screen.getByText(/Creation could not be confirmed/)).toBeVisible();expect(requests.filter(r=>r.method==='POST')).toEqual([original]);
+it('never unlocks or retries an uncertain creation while a new retired-scope intent is started and cancelled', async () => {
+    const { requests } = mount('/notebooks', r => r.method === 'POST' ? json({}, 503) : undefined);
+    await screen.findByRole('link', { name: 'Alpha feedback' });
+    fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Uncertain original' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Description (Optional)' }), { target: { value: 'Original uncertain description' } });
+    fireEvent.submit(screen.getByRole('textbox', { name: 'Name' }).closest('form')!);
+    await screen.findByText(/Creation could not be confirmed/);
+    const original = requests.find(r => r.method === 'POST')!;
+    await act(async () => invalidateTurnContext());
+    fireEvent.click(screen.getByRole('button', { name: 'Start a new notebook draft' }));
+    expect(screen.getByText('Uncertain original')).toBeVisible();
+    expect(screen.getByText('Original uncertain description')).toBeVisible();
+    expect(screen.getByText(/Creation could not be confirmed/)).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('');
+    fireEvent.submit(screen.getByRole('textbox', { name: 'Name' }).closest('form')!);
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Refresh' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
+    expect(screen.getByText('Uncertain original')).toBeVisible();
+    expect(screen.getByText(/Creation could not be confirmed/)).toBeVisible();
+    expect(requests.filter(r => r.method === 'POST')).toEqual([original]);
 });
-it('does not let a delayed retired create settle into or navigate away from the deliberate fresh intent',async()=>{
- let finish!:(r:Response)=>void;const {requests,router}=mount('/notebooks',r=>r.method==='POST'?new Promise(resolve=>{finish=resolve;}):undefined);await screen.findByRole('link',{name:'Alpha feedback'});fireEvent.click(screen.getByRole('button',{name:'New Notebook'}));fireEvent.change(screen.getByRole('textbox',{name:'Name'}),{target:{value:'Pending old intent'}});fireEvent.submit(screen.getByRole('textbox',{name:'Name'}).closest('form')!);await waitFor(()=>expect(requests.filter(r=>r.method==='POST')).toHaveLength(1));
- await act(async()=>invalidateTurnContext());fireEvent.click(screen.getByRole('button',{name:'Start a new notebook draft'}));const name=screen.getByRole('textbox',{name:'Name'});fireEvent.change(name,{target:{value:'Fresh unsent intent'}});await act(async()=>finish(json({...notebookRows[0],id:'notebook:old-result'})));expect(router.state.location.pathname).toBe('/notebooks');expect(name).toHaveValue('Fresh unsent intent');expect(name).not.toHaveAttribute('readonly');expect(screen.getByText('Pending old intent')).toBeVisible();expect(screen.getByText(/Creation could not be confirmed/)).toBeVisible();expect(requests.filter(r=>r.method==='POST')).toHaveLength(1);
+it('does not let a delayed retired create settle into or navigate away from the deliberate fresh intent', async () => {
+    let finish!: (r: Response) => void;
+    const { requests, router } = mount('/notebooks', r => r.method === 'POST' ? new Promise(resolve => { finish = resolve; }) : undefined);
+    await screen.findByRole('link', { name: 'Alpha feedback' });
+    fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Pending old intent' } });
+    fireEvent.submit(screen.getByRole('textbox', { name: 'Name' }).closest('form')!);
+    await waitFor(() => expect(requests.filter(r => r.method === 'POST')).toHaveLength(1));
+    await act(async () => invalidateTurnContext());
+    fireEvent.click(screen.getByRole('button', { name: 'Start a new notebook draft' }));
+    const name = screen.getByRole('textbox', { name: 'Name' });
+    fireEvent.change(name, { target: { value: 'Fresh unsent intent' } });
+    await act(async () => finish(json({ ...notebookRows[0], id: 'notebook:old-result' })));
+    expect(router.state.location.pathname).toBe('/notebooks');
+    expect(name).toHaveValue('Fresh unsent intent');
+    expect(name).not.toHaveAttribute('readonly');
+    expect(screen.getByText('Pending old intent')).toBeVisible();
+    expect(screen.getByText(/Creation could not be confirmed/)).toBeVisible();
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
 });
-
-it('makes the old form usable as a new blank intent only after actual B2 application reauthentication',async()=>{
- let failRead=false;const requests:Request[]=[];vi.stubGlobal('fetch',async(input:Request|string)=>{
-  const request=input instanceof Request?input:new Request(new URL(input,window.location.href));requests.push(request);const path=new URL(request.url).pathname;
-  if(path==='/config')return json({apiUrl:'',auth_mode:'legacy_password',web_session_protocol:null,client_contracts:['workspace-view-v1'],ui_transport_protocol:1});
-  if(path==='/api/auth/status')return json({auth_enabled:false});
-  if(path==='/api/personal/client-capabilities')return json({contract_version:'client-capabilities-v1',supported_contracts:['workspace-view-v1'],limits:{source_upload_max_bytes:50,portable:{max_archive_bytes:10,max_expanded_bytes:20,max_entity_bytes:10,max_manifest_bytes:10,max_request_bytes:30,multipart_overhead_bytes:10,max_entries:2,max_compression_ratio:5}}});
-  if(path==='/api/notebooks')return failRead?json({error:{code:'AUTH_REQUIRED'}},401):json(notebookRows);
-  if(path==='/api/recently-viewed')return json([]);throw new Error(`Unexpected ${request.method} ${path}`);
- });
- let session:ReturnType<typeof useWorkbenchSession>|undefined;function Observe(){session=useWorkbenchSession();return <AppRoutes/>;}
- const router=createMemoryRouter([{path:'*',element:<AppProviders locale="en-US"><WorkbenchSession><Observe/></WorkbenchSession></AppProviders>}],{initialEntries:['/notebooks']});render(<RouterProvider router={router}/>);
- await screen.findByRole('link',{name:'Alpha feedback'});fireEvent.click(screen.getByRole('button',{name:'New Notebook'}));const field=screen.getByRole('textbox',{name:'Name'});fireEvent.change(field,{target:{value:'Before actual reauth'}});const old=readTurnContext()!;
- failRead=true;await act(async()=>{await session!.transport.send({method:'GET',path:'/notebooks',context:old});});await screen.findByRole('dialog',{name:'Sign in again'});expect(field).toHaveValue('Before actual reauth');failRead=false;fireEvent.change(screen.getByLabelText('Password'),{target:{value:'synthetic-only'}});fireEvent.click(screen.getByRole('button',{name:'Sign in'}));await waitFor(()=>expect(screen.queryByRole('dialog',{name:'Sign in again'})).not.toBeInTheDocument());
- expect(readTurnContext()!.epoch).not.toBe(old.epoch);expect(screen.getByRole('textbox',{name:'Name'})).toBe(field);expect(field).toHaveAttribute('readonly');fireEvent.click(screen.getByRole('button',{name:'Start a new notebook draft'}));expect(screen.getByRole('textbox',{name:'Name'})).toHaveValue('');expect(screen.getByRole('textbox',{name:'Name'})).not.toHaveAttribute('readonly');expect(screen.getByText('Before actual reauth')).toBeVisible();expect(requests.some(r=>r.method==='POST')).toBe(false);
+it('makes the old form usable as a new blank intent only after actual B2 application reauthentication', async () => {
+    let failRead = false;
+    const requests: Request[] = [];
+    vi.stubGlobal('fetch', async (input: Request | string) => {
+        const request = input instanceof Request ? input : new Request(new URL(input, window.location.href));
+        requests.push(request);
+        const path = new URL(request.url).pathname;
+        if (path === '/config')
+            return json({ apiUrl: '', auth_mode: 'legacy_password', web_session_protocol: null, client_contracts: ['workspace-view-v1'], ui_transport_protocol: 1 });
+        if (path === '/api/auth/status')
+            return json({ auth_enabled: false });
+        if (path === '/api/personal/client-capabilities')
+            return json({ contract_version: 'client-capabilities-v1', supported_contracts: ['workspace-view-v1'], limits: { source_upload_max_bytes: 50, portable: { max_archive_bytes: 10, max_expanded_bytes: 20, max_entity_bytes: 10, max_manifest_bytes: 10, max_request_bytes: 30, multipart_overhead_bytes: 10, max_entries: 2, max_compression_ratio: 5 } } });
+        if (path === '/api/notebooks')
+            return failRead ? json({ error: { code: 'AUTH_REQUIRED' } }, 401) : json(notebookRows);
+        if (path === '/api/recently-viewed')
+            return json([]);
+        throw new Error(`Unexpected ${request.method} ${path}`);
+    });
+    let session: ReturnType<typeof useWorkbenchSession> | undefined;
+    function Observe() { session = useWorkbenchSession(); return <AppRoutes />; }
+    const router = createMemoryRouter([{ path: '*', element: <AppProviders locale="en-US"><WorkbenchSession><Observe /></WorkbenchSession></AppProviders> }], { initialEntries: ['/notebooks'] });
+    render(<RouterProvider router={router}/>);
+    await screen.findByRole('link', { name: 'Alpha feedback' });
+    fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
+    const field = screen.getByRole('textbox', { name: 'Name' });
+    fireEvent.change(field, { target: { value: 'Before actual reauth' } });
+    const old = readTurnContext()!;
+    failRead = true;
+    await act(async () => { await session!.transport.send({ method: 'GET', path: '/notebooks', context: old }); });
+    await screen.findByRole('dialog', { name: 'Sign in again' });
+    expect(field).toHaveValue('Before actual reauth');
+    failRead = false;
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'synthetic-only' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Sign in again' })).not.toBeInTheDocument());
+    expect(readTurnContext()!.epoch).not.toBe(old.epoch);
+    expect(screen.getByRole('textbox', { name: 'Name' })).toBe(field);
+    expect(field).toHaveAttribute('readonly');
+    fireEvent.click(screen.getByRole('button', { name: 'Start a new notebook draft' }));
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('');
+    expect(screen.getByRole('textbox', { name: 'Name' })).not.toHaveAttribute('readonly');
+    expect(screen.getByText('Before actual reauth')).toBeVisible();
+    expect(requests.some(r => r.method === 'POST')).toBe(false);
+});
+function mountRealCreation(initialEntries = ['/notebooks'], initialIndex = initialEntries.length - 1, post?: (request: Request) => Response | Promise<Response>) {
+    const requests: Request[] = [];
+    let workbench: ReturnType<typeof useWorkbenchSession> | undefined;
+    vi.stubGlobal('fetch', async (input: Request | string) => {
+        const request = input instanceof Request ? input : new Request(new URL(input, window.location.href));
+        requests.push(request);
+        const path = new URL(request.url).pathname;
+        if (path === '/config')
+            return json({ apiUrl: '', auth_mode: 'legacy_password', web_session_protocol: null, client_contracts: ['workspace-view-v1'], ui_transport_protocol: 1 });
+        if (path === '/api/auth/status')
+            return json({ auth_enabled: false });
+        if (path === '/api/personal/client-capabilities')
+            return json({ contract_version: 'client-capabilities-v1', supported_contracts: ['workspace-view-v1'], limits: { source_upload_max_bytes: 50, portable: { max_archive_bytes: 10, max_expanded_bytes: 20, max_entity_bytes: 10, max_manifest_bytes: 10, max_request_bytes: 30, multipart_overhead_bytes: 10, max_entries: 2, max_compression_ratio: 5 } } });
+        if (path === '/api/notebooks')
+            return request.method === 'POST' ? (post ? post(request) : json({ ...notebookRows[0], id: 'notebook:fresh-result' })) : json(notebookRows);
+        if (path === '/api/recently-viewed')
+            return json([]);
+        if (path.endsWith('/workspace-view'))
+            return json(notebookWorkspace(decodeURIComponent(path.split('/')[4]!)));
+        if (path.startsWith('/api/notebooks/'))
+            return json(notebookRows[0]);
+        throw new Error(`Unexpected ${request.method} ${path}`);
+    });
+    function Observe() { workbench = useWorkbenchSession(); return <AppRoutes />; }
+    const router = createMemoryRouter([{ path: '*', element: <AppProviders locale="en-US"><WorkbenchSession><Observe /></WorkbenchSession></AppProviders> }], { initialEntries, initialIndex });
+    render(<RouterProvider router={router}/>);
+    return { router, requests, workbench: () => workbench! };
+}
+it('protects real B2 Back and Forward and keeps an unsent creation across an allowed route unmount', async () => {
+    const { router, requests } = mountRealCreation(['/search', '/notebooks', '/advanced'], 1);
+    await screen.findByRole('link', { name: 'Alpha feedback' });
+    fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Keep across route unmount' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Description (Optional)' }), { target: { value: 'Remember description' } });
+    await act(async () => router.navigate(-1));
+    await screen.findByRole('dialog', { name: 'Leave this draft?' });
+    fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
+    expect(router.state.location.pathname).toBe('/notebooks');
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Keep across route unmount');
+    await act(async () => router.navigate(1));
+    await screen.findByRole('dialog', { name: 'Leave this draft?' });
+    fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
+    expect(router.state.location.pathname).toBe('/notebooks');
+    await act(async () => router.navigate(-1));
+    await screen.findByRole('dialog', { name: 'Leave this draft?' });
+    fireEvent.click(screen.getByRole('button', { name: 'Leave without saving' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/search'));
+    await act(async () => router.navigate(1));
+    await screen.findByRole('link', { name: 'Alpha feedback' });
+    fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Keep across route unmount');
+    expect(screen.getByRole('textbox', { name: 'Description (Optional)' })).toHaveValue('Remember description');
+    expect(requests.some(r => r.method === 'POST')).toBe(false);
+});
+it('does not discard an unknown creation on Cancel or force-unlock it through real B2 navigation', async () => {
+    const { router, requests } = mountRealCreation(['/notebooks'], 0, () => json({}, 503));
+    await screen.findByRole('link', { name: 'Alpha feedback' });
+    fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Unknown route-owned input' } });
+    fireEvent.submit(screen.getByRole('textbox', { name: 'Name' }).closest('form')!);
+    await screen.findByText(/Creation could not be confirmed/);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Alpha feedback' }));
+    await screen.findByRole('dialog', { name: 'Leave this draft?' });
+    expect(screen.queryByRole('button', { name: 'Leave without saving' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Keep creation and continue' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/notebooks/notebook%3Aalpha'));
+    await screen.findByRole('heading', { name: 'Alpha feedback', level: 1 });
+    await act(async () => router.navigate(-1));
+    await screen.findByRole('link', { name: 'Alpha feedback' });
+    fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Unknown route-owned input');
+    expect(within(screen.getByRole('dialog', { name: 'Create New Notebook' })).getByRole('button', { name: 'New' })).toBeDisabled();
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
+});
+it('keeps an older unknown creation across a successful different fresh creation and notebook-to-home navigation', async () => {
+    let posts = 0;
+    const { router, requests, workbench } = mountRealCreation(['/notebooks'], 0, () => ++posts === 1 ? json({}, 503) : json({ ...notebookRows[0], id: 'notebook:fresh-result' }));
+    await screen.findByRole('link', { name: 'Alpha feedback' });
+    fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Retained unknown after success' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Description (Optional)' }), { target: { value: 'Original retained description' } });
+    fireEvent.submit(screen.getByRole('textbox', { name: 'Name' }).closest('form')!);
+    await screen.findByText(/Creation could not be confirmed/);
+    await act(async () => workbench().controller.login('synthetic-only'));
+    fireEvent.click(screen.getByRole('button', { name: 'Start a new notebook draft' }));
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('');
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Separate successful notebook' } });
+    fireEvent.submit(screen.getByRole('textbox', { name: 'Name' }).closest('form')!);
+    await waitFor(() => expect(router.state.location.pathname).toBe('/notebooks/notebook%3Afresh-result'));
+    await screen.findByRole('heading', { name: 'notebook:fresh-result', level: 1 });
+    await act(async () => router.navigate(-1));
+    await screen.findByRole('link', { name: 'Alpha feedback' });
+    fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
+    expect(screen.getByText('Retained unknown after success')).toBeVisible();
+    expect(screen.getByText('Original retained description')).toBeVisible();
+    expect(screen.getByText(/Creation could not be confirmed/)).toBeVisible();
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('');
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(2);
+    const event = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+});
+it('blocks real B2 navigation while creation is pending and does not turn waiting into discard', async () => {
+    let finish!: (r: Response) => void;
+    const { router, requests } = mountRealCreation(['/search', '/notebooks'], 1, () => new Promise(resolve => { finish = resolve; }));
+    await screen.findByRole('link', { name: 'Alpha feedback' });
+    fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Pending protected creation' } });
+    fireEvent.submit(screen.getByRole('textbox', { name: 'Name' }).closest('form')!);
+    await waitFor(() => expect(requests.filter(r => r.method === 'POST')).toHaveLength(1));
+    await act(async () => router.navigate(-1));
+    await screen.findByRole('dialog', { name: 'Leave this draft?' });
+    expect(screen.queryByRole('button', { name: 'Leave without saving' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
+    expect(router.state.location.pathname).toBe('/notebooks');
+    await act(async () => router.navigate(-1));
+    await screen.findByRole('dialog', { name: 'Leave this draft?' });
+    fireEvent.click(screen.getByRole('button', { name: 'Keep creation and continue' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/search'));
+    await act(async () => finish(json({}, 503)));
+    expect(router.state.location.pathname).toBe('/search');
+    await act(async () => router.navigate(1));
+    await screen.findByRole('link', { name: 'Alpha feedback' });
+    fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Pending protected creation');
+    await screen.findByText(/Creation could not be confirmed/);
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
+});
+it('does not let creation success hijack a newer navigation awaiting retention confirmation', async () => {
+    let finish!: (r: Response) => void;
+    const { router, requests } = mountRealCreation(['/search', '/notebooks'], 1, () => new Promise(resolve => { finish = resolve; }));
+    await screen.findByRole('link', { name: 'Alpha feedback' });
+    fireEvent.click(screen.getByRole('button', { name: 'New Notebook' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Success with newer navigation' } });
+    fireEvent.submit(screen.getByRole('textbox', { name: 'Name' }).closest('form')!);
+    await waitFor(() => expect(requests.filter(r => r.method === 'POST')).toHaveLength(1));
+    await act(async () => router.navigate(-1));
+    await screen.findByRole('dialog', { name: 'Leave this draft?' });
+    await act(async () => finish(json({ ...notebookRows[0], id: 'notebook:late-success' })));
+    expect(router.state.location.pathname).toBe('/notebooks');
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
 });

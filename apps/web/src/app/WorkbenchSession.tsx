@@ -2,22 +2,23 @@ import { createContext, useContext, useEffect, useRef, useState, useSyncExternal
 import { UNSAFE_DataRouterContext } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { readTurnContext } from '@study/web-transport';
-import { createDraftRegistry, createNavigationController, type DraftId, type DraftState } from './drafts';
+import { createNavigationController, type DraftRegistry, type DraftId, type DraftState } from './drafts';
 import { createSessionController } from '../features/auth/session';
 import { LoginPage } from '../features/auth/LoginPage';
 import { ReauthLayer } from '../features/auth/ReauthLayer';
 import { ConnectionState } from '../features/auth/ConnectionState';
 import { RouterNavigationGuard, UnsavedNavigationDialog } from './UnsavedNavigationDialog';
-import { AppDataBoundary, useAppData } from './providers';
+import { AppDataBoundary, useAppData, useAppDrafts } from './providers';
 import { useI18n } from '../i18n';
-function createWorkbench(clearServerData: () => void) { const drafts = createDraftRegistry(); return { drafts, navigation: createNavigationController(drafts), controller: createSessionController(epoch => { drafts.retireContext(epoch); clearServerData(); }) }; }
+function createWorkbench(drafts: DraftRegistry, clearServerData: () => void) { return { drafts, navigation: createNavigationController(drafts), controller: createSessionController(epoch => { drafts.retireContext(epoch); clearServerData(); }) }; }
 type Workbench = ReturnType<typeof createWorkbench>;
 const Context = createContext<Workbench | null>(null);
 export function WorkbenchSession({ children }: {
     children: ReactNode;
 }) {
     const queryClient = useQueryClient();
-    const [value] = useState(() => createWorkbench(() => queryClient.clear()));
+    const drafts = useAppDrafts();
+    const [value] = useState(() => createWorkbench(drafts, () => queryClient.clear()));
     const state = useSyncExternalStore(value.controller.subscribe, value.controller.getSnapshot);
     const data = useAppData();
     const { session } = useI18n();
@@ -48,6 +49,22 @@ export function useWorkbenchDraft(notebookId: string, editorSession: string) {
     const id = capture.current;
     const draft = useSyncExternalStore(value?.drafts.subscribe ?? (() => () => { }), () => value?.drafts.get(id));
     const retired = useSyncExternalStore(value?.drafts.subscribe ?? (() => () => { }), () => value?.drafts.isRetired(id) ?? false);
-    useEffect(() => { value?.navigation.activate(id); return () => value?.navigation.activate(null); }, [value, id]);
+    useEffect(() => { value?.navigation.activate(id); return () => value?.navigation.deactivate(id); }, [value, id]);
     return { id, draft, retired, connected: !!value, update: (patch: Partial<Pick<DraftState, 'editor' | 'question' | 'file'>>) => value?.drafts.update(id, patch) };
+}
+/** App-lifetime creation records share the session's one navigation controller. */
+export function useNotebookCreationDrafts() {
+    const workbench = useContext(Context);
+    const drafts = useAppDrafts();
+    const state = useSyncExternalStore(drafts.subscribe, drafts.getNotebookCreationSnapshot);
+    const id = state.active?.id;
+    useEffect(() => {
+        if (id)
+            workbench?.navigation.activate(id);
+        return () => {
+            if (id)
+                workbench?.navigation.deactivate(id);
+        };
+    }, [workbench, id]);
+    return { drafts, state, activate: (value: DraftId) => workbench?.navigation.activate(value), navigationPending: () => !!workbench?.navigation.getSnapshot().status };
 }

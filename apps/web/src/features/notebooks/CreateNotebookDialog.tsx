@@ -2,106 +2,94 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import * as Radix from '@radix-ui/react-dialog';
 import { useNavigate } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { asRequestNotDispatchedError, canDispatch, freezeDispatchContext, readTurnContext, type DispatchContext } from '@study/web-transport';
+import { asRequestNotDispatchedError, canDispatch, readTurnContext } from '@study/web-transport';
 import { useNotebookConnection } from '../../data/use-notebook-connection';
 import { useI18n } from '../../i18n';
 import { Button } from '../../ui/Button';
-
-type CreationOutcome = 'unknown' | 'not-sent' | null;
-type CreationIntent = {
-    readonly id: string;
-    readonly context: DispatchContext;
-    latch: boolean;
-    uncertain: boolean;
-};
-type RetiredCreation = Readonly<{
-    intent: CreationIntent;
-    name: string;
-    description: string;
-    outcome: CreationOutcome;
-    retired: true;
-}>;
-const freshIntent = (context: DispatchContext): CreationIntent => ({
-    id: crypto.randomUUID(), context: freezeDispatchContext(context), latch: false, uncertain: false,
-});
-
+import { useNotebookCreationDrafts } from '../../app/WorkbenchSession';
 export function CreateNotebookDialog() {
     const { t, notebook: messages, session } = useI18n();
     const { api, context, ready } = useNotebookConnection();
     const navigate = useNavigate();
     const queries = useQueryClient();
     const [open, setOpen] = useState(false);
-    const [name, setName] = useState('');
-    const [description, setDescription] = useState('');
-    const [busy, setBusy] = useState(false);
-    const [outcome, setOutcome] = useState<CreationOutcome>(null);
-    const [retiredCreations, setRetiredCreations] = useState<readonly RetiredCreation[]>([]);
-    const activeIntent = useRef<CreationIntent | null>(null);
+    const { drafts, state, activate, navigationPending } = useNotebookCreationDrafts();
+    const active = state.active;
+    const creation = active?.creation;
+    const name = creation?.name ?? '';
+    const description = creation?.description ?? '';
+    const busy = creation?.status === 'pending';
+    const outcome = creation?.status === 'unknown' ? 'unknown' : creation?.status === 'not-sent' ? 'not-sent' : null;
+    const retiredCreations = state.retained;
+    const setName = (value: string) => {
+        if (active)
+            drafts.editNotebookCreation(active.id, { name: value });
+    };
+    const setDescription = (value: string) => {
+        if (active)
+            drafts.editNotebookCreation(active.id, { description: value });
+    };
     const mounted = useRef(true);
     useEffect(() => {
         mounted.current = true;
         return () => { mounted.current = false; };
     }, []);
-    const retired = !!activeIntent.current && (!context || activeIntent.current.context.epoch !== context.epoch);
-
+    const retired = !!active && (active.retired || !context || active.id.epoch !== context.epoch);
     function changeOpen(value: boolean) {
-        if (busy) return;
-        if (value && !activeIntent.current && context) activeIntent.current = freshIntent(context);
+        if (busy)
+            return;
+        if (value && context) {
+            const id = drafts.openNotebookCreation(context);
+            if (id)
+                activate(id);
+        }
         setOpen(value);
     }
     function startFreshForm() {
-        const previous = activeIntent.current;
         const current = readTurnContext();
-        if (!previous || !retired || !ready || !current?.ready || previous.context.epoch === current.epoch) return;
-        // A submitted retired attempt stays check-only even if its response is still pending.
-        if (previous.latch) previous.uncertain = true;
-        setRetiredCreations(records => [...records, Object.freeze({
-            intent: previous, name, description, retired: true as const,
-            outcome: previous.uncertain ? 'unknown' : outcome,
-        })]);
-        // This is a separate blank intent. Nothing is copied and the old lock/capture is retained.
-        activeIntent.current = freshIntent(current);
-        setName('');
-        setDescription('');
-        setOutcome(null);
-        setBusy(false);
+        if (!retired || !ready || !current?.ready)
+            return;
+        const id = drafts.startFreshNotebookCreation(current);
+        if (id)
+            activate(id);
     }
     async function submit(event: FormEvent) {
         event.preventDefault();
-        const intent = activeIntent.current;
-        if (!intent || intent.latch || intent.uncertain || !name.trim() || !api || !canDispatch(intent.context, readTurnContext())) return;
-        intent.latch = true;
-        setBusy(true);
-        setOutcome(null);
+        if (!active || !api)
+            return;
+        const captured = drafts.beginNotebookCreation(active.id, readTurnContext());
+        if (!captured)
+            return;
         try {
-            const created = await api.create({ name: name.trim(), ...(description.trim() ? { description: description.trim() } : {}) }, intent.context);
-            if (!mounted.current || activeIntent.current !== intent) return;
-            if (!canDispatch(intent.context, readTurnContext())) {
-                intent.uncertain = true;
-                setOutcome('unknown');
+            const created = await api.create({ name: captured.name.trim(), ...(captured.description.trim() ? { description: captured.description.trim() } : {}) }, captured.context);
+            drafts.settleNotebookCreation(active.id, { notebookId: created.id }, readTurnContext());
+            const settled = drafts.get(active.id)?.creation;
+            if (settled?.status === 'succeeded')
+                void queries.invalidateQueries({ queryKey: ['notebooks'] });
+            const current = drafts.getNotebookCreationSnapshot().active;
+            if (!mounted.current || current?.id !== active.id || current.creation.status !== 'succeeded' || !canDispatch(captured.context, readTurnContext()))
                 return;
-            }
-            void queries.invalidateQueries({ queryKey: ['notebooks'] });
             setOpen(false);
-            setBusy(false);
-            setName('');
-            setDescription('');
-            activeIntent.current = null;
+            // A newer captured navigation owns the next route, even before its confirmation settles.
+            if (navigationPending())
+                return;
             void navigate(`/notebooks/${encodeURIComponent(created.id)}`);
-        } catch (error) {
-            // The uncertainty lock belongs to this exact intent and is never cleared by a new form.
-            intent.uncertain = intent.uncertain || !asRequestNotDispatchedError(error);
-            if (mounted.current && activeIntent.current === intent) setOutcome(intent.uncertain ? 'unknown' : 'not-sent');
-        } finally {
-            intent.latch = false;
-            if (mounted.current && activeIntent.current === intent) setBusy(false);
+        }
+        catch (error) {
+            drafts.settleNotebookCreation(active.id, asRequestNotDispatchedError(error) ? 'not-sent' : 'unknown', readTurnContext());
         }
     }
     return <Radix.Root open={open} onOpenChange={changeOpen}>
         <Radix.Trigger asChild><Button variant="primary" disabled={!ready}>{t.notebooks.newNotebook}</Button></Radix.Trigger>
         <Radix.Portal>
             <Radix.Overlay className="dialog-overlay"/>
-            <Radix.Content className="dialog-content" onEscapeKeyDown={event => { if (busy) event.preventDefault(); }} onPointerDownOutside={event => { if (busy) event.preventDefault(); }}>
+            <Radix.Content className="dialog-content" onEscapeKeyDown={event => {
+            if (busy)
+                event.preventDefault();
+        }} onPointerDownOutside={event => {
+            if (busy)
+                event.preventDefault();
+        }}>
                 <Radix.Title>{t.notebooks.createNew}</Radix.Title>
                 <Radix.Description>{t.notebooks.createNewDesc}</Radix.Description>
                 <form onSubmit={event => { void submit(event); }}>
@@ -122,10 +110,10 @@ export function CreateNotebookDialog() {
                 </form>
                 {retiredCreations.length > 0 && <section aria-label={messages.retainedCreations}>
                     <h3>{messages.retainedCreations}</h3>
-                    {retiredCreations.map(record => <article key={record.intent.id}>
-                        <dl><dt>{t.common.name}</dt><dd>{record.name}</dd><dt>{t.common.description}</dt><dd>{record.description}</dd></dl>
+                    {retiredCreations.map(record => <article key={record.id.editorSession}>
+                        <dl><dt>{t.common.name}</dt><dd>{record.creation.name}</dd><dt>{t.common.description}</dt><dd>{record.creation.description}</dd></dl>
                         <p>{session.retiredDraft}</p>
-                        {record.outcome === 'unknown' && <p>{messages.createUnknown}</p>}
+                        {record.creation.status === 'unknown' && <p>{messages.createUnknown}</p>}
                     </article>)}
                 </section>}
             </Radix.Content>

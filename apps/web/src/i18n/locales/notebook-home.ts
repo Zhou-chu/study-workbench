@@ -10,7 +10,9 @@ export const notebookMessages = {
     "notFound": "This page could not be found.",
     "freshCreation": "Start a new notebook draft",
     "freshCreationHint": "Start a separate blank draft. Earlier input and uncertain requests are kept and are not copied or retried.",
-    "retainedCreations": "Retained earlier drafts"
+    "retainedCreations": "Retained earlier drafts",
+    "retainCreation": "Keep creation and continue",
+    "retainCreationHint": "This creation stays in memory with its original input and identity. It may still complete. Continuing does not cancel, discard, retry or resolve it."
   },
   "zh-CN": {
     "homeHint": "将资料、问题与想法收在一起。",
@@ -23,7 +25,9 @@ export const notebookMessages = {
     "notFound": "找不到此页面。",
     "freshCreation": "开始新的笔记本草稿",
     "freshCreationHint": "开始一份独立的空白草稿。原有输入和不确定请求会保留，不会复制或重试。",
-    "retainedCreations": "保留的先前草稿"
+    "retainedCreations": "保留的先前草稿",
+    "retainCreation": "保留创建请求并继续",
+    "retainCreationHint": "此创建请求会连同原有输入和身份保留在内存中，之后仍可能完成。继续不会取消、丢弃、重试或解决它。"
   },
   "zh-TW": {
     "homeHint": "將資料、問題與想法收在一起。",
@@ -36,7 +40,9 @@ export const notebookMessages = {
     "notFound": "找不到此頁面。",
     "freshCreation": "開始新的筆記本草稿",
     "freshCreationHint": "開始一份獨立的空白草稿。原有輸入和不確定請求會保留，不會複製或重試。",
-    "retainedCreations": "保留的先前草稿"
+    "retainedCreations": "保留的先前草稿",
+    "retainCreation": "保留建立請求並繼續",
+    "retainCreationHint": "此建立請求會連同原有輸入和身分保留在記憶體中，之後仍可能完成。繼續不會取消、捨棄、重試或解決它。"
   },
   "pt-BR": {
     "homeHint": "Reúna suas fontes, perguntas e ideias.",
@@ -49,7 +55,9 @@ export const notebookMessages = {
     "notFound": "Esta página não foi encontrada.",
     "freshCreation": "Iniciar um novo rascunho de caderno",
     "freshCreationHint": "Inicie um rascunho em branco separado. Os dados anteriores e as solicitações incertas são mantidos, sem cópia ou nova tentativa.",
-    "retainedCreations": "Rascunhos anteriores mantidos"
+    "retainedCreations": "Rascunhos anteriores mantidos",
+    "retainCreation": "Manter a criação e continuar",
+    "retainCreationHint": "Esta criação permanece na memória com os dados e a identidade originais. Ela ainda pode ser concluída. Continuar não cancela, descarta, repete nem resolve a solicitação."
   },
   "ja-JP": {
     "homeHint": "資料、質問、アイデアを一つにまとめましょう。",
@@ -62,7 +70,9 @@ export const notebookMessages = {
     "notFound": "このページは見つかりませんでした。",
     "freshCreation": "新しいノートブックの下書きを開始",
     "freshCreationHint": "別の空白の下書きを開始します。以前の入力と結果不明のリクエストは保持され、コピーや再送はされません。",
-    "retainedCreations": "保持された以前の下書き"
+    "retainedCreations": "保持された以前の下書き",
+    "retainCreation": "作成リクエストを保持して続行",
+    "retainCreationHint": "この作成リクエストは元の入力と識別情報とともにメモリに保持され、後で完了する場合があります。続行してもキャンセル、破棄、再送、解決はされません。"
   },
   "it-IT": {
     "homeHint": "Riunisci fonti, domande e idee.",
@@ -75,7 +85,9 @@ export const notebookMessages = {
     "notFound": "Pagina non trovata.",
     "freshCreation": "Inizia una nuova bozza di taccuino",
     "freshCreationHint": "Inizia una bozza vuota separata. I dati precedenti e le richieste incerte vengono conservati, senza copiarli o ripeterli.",
-    "retainedCreations": "Bozze precedenti conservate"
+    "retainedCreations": "Bozze precedenti conservate",
+    "retainCreation": "Conserva la creazione e continua",
+    "retainCreationHint": "Questa creazione resta in memoria con i dati e l’identità originali. Potrebbe ancora completarsi. Continuare non annulla, elimina, ripete o risolve la richiesta."
   },
   "fr-FR": {
     "homeHint": "Réunissez vos sources, questions et idées.",
@@ -88,7 +100,9 @@ export const notebookMessages = {
     "notFound": "Cette page est introuvable.",
     "freshCreation": "Commencer un nouveau brouillon de carnet",
     "freshCreationHint": "Commencez un brouillon vide distinct. Les saisies précédentes et les demandes incertaines sont conservées, sans copie ni nouvelle tentative.",
-    "retainedCreations": "Brouillons précédents conservés"
+    "retainedCreations": "Brouillons précédents conservés",
+    "retainCreation": "Conserver la création et continuer",
+    "retainCreationHint": "Cette création reste en mémoire avec la saisie et l’identité d’origine. Elle peut encore aboutir. Continuer ne l’annule, ne la supprime, ne la réessaie et ne la résout pas."
   },
   "ru-RU": {
     "homeHint": "Соберите источники, вопросы и идеи вместе.",
@@ -101,7 +115,9 @@ export const notebookMessages = {
     "notFound": "Страница не найдена.",
     "freshCreation": "Начать новый черновик блокнота",
     "freshCreationHint": "Начните отдельный пустой черновик. Прежний ввод и неопределённые запросы сохраняются, не копируются и не повторяются.",
-    "retainedCreations": "Сохранённые прежние черновики"
+    "retainedCreations": "Сохранённые прежние черновики",
+    "retainCreation": "Сохранить запрос создания и продолжить",
+    "retainCreationHint": "Этот запрос остаётся в памяти с исходным вводом и идентификатором. Он ещё может завершиться. Продолжение не отменяет, не удаляет, не повторяет и не разрешает запрос."
   },
   "bn-IN": {
     "homeHint": "উৎস, প্রশ্ন ও ভাবনা একসঙ্গে রাখুন।",
@@ -114,7 +130,9 @@ export const notebookMessages = {
     "notFound": "এই পৃষ্ঠাটি পাওয়া যায়নি।",
     "freshCreation": "নতুন নোটবুকের খসড়া শুরু করুন",
     "freshCreationHint": "আলাদা একটি ফাঁকা খসড়া শুরু করুন। আগের লেখা ও অনিশ্চিত অনুরোধ রাখা হবে; সেগুলি কপি বা আবার পাঠানো হবে না।",
-    "retainedCreations": "সংরক্ষিত আগের খসড়াগুলি"
+    "retainedCreations": "সংরক্ষিত আগের খসড়াগুলি",
+    "retainCreation": "তৈরির অনুরোধ রেখে এগিয়ে যান",
+    "retainCreationHint": "তৈরির অনুরোধটি মূল লেখা ও পরিচয়সহ মেমরিতে থাকবে। এটি পরেও সম্পূর্ণ হতে পারে। এগিয়ে গেলে এটি বাতিল, বাদ, আবার পাঠানো বা সমাধান করা হবে না।"
   },
   "ca-ES": {
     "homeHint": "Reuneix les teves fonts, preguntes i idees.",
@@ -127,7 +145,9 @@ export const notebookMessages = {
     "notFound": "No s’ha trobat aquesta pàgina.",
     "freshCreation": "Inicia un nou esborrany de llibreta",
     "freshCreationHint": "Inicia un esborrany buit independent. Les dades anteriors i les sol·licituds incertes es conserven, sense copiar-les ni repetir-les.",
-    "retainedCreations": "Esborranys anteriors conservats"
+    "retainedCreations": "Esborranys anteriors conservats",
+    "retainCreation": "Conserva la creació i continua",
+    "retainCreationHint": "Aquesta creació es manté en memòria amb les dades i la identitat originals. Encara es pot completar. Continuar no la cancel·la, descarta, repeteix ni resol."
   },
   "es-ES": {
     "homeHint": "Reúne tus fuentes, preguntas e ideas.",
@@ -140,7 +160,9 @@ export const notebookMessages = {
     "notFound": "No se encontró esta página.",
     "freshCreation": "Iniciar un nuevo borrador de cuaderno",
     "freshCreationHint": "Inicia un borrador vacío independiente. Las entradas anteriores y las solicitudes inciertas se conservan, sin copiarlas ni repetirlas.",
-    "retainedCreations": "Borradores anteriores conservados"
+    "retainedCreations": "Borradores anteriores conservados",
+    "retainCreation": "Conservar la creación y continuar",
+    "retainCreationHint": "Esta creación permanece en memoria con los datos y la identidad originales. Aún puede completarse. Continuar no la cancela, descarta, repite ni resuelve."
   },
   "de-DE": {
     "homeHint": "Sammle Quellen, Fragen und Ideen an einem Ort.",
@@ -153,7 +175,9 @@ export const notebookMessages = {
     "notFound": "Diese Seite wurde nicht gefunden.",
     "freshCreation": "Neuen Notizbuchentwurf beginnen",
     "freshCreationHint": "Beginne einen separaten leeren Entwurf. Frühere Eingaben und unklare Anfragen bleiben erhalten und werden weder kopiert noch wiederholt.",
-    "retainedCreations": "Aufbewahrte frühere Entwürfe"
+    "retainedCreations": "Aufbewahrte frühere Entwürfe",
+    "retainCreation": "Erstellung behalten und fortfahren",
+    "retainCreationHint": "Diese Erstellung bleibt mit den ursprünglichen Eingaben und ihrer Identität im Arbeitsspeicher. Sie kann noch abgeschlossen werden. Fortfahren bricht sie nicht ab, verwirft, wiederholt oder klärt sie nicht."
   },
   "pl-PL": {
     "homeHint": "Zbierz źródła, pytania i pomysły w jednym miejscu.",
@@ -166,7 +190,9 @@ export const notebookMessages = {
     "notFound": "Nie znaleziono tej strony.",
     "freshCreation": "Rozpocznij nowy szkic notatnika",
     "freshCreationHint": "Rozpocznij osobny pusty szkic. Poprzednie dane i niepewne żądania zostają zachowane, bez kopiowania ani ponawiania.",
-    "retainedCreations": "Zachowane wcześniejsze szkice"
+    "retainedCreations": "Zachowane wcześniejsze szkice",
+    "retainCreation": "Zachowaj żądanie utworzenia i kontynuuj",
+    "retainCreationHint": "To żądanie pozostaje w pamięci z pierwotnymi danymi i tożsamością. Może się jeszcze zakończyć. Kontynuacja nie anuluje, nie odrzuca, nie ponawia ani nie rozstrzyga go."
   },
   "tr-TR": {
     "homeHint": "Kaynaklarınızı, sorularınızı ve fikirlerinizi bir arada tutun.",
@@ -179,6 +205,8 @@ export const notebookMessages = {
     "notFound": "Bu sayfa bulunamadı.",
     "freshCreation": "Yeni bir not defteri taslağı başlat",
     "freshCreationHint": "Ayrı ve boş bir taslak başlatın. Önceki girdiler ve belirsiz istekler korunur; kopyalanmaz veya yeniden denenmez.",
-    "retainedCreations": "Korunan önceki taslaklar"
+    "retainedCreations": "Korunan önceki taslaklar",
+    "retainCreation": "Oluşturma isteğini koru ve devam et",
+    "retainCreationHint": "Bu oluşturma isteği, ilk girdi ve kimliğiyle bellekte kalır. Daha sonra tamamlanabilir. Devam etmek isteği iptal etmez, silmez, yeniden denemez veya sonuçlandırmaz."
   }
 } as const;

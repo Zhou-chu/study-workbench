@@ -8,13 +8,21 @@ export function UnsavedNavigationDialog({ navigation }: {
     navigation: NavigationController;
 }) {
     const state = useSyncExternalStore(navigation.subscribe, navigation.getSnapshot);
-    const { session } = useI18n();
-    useEffect(() => { const warn = (event: BeforeUnloadEvent) => { if (navigation.registry.hasUnsaved()) {
-        event.preventDefault();
-        event.returnValue = '';
-    } }; window.addEventListener('beforeunload', warn); return () => window.removeEventListener('beforeunload', warn); }, [navigation]);
-    return <Dialog.Root open={state.status !== null} onOpenChange={open => { if (!open)
-        navigation.cancel(state.capture); }}><Dialog.Portal><Dialog.Overlay className="dialog-overlay"/><Dialog.Content className="dialog-content" onCloseAutoFocus={event => event.preventDefault()}><Dialog.Title>{session.unsavedTitle}</Dialog.Title><Dialog.Description>{state.status === 'blocked' ? session.blocked : session.unsavedHint}</Dialog.Description><div className="dialog-actions"><Button onClick={() => navigation.cancel(state.capture)}>{session.keepEditing}</Button>{state.status === 'confirm' && <Button variant="danger" onClick={() => navigation.confirm(state.capture)}>{session.leave}</Button>}</div></Dialog.Content></Dialog.Portal></Dialog.Root>;
+    const { session, notebook } = useI18n();
+    useEffect(() => {
+        const warn = (event: BeforeUnloadEvent) => {
+            if (navigation.registry.hasUnsaved()) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', warn);
+        return () => window.removeEventListener('beforeunload', warn);
+    }, [navigation]);
+    return <Dialog.Root open={state.status !== null} onOpenChange={open => {
+            if (!open)
+                navigation.cancel(state.capture);
+        }}><Dialog.Portal><Dialog.Overlay className="dialog-overlay"/><Dialog.Content className="dialog-content" onCloseAutoFocus={event => event.preventDefault()}><Dialog.Title>{session.unsavedTitle}</Dialog.Title><Dialog.Description>{state.status === 'retain' ? notebook.retainCreationHint : state.status === 'blocked' ? session.blocked : session.unsavedHint}</Dialog.Description><div className="dialog-actions"><Button onClick={() => navigation.cancel(state.capture)}>{session.keepEditing}</Button>{state.status === 'confirm' && <Button variant="danger" onClick={() => navigation.confirm(state.capture)}>{session.leave}</Button>}{state.status === 'retain' && <Button onClick={() => navigation.confirm(state.capture)}>{notebook.retainCreation}</Button>}</div></Dialog.Content></Dialog.Portal></Dialog.Root>;
 }
 export function RouterNavigationGuard({ navigation }: {
     navigation: NavigationController;
@@ -26,16 +34,27 @@ export function RouterNavigationGuard({ navigation }: {
         // The navigation controller owns the captured target. React Router owns history repair.
         const originalConfirm = navigation.confirm;
         const originalCancel = navigation.cancel;
-        navigation.confirm = (expected) => { if (expected !== undefined && expected !== navigation.getSnapshot().capture)
-            return null; const intent = originalConfirm(expected); const current = latest.current; if (current.state === 'blocked') {
-            if (intent && intent.destination === current.location.pathname + current.location.search + current.location.hash)
-                current.proceed();
-            else
+        navigation.confirm = (expected) => {
+            if (expected !== undefined && expected !== navigation.getSnapshot().capture)
+                return null;
+            const intent = originalConfirm(expected);
+            const current = latest.current;
+            if (current.state === 'blocked') {
+                if (intent && intent.destination === current.location.pathname + current.location.search + current.location.hash)
+                    current.proceed();
+                else
+                    current.reset();
+            }
+            return intent;
+        };
+        navigation.cancel = (expected) => {
+            if (expected !== undefined && expected !== navigation.getSnapshot().capture)
+                return;
+            originalCancel(expected);
+            const current = latest.current;
+            if (current.state === 'blocked')
                 current.reset();
-        } return intent; };
-        navigation.cancel = (expected) => { if (expected !== undefined && expected !== navigation.getSnapshot().capture)
-            return; originalCancel(expected); const current = latest.current; if (current.state === 'blocked')
-            current.reset(); };
+        };
         return () => { navigation.confirm = originalConfirm; navigation.cancel = originalCancel; };
     }, [navigation]);
     return null;
