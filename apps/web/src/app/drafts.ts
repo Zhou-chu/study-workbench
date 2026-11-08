@@ -141,11 +141,13 @@ type NotebookCapture = Readonly<{
     activation: number;
     intent: NavigationIntent;
 }>;
-type ResourceCapture = Readonly<{decision: Exclude<NavigationDecision, 'allow'>; resourceId: string; resourceDraft: LibraryDraft; notebookDraft: DraftState | undefined; activation: number; intent: NavigationIntent}>;
+type ResourceCapture = Readonly<{decision: Exclude<NavigationDecision, 'allow'>; resourceId: string; resourceDraft: LibraryDraft; resourceDrafts: readonly LibraryDraft[]; focusedResourceId: string | null; notebookDraft: DraftState | undefined; activation: number; intent: NavigationIntent}>;
 type Capture = NotebookCapture | ResourceCapture;
 export function createNavigationController(registry: DraftRegistry) {
     let active: DraftId | null = null;
     let resourceActive: string | null = null;
+    const resourceOwners = new Set<string>();
+    const resourceLeases = new Map<string, Set<symbol>>();
     let activation = 0;
     let capture: Capture | null = null;
     let status: 'confirm' | 'blocked' | 'retain' | null = null;
@@ -165,8 +167,24 @@ export function createNavigationController(registry: DraftRegistry) {
         status = null;
         notify();
     };
-    const activateResource = (id: string | null) => { if (resourceActive === id) return; resourceActive = id; activation++; capture = null; status = null; notify(); };
-    const resourceDecision = (r: LibraryDraft | undefined): NavigationDecision => { const notebook = active ? decision(registry.get(active)) : 'allow'; if (notebook === 'blocked') return 'blocked'; if (notebook === 'retain' || r && ['pending', 'accepted', 'unknown'].includes(r.status)) return 'retain'; return notebook === 'confirm' || r?.dirty ? 'confirm' : 'allow'; };
+    const activateResource = (id: string | null) => {
+        if (resourceActive === id && (id !== null || resourceOwners.size === 0)) return;
+        resourceActive = id;
+        if (id) resourceOwners.add(id); else resourceOwners.clear();
+        activation++; capture = null; status = null; notify();
+    };
+    const deactivateResource = (id: string) => {
+        if (!resourceOwners.delete(id)) return;
+        if (resourceActive === id) resourceActive = [...resourceOwners].at(-1) ?? null;
+        activation++; capture = null; status = null; notify();
+    };
+    const resourceRows = () => [...resourceOwners].flatMap(id => {const row=registry.library.get(id);return row?[row]:[];});
+    const resourceDecision = (rows: readonly LibraryDraft[]): NavigationDecision => {
+        const notebook = active ? decision(registry.get(active)) : 'allow';
+        if (notebook === 'blocked') return 'blocked';
+        if (notebook === 'retain' || rows.some(r=>['pending','accepted','unknown'].includes(r.status))) return 'retain';
+        return notebook === 'confirm' || rows.some(r=>r.dirty) ? 'confirm' : 'allow';
+    };
     const decision = (draft: DraftState | undefined): NavigationDecision => {
         if (registry.studio.blocked(active?.notebookId)) return 'blocked';
         if (active && (registry.sources.pending(active.notebookId) || registry.turns.hasPending(active.notebookId))) return 'blocked';
@@ -181,15 +199,28 @@ export function createNavigationController(registry: DraftRegistry) {
     };
     return { registry, getSnapshot: () => snapshot, subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
         activate, activateResource,
-        deactivateResource(id: string) { if (resourceActive === id) activateResource(null); },
+        deactivateResource,
+        holdResource(id: string) {
+            const lease = Symbol(id), leases = resourceLeases.get(id) ?? new Set<symbol>();
+            leases.add(lease); resourceLeases.set(id, leases);
+            const row = registry.library.get(id);
+            if (row && (row.dirty || ['pending','accepted','unknown'].includes(row.status)) && !resourceOwners.has(id)) {
+                resourceOwners.add(id); activation++; capture=null; status=null; notify();
+            }
+            return () => {
+                leases.delete(lease);
+                if (!leases.size) {resourceLeases.delete(id);deactivateResource(id);}
+            };
+        },
         deactivate(id: DraftId) {
             if (active && key(active) === key(id))
                 activate(null);
         },
         requestNavigation(intent: NavigationIntent): NavigationDecision {
-            if (resourceActive) {
-                const row = registry.library.get(resourceActive), result = resourceDecision(row);
-                capture = row && result !== 'allow' ? Object.freeze({decision: result, resourceId: resourceActive, resourceDraft: row, notebookDraft: active ? registry.get(active) : undefined, activation, intent: Object.freeze({...intent})}) : null;
+            const rows = resourceRows();
+            if (rows.length) {
+                const row = rows.find(r=>r.id===resourceActive) ?? rows[0]!, result = resourceDecision(rows);
+                capture = result !== 'allow' ? Object.freeze({decision: result, resourceId: row.id, resourceDraft: row, resourceDrafts: Object.freeze(rows), focusedResourceId: resourceActive, notebookDraft: active ? registry.get(active) : undefined, activation, intent: Object.freeze({...intent})}) : null;
                 status = result === 'allow' ? null : result; notify(); return result;
             }
             const draft = active ? registry.get(active) : undefined;
@@ -206,7 +237,8 @@ export function createNavigationController(registry: DraftRegistry) {
             status = null;
             notify();
             if (original && 'resourceId' in original) {
-                if (resourceActive !== original.resourceId || activation !== original.activation || registry.library.get(original.resourceId) !== original.resourceDraft || original.notebookDraft !== (active ? registry.get(active) : undefined) || !['confirm','retain'].includes(original.decision) || resourceDecision(original.resourceDraft) !== original.decision) return null;
+                const rows = resourceRows();
+                if (resourceActive !== original.focusedResourceId || activation !== original.activation || rows.length !== original.resourceDrafts.length || rows.some((r,i)=>r!==original.resourceDrafts[i]) || original.notebookDraft !== (active ? registry.get(active) : undefined) || !['confirm','retain'].includes(original.decision) || resourceDecision(rows) !== original.decision) return null;
                 return original.intent;
             }
             if (!original || !active || activation !== original.activation || key(active) !== key(original.id))

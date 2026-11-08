@@ -1,6 +1,6 @@
 import { asRequestNotDispatchedError, canDispatch, readTurnContext, sessionCoordinator } from '@study/web-transport';
 import { LibraryError, type LibraryApi, type LibrarySource } from '../../data/library-api';
-import type { LibraryStore, LibraryDraft, ItemReceipt, LibraryStatus } from './library-store';
+import type { LibraryStore, LibraryDraft, ItemReceipt, LibraryStatus, ImportInput } from './library-store';
 export function failure(error: unknown): 'not-sent' | 'rejected' | 'unknown' { return asRequestNotDispatchedError(error) ? 'not-sent' : error instanceof LibraryError && ['rejected', 'missing'].includes(error.kind) ? 'rejected' : 'unknown'; }
 export function sourceHref(id: string) { return '/sources/' + encodeURIComponent(id); }
 export function safeContentUrl(value: string | null | undefined) {
@@ -38,7 +38,22 @@ export function retryReason(s: LibrarySource): 'completed' | 'active' | 'unknown
         return 'unknown';
     return null;
 }
+export function validImportInput(input: ImportInput, finalStep = true): boolean {
+    if (finalStep && input.step !== 3 || input.notebooks.length > 50 || input.transformations.length > 50)
+        return false;
+    if ([...input.notebooks, ...input.transformations].some(id => !id.trim()))
+        return false;
+    if (input.type === 'text')
+        return !!input.text.trim();
+    if (input.type === 'upload')
+        return input.files.length > 0 && input.files.every(file => file instanceof File);
+    const urls = input.urls.split(/\r?\n/).map(value => value.trim()).filter(Boolean);
+    return input.type === 'link' && urls.length > 0 && urls.every(url => !!safeContentUrl(url));
+}
 export async function executeLibraryDraft(store: LibraryStore, id: string, api: LibraryApi) {
+    const input = store.get(id)?.input;
+    if (input?.kind === 'import' && !validImportInput(input))
+        return;
     const row = store.begin(id, readTurnContext(), sessionCoordinator.current());
     if (!row?.token)
         return;
@@ -144,7 +159,14 @@ export async function executeLibraryDraft(store: LibraryStore, id: string, api: 
         finish('succeeded');
     }
     catch (error) {
-        finish(failure(error));
+        const outcome = failure(error);
+        if (outcome === 'unknown' && p.kind === 'action' && ['retry', 'embed', 'insight'].includes(p.action)) {
+            const receipt: ItemReceipt = { state: 'unknown', ...(error instanceof LibraryError && error.resourceId ? { resourceId: error.resourceId } : {}), ...(error instanceof LibraryError && error.commandId ? { commandId: error.commandId } : {}) };
+            record(0, receipt);
+            finish('unknown', receipt.commandId);
+        }
+        else
+            finish(outcome);
     }
     // Captured ownership is never replaced by current identity after an await.
     void g;

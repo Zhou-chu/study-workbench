@@ -82,6 +82,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Recover separate current source-library edits after reauthentication or target changes without rewriting retained work. Preserve all mounted dirty/pending navigation owners and actual uncertain command IDs, and require final import review before a single guarded submission.
+
 - Keep cited-note conflict re-edit available when the saved acknowledgement contains null optional citation metadata but the workspace omits those same four fields. Compare only that representation difference, retain the original frozen evidence and comparison history, and continue requiring an explicit revision-bound save.
 
 - Preserve manual scrolling of an already-visible citation while retained text is loading, cancelling older pending page jumps while allowing a newer explicit reader page request.

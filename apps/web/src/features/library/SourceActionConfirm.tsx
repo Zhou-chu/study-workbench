@@ -8,6 +8,7 @@ import { retryReason } from './library-operations';
 import type { LibrarySource } from '../../data/library-api';
 import type { ActionInput, LibraryDraft } from './library-store';
 import { OperationStatus } from './OperationStatus';
+import { FreshLibraryIntent } from './FreshLibraryIntent';
 export function SourceActionConfirm({ source, action, notebookId, insightId, after, labelOverride }: {
     source: LibrarySource;
     action: ActionInput['action'];
@@ -27,7 +28,7 @@ export function SourceActionConfirm({ source, action, notebookId, insightId, aft
             return;
         const id = c.store.open({ kind: 'source', sourceId: source.id }, { kind: 'action', action, sourceId: source.id, ...(notebookId ? { notebookId } : {}), ...(insightId ? { insightId } : {}) }, c.context, c.generation);
         const previous = c.store.get(id)!;
-        if (['not-sent', 'rejected'].includes(previous.status))
+        if (c.store.current(previous, c.context, c.generation) && ['not-sent', 'rejected'].includes(previous.status))
             c.store.edit(id, {});
         setCapture(c.store.get(id)!);
         setSourceCapture(source);
@@ -36,8 +37,8 @@ export function SourceActionConfirm({ source, action, notebookId, insightId, aft
     };
     return <><Button disabled={disabled} variant={['delete', 'unlink', 'delete-insight'].includes(action) ? 'danger' : 'secondary'} onClick={begin}>{label}</Button>{reason && <p className="meta">{reason === 'completed' ? l.retryCompleted : reason === 'active' ? l.retryActive : l.retryUnknown}</p>}
  <LibraryDialog open={open} onOpenChange={setOpen} title={label} description={action === 'unlink' ? t.sources.removeConfirm : action === 'retry' ? l.retryHint : action === 'delete' ? t.sources.deleteSourceConfirm : action === 'delete-insight' ? t.sources.deleteInsightConfirm : t.sources.embeddingDesc}>
- <p>{sourceCapture?.title ?? t.sources.untitledSource}</p><OperationStatus row={c.row}/>
- <Button variant="danger" disabled={!capture || capture !== c.row || c.row.status !== 'editing' || source.id !== (capture.input.kind === 'action' ? capture.input.sourceId : '') || capture.input.kind !== 'action' || capture.input.notebookId !== notebookId || capture.input.insightId !== insightId || !c.ready || sourceCapture?.updated !== source.updated || sourceCapture?.title !== source.title} onClick={() => {
+ <p>{sourceCapture?.title ?? t.sources.untitledSource}</p><OperationStatus row={c.row}/><FreshLibraryIntent row={c.row} input={{ kind: "action", action, sourceId: source.id, ...(notebookId ? { notebookId } : {}), ...(insightId ? { insightId } : {}) }} onFresh={id => { setCapture(c.store.get(id)!); setSourceCapture(source); }}/>
+ <Button variant="danger" disabled={!capture || capture !== c.row || c.row.status !== 'editing' || source.id !== (capture.input.kind === 'action' ? capture.input.sourceId : '') || capture.input.kind !== 'action' || capture.input.notebookId !== notebookId || capture.input.insightId !== insightId || !c.ready || !c.store.current(c.row, c.context, c.generation) || sourceCapture?.updated !== source.updated || sourceCapture?.title !== source.title} onClick={() => {
             if (!capture || capture !== c.store.get(capture.id))
                 return;
             void c.run(capture.id).then(() => {

@@ -147,6 +147,7 @@ it.each([false, true])('import submission uncertainty retains actual producer id
     fireEvent.change(screen.getByLabelText('URL(s) *'), { target: { value: 'https://source.example/one\nhttps://source.example/two' } });
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Import sources' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: 'Import sources' }));
     await screen.findByText(/Work may already be running/);
     const row = h.workbench.drafts.library.getSnapshot().find(r => r.input.kind === 'import')!;
@@ -192,4 +193,178 @@ it('notebook source links preserve their return origin and the sidebar opens the
     await waitFor(() => expect(h.router.state.location.pathname).toBe('/sources'));
     expect(await screen.findByRole('heading', { name: 'Sources' })).toBeVisible();
     expect(requests.some(r => r.method === 'PATCH' || r.method === 'POST')).toBe(false);
+});
+async function changeLibraryIdentity(kind: 'reauth' | 'target') {
+    const target = readTurnContext()!.target;
+    await act(async () => {
+        if (kind === 'reauth') {
+            sessionCoordinator.confirmed();
+            publishTurnTarget(target, false);
+        }
+        else
+            publishTurnTarget({ ...target, apiBase: 'http://localhost:3000/other-api' }, true);
+    });
+    await act(async () => publishTurnTarget(target, true));
+}
+it.each([['reauth', false], ['reauth', true], ['target', false], ['target', true]] as const)('I1 source Details and Insights recover a separate current intent after %s; dirty=%s', async (kind, dirty) => {
+    const requests = libraryServer(r => r.method === 'PUT' ? json({ ...legacySource, full_text: 'Original source body', notebooks: ['n'], title: 'Current edit' }) : r.method === 'POST' ? json({ status: 'pending', source_id: legacySource.id, transformation_id: 'transformation:summary', command_id: null }, 202) : undefined);
+    const h = await renderLibrary(detailPath);
+    await screen.findByText('Original source body');
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Details' }));
+    const title = await screen.findByLabelText('Source title');
+    if (dirty)
+        fireEvent.change(title, { target: { value: 'Retained original edit' } });
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Insights' }));
+    await screen.findByRole('option', { name: 'Summary' });
+    if (dirty)
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'transformation:summary' } });
+    const store = h.workbench.drafts.library, oldMetadata = store.getSnapshot().find(r => r.input.kind === 'metadata')!, oldInsight = store.getSnapshot().find(r => r.input.kind === 'action' && r.input.action === 'insight')!;
+    await changeLibraryIdentity(kind);
+    await screen.findByText('Original source body');
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Details' }));
+    if (dirty) {
+        expect(await screen.findByLabelText('Source title')).toBeDisabled();
+        fireEvent.click(screen.getByRole('button', { name: 'Start a separate new draft' }));
+    }
+    await waitFor(() => expect(screen.getByLabelText('Source title')).toBeEnabled());
+    expect(screen.getByLabelText('Source title')).not.toHaveValue('Retained original edit');
+    expect(store.get(oldMetadata.id)).toBe(oldMetadata);
+    fireEvent.change(screen.getByLabelText('Source title'), { target: { value: 'Current edit' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save source details' }));
+    await waitFor(() => expect(requests.filter(r => r.method === 'PUT')).toHaveLength(1));
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Insights' }));
+    await screen.findByRole('option', { name: 'Summary' });
+    if (dirty) {
+        expect(screen.getByRole('combobox')).toBeDisabled();
+        fireEvent.click(screen.getByRole('button', { name: 'Start a separate new draft' }));
+    }
+    await waitFor(() => expect(screen.getByRole('combobox')).toBeEnabled());
+    expect(screen.getByRole('combobox')).toHaveValue('');
+    expect(store.get(oldInsight.id)).toBe(oldInsight);
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'transformation:summary' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Generate New Insight' }));
+    await screen.findByText(/Work may already be running/);
+    const unknown = store.getSnapshot().find(r => r.status === 'unknown' && r.input.kind === 'action' && r.input.action === 'insight')!;
+    await changeLibraryIdentity('reauth');
+    await screen.findByText('Original source body');
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Insights' }));
+    expect(screen.getByRole('combobox')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Start a separate new draft' })).not.toBeInTheDocument();
+    expect(store.get(unknown.id)).toBe(unknown);
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
+});
+it.each([['reauth', false], ['reauth', true], ['target', false], ['target', true]] as const)('I1 stale association recovery after %s keeps original choices; dirty=%s', async (kind, dirty) => {
+    const requests = libraryServer();
+    const h = await renderLibrary(detailPath);
+    await screen.findByText('Original source body');
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Details' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit notebook associations' }));
+    const selection = await screen.findByLabelText('Synthetic notebook');
+    if (dirty)
+        fireEvent.click(selection);
+    const store = h.workbench.drafts.library, old = store.getSnapshot().find(r => r.input.kind === 'associations')!;
+    await changeLibraryIdentity(kind);
+    await screen.findByText('Original source body');
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Details' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit notebook associations' }));
+    if (dirty) {
+        expect(await screen.findByLabelText('Synthetic notebook')).toBeDisabled();
+        fireEvent.click(screen.getByRole('button', { name: 'Start a separate new draft' }));
+    }
+    expect(await screen.findByLabelText('Synthetic notebook')).toBeChecked();
+    expect(screen.getByLabelText('Synthetic notebook')).toBeEnabled();
+    expect(store.get(old.id)).toBe(old);
+    expect(old.input).toMatchObject({ selected: dirty ? [] : ['n'] });
+    expect(requests.some(r => r.method === 'POST' || r.method === 'DELETE')).toBe(false);
+    fireEvent.click(screen.getByLabelText('Synthetic notebook'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save associations' }));
+    await waitFor(() => expect(requests.filter(r => r.method === 'DELETE')).toHaveLength(1));
+    expect(store.get(old.id)).toBe(old);
+});
+it.each([['reauth', false], ['reauth', true], ['target', false], ['target', true]] as const)('I1 stale existing-source recovery after %s keeps original search and selection; dirty=%s', async (kind, dirty) => {
+    const requests = libraryServer(r => r.method === 'GET' && decodeURIComponent(new URL(r.url).pathname) === '/api/sources/source:extra' ? json({ ...legacySource, id: 'source:extra', title: 'Extra source', full_text: 'Extra body', notebooks: [] }) : r.method === 'GET' && new URL(r.url).pathname === '/api/sources' ? json(new URL(r.url).searchParams.has('notebook_id') ? [legacySource] : [legacySource, { ...legacySource, id: 'source:extra', title: 'Extra source' }]) : undefined);
+    const h = await renderLibrary('/notebooks/n'), panel = await screen.findByRole('region', { name: 'Classic sources' });
+    fireEvent.click(within(panel).getByRole('button', { name: 'Add Existing Source' }));
+    await screen.findByLabelText('Extra source');
+    if (dirty) {
+        fireEvent.click(screen.getByLabelText('Extra source'));
+        fireEvent.change(screen.getByLabelText('Search sources by name or URL...'), { target: { value: 'Retained query' } });
+    }
+    const store = h.workbench.drafts.library, old = store.getSnapshot().find(r => r.input.kind === 'existing')!;
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
+    await changeLibraryIdentity(kind);
+    fireEvent.click(within(await screen.findByRole('region', { name: 'Classic sources' })).getByRole('button', { name: 'Add Existing Source' }));
+    if (dirty) {
+        expect(await screen.findByLabelText('Search sources by name or URL...')).toBeDisabled();
+        fireEvent.click(screen.getByRole('button', { name: 'Start a separate new draft' }));
+    }
+    expect(screen.getByLabelText('Search sources by name or URL...')).toHaveValue('');
+    expect(await screen.findByLabelText('Extra source')).not.toBeChecked();
+    expect(store.get(old.id)).toBe(old);
+    expect(requests.some(r => r.method === 'POST')).toBe(false);
+    fireEvent.click(screen.getByLabelText('Extra source'));
+    fireEvent.click(screen.getByRole('button', { name: 'Add Selected' }));
+    await waitFor(() => expect(requests.filter(r => r.method === 'POST')).toHaveLength(1));
+    expect(store.get(old.id)).toBe(old);
+});
+it.each(['reauth', 'target'] as const)('I1 canceled pristine action opens a new current confirmation after %s', async (kind) => {
+    const requests = libraryServer(r => r.method === 'DELETE' ? json({ message: 'Deleted' }) : undefined);
+    const h = await renderLibrary(detailPath);
+    await screen.findByText('Original source body');
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Source' }));
+    const store = h.workbench.drafts.library, old = store.getSnapshot().find(r => r.input.kind === 'action' && r.input.action === 'delete')!;
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+    await changeLibraryIdentity(kind);
+    await screen.findByText('Original source body');
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Source' }));
+    expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' })).toBeEnabled();
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' }));
+    await waitFor(() => expect(requests.filter(r => r.method === 'DELETE')).toHaveLength(1));
+    expect(store.get(old.id)).toBe(old);
+    expect(store.getSnapshot().filter(r => r.input.kind === 'action' && r.input.action === 'delete')).toHaveLength(2);
+});
+it('I2 canceled clean action cannot hide a dirty source owner from sidebar or Back/Forward and stale confirmation', async () => {
+    libraryServer();
+    const h = await renderLibrary(detailPath, { entries: ['/notebooks', detailPath, '/sources'], index: 1 });
+    await screen.findByText('Original source body');
+    fireEvent.mouseDown(screen.getByRole('tab', { name: 'Details' }));
+    const title = screen.getByLabelText('Source title');
+    fireEvent.change(title, { target: { value: 'Dirty source' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Source' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Sources' }));
+    expect(await screen.findByRole('dialog', { name: 'Leave this draft?' })).toBeVisible();
+    const captured = h.workbench.navigation.getSnapshot().capture;
+    fireEvent.change(title, { target: { value: 'Newer dirty source' } });
+    await act(async () => { expect(h.workbench.navigation.confirm(captured)).toBeNull(); });
+    expect(h.router.state.location.pathname).toBe(detailPath);
+    await act(async () => h.router.navigate(-1));
+    expect(await screen.findByRole('dialog', { name: 'Leave this draft?' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
+    await act(async () => h.router.navigate(1));
+    expect(await screen.findByRole('dialog', { name: 'Leave this draft?' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
+    expect(title).toHaveValue('Newer dirty source');
+});
+it('I2 a pending hidden import still requires keep-and-continue after a clean dialog closes', async () => {
+    let release!: (r: Response) => void;
+    const requests = libraryServer(r => r.method === 'POST' ? new Promise<Response>(resolve => release = resolve) : undefined);
+    const h = await renderLibrary();
+    fireEvent.click(await screen.findByRole('button', { name: 'Add Source' }));
+    fireEvent.change(screen.getByLabelText('URL(s) *'), { target: { value: 'https://source.example/pending' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByLabelText('Summary');
+    fireEvent.click(screen.getByRole('button', { name: 'Import sources' }));
+    await waitFor(() => expect(requests.filter(r => r.method === 'POST')).toHaveLength(1));
+    const original = h.workbench.drafts.library.getSnapshot().find(r => r.input.kind === 'import')!;
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Source' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Notebooks' }));
+    expect(await screen.findByRole('button', { name: 'Keep work and continue' })).toBeVisible();
+    expect(h.workbench.drafts.library.get(original.id)).toBe(original);
+    fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
+    await act(async () => release(json({ ...legacySource, full_text: null, notebooks: [] })));
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
 });

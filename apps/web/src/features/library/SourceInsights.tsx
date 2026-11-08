@@ -8,6 +8,7 @@ import type { LibrarySource } from '../../data/library-api';
 import { useLibraryState } from './use-library-state';
 import { SourceActionConfirm } from './SourceActionConfirm';
 import { OperationStatus } from './OperationStatus';
+import { FreshLibraryIntent } from './FreshLibraryIntent';
 import { sourceHref } from './library-operations';
 export function SourceInsights({ source }: {
     source: LibrarySource;
@@ -15,11 +16,11 @@ export function SourceInsights({ source }: {
     const [selected, setSelected] = useState<string | null>(null), [operation, setOperation] = useState<string | null>(null);
     const c = useLibraryState(operation), { t } = useI18n();
     useEffect(() => {
-        if (c.context)
+        if (c.ready && c.context)
             setOperation(c.store.open({ kind: 'source', sourceId: source.id }, { kind: 'action', action: 'insight', sourceId: source.id, transformationId: '' }, c.context, c.generation));
-    }, [source.id, c.context?.epoch, c.store]);
+    }, [source.id, c.scope, c.ready, c.store]);
     const transformation = c.row?.input.kind === 'action' ? c.row.input.transformationId ?? '' : '';
-    const locked = !c.ready || !!c.row && (c.row.retired || c.row.generation !== c.generation || ['pending', 'accepted', 'unknown'].includes(c.row.status));
+    const locked = !c.ready || !!c.row && (!c.store.current(c.row, c.context, c.generation) || ['pending', 'accepted', 'unknown'].includes(c.row.status));
     const choose = (value: string) => {
         if (!c.context || locked)
             return;
@@ -45,7 +46,7 @@ export function SourceInsights({ source }: {
             void c.run(id);
         }}>{t.sources.generateNewInsight}</Button></div>
  {!source.full_text?.trim() && <p>{t.apiErrors.sourceHasNoText}</p>}{(list.isError || transformations.isError || detail.isError) && <p role="alert">{t.common.contentUnavailable.errorTitle}</p>}
- <OperationStatus row={c.row}/>
+ <OperationStatus row={c.row}/><FreshLibraryIntent row={c.row} input={{ kind: "action", action: "insight", sourceId: source.id, transformationId: "" }} onFresh={setOperation}/>
  <ul className="library-list">{list.data?.map(item => <li key={item.id}><Button onClick={() => setSelected(item.id)}>{item.insight_type}</Button><span className="meta">{item.created ?? t.common.unknown}</span><SourceActionConfirm source={source} action="delete-insight" insightId={item.id} after={() => setSelected(null)}/></li>)}</ul>
  {list.data?.length === 0 && <p>{t.sources.noInsightsYet}</p>}{detail.data && <article><h3>{detail.data.insight_type}</h3><Markdown>{detail.data.content}</Markdown><Link className="button" to={sourceHref(detail.data.source_id)}>{t.sources.viewSource}</Link></article>}
  </section>;

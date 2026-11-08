@@ -84,7 +84,6 @@ export type LibraryDraft = Readonly<{
     input: LibraryInput;
     status: LibraryStatus;
     retired: boolean;
-    superseded?: boolean;
     dirty: boolean;
     attempt: number;
     token: LibraryToken | null;
@@ -112,39 +111,48 @@ const ownerKey = (v: LibraryOwner): string => {
 export const libraryDraftLocked = (r: LibraryDraft) => r.retired || ['pending', 'accepted', 'unknown', 'failed', 'succeeded'].includes(r.status);
 export function createLibraryStore(onChange: () => void) {
     const records = new Map<string, LibraryDraft>();
+    const retiredEpochs = new Set<number>();
+    const superseded = new Set<string>(); // Selection metadata only; retained records are never rewritten for recovery.
     const listeners = new Set<() => void>();
     let snapshot: readonly LibraryDraft[] = Object.freeze([]);
     const emit = () => { snapshot = Object.freeze([...records.values()]); listeners.forEach(f => f()); onChange(); };
     const set = (r: LibraryDraft) => { records.set(r.id, freeze(r)); emit(); };
-    const current = (r: LibraryDraft, c: DispatchContext | null, g: number) => !r.retired && canDispatch(r.context, c) && r.generation === g;
+    const current = (r: LibraryDraft, c: DispatchContext | null, g: number) => !r.retired && !superseded.has(r.id) && !retiredEpochs.has(r.context.epoch) && canDispatch(r.context, c) && r.generation === g;
+    const definitelyUnsent = (r: LibraryDraft) => ['editing', 'not-sent', 'rejected'].includes(r.status) && !r.receipts.some(x => x.state === 'accepted' || x.state === 'unknown');
+    const canFresh = (r: LibraryDraft, c: DispatchContext | null, g: number) => !!c?.ready && !superseded.has(r.id) && !retiredEpochs.has(c.epoch) && !current(r, c, g) && definitelyUnsent(r);
+    const sameInput = (a: LibraryInput, b: LibraryInput) => a.kind === b.kind && (a.kind !== 'action' || b.kind === 'action' && a.action === b.action && a.sourceId === b.sourceId && a.notebookId === b.notebookId && a.insightId === b.insightId);
     const match = (r: LibraryDraft | undefined, t: LibraryToken) => !!r && r.token === t;
     return {
         get: (id: string) => records.get(id), getSnapshot: () => snapshot, subscribe(f: () => void) { listeners.add(f); return () => { listeners.delete(f); }; },
-        current,
+        current, canFresh,
         open(owner: LibraryOwner, input: LibraryInput, c: DispatchContext, g: number) {
-            const existing = [...records.values()].find(r => !r.superseded && ownerKey(r.owner) === ownerKey(owner) && r.input.kind === input.kind && (input.kind !== 'action' || r.input.kind === 'action' && r.input.action === input.action && r.input.sourceId === input.sourceId && r.input.notebookId === input.notebookId && r.input.insightId === input.insightId) && !['succeeded', 'failed'].includes(r.status));
-            if (existing)
-                return existing.id;
+            const existing = [...records.values()].reverse().find(r => !superseded.has(r.id) && ownerKey(r.owner) === ownerKey(owner) && sameInput(r.input, input) && !['succeeded', 'failed'].includes(r.status));
+            if (existing) {
+                const pristine = existing.status === 'editing' && !existing.dirty && existing.attempt === 0 && existing.receipts.length === 0;
+                if (!pristine || !canFresh(existing, c, g))
+                    return existing.id;
+                superseded.add(existing.id);
+            }
             const id = crypto.randomUUID();
-            set({ id, owner: { ...owner }, context: freezeDispatchContext(c), generation: g, revision: 0, input: { ...input }, status: 'editing', retired: false, dirty: input.kind === 'import' && !!(input.title || input.text || input.urls || input.files.length), attempt: 0, token: null, receipts: [], stopRequested: false });
+            set({ id, owner: { ...owner }, context: freezeDispatchContext(c), generation: g, revision: 0, input: { ...input }, status: 'editing', retired: retiredEpochs.has(c.epoch), dirty: input.kind === 'import' && !!(input.title || input.text || input.urls || input.files.length), attempt: 0, token: null, receipts: [], stopRequested: false });
             return id;
         },
         fresh(id: string, input: LibraryInput, c: DispatchContext, g: number) {
             const r = records.get(id);
-            if (!r || !c.ready || current(r, c, g) || !['editing', 'not-sent', 'rejected'].includes(r.status) || r.receipts.some(x => x.state === 'accepted' || x.state === 'unknown') || input.kind !== r.input.kind)
+            if (!r || !canFresh(r, c, g) || !sameInput(r.input, input))
                 return null;
-            set({ ...r, retired: true, superseded: true });
+            superseded.add(r.id);
             return this.open(r.owner, input, c, g);
         },
         edit(id: string, patch: Partial<LibraryInput>) {
             const r = records.get(id);
-            if (!r || libraryDraftLocked(r))
+            if (!r || superseded.has(id) || libraryDraftLocked(r))
                 return;
             set({ ...r, input: { ...r.input, ...patch, kind: r.input.kind } as LibraryInput, revision: r.revision + 1, dirty: true, status: 'editing' });
         },
         reset(id: string, input: LibraryInput) {
             const r = records.get(id);
-            if (!r || libraryDraftLocked(r) || r.input.kind !== input.kind)
+            if (!r || superseded.has(id) || libraryDraftLocked(r) || r.input.kind !== input.kind)
                 return;
             set({ ...r, input, status: 'editing', dirty: false, revision: r.revision + 1 });
         },
@@ -183,6 +191,7 @@ export function createLibraryStore(onChange: () => void) {
                 set({ ...r, stopRequested: true });
         },
         retire(epoch: number) {
+            retiredEpochs.add(epoch);
             for (const r of records.values())
                 if (r.context.epoch === epoch)
                     records.set(r.id, freeze({ ...r, retired: true, status: ['pending', 'accepted'].includes(r.status) ? 'unknown' : r.status }));

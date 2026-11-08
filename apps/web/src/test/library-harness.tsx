@@ -37,10 +37,13 @@ export function libraryServer(handler?: (request: Request) => Response | undefin
         return json({});
     }, () => json(libraryWorkspace()));
 }
-export async function renderLibrary(route = '/sources') {
+export async function renderLibrary(route = '/sources', history?: {
+    entries: string[];
+    index: number;
+}) {
     let workbench!: ReturnType<typeof useWorkbenchSession>;
     function Probe() { workbench = useWorkbenchSession(); return <><span hidden>Library ready</span><AppRoutes /></>; }
-    const router = createMemoryRouter([{ path: '*', element: <AppProviders locale="en-US"><WorkbenchSession><Probe /></WorkbenchSession></AppProviders> }], { initialEntries: [route] });
+    const router = createMemoryRouter([{ path: '*', element: <AppProviders locale="en-US"><WorkbenchSession><Probe /></WorkbenchSession></AppProviders> }], { initialEntries: history?.entries ?? [route], ...(history ? { initialIndex: history.index } : {}) });
     const result = render(<RouterProvider router={router}/>);
     await screen.findByText('Library ready');
     return { ...result, router, get workbench() { return workbench; } };

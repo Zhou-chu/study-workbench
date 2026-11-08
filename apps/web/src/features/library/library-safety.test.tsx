@@ -3,7 +3,7 @@ import { expect, it, vi } from 'vitest';
 import { libraryServer, renderLibrary } from '../../test/library-harness';
 import { legacySource, sourceDetail, insight } from '../../test/library-fixtures';
 import { json } from '../../test/notebook-fixtures';
-import { publishTurnTarget, readTurnContext } from '@study/web-transport';
+import { publishTurnTarget, readTurnContext, sessionCoordinator } from '@study/web-transport';
 const detailPath = '/sources/' + encodeURIComponent(legacySource.id);
 async function importStep3() { fireEvent.click(screen.getByRole('button', { name: 'Next' })); await screen.findByLabelText('Synthetic notebook'); fireEvent.click(screen.getByRole('button', { name: 'Next' })); await screen.findByLabelText('Summary'); }
 it('serial multiple URLs stop on unknown with partial receipts, retain options, and never replay on reopen', async () => {
@@ -171,4 +171,129 @@ it('stopping command observation explains that remote processing may continue an
     expect(h.workbench.drafts.library.getSnapshot().find(r => r.input.kind === 'action' && r.input.action === 'embed')).toMatchObject({ status: 'accepted', stopRequested: true });
     expect(requests.filter(r => r.method === 'POST' || r.method === 'DELETE')).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'Confirm' })).toBeDisabled();
+});
+it.each(['retry', 'embed', 'insight'] as const)('I3 %s uncertainty retains actual producer IDs across remount without another POST', async (action) => {
+    const ids = { resource_id: legacySource.id, command_id: 'command:uncertain' };
+    const requests = libraryServer(r => r.method === 'POST' ? json({ detail: { code: 'COMMAND_SUBMISSION_UNKNOWN', retry_safe: false, ...ids } }, 409) : undefined);
+    const h = await renderLibrary(detailPath);
+    await screen.findByText('Original source body');
+    if (action === 'insight') {
+        fireEvent.mouseDown(screen.getByRole('tab', { name: 'Insights' }));
+        await screen.findByRole('option', { name: 'Summary' });
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'transformation:summary' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Generate New Insight' }));
+    }
+    else {
+        fireEvent.click(screen.getByRole('button', { name: action === 'retry' ? 'Retry Processing' : 'Embed Content' }));
+        fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' }));
+    }
+    await screen.findByText(/Work may already be running/);
+    const original = h.workbench.drafts.library.getSnapshot().find(r => r.input.kind === 'action' && r.input.action === action)!;
+    expect(original.receipts).toEqual([{ state: 'unknown', resourceId: legacySource.id, commandId: 'command:uncertain' }]);
+    expect(original.commandId).toBe('command:uncertain');
+    expect(screen.getByText('command:uncertain')).toBeVisible();
+    if (action !== 'insight')
+        fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
+    await act(async () => h.router.navigate('/sources'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Keep work and continue' }));
+    fireEvent.click(await screen.findByRole('link', { name: 'Historical paper' }));
+    await screen.findByText('Original source body');
+    if (action === 'insight') {
+        fireEvent.mouseDown(screen.getByRole('tab', { name: 'Insights' }));
+        expect(screen.getByRole('button', { name: 'Generate New Insight' })).toBeDisabled();
+    }
+    else {
+        fireEvent.click(screen.getByRole('button', { name: action === 'retry' ? 'Retry Processing' : 'Embed Content' }));
+        expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' })).toBeDisabled();
+    }
+    expect(screen.getByText('command:uncertain')).toBeVisible();
+    expect(h.workbench.drafts.library.get(original.id)).toBe(original);
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
+    expect(requests.some(r => r.url.includes('/commands/jobs/'))).toBe(false);
+});
+it.each(['retry', 'embed', 'insight'] as const)('I3 %s uncertainty without IDs never invents an inspection identity', async (action) => {
+    const requests = libraryServer(r => r.method === 'POST' ? json({ detail: { code: 'COMMAND_SUBMISSION_UNKNOWN', retry_safe: false } }, 409) : undefined);
+    const h = await renderLibrary(detailPath);
+    await screen.findByText('Original source body');
+    if (action === 'insight') {
+        fireEvent.mouseDown(screen.getByRole('tab', { name: 'Insights' }));
+        await screen.findByRole('option', { name: 'Summary' });
+        fireEvent.change(screen.getByRole('combobox'), { target: { value: 'transformation:summary' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Generate New Insight' }));
+    }
+    else {
+        fireEvent.click(screen.getByRole('button', { name: action === 'retry' ? 'Retry Processing' : 'Embed Content' }));
+        fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' }));
+    }
+    await screen.findByText(/Work may already be running/);
+    const original = h.workbench.drafts.library.getSnapshot().find(r => r.input.kind === 'action' && r.input.action === action)!;
+    expect(original.receipts).toEqual([{ state: 'unknown' }]);
+    expect(original.commandId).toBeUndefined();
+    expect(h.workbench.drafts.library.begin(original.id, readTurnContext(), sessionCoordinator.current())).toBeNull();
+    if (action !== 'insight')
+        fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }));
+    await act(async () => h.router.navigate('/sources'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Keep work and continue' }));
+    fireEvent.click(await screen.findByRole('link', { name: 'Historical paper' }));
+    await screen.findByText('Original source body');
+    if (action === 'insight') {
+        fireEvent.mouseDown(screen.getByRole('tab', { name: 'Insights' }));
+        expect(screen.getByRole('button', { name: 'Generate New Insight' })).toBeDisabled();
+    }
+    else {
+        fireEvent.click(screen.getByRole('button', { name: action === 'retry' ? 'Retry Processing' : 'Embed Content' }));
+        expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' })).toBeDisabled();
+    }
+    expect(h.workbench.drafts.library.get(original.id)).toBe(original);
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
+    expect(requests.some(r => r.url.includes('/commands/jobs/'))).toBe(false);
+});
+it.each([1, 2])('I4 implicit submit at import step %s cannot dispatch before option review', async (step) => {
+    const requests = libraryServer(r => r.method === 'POST' ? json(sourceDetail) : undefined);
+    const h = await renderLibrary();
+    fireEvent.click(await screen.findByRole('button', { name: 'Add Source' }));
+    fireEvent.change(screen.getByLabelText('URL(s) *'), { target: { value: 'https://source.example/review' } });
+    if (step === 2)
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    const form = screen.getByRole('dialog').querySelector('form')!;
+    fireEvent.keyDown(form, { key: 'Enter' });
+    fireEvent.submit(form);
+    await act(async () => { });
+    expect(requests.some(r => r.method === 'POST')).toBe(false);
+    expect(h.workbench.drafts.library.getSnapshot().find(r => r.input.kind === 'import')?.attempt).toBe(0);
+});
+it('I4 final review rejects composing and over-limit submissions, then latches one reviewed request', async () => {
+    let release!: (r: Response) => void;
+    const requests = libraryServer(r => r.method === 'POST' ? new Promise<Response>(resolve => release = resolve) : undefined);
+    const h = await renderLibrary();
+    fireEvent.click(await screen.findByRole('button', { name: 'Add Source' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enter Text' }));
+    fireEvent.change(screen.getByLabelText('Source text'), { target: { value: 'Reviewed text' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(await screen.findByLabelText('Synthetic notebook'));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(await screen.findByLabelText('Summary'));
+    fireEvent.click(screen.getByLabelText('Embed Content'));
+    const form = screen.getByRole('dialog').querySelector('form')!;
+    fireEvent.compositionStart(form);
+    fireEvent.keyDown(form, { key: 'Enter', isComposing: true, keyCode: 229 });
+    fireEvent.submit(form);
+    await act(async () => { });
+    expect(requests.some(r => r.method === 'POST')).toBe(false);
+    fireEvent.compositionEnd(form);
+    const row = h.workbench.drafts.library.getSnapshot().find(r => r.input.kind === 'import')!;
+    await act(async () => h.workbench.drafts.library.edit(row.id, { transformations: Array.from({ length: 51 }, (_, i) => 'transformation:' + i) }));
+    fireEvent.submit(form);
+    await act(async () => { });
+    expect(requests.some(r => r.method === 'POST')).toBe(false);
+    expect(h.workbench.drafts.library.get(row.id)?.attempt).toBe(0);
+    await act(async () => h.workbench.drafts.library.edit(row.id, { transformations: ['transformation:summary'] }));
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+    await waitFor(() => expect(requests.filter(r => r.method === 'POST')).toHaveLength(1));
+    const body = await requests.find(r => r.method === 'POST')!.clone().formData();
+    expect(body.get('notebooks')).toBe('["n"]');
+    expect(body.get('transformations')).toBe('["transformation:summary"]');
+    expect(body.get('embed')).toBe('true');
+    await act(async () => release(json(sourceDetail)));
 });
