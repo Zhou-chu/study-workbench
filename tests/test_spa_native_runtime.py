@@ -1,5 +1,6 @@
 """Offline runner behavior only, never C2 live observations."""
 
+import asyncio
 import importlib
 import json
 import os
@@ -202,6 +203,14 @@ class FixtureService:
 
     def __init__(self, mode="ok"):
         self.mode = mode
+        # Exact publicRuntimeConfig producer contract for legacy-password mode.
+        self.config = {
+            "apiUrl": "",
+            "auth_mode": "legacy_password",
+            "web_session_protocol": None,
+            "client_contracts": ["workspace-view-v1"],
+            "ui_transport_protocol": 1,
+        }
         self.requests = []
         self.uploads = []
         self.note = None
@@ -252,10 +261,7 @@ class FixtureService:
         if p == "/config":
             return httpx.Response(
                 200,
-                json={
-                    "apiUrl": "http://127.0.0.1:31003",
-                    "auth_mode": "legacy_password",
-                },
+                json=self.config,
             )
         if p == "/api/auth/status":
             return httpx.Response(200, json={"auth_enabled": True})
@@ -750,3 +756,314 @@ def test_log_thread_start_failure_still_restores_signals_and_cleans_owned(
     receipt = json.loads((root / "receipt.json").read_text())
     assert receipt["cleanup"] == "uncertain"
     assert receipt["evidence"] == [{"path": "db.log", "status": "not_final"}]
+
+
+def test_same_origin_config_completes_provider_free_transaction():
+    txn, service, client = transact()
+    assert service.config == {
+        "apiUrl": "",
+        "auth_mode": "legacy_password",
+        "web_session_protocol": None,
+        "client_contracts": ["workspace-view-v1"],
+        "ui_transport_protocol": 1,
+    }
+    with client:
+        result = txn.execute(b"public fixture")
+    assert result["portable"]["status"] == "succeeded"
+    assert txn.counts["mutations"] == 7
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"apiUrl": "http://127.0.0.1:31003"},
+        {"apiUrl": "https://foreign.invalid"},
+        {"auth_mode": "device_sessions"},
+        {"web_session_protocol": "bff-memory-v1"},
+        {"client_contracts": []},
+        {"ui_transport_protocol": True},
+    ],
+)
+def test_invalid_same_origin_config_never_admits_mutations(change):
+    txn, service, client = transact()
+    service.config.update(change)
+    with client, pytest.raises(RuntimeError):
+        txn.execute(b"public fixture")
+    assert txn.counts["mutations"] == 0
+    assert len(service.requests) == 1
+
+
+@pytest.mark.parametrize("child", ["db", "api", "worker", "bff"])
+@pytest.mark.parametrize("sig", [signal.SIGINT, signal.SIGTERM])
+def test_interrupt_at_acquire_registration_boundary_cleans_every_child(
+    fake_run, monkeypatch, child, sig
+):
+    import sys
+
+    m, root, processes, events = fake_run
+    previous = {s: signal.getsignal(s) for s in (signal.SIGINT, signal.SIGTERM)}
+    injected: list[str] = []
+    prior_trace = sys.gettrace()
+
+    def forbidden_mask(*args, **kwargs):
+        pytest.fail("Child must not inherit blocked termination signals")
+
+    monkeypatch.setattr(signal, "pthread_sigmask", forbidden_mask)
+
+    def trace(frame, event, arg):
+        if (
+            event == "line"
+            and frame.f_code.co_filename
+            == str(m.ROOT / "scripts/v1/spa_native_runtime.py")
+            and frame.f_code.co_name == "start"
+            and "proc" in frame.f_locals
+            and not injected
+        ):
+            acquired = frame.f_locals["proc"]
+            registry = frame.f_locals["processes"]
+            if acquired.name == child and not any(p is acquired for p in registry):
+                injected.append(child)
+                handler = signal.getsignal(sig)
+                assert callable(handler)
+                handler(sig, None)  # Invoke Python handler, never send an OS signal.
+        return trace
+
+    try:
+        sys.settrace(trace)
+        result = m.run(root, "fixture", Path("/gateway"), "a" * 40)
+    finally:
+        sys.settrace(prior_trace)
+    expected = ["db", "api", "worker", "bff"][
+        : ["db", "api", "worker", "bff"].index(child) + 1
+    ]
+    assert injected == [child]
+    assert [p.name for p in processes] == expected
+    assert all(p.closed for p in processes)
+    assert [e[1] for e in events if e[0] == "stop"] == expected[::-1]
+    assert result["status"] == "failed"
+    assert result["failure"] == "interrupted"
+    assert result["cleanup"] == "succeeded"
+    assert result["startup"] == expected
+    assert result["transaction"] == {}
+    assert {s: signal.getsignal(s) for s in previous} == previous
+
+
+class ReadinessResponse:
+    """Finite continuing-response fake: no socket, process or real waiting."""
+
+    def __init__(
+        self,
+        clock,
+        payload=b"x",
+        chunks=1,
+        step=0,
+        headers=0,
+        status=200,
+        continuing_headers=False,
+    ):
+        self.continuing_headers = continuing_headers
+        self.clock = clock
+        self.payload = payload
+        self.chunks = chunks
+        self.step = step
+        self.headers = headers
+        self.status_code = status
+        self.read_chunks = 0
+        self.closed = False
+
+    def __enter__(self):
+        self.clock.sleep(self.headers)
+        return self
+
+    def __exit__(self, *args):
+        self.closed = True
+
+    async def __aenter__(self):
+        if self.continuing_headers:
+            # Keep producing header fragments without ever yielding a response.
+            for _ in range(1000):
+                self.clock.sleep(1)
+                await asyncio.sleep(0)
+        return self.__enter__()
+
+    async def __aexit__(self, *args):
+        self.__exit__(*args)
+
+    async def aiter_raw(self):
+        for chunk in self.iter_raw():
+            await asyncio.sleep(0)
+            yield chunk
+
+    def iter_raw(self, **kwargs):
+        for _ in range(self.chunks):
+            self.clock.sleep(self.step)
+            self.read_chunks += 1
+            yield self.payload
+
+
+def install_readiness_wire(m, monkeypatch, clock, **response_options):
+    responses = []
+    requests = []
+
+    def response(mode, kwargs):
+        requests.append({"mode": mode, **kwargs})
+        item = ReadinessResponse(clock, **response_options)
+        responses.append(item)
+        return item
+
+    def buffered(*args, **kwargs):
+        item = response("buffered", kwargs)
+        with item:
+            for _ in item.iter_raw():
+                pass
+        return item
+
+    def streamed(*args, **kwargs):
+        return response("streamed", kwargs)
+
+    class AsyncWire:
+        def __init__(self, **kwargs):
+            self.options = kwargs
+            self.item = None
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            if self.item is not None:
+                self.item.closed = True
+
+        def stream(self, *args, **kwargs):
+            self.item = response("streamed", self.options | kwargs)
+            return self.item
+
+    def once(name, proc, probe, **kwargs):
+        if not kwargs["guard"]() or not probe() or not kwargs["guard"]():
+            raise RuntimeError("Readiness did not succeed")
+
+    monkeypatch.setattr(m.time, "monotonic", clock)
+    monkeypatch.setattr(m.httpx, "get", buffered)
+    monkeypatch.setattr(m.httpx, "stream", streamed)
+    monkeypatch.setattr(m.httpx, "AsyncClient", AsyncWire)
+    monkeypatch.setattr(m.life, "wait_for_service", once)
+    return responses, requests
+
+
+@pytest.mark.parametrize(
+    "payload,chunks,step,headers,maximum_reads",
+    [
+        (b"x", 1000, 1, 0, 90),
+        (b"x" * 4096, 1000, 0, 0, 17),
+        (b"x", 1000, 0, 91, 0),
+    ],
+)
+def test_readiness_stream_budget_unwinds_to_owned_cleanup(
+    fake_run, monkeypatch, payload, chunks, step, headers, maximum_reads
+):
+    m, root, processes, events = fake_run
+    clock = Clock()
+    responses, requests = install_readiness_wire(
+        m,
+        monkeypatch,
+        clock,
+        payload=payload,
+        chunks=chunks,
+        step=step,
+        headers=headers,
+    )
+    result = m.run(root, "fixture", Path("/gateway"), "a" * 40)
+    assert result["status"] == "failed"
+    assert result["cleanup"] == "succeeded"
+    assert [p.name for p in processes] == ["db"]
+    assert all(p.closed for p in processes)
+    assert len(responses) == 1
+    assert responses[0].closed
+    assert responses[0].read_chunks <= maximum_reads
+    assert requests[0]["mode"] == "streamed"
+    assert result["readiness_requests"] == {"attempted": 1, "completed": 0}
+
+
+def test_readiness_stream_exact_body_limit_is_accepted(fake_run, monkeypatch):
+    m, root, processes, events = fake_run
+    responses, requests = install_readiness_wire(
+        m, monkeypatch, Clock(), payload=b"x" * 4096, chunks=16
+    )
+    result = m.run(root, "fixture", Path("/gateway"), "a" * 40)
+    assert result["status"] == "partial_pass"
+    assert all(r.read_chunks == 16 and r.closed for r in responses)
+    assert result["readiness_requests"] == {"attempted": 4, "completed": 4}
+
+
+def test_readiness_stream_deadline_rejects_late_admission(fake_run, monkeypatch):
+    m, root, processes, events = fake_run
+    clock = Clock()
+    responses, requests = install_readiness_wire(m, monkeypatch, clock)
+
+    def late(name, proc, probe, **kwargs):
+        clock.sleep(90)
+        probe()
+
+    monkeypatch.setattr(m.life, "wait_for_service", late)
+    result = m.run(root, "fixture", Path("/gateway"), "a" * 40)
+    assert result["status"] == "failed"
+    assert responses == requests == []
+    assert result["readiness_requests"] == {"attempted": 0, "completed": 0}
+    assert all(p.closed for p in processes)
+
+
+def test_readiness_stream_retry_uses_remaining_deadline(fake_run, monkeypatch):
+    m, root, processes, events = fake_run
+    clock = Clock()
+    responses, requests = install_readiness_wire(m, monkeypatch, clock)
+
+    def retry(name, proc, probe, **kwargs):
+        if name == "db":
+            if not kwargs["guard"]():
+                raise RuntimeError("Guard refused")
+            # The first completed response is ready, but a repeated guarded
+            # observation must still share the original endpoint deadline.
+            probe()
+            clock.sleep(89.75)
+        if not probe():
+            raise RuntimeError("Not ready")
+
+    monkeypatch.setattr(m.life, "wait_for_service", retry)
+    result = m.run(root, "fixture", Path("/gateway"), "a" * 40)
+    assert result["status"] == "partial_pass"
+    assert [r["timeout"] for r in requests[:2]] == [1, 0.25]
+    assert all(
+        r["trust_env"] is False and r["follow_redirects"] is False for r in requests
+    )
+    assert all(r.closed for r in responses)
+
+
+def test_readiness_stream_rechecks_ownership_while_consuming(fake_run, monkeypatch):
+    m, root, processes, events = fake_run
+    responses, requests = install_readiness_wire(m, monkeypatch, Clock(), chunks=100)
+    monkeypatch.setattr(
+        m.life,
+        "owned_listener_ready",
+        lambda proc, port: not responses or responses[0].read_chunks < 2,
+    )
+    result = m.run(root, "fixture", Path("/gateway"), "a" * 40)
+    assert result["status"] == "failed"
+    assert result["cleanup"] == "succeeded"
+    assert responses[0].read_chunks == 2
+    assert result["readiness_requests"]["completed"] == 0
+    assert all(p.closed for p in processes)
+
+
+def test_readiness_stream_cancels_continuing_headers(fake_run, monkeypatch):
+    m, root, processes, events = fake_run
+    clock = Clock()
+    responses, requests = install_readiness_wire(
+        m, monkeypatch, clock, continuing_headers=True
+    )
+    result = m.run(root, "fixture", Path("/gateway"), "a" * 40)
+    assert result["status"] == "failed"
+    assert result["cleanup"] == "succeeded"
+    assert requests[0]["mode"] == "streamed"
+    assert responses[0].closed and responses[0].read_chunks == 0
+    assert clock.now <= 93
+    assert result["readiness_requests"] == {"attempted": 1, "completed": 0}
+    assert all(p.closed for p in processes)

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Match native synthetic checks to the BFF same-origin config, defer termination interruption until each acquired child is registered for cleanup, and cap streamed readiness responses under a cancellable connection/header/body deadline. These source-only corrections do not release runtime or production acceptance.
+
 ### Added
 
 - Add an explicitly released foreground native SPA/BFF synthetic runner with pinned source/tool custody, same-parent DB/API/worker/BFF cleanup, bounded public upload and mandatory portable round-trip checks, and private partial receipts. Offline fake tests and source builds do not imply runtime, browser, gateway/image, provider or production acceptance.

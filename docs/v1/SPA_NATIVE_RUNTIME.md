@@ -101,6 +101,9 @@ runtime_lifecycle primitives retain the original waitable handles, validate
 identity, terminate only registered groups in reverse order and reap after
 signalling. No numeric PID from a file grants future signal authority. Success,
 failure, timeout, SIGINT and SIGTERM all unwind through that same owner.
+During spawn/acquire/registration, the installed Python signal handlers defer
+interruption until the returned original handle is in the cleanup registry.
+They do not block OS signals or alter masks inherited by children.
 Repeated signals are ignored only during this cleanup window. Listener release,
 root custody and source/artifact identity are checked afterward. Unknown
 ownership is never resolved with global or process-name kills.
@@ -117,7 +120,10 @@ The public tests/fixtures/v1/fixture_course.md is the actual upload. The
 allowlisted JSON workspace fixture is identity input, **not a DB seed**.
 The provider-free ordered transaction is:
 
-1. BFF config/auth status and an anonymous denied workspace request.
+1. The real BFF same-origin config (empty apiUrl, legacy auth, null session
+   protocol, workspace-view-v1 and transport protocol 1), auth status and an
+   anonymous denied workspace request. An absolute or foreign API base fails
+   before any mutation.
 2. One synthetic notebook, public multipart upload and bounded worker extraction
    observation through workspace reads. Exactly one same-key/same-bytes replay
    verifies the same IDs and no additional personal job.
@@ -125,6 +131,9 @@ The provider-free ordered transaction is:
    lexical-only search, authored note persistence and workspace/workspace-view
    readback. No model/embedding fields are supplied. Citation validation is
    separately labelled not_run; saving this authored note is not citation proof.
+   The unchanged API may enqueue an auxiliary embed_note command in the fresh
+   DB. Missing-model/embedding failures in its worker log are possible; no
+   provider is configured here and no embedding success is claimed.
 4. Mandatory provider-free export submission, bounded original-job observation,
    ZIP download/hash, single-file portable import, remapped notebook/selected
    version and original-byte hash verification.
@@ -134,12 +143,24 @@ workspace-only, not a dispatch-capable job endpoint. The original returned job
 identity remains in a partial receipt if later observation times out. Import is
 submitted at most once. No user archive is uploaded.
 
-Limits: readiness 90 seconds per endpoint, job observation 90 seconds, transaction
-300 seconds, individual transaction I/O timeout at most 10 seconds, at most 800
-transaction admissions, and at most 16 MiB per response. Stream chunks recheck
-the transaction deadline. A blocking I/O call can overrun the wall-clock budget
-by at most its current I/O timeout. Cleanup adds its bounded owned grace period,
-log drain and pure verifier timeouts.
+Readiness has one shared 90-second deadline per endpoint, including retries.
+An asyncio cancellation deadline surrounds asynchronous HTTPX connection,
+response headers and raw-body streaming, so a continuing header stream cannot
+evade the deadline by resetting an inactivity timeout. Each admitted probe uses
+an I/O timeout of min(1 second, remaining budget). Monotonic checks before
+admission, after headers and between raw chunks reject expired budgets; response
+bodies are discarded and capped at 64 KiB. Ownership is rechecked while reading.
+Timeout/cap/ownership failures close the client/response and unwind to owned
+cleanup. These are cooperative cancellation and deadline checks, not a hard
+real-time scheduling guarantee; event-loop scheduling and resource closure add
+latency. A partial response is attempted, not completed.
+
+Other limits: job observation 90 seconds, transaction 300 seconds, individual
+transaction I/O timeout at most 10 seconds, at most 800 transaction admissions,
+and at most 16 MiB per transaction response. Transaction stream chunks recheck
+the deadline. A blocking transaction I/O call can overrun that budget by at most
+its current I/O timeout. Cleanup adds its bounded owned grace period, log drain
+and pure verifier timeouts.
 
 ## Private receipts and honest status
 

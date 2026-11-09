@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import hashlib
 import json
 import os
@@ -445,8 +446,19 @@ class Transaction:
 
     def execute(self, content: bytes) -> dict[str, Any]:
         config = self.read("config", "/config")
-        require(config["auth_mode"] == "legacy_password")
-        require(config["apiUrl"] == str(self.client.base_url).rstrip("/"))
+        # The real BFF declares an empty API base for same-origin routing.
+        # Never accept a different destination from configuration received here.
+        require(
+            config
+            == {
+                "apiUrl": "",
+                "auth_mode": "legacy_password",
+                "web_session_protocol": None,
+                "client_contracts": ["workspace-view-v1"],
+                "ui_transport_protocol": 1,
+            }
+            and type(config["ui_transport_protocol"]) is int
+        )
         status = self.read("auth_status", "/api/auth/status")
         require(status.get("auth_enabled") is True)
         self.request(
@@ -683,6 +695,8 @@ def run(root: Path, fixture: str, gateway: Path, source_commit: str) -> dict[str
         "limits": {
             "request_seconds": 10,
             "readiness_seconds": 90,
+            "readiness_io_seconds": 1,
+            "readiness_response_bytes": 65536,
             "job_seconds": 90,
             "transaction_seconds": 300,
             "max_requests": 800,
@@ -698,30 +712,42 @@ def run(root: Path, fixture: str, gateway: Path, source_commit: str) -> dict[str
     logs: list[Path] = []
     transaction = None
     handlers = {}
+    interrupt_state = {"acquiring": False, "pending": False}
     envs = environments(root, ports)
 
     def custody():
         require(gate.identity(root, True) == owned_root)
 
     def interrupted(*_):
-        raise KeyboardInterrupt
+        interrupt_state["pending"] = True
+        if not interrupt_state["acquiring"]:
+            raise KeyboardInterrupt
 
     def start(name, args, port=None):
         custody()
         if port is not None:
             require_free(port)
-        proc = life.start_owned(
-            args,
-            cwd=ROOT,
-            env=envs[name],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        processes.append(proc)  # Immediate registration, before all following work.
+        # Defer Python interruption, not OS signal delivery/masks. A child must
+        # never inherit blocked termination signals, and every returned handle
+        # must enter the cleanup registry before a pending interrupt can unwind.
+        interrupt_state["acquiring"] = True
+        try:
+            proc = life.start_owned(
+                args,
+                cwd=ROOT,
+                env=envs[name],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+            processes.append(proc)
+            receipt["startup"].append(name)
+        finally:
+            interrupt_state["acquiring"] = False
+            if interrupt_state["pending"]:
+                raise KeyboardInterrupt
         if port is not None:
             listeners.append((proc, port))
-        receipt["startup"].append(name)
         target = root / (name + ".log")
         logs.append(target)
         secret_values = tuple(
@@ -747,20 +773,7 @@ def run(root: Path, fixture: str, gateway: Path, source_commit: str) -> dict[str
         return proc
 
     def wait(name, proc, port, path):
-        def probe():
-            nonlocal readiness_attempted, readiness_completed
-            readiness_attempted += 1
-            try:
-                response = httpx.get(
-                    f"http://127.0.0.1:{port}{path}",
-                    trust_env=False,
-                    timeout=1,
-                    follow_redirects=False,
-                )
-                readiness_completed += 1
-                return response.status_code == 200
-            except httpx.HTTPError:
-                return False
+        deadline = time.monotonic() + 90
 
         def guard():
             custody()
@@ -771,7 +784,52 @@ def run(root: Path, fixture: str, gateway: Path, source_commit: str) -> dict[str
                 for child, listen_port in listeners
             )
 
-        life.wait_for_service(name, proc, probe, timeout=90, guard=guard)
+        def remaining():
+            budget = deadline - time.monotonic()
+            if budget <= 0:
+                raise TimeoutError("Readiness deadline exceeded")
+            return budget
+
+        async def read_probe():
+            # The outer cancellation deadline also covers connect and headers,
+            # where a stream has not yielded yet. Inactivity timeouts alone do
+            # not bound a peer that keeps sending header fragments.
+            budget = remaining()
+            async with asyncio.timeout(budget):
+                async with httpx.AsyncClient(
+                    trust_env=False,
+                    timeout=min(1, budget),
+                    follow_redirects=False,
+                ) as client:
+                    async with client.stream(
+                        "GET", f"http://127.0.0.1:{port}{path}"
+                    ) as response:
+                        remaining()
+                        require(guard())
+                        count = 0
+                        # Do not request a minimum chunk size: buffering to that
+                        # size could hide a continuing trickle from our checks.
+                        async for chunk in response.aiter_raw():
+                            remaining()
+                            count += len(chunk)
+                            require(count <= 65536)
+                            require(guard())
+                        remaining()
+                        require(guard())
+                        return response.status_code == 200
+
+        def probe():
+            nonlocal readiness_attempted, readiness_completed
+            remaining()
+            readiness_attempted += 1
+            try:
+                ready = asyncio.run(read_probe())
+            except httpx.HTTPError:
+                return False
+            readiness_completed += 1
+            return ready
+
+        life.wait_for_service(name, proc, probe, timeout=remaining(), guard=guard)
         receipt["readiness"].append(name + path)
 
     try:
