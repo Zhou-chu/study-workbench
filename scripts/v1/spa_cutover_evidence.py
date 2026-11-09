@@ -193,6 +193,7 @@ class StagedEvidence:
         self.errors: set[str] = set()
         self.complete = False
         self.catalog_valid = False
+        self.r11_runtime_ids: set[str] = set()
         self.backup_valid = False
         self.restore_valid = False
         self.unit = any(
@@ -456,7 +457,7 @@ class StagedEvidence:
                     primaries.append(proof)
             self.need(bool(primaries))
 
-    def transition(self) -> None:
+    def transition(self, future: set[str]) -> None:
         for proof in self.proofs.values():
             if proof["family"] != "entry-observation" or proof["phase"] == "rehearsal":
                 continue
@@ -477,7 +478,14 @@ class StagedEvidence:
             self.need(bool(owners), "EVIDENCE_FRESHNESS_UNVERIFIED")
             field = "forward_entry_proof_id" if forward else "reverse_entry_proof_id"
             gate = "forward_owners" if forward else "reverse_owners"
-            if self.a["transition"][field] == proof["id"]:
+            # Named prior entries keep their own owner evidence. A new execution
+            # has a new due owner gate, and a future gate cannot be pre-passed.
+            entering = "forward-entry" if forward else "reverse-entry"
+            if (
+                self.a["transition"][field] == proof["id"]
+                and gate not in future
+                and self.phase != entering
+            ):
                 self.need(
                     bool(
                         {owner["id"] for owner in owners}
@@ -953,7 +961,13 @@ class StagedEvidence:
             "before-forward",
             self.live_scope,
         )
-        if self.phase == "forward-entry":
+        if (
+            self.phase == "forward-entry"
+            and self.forward is None
+            and self.reverse is None
+        ):
+            # Only first entry shares the snapshot's original cutoff/hold.
+            # Later entry custody is fresh; this insurance remains historical.
             custody, schema = (
                 self.result("operation_custody"),
                 self.result("schema_content"),
@@ -1042,13 +1056,14 @@ class StagedEvidence:
             else {}
         )
         for item in value["entries"]:
-            self.proof(
+            proof = self.proof(
                 item["proof_id"],
                 {"operation-custody-observation"},
                 self.baseline_subject,
                 self.live_phase,
                 self.live_scope,
             )
+            self._after_entry(proof)
             if item["state"] in {"pending", "unknown"}:
                 self.need(
                     item["disposition"] in {"check-only", "wait-original"}
@@ -1204,6 +1219,47 @@ class StagedEvidence:
                     flow["proof_id"], family, target, self.live_phase, self.live_scope
                 )
             )
+
+    def _r11_runtime(self, context: dict[str, Any]) -> bool:
+        """Bind this historical case to its own primary and cited entry epoch."""
+        matches = [
+            p
+            for identifier in context["predecessor_ids"]
+            if (p := self.proofs.get(identifier))
+            and p["role"] == "primary"
+            and p["record"]["bytes"] > 0
+            and p["family"] == "runtime-association"
+            and p["subject"] == context["subject"]
+            and p["phase"] == context["phase"]
+            and p["scope"] == context["scope"]
+        ]
+        valid: set[str] = set()
+        for match in matches:
+            self.proof(
+                match["id"],
+                {"runtime-association"},
+                context["subject"],
+                context["phase"],
+                self.live_scope,
+            )
+            events = {
+                identifier
+                for identifier in context["predecessor_ids"]
+                if (event := self.proofs.get(identifier))
+                and event["family"] == "entry-observation"
+                and event["phase"] == context["phase"]
+                and event["subject"]
+                == ("candidate" if context["phase"] == "after-forward" else "current")
+                and event["role"] == "primary"
+                and event["record"]["bytes"] > 0
+            }
+            if self.need(
+                bool(events & self.ancestors(match["id"])),
+                "EVIDENCE_FRESHNESS_UNVERIFIED",
+            ):
+                valid.add(match["id"])
+        self.r11_runtime_ids.update(valid)
+        return self.need(bool(valid))
 
     def catalog(self) -> None:
         membership, cases, evidence = (
@@ -1373,13 +1429,7 @@ class StagedEvidence:
                                     self.live_scope,
                                 )
                     else:
-                        okay &= self.need(
-                            any(
-                                self.proofs.get(identifier, {}).get("family")
-                                == "runtime-association"
-                                for identifier in context["predecessor_ids"]
-                            )
-                        )
+                        okay &= self._r11_runtime(context)
                 else:
                     okay &= self.need(
                         context["family"] == "case-observation"
@@ -1450,18 +1500,14 @@ class StagedEvidence:
                     "ACCEPTANCE_INCOMPLETE",
                 )
             self.need(
-                any(
-                    self.proofs.get(identifier, {}).get("family")
-                    == "runtime-association"
-                    for identifier in value["proof_ids"]
-                ),
+                bool(self.r11_runtime_ids & set(value["proof_ids"])),
                 "ACCEPTANCE_INCOMPLETE",
             )
 
     def evaluate(self, future: set[str]) -> tuple[set[str], bool, bool, str]:
         self.binding()
         self.provenance()
-        self.transition()
+        self.transition(future)
         self.catalog()
         for key, check in self.checks.items():
             if key in future:

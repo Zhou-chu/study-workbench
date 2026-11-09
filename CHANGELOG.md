@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Bind cutover old-tab evidence to its nonempty primary runtime record and cited entry, validate each operation's current custody epoch, and preserve historical reverse/backup evidence across fresh directional entry gates. These are source-only checks, not deployment or acceptance.
+
 - Match native synthetic checks to the BFF same-origin config, defer termination interruption until each acquired child is registered for cleanup, and cap streamed readiness responses under a cancellable connection/header/body deadline. These source-only corrections do not release runtime or production acceptance.
 
 ### Added

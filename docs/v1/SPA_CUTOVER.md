@@ -256,3 +256,24 @@ No service configuration, production route, authentication activation, legacy
 entry declaration, AGENTS, ENTRYPOINTS or RUNBOOK state is changed by this source
 slice. Those must describe actual separately authorized operations if and when
 they occur.
+
+
+### Historical evidence and repeated entries
+
+R11 old-tab identity must resolve to a nonempty primary runtime record matching
+its context's subject, scope and observation phase. That runtime record must
+descend from the same directional entry cited by the context, and the catalog
+gate must include that permitted primary. An empty or supplemental record, an
+unrelated entry, or a runtime-family label alone cannot close this association.
+
+Every due operation entry binds the current applicable entry epoch, even when
+the aggregate inventory already has a fresh proof. This includes settled as
+well as pending/unknown entries; historical R11 and backup records keep their
+historical roles instead of being forced onto the newest epoch.
+
+Each retained entry still validates its own primary directional owner. A new
+forward/reverse execution requires its own fresh owner gate rather than matching
+that new gate to an old entry. Later forward verification keeps reverse owners
+as a future obligation. Original snapshot/restore cutoff and hold match current
+custody at first entry only; later entry revalidates current custody while
+retaining that snapshot as historical insurance, not coverage of later writes.

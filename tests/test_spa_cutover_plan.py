@@ -2280,3 +2280,321 @@ def test_latest_target_schema_cannot_borrow_a_historical_forward_event():
     proof["predecessor_ids"] = ["actual-forward-entry"]
     seal_claims(inputs)
     assert_blocked(planner.make_cutover_plan(**inputs), "EVIDENCE_FRESHNESS_UNVERIFIED")
+
+
+# C3 independent review regressions. These are UNIT declarations, not observations.
+@pytest.mark.parametrize("location", ["context", "gate"])
+@pytest.mark.parametrize(
+    "defect",
+    [
+        "empty-supplemental",
+        "nonempty-supplemental",
+        "subject",
+        "scope",
+        "phase",
+        "event",
+        "event-subject",
+    ],
+)
+def test_r11_runtime_support_requires_matching_primary_context(location, defect):
+    inputs = staged_inputs("finalize", True)
+    a = inputs["acceptance"]
+    provenance = a["profile"]["provenance"]
+    runtime = copy.deepcopy(
+        next(p for p in provenance["proofs"] if p["id"] == "runtime-current")
+    )
+    runtime["id"] = "unit-r11-runtime"
+    if defect.endswith("supplemental"):
+        runtime["role"] = "supplemental"
+        runtime["record"]["bytes"] = 0 if defect == "empty-supplemental" else 1
+    elif defect == "subject":
+        runtime.update(subject="candidate", identity_sha256=ident(inputs["candidate"]))
+    elif defect == "scope":
+        # Independently permitted producer/scope, but not this UNIT context's scope.
+        runtime.update(scope="synthetic")
+        runtime["producer"]["kind"] = "reviewed-synthetic-runtime"
+    elif defect == "phase":
+        runtime.update(phase="after-forward", predecessor_ids=["actual-forward-entry"])
+    else:
+        other = copy.deepcopy(
+            next(p for p in provenance["proofs"] if p["id"] == "actual-reverse-entry")
+        )
+        other["id"] = "unit-other-reverse-entry"
+        if defect == "event-subject":
+            other.update(
+                subject="candidate", identity_sha256=ident(inputs["candidate"])
+            )
+            next(c for c in provenance["case_contexts"] if c["id"] == "c03")[
+                "predecessor_ids"
+            ].append(other["id"])
+        provenance["proofs"].append(other)
+        runtime["predecessor_ids"] = [other["id"]]
+    provenance["proofs"].append(runtime)
+    if location == "context":
+        next(c for c in provenance["case_contexts"] if c["id"] == "c03")[
+            "predecessor_ids"
+        ][0] = runtime["id"]
+    # Context mutations also update the gate, so a gate/context disagreement
+    # cannot mask an incorrectly admitted context predecessor.
+    gate = a["checks"]["catalog_acceptance"]
+    for ids in (gate["proof_ids"], gate["result"]["proof_ids"]):
+        ids[ids.index("runtime-current")] = runtime["id"]
+    seal_claims(inputs)
+    result = planner.make_cutover_plan(**inputs)
+    assert result["blockers"], (location, defect)
+    assert "INPUT_SCHEMA_INVALID" not in result["blockers"]
+    assert result["ordered_actions"] == result["rollback_actions"] == []
+
+
+@pytest.mark.parametrize("state", ["pending", "unknown", "succeeded"])
+def test_due_operation_entry_cannot_borrow_an_obsolete_epoch(state):
+    inputs = final_after_a_later_forward()
+    a = inputs["acceptance"]
+    checks, proofs = a["checks"], a["profile"]["provenance"]["proofs"]
+    entry_proof = copy.deepcopy(next(p for p in proofs if p["id"] == "fresh-custody"))
+    entry_proof["id"] = "unit-individual-custody"
+    proofs.append(entry_proof)
+    unsettled = state in {"pending", "unknown"}
+    if unsettled:
+        checks["forward_owners"]["result"]["owners"] = [
+            {
+                "owner_id": "unit-owner",
+                "client": "legacy-next",
+                "client_identity_sha256": ident(inputs["current"]),
+                "save": "no-obligation",
+                "reconcile": "original-custody-retained",
+                "exit": "observed",
+                "proof_ids": ["fresh-forward-owner"],
+            }
+        ]
+    checks["operation_custody"]["result"].update(
+        continuity="compatible-original-owner-retained" if unsettled else "quiescent",
+        pending_count=int(state == "pending"),
+        unknown_count=int(state == "unknown"),
+        entries=[
+            {
+                "operation_id": "unit-operation",
+                "original_owner_id": "unit-owner",
+                "original_handle_id": "unit-original",
+                "state": state,
+                "disposition": "check-only" if unsettled else "settled",
+                "proof_id": entry_proof["id"],
+            }
+        ],
+    )
+    checks["operation_custody"]["proof_ids"].append(entry_proof["id"])
+    seal_claims(inputs)
+    assert planner.make_cutover_plan(**inputs)["blockers"] == []
+    # Only the individual proof regresses. The inventory and owner gate stay fresh.
+    entry_proof.update(
+        observed_at="2026-11-09T10:02:00Z",
+        predecessor_ids=["actual-forward-entry"],
+    )
+    seal_claims(inputs)
+    assert_blocked(planner.make_cutover_plan(**inputs), "EVIDENCE_FRESHNESS_UNVERIFIED")
+
+
+def test_later_forward_verification_preserves_historical_reverse_as_future_obligation():
+    inputs = final_after_a_later_forward()
+    a = inputs["acceptance"]
+    a["phase"] = "forward-verification"
+    old_reverse = copy.deepcopy(a["checks"]["reverse_owners"])
+    a["checks"]["reverse_owners"] = {
+        "state": "obligation",
+        "status": "not_run",
+        "proof_ids": [],
+        "result": {"obligation": "reverse_owners"},
+    }
+    seal_claims(inputs)
+    result = planner.make_cutover_plan(**inputs)
+    assert result["blockers"] == []
+    assert result["candidate"]["full_catalog_complete"] is True
+    assert result["ordered_actions"] and result["rollback_actions"]
+    assert a["transition"]["reverse_entry_proof_id"] == "actual-reverse-entry"
+    a["checks"]["reverse_owners"] = old_reverse
+    seal_claims(inputs)
+    assert_blocked(planner.make_cutover_plan(**inputs), "EVIDENCE_FRESHNESS_UNVERIFIED")
+
+
+def repeat_entry_inputs(phase):
+    """Fresh due facts over a complete unchanged historical R11/backup aggregate."""
+    inputs = (
+        staged_inputs("finalize", True)
+        if phase == "forward-entry"
+        else final_after_a_later_forward()
+    )
+    donor = staged_inputs(phase)
+    a, d = inputs["acceptance"], donor["acceptance"]
+    a["phase"] = phase
+    direction = "forward" if phase == "forward-entry" else "reverse"
+    prior_entry = a["transition"][
+        "reverse_entry_proof_id" if direction == "forward" else "forward_entry_proof_id"
+    ]
+    names = {
+        p["id"]
+        for p in d["profile"]["provenance"]["proofs"]
+        if p["id"].startswith(("runtime-", "capability-", "ingress-", "transport-"))
+        or p["id"] in {direction + "-owner", "schema", "custody", "work"}
+    }
+    rename = {name: "repeat-" + name for name in names}
+
+    def remap(value):
+        if isinstance(value, str):
+            return rename.get(value, value)
+        if isinstance(value, list):
+            return [remap(item) for item in value]
+        if isinstance(value, dict):
+            return {key: remap(item) for key, item in value.items()}
+        return value
+
+    for key in (
+        "served_identity",
+        "auth_runtime",
+        "ingress_topology",
+        "cookie_upload",
+        direction + "_owners",
+        "schema_content",
+        "operation_custody",
+        "user_work",
+        "post_entry_acceptance",
+    ) + (("reverse_owners",) if direction == "forward" else ()):
+        a["checks"][key] = remap(copy.deepcopy(d["checks"][key]))
+        if a["checks"][key]["result"] and "cutoff_id" in a["checks"][key]["result"]:
+            a["checks"][key]["result"]["cutoff_id"] = "repeat-entry-cutoff"
+    a["checks"]["operation_custody"]["result"]["hold_id"] = "repeat-entry-hold"
+    for p in d["profile"]["provenance"]["proofs"]:
+        if p["id"] not in names:
+            continue
+        row = remap(copy.deepcopy(p))
+        row["observed_at"] = "2026-11-09T10:08:00Z"
+        if row["phase"] != "rehearsal":
+            row["predecessor_ids"] = [prior_entry]
+        a["profile"]["provenance"]["proofs"].append(row)
+    # Preserve every historical descriptor still used by a context, event or gate.
+    while True:
+        proofs = a["profile"]["provenance"]["proofs"]
+        used = {pid for check in a["checks"].values() for pid in check["proof_ids"]}
+        used.update(
+            pid
+            for row in proofs + a["profile"]["provenance"]["case_contexts"]
+            for pid in row["predecessor_ids"]
+        )
+        used.update(
+            pid
+            for key, pid in a["transition"].items()
+            if key.endswith("_proof_id") and pid
+        )
+        retained = [row for row in proofs if row["id"] in used]
+        if len(retained) == len(proofs):
+            break
+        a["profile"]["provenance"]["proofs"] = retained
+    return seal_claims(inputs)
+
+
+@pytest.mark.parametrize("phase", ["forward-entry", "reverse-entry"])
+def test_repeat_entry_preserves_history_and_requires_a_fresh_directional_window(phase):
+    inputs = repeat_entry_inputs(phase)
+    a = inputs["acceptance"]
+    backup = copy.deepcopy(a["checks"]["backup_snapshot"])
+    restore = copy.deepcopy(a["checks"]["isolated_restore"])
+    result = planner.make_cutover_plan(**inputs)
+    assert result["blockers"] == []
+    assert result["candidate"]["full_catalog_complete"] is True
+    assert result["backups_verified"] is True
+    assert result["ordered_actions"] and result["rollback_actions"]
+    assert (
+        backup["result"]["cutoff_id"]
+        != a["checks"]["operation_custody"]["result"]["cutoff_id"]
+    )
+    direction = "forward" if phase == "forward-entry" else "reverse"
+    owner = next(
+        p
+        for p in a["profile"]["provenance"]["proofs"]
+        if p["id"] == "repeat-" + direction + "-owner"
+    )
+    owner["predecessor_ids"] = []
+    seal_claims(inputs)
+    assert_blocked(planner.make_cutover_plan(**inputs), "EVIDENCE_FRESHNESS_UNVERIFIED")
+    assert a["checks"]["backup_snapshot"] == backup
+    assert a["checks"]["isolated_restore"] == restore
+
+
+def test_first_entry_still_requires_snapshot_at_its_current_cutoff_and_hold():
+    inputs = staged_inputs()
+    inputs["acceptance"]["checks"]["operation_custody"]["result"]["hold_id"] = (
+        "other-hold"
+    )
+    seal_claims(inputs)
+    assert_blocked(planner.make_cutover_plan(**inputs), "BACKUP_NOT_VERIFIED")
+
+
+def test_historical_entry_still_requires_its_own_primary_owner():
+    inputs = final_after_a_later_forward()
+    a = inputs["acceptance"]
+    a["phase"] = "forward-verification"
+    a["checks"]["reverse_owners"] = {
+        "state": "obligation",
+        "status": "not_run",
+        "proof_ids": [],
+        "result": {"obligation": "reverse_owners"},
+    }
+    reverse = next(
+        p
+        for p in a["profile"]["provenance"]["proofs"]
+        if p["id"] == "actual-reverse-entry"
+    )
+    reverse["predecessor_ids"] = ["actual-forward-entry"]
+    seal_claims(inputs)
+    assert_blocked(planner.make_cutover_plan(**inputs), "EVIDENCE_FRESHNESS_UNVERIFIED")
+
+
+@pytest.mark.parametrize("phase", ["forward-entry", "reverse-entry"])
+def test_repeat_entry_checks_each_operation_epoch_not_only_its_inventory(phase):
+    inputs = repeat_entry_inputs(phase)
+    a = inputs["acceptance"]
+    custody = a["checks"]["operation_custody"]
+    proof = copy.deepcopy(
+        next(
+            p
+            for p in a["profile"]["provenance"]["proofs"]
+            if p["id"] == "repeat-custody"
+        )
+    )
+    proof["id"] = "unit-repeat-individual"
+    a["profile"]["provenance"]["proofs"].append(proof)
+    custody["result"]["entries"] = [
+        {
+            "operation_id": "unit-settled",
+            "original_owner_id": "unit-original-owner",
+            "original_handle_id": "unit-original-handle",
+            "state": "succeeded",
+            "disposition": "settled",
+            "proof_id": proof["id"],
+        }
+    ]
+    custody["proof_ids"].append(proof["id"])
+    seal_claims(inputs)
+    assert planner.make_cutover_plan(**inputs)["blockers"] == []
+    proof["predecessor_ids"] = (
+        [] if phase == "forward-entry" else ["actual-forward-entry"]
+    )
+    seal_claims(inputs)
+    assert_blocked(planner.make_cutover_plan(**inputs), "EVIDENCE_FRESHNESS_UNVERIFIED")
+
+
+@pytest.mark.parametrize("phase", ["forward-verification", "reverse-verification"])
+def test_active_entry_cannot_replace_its_gate_with_an_unrelated_owner_window(phase):
+    inputs = staged_inputs(phase)
+    a = inputs["acceptance"]
+    direction = "forward" if phase == "forward-verification" else "reverse"
+    old = next(
+        p
+        for p in a["profile"]["provenance"]["proofs"]
+        if p["id"] == direction + "-owner"
+    )
+    other = copy.deepcopy(old)
+    other["id"] = "unit-unrelated-" + direction + "-owner"
+    a["profile"]["provenance"]["proofs"].append(other)
+    a["checks"][direction + "_owners"]["proof_ids"] = [other["id"]]
+    seal_claims(inputs)
+    assert_blocked(planner.make_cutover_plan(**inputs), "EVIDENCE_FRESHNESS_UNVERIFIED")
