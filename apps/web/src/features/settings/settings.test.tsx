@@ -333,3 +333,109 @@ it('publishes an exactly reconciled unknown clear without repeating either trans
  expect(h.workbench.drafts.sources.selectionUnconfirmed('n',readTurnContext()!.epoch)).toBe(false);
  expect(requests.filter(r=>r.method==='PATCH')).toHaveLength(1);expect(requests.filter(r=>r.url.endsWith('/notebooklm-link'))).toHaveLength(1);
 });
+
+/** B9b: synthetic mounted Advanced requirements, no actual API/provider. */
+const rebuildReceipt={command_id:'command:owned',total_items:7,message:'started'};
+const rebuildStatus=(patch:Record<string,unknown>={})=>({command_id:'command:owned',status:'running',progress:null,stats:null,started_at:null,completed_at:null,error_message:null,...patch});
+function advancedServer(handler?:(r:Request)=>Response|undefined|Promise<Response|undefined>,config:unknown={version:'1.2.3',latestVersion:null,hasUpdate:false}){
+ return server(async r=>{const custom=await handler?.(r);if(custom)return custom;const p=new URL(r.url).pathname;
+ if(p==='/api/config')return json(config);
+ if(p==='/api/embeddings/rebuild')return json(rebuildReceipt);
+ if(p.startsWith('/api/embeddings/rebuild/'))return json(rebuildStatus());
+ return undefined;});
+}
+async function advancedOpen(){const h=await renderLibrary('/advanced');await screen.findByLabelText('Rebuild mode');return h}
+function advancedConfirm(){fireEvent.click(screen.getByRole('button',{name:'Start rebuild'}));return within(screen.getByRole('dialog'))}
+it('B9b mounts real Advanced with global disclosure, local existing/all categories and one exact confirmed POST',async()=>{
+ const requests=advancedServer();await advancedOpen();
+ expect(screen.getByLabelText('Rebuild mode')).toHaveValue('existing');
+ fireEvent.change(screen.getByLabelText('Rebuild mode'),{target:{value:'all'}});
+ fireEvent.click(screen.getByLabelText('Notes'));
+ expect(requests.filter(r=>r.method==='POST')).toHaveLength(0);
+ const dialog=advancedConfirm();expect(dialog.getByText(/worker time/)).toBeVisible();
+ fireEvent.click(dialog.getByRole('button',{name:'Cancel'}));expect(requests.filter(r=>r.method==='POST')).toHaveLength(0);
+ const confirm=advancedConfirm().getByRole('button',{name:'Confirm rebuild'});fireEvent.click(confirm);fireEvent.click(confirm);
+ await waitFor(()=>expect(requests.filter(r=>r.method==='POST')).toHaveLength(1));
+ expect(await requests.find(r=>r.method==='POST')!.clone().json()).toEqual({mode:'all',include_sources:true,include_notes:false,include_insights:true});
+ expect(await screen.findByText(/Estimated items: 7/)).toBeVisible();
+ expect(screen.getByRole('button',{name:'Reset form'})).toBeDisabled();
+ expect(requests.filter(r=>r.url.includes('/personal/jobs')||r.url.includes('/connections/'))).toHaveLength(0);
+});
+it('B9b requires a category and an unchanged capture before dispatch',async()=>{
+ const requests=advancedServer();const h=await advancedOpen();
+ for(const name of ['Sources','Notes','Insights'])fireEvent.click(screen.getByLabelText(name));
+ expect(screen.getByRole('button',{name:'Start rebuild'})).toBeDisabled();
+ fireEvent.click(screen.getByLabelText('Sources'));const dialog=advancedConfirm();
+ act(()=>h.workbench.controller.invalidateProviderAdmission());
+ expect(dialog.getByRole('button',{name:'Confirm rebuild'})).toBeDisabled();fireEvent.click(dialog.getByRole('button',{name:'Confirm rebuild'}));
+ expect(requests.filter(r=>r.method==='POST')).toHaveLength(0);
+});
+it.each([false,true])('B9b retains typed409 unknown with command ID=%s and never resets or replays',async withId=>{
+ const requests=advancedServer(r=>r.method==='POST'?json({detail:{code:'COMMAND_SUBMISSION_UNKNOWN',retry_safe:false,...(withId?{command_id:'command:owned'}:{}),resource_id:'not-a-command',message:'/private secret'}},409):r.url.includes('/embeddings/rebuild/')&&r.url.endsWith('/status')?json(rebuildStatus({status:'completed',progress:{processed:2,total:3,percentage:66.67},stats:{sources:2,notes:0,insights:0,failed:1}})):undefined);
+ await advancedOpen();fireEvent.click(advancedConfirm().getByRole('button',{name:'Confirm rebuild'}));
+ expect(await screen.findByText(/Submission is uncertain/)).toBeVisible();
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Reset form'})).toBeDisabled());
+ expect(screen.getByRole('button',{name:'Start rebuild'})).toBeDisabled();
+ expect(requests.filter(r=>r.url.includes('/embeddings/rebuild/')&&r.url.endsWith('/status'))).toHaveLength(withId?1:0);
+ expect(document.body.textContent).not.toMatch(/private secret|not-a-command/);
+});
+it('B9b calls API config, preserves unavailable latest and safely links the repository without update actions',async()=>{
+ const requests=advancedServer();await advancedOpen();
+ expect(await screen.findByText('1.2.3')).toBeVisible();expect(screen.getByText('Latest version unavailable')).toBeVisible();
+ expect(screen.queryByText('Up to date')).toBeNull();expect(screen.getByRole('link',{name:'Repository and documentation'})).toHaveAttribute('href','https://github.com/lfnovo/open-notebook');
+ expect(requests.some(r=>new URL(r.url).pathname==='/api/config')).toBe(true);
+ expect(requests.some(r=>r.url.includes('github.com'))).toBe(false);
+});
+it.each([{estimated_items:9,command_id:'command:owned',message:'legacy'},{command_id:'command:owned',total_items:null,message:'bad'}])('B9b malformed post receipt stays unknown instead of zero success',async receipt=>{
+ advancedServer(r=>r.method==='POST'?json(receipt):undefined);await advancedOpen();fireEvent.click(advancedConfirm().getByRole('button',{name:'Confirm rebuild'}));
+ expect(await screen.findByText(/Submission is uncertain/)).toBeVisible();expect(screen.queryByText(/Estimated items: 0/)).toBeNull();
+ expect(screen.getByRole('button',{name:'Reset form'})).toBeDisabled();
+});
+it.each([rebuildStatus({status:'future'}),rebuildStatus({command_id:'command:wrong',status:'completed'}),rebuildStatus({progress:{processed:null,total:2,percentage:0}})])('B9b unsupported or malformed status remains guarded and cannot resubmit',async value=>{
+ const requests=advancedServer(r=>r.url.includes('/embeddings/rebuild/')&&r.url.endsWith('/status')?json(value):undefined);await advancedOpen();fireEvent.click(advancedConfirm().getByRole('button',{name:'Confirm rebuild'}));
+ expect(await screen.findByText('Progress unavailable')).toBeVisible();expect(screen.getByRole('button',{name:'Reset form'})).toBeDisabled();expect(requests.filter(r=>r.method==='POST')).toHaveLength(1);
+});
+it('B9b parent completed displays child submissions and partial failure, and reset is local',async()=>{
+ const requests=advancedServer(r=>r.url.includes('/embeddings/rebuild/')&&r.url.endsWith('/status')?json(rebuildStatus({status:'completed',progress:{processed:2,total:3,percentage:66.67},stats:{sources:2,notes:0,insights:0,failed:1}})):undefined);await advancedOpen();fireEvent.click(advancedConfirm().getByRole('button',{name:'Confirm rebuild'}));
+ expect(await screen.findByText('Scheduling ended; vector completion is not reported.')).toBeVisible();
+ expect(screen.getByText(/Child jobs submitted: 2 \/ 3/)).toBeVisible();expect(screen.getByText(/Failed submissions: 1/)).toBeVisible();
+ fireEvent.click(screen.getByRole('button',{name:'Reset form'}));expect(requests.filter(r=>r.method==='POST')).toHaveLength(1);
+ expect(screen.getByRole('button',{name:'Start rebuild'})).toBeEnabled();
+});
+it('B9b retains pending original form across navigation and retirement without mount observation or copies',async()=>{
+ let resolve!:(r:Response)=>void;const requests=advancedServer(r=>r.method==='POST'?new Promise<Response>(yes=>resolve=yes):undefined);const h=await advancedOpen();
+ fireEvent.change(screen.getByLabelText('Rebuild mode'),{target:{value:'all'}});fireEvent.click(advancedConfirm().getByRole('button',{name:'Confirm rebuild'}));
+ await waitFor(()=>expect(resolve).toBeDefined());
+ await act(async()=>{void h.router.navigate('/settings')});fireEvent.click(await screen.findByRole('button',{name:'Keep work and continue'}));
+ await act(async()=>{await h.router.navigate('/advanced')});await screen.findByLabelText('Rebuild mode');expect(screen.getByLabelText('Rebuild mode')).toHaveValue('all');
+ await act(async()=>resolve(json(rebuildReceipt)));expect(requests.filter(r=>r.url.includes('/embeddings/rebuild/')&&r.url.endsWith('/status'))).toHaveLength(0);
+ act(()=>h.workbench.controller.retirePrivacyContext());expect(await screen.findByText(/Original record is frozen/)).toBeVisible();
+ expect(screen.getByRole('button',{name:'Start rebuild'})).toBeDisabled();
+});
+
+it('B9b acknowledged route remount never resumes observation and retains the exact command',async()=>{
+ const requests=advancedServer();const h=await advancedOpen();fireEvent.click(advancedConfirm().getByRole('button',{name:'Confirm rebuild'}));
+ await waitFor(()=>expect(requests.filter(r=>r.url.includes('/embeddings/rebuild/')&&r.url.endsWith('/status'))).toHaveLength(1));
+ await act(async()=>{void h.router.navigate('/settings')});fireEvent.click(await screen.findByRole('button',{name:'Keep work and continue'}));
+ await act(async()=>{await h.router.navigate('/advanced')});await screen.findByLabelText('Rebuild mode');
+ expect(screen.getByText('command:owned')).toBeVisible();expect(requests.filter(r=>r.url.includes('/embeddings/rebuild/')&&r.url.endsWith('/status'))).toHaveLength(1);
+ expect(requests.filter(r=>r.method==='POST')).toHaveLength(1);expect(screen.getByRole('button',{name:'Refresh progress'})).toBeEnabled();
+});
+it('B9b retired unknown remains selectable after explicit blank successor and reset never reconciles it',async()=>{
+ const requests=advancedServer(r=>r.method==='POST'?json({detail:{code:'COMMAND_SUBMISSION_UNKNOWN',retry_safe:false}},409):undefined);const h=await advancedOpen();fireEvent.change(screen.getByLabelText('Rebuild mode'),{target:{value:'all'}});fireEvent.click(advancedConfirm().getByRole('button',{name:'Confirm rebuild'}));await screen.findByText(/Submission is uncertain/);
+ const old=h.workbench.drafts.advanced.getSnapshot()[0]!.id;
+ await act(async()=>{h.workbench.controller.retirePrivacyContext();await h.workbench.controller.check()});
+ fireEvent.click(await screen.findByRole('button',{name:'New blank record'}));expect(screen.getByLabelText('Rebuild mode')).toHaveValue('existing');
+ expect(screen.queryByText(/Submission is uncertain/)).toBeNull();
+ fireEvent.change(screen.getByLabelText('Retained rebuild records'),{target:{value:old}});
+ expect(screen.getByLabelText('Rebuild mode')).toHaveValue('all');expect(screen.getByText(/Submission is uncertain/)).toBeVisible();expect(screen.getByRole('button',{name:'Reset form'})).toBeDisabled();
+ expect(requests.filter(r=>r.method==='POST')).toHaveLength(1);
+});
+it.each([{version:'x',latestVersion:null,hasUpdate:true},{version:'x',latestVersion:'y'},{version:'unknown',hasUpdate:false}])('B9b missing latest evidence or flag is not up-to-date',async config=>{
+ advancedServer(undefined,config);await advancedOpen();await waitFor(()=>expect(screen.queryByText('Loading...')).toBeNull());expect(screen.queryByText('Up to date')).toBeNull();
+});
+
+it('B9b closing confirmation restores focus to the visible opener or main fallback when start is disabled',async()=>{
+ advancedServer();await advancedOpen();fireEvent.click(advancedConfirm().getByRole('button',{name:'Cancel'}));await waitFor(()=>expect(screen.getByRole('button',{name:'Start rebuild'})).toHaveFocus());
+ fireEvent.click(advancedConfirm().getByRole('button',{name:'Confirm rebuild'}));await waitFor(()=>expect(screen.getByRole('main')).toHaveFocus());
+});

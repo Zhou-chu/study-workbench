@@ -1,3 +1,4 @@
+import {commandId,validRebuildRequest,parseRebuildReceipt,parseRebuildStatus,parseApiVersion,rebuildUnknown,type RebuildRequest} from './advanced-contracts';
 import {isRecord} from '@study/contracts';
 import {canDispatch,freezeDispatchContext,readTurnContext,sessionCoordinator,RequestNotDispatchedError,TransportResponseError,type DispatchContext,type WebTransport} from '@study/web-transport';
 import {parseNotebookSummary,type NotebookSummary} from './notebook-api';
@@ -13,6 +14,7 @@ export const canObserveCreate=(r:CreateReceipt)=>['queued','running'].includes(r
 export const canStartCreateSuccessor=(r:CreateReceipt)=>r.state==='succeeded'&&r.submission_state==='confirmed'||['failed','cancelled_local','needs_reauth'].includes(r.state)&&r.submission_state==='not_submitted';
 export type SetupMetadata=Readonly<{encryption_configured:boolean;configured:Readonly<Record<string,boolean>>;source:Readonly<Record<string,string>>;environment:Readonly<Record<string,boolean>>}>;
 export class SettingsRequestError extends Error{constructor(readonly status:number){super('Settings request was not confirmed')}}
+export class RebuildSubmissionUnknown extends SettingsRequestError { constructor(readonly command_id?:string){super(409)} }
 const record=(v:unknown)=>{if(!isRecord(v))throw Error('Invalid response');return v};
 const str=(v:unknown)=>{if(typeof v!=='string')throw Error('Invalid text');return v};
 const id=(v:unknown)=>{const s=str(v);if(!s||s.length>500||[...s].some(c=>c.charCodeAt(0)<32))throw Error('Invalid identity');return s};
@@ -38,16 +40,19 @@ export async function parseCreateReceipt(value:unknown,input:{notebook_id:string
  return Object.freeze({job_id:id(r.job_id),state,submission_state,remote_notebook_id:remote,request_hash:hash,notebook_id:input.notebook_id,title:input.title,idempotency_key:input.idempotency_key});
 }
 export function createSettingsApi(transport:WebTransport){
- async function request(method:string,path:string,context:DispatchContext,body?:unknown){
+ async function request(method:string,path:string,context:DispatchContext,body?:unknown,options?:{signal?:AbortSignal;operationKey?:string;rebuild?:boolean}){
  const c=freezeDispatchContext(context),g=sessionCoordinator.current();if(!canDispatch(c,readTurnContext()))throw new RequestNotDispatchedError('superseded');
- const response=await transport.send({method,path,context:c,...(body!==undefined?{body:JSON.stringify(body)}:{})});
+ const response=await transport.send({method,path,context:c,...(body!==undefined?{body:JSON.stringify(body)}:{}),...(options?.signal?{signal:options.signal}:{}),...(options?.operationKey?{operationKey:options.operationKey}:{})});
  if(!canDispatch(c,readTurnContext())||g!==sessionCoordinator.current()){void response.body?.cancel();throw new TransportResponseError('retired')}
- if(!response.ok){void response.body?.cancel();throw new SettingsRequestError(response.status)}
+ if(!response.ok){if(options?.rebuild&&response.status===409){const unknown=await rebuildUnknown(response);if(!canDispatch(c,readTurnContext())||g!==sessionCoordinator.current())throw new TransportResponseError('retired');if(unknown)throw new RebuildSubmissionUnknown(unknown.command_id)}else void response.body?.cancel();throw new SettingsRequestError(response.status)}
  const result:unknown=await response.json();if(!canDispatch(c,readTurnContext())||g!==sessionCoordinator.current())throw new TransportResponseError('retired');return result;
  }
  const notebook=(n:string)=>'/notebooks/'+encodeURIComponent(n);
  const connection='/personal/connections/notebooklm';
  return Object.freeze({
+ async rebuild(input:RebuildRequest,c:DispatchContext,operationKey:string){if(!validRebuildRequest(input))throw new RequestNotDispatchedError('configuration');return parseRebuildReceipt(await request('POST','/embeddings/rebuild',c,{mode:input.mode,include_sources:input.include_sources,include_notes:input.include_notes,include_insights:input.include_insights},{operationKey,rebuild:true}))},
+ async rebuildStatus(id:string,c:DispatchContext,signal?:AbortSignal){const expected=commandId(id);return parseRebuildStatus(await request('GET','/embeddings/rebuild/'+encodeURIComponent(expected)+'/status',c,undefined,{...(signal?{signal}:{})}),expected)},
+ async version(c:DispatchContext,signal?:AbortSignal){return parseApiVersion(await request('GET','/config',c,undefined,{...(signal?{signal}:{})}))},
  async notebook(n:string,c:DispatchContext){const v=parseNotebookSummary(await request('GET',notebook(n),c));if(v.id!==n)throw Error('Mismatched notebook');return v},
  async update(n:string,input:NotebookPatch,c:DispatchContext):Promise<NotebookSummary>{const v=parseNotebookSummary(await request('PUT',notebook(n),c,input));if(v.id!==n)throw Error('Mismatched notebook');return v},
  async preview(n:string,c:DispatchContext):Promise<DeletePreview>{const r=record(await request('GET',notebook(n)+'/delete-preview',c));if(r.notebook_id!==n)throw Error('Mismatched preview');return Object.freeze({notebook_id:n,notebook_name:str(r.notebook_name),note_count:count(r.note_count),exclusive_source_count:count(r.exclusive_source_count),shared_source_count:count(r.shared_source_count)})},

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Restore 12 SPA Advanced controls with explicit global rebuild cost/scope confirmation, retained original acknowledgements and unknown guards, finite user-triggered progress observation and API version information in all 14 locales. Scheduling counts child submissions, not completed vectors. B9c-e, browser/provider/runtime acceptance and deployment remain pending.
+
 - Restore 33 SPA session, notebook lifecycle and Google connection controls with retained notebook settings, truthful local signout evidence, one-shot safe cold return, complete-selection ownership and explicit two-stage link outcomes. Preserve original retrieval admission, provider proof and nonsecret drafts across all 14 locales. B9b-e and browser/provider/deployment acceptance remain pending.
 
 - Restore the monochrome SPA podcast and profile workflows with explicit context previews, retained operation receipts, contained audio controls and synthetic acceptance for all172 B8 operations. Browser/runtime acceptance remains separate.
