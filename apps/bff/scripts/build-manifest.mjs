@@ -11,7 +11,7 @@ export async function buildBff(slot){
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const [mode,target]=process.argv.slice(2);
- if(mode==='--verify')await verifyArtifact(path.resolve(target),{kind:'bff',contract:path.join(ROOT,'contracts/v1/openapi.json')});
+ if(mode==='--verify')await verifyArtifact(path.resolve(target),{kind:'bff',contract:path.join(ROOT,'contracts/v1/openapi.json'),source:true});
  else if(mode===undefined||mode==='--build')await buildBff(target);
  else throw Error('Usage: --build [slot] | --verify dist');
  console.log('BFF source/artifact file gate PASS; listener/runtime NOT_RUN');

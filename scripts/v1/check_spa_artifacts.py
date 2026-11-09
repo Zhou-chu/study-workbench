@@ -8,6 +8,7 @@ import re
 import stat
 import subprocess
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 META = {"spa-artifact-manifest.json", "artifact-inventory.json"}
@@ -68,7 +69,7 @@ def inventory(root):
         raise ValueError("Symlink root")
     if not root.is_dir():
         raise ValueError("Missing artifact directory")
-    rows = []
+    rows: list[dict[str, Any]] = []
     total = 0
     for directory, directories, files in os.walk(root, followlinks=False):
         for name in directories:
@@ -148,7 +149,7 @@ def source_inventory(kind):
     ]
     if kind == "web":
         paths += ["packages/domain", "packages/web-transport"]
-    rows = []
+    rows: list[dict[str, Any]] = []
     for name in sorted(filter(None, git("ls-files", "-z", "--", *paths).split("\0"))):
         if "/dist/" in name:
             continue
@@ -247,22 +248,35 @@ def verify(root, kind, contract, source=True):
                 raise ValueError("Unexpected BFF closure payload")
             code = read_file(root / name)[0].decode()
             if re.search(
-                r"\b(?:require|eval)\s*\(|\bimport\s*\(|\bFunction\s*\(", code
+                r"\b(?:require|eval)\s*\(|\bimport\s*(?:/\*[\s\S]*?\*/\s*)*\(|\bFunction\s*\(",
+                code,
             ):
                 raise ValueError("Dynamic BFF dependency")
-            for imported in re.findall(
-                r"""(?:\bfrom\s*|\bimport\s*)['"]([^'"]+)['"]""", code
-            ):
+            parse = (
+                "import {SourceTextModule} from 'node:vm'; import {readFileSync} from 'node:fs'; "
+                "const m=new SourceTextModule(readFileSync(0,'utf8')); process.stdout.write(JSON.stringify(m.dependencySpecifiers));"
+            )
+            result = subprocess.run(
+                [
+                    "node",
+                    "--experimental-vm-modules",
+                    "--input-type=module",
+                    "-e",
+                    parse,
+                ],
+                input=code,
+                capture_output=True,
+                text=True,
+                env={"PATH": os.environ.get("PATH", os.defpath), "LANG": "C.UTF-8"},
+                check=True,
+            )
+            for imported in json.loads(result.stdout):
                 if imported in {
-                    "node:http",
-                    "node:https",
+                    "node:async_hooks",
                     "node:crypto",
-                    "node:stream",
-                    "node:events",
-                    "node:url",
+                    "node:http",
                     "node:path",
-                    "node:buffer",
-                    "node:util",
+                    "node:url",
                 }:
                     continue
                 if (

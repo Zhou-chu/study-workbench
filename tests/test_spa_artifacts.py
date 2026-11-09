@@ -10,6 +10,7 @@ def checker():
     path = ROOT / "scripts/v1/check_spa_artifacts.py"
     assert path.is_file(), "Independent Web/BFF validator missing"
     spec = importlib.util.spec_from_file_location("spa_artifacts", path)
+    assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -226,3 +227,41 @@ def test_gateway_supports_real_pdf_modules_and_streamed_large_uploads():
     assert "client_max_body_size 0;" in config
     assert "upstream bff_origin { server bff:3000; }" in config
     assert "proxy_pass http://bff_origin$request_uri;" in config
+
+
+def test_independent_bff_parser_never_evaluates_module_source(tmp_path):
+    check, root, contract = synthetic(tmp_path, "bff")
+
+    def refresh():
+        receipt = check.load_json(root / "artifact-inventory.json")
+        receipt["assets"] = check.inventory(root)
+        manifest = check.load_json(root / "spa-artifact-manifest.json")
+        manifest["asset_digest"] = check.digest(receipt["assets"])
+        (root / "artifact-inventory.json").write_text(check.canonical(receipt) + "\n")
+        (root / "spa-artifact-manifest.json").write_text(
+            check.canonical(manifest) + "\n"
+        )
+
+    (root / "server.js").write_text(
+        "import {AsyncLocalStorage} from 'node:async_hooks'; const routes=[['POST','/import'],['GET','/x']]; throw Error('must-not-execute');"
+    )
+    refresh()
+    check.verify(root, "bff", contract, source=False)
+    for code in [
+        "export {x} from 'next';",
+        "import 'node:child_process';",
+        "const x = import /* comment */ ('next');",
+    ]:
+        (root / "server.js").write_text(code)
+        refresh()
+        with pytest.raises(ValueError):
+            check.verify(root, "bff", contract, source=False)
+
+
+def test_local_cli_verification_checks_actual_source_and_web_recipe_contract():
+    for app in ("web", "bff"):
+        cli = (ROOT / f"apps/{app}/scripts/build-manifest.mjs").read_text()
+        assert "source:true" in cli
+    assert (
+        "contracts/v1/openapi.json" in (ROOT / "deploy/v1/Dockerfile.web").read_text()
+    )

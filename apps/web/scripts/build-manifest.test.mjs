@@ -64,3 +64,13 @@ test('Node verifier rejects duplicate/noncanonical manifests and undeclared file
   await assert.rejects(common.verifyArtifact(artifact),/canonical|schema/);
  }finally{await rm(root,{recursive:true,force:true});}
 });
+
+test('gateway packaging checks the selected current contract without replacing retained identities',async()=>{
+ const root=await mkdtemp(path.join(tmpdir(),'c1-contract-'));
+ try{
+  const artifact=await fixtureWeb(root,'synthetic-release-006');
+  const output=path.join(root,'gateway');await common.stageGateway(output,[artifact]);
+  const contract=path.join(root,'openapi.json');await writeFile(contract,'wrong');
+  await assert.rejects(common.verifyGateway(output,{contract}),/contract/);
+ }finally{await rm(root,{recursive:true,force:true});}
+});

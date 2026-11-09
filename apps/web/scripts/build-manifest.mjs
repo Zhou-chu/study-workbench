@@ -11,7 +11,7 @@ export async function buildWeb(slot){
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  const [mode,target,...retained]=process.argv.slice(2);
- if(mode==='--verify')await verifyArtifact(path.resolve(target),{kind:'web',contract:path.join(ROOT,'contracts/v1/openapi.json')});
+ if(mode==='--verify')await verifyArtifact(path.resolve(target),{kind:'web',contract:path.join(ROOT,'contracts/v1/openapi.json'),source:true});
  else if(mode==='--stage-gateway')await stageGateway(path.resolve(target),retained.map(p=>path.resolve(p)));
  else if(mode===undefined||mode==='--build')await buildWeb(target);
  else throw Error('Usage: --build [slot] | --verify dist | --stage-gateway fresh-output current-dist [retained-dist ...]');

@@ -3,7 +3,6 @@ import {createHash,randomUUID} from 'node:crypto';
 import {constants} from 'node:fs';
 import {lstat,open,readdir,writeFile,mkdir,rename,cp} from 'node:fs/promises';
 import {execFileSync,spawnSync} from 'node:child_process';
-import {builtinModules} from 'node:module';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 export const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
@@ -68,10 +67,9 @@ export async function verifyBffClosure(root){
   if(['package.json','artifact-identity.json'].includes(r.path))continue;
   if(!r.path.endsWith('.js'))throw Error('unexpected BFF closure payload');
   const code=(await bytes(path.join(root,r.path))).data.toString();
-  if(/\b(?:require|eval)\s*\(|\bimport\s*\(|\bFunction\s*\(/.test(code))throw Error('dynamic dependency closure');
-  for(const m of code.matchAll(/(?:\bfrom\s*|\bimport\s*)['"]([^'"]+)['"]/g)){
-   const spec=m[1];
-   if(spec.startsWith('node:')&&builtinModules.includes(spec.slice(5)))continue;
+  if(/\b(?:require|eval)\s*\(|\bimport\s*(?:\/\*[\s\S]*?\*\/\s*)*\(|\bFunction\s*\(/.test(code))throw Error('dynamic dependency closure');
+  for(const spec of moduleImports(code)){
+   if(['node:async_hooks','node:crypto','node:http','node:path','node:url'].includes(spec))continue;
    if(!spec.startsWith('./')||!spec.endsWith('.js')||!names.has(path.posix.join(path.posix.dirname(r.path),spec)))throw Error('external or missing import closure');
   }
  }
@@ -154,14 +152,14 @@ export async function readCanonical(filename){
  if(raw!==canonical(value)+'\n')throw Error('noncanonical/duplicate metadata');
  return value;
 }
-export async function verifyGateway(root){
+export async function verifyGateway(root,{contract}={}){
  const window=await readCanonical(path.join(root,'client-window.json'));
  keys(window,['schema_version','current','retained']);
  if(window.schema_version!=='spa-client-window-v1'||!Array.isArray(window.retained)||!window.retained.length||window.retained[0]!==window.current||new Set(window.retained).size!==window.retained.length)throw Error('invalid retained window');
  const expected=[],seen=new Map();
  for(const slot of window.retained){
   if(typeof slot!=='string'||!/^[a-z0-9][a-z0-9-]{15,79}$/.test(slot))throw Error('invalid release slot');
-  const relative='_spa/releases/'+slot,source=path.join(root,relative),checked=await verifyArtifact(source,{kind:'web'});
+  const relative='_spa/releases/'+slot,source=path.join(root,relative),checked=await verifyArtifact(source,{kind:'web',...(slot===window.current?{contract}:{})});
   if(checked.inventory.release_slot!==slot)throw Error('slot association mismatch');
   for(const entry of await inventory(source,{metadata:true})){
    expected.push({...entry,path:relative+'/'+entry.path});
@@ -184,4 +182,11 @@ export async function rebuildPackages(kind){
   try{await noLinks(dist);await mkdir(path.join(root,'build'),{recursive:true});await rename(dist,path.join(root,'build','previous-'+randomUUID()));}catch(e){if(e.code!=='ENOENT')throw e;}
   runNode([path.join(ROOT,'node_modules/typescript/bin/tsc'),'--project','tsconfig.build.json'],root);
  }
+}
+
+/** Parse with Node's ESM grammar without linking/evaluating the candidate. */
+export function moduleImports(code){
+ const parse="import {SourceTextModule} from 'node:vm'; import {readFileSync} from 'node:fs'; const m=new SourceTextModule(readFileSync(0,'utf8')); process.stdout.write(JSON.stringify(m.dependencySpecifiers));";
+ try{return JSON.parse(execFileSync(process.execPath,['--experimental-vm-modules','--input-type=module','-e',parse],{input:code,encoding:'utf8',env:{PATH:path.dirname(process.execPath),LANG:'C.UTF-8'},stdio:['pipe','pipe','pipe']}));}
+ catch{throw Error('invalid ESM closure syntax');}
 }
