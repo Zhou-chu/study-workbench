@@ -1,3 +1,4 @@
+import { readTurnContext, sessionCoordinator } from '@study/web-transport';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { expect, it } from 'vitest';
 import { renderLibrary } from '../../test/library-harness';
@@ -150,4 +151,114 @@ it('an uncertain duplicate prevents a same-target profile edit from dispatching'
     fireEvent.submit(screen.getByLabelText('Profile name').closest('form')!);
     await act(async () => { });
     expect(req.filter(r => r.method === 'PUT')).toHaveLength(0);
+});
+
+it.each([['create', 'unknown'], ['update', 'unknown'], ['create', 'rejected'], ['update', 'rejected']])('I3 %s binding protects its speaker while pending and after %s outcome', async (kind, outcome) => {
+    let resolve!: (r: Response) => void;
+    const req = podcastServer(r => {
+        const path = new URL(r.url).pathname;
+        if (r.method === 'GET' && path.endsWith('/episode-profiles')) return json([{ ...ep, speaker_config: 'speaker_profile:other' }]);
+        if (path.includes('/episode-profiles') && ['POST', 'PUT'].includes(r.method)) return new Promise<Response>(yes => resolve = yes);
+    });
+    await profiles();
+    const speakers = screen.getByRole('region', { name: 'Speaker profiles' });
+    await waitFor(() => expect(within(speakers).getByRole('button', { name: 'Delete' })).toBeEnabled());
+    if (kind === 'create') fireEvent.click(screen.getByRole('button', { name: 'Create profile' }));
+    else fireEvent.click(within(screen.getByRole('region', { name: 'Episode profiles' })).getByRole('button', { name: 'Edit' }));
+    fireEvent.change(await screen.findByLabelText('Profile name'), { target: { value: 'Pending binding' } });
+    fireEvent.change(screen.getByLabelText('Default briefing'), { target: { value: 'Teach carefully' } });
+    fireEvent.change(screen.getByLabelText('Speaker configuration'), { target: { value: sp.id } });
+    fireEvent.click(d().getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(resolve).toBeDefined());
+    fireEvent.click(d().getByRole('button', { name: 'Close' }));
+    expect(within(speakers).getByRole('button', { name: 'Delete' })).toBeDisabled();
+    fireEvent.click(within(speakers).getByRole('button', { name: 'Delete' }));
+    expect(req.filter(r => r.method === 'DELETE')).toHaveLength(0);
+    await act(async () => resolve(outcome === 'unknown' ? json({ malformed: true }) : json({ detail: 'Rejected' }, 422)));
+    if (outcome === 'unknown') {
+        await screen.findByText('Outcome unknown. No automatic retry.');
+        expect(within(speakers).getByRole('button', { name: 'Delete' })).toBeDisabled();
+    } else await waitFor(() => expect(within(speakers).getByRole('button', { name: 'Delete' })).toBeEnabled());
+    expect(req.filter(r => r.method === 'DELETE')).toHaveLength(0);
+});
+
+it.each(['Episode profiles', 'Speaker profiles'])('I4 next %s edit uses the matching acknowledged fields without reverting or losing prior evidence', async region => {
+    const isEpisode = region === 'Episode profiles';
+    const req = podcastServer(async r => {
+        if (r.method === 'PUT') return json({ ...(isEpisode ? ep : sp), ...await r.clone().json(), name: 'Acknowledged B', description: 'Server baseline', ...(isEpisode ? { max_tokens: 3072, num_segments: 7 } : {}) });
+    });
+    const h = await renderLibrary('/podcasts');
+    fireEvent.click(await screen.findByRole('button', { name: 'Profiles' }));
+    fireEvent.click(await within(screen.getByRole('region', { name: region })).findByRole('button', { name: 'Edit' }));
+    fireEvent.change(await screen.findByLabelText('Profile name'), { target: { value: 'B' } });
+    fireEvent.click(d().getByRole('button', { name: 'Save' }));
+    fireEvent.click(await d().findByRole('button', { name: 'New draft' }));
+    expect(screen.getByLabelText('Profile name')).toHaveValue('Acknowledged B');
+    expect(screen.getByLabelText('Description')).toHaveValue('Server baseline');
+    if (isEpisode) {
+        expect(screen.getByLabelText('Max output tokens')).toHaveValue(3072);
+        expect(screen.getByLabelText('Segments')).toHaveValue(7);
+    }
+    const old = h.workbench.drafts.library.getSnapshot().find(r => r.input.kind === 'podcast-operation')!;
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Second edit' } });
+    await act(async () => h.queries.invalidateQueries({ queryKey: ['library', isEpisode ? 'episode-profiles' : 'speaker-profiles'] }));
+    expect(screen.getByLabelText('Description')).toHaveValue('Second edit');
+    fireEvent.click(d().getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(req.filter(r => r.method === 'PUT')).toHaveLength(2));
+    const sent = await req.filter(r => r.method === 'PUT')[1]!.clone().json();
+    expect(sent).toMatchObject({ name: 'Acknowledged B', description: 'Second edit', ...(isEpisode ? { max_tokens: 3072, num_segments: 7, speaker_config: sp.id, language: null } : { speakers: sp.speakers, voice_model: sp.voice_model }) });
+    expect(h.workbench.drafts.library.get(old.id)?.input).toBe(old.input);
+    expect(h.workbench.drafts.library.get(old.id)?.token).toBe(old.token);
+});
+it('I4 successful profile creation still opens a blank create intent rather than an edit or duplicate', async () => {
+    const req = podcastServer(); await profiles();
+    fireEvent.click(screen.getByRole('button', { name: 'Create profile' }));
+    fireEvent.change(await screen.findByLabelText('Profile name'), { target: { value: 'Created format' } });
+    fireEvent.change(screen.getByLabelText('Speaker configuration'), { target: { value: sp.id } });
+    fireEvent.change(screen.getByLabelText('Default briefing'), { target: { value: 'Explain' } });
+    fireEvent.click(d().getByRole('button', { name: 'Save' }));
+    fireEvent.click(await d().findByRole('button', { name: 'New draft' }));
+    expect(screen.getByLabelText('Profile name')).toHaveValue('');
+    expect(screen.getByLabelText('Speaker configuration')).toHaveValue('');
+    expect(req.filter(r => r.method === 'POST')).toHaveLength(1);
+    expect(req.filter(r => r.method === 'PUT')).toHaveLength(0);
+});
+
+it.each(['Close', 'Cancel'])('I5 palette create reopens its retained form after %s at the same URL without submission', async close => {
+    const req = podcastServer(), h = await renderLibrary('/podcasts');
+    fireEvent.click(await screen.findByRole('button', { name: 'Commands' }));
+    fireEvent.click(d().getByRole('button', { name: 'Generate Podcast' }));
+    fireEvent.change(await screen.findByLabelText('Episode name'), { target: { value: 'Retained palette draft' } });
+    const old = h.workbench.drafts.library.getSnapshot().find(r => r.input.kind === 'podcast-form')!;
+    const firstKey = h.router.state.location.key;
+    fireEvent.click(d().getByRole('button', { name: close }));
+    fireEvent.click(screen.getByRole('button', { name: 'Commands' }));
+    fireEvent.click(d().getByRole('button', { name: 'Generate Podcast' }));
+    expect(await screen.findByLabelText('Episode name')).toHaveValue('Retained palette draft');
+    expect(h.router.state.location.search).toBe('?create=1');
+    expect(h.router.state.location.key).not.toBe(firstKey);
+    expect(h.workbench.drafts.library.getSnapshot().filter(r => r.input.kind === 'podcast-form')).toHaveLength(1);
+    expect(h.workbench.drafts.library.get(old.id)?.input).toBe(old.input);
+    expect(req.filter(r => r.method === 'POST')).toHaveLength(0);
+});
+
+it('I1/I4 completed same-owner edit can start another ACK-based edit after temporary readiness loss', async () => {
+    const req = podcastServer(), h = await renderLibrary('/podcasts');
+    fireEvent.click(await screen.findByRole('button', { name: 'Profiles' }));
+    fireEvent.click(await within(screen.getByRole('region', { name: 'Episode profiles' })).findByRole('button', { name: 'Edit' }));
+    fireEvent.change(await screen.findByLabelText('Profile name'), { target: { value: 'Saved B' } });
+    fireEvent.click(d().getByRole('button', { name: 'Save' }));
+    await d().findByRole('button', { name: 'New draft' });
+    const epoch = readTurnContext()!.epoch;
+    act(() => sessionCoordinator.report('unavailable', sessionCoordinator.current()));
+    await act(async () => h.workbench.controller.check());
+    expect(readTurnContext()!.epoch).toBe(epoch);
+    fireEvent.click(await d().findByRole('button', { name: 'New draft' }));
+    expect(screen.getByLabelText('Profile name')).toHaveValue('Saved B');
+    expect(screen.getByLabelText('Profile name')).toBeEnabled();
+    await waitFor(() => expect(d().getByRole('button', { name: 'Save' })).toBeEnabled());
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Second same-owner edit' } });
+    fireEvent.click(d().getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(req.filter(r => r.method === 'PUT')).toHaveLength(2));
+    expect(await req.filter(r => r.method === 'PUT')[1]!.clone().json()).toMatchObject({ name: 'Saved B', description: 'Second same-owner edit' });
 });

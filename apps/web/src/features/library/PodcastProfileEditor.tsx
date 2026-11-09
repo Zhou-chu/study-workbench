@@ -1,4 +1,5 @@
 import { useMemo, useRef } from 'react';
+import { readTurnContext } from '@study/web-transport';
 import { useQuery } from '@tanstack/react-query';
 import { useI18n } from '../../i18n';
 import { Button } from '../../ui/Button';
@@ -28,8 +29,18 @@ export function PodcastProfileEditor({ type, value, onClose }: {
     value?: EpisodeProfile | SpeakerProfile;
     onClose(): void;
 }) {
-    const initial = useMemo<PodcastProfileForm>(() => ({ kind: 'podcast-profile-form', formKey: type + ':' + (value?.id ?? 'new'), intentId: crypto.randomUUID(), profileType: type, targetId: value?.id ?? null, payload: payload(type, value) }), [type, value?.id]);
-    const s = usePodcastForm(initial), data = usePodcastData(false), { t, podcast: p } = useI18n(), composing = useRef(false);
+    function makeForm(value?: EpisodeProfile | SpeakerProfile): PodcastProfileForm {
+        return { kind: 'podcast-profile-form', formKey: type + ':' + (value?.id ?? 'new') + ':' + readTurnContext()?.epoch, intentId: crypto.randomUUID(), profileType: type, targetId: value?.id ?? null, payload: payload(type, value) };
+    }
+    const initial = useMemo(() => makeForm(value), [type, value?.id]);
+    const s = usePodcastForm(initial, () => makeForm(), (operation, input) => {
+        if (input.kind !== 'podcast-profile-form') return null;
+        if (!input.targetId) return makeForm();
+        if (operation.status !== 'succeeded') return input;
+        const acknowledged = operation.podcastProfile;
+        if (!acknowledged || acknowledged.id !== input.targetId || ('speaker_config' in acknowledged) !== (type === 'episode')) return null;
+        return { ...input, payload: payload(type, acknowledged) };
+    }), data = usePodcastData(false), { t, podcast: p } = useI18n(), composing = useRef(false);
     const langs = useQuery({ queryKey: ['library', 'podcast-languages', s.scope], enabled: s.ready, queryFn: ({ signal }) => s.api!.metadata.languages(s.context!, signal) });
     const form = s.row?.input.kind === 'podcast-profile-form' ? s.row.input : null, v = form?.payload;
     const change = (patch: Partial<EpisodeProfileInput & SpeakerProfileInput>) => { if (v)
@@ -45,7 +56,7 @@ export function PodcastProfileEditor({ type, value, onClose }: {
         s.refresh();
     }
     return <LibraryDialog open={s.ready} onOpenChange={v => { if (!v)
-        onClose(); }} title={type === 'episode' ? (value ? t.podcasts.editEpisodeProfile : t.podcasts.createEpisodeProfile) : (value ? t.podcasts.editSpeakerProfile : t.podcasts.createSpeakerProfile)}>
+        onClose(); }} title={type === 'episode' ? (form?.targetId ? t.podcasts.editEpisodeProfile : t.podcasts.createEpisodeProfile) : (form?.targetId ? t.podcasts.editSpeakerProfile : t.podcasts.createSpeakerProfile)}>
  {v && <form className="podcast-form" onSubmit={e => { e.preventDefault(); void save(); }} onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }}><fieldset disabled={s.locked}><legend>{t.podcasts.profile}</legend>
  <label>{t.podcasts.profileName}<input value={v.name} onChange={e => change({ name: e.target.value })}/></label><label>{t.common.description}<textarea value={v.description ?? ''} onChange={e => change({ description: e.target.value })}/></label>
  {'speaker_config' in v ? <><label>{t.podcasts.speakerConfig}<select value={v.speaker_config} onChange={e => change({ speaker_config: e.target.value })}><option value="">{t.podcasts.selectSpeakerProfile}</option>{v.speaker_config && !data.speakers.data?.some(x => x.id === v.speaker_config) && <option value={v.speaker_config}>{v.speaker_config + ' · ' + t.common.unknown}</option>}{data.speakers.data?.map(x => <option value={x.id} key={x.id}>{x.name + ' · ' + x.id}</option>)}</select></label>

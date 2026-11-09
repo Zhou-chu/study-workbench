@@ -36,6 +36,7 @@ export async function executePodcast(store: LibraryStore, input: PodcastOperatio
                 if (!p.request || !('speaker_config' in p.request))
                     throw new TypeError('Profile input');
                 const value = p.targetId ? await api.episodeProfiles.update(p.targetId, p.request, row.context, key) : await api.episodeProfiles.create(p.request, row.context, key);
+                store.podcastProfile(id, t, value);
                 resourceId = value.id;
                 break;
             }
@@ -43,6 +44,7 @@ export async function executePodcast(store: LibraryStore, input: PodcastOperatio
                 if (!p.request || !('speakers' in p.request))
                     throw new TypeError('Profile input');
                 const value = p.targetId ? await api.speakerProfiles.update(p.targetId, p.request, row.context, key) : await api.speakerProfiles.create(p.request, row.context, key);
+                store.podcastProfile(id, t, value);
                 resourceId = value.id;
                 break;
             }
@@ -93,6 +95,14 @@ export function validatePodcastContext(config: ContextConfig, membership: {
             }
             seen.add(item.id);
             const mode = config[kind][item.id];
+            const allowed = kind === 'notes' ? ['id', 'title', 'content'] : ['id', 'title', 'insights', ...(mode === 'full content' ? ['full_text'] : [])];
+            const malformedInsight = (v: unknown) => !isRecord(v) || Object.keys(v).some(k => !['id', 'created', 'updated', 'insight_type', 'content'].includes(k)) || typeof v.content !== 'string' || ['id', 'created', 'updated', 'insight_type'].some(k => v[k] != null && typeof v[k] !== 'string');
+            const malformed = Object.keys(item).some(k => !allowed.includes(k)) || item.title != null && typeof item.title !== 'string' ||
+                kind === 'sources' && item.insights !== undefined && (!Array.isArray(item.insights) || item.insights.some(malformedInsight));
+            if (malformed) {
+                issues.push({ id: item.id, kind: 'invalid' });
+                continue;
+            }
             const usable = kind === 'notes' ? typeof item.content === 'string' && !!item.content.trim() : mode === 'full content' ? typeof item.full_text === 'string' && !!item.full_text.trim() : Array.isArray(item.insights) && item.insights.some(v => isRecord(v) && typeof v.content === 'string' && !!v.content.trim());
             if (!usable)
                 issues.push({ id: item.id, kind: 'unusable' });

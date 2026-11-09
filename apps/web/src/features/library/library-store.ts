@@ -1,3 +1,4 @@
+import type { EpisodeProfile, SpeakerProfile } from '../../data/podcast-contracts';
 import type { PodcastInput, PodcastPreview } from './podcast-state';
 import type { GlobalQueryInput, GlobalRunInput, GlobalSaveInput, GlobalOutput } from './global-state';
 import { ownsSession, parentKey, type NativeParent, type NativeSession, type NativeMessage, type Indicators, type ContextConfig } from '../../data/native-chat';
@@ -134,6 +135,7 @@ export type LibraryDraft = Readonly<{
     native?: NativeState;
     global?: GlobalOutput;
     podcastPreview?: PodcastPreview;
+    podcastProfile?: EpisodeProfile | SpeakerProfile;
 }>;
 function freeze<T>(v: T): T {
     if (v && typeof v === 'object' && !(v instanceof Blob)) {
@@ -222,6 +224,13 @@ export function createLibraryStore(onChange: () => void) {
             const incoming = value.messages ?? [];
             const kept = baseline?.sessionId === value.id && incoming.length < baseline.messages.length ? r.native?.messages ?? baseline.messages : incoming;
             set({ ...r, native: { ...verifiedState, session: value, messages: kept, indicators: value.context_indicators ?? null } });
+        },
+        podcastProfile(id: string, t: LibraryToken, value: EpisodeProfile | SpeakerProfile) {
+            const r = records.get(id);
+            if (!r || !match(r, t) || !['pending', 'unknown'].includes(r.status) || r.input.kind !== 'podcast-operation' ||
+                !['save-episode', 'save-speaker'].includes(r.input.action) || r.input.targetId && value.id !== r.input.targetId)
+                return;
+            set({ ...r, podcastProfile: value });
         },
         podcastPreview(id: string, revision: number, value: PodcastPreview, c: DispatchContext | null, g: number) {
             const r = records.get(id);

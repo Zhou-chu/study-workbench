@@ -17,7 +17,7 @@ export function PodcastGenerationDialog({ onClose }: {
     onClose(): void;
 }) {
     const initial = useMemo(emptyPodcastForm, []), s = usePodcastForm(initial), data = usePodcastData(false), n = useNotebookConnection(), { transport } = useAppData(), studio = useMemo(() => transport ? createStudioApi(transport) : null, [transport]), { t, podcast: p } = useI18n();
-    const notebooks = useQuery({ queryKey: ['notebooks', n.scope], enabled: n.ready && s.current(), queryFn: ({ signal }) => n.api!.list(n.context!, signal) });
+    const notebooks = useQuery({ queryKey: ['notebooks', n.scope], enabled: s.ready && n.ready && s.current(), queryFn: ({ signal }) => n.api!.list(n.context!, signal) });
     const controller = useRef<AbortController | null>(null), serial = useRef(0), busyRef = useRef(false), [busy, setBusy] = useState(false), composing = useRef(false);
     const form = s.row?.input.kind === 'podcast-form' ? s.row.input : null;
     useEffect(() => { busyRef.current = false; setBusy(false); return () => { serial.current++; controller.current?.abort(); busyRef.current = false; }; }, [s.scope]);

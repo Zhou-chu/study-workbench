@@ -88,6 +88,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Keep podcast draft identities within their original owner, reject widened selected context, protect pending speaker bindings, preserve acknowledged profile edits and reopen repeated palette creation intents.
+
 - Keep retained global Search/Ask references read-only after their original connection retires, enforce current embedding availability for every submission path, and show unresolved original Studio saves as unknown rather than definitely unsent. Preserve retained text, receipts and no-replay locks.
 
 - Show separately fetched read-only orphan history after an uncertain classic send, preserving the original transcript and no-replay lock.

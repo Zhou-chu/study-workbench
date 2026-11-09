@@ -28,7 +28,7 @@ export function PodcastsPage() {
     } | null>(null), [action, setAction] = useState<Action | null>(null), [actionId, setActionId] = useState<string | null>(null), leases = useRef(new Map<string, () => void>()), latestAction = useRef<Action | null>(null), attempted = useRef(new Set<string>());
     latestAction.current = action;
     useEffect(() => { if (new URLSearchParams(location.search).get('create') === '1')
-        setGenerate(true); }, [location.search]);
+        setGenerate(true); }, [location.search, location.key]);
     useEffect(() => { const ids = new Set(s.rows.filter(r => r.input.kind === 'podcast-operation' && ['pending', 'accepted', 'unknown'].includes(r.status)).map(r => r.id)); for (const [id, release] of leases.current)
         if (!ids.has(id)) {
             release();
