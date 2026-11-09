@@ -280,3 +280,38 @@ it('captures unchanged editor model binding and expires a prompt-only update whe
     expect(dialog().getByRole('button',{name:'Confirm action'})).toBeDisabled();
     expect(requests.filter(r=>r.method==='PUT')).toHaveLength(0);
 });
+
+it.each([false, true])('confirmed deletion makes the retained editor non-actionable without losing text; dirty=%s', async dirty => {
+    let deleted = false;
+    const requests = transformationServer(request => {
+        if (request.method === 'DELETE') {
+            deleted = true;
+            return json({message: 'Transformation deleted successfully'});
+        }
+        if (deleted && request.method === 'GET' && request.url.endsWith('/transformations')) return json([]);
+        return undefined;
+    });
+    const h = await open();
+    fireEvent.click(screen.getByRole('button', {name: 'Edit ' + fixture.title}));
+    await waitFor(() => expect(dialog().getByLabelText('Prompt')).toHaveValue(fixture.prompt));
+    if (dirty) fireEvent.change(dialog().getByLabelText('Prompt'), {target: {value: 'Retained local prompt'}});
+    const before = h.workbench.drafts.transformations.getSnapshot()[0]!.editor!;
+    fireEvent.click(dialog().getByRole('button', {name: 'Cancel'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Delete ' + fixture.title}));
+    fireEvent.click(dialog().getByRole('button', {name: 'Confirm action'}));
+    await screen.findByText('No transformations yet');
+    fireEvent.click(screen.getByRole('button', {name: 'Resume editor'}));
+    expect(dialog().getByLabelText('Prompt')).toHaveValue(dirty ? 'Retained local prompt' : fixture.prompt);
+    expect(dialog().getByRole('button', {name: 'Save transformation'})).toBeDisabled();
+    expect(dialog().getByRole('status')).toHaveTextContent('This transformation was deleted.');
+    expect(dialog().getByLabelText('Prompt')).toBeDisabled();
+    const after = h.workbench.drafts.transformations.getSnapshot()[0]!;
+    expect(after.editor?.target).toBe(fixture.id);
+    expect(after.editor?.fields).toEqual(before.fields);
+    expect(after.editor?.baseline).toEqual(before.baseline);
+    expect(after.attempts).toHaveLength(1);
+    expect(after.attempts[0]).toMatchObject({phase: 'confirmed', token: {intent: {kind: 'delete', target: fixture.id}}});
+    fireEvent.click(dialog().getByRole('button', {name: 'Save transformation'}));
+    expect(requests.filter(request => request.method === 'PUT')).toHaveLength(0);
+    expect(requests.filter(request => request.method === 'DELETE')).toHaveLength(1);
+});

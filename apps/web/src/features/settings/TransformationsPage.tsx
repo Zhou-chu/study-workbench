@@ -32,6 +32,7 @@ export function TransformationsPage() {
     else
         choose(id); };
     const editor = r?.editor, fields = editor?.fields, listReady = r?.listRead?.phase === 'ready', p = r?.playground;
+    const deletedEditor = !!r && !!editor && c.store.targetDeleted(r.id, editor.target);
     const editorValid = !!fields && fields.name.trim() && fields.title.trim() && fields.prompt.trim() && (fields.model_id === null || c.modelsReady && c.models.some(v => v.id === fields.model_id && v.type === 'language'));
     const executeReady = !!p && listReady && c.modelsReady && r.list.some(v => v.id === p.transformationId) && c.models.some(v => v.id === p.modelId && v.type === 'language') && !!p.input.trim();
     const modelOptions = (value: string, empty: string) => <><option value="">{empty}</option>{value && !c.models.some(v => v.id === value) && <option value={value} disabled>{t.common.unknown}: {value}</option>}{c.models.map(v => <option key={v.id} value={v.id} disabled={v.type !== 'language'}>{v.name} · {v.provider}{v.type === 'language' ? '' : ' · ' + t.common.unknown + ': ' + v.type}</option>)}</>;
@@ -78,14 +79,15 @@ export function TransformationsPage() {
                 c.store.showEditor(r.id, false);
                 focus();
             } }} title={editor.target ? t.common.edit : m.create}>
- {editor.read?.phase === 'loading' ? <p>{t.common.loading}</p> : editor.read?.phase === 'error' ? <p role="alert">{t.common.error}</p> : <fieldset disabled={!c.ready} className="transformation-editor">
+ {deletedEditor && <p role="status">{m.deletedTarget}</p>}
+ {editor.read?.phase === 'loading' && !deletedEditor ? <p>{t.common.loading}</p> : editor.read?.phase === 'error' && !deletedEditor ? <p role="alert">{t.common.error}</p> : <fieldset disabled={!c.ready || deletedEditor} className="transformation-editor">
  <label>{t.common.name}<input value={fields.name} onChange={e => c.store.edit(r.id, { name: e.target.value })}/></label>
  <label>{m.title}<input value={fields.title} onChange={e => c.store.edit(r.id, { title: e.target.value })}/></label>
  <label>{t.common.description}<textarea value={fields.description} onChange={e => c.store.edit(r.id, { description: e.target.value })}/></label>
  <label>{m.prompt}<textarea value={fields.prompt} onChange={e => c.store.edit(r.id, { prompt: e.target.value })}/></label>
  <label>{m.defaultModel}<select value={fields.model_id ?? ''} disabled={!c.modelsReady} onChange={e => c.store.edit(r.id, { model_id: e.target.value || null })}>{modelOptions(fields.model_id ?? '', t.transformations.systemDefault)}</select></label>
  <label className="transformation-check"><input type="checkbox" checked={fields.apply_default} onChange={e => c.store.edit(r.id, { apply_default: e.target.checked })}/>{m.futureImports}</label><p>{m.importEffect}</p>
- <Button disabled={!editorValid || !editorDirty(editor) || c.store.locked(r.id, editor.target ?? 'create')} onClick={() => queue(c.capture(editor.target ? { kind: 'update', target: editor.target, editorId: editor.id, input: editorPatch(editor) } : { kind: 'create', editorId: editor.id, input: fields }))}>{m.save}</Button></fieldset>}
+ <Button disabled={deletedEditor || !editorValid || !editorDirty(editor) || c.store.locked(r.id, editor.target ?? 'create')} onClick={() => queue(c.capture(editor.target ? { kind: 'update', target: editor.target, editorId: editor.id, input: editorPatch(editor) } : { kind: 'create', editorId: editor.id, input: fields }))}>{m.save}</Button></fieldset>}
  <Button onClick={() => { c.store.showEditor(r.id, false); focus(); }}>{t.common.cancel}</Button></LibraryDialog>}
  {confirm && <LibraryDialog open onOpenChange={open => { if (!open)
                 close(); }} title={cm.confirm} description={confirm.intent.kind === 'execute' ? m.executionWarning : confirm.intent.kind === 'instructions' ? m.globalEffect : confirm.intent.kind === 'delete' ? m.deleteEffect : m.importEffect}>

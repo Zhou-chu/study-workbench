@@ -113,10 +113,13 @@ export function createTransformationStore(notify: () => void) {
         return id;
     };
     const blocked = (r: TransformationDraft, target: string) => [...rows.values()].some(other => canDispatch(other.context, r.context) && other.attempts.some(a => a.token.target === target && ['pending', 'unknown'].includes(a.phase)));
+    // Only our confirmed DELETE revokes this target; list absence never settles a write.
+    const deleted = (r: TransformationDraft, target: string | null) => target !== null && r.attempts.some(a => a.phase === 'confirmed' && a.token.intent.kind === 'delete' && a.token.intent.target === target);
     const revision = (r: TransformationDraft, i: TransformationIntent) => i.kind === 'instructions' ? r.instructions.revision : i.kind === 'create' || i.kind === 'update' ? r.editor?.revision : i.kind === 'execute' ? r.playground.revision : r.listRead?.revision;
     const resource = (r: TransformationDraft, i: TransformationIntent) => i.kind === 'instructions' ? r.instructions.id : i.kind === 'create' || i.kind === 'update' ? r.editor?.id : i.kind === 'execute' ? r.playground.id : r.id;
     return {
         get: (id: string) => rows.get(id), getSnapshot: () => snapshot, selected: () => selected,
+        targetDeleted(id: string, target: string | null) { const r = rows.get(id); return !!r && deleted(r, target); },
         open(c: DispatchContext) { return selected ?? (c.ready ? create(c) : null); },
         select(id: string) { const r = rows.get(id); if (!r)
             return false; selected = id; put(r); return true; },
@@ -134,20 +137,20 @@ export function createTransformationStore(notify: () => void) {
             put({ ...r, playground: { ...r.playground, ...patch, revision: r.playground.revision + 1 } }); },
         editor(id: string, target: string | null) {
             const r = rows.get(id);
-            if (!r || r.retired || r.editor && (editorDirty(r.editor) || blocked(r, r.editor.target ?? 'create')))
+            if (!r || r.retired || deleted(r, target) || r.editor && (editorDirty(r.editor) || blocked(r, r.editor.target ?? 'create')))
                 return false;
             put({ ...r, editor: { id: crypto.randomUUID(), target, baseline: null, fields: blankFields(), revision: 0, open: true, read: target === null ? null : { phase: 'loading', revision: 1 } } });
             return true;
         },
         showEditor(id: string, open: boolean) { const r = rows.get(id); if (r?.editor)
             put({ ...r, editor: { ...r.editor, open } }); },
-        edit(id: string, patch: Partial<TransformationFields>) { const r = rows.get(id); if (r?.editor && !r.retired)
+        edit(id: string, patch: Partial<TransformationFields>) { const r = rows.get(id); if (r?.editor && !r.retired && !deleted(r, r.editor.target))
             put({ ...r, editor: { ...r.editor, fields: Object.freeze({ ...r.editor.fields, ...patch }), revision: r.editor.revision + 1 } }); },
         discardEditor(id: string) { const r = rows.get(id); if (r?.editor && !r.retired && !blocked(r, r.editor.target ?? 'create'))
             put({ ...r, editor: null }); },
         detail(id: string, editorId: string, value: Transformation | null) {
             const r = rows.get(id), e = r?.editor;
-            if (!r || r.retired || !e || e.id !== editorId || e.read?.phase !== 'loading')
+            if (!r || r.retired || !e || deleted(r, e.target) || e.id !== editorId || e.read?.phase !== 'loading')
                 return;
             if (value && value.id !== e.target)
                 return;
@@ -193,7 +196,7 @@ export function createTransformationStore(notify: () => void) {
             if (intent.kind === 'create' && (!r.editor || r.editor.target !== null || transformationKeys.some(k => intent.input[k] !== r.editor!.fields[k])))
                 return null;
             if (intent.kind === 'update') {
-                if (!r.editor || r.editor.target !== intent.target)
+                if (!r.editor || r.editor.target !== intent.target || deleted(r, intent.target))
                     return null;
                 const expected = editorPatch(r.editor), keys = Object.keys(intent.input);
                 if (keys.length !== Object.keys(expected).length || keys.some(k => intent.input[k as keyof TransformationPatch] !== expected[k as keyof TransformationPatch]))
@@ -214,6 +217,8 @@ export function createTransformationStore(notify: () => void) {
         canBegin(token: TransformationToken, c: DispatchContext | null, g: number, p: number, models: ModelsCapture | null) {
             const r = rows.get(token.ownerId);
             if (!usable(r, c) || selected !== r.id || r.attempts.some(a => a.token.id === token.id) || blocked(r, token.target) || g !== token.generation || p !== token.providerRevision || revision(r, token.intent) !== token.controlRevision || resource(r, token.intent) !== token.resourceId)
+                return false;
+            if (token.intent.kind === 'update' && deleted(r, token.intent.target))
                 return false;
             if (token.listRevision !== null && (r.listRead?.phase !== 'ready' || r.listRead.revision !== token.listRevision))
                 return false;

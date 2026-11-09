@@ -1,7 +1,8 @@
 import type { LanguageCode } from './locales';
-export type TransformationMessages = { refresh: string; refreshModels: string; records: string; instructions: string; globalEffect: string; saveInstructions: string; create: string; resume: string; discard: string; details: string; futureImports: string; try: string; executionWarning: string; modelsUnavailable: string; transformation: string; languageModel: string; input: string; run: string; requests: string; original: string; requestedIdentity: string; identityLimit: string; title: string; prompt: string; defaultModel: string; save: string; importEffect: string; deleteEffect: string; replace: string; discardWarning: string; replaceWarning: string };
+export type TransformationMessages = { deletedTarget: string; refresh: string; refreshModels: string; records: string; instructions: string; globalEffect: string; saveInstructions: string; create: string; resume: string; discard: string; details: string; futureImports: string; try: string; executionWarning: string; modelsUnavailable: string; transformation: string; languageModel: string; input: string; run: string; requests: string; original: string; requestedIdentity: string; identityLimit: string; title: string; prompt: string; defaultModel: string; save: string; importEffect: string; deleteEffect: string; replace: string; discardWarning: string; replaceWarning: string };
 export const transformationMessages = {
   "en-US": {
+    "deletedTarget": "This transformation was deleted. Your editor text is retained for reference and cannot be saved.",
     "refresh": "Refresh transformations",
     "refreshModels": "Refresh model list",
     "records": "Transformation records",
@@ -35,6 +36,7 @@ export const transformationMessages = {
     "replaceWarning": "Change the selected transformation? Keep the current input and model; nothing will run."
   },
   "zh-CN": {
+    "deletedTarget": "此转换已删除。编辑器中的文本仍保留供查看，但无法保存。",
     "refresh": "刷新转换",
     "refreshModels": "刷新模型列表",
     "records": "转换记录",
@@ -68,6 +70,7 @@ export const transformationMessages = {
     "replaceWarning": "更改所选转换？保留当前输入和模型，不会执行。"
   },
   "zh-TW": {
+    "deletedTarget": "此轉換已刪除。編輯器中的文字仍保留供查看，但無法儲存。",
     "refresh": "重新整理轉換",
     "refreshModels": "重新整理模型清單",
     "records": "轉換記錄",
@@ -101,6 +104,7 @@ export const transformationMessages = {
     "replaceWarning": "變更所選轉換？保留目前輸入和模型，不會執行。"
   },
   "ja-JP": {
+    "deletedTarget": "この変換は削除されました。エディターのテキストは参照用に保持されていますが、保存できません。",
     "refresh": "変換を更新",
     "refreshModels": "モデル一覧を更新",
     "records": "変換の記録",
@@ -134,6 +138,7 @@ export const transformationMessages = {
     "replaceWarning": "選択した変換を変更しますか？入力とモデルを保持し、実行はしません。"
   },
   "de-DE": {
+    "deletedTarget": "Diese Transformation wurde gelöscht. Ihr Editor-Text bleibt zur Ansicht erhalten und kann nicht gespeichert werden.",
     "refresh": "Transformationen aktualisieren",
     "refreshModels": "Modellliste aktualisieren",
     "records": "Transformationsdatensätze",
@@ -167,6 +172,7 @@ export const transformationMessages = {
     "replaceWarning": "Transformation wechseln? Eingabe und Modell bleiben erhalten; nichts wird ausgeführt."
   },
   "fr-FR": {
+    "deletedTarget": "Cette transformation a été supprimée. Le texte de l’éditeur est conservé pour consultation et ne peut pas être enregistré.",
     "refresh": "Actualiser les transformations",
     "refreshModels": "Actualiser les modèles",
     "records": "Enregistrements de transformation",
@@ -200,6 +206,7 @@ export const transformationMessages = {
     "replaceWarning": "Changer la transformation choisie ? Le texte et le modèle sont conservés ; rien ne sera exécuté."
   },
   "es-ES": {
+    "deletedTarget": "Esta transformación se eliminó. El texto del editor se conserva para consulta y no se puede guardar.",
     "refresh": "Actualizar transformaciones",
     "refreshModels": "Actualizar modelos",
     "records": "Registros de transformación",
@@ -233,6 +240,7 @@ export const transformationMessages = {
     "replaceWarning": "¿Cambiar la transformación? Se conservan la entrada y el modelo; no se ejecutará nada."
   },
   "it-IT": {
+    "deletedTarget": "Questa trasformazione è stata eliminata. Il testo dell’editor resta disponibile per consultazione e non può essere salvato.",
     "refresh": "Aggiorna trasformazioni",
     "refreshModels": "Aggiorna modelli",
     "records": "Registri delle trasformazioni",
@@ -266,6 +274,7 @@ export const transformationMessages = {
     "replaceWarning": "Cambiare trasformazione? Input e modello restano invariati; non verrà eseguito nulla."
   },
   "pt-BR": {
+    "deletedTarget": "Esta transformação foi excluída. O texto do editor é mantido para consulta e não pode ser salvo.",
     "refresh": "Atualizar transformações",
     "refreshModels": "Atualizar modelos",
     "records": "Registros de transformação",
@@ -299,6 +308,7 @@ export const transformationMessages = {
     "replaceWarning": "Mudar a transformação? A entrada e o modelo serão mantidos; nada será executado."
   },
   "ru-RU": {
+    "deletedTarget": "Это преобразование удалено. Текст редактора сохранён для просмотра, но его нельзя сохранить.",
     "refresh": "Обновить преобразования",
     "refreshModels": "Обновить модели",
     "records": "Записи преобразований",
@@ -332,6 +342,7 @@ export const transformationMessages = {
     "replaceWarning": "Изменить преобразование? Текст и модель сохранятся, запуск не произойдёт."
   },
   "pl-PL": {
+    "deletedTarget": "Ta transformacja została usunięta. Tekst w edytorze pozostaje do wglądu, ale nie można go zapisać.",
     "refresh": "Odśwież przekształcenia",
     "refreshModels": "Odśwież modele",
     "records": "Rejestry przekształceń",
@@ -365,6 +376,7 @@ export const transformationMessages = {
     "replaceWarning": "Zmienić przekształcenie? Tekst i model zostaną zachowane; nic nie zostanie uruchomione."
   },
   "tr-TR": {
+    "deletedTarget": "Bu dönüşüm silindi. Düzenleyicideki metin başvuru için korunur ve kaydedilemez.",
     "refresh": "Dönüşümleri yenile",
     "refreshModels": "Model listesini yenile",
     "records": "Dönüşüm kayıtları",
@@ -398,6 +410,7 @@ export const transformationMessages = {
     "replaceWarning": "Seçili dönüşüm değişsin mi? Girdi ve model korunur; hiçbir şey çalışmaz."
   },
   "ca-ES": {
+    "deletedTarget": "Aquesta transformació s’ha suprimit. El text de l’editor es conserva per consultar-lo i no es pot desar.",
     "refresh": "Actualitza les transformacions",
     "refreshModels": "Actualitza els models",
     "records": "Registres de transformació",
@@ -431,6 +444,7 @@ export const transformationMessages = {
     "replaceWarning": "Vols canviar la transformació? Es conserven l’entrada i el model; no s’executarà res."
   },
   "bn-IN": {
+    "deletedTarget": "এই রূপান্তরটি মুছে ফেলা হয়েছে। এডিটরের পাঠ্য দেখার জন্য রাখা হয়েছে, তবে সংরক্ষণ করা যাবে না.",
     "refresh": "রূপান্তর রিফ্রেশ করুন",
     "refreshModels": "মডেল তালিকা রিফ্রেশ করুন",
     "records": "রূপান্তরের রেকর্ড",

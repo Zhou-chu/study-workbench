@@ -98,6 +98,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Keep retained transformation editors read-only after confirmed deletion, preserving their text and original request records while rejecting stale updates.
+
 - Load stored global transformation instructions through the established async singleton getter and snapshot them before model awaits, without clearing or saving the singleton during execution. Preserve literal prompt/input rendering and existing output validation; this does not guarantee cross-process freshness or actual model identity.
 
 - Preserve newly entered credential keys, replacement URLs and paths across normal form rerenders while retaining lifecycle cleanup. Explicit model-settings Refresh now retries failed provider-registry reads without provider actions.
