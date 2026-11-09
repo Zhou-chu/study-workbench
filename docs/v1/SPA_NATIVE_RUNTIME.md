@@ -150,7 +150,8 @@ gateway identities; prepared-tool/version/resolution records; run-root custody;
 startup/readiness lists; completed checks and known synthetic IDs/hashes;
 request counts/outcomes; timeouts; cleanup outcome; and relative private log
 names with hashes. No raw responses, credentials, arbitrary exception strings,
-full logs, process argv or environments are copied into it.
+full logs, process argv or environments are copied into it. Undrained or failed
+log streams are labelled not_final and never given a purported final hash.
 
 - partial_pass: the named native checks completed and owned cleanup, listener
   release and source/artifact rechecks succeeded. CLI exits 0.

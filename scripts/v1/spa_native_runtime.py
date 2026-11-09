@@ -857,10 +857,14 @@ def run(root: Path, fixture: str, gateway: Path, source_commit: str) -> dict[str
             life.stop_processes(processes)
         except BaseException:
             uncertain = True
+        drained = True
         for thread in threads:
-            thread.join(timeout=5)
-            uncertain |= thread.is_alive()
-        uncertain |= bool(log_errors)
+            try:
+                thread.join(timeout=5)
+                drained &= not thread.is_alive()
+            except BaseException:
+                drained = False
+        uncertain |= not drained or bool(log_errors)
         for check in (
             lambda: life.require_free_ports(ports),
             custody,
@@ -885,6 +889,11 @@ def run(root: Path, fixture: str, gateway: Path, source_commit: str) -> dict[str
         try:
             custody()
             for log in logs:
+                if not drained or log_errors:
+                    receipt["evidence"].append(
+                        {"path": log.name, "status": "not_final"}
+                    )
+                    continue
                 raw = gate.read_file(log, True)
                 receipt["evidence"].append({"path": log.name, "sha256": gate.sha(raw)})
             gate.write_private(root, "receipt.json", receipt, owned_root)

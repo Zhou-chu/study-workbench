@@ -720,3 +720,33 @@ def test_spawn_port_race_never_adopts_foreign_service(fake_run, monkeypatch):
     assert result["status"] == "failed"
     assert not processes
     assert root.exists()
+
+
+def test_log_thread_start_failure_still_restores_signals_and_cleans_owned(
+    fake_run, monkeypatch
+):
+    m, root, processes, events = fake_run
+    previous = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
+
+    class BrokenThread:
+        def __init__(self, **kwargs):
+            pass
+
+        def start(self):
+            raise RuntimeError("cannot start log thread")
+
+        def join(self, **kwargs):
+            raise RuntimeError("cannot join thread before it is started")
+
+        def is_alive(self):
+            return False
+
+    monkeypatch.setattr(m.threading, "Thread", BrokenThread)
+    result = m.run(root, "fixture", Path("/gateway"), "a" * 40)
+    assert result["status"] == "cleanup_uncertain"
+    assert all(p.closed for p in processes)
+    assert {sig: signal.getsignal(sig) for sig in previous} == previous
+    assert (root / "started.json").exists()
+    receipt = json.loads((root / "receipt.json").read_text())
+    assert receipt["cleanup"] == "uncertain"
+    assert receipt["evidence"] == [{"path": "db.log", "status": "not_final"}]
