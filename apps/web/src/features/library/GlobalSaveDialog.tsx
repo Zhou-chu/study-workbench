@@ -84,7 +84,7 @@ export function GlobalSaveDialog({ answer, notebooks, onClose }: {
  {notebooks.map(n => <Target key={n.id} notebook={n} selected={row?.input.kind === 'global-save' ? row.input.targets.some(v => v.notebookId === n.id) : selected.includes(n.id)} disabled={!!row || !eligible || !s.ready} register={register} onChange={value => setSelected(v => value ? [...v, n.id] : v.filter(id => id !== n.id))}/>)}
  {row?.input.kind === 'global-save' && <ul>{row.input.targets.map((target, index) => {
                 const receipt = row.receipts[index], note = studio.get(target.studioId);
-                const label = receipt?.state === 'accepted' ? t.common.success : receipt?.state === 'unknown' ? g.unknown : receipt?.state === 'rejected' ? g.rejected : note?.editor.saveResult === 'saving' ? t.searchPage.saving : g.notSent;
+                const label = receipt?.state === 'accepted' ? t.common.success : receipt?.state === 'unknown' ? g.unknown : receipt?.state === 'rejected' ? g.rejected : note?.editor.saveResult === 'unknown' ? g.unknown : note?.editor.saveResult === 'saving' ? t.searchPage.saving : note?.editor.pending ? g.unknown : g.notSent;
                 return <li key={target.notebookId}>{target.notebookId} · {label}{receipt?.resourceId ? ' · ' + receipt.resourceId : ''}</li>;
             })}</ul>}
  {row?.status === 'failed' && <p role="status">{g.stopped}</p>}

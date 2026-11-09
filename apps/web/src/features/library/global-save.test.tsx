@@ -92,3 +92,35 @@ it('reauth during first create locks original targets and cannot advance or repl
     expect(requests.filter(r => r.url.endsWith('/notes') && r.method === 'POST')).toHaveLength(1);
     expect(h.workbench.drafts.studio.getSnapshot().notes.filter(n => n.editor.saveResult === 'unknown')).toHaveLength(1);
 });
+
+
+it('I3 unresolved dispatched create remains unknown before settlement, with later targets definitely unsent',async()=>{
+    let resolve!: (r:Response)=>void;
+    const requests=globalServer(r=>r.method==='POST' && r.url.endsWith('/notes') ? new Promise<Response>(yes=>resolve=yes) : undefined);
+    const h=await answer(), d=await select();
+    fireEvent.click(within(d).getByRole('button',{name:'Save'}));
+    await waitFor(()=>expect(resolve).toBeDefined());
+    const original=h.workbench.drafts.library.getSnapshot().find(r=>r.input.kind==='global-save')!;
+    if(original.input.kind!=='global-save') throw new Error('Missing batch');
+    const targets=original.input.targets;
+    expect(original.receipts).toHaveLength(0);
+    expect(h.workbench.drafts.studio.get(targets[0]!.studioId)?.editor.saveResult).toBe('saving');
+    await act(async()=>h.workbench.controller.retirePrivacyContext());
+    await act(async()=>h.workbench.controller.check());
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button',{name:'Close'}));
+    fireEvent.click(screen.getByRole('button',{name:'Save answer to notebooks'}));
+    const dialog=screen.getByRole('dialog');
+    expect(within(dialog).getByText('notebook:alpha:full · Outcome unknown. No automatic retry.')).toBeVisible();
+    for(const id of ['beta','gamma']) expect(within(dialog).getByText('notebook:'+id+':full · Request was not sent.')).toBeVisible();
+    expect(within(dialog).getByRole('button',{name:'Save'})).toBeDisabled();
+    expect(h.workbench.drafts.library.get(original.id)?.input).toBe(original.input);
+    expect(h.workbench.drafts.library.get(original.id)?.receipts).toHaveLength(0);
+    expect(h.workbench.drafts.studio.getSnapshot().notes.map(n=>n.id)).toEqual(targets.map(t=>t.studioId));
+    expect(requests.filter(r=>r.method==='POST' && r.url.endsWith('/notes'))).toHaveLength(1);
+    await act(async()=>resolve(json({id:'note:late:alpha',title:'Original question',content:'Final answer [source:alpha:full]',note_type:'ai',revision:1,created:'',updated:'',command_id:null})));
+    expect(within(dialog).getByText('notebook:alpha:full · Outcome unknown. No automatic retry.')).toBeVisible();
+    for(const id of ['beta','gamma']) expect(within(dialog).getByText('notebook:'+id+':full · Request was not sent.')).toBeVisible();
+    expect(h.workbench.drafts.library.get(original.id)?.input).toBe(original.input);
+    expect(h.workbench.drafts.studio.get(targets[0]!.studioId)?.editor.saveResult).toBe('unknown');
+    expect(requests.filter(r=>r.method==='POST' && r.url.endsWith('/notes'))).toHaveLength(1);
+});

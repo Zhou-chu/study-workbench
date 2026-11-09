@@ -1,5 +1,5 @@
 import { readTurnContext, sessionCoordinator } from '@study/web-transport';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { expect, it } from 'vitest';
 import { renderLibrary } from '../../test/library-harness';
 import { globalServer } from '../../test/global-fixtures';
@@ -83,6 +83,11 @@ it('malformed selected notebook IDs block submission instead of widening to whol
     await renderLibrary('/search?q=Keep scope');
     fireEvent.click(await screen.findByLabelText('Search scope · Malformed'));
     expect(screen.getByRole('button', { name: 'Search library' })).toBeDisabled();
+    const input = screen.getByLabelText('Library question');
+    fireEvent.keyDown(input, {key:'Enter', ctrlKey:true});
+    fireEvent.keyDown(input, {key:'Enter', metaKey:true});
+    fireEvent.submit(input.closest('form')!);
+    await act(async()=>{});
     expect(requests.filter(r => r.method === 'POST')).toHaveLength(0);
 });
 it('note inspection shows nullable title fallback and actual revision without save authority', async () => {
@@ -124,4 +129,26 @@ it('shell Search link and retained global scope do not mutate classic/personal s
     expect(h.workbench.drafts.get(personal)?.file).toBe(file);
     expect(h.workbench.drafts.get(personal)?.question).toBe('Personal question');
     expect(requests.some(r => r.url.endsWith('/chat/context') || r.url.endsWith('/chat/execute'))).toBe(false);
+});
+
+
+const embeddingCases = (['null','loading','error'] as const).flatMap(metadata => (['vector','ask'] as const).flatMap(mode => ['ctrlKey','metaKey'].map(key => ({metadata,mode,key}))));
+it.each(embeddingCases)('I2 $key Enter cannot bypass $metadata embedding admission for $mode; text still works', async ({metadata,mode,key})=>{
+    const requests = globalServer(r=>r.url.endsWith('/models/defaults') ? metadata==='loading' ? new Promise<Response>(()=>{}) : metadata==='error' ? json({detail:'Unavailable'},503) : json({default_chat_model:'model:language',default_embedding_model:null}) : undefined);
+    const h = await renderLibrary('/search?q=Blocked embedding');
+    fireEvent.change(await screen.findByLabelText('Search type'),{target:{value:'vector'}});
+    if(mode==='ask') fireEvent.change(screen.getByLabelText('Mode'),{target:{value:'ask'}});
+    const input=screen.getByLabelText('Library question');
+    expect(screen.getByRole('button',{name:mode==='ask' ? 'Ask library' : 'Search library'})).toBeDisabled();
+    fireEvent.keyDown(input,{key:'Enter',[key]:true});
+    fireEvent.submit(input.closest('form')!);
+    await act(async()=>{});
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(requests.filter(r=>r.method==='POST')).toHaveLength(0);
+    expect(h.workbench.drafts.library.getSnapshot().filter(r=>r.input.kind==='global-run')).toHaveLength(0);
+    fireEvent.change(screen.getByLabelText('Mode'),{target:{value:'search'}});
+    fireEvent.change(screen.getByLabelText('Search type'),{target:{value:'text'}});
+    fireEvent.keyDown(input,{key:'Enter',[key]:true});
+    await screen.findByText('Raw source');
+    expect(requests.filter(r=>r.method==='POST')).toHaveLength(1);
 });

@@ -1,6 +1,7 @@
 import type { LanguageCode } from './locales';
 export const globalMessages = {
     "en-US": {
+        "retainedReadOnly": "Retained output is read-only because its original connection is no longer current.",
         "question": "Library question",
         "mode": "Mode",
         "search": "Search library",
@@ -32,6 +33,7 @@ export const globalMessages = {
         "stopped": "Stopped. Remaining destinations were not sent."
     },
     "zh-CN": {
+        "retainedReadOnly": "原连接已失效，保留的输出仅供阅读。",
         "question": "知识库问题",
         "mode": "模式",
         "search": "搜索知识库",
@@ -63,6 +65,7 @@ export const globalMessages = {
         "stopped": "已停止，其余目标未发送。"
     },
     "zh-TW": {
+        "retainedReadOnly": "原連線已失效，保留的輸出僅供閱讀。",
         "question": "知識庫問題",
         "mode": "模式",
         "search": "搜尋知識庫",
@@ -94,6 +97,7 @@ export const globalMessages = {
         "stopped": "已停止，其餘目標未傳送。"
     },
     "ja-JP": {
+        "retainedReadOnly": "元の接続が現在と異なるため、保持した出力は読み取り専用です。",
         "question": "ライブラリへの質問",
         "mode": "モード",
         "search": "ライブラリを検索",
@@ -125,6 +129,7 @@ export const globalMessages = {
         "stopped": "停止しました。残りの保存先には送信していません。"
     },
     "pt-BR": {
+        "retainedReadOnly": "A saída preservada é somente leitura porque a conexão original não é mais a atual.",
         "question": "Pergunta à biblioteca",
         "mode": "Modo",
         "search": "Pesquisar biblioteca",
@@ -156,6 +161,7 @@ export const globalMessages = {
         "stopped": "Interrompido. Os demais destinos não foram enviados."
     },
     "it-IT": {
+        "retainedReadOnly": "Il risultato conservato è di sola lettura perché la connessione originale non è più quella corrente.",
         "question": "Domanda alla raccolta",
         "mode": "Modalità",
         "search": "Cerca nella raccolta",
@@ -187,6 +193,7 @@ export const globalMessages = {
         "stopped": "Interrotto. Le destinazioni rimanenti non sono state inviate."
     },
     "fr-FR": {
+        "retainedReadOnly": "Le résultat conservé est en lecture seule car sa connexion d’origine n’est plus active.",
         "question": "Question à la bibliothèque",
         "mode": "Mode",
         "search": "Rechercher dans la bibliothèque",
@@ -218,6 +225,7 @@ export const globalMessages = {
         "stopped": "Arrêté. Les autres destinations n’ont pas été envoyées."
     },
     "ru-RU": {
+        "retainedReadOnly": "Сохранённый результат доступен только для чтения: исходное соединение больше не является текущим.",
         "question": "Вопрос библиотеке",
         "mode": "Режим",
         "search": "Поиск в библиотеке",
@@ -249,6 +257,7 @@ export const globalMessages = {
         "stopped": "Остановлено. Остальные назначения не отправлены."
     },
     "bn-IN": {
+        "retainedReadOnly": "মূল সংযোগ আর বর্তমান নয়, তাই সংরক্ষিত ফলাফল শুধু পড়া যাবে।",
         "question": "লাইব্রেরির প্রশ্ন",
         "mode": "মোড",
         "search": "লাইব্রেরি অনুসন্ধান",
@@ -280,6 +289,7 @@ export const globalMessages = {
         "stopped": "থামানো হয়েছে। বাকি গন্তব্যে পাঠানো হয়নি।"
     },
     "ca-ES": {
+        "retainedReadOnly": "El resultat conservat és de només lectura perquè la connexió original ja no és l’actual.",
         "question": "Pregunta a la biblioteca",
         "mode": "Mode",
         "search": "Cerca a la biblioteca",
@@ -311,6 +321,7 @@ export const globalMessages = {
         "stopped": "Aturat. No s’han enviat les destinacions restants."
     },
     "es-ES": {
+        "retainedReadOnly": "El resultado conservado es de solo lectura porque su conexión original ya no es la actual.",
         "question": "Pregunta a la biblioteca",
         "mode": "Modo",
         "search": "Buscar en la biblioteca",
@@ -342,6 +353,7 @@ export const globalMessages = {
         "stopped": "Detenido. Los destinos restantes no se enviaron."
     },
     "de-DE": {
+        "retainedReadOnly": "Die aufbewahrte Ausgabe ist schreibgeschützt, da ihre ursprüngliche Verbindung nicht mehr aktuell ist.",
         "question": "Frage an die Bibliothek",
         "mode": "Modus",
         "search": "Bibliothek durchsuchen",
@@ -373,6 +385,7 @@ export const globalMessages = {
         "stopped": "Gestoppt. Die übrigen Ziele wurden nicht gesendet."
     },
     "pl-PL": {
+        "retainedReadOnly": "Zachowany wynik jest tylko do odczytu, ponieważ pierwotne połączenie nie jest już aktualne.",
         "question": "Pytanie do biblioteki",
         "mode": "Tryb",
         "search": "Przeszukaj bibliotekę",
@@ -404,6 +417,7 @@ export const globalMessages = {
         "stopped": "Zatrzymano. Pozostałych miejsc nie wysłano."
     },
     "tr-TR": {
+        "retainedReadOnly": "İlk bağlantı artık geçerli olmadığından saklanan çıktı salt okunurdur.",
         "question": "Kütüphaneye soru",
         "mode": "Mod",
         "search": "Kütüphanede ara",

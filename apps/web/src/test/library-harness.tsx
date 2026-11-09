@@ -1,3 +1,4 @@
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { AppProviders } from '../app/providers';
@@ -42,9 +43,10 @@ export async function renderLibrary(route = '/sources', history?: {
     index: number;
 }) {
     let workbench!: ReturnType<typeof useWorkbenchSession>;
-    function Probe() { workbench = useWorkbenchSession(); return <><span hidden>Library ready</span><AppRoutes /></>; }
+    let queries!: QueryClient;
+    function Probe() { queries = useQueryClient(); workbench = useWorkbenchSession(); return <><span hidden>Library ready</span><AppRoutes /></>; }
     const router = createMemoryRouter([{ path: '*', element: <AppProviders locale="en-US"><WorkbenchSession><Probe /></WorkbenchSession></AppProviders> }], { initialEntries: history?.entries ?? [route], ...(history ? { initialIndex: history.index } : {}) });
     const result = render(<RouterProvider router={router}/>);
     await screen.findByText('Library ready');
-    return { ...result, router, get workbench() { return workbench; } };
+    return { ...result, router, get queries() { return queries; }, get workbench() { return workbench; } };
 }

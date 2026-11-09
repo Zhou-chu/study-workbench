@@ -1,6 +1,6 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
-import { sessionCoordinator } from '@study/web-transport';
+import { publishTurnTarget, readTurnContext, sessionCoordinator } from '@study/web-transport';
 import { renderLibrary } from '../../test/library-harness';
 import { globalServer, askStream } from '../../test/global-fixtures';
 async function ask() { const h = await renderLibrary('/search?q=Original&mode=ask'); fireEvent.click(await screen.findByRole('button', { name: 'Ask library' })); fireEvent.click(await within(screen.getByRole('dialog')).findByRole('button', { name: 'Start answer' })); return h; }
@@ -103,4 +103,57 @@ it('model confirmation cannot rebind a captured question after its original edit
     await act(async () => { });
     expect(requests.filter(r => r.method === 'POST')).toHaveLength(0);
     expect(screen.getByLabelText('Library question')).toHaveValue('Newer draft');
+});
+
+
+const retainedReferences = ['source:alpha:full', 'note:one:full', 'source_insight:one:full'] as const;
+const ownershipCases = (['search', 'ask'] as const).flatMap(mode => retainedReferences.flatMap(reference => (['target', 'privacy', 'reauth'] as const).flatMap(transition => [false, true].map(open => ({ mode, reference, transition, open })))));
+it.each(ownershipCases)('I1 retained $mode $reference, $transition, open=$open cannot resolve under a replacement owner', async ({mode, reference, transition, open}) => {
+    const text = 'Retained answer [' + reference + ']';
+    const requests = globalServer(r => r.url.endsWith('/search/ask') ? askStream([{type:'complete',final_answer:text}]) : undefined);
+    const h = await renderLibrary('/search?q=Original owner&mode=' + mode);
+    const submit = await screen.findByRole('button', {name:mode === 'ask' ? 'Ask library' : 'Search library'});
+    await waitFor(() => expect(submit).toBeEnabled());
+    fireEvent.click(submit);
+    if(mode === 'ask') fireEvent.click(await within(screen.getByRole('dialog')).findByRole('button',{name:'Start answer'}));
+    const button = await screen.findByRole('button',{name:'Open reference · ' + reference});
+    if(open) {
+        fireEvent.click(button);
+        await within(screen.getByRole('dialog')).findByText(reference.startsWith('note:') ? 'Detached body' : reference.startsWith('source_insight:') ? 'Insight body' : 'Original source body');
+    }
+    const original = h.workbench.drafts.library.getSnapshot().find(r=>r.input.kind==='global-run')!;
+    const target = readTurnContext()!.target;
+    const referenceReads = () => requests.filter(r=>r.method==='GET' && /\/(sources|notes|insights)\//.test(decodeURIComponent(r.url)));
+    const count = referenceReads().length;
+    if(transition==='target') await act(async()=>publishTurnTarget({...target, apiBase:'http://localhost:3000/other-api'},true));
+    else if(transition==='privacy') {
+        await act(async()=>h.workbench.controller.retirePrivacyContext());
+        expect(document.querySelector('[role="dialog"].library-dialog')).toBeNull();
+        await act(async()=>h.workbench.controller.check());
+    }
+    else {
+        await act(async()=>sessionCoordinator.report('reauth-required',sessionCoordinator.current()));
+        expect(document.querySelector('[role="dialog"].library-dialog')).toBeNull();
+        await act(async()=>h.workbench.controller.login('synthetic'));
+    }
+    expect(document.querySelector('[role="dialog"].library-dialog')).toBeNull();
+    await waitFor(()=>expect(readTurnContext()?.ready).toBe(true));
+    expect(screen.getByText(mode==='ask' ? text : 'Raw source')).toBeVisible();
+    expect(screen.getByText('Retained output is read-only because its original connection is no longer current.')).toBeVisible();
+    const retainedButton = screen.getByRole('button',{name:'Open reference · '+reference});
+    expect(retainedButton).toBeDisabled();
+    fireEvent.click(retainedButton);
+    await act(async()=>{});
+    expect(referenceReads()).toHaveLength(count);
+    if(transition==='target') {
+        await act(async()=>publishTurnTarget(target,true));
+        expect(document.querySelector('[role="dialog"].library-dialog')).toBeNull();
+        fireEvent.click(screen.getByRole('button',{name:'Open reference · '+reference}));
+        await act(async()=>{});
+        expect(referenceReads()).toHaveLength(count);
+    }
+    expect(h.workbench.drafts.library.get(original.id)?.global).toBe(original.global);
+    expect(h.workbench.drafts.studio.getSnapshot().notes).toHaveLength(0);
+    expect(requests.filter(r=>r.method==='POST')).toHaveLength(1);
+    expect(requests.some(r=>r.url.includes('/chat/sessions'))).toBe(false);
 });

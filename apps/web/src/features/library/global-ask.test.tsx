@@ -1,6 +1,7 @@
-import { act, fireEvent, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { expect, it } from 'vitest';
 import { renderLibrary } from '../../test/library-harness';
+import { json } from '../../test/notebook-fixtures';
 import { globalServer, askStream } from '../../test/global-fixtures';
 async function open() { await renderLibrary('/search?q=Original question&mode=ask'); fireEvent.click(await screen.findByRole('button', { name: 'Ask library' })); await screen.findByRole('dialog'); }
 async function start() { fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Start answer' })); }
@@ -79,4 +80,35 @@ it('Ask reference opens the reviewed source consumer without creating sessions o
     expect(await within(screen.getByRole('dialog')).findByRole('button', { name: 'Chat with source' })).toBeVisible();
     expect(requests.some(r => r.url.includes('/chat/sessions'))).toBe(false);
     expect(requests.filter(r => r.url.endsWith('/notes') && r.method === 'POST')).toHaveLength(0);
+});
+
+
+it.each(['null','loading','error'] as const)('I2 an open model dialog loses dispatch admission when embedding becomes %s',async(metadata)=>{
+    let changed=false;
+    const requests=globalServer(r=>changed && r.url.endsWith('/models/defaults') ? metadata==='loading' ? new Promise<Response>(()=>{}) : metadata==='error' ? json({detail:'Unavailable'},503) : json({default_chat_model:'model:language',default_embedding_model:null}) : undefined);
+    const h=await renderLibrary('/search?q=Capture availability&mode=ask');
+    const submit=await screen.findByRole('button',{name:'Ask library'});
+    await waitFor(()=>expect(submit).toBeEnabled());
+    fireEvent.click(submit);
+    const confirm=within(screen.getByRole('dialog')).getByRole('button',{name:'Start answer'});
+    changed=true;
+    await act(async()=>{void h.queries.invalidateQueries({queryKey:['library','model-defaults']});});
+    await waitFor(()=>expect(confirm).toBeDisabled());
+    fireEvent.click(confirm);
+    expect(requests.filter(r=>r.method==='POST')).toHaveLength(0);
+    expect(h.workbench.drafts.library.getSnapshot().filter(r=>r.input.kind==='global-run')).toHaveLength(0);
+});
+it('I2 final hook admission reads current metadata before a stale model-confirm callback can dispatch',async()=>{
+    const requests=globalServer(), h=await renderLibrary('/search?q=No stale confirmation&mode=ask');
+    const submit=await screen.findByRole('button',{name:'Ask library'});
+    await waitFor(()=>expect(submit).toBeEnabled());
+    fireEvent.click(submit);
+    const confirm=within(screen.getByRole('dialog')).getByRole('button',{name:'Start answer'});
+    act(()=>{
+        h.queries.setQueriesData({queryKey:['library','model-defaults']},{default_chat_model:'model:language',default_embedding_model:null});
+        fireEvent.click(confirm);
+    });
+    await act(async()=>{});
+    expect(requests.filter(r=>r.method==='POST')).toHaveLength(0);
+    expect(h.workbench.drafts.library.getSnapshot().filter(r=>r.input.kind==='global-run')).toHaveLength(0);
 });

@@ -1,3 +1,6 @@
+import { readTurnContext, sessionCoordinator } from '@study/web-transport';
+import { useLibraryState } from './use-library-state';
+import type { LibraryDraft } from './library-store';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAppData } from '../../app/providers';
@@ -21,16 +24,36 @@ export function recordReferences(content: string): RecordIdentity[] {
     }
     return [...out.values()];
 }
-export function RecordReferences({ content }: {
-    content: string;
-}) {
-    const { native: n } = useI18n(), [selected, setSelected] = useState<RecordIdentity | null>(null);
-    return <><div className="library-actions">{recordReferences(content).map(ref => <Button key={ref.id} onClick={() => setSelected(ref)}>{n.reference + ' · ' + ref.id}</Button>)}</div>{selected && <RecordReference key={selected.id} reference={selected} onClose={() => setSelected(null)}/>}</>;
+// Optional original-record admission. Existing current-owner consumers retain their API.
+export function useRecordReferenceAdmission(owner?: LibraryDraft) {
+    const s = useLibraryState();
+    return () => {
+        if (!owner) return true;
+        const original = s.store.get(owner.id);
+        return !!original && original.context === owner.context && original.generation === owner.generation &&
+            s.store.current(original, readTurnContext(), sessionCoordinator.current());
+    };
 }
-export function RecordReference({ reference, onClose }: {
+export function RecordReferences({ content, owner }: {
+    content: string;
+    owner?: LibraryDraft | undefined;
+}) {
+    const { native: n, global: g } = useI18n(), [selected, setSelected] = useState<RecordIdentity | null>(null);
+    const admitted = useRecordReferenceAdmission(owner);
+    return <>{!admitted() && <p role="status">{g.retainedReadOnly}</p>}<div className="library-actions">{recordReferences(content).map(ref => <Button key={ref.id} disabled={!admitted()} onClick={() => { if (admitted()) setSelected(ref); }}>{n.reference + ' · ' + ref.id}</Button>)}</div>{selected && <RecordReference key={selected.id} reference={selected} owner={owner} onClose={() => setSelected(null)}/>}</>;
+}
+type ReferenceProps = {
     reference: RecordIdentity;
     onClose(): void;
-}) {
+    owner?: LibraryDraft | undefined;
+};
+export function RecordReference(props: ReferenceProps) {
+    const admitted = useRecordReferenceAdmission(props.owner);
+    // This is a render boundary, not effect cleanup. The reader cannot render against
+    // a replacement query scope even for the first frame of an owner transition.
+    return admitted() ? <CurrentRecordReference {...props}/> : null;
+}
+function CurrentRecordReference({ reference, onClose }: ReferenceProps) {
     const c = useLibraryConnection(), { transport } = useAppData(), studio = useMemo(() => transport ? createStudioApi(transport) : null, [transport]), { t, native: n } = useI18n();
     const read = useQuery({ queryKey: ['library', 'reference', c.scope, reference.kind, reference.id], enabled: c.ready && reference.kind !== 'source', queryFn: async () => {
             if (reference.kind === 'source_insight')

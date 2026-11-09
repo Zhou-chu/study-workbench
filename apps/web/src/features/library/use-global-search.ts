@@ -1,7 +1,7 @@
 import type { LibraryDraft } from './library-store';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { readTurnContext, sessionCoordinator } from '@study/web-transport';
 import { useLibraryState } from './use-library-state';
 import { useNotebookConnection } from '../../data/use-notebook-connection';
@@ -11,7 +11,7 @@ import { readAskStream } from './global-ask-stream';
 import { failure } from './library-operations';
 export function useGlobalSearch() {
     const location = useLocation(), [id, setId] = useState<string | null>(null), s = useLibraryState(id), n = useNotebookConnection(), runs = useRef(new Map<string, AbortController>());
-    const { store, context, generation, scope } = s;
+    const { store, context, generation, scope } = s, queries = useQueryClient();
     const query = new URLSearchParams(location.search), routeKey = location.search;
     useEffect(() => { if (context?.ready) {
         setId(store.open({ kind: 'global' }, { kind: 'global-query', routeKey, intentId: crypto.randomUUID(), question: query.get('q') ?? '', mode: query.get('mode') === 'ask' ? 'ask' : 'search', searchType: 'text', includeSources: true, includeNotes: true, notebooks: [] }, context, generation));
@@ -37,8 +37,20 @@ export function useGlobalSearch() {
         if (next)
             setId(next);
     } }
+    // One admission path for render, explicit gestures, model confirmation and dispatch.
+    // Read the live query cache too: a captured event callback may predate its latest update.
+    function canSubmit(snapshot: GlobalQuery, owner: LibraryDraft | undefined = s.row) {
+        const metadata = queries.getQueryState<{ default_embedding_model: string | null }>(['library', 'model-defaults', scope]);
+        const embedding = snapshot.mode === 'search' && snapshot.searchType === 'text' ||
+            defaults.fetchStatus === 'idle' && metadata?.status === 'success' && metadata.fetchStatus === 'idle' && !!metadata.data?.default_embedding_model?.trim();
+        return !!id && !!s.api && !!context?.ready && !!s.row && !!owner && owner === s.row &&
+            store.get(owner.id) === owner && owner.input.kind === 'global-query' &&
+            !store.getSnapshot().some(r => r.input.kind === 'global-run' && r.input.intentId === (owner.input.kind === 'global-query' ? owner.input.intentId : '')) &&
+            store.current(owner, readTurnContext(), sessionCoordinator.current()) && !!snapshot.question.trim() &&
+            validScope(snapshot.notebooks) && !runs.current.size && embedding;
+    }
     async function submit(snapshot: GlobalQuery, chosen?: AskModels, owner: LibraryDraft | undefined = s.row) {
-        if (!id || !s.api || !context?.ready || !s.row || !owner || owner !== s.row || store.get(owner.id) !== owner || owner.input.kind !== 'global-query' || store.getSnapshot().some(r => r.input.kind === 'global-run' && r.input.intentId === (owner.input.kind === 'global-query' ? owner.input.intentId : '')) || !store.current(s.row, readTurnContext(), sessionCoordinator.current()) || !snapshot.question.trim() || !validScope(snapshot.notebooks) || runs.current.size)
+        if (!canSubmit(snapshot, owner) || !owner || owner.input.kind !== 'global-query' || !context || !s.api)
             return;
         if (snapshot.mode === 'ask' && (!chosen || Object.values(chosen).some(v => !v.trim())))
             return;
@@ -91,5 +103,5 @@ export function useGlobalSearch() {
         store.edit(id, { question: '', intentId: crypto.randomUUID() });
     else
         fresh(); }
-    return { ...s, input, edit, fresh, newQuestion, submitted, submit, stop, notebooks, models, defaults, locked: !s.ready || !s.row || !store.current(s.row, context, generation), outputs: s.rows.filter(r => r.input.kind === 'global-run') };
+    return { ...s, input, edit, fresh, newQuestion, submitted, canSubmit, submit, stop, notebooks, models, defaults, locked: !s.ready || !s.row || !store.current(s.row, context, generation), outputs: s.rows.filter(r => r.input.kind === 'global-run') };
 }
