@@ -384,3 +384,154 @@ it('T16 rejects a maintenance refresh that changes its originally acknowledged f
  expect(attempt.observationFailed).toBe(true);
  expect(attempt.job?.fresh_extraction_id).toBe('fresh-original');
 });
+
+
+it.each(['ready', 'stale', 'not_indexed', 'future_state'])('I1 keeps %s visible and only supported states authorize hybrid and preview', async state => {
+ const requests = server(r => r.method === 'GET' && new URL(r.url).pathname.endsWith('/semantic-index') ?
+  json({...status, profiles: [{...status.profiles[0], index: {state}}]}) : undefined);
+ const h = await open(); await load(h);
+ fireEvent.click(h.q().getByLabelText('Hybrid (explicit submit only)'));
+ const query = h.q().getByLabelText('I acknowledge sending this query for embedding at the disclosed destination; quota may be consumed.');
+ expect(h.q().getByLabelText('Hybrid (explicit submit only)')).toBeChecked();
+ if (state === 'future_state') {
+  expect(h.q().getByRole('option', {name: /future_state/})).toBeDisabled();
+  expect(query).toBeDisabled();
+  expect(h.q().getByRole('button', {name: 'Preview indexing'})).toBeDisabled();
+  expect(captures.values.at(-1)?.available).toBe(false);
+  expect(requests.filter(r => r.method === 'POST')).toHaveLength(0);
+ } else {
+  expect(query).toBeEnabled(); fireEvent.click(query);
+  expect(captures.values.at(-1)?.available).toBe(true);
+  expect(captures.values.at(-1)?.isCurrent()).toBe(true);
+  fireEvent.click(h.q().getByRole('button', {name: 'Preview indexing'}));
+  expect(await h.q().findByLabelText('I acknowledge processing these document excerpts at the disclosed destination; quota may be consumed.')).toBeEnabled();
+ }
+});
+
+
+it.each([false, true])('I2 malformed current status retires original query/build authority and preserves unknown records (%s)', async unknown => {
+ let reads = 0;
+ const requests = server(r => {
+  if (r.method === 'GET' && new URL(r.url).pathname.endsWith('/semantic-index') && ++reads > 1)
+   return json({...status, profiles: [{profile: {...preview.profile, fingerprint: null}, index: {state: 'ready'}}]});
+  if (r.method === 'POST' && r.url.endsWith('/semantic-index')) return json({malformed: true});
+  return undefined;
+ });
+ const h = await open(); await load(h);
+ fireEvent.click(h.q().getByLabelText('Hybrid (explicit submit only)'));
+ fireEvent.click(h.q().getByLabelText('I acknowledge sending this query for embedding at the disclosed destination; quota may be consumed.'));
+ fireEvent.click(h.q().getByRole('button', {name: 'Preview indexing'}));
+ fireEvent.click(await h.q().findByLabelText('I acknowledge processing these document excerpts at the disclosed destination; quota may be consumed.'));
+ expect(h.q().getByRole('button', {name: 'Confirm indexing'})).toBeEnabled();
+ if (unknown) {
+  fireEvent.click(h.q().getByRole('button', {name: 'Confirm indexing'}));
+  await waitFor(() => expect(h.workbench.drafts.settings.getSnapshot()[0]!.retrieval.attempts[0]!.phase).toBe('unknown'));
+ }
+ const original = captures.values.at(-1)!;
+ const attempts = h.workbench.drafts.settings.getSnapshot()[0]!.retrieval.attempts;
+ expect(original.available).toBe(true); expect(original.isCurrent()).toBe(true);
+ fireEvent.click(h.q().getByRole('button', {name: 'Refresh index status'}));
+ await waitFor(() => expect(h.q().getByRole('alert')).toBeVisible());
+ expect(original.isCurrent()).toBe(false);
+ expect(captures.values.at(-1)?.available).toBe(false);
+ expect(h.q().getByLabelText('Hybrid (explicit submit only)')).toBeChecked();
+ const query = h.q().getByLabelText('I acknowledge sending this query for embedding at the disclosed destination; quota may be consumed.');
+ expect(query).not.toBeChecked(); expect(query).toBeDisabled();
+ expect(h.q().queryByRole('button', {name: 'Confirm indexing'})).toBeNull();
+ expect(h.workbench.drafts.settings.getSnapshot()[0]!.retrieval.attempts).toEqual(attempts);
+ expect(requests.filter(r => r.method === 'POST' && r.url.endsWith('/semantic-index'))).toHaveLength(unknown ? 1 : 0);
+});
+
+it('I2 an obsolete malformed refresh cannot retire a newer successful query capture', async () => {
+ let pending!: (r: Response) => void; let reads = 0, settled = 0;
+ const create = settingsApi.createSettingsApi;
+ vi.spyOn(settingsApi, 'createSettingsApi').mockImplementation((...args) => {
+  const api = create(...args);
+  return {...api, semanticStatus: async (...args) => { try { return await api.semanticStatus(...args); } finally { settled++; } }};
+ });
+ server(r => r.method === 'GET' && new URL(r.url).pathname.endsWith('/semantic-index') && ++reads === 2 ? new Promise(resolve => pending = resolve) : undefined);
+ const h = await open(); await load(h);
+ fireEvent.click(h.q().getByRole('button', {name: 'Refresh index status'}));
+ await waitFor(() => expect(pending).toBeDefined());
+ act(() => { h.workbench.drafts.configuration.open('models', readTurnContext()!); });
+ fireEvent.click(h.q().getByRole('button', {name: 'Refresh index status'}));
+ await waitFor(() => expect(settled).toBe(2));
+ fireEvent.click(h.q().getByLabelText('Hybrid (explicit submit only)'));
+ fireEvent.click(h.q().getByLabelText('I acknowledge sending this query for embedding at the disclosed destination; quota may be consumed.'));
+ const newer = captures.values.at(-1)!;
+ await act(async () => pending(json({malformed: true})));
+ await waitFor(() => expect(settled).toBe(3));
+ expect(newer.isCurrent()).toBe(true); expect(captures.values.at(-1)?.available).toBe(true);
+ expect(h.q().getByLabelText('I acknowledge sending this query for embedding at the disclosed destination; quota may be consumed.')).toBeChecked();
+ expect(h.q().queryByRole('alert')).toBeNull();
+});
+
+it('I2 later owned-job uncertainty does not invalidate newly validated semantic status', async () => {
+ let reads = 0;
+ server(r => {
+  if (r.method === 'GET' && new URL(r.url).pathname.endsWith('/semantic-index') && ++reads > 1)
+   return json({...status, profiles: [{...status.profiles[0], index: {state: 'stale'}}]});
+  if (r.url.includes('/personal/jobs/')) return json({malformed: true});
+  return undefined;
+ });
+ const h = await open(); await plan(h);
+ fireEvent.click(h.q().getByLabelText('I acknowledge processing these document excerpts at the disclosed destination; quota may be consumed.'));
+ fireEvent.click(h.q().getByRole('button', {name: 'Confirm indexing'})); await h.q().findByText('child');
+ fireEvent.click(h.q().getByRole('button', {name: 'Refresh index status'}));
+ await waitFor(() => expect(h.q().getByRole('button', {name: 'Refresh index status'})).toBeEnabled());
+ const current = h.workbench.drafts.settings.getSnapshot()[0]!.retrieval;
+ expect(current.status?.profiles[0]?.state).toBe('stale');
+ expect(current.attempts[0]?.observationFailed).toBe(true);
+ fireEvent.click(h.q().getByLabelText('Hybrid (explicit submit only)'));
+ expect(h.q().getByLabelText('I acknowledge sending this query for embedding at the disclosed destination; quota may be consumed.')).toBeEnabled();
+});
+
+
+it.each([false, true])('I3 full two-version refresh keeps the original child authority (group drift=%s)', async drift => {
+ const ids = ['v-old', 'v-new'];
+ const entries = ids.map((version_id, i) => ({...preview.snapshot.entries[0]!, version_id, extraction_id: 'ex-' + i}));
+ const snapshot = {notebook_id: 'n', entries};
+ const pre = {...preview, snapshot};
+ const jobs = ids.map((source_version_id, i) => ({...receipt.jobs[0]!, job_id: 'child' + i, source_version_id, total_evidence: 1}));
+ const rec = {...receipt, jobs, job_ids: jobs.map(j => j.job_id)};
+ const observed = jobs.map((j, i) => ({...j, state: 'succeeded', total_evidence: drift ? (i ? 0 : 2) : 1, completed_evidence: drift ? (i ? 0 : 2) : 1}));
+ const workspace = sourceWorkspace(); workspace.selection = {...workspace.selection, engine: 'independent', selection_origin: 'local', source_version_ids: ids, remote_source_ids: []};
+ let body: Record<string, unknown> = {};
+ const authorities: unknown[] = [];
+ const create = settingsApi.createSettingsApi;
+ vi.spyOn(settingsApi, 'createSettingsApi').mockImplementation((...args) => {
+  const api = create(...args);
+  return {...api, indexJob: (...args) => { authorities.push(args[0].receipt); return api.indexJob(...args); }};
+ });
+ const requests = server(async r => {
+  const path = new URL(r.url).pathname;
+  if (path.endsWith('/preview')) return json(pre);
+  if (path.endsWith('/semantic-index')) {
+   if (r.method === 'GET') return json({...status, snapshot});
+   body = await r.clone().json(); return json(rec);
+  }
+  if (path === '/api/personal/jobs/group') return json({job_id: 'group', group_id: 'group', notebook_id: 'n', operation: 'index_evidence_group',
+   replay_allowed: false, request_hash: pyHash({notebook_id: 'n', ...body}), version_ids: ids, job_ids: rec.job_ids, receipt: rec,
+   jobs: observed, state: 'succeeded', retry_safe: false, remote_cancel_confirmed: false});
+  if (path.includes('/personal/jobs/child')) {
+   const i = Number(path.split('child')[1]);
+   return json({...liveJob(body, 'child'), ...observed[i], extraction_id: 'ex-' + i, scope_snapshot: snapshot,
+    version_snapshot: {notebook_id: 'n', entries: [entries[i]]}, submission_state: 'confirmed', result: {state: 'ready', attempt_id: 'child' + i}});
+  }
+  return undefined;
+ }, () => json(workspace));
+ const h = await open(); await plan(h);
+ fireEvent.click(h.q().getByLabelText('I acknowledge processing these document excerpts at the disclosed destination; quota may be consumed.'));
+ fireEvent.click(h.q().getByRole('button', {name: 'Confirm indexing'})); await h.q().findByText('child1');
+ const original = h.workbench.drafts.settings.getSnapshot()[0]!.retrieval.attempts[0]!.receipt;
+ fireEvent.click(h.q().getByRole('button', {name: 'Refresh index status'}));
+ await waitFor(() => expect(h.q().getByRole('button', {name: 'Refresh index status'})).toBeEnabled());
+ const attempt = h.workbench.drafts.settings.getSnapshot()[0]!.retrieval.attempts[0]!;
+ expect(attempt.receipt).toBe(original);
+ expect(attempt.receipt?.jobs.map(j => j.total_evidence)).toEqual([1, 1]);
+ expect(attempt.observationFailed).toBe(drift);
+ expect(requests.filter(r => r.url.includes('/personal/jobs/'))).toHaveLength(drift ? 1 : 3);
+ expect(authorities.every(value => value === original)).toBe(true);
+ if (drift) expect(attempt.observedReceipt).toBeNull();
+ else expect(attempt.observedReceipt?.state).toBe('succeeded');
+});

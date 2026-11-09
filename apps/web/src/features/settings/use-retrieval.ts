@@ -57,9 +57,10 @@ export function useRetrieval(notebookId: string | undefined, workspace: Workspac
     const patchAttempt = (id: string, patch: Partial<IndexAttempt>) => update(v => ({
         ...v, attempts: Object.freeze(v.attempts.map(a => a.id === id ? Object.freeze({ ...a, ...patch }) : a)),
     }));
-    const profile = s?.status?.profiles.find(p => p.profile.profile_id === s.profileId)?.profile;
+    const profileStatus = s?.status?.profiles.find(p => p.profile.profile_id === s.profileId);
+    const profile = profileStatus?.profile;
     const validProfile = profile && disclosure(profile);
-    const semanticReady = ready && local && s?.status?.enabled === true && !!validProfile;
+    const semanticReady = ready && local && s?.status?.enabled === true && profileStatus?.recognized === true && !!validProfile;
     const locked = !!s?.busy || !!s?.attempts.some(a => a.phase === 'pending' || a.phase === 'unknown' ||
         a.receipt && ['queued', 'running', 'submission_unknown'].includes((a.observedReceipt ?? a.receipt).state));
     const change = (patch: Partial<RetrievalState>) => {
@@ -68,7 +69,7 @@ export function useRetrieval(notebookId: string | undefined, workspace: Workspac
             documentAck: false, duplicateAck: false, retryChild: null, dirty: true }));
     };
     const chooseProfile = (value: string) => {
-        if (s?.status?.profiles.some(p => p.profile.profile_id === value && disclosure(p.profile)))
+        if (s?.status?.profiles.some(p => p.profile.profile_id === value && p.recognized && disclosure(p.profile)))
             change({ profileId: value });
     };
     const query = (checked: boolean) => {
@@ -81,28 +82,40 @@ export function useRetrieval(notebookId: string | undefined, workspace: Workspac
         const versions = Object.freeze([...scope.source_version_ids]);
         const acknowledged = [...(s?.attempts ?? [])].reverse().find(a => a.receipt && current(a.fence, false));
         const busyToken = crypto.randomUUID();
+        const ownsRefresh = () => current(f, false) && store.get(f.ownerId)?.retrieval.busyToken === busyToken;
+        let phase: 'status' | 'jobs' = 'status';
         update(v => ({ ...v, busy: true, busyToken, error: false }));
         try {
-            if (!current(f)) return;
+            if (!current(f) || !ownsRefresh()) return;
             const status = await api.semanticStatus(notebookId!, versions, f.context);
-            if (!current(f)) return;
+            if (!current(f) || !ownsRefresh()) return;
             update(v => same(v.status, status) ? { ...v, status } : { ...invalidateRetrieval(v), status, busy: true, busyToken });
+            phase = 'jobs';
             if (acknowledged?.receipt) {
-                let receipt = acknowledged.receipt;
+                const receipt = acknowledged.receipt;
+                let observedReceipt = receipt;
                 const children: ChildStatus[] = [];
                 // One finite original group plus at most twenty originally acknowledged children.
                 for (const id of [receipt.group_id, ...receipt.job_ids]) {
-                    if (!current(acknowledged.fence, false)) return;
+                    if (!current(acknowledged.fence, false) || !ownsRefresh()) return;
                     const value = await api.indexJob({ preview: acknowledged.preview, request: acknowledged.request, receipt }, id, acknowledged.fence.context);
-                    if (!current(acknowledged.fence, false)) return;
-                    if ('group_id' in value) receipt = value;
+                    if (!current(acknowledged.fence, false) || !ownsRefresh()) return;
+                    if ('group_id' in value) observedReceipt = value;
                     else children.push(value);
                 }
-                patchAttempt(acknowledged.id, { observedReceipt: receipt, children: Object.freeze(children), observationFailed: false });
+                patchAttempt(acknowledged.id, { observedReceipt, children: Object.freeze(children), observationFailed: false });
             }
         } catch (e) {
-            update(v => ({ ...v, error: true, ...(e instanceof SettingsRequestError ? { httpStatus: e.status } : {}) }));
-            if (acknowledged) patchAttempt(acknowledged.id, { observationFailed: true });
+            if (!ownsRefresh()) return;
+            // Failed current semantic evidence removes admission. A later job failure
+            // belongs to its original attempt, not the successfully read metadata.
+            update(v => {
+                const next = { ...(phase === 'status' ? invalidateRetrieval(v) : v), error: true };
+                if (e instanceof SettingsRequestError) next.httpStatus = e.status;
+                else delete next.httpStatus;
+                return next;
+            });
+            if (phase === 'jobs' && acknowledged) patchAttempt(acknowledged.id, { observationFailed: true });
         } finally { update(v => v.busyToken === busyToken ? { ...v, busy: false, busyToken: null } : v); }
     };
     const preview = async (childId?: string) => {
@@ -202,7 +215,7 @@ export function useRetrieval(notebookId: string | undefined, workspace: Workspac
         available: s.mode === 'lexical' ? ready : semanticReady && !!originalQuery,
         isCurrent: () => !!f && current(f),
     });
-    return { owner, s, ready, local, locked, profile, semanticReady, conversation, capture, current, update,
+    return { owner, s, ready, local, locked, profile, profileStatus, semanticReady, conversation, capture, current, update,
         chooseMode: (mode: 'lexical' | 'hybrid') => change({ mode }), chooseProfile, query, refresh, preview,
         cancelPreview, acknowledge, build, cancel };
 }

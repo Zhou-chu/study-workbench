@@ -68,14 +68,15 @@ export function parseScope(value: unknown, notebook: string, selected: readonly 
     return Object.freeze({ notebook_id: notebook, entries: Object.freeze(entries) });
 }
 export type SemanticStatus = Readonly<{ notebook_id: string; snapshot: Scope; enabled: boolean;
-    profiles: readonly Readonly<{ profile: SemanticProfile; state: string }>[]; jobs: readonly ChildStatus[] }>;
+    profiles: readonly Readonly<{ profile: SemanticProfile; state: string; recognized: boolean }>[]; jobs: readonly ChildStatus[] }>;
 export type Preview = Readonly<{ snapshot: Scope; profile: SemanticProfile; preview_hash: string;
     evidence_count: number; input_bytes: number; warnings: readonly string[] }>;
 export function parseStatus(value: unknown, notebook: string, selected: readonly string[]): SemanticStatus {
     const r = object(value); flags(r);
     if (r.notebook_id !== notebook) return bad();
     const profiles = list(r.profiles).map(v => {
-        const p = object(v); return Object.freeze({ profile: parseProfile(p.profile), state: text(object(p.index).state) });
+        const p = object(v), state = text(object(p.index).state);
+        return Object.freeze({ profile: parseProfile(p.profile), state, recognized: ['ready', 'stale', 'not_indexed'].includes(state) });
     });
     if (new Set(profiles.map(p => p.profile.profile_id)).size !== profiles.length) return bad();
     return Object.freeze({ notebook_id: notebook, snapshot: parseScope(r.snapshot, notebook, selected), enabled: flag(r.enabled),
@@ -119,7 +120,10 @@ export function parseReceipt(value: unknown, preview: Preview, original?: IndexR
         !equalSet(jobs.map(j => j.source_version_id ?? ''), preview.snapshot.entries.map(e => e.version_id)) ||
         jobs.reduce((n, j) => n + j.total_evidence, 0) !== preview.evidence_count) return bad();
     if (original && (original.group_id !== group_id || !equalSet(original.job_ids, job_ids) ||
-        jobs.some(j => original.jobs.find(o => o.job_id === j.job_id)?.source_version_id !== j.source_version_id))) return bad();
+        jobs.some(j => {
+            const owned = original.jobs.find(o => o.job_id === j.job_id);
+            return !owned || owned.source_version_id !== j.source_version_id || owned.total_evidence !== j.total_evidence;
+        }))) return bad();
     const lifecycle = state(r.state);
     if (lifecycle === 'succeeded' && jobs.some(j => j.state !== 'succeeded' || j.completed_evidence !== j.total_evidence)) return bad();
     return Object.freeze({ group_id, notebook_id: preview.snapshot.notebook_id, profile_id: preview.profile.profile_id,

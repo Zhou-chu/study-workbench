@@ -1,3 +1,4 @@
+import { createSettingsApi } from './settings-api';
 import { expect, it } from 'vitest';
 import { createHash } from 'node:crypto';
 import { sourceContext } from '../test/source-fixtures';
@@ -69,3 +70,31 @@ it('T15/T16 preserves zero and partial counts, rejects foreign maintenance jobs 
 });
 
 it('T08 rejects a duplicate-cost flag without an exact single-version retry reference',()=>{expect(()=>indexBody({...request,acknowledge_duplicate_embedding_cost:true})).toThrow();expect(()=>indexBody({...request,retry_of_job_id:'old',source_version_ids:['v-old','other'],acknowledge_duplicate_embedding_cost:true})).toThrow();expect(()=>indexBody({...request,retry_of_job_id:'old',acknowledge_duplicate_embedding_cost:false})).toThrow();});
+
+
+it.each(['ready', 'stale', 'not_indexed', 'future_state'])('I1 retains %s while separately recognizing supported index states', state => {
+ const value = parseStatus({...status, profiles: [{profile, index: {state}}]}, 'n', ['v-old']);
+ expect(value.profiles[0]).toMatchObject({state, recognized: state !== 'future_state'});
+});
+
+
+it.each([false, true])('I3 group adapter rejects aggregate-preserving original child-count drift (cancel=%s)', async cancel => {
+ const context = sourceContext();
+ const ids = ['v-old', 'v-new'];
+ const snapshot = {...preview.snapshot, entries: ids.map((version_id, i) => ({...preview.snapshot.entries[0]!, version_id, extraction_id: 'ex-' + i}))};
+ const rawPreview = {...preview, snapshot};
+ const parsedPreview = parsePreview(rawPreview, 'n', ids, parseProfile(profile));
+ const jobs = ids.map((source_version_id, i) => ({...receipt.jobs[0]!, job_id: 'child' + i, source_version_id, total_evidence: 1}));
+ const rawReceipt = {...receipt, jobs, job_ids: jobs.map(j => j.job_id)};
+ const original = parseReceipt(rawReceipt, parsedPreview);
+ const originalRequest = {...request, source_version_ids: ids};
+ const drift = jobs.map((j, i) => ({...j, state: 'succeeded', total_evidence: i ? 0 : 2, completed_evidence: i ? 0 : 2}));
+ const group = {job_id: 'group', group_id: 'group', notebook_id: 'n', operation: 'index_evidence_group', replay_allowed: false,
+  request_hash: hash({notebook_id: 'n', ...originalRequest}), version_ids: ids, job_ids: rawReceipt.job_ids,
+  receipt: rawReceipt, jobs: drift, state: 'succeeded', retry_safe: false, remote_cancel_confirmed: false};
+ const sends: {method: string; path: string}[] = [];
+ const api = createSettingsApi({send: async input => { sends.push({method: input.method, path: input.path}); return new Response(JSON.stringify(group)); }});
+ await expect(api.indexJob({preview: parsedPreview, request: originalRequest, receipt: original}, 'group', context, cancel)).rejects.toThrow();
+ expect(sends).toEqual([{method: cancel ? 'POST' : 'GET', path: '/personal/jobs/group' + (cancel ? '/cancel' : '')}]);
+ expect(original.jobs.map(j => j.total_evidence)).toEqual([1, 1]);
+});

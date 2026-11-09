@@ -27,8 +27,8 @@ export function RetrievalPanel({ control: c }: { control: RetrievalController })
                 <option value="">{w.chooseEmbeddingProfile}</option>
                 {s.profileId && !s.status?.profiles.some(p => p.profile.profile_id === s.profileId) &&
                     <option value={s.profileId} disabled>{t.common.unknown}: {s.profileId}</option>}
-                {s.status?.profiles.map(p => <option key={p.profile.profile_id} value={p.profile.profile_id} disabled={!disclosure(p.profile)}>
-                    {p.profile.profile_id} · {p.profile.model_name}{disclosure(p.profile) ? '' : ' · ' + t.common.unknown + ': ' + p.profile.destination_kind}
+                {s.status?.profiles.map(p => <option key={p.profile.profile_id} value={p.profile.profile_id} disabled={!p.recognized || !disclosure(p.profile)}>
+                    {p.profile.profile_id} · {p.profile.model_name}{!p.recognized && ' · ' + t.common.unknown + ': ' + p.state}{disclosure(p.profile) ? '' : ' · ' + t.common.unknown + ': ' + p.profile.destination_kind}
                 </option>)}
             </select>
         </label>
@@ -41,7 +41,8 @@ export function RetrievalPanel({ control: c }: { control: RetrievalController })
                     t.common.unknown + ': ' + c.profile.destination_kind).replace('{{version}}', c.profile.destination_descriptor_version)}</p>
             <p className="source-id">{c.profile.endpoint}</p>
             <details><summary>{w.originalEmbeddingDisclosure}</summary><pre className="source-id">{JSON.stringify(c.profile, null, 2)}</pre></details>
-            <p>{s.status?.profiles.find(p => p.profile === c.profile)?.state === 'ready' ? w.semanticReady : w.semanticNotReady}</p>
+            <p>{!c.profileStatus?.recognized ? t.common.unknown + ': ' + c.profileStatus?.state :
+                c.profileStatus.state === 'ready' ? w.semanticReady : w.semanticNotReady}</p>
             <details><summary>{w.jobTechnicalDetails}</summary><p className="source-id">{s.status?.profiles.find(p => p.profile === c.profile)?.state}</p></details>
         </section>}
         <label><input type="checkbox" checked={!!s.query} disabled={!c.semanticReady || s.busy}
