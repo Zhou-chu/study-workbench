@@ -1,3 +1,4 @@
+import {podcastMessages,type PodcastMessages} from './podcast-messages';
 import {globalMessages,type GlobalMessages} from './global-messages';
 import { nativeMessages, type NativeMessages } from './native-messages';
 import { libraryMessages, type LibraryMessages } from './library-messages';
@@ -18,6 +19,7 @@ export type ShellMessages = {
     [K in keyof typeof shellMessages['en-US']]: string;
 };
 type I18nValue = {
+    podcast:PodcastMessages;
     global: GlobalMessages;
     library: LibraryMessages;
     native: NativeMessages;
@@ -58,7 +60,7 @@ export function I18nProvider({ children, initialLocale = detectLocale() }: {
     useEffect(() => { document.documentElement.lang = locale; }, [locale]);
     // Shape type only: parity is tested; this never substitutes English content.
     const t = resources[locale].translation as TranslationKeys;
-    return <Context.Provider value={{ global:globalMessages[locale], native: nativeMessages[locale], library: libraryMessages[locale], studio: studioMessages[locale], reader: readerMessages[locale], locale, setLocale, t, chat: chatMessages[locale], shell: shellMessages[locale], session: sessionMessages[locale], notebook: notebookMessages[locale], source: sourceMessages[locale] }}>{children}</Context.Provider>;
+    return <Context.Provider value={{ podcast:podcastMessages[locale], global:globalMessages[locale], native: nativeMessages[locale], library: libraryMessages[locale], studio: studioMessages[locale], reader: readerMessages[locale], locale, setLocale, t, chat: chatMessages[locale], shell: shellMessages[locale], session: sessionMessages[locale], notebook: notebookMessages[locale], source: sourceMessages[locale] }}>{children}</Context.Provider>;
 }
 export function useI18n(): I18nValue {
     const value = useContext(Context);

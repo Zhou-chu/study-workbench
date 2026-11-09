@@ -1,0 +1,153 @@
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { expect, it } from 'vitest';
+import { renderLibrary } from '../../test/library-harness';
+import { podcastServer, ep, sp, episode } from '../../test/podcast-fixtures';
+import { json } from '../../test/notebook-fixtures';
+const d = () => within(screen.getByRole('dialog'));
+async function profiles() { await renderLibrary('/podcasts'); fireEvent.click(await screen.findByRole('button', { name: 'Profiles' })); await screen.findByText(ep.name); }
+it('create episode profile sends full mandatory schema and explicit nullable/model/language fields', async () => {
+    const req = podcastServer();
+    await profiles();
+    fireEvent.click(screen.getByRole('button', { name: 'Create profile' }));
+    expect(await screen.findByLabelText('Speaker configuration')).toHaveValue('');
+    fireEvent.change(screen.getByLabelText('Profile name'), { target: { value: 'New show' } });
+    fireEvent.change(screen.getByLabelText('Speaker configuration'), { target: { value: sp.id } });
+    fireEvent.change(screen.getByLabelText('Default briefing'), { target: { value: 'Teach clearly' } });
+    fireEvent.change(screen.getByLabelText('Outline model'), { target: { value: 'model:language' } });
+    fireEvent.change(screen.getByLabelText('Transcript model'), { target: { value: 'model:language' } });
+    await screen.findByRole('option', { name: 'English' });
+    fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'en-US' } });
+    fireEvent.change(screen.getByLabelText('Segments'), { target: { value: '7' } });
+    fireEvent.change(screen.getByLabelText('Max output tokens'), { target: { value: '2048' } });
+    fireEvent.click(d().getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(req.filter(r => r.method === 'POST' && r.url.endsWith('/episode-profiles'))).toHaveLength(1));
+    expect(await req.find(r => r.method === 'POST' && r.url.endsWith('/episode-profiles'))!.clone().json()).toEqual({ name: 'New show', description: '', speaker_config: sp.id, outline_llm: 'model:language', transcript_llm: 'model:language', language: 'en-US', default_briefing: 'Teach clearly', num_segments: 7, max_tokens: 2048 });
+});
+it('speaker creation, row limits and canceled draft persist without hidden mutation', async () => {
+    const req = podcastServer();
+    await profiles();
+    fireEvent.click(screen.getByRole('button', { name: 'Create speaker' }));
+    fireEvent.change(await screen.findByLabelText('Profile name'), { target: { value: 'New hosts' } });
+    fireEvent.click(d().getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create speaker' }));
+    expect(await screen.findByLabelText('Profile name')).toHaveValue('New hosts');
+    expect(req.filter(r => r.method === 'POST')).toHaveLength(0);
+    fireEvent.change(screen.getByLabelText('Voice model'), { target: { value: 'model:voice' } });
+    for (let i = 0; i < 3; i++)
+        fireEvent.click(d().getByRole('button', { name: 'Add speaker' }));
+    expect(d().getByRole('button', { name: 'Add speaker' })).toBeDisabled();
+    for (let i = 0; i < 3; i++)
+        fireEvent.click(d().getAllByRole('button', { name: 'Remove speaker' }).at(-1)!);
+    expect(d().getByRole('button', { name: 'Remove speaker' })).toBeDisabled();
+    for (const [label, value] of [['Name', 'Host'], ['Voice ID', 'voice-one'], ['Backstory', 'A teacher'], ['Personality', 'Calm']])
+        fireEvent.change(screen.getByLabelText(label!), { target: { value } });
+    fireEvent.click(d().getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(req.filter(r => r.method === 'POST' && r.url.endsWith('/speaker-profiles'))).toHaveLength(1));
+    expect((await req.find(r => r.method === 'POST' && r.url.endsWith('/speaker-profiles'))!.clone().json()).speakers).toEqual([{ name: 'Host', voice_id: 'voice-one', backstory: 'A teacher', personality: 'Calm', voice_model: null }]);
+});
+it.each([['Episode profiles', 'episode-profiles', ep.id], ['Speaker profiles', 'speaker-profiles', sp.id]])('duplicates %s by exact ID without a body and preserves returned copy identity', async (region, path, id) => {
+    const req = podcastServer();
+    await profiles();
+    fireEvent.click(within(screen.getByRole('region', { name: region })).getByRole('button', { name: 'Duplicate' }));
+    fireEvent.click(d().getByRole('button', { name: 'Duplicate' }));
+    await d().findByText(path === 'episode-profiles' ? 'episode_profile:copy' : 'speaker_profile:copy');
+    const sent = req.filter(r => r.url.endsWith('/duplicate'));
+    expect(sent).toHaveLength(1);
+    expect(decodeURIComponent(new URL(sent[0]!.url).pathname)).toBe('/api/' + path + '/' + id + '/duplicate');
+    expect(await sent[0]!.clone().text()).toBe('');
+});
+it('episode profile delete cancellation has no effect; confirmed delete captures its actual ID', async () => {
+    const req = podcastServer();
+    await profiles();
+    const region = screen.getByRole('region', { name: 'Episode profiles' });
+    fireEvent.click(within(region).getByRole('button', { name: 'Delete' }));
+    fireEvent.click(d().getByRole('button', { name: 'Cancel' }));
+    expect(req.some(r => r.method === 'DELETE')).toBe(false);
+    fireEvent.click(within(region).getByRole('button', { name: 'Delete' }));
+    fireEvent.click(d().getByRole('button', { name: 'Delete' }));
+    await waitFor(() => expect(req.filter(r => r.method === 'DELETE')).toHaveLength(1));
+    expect(decodeURIComponent(req.find(r => r.method === 'DELETE')!.url)).toContain('/episode-profiles/' + ep.id);
+});
+it('speaker delete guards current ID usage again at confirmation, not duplicate names', async () => {
+    let used = false;
+    const req = podcastServer(r => r.url.endsWith('/episode-profiles') ? json([{ ...ep, speaker_config: used ? sp.id : 'speaker_profile:other', speaker_config_name: sp.name }]) : undefined);
+    const h = await renderLibrary('/podcasts');
+    fireEvent.click(await screen.findByRole('button', { name: 'Profiles' }));
+    const region = screen.getByRole('region', { name: 'Speaker profiles' });
+    await within(region).findByText(sp.name);
+    await waitFor(() => expect(within(region).getByRole('button', { name: 'Delete' })).toBeEnabled());
+    fireEvent.click(within(region).getByRole('button', { name: 'Delete' }));
+    used = true;
+    await act(async () => h.queries.invalidateQueries({ queryKey: ['library', 'episode-profiles'] }));
+    await waitFor(() => expect(d().getByRole('button', { name: 'Delete' })).toBeDisabled());
+    expect(req.some(r => r.method === 'DELETE')).toBe(false);
+    used = false;
+    await act(async () => h.queries.invalidateQueries({ queryKey: ['library', 'episode-profiles'] }));
+    await waitFor(() => expect(d().getByRole('button', { name: 'Delete' })).toBeEnabled());
+    fireEvent.click(d().getByRole('button', { name: 'Delete' }));
+    await waitFor(() => expect(req.filter(r => r.method === 'DELETE')).toHaveLength(1));
+});
+it('missing model setup and refresh errors remain visible without claiming an empty list', async () => {
+    let failed = false;
+    const req = podcastServer(r => r.url.endsWith('/models') ? json([]) : r.url.endsWith('/podcasts/episodes') && failed ? json({ detail: 'Unavailable' }, 503) : undefined);
+    await renderLibrary('/podcasts');
+    expect(await screen.findByText('Setup required')).toBeVisible();
+    expect(await screen.findByText(episode.name)).toBeVisible();
+    failed = true;
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    expect(await screen.findByText('We could not fetch the latest podcast episodes. Try again shortly.')).toBeVisible();
+    expect(screen.getByText(episode.name)).toBeVisible();
+    expect(req.filter(r => r.method === 'POST')).toHaveLength(0);
+});
+it('podcast palette navigation and creation target the working destination without submitting', async () => {
+    const req = podcastServer(), h = await renderLibrary('/sources');
+    fireEvent.click(await screen.findByRole('button', { name: 'Commands' }));
+    fireEvent.click(d().getByRole('button', { name: 'Podcasts' }));
+    await waitFor(() => expect(h.router.state.location.pathname).toBe('/podcasts'));
+    fireEvent.click(screen.getByRole('button', { name: 'Commands' }));
+    fireEvent.click(d().getByRole('button', { name: 'Generate Podcast' }));
+    expect(await screen.findByLabelText('Episode name')).toHaveValue('');
+    expect(req.filter(r => r.method === 'POST')).toHaveLength(0);
+});
+it('speaker delete dispatch consults the latest cache even before an observer rerender', async () => {
+    const req = podcastServer(r => r.url.endsWith('/episode-profiles') ? json([{ ...ep, speaker_config: 'speaker_profile:other' }]) : undefined), h = await renderLibrary('/podcasts');
+    fireEvent.click(await screen.findByRole('button', { name: 'Profiles' }));
+    const region = screen.getByRole('region', { name: 'Speaker profiles' });
+    await within(region).findByText(sp.name);
+    await waitFor(() => expect(within(region).getByRole('button', { name: 'Delete' })).toBeEnabled());
+    fireEvent.click(within(region).getByRole('button', { name: 'Delete' }));
+    const confirm = d().getByRole('button', { name: 'Delete' });
+    act(() => { h.queries.setQueriesData({ queryKey: ['library', 'episode-profiles'] }, [{ ...ep, speaker_config: sp.id }]); fireEvent.click(confirm); });
+    await act(async () => { });
+    expect(req.filter(r => r.method === 'DELETE')).toHaveLength(0);
+});
+it('a late action receipt cannot relabel a different open confirmation', async () => {
+    let resolve!: (r: Response) => void;
+    const req = podcastServer(r => r.url.endsWith('/duplicate') ? new Promise<Response>(yes => resolve = yes) : undefined);
+    await profiles();
+    fireEvent.click(within(screen.getByRole('region', { name: 'Episode profiles' })).getByRole('button', { name: 'Duplicate' }));
+    fireEvent.click(d().getByRole('button', { name: 'Duplicate' }));
+    await waitFor(() => expect(resolve).toBeDefined());
+    fireEvent.click(d().getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(within(screen.getByRole('region', { name: 'Speaker profiles' })).getByRole('button', { name: 'Duplicate' }));
+    await act(async () => resolve(json({ ...ep, id: 'episode_profile:late-copy' })));
+    expect(d().queryByText('episode_profile:late-copy')).toBeNull();
+    expect(d().getByRole('button', { name: 'Duplicate' })).toBeEnabled();
+    expect(req.filter(r => r.url.endsWith('/duplicate'))).toHaveLength(1);
+});
+it('an uncertain duplicate prevents a same-target profile edit from dispatching', async () => {
+    const req = podcastServer(r => r.url.endsWith('/duplicate') ? json({ detail: 'Unknown' }, 503) : undefined);
+    await profiles();
+    const region = screen.getByRole('region', { name: 'Episode profiles' });
+    fireEvent.click(within(region).getByRole('button', { name: 'Duplicate' }));
+    fireEvent.click(d().getByRole('button', { name: 'Duplicate' }));
+    await d().findByText('Outcome unknown. No automatic retry.');
+    fireEvent.click(d().getByRole('button', { name: 'Close' }));
+    fireEvent.click(within(region).getByRole('button', { name: 'Edit' }));
+    expect(await d().findByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(d().getByText('Outcome unknown. No automatic retry.')).toBeVisible();
+    expect(d().queryByRole('button', { name: 'New draft' })).toBeNull();
+    fireEvent.submit(screen.getByLabelText('Profile name').closest('form')!);
+    await act(async () => { });
+    expect(req.filter(r => r.method === 'PUT')).toHaveLength(0);
+});

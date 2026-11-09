@@ -1,7 +1,11 @@
+import type { PodcastInput, PodcastPreview } from './podcast-state';
 import type { GlobalQueryInput, GlobalRunInput, GlobalSaveInput, GlobalOutput } from './global-state';
 import { ownsSession, parentKey, type NativeParent, type NativeSession, type NativeMessage, type Indicators, type ContextConfig } from '../../data/native-chat';
 import { canDispatch, freezeDispatchContext, type DispatchContext } from '@study/domain';
 export type LibraryOwner = {
+    kind: 'podcast';
+    key: string;
+} | {
     kind: 'global';
 } | {
     kind: 'source';
@@ -96,7 +100,7 @@ export type NativeState = {
     readSequence?: number;
     checked?: NativeMessage[];
 };
-export type LibraryInput = ImportInput | MetadataInput | AssociationInput | ExistingInput | ActionInput | NativeChatInput | NativeSessionInput | ClassicContextInput | GlobalQueryInput | GlobalRunInput | GlobalSaveInput;
+export type LibraryInput = PodcastInput | ImportInput | MetadataInput | AssociationInput | ExistingInput | ActionInput | NativeChatInput | NativeSessionInput | ClassicContextInput | GlobalQueryInput | GlobalRunInput | GlobalSaveInput;
 export type LibraryStatus = 'editing' | 'pending' | 'accepted' | 'succeeded' | 'failed' | 'unknown' | 'not-sent' | 'rejected';
 export type ItemReceipt = Readonly<{
     state: 'accepted' | 'rejected' | 'unknown' | 'not-sent';
@@ -129,6 +133,7 @@ export type LibraryDraft = Readonly<{
     stopRequested: boolean;
     native?: NativeState;
     global?: GlobalOutput;
+    podcastPreview?: PodcastPreview;
 }>;
 function freeze<T>(v: T): T {
     if (v && typeof v === 'object' && !(v instanceof Blob)) {
@@ -139,6 +144,7 @@ function freeze<T>(v: T): T {
 }
 const ownerKey = (v: LibraryOwner): string => {
     switch (v.kind) {
+        case 'podcast': return JSON.stringify([v.kind, v.key]);
         case 'global': return JSON.stringify([v.kind]);
         case 'source': return JSON.stringify([v.kind, v.sourceId]);
         case 'notebook': return JSON.stringify([v.kind, v.notebookId]);
@@ -166,7 +172,7 @@ export function createLibraryStore(onChange: () => void) {
     const current = (r: LibraryDraft, c: DispatchContext | null, g: number) => !r.retired && !superseded.has(r.id) && !retiredEpochs.has(r.context.epoch) && canDispatch(r.context, c) && r.generation === g;
     const definitelyUnsent = (r: LibraryDraft) => ['editing', 'not-sent', 'rejected'].includes(r.status) && !r.receipts.some(x => x.state === 'accepted' || x.state === 'unknown');
     const canFresh = (r: LibraryDraft, c: DispatchContext | null, g: number) => !!c?.ready && !superseded.has(r.id) && !retiredEpochs.has(c.epoch) && !current(r, c, g) && definitelyUnsent(r);
-    const sameInput = (a: LibraryInput, b: LibraryInput) => a.kind === b.kind && (a.kind !== 'global-query' || b.kind === 'global-query' && a.routeKey === b.routeKey) && (a.kind !== 'global-run' || b.kind === 'global-run' && a.runId === b.runId) && (a.kind !== 'global-save' || b.kind === 'global-save' && a.runId === b.runId) && (a.kind !== 'native-session' || b.kind === 'native-session' && a.action === b.action && a.sessionId === b.sessionId) && (a.kind !== 'action' || b.kind === 'action' && a.action === b.action && a.sourceId === b.sourceId && a.notebookId === b.notebookId && a.insightId === b.insightId);
+    const sameInput = (a: LibraryInput, b: LibraryInput) => a.kind === b.kind && (a.kind !== 'podcast-form' || b.kind === 'podcast-form' && a.formKey === b.formKey) && (a.kind !== 'podcast-profile-form' || b.kind === 'podcast-profile-form' && a.formKey === b.formKey) && (a.kind !== 'podcast-operation' || b.kind === 'podcast-operation' && a.key === b.key) && (a.kind !== 'global-query' || b.kind === 'global-query' && a.routeKey === b.routeKey) && (a.kind !== 'global-run' || b.kind === 'global-run' && a.runId === b.runId) && (a.kind !== 'global-save' || b.kind === 'global-save' && a.runId === b.runId) && (a.kind !== 'native-session' || b.kind === 'native-session' && a.action === b.action && a.sessionId === b.sessionId) && (a.kind !== 'action' || b.kind === 'action' && a.action === b.action && a.sourceId === b.sourceId && a.notebookId === b.notebookId && a.insightId === b.insightId);
     const match = (r: LibraryDraft | undefined, t: LibraryToken) => !!r && r.token === t;
     return {
         get: (id: string) => records.get(id), getSnapshot: () => snapshot, subscribe(f: () => void) { listeners.add(f); return () => { listeners.delete(f); }; },
@@ -217,10 +223,17 @@ export function createLibraryStore(onChange: () => void) {
             const kept = baseline?.sessionId === value.id && incoming.length < baseline.messages.length ? r.native?.messages ?? baseline.messages : incoming;
             set({ ...r, native: { ...verifiedState, session: value, messages: kept, indicators: value.context_indicators ?? null } });
         },
+        podcastPreview(id: string, revision: number, value: PodcastPreview, c: DispatchContext | null, g: number) {
+            const r = records.get(id);
+            if (!r || r.input.kind !== 'podcast-form' || r.revision !== revision || !current(r, c, g))
+                return;
+            set({ ...r, podcastPreview: value });
+        },
         globalOutput(id: string, token: LibraryToken, patch: GlobalOutput, c: DispatchContext | null, g: number) {
             const r = records.get(id);
-            if (!r || r.input.kind !== 'global-run' || r.token !== token || r.status !== 'pending' || !current(r,c,g) || r.stopRequested) return;
-            set({...r,global:{...r.global,...patch}});
+            if (!r || r.input.kind !== 'global-run' || r.token !== token || r.status !== 'pending' || !current(r, c, g) || r.stopRequested)
+                return;
+            set({ ...r, global: { ...r.global, ...patch } });
         },
         nativeOutput(id: string, t: LibraryToken, patch: NativeState, c: DispatchContext | null, g: number) {
             const r = records.get(id);

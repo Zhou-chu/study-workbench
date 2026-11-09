@@ -1,3 +1,4 @@
+import { parsePodcastEpisode, parseEpisodeProfile, parseSpeakerProfile, podcastAudioPath, type PodcastEpisode, type EpisodeProfileInput, type SpeakerProfileInput, type GenerationRequest } from './podcast-contracts';
 import { parseSearch, validScope, type GlobalQuery, type AskModels } from './global-search';
 import { session, messages, parentId, type NativeParent, type ContextConfig } from './native-chat';
 import { isRecord } from '@study/contracts';
@@ -144,8 +145,11 @@ export function createLibraryApi(transport: WebTransport) {
     const sourcePath = (s: string) => '/sources/' + encodeURIComponent(id(s));
     const nativePath = (p: NativeParent, sid?: string) => (p.kind === 'notebook' ? '/chat/sessions' : sourcePath(p.sourceId) + '/chat/sessions') + (sid ? '/' + encodeURIComponent(id(sid)) : '');
     const native = (kind: 'notebook' | 'source') => ({
-        async list(p: NativeParent, c: DispatchContext, signal?: AbortSignal) { if (p.kind !== kind)
-            throw new LibraryError('invalid'); return array(await request('GET', nativePath(p) + (p.kind === 'notebook' ? '?notebook_id=' + encodeURIComponent(p.notebookId) : ''), c, signal)).map(v => session(v, p)); },
+        async list(p: NativeParent, c: DispatchContext, signal?: AbortSignal) {
+            if (p.kind !== kind)
+                throw new LibraryError('invalid');
+            return array(await request('GET', nativePath(p) + (p.kind === 'notebook' ? '?notebook_id=' + encodeURIComponent(p.notebookId) : ''), c, signal)).map(v => session(v, p));
+        },
         async get(p: NativeParent, sid: string, c: DispatchContext, signal?: AbortSignal) { return session(await request('GET', nativePath(p, sid), c, signal), p, sid, true); },
         async create(p: NativeParent, input: {
             title?: string;
@@ -155,31 +159,82 @@ export function createLibraryApi(transport: WebTransport) {
             title?: string;
             model_override?: string | null;
         }, c: DispatchContext, key: string) { return session(await request('PUT', nativePath(p, sid), c, undefined, JSON.stringify(input), key), p, sid); },
-        async delete(p: NativeParent, sid: string, c: DispatchContext, key: string) { const r = record(await request('DELETE', nativePath(p, sid), c, undefined, undefined, key)); if (r.success !== true)
-            throw new LibraryError('invalid'); }
+        async delete(p: NativeParent, sid: string, c: DispatchContext, key: string) {
+            const r = record(await request('DELETE', nativePath(p, sid), c, undefined, undefined, key));
+            if (r.success !== true)
+                throw new LibraryError('invalid');
+        }
     });
-    const checkedScope = (p: GlobalQuery) => { if (!p.question.trim() || !validScope(p.notebooks)) throw new RequestNotDispatchedError('configuration'); return [...p.notebooks]; };
+    const checkedScope = (p: GlobalQuery) => { if (!p.question.trim() || !validScope(p.notebooks))
+        throw new RequestNotDispatchedError('configuration'); return [...p.notebooks]; };
+    function profiles<T extends {
+        id: string;
+    }, P>(path: string, parse: (value: unknown) => T) {
+        return {
+            async list(c: DispatchContext, signal?: AbortSignal) { return array(await request('GET', path, c, signal)).map(parse); },
+            async create(payload: P, c: DispatchContext, key: string) { return parse(await request('POST', path, c, undefined, JSON.stringify(payload), key)); },
+            async update(target: string, payload: P, c: DispatchContext, key: string) { const value = parse(await request('PUT', path + '/' + encodeURIComponent(id(target)), c, undefined, JSON.stringify(payload), key)); if (value.id !== target)
+                throw new LibraryError('invalid'); return value; },
+            async duplicate(target: string, c: DispatchContext, key: string) { const value = parse(await request('POST', path + '/' + encodeURIComponent(id(target)) + '/duplicate', c, undefined, undefined, key)); if (value.id === target)
+                throw new LibraryError('invalid'); return value; },
+            async delete(target: string, c: DispatchContext, key: string) { const value = record(await request('DELETE', path + '/' + encodeURIComponent(id(target)), c, undefined, undefined, key)); str(value.message); }
+        };
+    }
     return {
-        search: {
-            async submit(p: GlobalQuery,c: DispatchContext,signal?:AbortSignal) {
-                const notebook_ids=checkedScope(p);
-                return parseSearch(await request('POST','/search',c,signal,JSON.stringify({query:p.question,type:p.searchType,search_sources:p.includeSources,search_notes:p.includeNotes,limit:100,minimum_score:.2,notebook_ids})));
+        episodeProfiles: profiles<ReturnType<typeof parseEpisodeProfile>, EpisodeProfileInput>('/episode-profiles', parseEpisodeProfile),
+        speakerProfiles: profiles<ReturnType<typeof parseSpeakerProfile>, SpeakerProfileInput>('/speaker-profiles', parseSpeakerProfile),
+        podcasts: {
+            async list(c: DispatchContext, signal?: AbortSignal) { return array(await request('GET', '/podcasts/episodes', c, signal)).map(parsePodcastEpisode); },
+            async generate(payload: GenerationRequest, c: DispatchContext, key: string) {
+                if (!payload.episode_profile.trim() || !payload.speaker_profile.trim() || !payload.episode_name.trim() || !payload.content.trim())
+                    throw new RequestNotDispatchedError('configuration');
+                const r = record(await request('POST', '/podcasts/generate', c, undefined, JSON.stringify(payload), key));
+                if (r.status !== 'submitted' || r.episode_profile !== payload.episode_profile || r.episode_name !== payload.episode_name)
+                    throw new LibraryError('invalid');
+                str(r.message);
+                return { job_id: id(r.job_id), status: 'submitted' as const };
             },
-            async ask(p:GlobalQuery,models:AskModels,c:DispatchContext,signal:AbortSignal) {
-                const notebook_ids=checkedScope(p);
-                if(Object.values(models).some(v=>!v.trim()))throw new RequestNotDispatchedError('configuration');
-                return (await response('POST','/search/ask',c,signal,JSON.stringify({question:p.question,strategy_model:models.strategy_model,answer_model:models.answer_model,final_answer_model:models.final_answer_model,notebook_ids}))).res;
+            async retry(target: string, c: DispatchContext, key: string) { const r = record(await request('POST', '/podcasts/episodes/' + encodeURIComponent(id(target)) + '/retry', c, undefined, undefined, key)); str(r.message); return { job_id: id(r.job_id) }; },
+            async delete(target: string, c: DispatchContext, key: string) { const r = record(await request('DELETE', '/podcasts/episodes/' + encodeURIComponent(id(target)), c, undefined, undefined, key)); if (r.episode_id !== target)
+                throw new LibraryError('invalid'); str(r.message); },
+            async audio(episode: PodcastEpisode, c: DispatchContext, signal: AbortSignal) { const path = podcastAudioPath(episode); if (!path)
+                throw new RequestNotDispatchedError('configuration'); const { res, current } = await response('GET', path, c, signal); const blob = await res.blob(); if (!current())
+                throw new TransportResponseError('retired'); return { blob, disposition: res.headers.get('content-disposition') }; }
+        },
+        search: {
+            async submit(p: GlobalQuery, c: DispatchContext, signal?: AbortSignal) {
+                const notebook_ids = checkedScope(p);
+                return parseSearch(await request('POST', '/search', c, signal, JSON.stringify({ query: p.question, type: p.searchType, search_sources: p.includeSources, search_notes: p.includeNotes, limit: 100, minimum_score: .2, notebook_ids })));
+            },
+            async ask(p: GlobalQuery, models: AskModels, c: DispatchContext, signal: AbortSignal) {
+                const notebook_ids = checkedScope(p);
+                if (Object.values(models).some(v => !v.trim()))
+                    throw new RequestNotDispatchedError('configuration');
+                return (await response('POST', '/search/ask', c, signal, JSON.stringify({ question: p.question, strategy_model: models.strategy_model, answer_model: models.answer_model, final_answer_model: models.final_answer_model, notebook_ids }))).res;
             }
         },
         notebookChat: { ...native('notebook'), async execute(sid: string, message: string, context: {
                 sources: unknown[];
                 notes: unknown[];
-            }, model: string | null, c: DispatchContext, key: string, signal?: AbortSignal) { const r = record(await request('POST', '/chat/execute', c, signal, JSON.stringify({ session_id: sid, message, context, ...(model === null ? {} : { model_override: model }) }), key)); if (r.session_id !== sid)
-                throw new LibraryError('invalid'); return messages(r.messages); } },
-        sourceChat: { ...native('source'), async send(p: NativeParent, sid: string, message: string, model: string | null, c: DispatchContext, key: string, signal: AbortSignal) { if (p.kind !== 'source')
-                throw new LibraryError('invalid'); const { res } = await response('POST', nativePath(p, sid) + '/messages', c, signal, JSON.stringify({ message, ...(model === null ? {} : { model_override: model }) }), key); return res; } },
-        async context(p: NativeParent, config: ContextConfig, c: DispatchContext, signal?: AbortSignal) { if (p.kind !== 'notebook')
-            throw new LibraryError('invalid'); const r = record(await request('POST', '/chat/context', c, signal, JSON.stringify({ notebook_id: parentId(p), context_config: { sources: { ...config.sources }, notes: { ...config.notes } } }))); const data = record(r.context); return { context: { sources: array(data.sources), notes: array(data.notes) }, token_count: nonnegative(r.token_count), char_count: nonnegative(r.char_count) }; },
+            }, model: string | null, c: DispatchContext, key: string, signal?: AbortSignal) {
+                const r = record(await request('POST', '/chat/execute', c, signal, JSON.stringify({ session_id: sid, message, context, ...(model === null ? {} : { model_override: model }) }), key));
+                if (r.session_id !== sid)
+                    throw new LibraryError('invalid');
+                return messages(r.messages);
+            } },
+        sourceChat: { ...native('source'), async send(p: NativeParent, sid: string, message: string, model: string | null, c: DispatchContext, key: string, signal: AbortSignal) {
+                if (p.kind !== 'source')
+                    throw new LibraryError('invalid');
+                const { res } = await response('POST', nativePath(p, sid) + '/messages', c, signal, JSON.stringify({ message, ...(model === null ? {} : { model_override: model }) }), key);
+                return res;
+            } },
+        async context(p: NativeParent, config: ContextConfig, c: DispatchContext, signal?: AbortSignal) {
+            if (p.kind !== 'notebook')
+                throw new LibraryError('invalid');
+            const r = record(await request('POST', '/chat/context', c, signal, JSON.stringify({ notebook_id: parentId(p), context_config: { sources: { ...config.sources }, notes: { ...config.notes } } })));
+            const data = record(r.context);
+            return { context: { sources: array(data.sources), notes: array(data.notes) }, token_count: nonnegative(r.token_count), char_count: nonnegative(r.char_count) };
+        },
         sources: {
             async list(params: {
                 notebook_id?: string;
@@ -295,9 +350,10 @@ export function createLibraryApi(transport: WebTransport) {
             return { job_id: commandId, status: str(r.status) };
         },
         metadata: {
+            async languages(c: DispatchContext, signal?: AbortSignal) { return array(await request('GET', '/languages', c, signal)).map(v => { const r = record(v); return { code: str(r.code), name: str(r.name) }; }); },
             async defaults(c: DispatchContext, signal?: AbortSignal) { const r = record(await request('GET', '/models/defaults', c, signal)); return { default_chat_model: nullable(r.default_chat_model), default_embedding_model: nullable(r.default_embedding_model) }; },
             async transformations(c: DispatchContext, signal?: AbortSignal) { return array(await request('GET', '/transformations', c, signal)).map(v => { const r = record(v); return { id: id(r.id), title: str(r.title), description: str(r.description), apply_default: boolean(r.apply_default) }; }); },
-            async models(c: DispatchContext, signal?: AbortSignal) { return array(await request('GET', '/models', c, signal)).map(v => { const r = record(v); return { id: id(r.id), name: str(r.name), type: str(r.type) }; }); }
+            async models(c: DispatchContext, signal?: AbortSignal) { return array(await request('GET', '/models', c, signal)).map(v => { const r = record(v); return { id: id(r.id), name: str(r.name), type: str(r.type), provider: nullable(r.provider) }; }); }
         }
     };
 }

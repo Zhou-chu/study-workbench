@@ -140,19 +140,24 @@ it('retains workspace and the same question node on refresh failure and theme ch
     expect(screen.getByRole('textbox', { name: 'Question' })).toBe(draft);
     expect(draft).toHaveValue('Keep question');
 });
-it('keeps every retained pending route and search deep link instead of falling back to home or issuing provider work', async () => {
-    const { router, requests } = mount('/search?q=synthetic&mode=ask');
+it('keeps implemented podcast/search routes and pending settings routes without provider work', async () => {
+    const podcastReads = ['/podcasts/episodes', '/episode-profiles', '/speaker-profiles'];
+    const { router, requests } = mount('/search?q=synthetic&mode=ask', r => podcastReads.includes(r.path) ? json([]) : undefined);
     expect(await screen.findByRole('heading', { name: 'Ask and Search', level: 1 })).toBeVisible();
     expect(router.state.location.search).toBe('?q=synthetic&mode=ask');
     expect(requests.filter(r=>r.method!=='GET')).toHaveLength(0);
     expect(requests.every(r=>r.path==='/models'||r.path==='/models/defaults'||r.path.startsWith('/notebooks?'))).toBe(true);
-    for (const route of ['/podcasts', '/settings', '/settings/models', '/transformations', '/advanced']) {
+    await act(async () => router.navigate('/podcasts'));
+    expect(await screen.findByRole('heading', { name: 'Podcasts', level: 1 })).toBeVisible();
+    expect(screen.queryByText(/This page is being rebuilt/)).toBeNull();
+    expect(router.state.location.pathname).toBe('/podcasts');
+    for (const route of ['/settings', '/settings/models', '/transformations', '/advanced']) {
         await act(async () => router.navigate(route));
         expect(screen.getByText(/This page is being rebuilt/)).toBeVisible();
         expect(router.state.location.pathname).toBe(route);
     }
     expect(requests.filter(r=>r.method!=='GET')).toHaveLength(0);
-    expect(requests.every(r=>r.path==='/models'||r.path==='/models/defaults'||r.path.startsWith('/notebooks?'))).toBe(true);
+    expect(requests.every(r=>podcastReads.includes(r.path)||r.path==='/models'||r.path==='/models/defaults'||r.path.startsWith('/notebooks?'))).toBe(true);
 });
 it('does not show a late A response after newer B navigation', async () => {
     let finish!: (r: Response) => void;
