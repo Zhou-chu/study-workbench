@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add an explicitly released foreground native SPA/BFF synthetic runner with pinned source/tool custody, same-parent DB/API/worker/BFF cleanup, bounded public upload and mandatory portable round-trip checks, and private partial receipts. Offline fake tests and source builds do not imply runtime, browser, gateway/image, provider or production acceptance.
+
 - Add inert SPA acceptance preparation/inspection/closure and strict source-bound evidence custody, plus individually linked plans for all 446 operations and separate browser/device/provider/runtime gates. The catalog includes distinct actual-device/zoom conditions, measured rendered target/contrast thresholds, and per-operation B9c ambiguous/proven-unsent request budgets. Proven-unsent migration preserves its original not-sent record without fabricated counts or effects. No services, browser acceptance, verified route, deployment or passed acceptance is implied; uncertain cleanup retains the root without signals or deletion.
 
 - Add independent clean-source Web/BFF artifacts, immutable release identities and five-service packaging recipes. Compatibility suspension preserves drafts, File objects and uncertain operations; updates refuse to reload unresolved in-memory work. Source checks do not authorize image/runtime/browser/production deployment. Retained PDF-version assets, cold-start recovery, and non-evaluating dependency checks fail closed across updates.
