@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add a bounded, source-only Notebook SPA cutover dry-run with exact phase-aware evidence, current-data/owner custody, and compatible rollback checks. Preparation and native-partial evidence remain blocked; staged entry preserves the full 615-case and old-Next-retirement holds. No runtime or production transition is performed.
+
 - Add an explicitly released foreground native SPA/BFF synthetic runner with pinned source/tool custody, same-parent DB/API/worker/BFF cleanup, bounded public upload and mandatory portable round-trip checks, and private partial receipts. Offline fake tests and source builds do not imply runtime, browser, gateway/image, provider or production acceptance.
 
 - Add inert SPA acceptance preparation/inspection/closure and strict source-bound evidence custody, plus individually linked plans for all 446 operations and separate browser/device/provider/runtime gates. The catalog includes distinct actual-device/zoom conditions, measured rendered target/contrast thresholds, and per-operation B9c ambiguous/proven-unsent request budgets. Proven-unsent migration preserves its original not-sent record without fabricated counts or effects. No services, browser acceptance, verified route, deployment or passed acceptance is implied; uncertain cleanup retains the root without signals or deletion.
