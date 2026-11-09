@@ -558,3 +558,13 @@ it.each(['http', 'malformed'] as const)('B9c fix1 explicit Refresh recovers a %s
     expect(store.getSnapshot().filter(row => row.kind === 'models')).toHaveLength(1);
     expect(requests.filter(r => r.method !== 'GET')).toHaveLength(0);
 });
+
+it('B9e metadata publication reuses the mounted model owner without detaching real private input refs',async()=>{
+ configurationServer();const h=await modelPage();fireEvent.click(screen.getByRole('button',{name:'Edit First configuration'}));
+ const input=dialog().getByLabelText('API Key') as HTMLInputElement;fireEvent.change(input,{target:{value:'synthetic-kept-private'}});
+ const store=h.workbench.drafts.configuration,original=store.getSnapshot()[0]!,form=original.form;
+ act(()=>{const c=readTurnContext()!,owner=store.acquireModels(c)!;expect(owner.id).toBe(original.id);const rev=owner.loading(c)!;owner.publish(rev,configuredModels,c);});
+ expect(dialog().getByLabelText('API Key')).toBe(input);expect(input.value).toBe('synthetic-kept-private');expect(store.get(original.id)?.form).toBe(form);
+ expect(JSON.stringify(store.getSnapshot())).not.toContain('synthetic-kept-private');
+ fireEvent.click(dialog().getByRole('button',{name:'Cancel'}));expect(input.value).toBe('');
+});

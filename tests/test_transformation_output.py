@@ -21,7 +21,8 @@ def transformation_call():
     chain = AsyncMock()
     with (
         patch(
-            "open_notebook.graphs.transformation.DefaultPrompts",
+            "open_notebook.graphs.transformation.DefaultPrompts.get_instance",
+            new_callable=AsyncMock,
             return_value=SimpleNamespace(transformation_instructions=None),
         ),
         patch(

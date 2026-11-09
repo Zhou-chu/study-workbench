@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Restore the final 18 SPA transformation controls and close the exact 129-operation B9 source set, with memory-only drafts, explicit original model/input confirmation, honest execution identity limits, form-free shared model metadata and retained unknown requests. All 14 locales are covered; browser, runtime and deployment acceptance remain separate gates.
+
 - Restore 16 SPA retrieval, semantic indexing and reader-maintenance controls with separate query/document/retry consent, immutable original receipts, finite explicit owned observation, conservative configuration invalidation and presence-only retained-Markdown eligibility. Preserve lexical/hybrid intent and historical extraction identity across all 14 locales. Synthetic checks do not grant browser, provider, runtime or deployment acceptance; independent review and B9e remain separate gates.
 
 - Restore 50 SPA application settings, provider credential/model and default-assignment controls with private transient credential inputs, presence-aware edits, retained immutable safe intents, complete deletion impact checks and guarded save-to-Advanced navigation. Explicit provider actions and uncertain/partial results never replay automatically. All 14 locales are covered synthetically; B9d/e, independent review, browser/provider/runtime acceptance and deployment remain separate gates.
@@ -95,6 +97,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Development:** `architecture.md`, `testing.md`, `api-reference.md` and `code-standards.md` are rewritten from the code. A new playbook covers adding an AI provider. Dev setup lives on one page. The AGENTS files agree with the docs. Contributor conventions (Conventional Commits, CHANGELOG sections, pre-PR checks that match CI) are documented
 
 ### Fixed
+
+- Load stored global transformation instructions through the established async singleton getter and snapshot them before model awaits, without clearing or saving the singleton during execution. Preserve literal prompt/input rendering and existing output validation; this does not guarantee cross-process freshness or actual model identity.
 
 - Preserve newly entered credential keys, replacement URLs and paths across normal form rerenders while retaining lifecycle cleanup. Explicit model-settings Refresh now retries failed provider-registry reads without provider actions.
 

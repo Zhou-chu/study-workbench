@@ -1,3 +1,4 @@
+import * as transformation from './transformation-contracts';
 import * as retrieval from './retrieval-contracts';
 import * as cfg from './configuration-contracts';
 import {commandId,validRebuildRequest,parseRebuildReceipt,parseRebuildStatus,parseApiVersion,rebuildUnknown,type RebuildRequest} from './advanced-contracts';
@@ -52,6 +53,33 @@ export function createSettingsApi(transport:WebTransport){
  const notebook=(n:string)=>'/notebooks/'+encodeURIComponent(n);
  const connection='/personal/connections/notebooklm';
  return Object.freeze({
+async transformations(c: DispatchContext) { return transformation.parseTransformations(await request('GET','/transformations',c)); },
+async transformation(id: string,c: DispatchContext) {
+ const expected=transformation.transformationId(id),value=transformation.parseTransformation(await request('GET','/transformations/'+encodeURIComponent(expected),c));
+ if(value.id!==expected)throw Error('Mismatched transformation');return value;
+},
+async transformationInstructions(c: DispatchContext) { return transformation.parseTransformationInstructions(await request('GET','/transformations/default-prompt',c)); },
+async saveTransformationInstructions(value: string,c: DispatchContext,key: string) {
+ const result=transformation.parseTransformationInstructions(await request('PUT','/transformations/default-prompt',c,{transformation_instructions:value},{operationKey:key}));
+ if(result!==value)throw Error('Unconfirmed instructions');return result;
+},
+async createTransformation(input: transformation.TransformationFields,c: DispatchContext,key: string) {
+ const body=transformation.transformationBody(input,true);
+ return transformation.matchTransformation(await request('POST','/transformations',c,body,{operationKey:key}),body);
+},
+async updateTransformation(id: string,input: transformation.TransformationPatch,c: DispatchContext,key: string) {
+ const body=transformation.transformationBody(input),expected=transformation.transformationId(id);
+ return transformation.matchTransformation(await request('PUT','/transformations/'+encodeURIComponent(expected),c,body,{operationKey:key}),body,expected);
+},
+async deleteTransformation(id: string,c: DispatchContext,key: string) {
+ const value=record(await request('DELETE','/transformations/'+encodeURIComponent(transformation.transformationId(id)),c,undefined,{operationKey:key}));
+ str(value.message);return Object.freeze({deleted:true as const});
+},
+async executeTransformation(input: transformation.ExecuteTransformation,c: DispatchContext,key: string) {
+ if(!input.input_text.trim())throw new RequestNotDispatchedError('configuration');
+ const body=Object.freeze({transformation_id:transformation.transformationId(input.transformation_id),input_text:input.input_text,model_id:transformation.transformationId(input.model_id)});
+ return transformation.parseTransformationOutput(await request('POST','/transformations/execute',c,body,{operationKey:key}),body);
+},
 async semanticStatus(notebookId:string, selected:readonly string[], c:DispatchContext) {
  const n=retrieval.identity(notebookId),v=retrieval.versions(selected),q=new URLSearchParams();
  v.forEach(id=>q.append('source_version_ids',id));

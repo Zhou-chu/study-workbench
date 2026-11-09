@@ -535,3 +535,22 @@ it.each([false, true])('I3 full two-version refresh keeps the original child aut
  if (drift) expect(attempt.observedReceipt).toBeNull();
  else expect(attempt.observedReceipt?.state).toBe('succeeded');
 });
+
+it('B9e read-only model owner invalidates original F52 captures, while transformation typing does not',async()=>{
+ server();const h=await open();await load(h);
+ fireEvent.click(h.q().getByLabelText('Hybrid (explicit submit only)'));
+ fireEvent.click(h.q().getByLabelText('I acknowledge sending this query for embedding at the disclosed destination; quota may be consumed.'));
+ const original=captures.values.at(-1)!;expect(original.isCurrent()).toBe(true);
+ act(()=>{const s=h.workbench.drafts.transformations,id=s.open(readTurnContext()!)!;s.instructions(id,'Local only');s.playground(id,{input:'Memory'});});
+ expect(original.isCurrent()).toBe(true);
+ let owner!:NonNullable<ReturnType<typeof h.workbench.drafts.configuration.acquireModels>>;
+ act(()=>{owner=h.workbench.drafts.configuration.acquireModels(readTurnContext()!)!;});
+ expect(original.isCurrent()).toBe(false);
+ fireEvent.click(h.q().getByRole('button',{name:'Refresh index status'}));
+ await waitFor(()=>expect(h.q().getByLabelText('I acknowledge sending this query for embedding at the disclosed destination; quota may be consumed.')).toBeEnabled());
+ fireEvent.click(h.q().getByLabelText('I acknowledge sending this query for embedding at the disclosed destination; quota may be consumed.'));
+ const next=captures.values.at(-1)!;expect(next.isCurrent()).toBe(true);
+ act(()=>{const c=readTurnContext()!,rev=owner.loading(c)!;owner.publish(rev,[],c);});
+ expect(next.isCurrent()).toBe(false);expect(original.isCurrent()).toBe(false);
+ expect(h.q().getByLabelText('Hybrid (explicit submit only)')).toBeChecked();
+});

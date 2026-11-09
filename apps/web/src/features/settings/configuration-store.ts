@@ -1,5 +1,5 @@
 import { canDispatch, freezeDispatchContext, type DispatchContext } from '@study/domain';
-import { defaultKeys, contentKeys, type ContentSettings, type ContentKey, type DefaultKey, type Registration, type Sources, type SourceName, type Provider, type Credential, type PrivateField, type Discovery } from '../../data/configuration-contracts';
+import { defaultKeys, contentKeys, type ContentSettings, type ContentKey, type DefaultKey, type Registration, type Sources, type SourceName, type Provider, type Credential, type PrivateField, type Discovery, type Model } from '../../data/configuration-contracts';
 export type CredentialForm = Readonly<{
     identity: string;
     credentialRevision: number;
@@ -20,6 +20,14 @@ export type DiscoverySelection = Readonly<{
     search: string;
     selected: readonly string[];
     custom: boolean;
+}>;
+/** Metadata-only authority. No form selection, private fields or navigation methods. */
+export type ModelsOwner = Readonly<{
+    id: string;
+    context: DispatchContext;
+    read(): Readonly<Pick<ConfigurationDraft, 'id' | 'context' | 'retired' | 'metadataRevision'> & { data: Readonly<Pick<Partial<Sources>, 'models'>>; sources: Readonly<Pick<Partial<Record<SourceName, SourceState>>, 'models'>> }> | undefined;
+    loading(current: DispatchContext | null): number | null;
+    publish(revision: number, value: readonly Model[] | null, current: DispatchContext | null): void;
 }>;
 export type ConfigurationKind = 'application' | 'models';
 export type ConfigurationIntent = Readonly<{
@@ -124,32 +132,63 @@ function freezeIntent(intent: ConfigurationIntent, row: ConfigurationDraft): Con
 export function createConfigurationStore(notify: () => void) {
     const rows = new Map<string, ConfigurationDraft>();
     const selected = new Map<ConfigurationKind, string>();
+    const modelsOwners = new Map<string, string>();
+    const contextKey = (c: DispatchContext) => JSON.stringify([c.epoch, c.target.mode, c.target.apiBase, c.target.protocol]);
     let snapshot: readonly ConfigurationDraft[] = Object.freeze([]);
     const put = (row: ConfigurationDraft) => {
         rows.set(row.id, Object.freeze(row));
         snapshot = Object.freeze([...rows.values()]);
         notify();
     };
-    const create = (kind: ConfigurationKind, context: DispatchContext) => {
+    const create = (kind: ConfigurationKind, context: DispatchContext, select = true) => {
         const id = 'configuration:' + crypto.randomUUID();
-        selected.set(kind, id);
+        if (select) selected.set(kind, id);
+        if (kind === 'models') modelsOwners.set(contextKey(context), id);
         put({ id, kind, context: freezeDispatchContext(context), retired: false, dirty: false, status: 'editing', revision: 0, metadataRevision: 0, data: {}, sources: {}, fields: {}, fieldRevisions: {}, form: null, discovery: null, attempt: null, history: [] });
         return id;
     };
     const usable = (row: ConfigurationDraft | undefined, current: DispatchContext | null): row is ConfigurationDraft => !!row && !row.retired && canDispatch(row.context, current);
     const blocked = (row: ConfigurationDraft) => [...rows.values()].some(r => r.kind === row.kind && r.context.epoch === row.context.epoch && r.attempt && ['pending', 'unknown'].includes(r.attempt.phase));
     const dirty = (fields: ContentSettings, baseline: ContentSettings | undefined) => contentKeys.some(k => Object.hasOwn(fields, k) && fields[k] !== baseline?.[k]);
-    return {
+    const store = {
         get: (id: string) => rows.get(id), getSnapshot: () => snapshot,
-        open(kind: ConfigurationKind, context: DispatchContext) { return selected.get(kind) ?? (context.ready ? create(kind, context) : null); },
+        open(kind: ConfigurationKind, context: DispatchContext) {
+            const previous = selected.get(kind);
+            if (previous) return previous;
+            if (!context.ready) return null;
+            const owned = kind === 'models' ? modelsOwners.get(contextKey(context)) : undefined;
+            if (owned && usable(rows.get(owned), context)) { selected.set(kind, owned); return owned; }
+            return create(kind, context);
+        },
+        acquireModels(context: DispatchContext): ModelsOwner | null {
+            if (!context.ready) return null;
+            const key = contextKey(context), owned = modelsOwners.get(key);
+            const id = owned && usable(rows.get(owned), context) ? owned : create('models', context, false);
+            const original = rows.get(id)!.context;
+            const currentOwner = (current: DispatchContext | null) => modelsOwners.get(key) === id && usable(rows.get(id), current);
+            return Object.freeze({
+                id, context: original,
+                read: () => {
+                    const r = rows.get(id);
+                    return r ? Object.freeze({id:r.id,context:r.context,retired:r.retired,metadataRevision:r.metadataRevision,
+                        data:Object.freeze(r.data.models ? {models:r.data.models} : {}),
+                        sources:Object.freeze(r.sources.models ? {models:r.sources.models} : {})}) : undefined;
+                },
+                loading: (current: DispatchContext | null) => currentOwner(current) ? store.loading(id, 'models') : null,
+                publish: (revision: number, value: readonly Model[] | null, current: DispatchContext | null) => {
+                    if (currentOwner(current)) store.publish(id, 'models', revision, value);
+                }
+            });
+        },
         select(id: string) { const row = rows.get(id); if (!row)
             return false; selected.set(row.kind, id); return true; },
         fresh(id: string, current: DispatchContext) {
             const row = rows.get(id);
             if (!row?.retired || !current.ready)
                 return null;
-            const live = [...rows.values()].find(r => r.kind === row.kind && usable(r, current));
-            if (live) {
+            const modelId = row.kind === 'models' ? modelsOwners.get(contextKey(current)) : undefined;
+            const live = row.kind === 'models' ? modelId ? rows.get(modelId) : undefined : [...rows.values()].find(r => r.kind === row.kind && usable(r, current));
+            if (usable(live, current)) {
                 selected.set(row.kind, live.id);
                 return live.id;
             }
@@ -230,4 +269,5 @@ export function createConfigurationStore(notify: () => void) {
         hasUnsaved: () => [...rows.values()].some(r => r.dirty || ['pending', 'unknown'].includes(r.status)),
         locked: (id: string) => { const r = rows.get(id); return !r || r.retired || blocked(r); }
     };
+    return store;
 }

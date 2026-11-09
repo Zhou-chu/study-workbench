@@ -332,3 +332,17 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .retrieval-panel summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
 .retrieval-panel pre { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
 .retrieval-panel select, .retrieval-panel button { max-width: 100%; white-space: normal; }
+
+/* B9e: content remains original color; only controls use shell grayscale tokens. */
+.transformations-page { display: grid; gap: 1rem; min-width: 0; }
+.transformations-page label, .transformation-editor label { display: grid; gap: .5rem; margin-block: .75rem; }
+.transformations-page input:not([type="checkbox"]), .transformations-page select, .transformations-page textarea,
+.transformation-editor input:not([type="checkbox"]), .transformation-editor select, .transformation-editor textarea { min-height: 44px; width: 100%; max-width: 100%; }
+.transformations-page textarea, .transformation-editor textarea { min-height: 8rem; resize: vertical; }
+.transformation-list { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,22rem),1fr)); gap: 1rem; }
+.transformation-card, .transformation-attempt { border: 1px solid var(--interactive-border); padding: 1rem; min-width: 0; overflow-wrap: anywhere; }
+.transformation-editor { border: 0; padding: 0; min-width: 0; }
+.transformation-editor .transformation-check { display: flex; align-items: center; min-height: 44px; gap: .75rem; }
+.transformations-page .settings-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.transformations-page pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.transformations-page summary { min-height: 44px; padding-block: .5rem; cursor: pointer; }

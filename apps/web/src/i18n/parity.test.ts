@@ -49,3 +49,14 @@ it('provides explicit Studio uncertainty, compatibility and download labels in a
 
 import {retrievalMessages} from './retrieval-messages';
 it('provides B9d safety copy in all fourteen languages without fallback',()=>{expect(Object.keys(retrievalMessages).sort()).toEqual([...codes].sort());for(const values of Object.values(retrievalMessages)){expect(Object.keys(values).sort()).toEqual(Object.keys(retrievalMessages['en-US']).sort());for(const text of Object.values(values))expect(text.trim()).not.toBe('');}});
+
+import {transformationMessages} from './transformation-messages';
+it('provides B9e transformation controls and destination limitations explicitly in all fourteen languages',()=>{
+ expect(Object.keys(transformationMessages).sort()).toEqual([...codes].sort());
+ for(const [code,values] of Object.entries(transformationMessages)){
+  expect(Object.keys(values).sort()).toEqual(Object.keys(transformationMessages['en-US']).sort());
+  for(const value of Object.values(values))expect(value.trim()).not.toBe('');
+  expect(values.executionWarning).toContain('105000');
+  if(code!=='en-US')expect(values.executionWarning).not.toBe(transformationMessages['en-US'].executionWarning);
+ }
+});

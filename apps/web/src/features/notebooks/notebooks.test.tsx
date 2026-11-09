@@ -140,7 +140,7 @@ it('retains workspace and the same question node on refresh failure and theme ch
     expect(screen.getByRole('textbox', { name: 'Question' })).toBe(draft);
     expect(draft).toHaveValue('Keep question');
 });
-it('keeps implemented podcast/search/advanced routes and pending later settings without provider work', async () => {
+it('keeps implemented podcast/search/advanced/settings routes without provider work', async () => {
     const podcastReads = ['/podcasts/episodes', '/episode-profiles', '/speaker-profiles'];
     const { router, requests } = mount('/search?q=synthetic&mode=ask', r => podcastReads.includes(r.path) ? json([]) : undefined);
     expect(await screen.findByRole('heading', { name: 'Ask and Search', level: 1 })).toBeVisible();
@@ -153,12 +153,8 @@ it('keeps implemented podcast/search/advanced routes and pending later settings 
     expect(router.state.location.pathname).toBe('/podcasts');
     for (const route of ['/settings', '/settings/models', '/transformations']) {
         await act(async () => router.navigate(route));
-        if (route === '/transformations') {
-            expect(screen.getByText(/This page is being rebuilt/)).toBeVisible();
-        } else {
-            expect(screen.getByRole('heading', {name: route === '/settings' ? 'Settings' : 'Models', level: 1})).toBeVisible();
-            expect(screen.queryByText(/This page is being rebuilt/)).toBeNull();
-        }
+        expect(screen.getByRole('heading', {name: route === '/settings' ? 'Settings' : route === '/settings/models' ? 'Models' : 'Transformations', level: 1})).toBeVisible();
+        expect(screen.queryByText(/This page is being rebuilt/)).toBeNull();
         expect(router.state.location.pathname).toBe(route);
     }
     await act(async()=>router.navigate('/advanced'));
