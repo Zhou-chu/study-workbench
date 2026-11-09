@@ -709,3 +709,20 @@ def test_unavailable_or_modified_approved_source_cannot_run_node(tmp_path, monke
     )
     with pytest.raises(ValueError, match="Reviewed verifier changed"):
         m.verify_source(tmp_path)
+
+
+def test_mobile_control_cases_have_executable_compact_conditions():
+    m = helper()
+    cases = m.load_catalog(ROOT)["cases"]
+    for operation in (
+        "shell.open_mobile_navigation",
+        "shell.close_mobile_navigation",
+        "workspace.mobile_tabs",
+    ):
+        primary = next(
+            c
+            for c in cases
+            if c["operation_ids"] == [operation] and c["layer"] == "browser"
+        )
+        assert primary["conditions"]["viewport"] == [390, 900]
+        assert "--compact-en-US-light--browser" in primary["id"]

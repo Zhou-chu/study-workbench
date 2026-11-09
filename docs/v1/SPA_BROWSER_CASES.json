@@ -262,7 +262,7 @@
       "initial_status": "not_run"
     },
     {
-      "id": "C2-B8-shell.open_mobile_navigation--desktop-en-US-light--browser",
+      "id": "C2-B8-shell.open_mobile_navigation--compact-en-US-light--browser",
       "operation_ids": [
         "shell.open_mobile_navigation"
       ],
@@ -283,8 +283,8 @@
       ],
       "conditions": {
         "viewport": [
-          1280,
-          800
+          390,
+          900
         ],
         "locale": "en-US",
         "theme": "light",
@@ -299,7 +299,7 @@
       "initial_status": "not_run"
     },
     {
-      "id": "C2-B8-shell.close_mobile_navigation--desktop-en-US-light--browser",
+      "id": "C2-B8-shell.close_mobile_navigation--compact-en-US-light--browser",
       "operation_ids": [
         "shell.close_mobile_navigation"
       ],
@@ -320,8 +320,8 @@
       ],
       "conditions": {
         "viewport": [
-          1280,
-          800
+          390,
+          900
         ],
         "locale": "en-US",
         "theme": "light",
@@ -2223,7 +2223,7 @@
       "initial_status": "not_run"
     },
     {
-      "id": "C2-B1-workspace.mobile_tabs--desktop-en-US-light--browser",
+      "id": "C2-B1-workspace.mobile_tabs--compact-en-US-light--browser",
       "operation_ids": [
         "workspace.mobile_tabs"
       ],
@@ -2244,8 +2244,8 @@
       ],
       "conditions": {
         "viewport": [
-          1280,
-          800
+          390,
+          900
         ],
         "locale": "en-US",
         "theme": "light",
