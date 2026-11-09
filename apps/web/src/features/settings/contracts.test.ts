@@ -1,5 +1,5 @@
 import {beforeEach,expect,it} from 'vitest';
-import {parseSetupMetadata,parseCreateReceipt,createSettingsApi,parseLoginFlow,SettingsRequestError} from '../../data/settings-api';
+import {canObserveCreate,canStartCreateSuccessor,parseSetupMetadata,parseCreateReceipt,createSettingsApi,parseLoginFlow,SettingsRequestError} from '../../data/settings-api';
 import {parseProviderStatus} from '../../data/provider-status';
 import {sourceContext} from '../../test/source-fixtures';
 import {json} from '../../test/notebook-fixtures';
@@ -39,4 +39,19 @@ it.each([400,404,409,422,429])('retains exact HTTP %s without raw server body in
 it('has an explicit complete B9a translation set for every current locale',()=>{
  expect(Object.keys(settingsMessages).sort()).toEqual(languages.map(l=>l.code).sort());const keys=Object.keys(settingsMessages['en-US']).sort();
  for(const [locale,messages] of Object.entries(settingsMessages)){expect(Object.keys(messages).sort()).toEqual(keys);expect(Object.values(messages).every(v=>v.trim().length>0)).toBe(true);if(locale!=='en-US')expect(messages.manual).not.toBe(settingsMessages['en-US'].manual)}
+});
+
+it('keeps unknown submission non-actionable and permits only the producer-supported original observation and terminal successor combinations',async()=>{
+ const parsed=await parseCreateReceipt(receipt,input);
+ for(const state of ['queued','running']){
+  expect(canObserveCreate({...parsed,state,submission_state:'not_submitted'})).toBe(true);
+  expect(canObserveCreate({...parsed,state,submission_state:'unknown'})).toBe(false);
+  expect(canStartCreateSuccessor({...parsed,state,submission_state:'not_submitted'})).toBe(false);
+ }
+ for(const state of ['failed','cancelled_local','needs_reauth']){
+  expect(canStartCreateSuccessor({...parsed,state,submission_state:'not_submitted'})).toBe(true);
+  for(const submission_state of ['confirmed','unknown',null])expect(canStartCreateSuccessor({...parsed,state,submission_state})).toBe(false);
+ }
+ expect(canObserveCreate({...parsed,state:'waiting_remote',submission_state:'not_submitted'})).toBe(false);
+ expect(canStartCreateSuccessor({...parsed,state:'submission_unknown',submission_state:'unknown'})).toBe(false);
 });

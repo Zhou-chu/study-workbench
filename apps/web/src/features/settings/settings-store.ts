@@ -1,3 +1,4 @@
+import {canStartCreateSuccessor} from '../../data/settings-api';
 import type {LoginFlow,ConnectionCapability,NotebookPage,CreateReceipt,DeleteReceipt} from '../../data/settings-api';
 import {canDispatch,freezeDispatchContext,type DispatchContext} from '@study/domain';
 import type {NotebookSummary} from '../../data/notebook-api';
@@ -7,14 +8,19 @@ export type SettingsMetadata=Readonly<{flow?:LoginFlow;capabilities?:readonly Co
 export type SettingsDraft=Readonly<{id:string;notebookId:string;context:DispatchContext;generation:number;fields:SettingsFields;baseline:NotebookSummary|null;dirty:boolean;retired:boolean;status:'editing'|'pending'|'unknown'|'succeeded';command:SettingsCommand|null;metadata:SettingsMetadata}>;
 /** Only enumerated nonsecret fields. Private values cannot be stored here. */
 export function createSettingsStore(notify:()=>void){
- const rows=new Map<string,SettingsDraft>();let snapshot:readonly SettingsDraft[]=Object.freeze([]);
+ const selected=new Map<string,string>();const rows=new Map<string,SettingsDraft>();let snapshot:readonly SettingsDraft[]=Object.freeze([]);
  const emit=()=>{snapshot=Object.freeze([...rows.values()]);notify()};
  const put=(r:SettingsDraft)=>{rows.set(r.id,Object.freeze(r));emit()};
- const resourceStatus=(status:SettingsDraft['status'],metadata:SettingsMetadata):SettingsDraft['status']=>status==='pending'||status==='unknown'?status:metadata.create&&metadata.create.state!=='succeeded'?(['queued','running','waiting_remote'].includes(metadata.create.state)?'pending':'unknown'):status;
+ const resourceStatus=(status:SettingsDraft['status'],metadata:SettingsMetadata):SettingsDraft['status']=>status==='pending'||status==='unknown'?status:metadata.create&&!canStartCreateSuccessor(metadata.create)?(['queued','running','waiting_remote'].includes(metadata.create.state)?'pending':'unknown'):status;
  const dirty=(f:SettingsFields,b:NotebookSummary|null)=>b?f.name!==b.name||f.description!==b.description||!!f.remoteTitle||!!f.remoteId:!!f.name||!!f.description||!!f.remoteTitle||!!f.remoteId;
+ const create=(notebookId:string,context:DispatchContext,generation:number)=>{const id='settings:'+crypto.randomUUID();selected.set(notebookId,id);put({id,notebookId,context:freezeDispatchContext(context),generation,fields:Object.freeze({name:'',description:'',remoteTitle:'',remoteId:'',deleteExclusive:false}),baseline:null,dirty:false,retired:false,status:'editing',command:null,metadata:Object.freeze({})});return id};
  return {get:(id:string)=>rows.get(id),getSnapshot:()=>snapshot,
- open(notebookId:string,context:DispatchContext,generation:number){const old=[...rows.values()].find(r=>r.notebookId===notebookId&&canDispatch(r.context,context)&&!r.retired);if(old)return old.id;
- const id='settings:'+crypto.randomUUID();put({id,notebookId,context:freezeDispatchContext(context),generation,fields:Object.freeze({name:'',description:'',remoteTitle:'',remoteId:'',deleteExclusive:false}),baseline:null,dirty:false,retired:false,status:'editing',command:null,metadata:Object.freeze({})});return id},
+ open(notebookId:string,context:DispatchContext,generation:number){const old=selected.get(notebookId);if(old&&rows.has(old))return old;return create(notebookId,context,generation)},
+ select(id:string){const row=rows.get(id);if(!row)return false;selected.set(row.notebookId,id);emit();return true},
+ fresh(id:string,context:DispatchContext,generation:number){const row=rows.get(id);if(!row||!context.ready||!row.retired&&(!row.metadata.create||!canStartCreateSuccessor(row.metadata.create)||row.command&&['pending','unknown'].includes(row.command.status)))return null;
+ const live=[...rows.values()].find(r=>r.id!==id&&r.notebookId===row.notebookId&&!r.retired&&canDispatch(r.context,context));
+ if(live){selected.set(row.notebookId,live.id);emit();return live.id}
+ rows.set(id,Object.freeze({...row,retired:true}));return create(row.notebookId,context,generation)},
  metadata(id:string,patch:Partial<SettingsMetadata>){const r=rows.get(id);if(!r||r.retired)return;const metadata=Object.freeze({...r.metadata,...patch});put({...r,metadata,status:resourceStatus(r.command?.status==='pending'?'pending':r.command?.status==='unknown'?'unknown':'editing',metadata)})},
  seed(id:string,baseline:NotebookSummary){const r=rows.get(id);if(!r||r.retired||r.baseline||r.notebookId!==baseline.id)return;const fields=Object.freeze({...r.fields,name:r.dirty?r.fields.name:baseline.name,description:r.dirty?r.fields.description:baseline.description});put({...r,baseline:Object.freeze({...baseline}),fields,dirty:dirty(fields,baseline)})},
  edit(id:string,patch:Partial<SettingsFields>){const r=rows.get(id);if(!r||r.retired)return;const fields=Object.freeze({...r.fields,...patch});put({...r,fields,dirty:dirty(fields,r.baseline)})},

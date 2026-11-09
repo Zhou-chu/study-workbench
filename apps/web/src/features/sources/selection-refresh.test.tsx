@@ -1,6 +1,7 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, expect, it } from 'vitest';
-import { readTurnContext, sessionCoordinator } from '@study/web-transport';
+import { RequestNotDispatchedError, type RequestSpec, readTurnContext, sessionCoordinator } from '@study/web-transport';
+import {AppDataBoundary} from '../../app/providers';
 import { createDraftRegistry } from '../../app/drafts';
 import { sourceContext, sourceWorkspace, selection } from '../../test/source-fixtures';
 import { renderSourceFeature, sourceServer } from '../../test/source-harness';
@@ -79,4 +80,42 @@ it('does not revive an older succeeded payload when accepted selection survives 
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select v-old' }));
     await waitFor(() => expect(requests.filter(r => r.method === 'PATCH')).toHaveLength(1));
     expect(await requests.find(r => r.method === 'PATCH')!.clone().json()).toEqual({ ...newer, source_version_ids: ['v-new', 'v-old'] });
+});
+
+it.each([false,true])('keeps the original provider fence on a mounted definitely-unsent selection retry (replaced: %s)',async replaced=>{
+ sourceServer(r=>json(r.url.endsWith('/connections/notebooklm')?{state:'connected'}:{}));
+ const writes:RequestSpec[]=[];
+ const transport={send:async(request:RequestSpec)=>{writes.push(request);if(writes.length===1)throw new RequestNotDispatchedError('duplicate');return json({})}};
+ const h=await renderSourceFeature(<AppDataBoundary transport={transport} workspace={undefined}><SourcesPanel notebookId="n" workspace={sourceWorkspace()} onRead={()=>{}}/></AppDataBoundary>);
+ await act(async()=>{await h.workbench.controller.verifyProviderConnection()});
+ const store=h.workbench.drafts.sources,c=readTurnContext()!,g=sessionCoordinator.current();
+ let id='';
+ act(()=>{id=store.reserveSelection('n',selection,c,g,{providerRevision:h.workbench.controller.getSnapshot().providerEvidenceRevision,remoteNotebookId:'B'})!;store.releaseSelection(id)});
+ fireEvent.click(screen.getByRole('button',{name:'Retry latest selection save'}));
+ await waitFor(()=>expect(store.get(id)?.operation.state).toBe('idle'));
+ expect(writes).toHaveLength(1);
+ if(replaced)await act(async()=>{await h.workbench.controller.verifyProviderConnection()});
+ const retry=screen.getByRole('button',{name:'Retry latest selection save'});
+ if(replaced)expect(retry).toBeDisabled();else expect(retry).toBeEnabled();
+ fireEvent.click(retry);
+ await waitFor(()=>expect(writes).toHaveLength(replaced?1:2));
+ expect(store.get(id)?.operation.state).toBe(replaced?'idle':'succeeded');
+});
+it('blocks transaction admission until an exact post-settlement workspace is accepted, rejecting older and wrong-link projections',()=>{
+ const store=createDraftRegistry().sources,c=readTurnContext()!,g=sessionCoordinator.current();
+ const id=store.reserveSelection('n',selection,c,g,{providerRevision:7,remoteNotebookId:'B'})!;
+ store.releaseSelection(id);const active=store.begin(id,c,g,7)!;
+ const during=store.beginWorkspaceRead('n',c,g);
+ store.settle(id,active.operation.token!,{kind:'succeeded'},c,g);
+ expect(store.selectionUnconfirmed('n',c.epoch)).toBe(true);
+ const target={...sourceWorkspace(),link:{remote_notebook_id:'B'}};
+ expect(store.acceptWorkspaceRead(during,target,c,g)).toBe(false);
+ const wrong=store.beginWorkspaceRead('n',c,g);
+ expect(store.acceptWorkspaceRead(wrong,{...target,link:{remote_notebook_id:'A'}},c,g)).toBe(false);
+ expect(store.selectionUnconfirmed('n',c.epoch)).toBe(true);
+ const exact=store.beginWorkspaceRead('n',c,g);
+ expect(store.acceptWorkspaceRead(exact,target,c,g)).toBe(true);
+ expect(store.selectionUnconfirmed('n',c.epoch)).toBe(false);
+ const later=store.beginWorkspaceRead('n',c,g);
+ expect(store.acceptWorkspaceRead(later,{...target,selection:{...selection,source_version_ids:['v-new']}},c,g)).toBe(true);
 });

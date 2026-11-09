@@ -29,6 +29,9 @@ export type SourceOperation = Readonly<{
     retired: boolean;
     hidden: boolean;
     reserved?: boolean;
+    transaction?: Readonly<{providerRevision:number;remoteNotebookId:string}>;
+    workspaceConfirmed?: boolean;
+    selectionRevision?: number;
     receipt?: UploadReceipt;
     versionIds?: readonly string[];
     jobId?: string;
@@ -69,6 +72,8 @@ function freezePayload(p: SourcePayload): SourcePayload { if (p.kind === 'select
     return Object.freeze({ kind: p.kind, selection: Object.freeze({ ...p.selection, source_version_ids: Object.freeze([...p.selection.source_version_ids]) as unknown as string[], remote_source_ids: Object.freeze([...p.selection.remote_source_ids]) as unknown as string[], ...(p.selection.reading ? { reading: Object.freeze({ ...p.selection.reading }) } : {}) }) }); if (p.kind === 'remote')
     return Object.freeze({ kind: p.kind, action: Object.freeze({ ...p.action, versionIds: Object.freeze([...p.action.versionIds]), remoteIds: Object.freeze([...p.action.remoteIds]) }) }); if (p.kind === 'web')
     return Object.freeze({ kind: p.kind, result: Object.freeze({ ...p.result }) }); return Object.freeze({ ...p }); }
+export const unconfirmedSelection=(r:SourceOperation,notebookId:string,epoch:number|undefined)=>r.notebookId===notebookId&&!r.retired&&r.operation.context.epoch===epoch&&r.payload.kind==='selection'&&(['idle','submitting','unknown'].includes(r.operation.state)||!!r.transaction&&!r.workspaceConfirmed);
+const matchesLink=(r:SourceOperation,w:WorkspaceViewV1)=>!r.transaction||r.workspaceConfirmed===true||!!w.link&&!w.link.projection_status&&'remote_notebook_id' in w.link&&w.link.remote_notebook_id===r.transaction.remoteNotebookId&&r.payload.kind==='selection'&&!!selectionFromView(w.selection)&&sameSelection(r.payload.selection,selectionFromView(w.selection)!);
 /** App-lifetime in-memory ownership. No disk cache, automatic queue, or server replay claim. */
 export function createSourceOperations(onChange: () => void) {
     const retiredEpochs = new Set<number>();
@@ -82,13 +87,15 @@ export function createSourceOperations(onChange: () => void) {
     let snapshot: readonly SourceOperation[] = Object.freeze([]);
     const listeners = new Set<() => void>();
     const emit = () => { snapshot = Object.freeze([...rows.values()]); listeners.forEach(fn => fn()); onChange(); };
-    const add = (notebookId: string, payload: SourcePayload, context: DispatchContext, generation: number, file: File | null = null, signature: string | null = null) => { const id = crypto.randomUUID(); if (payload.kind === 'selection') advance(notebookId); rows.set(id, Object.freeze({ id, notebookId, file, fileSignature: signature, payload: freezePayload(payload), operation: createOperation(context, id, { serverIdempotency: false, sessionGeneration: generation }), retired: retiredEpochs.has(context.epoch), hidden: false })); emit(); return id; };
+    const add = (notebookId: string, payload: SourcePayload, context: DispatchContext, generation: number, file: File | null = null, signature: string | null = null) => { const id = crypto.randomUUID(); if (payload.kind === 'selection') advance(notebookId); rows.set(id, Object.freeze({ id, notebookId, file, fileSignature: signature, payload: freezePayload(payload), operation: createOperation(context, id, { serverIdempotency: false, sessionGeneration: generation }), retired: retiredEpochs.has(context.epoch), hidden: false, ...(payload.kind==='remote'?{selectionRevision:revisions.get(notebookId)??0}:{}) })); emit(); return id; };
     return { get: (id: string) => rows.get(id), getSnapshot: () => snapshot, subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
         getSelectionRead: (notebookId: string) => selectionReads.get(notebookId),
         selectionRevision: (notebookId: string) => revisions.get(notebookId) ?? 0,
-        reserveSelection(notebookId: string, selection: WorkbenchSelection, context: DispatchContext, generation: number) {
-            if (!context.ready || !selectionFromView(selection) || [...rows.values()].some(r=>r.notebookId===notebookId && r.payload.kind==='selection' && ['idle','submitting','unknown'].includes(r.operation.state))) return null;
-            const id=add(notebookId,{kind:'selection',selection},context,generation); const row=rows.get(id)!; rows.set(id,Object.freeze({...row,reserved:true})); emit(); return id;
+        hasSelectionTransaction:(notebookId:string,epoch:number|undefined)=>epoch!==undefined&&!!latestSelection(notebookId,epoch)?.transaction,
+        selectionUnconfirmed: (notebookId:string,epoch:number|undefined)=>[...rows.values()].some(r=>unconfirmedSelection(r,notebookId,epoch)),
+        reserveSelection(notebookId: string, selection: WorkbenchSelection, context: DispatchContext, generation: number, transaction?:Readonly<{providerRevision:number;remoteNotebookId:string}>) {
+            if (!context.ready || !selectionFromView(selection) || [...rows.values()].some(r=>unconfirmedSelection(r,notebookId,context.epoch))) return null;
+            const id=add(notebookId,{kind:'selection',selection},context,generation); const row=rows.get(id)!; rows.set(id,Object.freeze({...row,reserved:true,...(transaction?{transaction:Object.freeze({...transaction})}:{})})); emit(); return id;
         },
         releaseUnsentReservation(id: string, evidence: unknown) { const row=rows.get(id); if (!asRequestNotDispatchedError(evidence) || !row?.reserved || row.operation.state!=='idle' || row.operation.token) return false; rows.delete(id); advance(row.notebookId); emit(); return true; },
         releaseSelection(id: string) { const row=rows.get(id); if (!row || row.retired || !row.reserved) return false; rows.set(id,Object.freeze({...row,reserved:false})); emit(); return true; },
@@ -99,12 +106,14 @@ export function createSourceOperations(onChange: () => void) {
         },
         acceptWorkspaceRead(token: SourceWorkspaceReadToken, workspace: WorkspaceViewV1, current: DispatchContext | null, generation: number) {
             const operation = latestSelection(token.notebookId, token.context.epoch);
-            if (workspaceReads.get(token.notebookId) !== token || !canDispatch(token.context, current) || token.generation !== generation || workspace.notebook.id !== token.notebookId || workspace.notebook.projection_status || token.selectionOperation !== operation || operation && operation.operation.state !== 'succeeded')
+            if (workspaceReads.get(token.notebookId) !== token || !canDispatch(token.context, current) || token.generation !== generation || workspace.notebook.id !== token.notebookId || workspace.notebook.projection_status || token.selectionOperation !== operation || operation && (operation.operation.state !== 'succeeded' || !matchesLink(operation,workspace)))
                 return false;
             const parsed = selectionFromView(workspace.selection);
             const payload = parsed ? freezePayload({ kind: 'selection', selection: parsed }) : null;
             if (JSON.stringify(selectionReads.get(token.notebookId)?.selection) !== JSON.stringify(parsed)) advance(token.notebookId);
-            selectionReads.set(token.notebookId, Object.freeze({ token, selection: payload?.kind === 'selection' ? payload.selection : null }));
+            let acceptedToken=token;
+            if(operation?.transaction&&!operation.workspaceConfirmed){const published=Object.freeze({...operation,workspaceConfirmed:true});rows.set(operation.id,published);acceptedToken=Object.freeze({...token,selectionOperation:published});}
+            selectionReads.set(token.notebookId, Object.freeze({ token:acceptedToken, selection: payload?.kind === 'selection' ? payload.selection : null }));
             emit();
             return true;
         },
@@ -113,8 +122,8 @@ export function createSourceOperations(onChange: () => void) {
         capture(notebookId: string, payload: Exclude<SourcePayload, {
             kind: 'upload';
         }>, context: DispatchContext, generation: number) { if (payload.kind === 'selection' && !selectionFromView(payload.selection))
-            throw new Error('Unsupported selection'); const existing = [...rows.values()].find(r => r.notebookId === notebookId && (payload.kind === 'selection' ? r.payload.kind === 'selection' && ['idle', 'submitting', 'unknown'].includes(r.operation.state) : payload.kind === 'web' ? r.payload.kind === 'web' && r.payload.result.url === payload.result.url : payload.kind === 'remote' ? r.payload.kind === 'remote' && r.payload.action.kind === payload.action.kind && r.payload.action.remoteNotebookId === payload.action.remoteNotebookId && JSON.stringify([r.payload.action.versionIds, r.payload.action.remoteIds]) === JSON.stringify([payload.action.versionIds, payload.action.remoteIds]) : r.payload.kind === 'cancel' && r.payload.jobId === payload.jobId)); return existing?.id ?? add(notebookId, payload, context, generation); },
-        begin(id: string, current: DispatchContext | null, generation: number) { const r = rows.get(id); if (!r || r.retired || r.reserved || !current || r.payload.kind === 'upload' && !r.file || r.operation.state !== 'idle')
+            throw new Error('Unsupported selection'); const existing = [...rows.values()].find(r => r.notebookId === notebookId && (payload.kind === 'selection' ? unconfirmedSelection(r,notebookId,context.epoch) : payload.kind === 'web' ? r.payload.kind === 'web' && r.payload.result.url === payload.result.url : payload.kind === 'remote' ? r.payload.kind === 'remote' && r.payload.action.kind === payload.action.kind && r.payload.action.remoteNotebookId === payload.action.remoteNotebookId && JSON.stringify([r.payload.action.versionIds, r.payload.action.remoteIds]) === JSON.stringify([payload.action.versionIds, payload.action.remoteIds]) : r.payload.kind === 'cancel' && r.payload.jobId === payload.jobId)); return existing?.id ?? add(notebookId, payload, context, generation); },
+        begin(id: string, current: DispatchContext | null, generation: number, providerRevision?:number) { const r = rows.get(id); if (!r || r.retired || r.reserved || r.transaction && r.transaction.providerRevision!==providerRevision || !current || r.payload.kind === 'upload' && !r.file || r.operation.state !== 'idle')
             return null; const operation = reduceOperation(r.operation, { type: 'begin', context: current, sessionGeneration: generation }); if (operation === r.operation)
             return null; const next = Object.freeze({ ...r, operation }); rows.set(id, next); emit(); return next; },
         settle(id: string, token: OperationToken, outcome: SourceOutcome, current: DispatchContext | null, generation: number) { const r = rows.get(id); if (!r || r.operation.token !== token || r.operation.state !== 'submitting')
@@ -134,7 +143,7 @@ export function createSourceOperations(onChange: () => void) {
         beginCheck(id: string, current: DispatchContext | null, generation: number): SourceCheckToken | null { const r = rows.get(id); if (!r || r.retired || !current || !canDispatch(r.operation.context, current) || r.operation.state !== 'unknown' || !r.operation.token)
             return null; return Object.freeze({ id, operationToken: r.operation.token, context: freezeDispatchContext(current), generation }); },
         check(check: SourceCheckToken, workspace: WorkspaceViewV1, current: DispatchContext | null, generation: number) { const { id } = check; const r = rows.get(id); if (!r || r.retired || !canDispatch(r.operation.context, current) || !canDispatch(check.context, current) || check.generation !== generation || r.operation.state !== 'unknown' || r.operation.token !== check.operationToken)
-            return false; const receipt = r.payload.kind === 'upload' ? reconcileUpload(r, workspace) : null; const selected = r.payload.kind === 'selection' ? selectionFromView(workspace.selection) : null; if (!receipt && !(r.payload.kind === 'selection' && workspace.notebook.id === r.notebookId && selected && sameSelection(r.payload.selection, selected)))
+            return false; const receipt = r.payload.kind === 'upload' ? reconcileUpload(r, workspace) : null; const selected = r.payload.kind === 'selection' ? selectionFromView(workspace.selection) : null; if (!receipt && !(r.payload.kind === 'selection' && workspace.notebook.id === r.notebookId && selected && sameSelection(r.payload.selection, selected) && matchesLink(r,workspace)))
             return false; rows.set(id, Object.freeze({ ...r, ...(receipt ? { receipt, versionIds: Object.freeze([receipt.source_version_id]), jobId: receipt.job_id } : {}), operation: reduceOperation(r.operation, { type: 'succeeded', token: r.operation.token }) })); emit(); return true; },
         retire(epoch: number) { retiredEpochs.add(epoch); for (const r of rows.values()) if(r.operation.context.epoch===epoch) advance(r.notebookId); for (const [id, r] of rows)
             if (r.operation.context.epoch === epoch)

@@ -1,4 +1,4 @@
-import {selection} from '../../test/source-fixtures';
+import {selection,sourceWorkspace} from '../../test/source-fixtures';
 import {act,fireEvent,screen,within,waitFor} from '@testing-library/react';
 import {expect,it} from 'vitest';
 import {libraryServer,renderLibrary} from '../../test/library-harness';
@@ -169,9 +169,9 @@ it('reverification does not renew the old remote listing or its selected link',a
 it('stale remote-create confirmation cannot submit an edited title',async()=>{
  const requests=remoteServer();const h=await remoteOpen();fireEvent.change(h.dialog().getByLabelText('New Google notebook title'),{target:{value:'Original'}});fireEvent.click(h.dialog().getByRole('button',{name:'Create Google notebook'}));fireEvent.change(h.dialog().getByLabelText('New Google notebook title'),{target:{value:'Changed'}});expect(h.dialog().getByRole('button',{name:'Confirm'})).toBeDisabled();fireEvent.click(h.dialog().getByRole('button',{name:'Cancel'}));expect(requests.some(r=>r.method==='POST')).toBe(false);
 });
-it('observes only an acknowledged original create on an explicit click and never automatically links it',async()=>{
+it.each(['waiting_remote','queued','running'])('observes only an acknowledged original create %s on an explicit click and never automatically links it',async state=>{
  let receipt:Record<string,unknown>|undefined;
- const requests=remoteServer(async r=>{if(r.method==='POST'&&r.url.endsWith('/notebooklm/notebooks')){const body=await r.clone().json();const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify({operation:'create_notebook',request:{title:body.title}})));const request_hash=[...new Uint8Array(bytes)].map(v=>v.toString(16).padStart(2,'0')).join('');receipt={job_id:'owned',notebook_id:'n',operation:'create_notebook',provider:'notebooklm',idempotency_key:body.idempotency_key,request_hash,request_snapshot:{title:body.title},state:'waiting_remote',submission_state:'confirmed'};return json(receipt)}if(r.url.endsWith('/personal/jobs/owned'))return json({...receipt,state:'succeeded',result:{remote_notebook_id:'created-remote'}});return undefined});
+ const requests=remoteServer(async r=>{if(r.method==='POST'&&r.url.endsWith('/notebooklm/notebooks')){const body=await r.clone().json();const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify({operation:'create_notebook',request:{title:body.title}})));const request_hash=[...new Uint8Array(bytes)].map(v=>v.toString(16).padStart(2,'0')).join('');receipt={job_id:'owned',notebook_id:'n',operation:'create_notebook',provider:'notebooklm',idempotency_key:body.idempotency_key,request_hash,request_snapshot:{title:body.title},state,submission_state:state==='waiting_remote'?'confirmed':'not_submitted'};return json(receipt)}if(r.url.endsWith('/personal/jobs/owned'))return json({...receipt,state:'succeeded',submission_state:'confirmed',result:{remote_notebook_id:'created-remote'}});return undefined});
  const h=await remoteOpen();fireEvent.change(h.dialog().getByLabelText('New Google notebook title'),{target:{value:'Created'}});fireEvent.click(h.dialog().getByRole('button',{name:'Create Google notebook'}));fireEvent.click(h.dialog().getByRole('button',{name:'Confirm'}));
  const observe=await h.dialog().findByRole('button',{name:'Tasks · Refresh'});expect(requests.some(r=>r.url.includes('/personal/jobs/'))).toBe(false);fireEvent.click(observe);await h.dialog().findByText('created-remote');expect(requests.filter(r=>r.url.includes('/personal/jobs/'))).toHaveLength(1);expect(requests.some(r=>r.url.endsWith('/notebooklm-link')||r.method==='PATCH')).toBe(false);
 });
@@ -185,4 +185,151 @@ it('mounts tools and guarded settings destinations and reuses one setup metadata
  const docs=await screen.findByRole('link',{name:/documentation|docs/i});expect(docs).toHaveAttribute('href','https://github.com/lfnovo/open-notebook/blob/main/docs/3-USER-GUIDE/api-configuration.md#encryption-setup');
  fireEvent.click(screen.getByRole('link',{name:'Settings'}));expect(await screen.findByRole('heading',{name:'Settings'})).toBeVisible();for(const name of ['Models','Transformations','Advanced'])expect(screen.getAllByRole('link',{name}).length).toBeGreaterThan(0);
  expect(requests.filter(r=>new URL(r.url).pathname==='/api/credentials/status')).toHaveLength(1);
+});
+
+
+// B9a fix round 1: mounted cross-owner paths, using only synthetic producers.
+function linkServer(initial:string|null,outcome:'success'|'link-unknown'|'clear-unknown'='success'){
+ let w=sourceWorkspace();w.link=initial?{remote_notebook_id:initial}:null;
+ const requests=libraryServer(async r=>{const p=new URL(r.url).pathname;
+  if(p==='/api/notebooks/n')return json(notebook);
+  if(p==='/api/credentials/status')return json({configured:{},source:{},encryption_configured:true});
+  if(p==='/api/credentials/env-status')return json({});
+  if(p.endsWith('/connections/notebooklm'))return json({state:'connected',quota:0,account_label:null,last_verified_at:null,reason:null});
+  if(p.endsWith('/notebooklm/capabilities'))return json({...matrix,operations:[...matrix.operations,...['list_sources','upload_source','fetch_source_text'].map(name=>({name,support:'available',reason:null,last_verified_at:null,sdk_version:'0.8.5',adapter_version:'1'}))]});
+  if(p.endsWith('/notebooklm/notebooks'))return json({items:[{id:'remote/one',title:'Remote one'}],next_cursor:null,listing_complete:true,completeness_note:null});
+  if(p.endsWith('/notebooklm-link')){w={...w,link:{remote_notebook_id:'remote/one'}};return outcome==='link-unknown'?json({bad:true}):json({link_id:'link',notebook_id:'n',connection_id:'notebooklm',remote_notebook_id:'remote/one',last_checked_at:'now'})}
+  if(r.method==='PATCH'){w={...w,selection:await r.clone().json()};return outcome==='clear-unknown'?new Response('bad',{headers:{'content-type':'application/json'}}):json({})}
+  return undefined;
+ },()=>json(w));return requests;
+}
+async function chooseLink(h:Awaited<ReturnType<typeof remoteOpen>>){
+ fireEvent.click(h.dialog().getByRole('button',{name:'List Google notebooks'}));
+ await h.dialog().findByRole('option',{name:'Remote one'});
+ fireEvent.change(h.dialog().getByLabelText('Google notebook'),{target:{value:'remote/one'}});
+ fireEvent.click(h.dialog().getByRole('button',{name:'Link selected notebook'}));
+}
+it.each(['A',null])('publishes a reconciled link from %s to the real retained workspace consumers',async initial=>{
+ const requests=linkServer(initial),h=await remoteOpen();await chooseLink(h);
+ await waitFor(()=>expect(h.workbench.drafts.settings.getSnapshot()[0]?.command?.status).toBe('succeeded'));
+ fireEvent.click(h.dialog().getByRole('button',{name:'Close'}));
+ await waitFor(()=>expect(screen.getByRole('region',{name:'Google connection'})).toHaveTextContent('remote/one'));
+ expect(requests.filter(r=>r.method==='PATCH')).toHaveLength(1);
+ expect(requests.filter(r=>r.url.endsWith('/notebooklm-link'))).toHaveLength(1);
+});
+it.each(['link-unknown','clear-unknown'] as const)('blocks retained remote sync after %s, closing settings and explicitly verifying again',async outcome=>{
+ const requests=linkServer('A',outcome),h=await remoteOpen();await chooseLink(h);
+ await waitFor(()=>expect(h.workbench.drafts.settings.getSnapshot()[0]?.command?.status).toBe('unknown'));
+ fireEvent.click(h.dialog().getByRole('button',{name:'Close'}));
+ const remote=within(screen.getByRole('region',{name:'Google connection'}));
+ fireEvent.click(remote.getByRole('button',{name:'Verify Google connection'}));
+ await remote.findByText('upload_source: available');
+ expect(remote.getByRole('button',{name:'Sync selected originals to Google'})).toBeDisabled();
+ fireEvent.click(remote.getByRole('button',{name:'Sync selected originals to Google'}));
+ expect(requests.filter(r=>r.method==='POST')).toHaveLength(1);
+});
+it('invalidates provider admission at disconnect intent while pending and unknown, without retiring local work',async()=>{
+ let finish!:(r:Response)=>void;
+ remoteServer(r=>r.method==='DELETE'?new Promise(resolve=>finish=resolve):undefined);
+ const h=await remoteOpen(),before=h.workbench.controller.getSnapshot().providerEvidenceRevision,epoch=readTurnContext()!.epoch;
+ fireEvent.click(h.dialog().getByRole('button',{name:'Clear local connection'}));
+ fireEvent.click(h.dialog().getByRole('button',{name:'Confirm'}));
+ expect(h.workbench.controller.getSnapshot().providerEvidenceRevision).toBeGreaterThan(before);
+ expect(h.workbench.controller.getSnapshot()).toMatchObject({ready:true,signedOutLocally:false,privacyChanged:false});
+ await waitFor(()=>expect(finish).toBeTypeOf('function'));
+ await act(async()=>finish(json({bad:true})));
+ expect(h.workbench.controller.getSnapshot().providerVerification).toBeNull();
+ expect(readTurnContext()!.epoch).toBe(epoch);
+ fireEvent.click(h.dialog().getByRole('button',{name:'Close'}));
+ expect(within(screen.getByRole('region',{name:'Sources'})).getByRole('button',{name:'Add sources'})).toBeEnabled();
+});
+it.each([false,true])('keeps retired dirty settings reachable across remount (closed at retirement: %s)',async closed=>{
+ server();const h=await open();
+ fireEvent.change(h.dialog().getByLabelText('Description'),{target:{value:'Frozen original description'}});
+ const original=h.workbench.drafts.settings.getSnapshot()[0]!;
+ if(closed)fireEvent.click(h.dialog().getByRole('button',{name:'Close'}));
+ act(()=>h.workbench.controller.retirePrivacyContext());await act(async()=>h.workbench.controller.check());
+ await waitFor(()=>expect(h.workbench.controller.getSnapshot().ready).toBe(true));
+ await act(async()=>{await h.queries.refetchQueries({queryKey:['workspace']})});
+ if(!closed)fireEvent.click(within(screen.getByRole('dialog')).getByRole('button',{name:'Close'}));
+ fireEvent.click(await screen.findByRole('button',{name:'Notebook settings'}));
+ expect(within(screen.getByRole('dialog')).getByLabelText('Description')).toHaveValue('Frozen original description');
+ expect(within(screen.getByRole('dialog')).getByLabelText('Description')).toBeDisabled();
+ expect(h.workbench.drafts.settings.getSnapshot()).toHaveLength(1);
+ fireEvent.click(within(screen.getByRole('dialog')).getByRole('button',{name:'New'}));
+ await waitFor(()=>expect(within(screen.getByRole('dialog')).getByLabelText('Description')).toHaveValue(''));
+ expect(h.workbench.drafts.settings.get(original.id)?.fields.description).toBe('Frozen original description');
+ fireEvent.change(h.dialog().getByRole('combobox',{name:'Notebook settings'}),{target:{value:original.id}});
+ fireEvent.click(h.dialog().getByRole('button',{name:'Close'}));
+ await act(async()=>{await h.router.navigate('/settings')});
+ if(h.workbench.navigation.getSnapshot().capture)act(()=>h.workbench.navigation.confirm(h.workbench.navigation.getSnapshot().capture));
+ await waitFor(()=>expect(h.router.state.location.pathname).toBe('/settings'));
+ await act(async()=>{await h.router.navigate('/notebooks/n')});
+ fireEvent.click(await screen.findByRole('button',{name:'Notebook settings'}));
+ expect(within(screen.getByRole('dialog')).getByLabelText('Description')).toHaveValue('Frozen original description');
+ expect(within(screen.getByRole('dialog')).getByLabelText('Description')).toBeDisabled();
+
+});
+it('allows a new explicit selection after an unknown link retires without replaying the old reservation',async()=>{
+ const requests=linkServer('A','link-unknown'),h=await remoteOpen();await chooseLink(h);
+ await waitFor(()=>expect(h.workbench.drafts.settings.getSnapshot()[0]?.command?.status).toBe('unknown'));
+ const old=h.workbench.drafts.sources.getSnapshot().find(r=>r.payload.kind==='selection')!;
+ act(()=>h.workbench.controller.retirePrivacyContext());await act(async()=>h.workbench.controller.check());
+ await waitFor(()=>expect(h.workbench.controller.getSnapshot().ready).toBe(true));
+ await act(async()=>{await h.queries.refetchQueries({queryKey:['workspace']})});
+ fireEvent.click(h.dialog().getByRole('button',{name:'New'}));
+ await waitFor(()=>expect(h.dialog().getByLabelText('Answer engine')).toBeEnabled());
+ fireEvent.change(h.dialog().getByLabelText('Answer engine'),{target:{value:'notebooklm'}});
+ await waitFor(()=>expect(requests.filter(r=>r.method==='PATCH')).toHaveLength(1));
+ expect(h.workbench.drafts.sources.get(old.id)?.retired).toBe(true);
+ expect(h.workbench.drafts.sources.begin(old.id,readTurnContext(),sessionCoordinator.current())).toBeNull();
+ expect(requests.filter(r=>r.url.endsWith('/notebooklm-link'))).toHaveLength(1);
+});
+
+it.each(['failed','cancelled_local','needs_reauth','succeeded'])('requires an explicit blank successor after producer terminal create %s, retaining the original receipt',async state=>{
+ let key='';
+ remoteServer(async r=>{if(r.method==='POST'&&r.url.endsWith('/notebooklm/notebooks')){const body=await r.clone().json();key=body.idempotency_key;const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify({operation:'create_notebook',request:{title:body.title}})));return json({job_id:'owned-terminal',notebook_id:'n',operation:'create_notebook',provider:'notebooklm',idempotency_key:key,request_hash:[...new Uint8Array(bytes)].map(v=>v.toString(16).padStart(2,'0')).join(''),request_snapshot:{title:body.title},state,submission_state:state==='succeeded'?'confirmed':'not_submitted',...(state==='succeeded'?{result:{remote_notebook_id:'created'}}:{})})}return undefined});
+ const h=await remoteOpen();
+ fireEvent.change(h.dialog().getByLabelText('New Google notebook title'),{target:{value:'Original title'}});
+ fireEvent.click(h.dialog().getByRole('button',{name:'Create Google notebook'}));fireEvent.click(h.dialog().getByRole('button',{name:'Confirm'}));
+ await waitFor(()=>expect(h.workbench.drafts.settings.getSnapshot()[0]?.metadata.create?.state).toBe(state));
+ const original=h.workbench.drafts.settings.getSnapshot()[0]!;
+ expect(h.dialog().getByRole('button',{name:'Create Google notebook'})).toBeDisabled();
+ fireEvent.click(h.dialog().getByRole('button',{name:'New'}));
+ await waitFor(()=>expect(h.dialog().getByLabelText('New Google notebook title')).toHaveValue(''));
+ expect(h.workbench.drafts.settings.get(original.id)?.metadata.create).toMatchObject({job_id:'owned-terminal',idempotency_key:key,title:'Original title'});
+ expect(h.workbench.drafts.settings.get(original.id)?.retired).toBe(true);
+});
+
+it.each([false,true])('keeps an unknown link receipt inspectable after retirement, remount and blank successor (closed: %s)',async closed=>{
+ const requests=linkServer('A','link-unknown'),h=await remoteOpen();await chooseLink(h);
+ await waitFor(()=>expect(h.workbench.drafts.settings.getSnapshot()[0]?.command?.status).toBe('unknown'));
+ const old=h.workbench.drafts.settings.getSnapshot()[0]!;
+ if(closed)fireEvent.click(h.dialog().getByRole('button',{name:'Close'}));
+ act(()=>h.workbench.controller.retirePrivacyContext());await act(async()=>h.workbench.controller.check());
+ await act(async()=>{await h.queries.refetchQueries({queryKey:['workspace']})});
+ if(!closed)fireEvent.click(h.dialog().getByRole('button',{name:'Close'}));
+ fireEvent.click(await screen.findByRole('button',{name:'Notebook settings'}));
+ expect(h.dialog().getByText(old.command!.id)).toBeVisible();
+ fireEvent.click(h.dialog().getByRole('button',{name:'Connections'}));
+ expect(h.dialog().getByLabelText('Google notebook')).toHaveValue('remote/one');
+ expect(h.dialog().getByLabelText('Google notebook')).toBeDisabled();
+ fireEvent.click(h.dialog().getByRole('button',{name:'New'}));
+ const fresh=h.workbench.drafts.settings.getSnapshot().find(r=>!r.retired)!;
+ expect(fresh.fields.remoteId).toBe('');
+ fireEvent.change(h.dialog().getByRole('combobox',{name:'Notebook settings'}),{target:{value:old.id}});
+ expect(h.dialog().getByText(old.command!.id)).toBeVisible();
+ expect(h.workbench.drafts.settings.get(old.id)?.command?.id).toBe(old.command!.id);
+ expect(requests.filter(r=>r.url.endsWith('/notebooklm-link'))).toHaveLength(1);
+});
+
+it('publishes an exactly reconciled unknown clear without repeating either transaction write',async()=>{
+ const requests=linkServer('A','clear-unknown'),h=await remoteOpen();await chooseLink(h);
+ await waitFor(()=>expect(h.workbench.drafts.settings.getSnapshot()[0]?.command?.status).toBe('unknown'));
+ fireEvent.click(h.dialog().getByRole('button',{name:'Check original request (read only)'}));
+ await waitFor(()=>expect(h.workbench.drafts.settings.getSnapshot()[0]?.command?.status).toBe('succeeded'));
+ fireEvent.click(h.dialog().getByRole('button',{name:'Close'}));
+ await waitFor(()=>expect(screen.getByRole('region',{name:'Google connection'})).toHaveTextContent('remote/one'));
+ expect(h.workbench.drafts.sources.selectionUnconfirmed('n',readTurnContext()!.epoch)).toBe(false);
+ expect(requests.filter(r=>r.method==='PATCH')).toHaveLength(1);expect(requests.filter(r=>r.url.endsWith('/notebooklm-link'))).toHaveLength(1);
 });

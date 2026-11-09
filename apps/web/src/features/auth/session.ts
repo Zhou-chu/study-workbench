@@ -36,6 +36,7 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
     let providerRevision = 0;
     let providerFlight: {
         ticket: number;
+        revision: number;
         promise: Promise<boolean>;
     } | null = null;
     let loginRequired = false;
@@ -352,11 +353,11 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
                 return false;
             }
             finally {
-                if (!disposed && own === ticket)
+                if (!disposed && own === ticket && providerFlight?.revision === revision)
                     update({ providerChecking: false });
             }
         })();
-        const entry = { ticket: own, promise: task };
+        const entry = { ticket: own, revision, promise: task };
         providerFlight = entry;
         try {
             return await task;
@@ -368,6 +369,7 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
     }
     return { getSnapshot: () => snapshot, subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; }, transport,
         verifyProviderConnection,
+        invalidateProviderAdmission() { providerFlight = null; update({ providerEvidenceRevision: ++providerRevision, providerVerification: null, providerChecking: false }); },
         start: () => run('check'), check: () => run('check'), login: (password: string) => run('login', password), refresh: () => run('refresh'),
         closeReauth() {
             if (signedOut) return;

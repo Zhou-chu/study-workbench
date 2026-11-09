@@ -154,7 +154,7 @@ it('keeps one accepted observer and the newer draft while conversation is unmoun
     fireEvent.click(screen.getByRole('button', { name: 'Stop local waiting' }));
     expect(requests.some(r => r.url.endsWith('/cancel'))).toBe(false);
 });
-it('invalidates verified Google admission after provider evidence changes without changing selected engine', async () => {
+it.each(['provider-response','disconnect-intent'] as const)('invalidates verified Google admission after %s without changing selected engine', async cause => {
     const w = sourceWorkspace();
     w.selection = { engine: 'notebooklm', selection_origin: 'remote', source_version_ids: [], remote_source_ids: ['remote'] };
     w.link = { remote_notebook_id: 'rn', connection_id: 'connection' };
@@ -177,7 +177,7 @@ it('invalidates verified Google admission after provider evidence changes withou
     fireEvent.change(screen.getByRole('textbox', { name: 'Question' }), { target: { value: 'Question' } });
     expect(screen.getByRole('button', { name: 'Ask selected sources' })).toBeEnabled();
     invalid = true;
-    await act(async () => { await view.workbench.controller.transport.send({ method: 'GET', path: '/personal/notebooklm/capabilities', context: readTurnContext()! }); });
+    await act(async () => { if(cause==='disconnect-intent')view.workbench.controller.invalidateProviderAdmission();else await view.workbench.controller.transport.send({ method: 'GET', path: '/personal/notebooklm/capabilities', context: readTurnContext()! }); });
     expect(screen.getByRole('button', { name: 'Ask selected sources' })).toBeDisabled();
     expect(screen.getByLabelText('Current question scope')).toHaveTextContent('NotebookLM personal connection');
     expect(requests.filter(r => r.method === 'POST')).toHaveLength(0);

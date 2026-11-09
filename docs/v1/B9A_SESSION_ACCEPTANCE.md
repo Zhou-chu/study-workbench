@@ -55,3 +55,13 @@ F48/F49: original retrieval admission is invalidated by control/selection replac
 - Unknown/unavailable provider states are non-actionable. A connected listing is not strict-isolation ask proof, account identity or unlimited quota.
 - Local signout does not mean account-wide server revocation. Legacy storage-removal failure stays unconfirmed/retryable. Device confirmation follows only the exact local endpoint result or its explicitly supported AUTH_REQUIRED retry.
 - Known render-time and bundle warnings are preserved in the task report. Client allowlisting does not fix the retained F29 legacy wire limitation.
+
+## B9a review fix round 1
+
+The six reviewed gaps are covered by synthetic source tests, not browser acceptance:
+- Settings tests exercise producer-shaped queued/not_submitted and running/not_submitted create receipts through explicit observation to succeeded. Supported settled outcomes require a blank New action and retain the old receipt; unknown submission never acquires observation or successor authority.
+- Settings and selection-refresh tests cover link A-to-B and unlinked-to-B workspace publication, unknown link/clear followed by dismissal and source verification, original definitely-unsent clear retries under retained versus replaced provider proof, and exact reconciliation without repeating either write.
+- The one selection owner holds an immutable link target/provider revision. Account-bound source and audio consumers honor its unresolved state. Only an accepted original-context, post-settlement workspace publishes the completed transaction; retired foreign-epoch reservations remain inspectable but do not lock a fresh epoch.
+- Auth, chat and Studio interaction tests cover synchronous disconnect-intent invalidation, a late retired verification, original Google question/audio admission, explicit fresh verification, and independent local readiness.
+- Settings/ownership tests cover dirty and unknown records both open and closed at retirement, explicit blank successors, retained-record inspection, and actual route leave/return. Navigation regressions retain the existing controller.
+- All 33 operation rows and the held B9b-e allocation remain unchanged. Existing render/bundle warnings and all browser/live-service/provider/deployment NOT_RUN gates remain disclosed.

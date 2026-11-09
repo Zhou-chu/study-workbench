@@ -517,3 +517,18 @@ it('failed legacy local removal remains locked and explicitly retryable without 
  controller.closeReauth();expect(controller.getSnapshot().reauthOpen).toBe(true);await controller.check();expect(controller.getSnapshot().ready).toBe(false);
  remove.mockRestore();await controller.signoutLocal();expect(controller.getSnapshot()).toMatchObject({localSignoutConfirmed:true,ready:false});controller.dispose();
 });
+
+it('invalidates an in-flight provider check without revoking app readiness and only publishes the new explicit check',async()=>{
+ server();const base=globalThis.fetch;const ends:Array<(r:Response)=>void>=[];
+ vi.stubGlobal('fetch',async(input:Request)=>new URL(input.url).pathname.endsWith('/connections/notebooklm')?new Promise<Response>(resolve=>ends.push(resolve)):base(input));
+ const controller=createSessionController();await controller.start();const c=readTurnContext()!,g=sessionCoordinator.current();
+ const old=controller.verifyProviderConnection();await waitFor(()=>expect(ends).toHaveLength(1));
+ controller.invalidateProviderAdmission();const retired=controller.getSnapshot().providerEvidenceRevision;
+ expect(controller.getSnapshot()).toMatchObject({ready:true,providerVerification:null,providerChecking:false});
+ const fresh=controller.verifyProviderConnection();await waitFor(()=>expect(ends).toHaveLength(2));
+ ends[0]!(json({state:'connected'}));expect(await old).toBe(false);
+ expect(controller.getSnapshot().providerChecking).toBe(true);expect(controller.getSnapshot().providerVerification).toBeNull();
+ ends[1]!(json({state:'connected'}));expect(await fresh).toBe(true);
+ expect(controller.getSnapshot().providerVerification?.revision).toBeGreaterThan(retired);
+ expect(readTurnContext()!.epoch).toBe(c.epoch);expect(sessionCoordinator.current()).toBe(g);controller.dispose();
+});

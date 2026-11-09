@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { useAppDrafts } from '../../app/providers';
 import type { WorkspaceViewV1 } from '@study/contracts';
+import {unconfirmedSelection} from './source-operations';
 import { selectionFromView } from './source-selection';
 /** Unresolved intent stays frozen. A succeeded overlay yields only to a read begun after its settlement. */
 export function useSourceSelection(notebookId: string, epoch: number | undefined, workspace: WorkspaceViewV1 | undefined) {
@@ -13,6 +14,6 @@ export function useSourceSelection(notebookId: string, epoch: number | undefined
     return {
         operation,
         selection: authoritative ? read.selection : operation?.payload.kind === 'selection' ? operation.payload.selection : selectionFromView(workspace?.selection),
-        unconfirmed: rows.some(row => row.notebookId === notebookId && row.payload.kind === 'selection' && ['idle', 'submitting', 'unknown'].includes(row.operation.state)),
+        unconfirmed: rows.some(row => unconfirmedSelection(row,notebookId,epoch)),
     };
 }

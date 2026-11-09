@@ -131,3 +131,32 @@ it('re-edits revision 7 ACK nulls against revision 8 workspace omissions and exp
     expect(before.latest?.citations).toEqual([withoutNulls]);
     expect(requests.filter(r => r.method === 'POST')).toHaveLength(0);
 });
+
+it.each(['disconnect-intent','link-reservation'] as const)('blocks the original audio confirmation after %s and never revives it through fresh proof',async change=>{
+ const requests=sourceServer(r=>json(r.url.endsWith('/capabilities')?{operations:[{name:'generate_audio',support:'available'},{name:'list_artifacts',support:'available'}]}:r.url.endsWith('/connections/notebooklm')?{state:'connected'}:{}));
+ const w={...workspace,selection:{engine:'notebooklm' as const,selection_origin:'remote' as const,source_version_ids:[],remote_source_ids:['rs']},link:{remote_notebook_id:'A'}};
+ function Panel(){const c=useStudio('n');return <RemoteAudioControls notebookId="n" workspace={w} connection={c}/>}
+ const h=await renderSourceFeature(<Panel/>);
+ fireEvent.click(screen.getByRole('button',{name:'Verify Google connection'}));
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Generate audio overview'})).toBeEnabled());
+ fireEvent.click(screen.getByRole('button',{name:'Generate audio overview'}));
+ act(()=>{if(change==='disconnect-intent')h.workbench.controller.invalidateProviderAdmission();else h.workbench.drafts.sources.reserveSelection('n',{...w.selection,remote_source_ids:[]},readTurnContext()!,sessionCoordinator.current(),{providerRevision:h.workbench.controller.getSnapshot().providerEvidenceRevision,remoteNotebookId:'B'})});
+ expect(within(screen.getByRole('dialog')).getByRole('button',{name:'Confirm'})).toBeDisabled();
+ await act(async()=>{await h.workbench.controller.verifyProviderConnection()});
+ expect(within(screen.getByRole('dialog')).getByRole('button',{name:'Confirm'})).toBeDisabled();
+ expect(h.workbench.controller.getSnapshot().ready).toBe(true);
+ expect(screen.getByRole('button',{name:'List Google artifacts',hidden:true})).toBeDisabled();
+ fireEvent.click(within(screen.getByRole('dialog')).getByRole('button',{name:'Confirm'}));expect(requests.some(r=>r.method==='POST')).toBe(false);
+});
+
+it('does not admit audio artifact listing through a fresh verification while a link transaction is unresolved',async()=>{
+ const requests=sourceServer(r=>json(r.url.endsWith('/capabilities')?{operations:[{name:'list_artifacts',support:'available'}]}:{state:'connected'}));
+ function Panel(){const c=useStudio('n');return <RemoteAudioControls notebookId="n" workspace={{...workspace,link:{remote_notebook_id:'A'}}} connection={c}/>}
+ const h=await renderSourceFeature(<Panel/>);
+ act(()=>{h.workbench.drafts.sources.reserveSelection('n',{engine:'notebooklm',selection_origin:'remote',source_version_ids:[],remote_source_ids:[]},readTurnContext()!,sessionCoordinator.current(),{providerRevision:0,remoteNotebookId:'B'})});
+ fireEvent.click(screen.getByRole('button',{name:'Verify Google connection'}));
+ await waitFor(()=>expect(screen.getByRole('button',{name:'Verify Google connection'})).toBeEnabled());
+ expect(screen.getByRole('button',{name:'List Google artifacts'})).toBeDisabled();
+ fireEvent.click(screen.getByRole('button',{name:'List Google artifacts'}));
+ expect(requests.some(r=>r.url.endsWith('/artifacts'))).toBe(false);
+});

@@ -44,7 +44,7 @@ export function RemoteAudioControls({ notebookId, workspace, connection: c }: {
     const latest = useRef({ remote, selection, unconfirmed });
     latest.current = { remote, selection, unconfirmed };
     useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
-    const valid = (a: ProviderCapture|null) => { const state = c.controller?.getSnapshot(); return !!a && mounted.current && canDispatch(a.context, readTurnContext()) && a.generation === sessionCoordinator.current() && state?.ready === true && !state.providerNeedsReauth && !state.providerChecking && state.providerEvidenceRevision === a.revision && latest.current.remote === a.remote && !!a.targetAdmission && a.targetAdmission.ownerId===admissionOwner.current && target.current.revision===a.targetAdmission.revision; };
+    const valid = (a: ProviderCapture|null) => { const state = c.controller?.getSnapshot(); return !!a && !sources.selectionUnconfirmed(notebookId,a.context.epoch) && mounted.current && canDispatch(a.context, readTurnContext()) && a.generation === sessionCoordinator.current() && state?.ready === true && !state.providerNeedsReauth && !state.providerChecking && state.providerEvidenceRevision === a.revision && latest.current.remote === a.remote && !!a.targetAdmission && a.targetAdmission.ownerId===admissionOwner.current && target.current.revision===a.targetAdmission.revision; };
     const available = (name: string) => !!caps && valid(caps.capture) && caps.names.filter(n => n === name).length === 1;
     async function verify() {
         if (!c.api || !c.controller || !c.ready || !remote || flight.current)

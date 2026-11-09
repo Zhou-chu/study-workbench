@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'react-router';
 import { notebookIdFromPathname } from '../../app/notebook-route';
-import { freezeDispatchContext, readTurnContext, sessionCoordinator } from '@study/web-transport';
+import { TransportResponseError, freezeDispatchContext, readTurnContext, sessionCoordinator } from '@study/web-transport';
 import { AppDataBoundary, useAppData, useAppDrafts } from '../../app/providers';
 import { useNotebookConnection } from '../../data/use-notebook-connection';
 import { useI18n } from '../../i18n';
@@ -17,7 +17,8 @@ export function NotebookPage() {
             const captured = freezeDispatchContext(context!);
             const read = sourceStore.beginWorkspaceRead(notebookId, captured, sessionCoordinator.current());
             const value = await api!.workspace(notebookId, captured, signal);
-            sourceStore.acceptWorkspaceRead(read, value, readTurnContext(), sessionCoordinator.current());
+            const accepted=sourceStore.acceptWorkspaceRead(read, value, readTurnContext(), sessionCoordinator.current());
+            if(!accepted&&(read.selectionOperation?.transaction||sourceStore.hasSelectionTransaction(notebookId,captured.epoch)))throw new TransportResponseError('retired');
             // A route open, never a list prefetch. Stamp failure must not hide a successful read.
             void api!.recordOpen(notebookId, captured, signal).catch(() => { });
             return value;

@@ -9,6 +9,8 @@ export type LoginFlow=Readonly<{flow_id:string;state:string;expires_at:string;re
 export type ConnectionCapability=Readonly<{name:string;support:string;reason:string|null;last_verified_at:string|null;sdk_version:string;adapter_version:string}>;
 export type NotebookPage=Readonly<{items:readonly Readonly<{id:string;title:string}>[];next_cursor:string|null;listing_complete:boolean;completeness_note:string|null}>;
 export type CreateReceipt=Readonly<{job_id:string;state:string;submission_state:string|null;remote_notebook_id:string|null;request_hash:string;notebook_id:string;idempotency_key:string;title:string}>;
+export const canObserveCreate=(r:CreateReceipt)=>['queued','running'].includes(r.state)&&['not_submitted','confirmed'].includes(r.submission_state??'')||r.state==='waiting_remote'&&r.submission_state==='confirmed';
+export const canStartCreateSuccessor=(r:CreateReceipt)=>r.state==='succeeded'&&r.submission_state==='confirmed'||['failed','cancelled_local','needs_reauth'].includes(r.state)&&r.submission_state==='not_submitted';
 export type SetupMetadata=Readonly<{encryption_configured:boolean;configured:Readonly<Record<string,boolean>>;source:Readonly<Record<string,string>>;environment:Readonly<Record<string,boolean>>}>;
 export class SettingsRequestError extends Error{constructor(readonly status:number){super('Settings request was not confirmed')}}
 const record=(v:unknown)=>{if(!isRecord(v))throw Error('Invalid response');return v};
@@ -58,7 +60,7 @@ export function createSettingsApi(transport:WebTransport){
  async notebooks(cursor:string|null,c:DispatchContext):Promise<NotebookPage>{const r=record(await request('GET','/personal/notebooklm/notebooks'+(cursor===null?'':'?cursor='+encodeURIComponent(cursor)),c));return Object.freeze({items:Object.freeze(list(r.items).map(v=>{const x=record(v);return Object.freeze({id:id(x.id),title:str(x.title)})})),next_cursor:r.next_cursor===null?null:id(r.next_cursor),listing_complete:bool(r.listing_complete),completeness_note:nullable(r.completeness_note)})},
  async link(n:string,remoteId:string,c:DispatchContext){const r=record(await request('POST','/personal/notebooks/'+encodeURIComponent(n)+'/notebooklm-link',c,{remote_notebook_id:remoteId}));if(r.notebook_id!==n||r.remote_notebook_id!==remoteId||r.connection_id!=='notebooklm')throw Error('Mismatched link');id(r.link_id);str(r.last_checked_at);return Object.freeze({notebook_id:n,remote_notebook_id:remoteId})},
  async create(input:{notebook_id:string;title:string;idempotency_key:string},c:DispatchContext){return parseCreateReceipt(await request('POST','/personal/notebooklm/notebooks',c,input),input)},
- async observe(receipt:CreateReceipt,c:DispatchContext){if(!['queued','running','waiting_remote'].includes(receipt.state)||receipt.submission_state!=='confirmed')throw new RequestNotDispatchedError('configuration');const next=await parseCreateReceipt(await request('GET','/personal/jobs/'+encodeURIComponent(receipt.job_id),c),receipt);if(next.job_id!==receipt.job_id)throw Error('Mismatched job');return next}
+ async observe(receipt:CreateReceipt,c:DispatchContext){if(!canObserveCreate(receipt))throw new RequestNotDispatchedError('configuration');const next=await parseCreateReceipt(await request('GET','/personal/jobs/'+encodeURIComponent(receipt.job_id),c),receipt);if(next.job_id!==receipt.job_id)throw Error('Mismatched job');return next}
  });
 }
 export type SettingsApi=ReturnType<typeof createSettingsApi>;

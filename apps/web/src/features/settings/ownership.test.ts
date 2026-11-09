@@ -43,3 +43,21 @@ it('releases a link reservation only on actual never-dispatched proof, never gen
  const sent=s.reserveSelection('n',selection,c,g)!;s.releaseSelection(sent);s.begin(sent,c,g);
  expect(s.releaseUnsentReservation(sent,new RequestNotDispatchedError('duplicate'))).toBe(false);
 });
+
+it('retains a foreign-epoch reservation without returning it as the new epoch writer',()=>{
+ const c=readTurnContext()!,s=createSourceOperations(()=>{}),g=sessionCoordinator.current();
+ const old=s.reserveSelection('n',selection,c,g)!;s.retire(c.epoch);const next=sourceContext();
+ const fresh=s.reserveSelection('n',selection,next,sessionCoordinator.current());
+ expect(fresh).not.toBeNull();expect(fresh).not.toBe(old);
+ expect(s.get(old)?.retired).toBe(true);expect(s.begin(old,next,sessionCoordinator.current())).toBeNull();
+});
+
+it('does not silently select a new settings owner after the original is retired',()=>{
+ const d=createDraftRegistry(),oldContext=readTurnContext()!,g=sessionCoordinator.current();
+ const old=d.settings.open('n',oldContext,g);d.settings.edit(old,{remoteTitle:'Original unknown title'});
+ const command=d.settings.begin(old,'create',oldContext,g)!;
+ d.settings.settle(old,command,'unknown',oldContext,g);d.retireContext(oldContext.epoch);
+ const next=sourceContext();
+ expect(d.settings.open('n',next,sessionCoordinator.current())).toBe(old);
+ expect(d.settings.get(old)).toMatchObject({retired:true,fields:{remoteTitle:'Original unknown title'},command:{id:command.id,status:'unknown'}});
+});

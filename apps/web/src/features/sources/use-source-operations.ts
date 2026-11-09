@@ -15,7 +15,9 @@ export function useSourceOperations(notebookId: string, onChanged?: () => void) 
             return;
         if (candidate.payload.kind === 'upload' && (!candidate.file || candidate.file.size > (connection.controller.getSnapshot().capabilities?.limits.source_upload_max_bytes ?? -1)))
             return;
-        const active = store.begin(id, readTurnContext(), sessionCoordinator.current());
+        const originalAdmission=()=>{const state=connection.controller!.getSnapshot();return admit()&&(!candidate.transaction||candidate.transaction.providerRevision===state.providerEvidenceRevision&&!state.providerChecking&&!state.providerNeedsReauth)&&(candidate.payload.kind!=='remote'||!store.selectionUnconfirmed(notebookId,candidate.operation.context.epoch)&&candidate.selectionRevision===store.selectionRevision(notebookId));};
+        if(!originalAdmission())return;
+        const active = store.begin(id, readTurnContext(), sessionCoordinator.current(),connection.controller.getSnapshot().providerEvidenceRevision);
         if (!active?.operation.token)
             return;
         const token = active.operation.token, context = active.operation.context;
@@ -47,7 +49,7 @@ export function useSourceOperations(notebookId: string, onChanged?: () => void) 
         catch (error) {
             outcome = { kind: asRequestNotDispatchedError(error) ? 'not-sent' : 'unknown' };
         }
-        if ((active.payload.kind === 'remote' || active.payload.kind === 'selection') && !admit()) outcome = { kind: 'unknown' };
+        if ((active.payload.kind === 'remote' || active.payload.kind === 'selection') && !originalAdmission()) outcome = { kind: 'unknown' };
         store.settle(id, token, outcome, readTurnContext(), sessionCoordinator.current());
         if (store.get(id)?.operation.state === 'succeeded')
             onChanged?.();

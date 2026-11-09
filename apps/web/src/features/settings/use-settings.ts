@@ -13,7 +13,7 @@ export function useSettings(notebookId:string){
  const navigation=useResourceNavigation();
  useEffect(()=>{if(!id)return;navigation?.activateResource(id);return navigation?.holdResource(id)},[navigation,id,row?.dirty,row?.status]);
  const ready=!!row&&!row.retired&&!!api&&state?.ready===true&&canDispatch(row.context,context);
- const current=()=>!!row&&!row.retired&&controller?.getSnapshot().ready===true&&canDispatch(row.context,readTurnContext());
- return {drafts,store,id,row,api,context,state,controller,ready,current,
- fresh:()=>{if(context?.ready&&state?.ready)setId(store.open(notebookId,context,sessionCoordinator.current()))}};
+ const current=()=>!!row&&!store.get(row.id)?.retired&&controller?.getSnapshot().ready===true&&canDispatch(row.context,readTurnContext());
+ return {drafts,store,id,row,rows:rows.filter(r=>r.notebookId===notebookId),select:(selected:string)=>{if(store.select(selected))setId(selected)},api,context,state,controller,ready,current,
+ fresh:()=>{if(id&&context?.ready&&state?.ready){const next=store.fresh(id,context,sessionCoordinator.current());if(next)setId(next)}}};
 }
