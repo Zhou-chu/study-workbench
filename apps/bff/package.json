@@ -16,7 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "test": "node --test scripts/*.test.mjs && vitest run",
+    "test": "node --test scripts/*.test.mjs && vitest run --exclude=**/scripts/**",
     "typecheck": "tsc --noEmit",
     "build": "node scripts/build-manifest.mjs --build",
     "lint": "eslint src/ test/",
