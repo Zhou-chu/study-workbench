@@ -1,5 +1,8 @@
 export const sessionMessages = {
   "en-US": {
+    "updateApplication": "Update application",
+    "compatibilityPaused": "Application compatibility is paused. The workspace is retained but inactive.",
+    "updateBlocked": "Save or reconcile every draft, File and pending or uncertain operation before updating. Nothing has been discarded.",
     "signIn": "Sign in",
     "password": "Password",
     "reauth": "Sign in again",
@@ -25,6 +28,9 @@ export const sessionMessages = {
     "verifyGoogle": "Verify Google connection"
   },
   "zh-CN": {
+    "updateApplication": "更新应用",
+    "compatibilityPaused": "应用兼容性检查已暂停。工作区内容仍保留，但暂不可操作。",
+    "updateBlocked": "更新前，请保存或核对全部草稿、文件及待处理或结果不明的操作。没有丢弃任何内容。",
     "signIn": "登录",
     "password": "密码",
     "reauth": "重新登录",
@@ -50,6 +56,9 @@ export const sessionMessages = {
     "verifyGoogle": "验证 Google 连接"
   },
   "zh-TW": {
+    "updateApplication": "更新應用程式",
+    "compatibilityPaused": "應用程式相容性檢查已暫停。工作區內容仍保留，但暫不可操作。",
+    "updateBlocked": "更新前，請儲存或核對全部草稿、檔案及待處理或結果不明的操作。未捨棄任何內容。",
     "signIn": "登入",
     "password": "密碼",
     "reauth": "重新登入",
@@ -75,6 +84,9 @@ export const sessionMessages = {
     "verifyGoogle": "驗證 Google 連線"
   },
   "pt-BR": {
+    "updateApplication": "Atualizar aplicativo",
+    "compatibilityPaused": "A compatibilidade está pausada. O espaço de trabalho está preservado, mas inativo.",
+    "updateBlocked": "Salve ou confira todos os rascunhos, arquivos e operações pendentes ou incertas antes de atualizar. Nada foi descartado.",
     "signIn": "Entrar",
     "password": "Senha",
     "reauth": "Entrar novamente",
@@ -100,6 +112,9 @@ export const sessionMessages = {
     "verifyGoogle": "Verificar conexão com o Google"
   },
   "ja-JP": {
+    "updateApplication": "アプリを更新",
+    "compatibilityPaused": "互換性の確認が停止しています。作業内容は保持されていますが、操作できません。",
+    "updateBlocked": "更新前に、すべての下書き、ファイル、保留中や結果不明の操作を保存または確認してください。内容は破棄されていません。",
     "signIn": "ログイン",
     "password": "パスワード",
     "reauth": "再ログイン",
@@ -125,6 +140,9 @@ export const sessionMessages = {
     "verifyGoogle": "Google 接続を確認"
   },
   "it-IT": {
+    "updateApplication": "Aggiorna applicazione",
+    "compatibilityPaused": "La compatibilità è in pausa. Lo spazio di lavoro è conservato ma inattivo.",
+    "updateBlocked": "Salva o verifica tutte le bozze, i file e le operazioni in sospeso o incerte prima di aggiornare. Nulla è stato eliminato.",
     "signIn": "Accedi",
     "password": "Password",
     "reauth": "Accedi di nuovo",
@@ -150,6 +168,9 @@ export const sessionMessages = {
     "verifyGoogle": "Verifica la connessione a Google"
   },
   "fr-FR": {
+    "updateApplication": "Mettre à jour l’application",
+    "compatibilityPaused": "La compatibilité est suspendue. L’espace de travail est conservé mais inactif.",
+    "updateBlocked": "Enregistrez ou vérifiez tous les brouillons, fichiers et opérations en attente ou incertaines avant la mise à jour. Rien n’a été supprimé.",
     "signIn": "Se connecter",
     "password": "Mot de passe",
     "reauth": "Se reconnecter",
@@ -175,6 +196,9 @@ export const sessionMessages = {
     "verifyGoogle": "Vérifier la connexion Google"
   },
   "ru-RU": {
+    "updateApplication": "Обновить приложение",
+    "compatibilityPaused": "Проверка совместимости приостановлена. Рабочая область сохранена, но неактивна.",
+    "updateBlocked": "Перед обновлением сохраните или проверьте все черновики, файлы и операции с ожидающим или неизвестным результатом. Ничего не удалено.",
     "signIn": "Войти",
     "password": "Пароль",
     "reauth": "Войти снова",
@@ -200,6 +224,9 @@ export const sessionMessages = {
     "verifyGoogle": "Проверить соединение с Google"
   },
   "bn-IN": {
+    "updateApplication": "অ্যাপ আপডেট করুন",
+    "compatibilityPaused": "সামঞ্জস্য যাচাই স্থগিত আছে। কাজের জায়গা সংরক্ষিত, কিন্তু নিষ্ক্রিয়।",
+    "updateBlocked": "আপডেটের আগে সব খসড়া, ফাইল এবং অপেক্ষমাণ বা অনিশ্চিত কাজ সংরক্ষণ বা যাচাই করুন। কিছুই বাদ দেওয়া হয়নি।",
     "signIn": "প্রবেশ করুন",
     "password": "পাসওয়ার্ড",
     "reauth": "আবার প্রবেশ করুন",
@@ -225,6 +252,9 @@ export const sessionMessages = {
     "verifyGoogle": "Google সংযোগ যাচাই করুন"
   },
   "ca-ES": {
+    "updateApplication": "Actualitza l’aplicació",
+    "compatibilityPaused": "La compatibilitat està en pausa. L’espai de treball es conserva però està inactiu.",
+    "updateBlocked": "Desa o comprova tots els esborranys, fitxers i operacions pendents o incertes abans d’actualitzar. No s’ha descartat res.",
     "signIn": "Inicia la sessió",
     "password": "Contrasenya",
     "reauth": "Torna a iniciar la sessió",
@@ -250,6 +280,9 @@ export const sessionMessages = {
     "verifyGoogle": "Verifica la connexió amb Google"
   },
   "es-ES": {
+    "updateApplication": "Actualizar aplicación",
+    "compatibilityPaused": "La compatibilidad está en pausa. El espacio de trabajo se conserva pero está inactivo.",
+    "updateBlocked": "Guarda o comprueba todos los borradores, archivos y operaciones pendientes o inciertas antes de actualizar. No se ha descartado nada.",
     "signIn": "Iniciar sesión",
     "password": "Contraseña",
     "reauth": "Volver a iniciar sesión",
@@ -275,6 +308,9 @@ export const sessionMessages = {
     "verifyGoogle": "Verificar conexión con Google"
   },
   "de-DE": {
+    "updateApplication": "Anwendung aktualisieren",
+    "compatibilityPaused": "Die Kompatibilitätsprüfung pausiert. Der Arbeitsbereich bleibt erhalten, ist aber inaktiv.",
+    "updateBlocked": "Vor dem Aktualisieren alle Entwürfe, Dateien und ausstehenden oder unklaren Vorgänge speichern oder prüfen. Nichts wurde verworfen.",
     "signIn": "Anmelden",
     "password": "Passwort",
     "reauth": "Erneut anmelden",
@@ -300,6 +336,9 @@ export const sessionMessages = {
     "verifyGoogle": "Google-Verbindung überprüfen"
   },
   "pl-PL": {
+    "updateApplication": "Zaktualizuj aplikację",
+    "compatibilityPaused": "Sprawdzanie zgodności wstrzymano. Obszar roboczy zachowano, ale jest nieaktywny.",
+    "updateBlocked": "Przed aktualizacją zapisz lub sprawdź wszystkie szkice, pliki oraz oczekujące lub niepewne operacje. Niczego nie odrzucono.",
     "signIn": "Zaloguj się",
     "password": "Hasło",
     "reauth": "Zaloguj się ponownie",
@@ -325,6 +364,9 @@ export const sessionMessages = {
     "verifyGoogle": "Zweryfikuj połączenie z Google"
   },
   "tr-TR": {
+    "updateApplication": "Uygulamayı güncelle",
+    "compatibilityPaused": "Uyumluluk denetimi duraklatıldı. Çalışma alanı korunuyor ancak etkin değil.",
+    "updateBlocked": "Güncellemeden önce tüm taslakları, dosyaları ve bekleyen veya belirsiz işlemleri kaydedin veya kontrol edin. Hiçbir şey silinmedi.",
     "signIn": "Oturum aç",
     "password": "Parola",
     "reauth": "Yeniden oturum aç",

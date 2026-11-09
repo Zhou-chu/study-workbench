@@ -160,7 +160,7 @@ def test_rejects_insecure_real_manifest_mutations(mutation):
     elif mutation == "api_port":
         services["api"]["ports"] = ["5055:5055"]
     elif mutation == "public_frontend":
-        services["frontend"]["ports"] = ["3000:3000"]
+        services["web"]["ports"] = ["3000:3000"]
     elif mutation == "backend_image":
         services["worker"]["image"] = "wrong:latest"
     elif mutation == "backend_build":
@@ -170,7 +170,7 @@ def test_rejects_insecure_real_manifest_mutations(mutation):
     elif mutation == "secret_value":
         services["api"]["environment"]["SURREAL_PASSWORD"] = "do-not-print-me"
     elif mutation == "frontend_secret":
-        services["frontend"]["secrets"] = ["db_password"]
+        services["web"]["secrets"] = ["db_password"]
     elif mutation == "missing_volume":
         services["worker"]["volumes"] = []
     elif mutation == "missing_secret":
@@ -474,6 +474,11 @@ def test_build_artifact_mutations_are_rejected(tmp_path, path, old, new):
     for name in [
         ".dockerignore",
         "deploy/v1/Dockerfile.backend",
+        "deploy/v1/Dockerfile.web",
+        "deploy/v1/Dockerfile.bff",
+        "deploy/v1/web-gateway.conf",
+        "deploy/v1/bff-proxy.conf",
+        "deploy/v1/THIRD_PARTY_NOTICES.md",
         "deploy/v1/Dockerfile.frontend",
         "deploy/v1/entrypoint.py",
         "deploy/v1/env.example",
@@ -529,7 +534,9 @@ def test_portable_proxy_origin_with_real_security_middleware(
     from api.personal_security import PersonalSecurityMiddleware
 
     # Model Compose's one explicit substitution, without reading operator env/files.
-    frontend_origin = manifest()["services"]["frontend"]["environment"]["API_URL"]
+    frontend_origin = manifest()["services"]["bff"]["environment"][
+        "STUDY_WORKBENCH_WEB_ORIGIN"
+    ]
     api_cors = manifest()["services"]["api"]["environment"].get("CORS_ORIGINS", "")
     monkeypatch.setenv("CORS_ORIGINS", api_cors.replace(frontend_origin, public_origin))
     monkeypatch.setenv("OPEN_NOTEBOOK_PASSWORD", "test-deployment-access")

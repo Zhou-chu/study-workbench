@@ -1,3 +1,4 @@
+import {createArtifactIdentity} from '../data/artifact';
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -7,6 +8,8 @@ import { I18nProvider } from '../i18n';
 import type { LanguageCode } from '../i18n';
 import { ThemeProvider } from '../theme/theme';
 import { createDraftRegistry, type DraftRegistry } from './drafts';
+const ArtifactContext = createContext<ReturnType<typeof createArtifactIdentity> | null>(null);
+export function useArtifactIdentity(){const value=useContext(ArtifactContext);if(!value)throw new Error('AppProviders required');return value;}
 const DraftsContext = createContext<DraftRegistry | null>(null);
 export function useAppDrafts() {
     const value = useContext(DraftsContext);
@@ -27,10 +30,11 @@ const Context = createContext<AppData | null>(null);
 export function AppProviders({ children, transport, workspace, locale }: AppProviderOptions & {
     children: ReactNode;
 }) {
+    const [artifactIdentity] = useState(createArtifactIdentity);
     const [drafts] = useState(createDraftRegistry);
     const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false }, mutations: { retry: false } } }));
     // B2 owns validated config and real transport construction; this provider never establishes authentication.
-    return <DraftsContext.Provider value={drafts}><I18nProvider {...(locale ? { initialLocale: locale } : {})}><ThemeProvider><QueryClientProvider client={queryClient}><Context.Provider value={{ transport, workspace }}>{children}</Context.Provider></QueryClientProvider></ThemeProvider></I18nProvider></DraftsContext.Provider>;
+    return <ArtifactContext.Provider value={artifactIdentity}><DraftsContext.Provider value={drafts}><I18nProvider {...(locale ? { initialLocale: locale } : {})}><ThemeProvider><QueryClientProvider client={queryClient}><Context.Provider value={{ transport, workspace }}>{children}</Context.Provider></QueryClientProvider></ThemeProvider></I18nProvider></DraftsContext.Provider></ArtifactContext.Provider>;
 }
 export function useAppData(): AppData {
     const value = useContext(Context);

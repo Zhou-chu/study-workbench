@@ -1,34 +1,69 @@
 {
   "name": "study-workbench-v1",
   "services": {
-    "frontend": {
-      "image": "study-workbench-frontend:v1-local",
-      "build": {
-        "context": "../..",
-        "dockerfile": "deploy/v1/Dockerfile.frontend",
-        "target": "frontend"
-      },
-      "user": "node",
+    "web": {
       "init": true,
       "restart": "unless-stopped",
-      "ports": [
-        "127.0.0.1:8502:3000"
+      "read_only": true,
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,size=64m"
       ],
-      "environment": {
-        "INTERNAL_API_URL": "http://api:5055",
-        "API_URL": "${PUBLIC_ORIGIN:?Set frontend origin without trailing slash}"
-      },
-      "depends_on": {
-        "api": {
-          "condition": "service_healthy"
-        }
-      },
       "security_opt": [
         "no-new-privileges:true"
       ],
       "cap_drop": [
         "ALL"
-      ]
+      ],
+      "image": "study-workbench-web:v1-local",
+      "build": {
+        "context": "../..",
+        "dockerfile": "deploy/v1/Dockerfile.web",
+        "target": "web"
+      },
+      "user": "101:101",
+      "ports": [
+        "127.0.0.1:8502:8080"
+      ],
+      "depends_on": {
+        "bff": {
+          "condition": "service_started"
+        }
+      }
+    },
+    "bff": {
+      "init": true,
+      "restart": "unless-stopped",
+      "read_only": true,
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,size=64m"
+      ],
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "image": "study-workbench-bff:v1-local",
+      "build": {
+        "context": "../..",
+        "dockerfile": "deploy/v1/Dockerfile.bff",
+        "target": "bff"
+      },
+      "user": "node",
+      "environment": {
+        "NODE_ENV": "production",
+        "PORT": "3000",
+        "STUDY_WORKBENCH_BFF_LISTEN_HOST": "0.0.0.0",
+        "STUDY_WORKBENCH_AUTH_MODE": "legacy_password",
+        "STUDY_WORKBENCH_WEB_ORIGIN": "${PUBLIC_ORIGIN:?Set frontend origin without trailing slash}",
+        "INTERNAL_API_URL": "http://api:5055",
+        "STUDY_WORKBENCH_WEB_NATIVE_PASSTHROUGH": "false"
+      },
+      "depends_on": {
+        "api": {
+          "condition": "service_healthy"
+        }
+      }
     },
     "api": {
       "image": "study-workbench-backend:v1-local",

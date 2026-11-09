@@ -69,19 +69,21 @@ def _validate(data, root):
 
     if not isinstance(data, dict) or not isinstance(data.get("services"), dict):
         return ["Compose must define services"]
+    require(
+        set(data) <= {"name", "services", "volumes", "secrets"},
+        "Unsupported top-level deployment setting",
+    )
     services = data["services"]
     require(
-        set(services) == {"frontend", "api", "worker", "db"},
-        "Exactly four named services required",
+        set(services) == {"web", "bff", "api", "worker", "db"},
+        "Exactly five named services required",
     )
     if not all(
         isinstance(services.get(name), dict)
-        for name in ("frontend", "api", "worker", "db")
+        for name in ("web", "bff", "api", "worker", "db")
     ):
         return errors + ["Required service mappings missing"]
-    api, worker, front, db = (
-        services[name] for name in ("api", "worker", "frontend", "db")
-    )
+    api, worker, front, db = (services[name] for name in ("api", "worker", "web", "db"))
     require(
         api.get("image") == worker.get("image") == "study-workbench-backend:v1-local",
         "Backend image must be identical and local",
@@ -107,22 +109,59 @@ def _validate(data, root):
         front.get("build")
         == {
             "context": "../..",
-            "dockerfile": "deploy/v1/Dockerfile.frontend",
-            "target": "frontend",
+            "dockerfile": "deploy/v1/Dockerfile.web",
+            "target": "web",
         },
         "Frontend build target required",
     )
     require(
-        front.get("ports") == ["127.0.0.1:8502:3000"],
+        front.get("ports") == ["127.0.0.1:8502:8080"],
         "Frontend publication must be loopback-only",
     )
     require(
-        front.get("environment")
+        front.get("image") == "study-workbench-web:v1-local",
+        "Static Web image required",
+    )
+    bff = services["bff"]
+    require(
+        not front.get("environment"), "Static gateway has no runtime credentials/config"
+    )
+    require(
+        bff.get("image") == "study-workbench-bff:v1-local"
+        and bff.get("build")
         == {
-            "INTERNAL_API_URL": "http://api:5055",
-            "API_URL": "${PUBLIC_ORIGIN:?Set frontend origin without trailing slash}",
+            "context": "../..",
+            "dockerfile": "deploy/v1/Dockerfile.bff",
+            "target": "bff",
         },
-        "Frontend gets only internal URL and explicit public origin",
+        "Standalone BFF build required",
+    )
+    require(
+        bff.get("environment")
+        == {
+            "NODE_ENV": "production",
+            "PORT": "3000",
+            "STUDY_WORKBENCH_BFF_LISTEN_HOST": "0.0.0.0",
+            "STUDY_WORKBENCH_AUTH_MODE": "legacy_password",
+            "STUDY_WORKBENCH_WEB_ORIGIN": "${PUBLIC_ORIGIN:?Set frontend origin without trailing slash}",
+            "INTERNAL_API_URL": "http://api:5055",
+            "STUDY_WORKBENCH_WEB_NATIVE_PASSTHROUGH": "false",
+        },
+        "BFF exact production configuration required",
+    )
+    require(
+        not bff.get("secrets") and not bff.get("volumes") and not bff.get("command"),
+        "BFF receives no data, secrets or alternate command",
+    )
+    for name in ("web", "bff"):
+        require(
+            services[name].get("read_only") is True
+            and services[name].get("tmpfs") == ["/tmp:rw,noexec,nosuid,size=64m"],
+            name + ": read-only root and scoped tmpfs required",
+        )
+    require(
+        front.get("depends_on") == {"bff": {"condition": "service_started"}},
+        "Web orders after its one BFF",
     )
     require(
         not front.get("secrets") and not front.get("volumes"),
@@ -151,8 +190,35 @@ def _validate(data, root):
         if not isinstance(service, dict):
             errors.append("Service must be a mapping")
             continue
+        allowed_keys = {
+            "image",
+            "build",
+            "user",
+            "init",
+            "restart",
+            "environment",
+            "secrets",
+            "volumes",
+            "depends_on",
+            "security_opt",
+            "cap_drop",
+            "command",
+            "healthcheck",
+        }
+        if name in {"web", "bff"}:
+            allowed_keys |= {"read_only", "tmpfs"}
+        if name == "web":
+            allowed_keys.add("ports")
+        require(set(service) <= allowed_keys, f"{name}: unsupported service setting")
         require(
-            service.get("user") == ("node" if name == "frontend" else "10001:10001"),
+            service.get("user")
+            == (
+                "node"
+                if name == "bff"
+                else "101:101"
+                if name == "web"
+                else "10001:10001"
+            ),
             f"{name}: explicit non-root identity required",
         )
         require(
@@ -174,7 +240,9 @@ def _validate(data, root):
             service.get("deploy", {}).get("replicas", 1) == 1,
             f"{name}: one instance required",
         )
-        if name != "frontend":
+        if name != "web":
+            require(not service.get("ports"), f"{name}: host publication forbidden")
+        if name not in {"web", "bff"}:
             require(not service.get("ports"), f"{name}: host publication forbidden")
             require(
                 service.get("command") == [name],
@@ -242,7 +310,7 @@ def _validate(data, root):
             service.get("depends_on", {}).get("db") == {"condition": "service_healthy"},
             f"{name}: DB health ordering required",
         )
-    for name in ("frontend", "worker"):
+    for name in ("bff", "worker"):
         require(
             services[name].get("depends_on", {}).get("api")
             == {"condition": "service_healthy"},
@@ -293,8 +361,14 @@ def _validate(data, root):
         }
         require(
             IGNORE_PATTERNS <= ignores
-            and not any(line.startswith("!") for line in ignores),
-            "Build context must exclude all sensitive/nested paths without re-inclusions",
+            and {line for line in ignores if line.startswith("!")}
+            == {
+                "!apps/web/gateway/dist",
+                "!apps/web/gateway/dist/**",
+                "!apps/bff/dist",
+                "!apps/bff/dist/**",
+            },
+            "Build context must exclude sensitive paths with only verified artifact roots re-included",
         )
         backend = (root / "deploy/v1/Dockerfile.backend").read_text()
         frontend = (root / "deploy/v1/Dockerfile.frontend").read_text()
@@ -353,6 +427,68 @@ def _validate(data, root):
                 ),
                 "Build-time secrets forbidden",
             )
+        node_pin = "node:24.22.2-bookworm-slim@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9"
+        nginx_pin = "nginx:1.30.6-trixie@sha256:42c68eab6f7e22611786a9fe1d1c019e275c50185bd54b8f75dc2b9184322703"
+        web_recipe = (root / "deploy/v1/Dockerfile.web").read_text()
+        bff_recipe = (root / "deploy/v1/Dockerfile.bff").read_text()
+        require(
+            node_pin in web_recipe
+            and node_pin in bff_recipe
+            and nginx_pin in web_recipe,
+            "Exact official Node/nginx pins required",
+        )
+        require(
+            'ENTRYPOINT ["nginx"]' in web_recipe
+            and "USER 101:101" in web_recipe
+            and "verifyGateway" in web_recipe,
+            "Unprivileged artifact-first gateway required",
+        )
+        require(
+            'ENTRYPOINT ["node", "cli.js"]' in bff_recipe
+            and "verifyArtifact" in bff_recipe
+            and "node_modules" not in bff_recipe,
+            "Standalone verified BFF closure required",
+        )
+        gateway = (root / "deploy/v1/web-gateway.conf").read_text()
+        proxy = (root / "deploy/v1/bff-proxy.conf").read_text()
+        require(
+            all(
+                value in gateway
+                for value in (
+                    "$request_uri",
+                    "upstream bff_origin { server bff:3000; }",
+                    "proxy_pass http://bff_origin$request_uri;",
+                    "listen 8080;",
+                    "pid /tmp/nginx.pid;",
+                    "application/javascript mjs;",
+                    "client_max_body_size 0;",
+                )
+            ),
+            "Fixed raw-target non-root gateway required",
+        )
+        require(
+            all(
+                value in proxy
+                for value in (
+                    "proxy_buffering off;",
+                    "proxy_request_buffering off;",
+                    "proxy_cache off;",
+                    "proxy_next_upstream off;",
+                    "proxy_ignore_client_abort off;",
+                )
+            ),
+            "Unbuffered unreplayed private proxy required",
+        )
+        require(
+            "try_files $uri $uri/ /index.html" not in gateway
+            and "$host" not in gateway
+            and "$host" not in proxy,
+            "Generic SPA fallback or browser Host trust forbidden",
+        )
+        require(
+            (root / "deploy/v1/THIRD_PARTY_NOTICES.md").is_file(),
+            "Accompanying third-party notices required",
+        )
         entry = (root / "deploy/v1/entrypoint.py").read_text()
         require(
             not re.search(r"(?:pip install|uv sync|npm (?:ci|install)|apt-get)", entry),

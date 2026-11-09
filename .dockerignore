@@ -51,6 +51,14 @@ docs
 *.swo
 *~
 .DS_Store
+# C1 artifact-first inputs; only strictly verified artifact roots are re-included.
+**/build
+**/dist
+!apps/web/gateway/dist
+!apps/web/gateway/dist/**
+!apps/bff/dist
+!apps/bff/dist/**
+
 # V1 build boundary: secrets, local browser state and nested native workspaces.
 **/.runtime
 **/.env*
@@ -60,8 +68,6 @@ docs
 **/.venv
 **/__pycache__
 **/target
-**/build
-**/dist
 **/.git
 **/.aws
 **/.ssh
@@ -84,3 +90,8 @@ docs
 **/*.pem
 **/*.key
 **/*.secret
+
+.superpowers
+**/profile_default
+**/profiles
+**/auth-state*

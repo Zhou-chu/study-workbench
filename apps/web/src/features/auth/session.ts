@@ -1,10 +1,22 @@
+import {createArtifactIdentity,isArtifactManifest,ArtifactMismatchError,type SpaArtifactManifest} from '../../data/artifact';
 import { parseProviderStatus, type ProviderStatus } from '../../data/provider-status';
 import type { DispatchContext } from '@study/web-transport';
-import type { ClientCapabilitiesV1, RuntimeConfig } from '@study/contracts';
+import {parseClientCapabilities, type ClientCapabilitiesV1, type RuntimeConfig} from '@study/contracts';
 import { classifyAuthFailure, createSessionClient, createWebTransport, invalidateTurnContext, publishTurnTarget, readTurnContext, sessionCoordinator, suspendTurnTarget, TransportResponseError, RequestNotDispatchedError, type AuthPhase, type SessionClient, type RequestSpec, type WebTransport } from '@study/web-transport';
 import { ConfigurationError, errorCode, loadRuntimeConfig, loadClientCapabilities, parseSessionMetadata, parseWebStatus, type SessionMetadata } from '../../data/config';
+export type Compatibility = 'compatible' | 'blocked' | 'unavailable';
+export function evaluateCompatibility(localManifest: unknown, runtimeConfig: unknown, apiCapabilities: unknown): Compatibility {
+    if (localManifest == null || runtimeConfig == null || apiCapabilities == null) return 'unavailable';
+    if (!isArtifactManifest(localManifest)) return 'blocked';
+    const runtime = runtimeConfig as Record<string, unknown>, api = apiCapabilities as Record<string, unknown>;
+    if(runtime.apiUrl!=='' || !['legacy_password','device_sessions'].includes(String(runtime.auth_mode)) || (runtime.auth_mode==='device_sessions'?runtime.web_session_protocol!=='bff-memory-v1':runtime.web_session_protocol!==null))return 'blocked';
+    try {parseClientCapabilities(apiCapabilities);} catch {return 'blocked';}
+    const declared=runtime.client_contracts, supported=api.supported_contracts;
+    return runtime.ui_transport_protocol === localManifest.ui_transport_protocol && Array.isArray(declared) && localManifest.supported_contracts.every(c => declared.includes(c)) && api.contract_version === 'client-capabilities-v1' && Array.isArray(supported) && localManifest.supported_contracts.every(c => supported.includes(c)) ? 'compatible' : 'blocked';
+}
 export type ConnectionIssue = 'configuration' | 'capabilities' | 'ingress' | 'connection' | 'invalid-password' | null;
 export type SessionSnapshot = Readonly<{
+    compatibility: Compatibility | 'checking';
     reauthOpen: boolean;
     signedOutLocally: boolean;
     localSignoutConfirmed: boolean | null;
@@ -23,8 +35,10 @@ export type SessionSnapshot = Readonly<{
     capabilities: ClientCapabilitiesV1 | null;
 }>;
 /** One mounted application owns the coordinator. Metadata is not identity or authority. */
-export function createSessionController(onRetire: (epoch: number) => void = () => { }) {
-    let snapshot: SessionSnapshot = { reauthOpen: true, signedOutLocally:false, localSignoutConfirmed:null, serverRevocation:null, providerVerification:null, phase: 'bootstrapping', ready: false, busy: false, hasWorkspace: false, privacyChanged: false, providerNeedsReauth: false, providerChecking: false, providerEvidenceRevision: 0, issue: null, capabilities: null };
+export function createSessionController(onRetire: (epoch: number) => void = () => { }, localIdentity: () => Promise<SpaArtifactManifest> = createArtifactIdentity()) {
+    let verifiedAt = 0;
+    let localManifest: SpaArtifactManifest | null = null;
+    let snapshot: SessionSnapshot = { compatibility:'unavailable', reauthOpen: true, signedOutLocally:false, localSignoutConfirmed:null, serverRevocation:null, providerVerification:null, phase: 'bootstrapping', ready: false, busy: false, hasWorkspace: false, privacyChanged: false, providerNeedsReauth: false, providerChecking: false, providerEvidenceRevision: 0, issue: null, capabilities: null };
     let config: RuntimeConfig | null = null;
     let client: SessionClient | null = null;
     let raw: WebTransport | null = null;
@@ -56,7 +70,7 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
         sessionCoordinator.setPhase(next);
         update({ phase: next, ...((next === 'reauth-required' || next === 'anonymous') && snapshot.phase !== next ? {reauthOpen:true} : {}) });
     };
-    const suspend = () => { suspendTurnTarget(); update({ ready: false, capabilities: null }); };
+    const suspend = () => { verifiedAt=0; suspendTurnTarget(); update({ ready: false, capabilities: null }); };
     const retire = () => {
         const old = readTurnContext();
         suspend();
@@ -77,6 +91,15 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
             update({ busy: false, issue: null });
         }
     };
+    const invalidateCompatibility = () => {
+        if (disposed || signedOut) return;
+        ++ticket; sessionCoordinator.begin(); flight=null; suspend();
+        update({compatibility:'unavailable',busy:false});
+    };
+    const recoverCompatibility = () => {
+        if (!disposed && !signedOut && !loginRequired && snapshot.hasWorkspace) void run('check');
+    };
+    const visibilityChanged = () => { if(document.visibilityState==='hidden') invalidateCompatibility(); else recoverCompatibility(); };
     let unsubscribe = () => { };
     let listening = false;
     const listen = () => {
@@ -84,6 +107,7 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
             return;
         listening = true;
         window.addEventListener('storage', storageChanged);
+        window.addEventListener('offline',invalidateCompatibility); window.addEventListener('online',recoverCompatibility); document.addEventListener('visibilitychange',visibilityChanged);
         unsubscribe = sessionCoordinator.subscribe(next => {
             if (disposed || signedOut)
                 return;
@@ -105,7 +129,8 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
         if (error instanceof TransportResponseError && error.kind === 'retired')
             return;
         suspend();
-        update({ issue: error instanceof TransportResponseError ? (error.kind === 'ingress-unavailable' ? 'ingress' : 'connection') : stage });
+        update({ compatibility:error instanceof ConfigurationError || error instanceof ArtifactMismatchError ? 'blocked' : 'unavailable' });
+        update({ issue: error instanceof TransportResponseError ? (error.kind === 'ingress-unavailable' ? 'ingress' : stage === 'capabilities' ? 'capabilities' : 'connection') : stage });
         if (stage !== 'capabilities')
             phase('unavailable');
     };
@@ -125,7 +150,10 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
                 return;
             if (disposed || own !== ticket || !sessionCoordinator.isCurrent(operation))
                 return;
-            update({ ready: true, capabilities, hasWorkspace: true, issue: null });
+            const compatibility=evaluateCompatibility(localManifest,config,capabilities);
+            if(compatibility!=='compatible'){suspend();update({compatibility,issue:'capabilities'});return;}
+            verifiedAt=Date.now();
+            update({ compatibility, ready: true, capabilities, hasWorkspace: true, issue: null });
         }
         catch (error) {
             if (own === ticket && !disposed) {
@@ -198,12 +226,14 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
         }
         const own = ++ticket;
         const operation = sessionCoordinator.begin();
-        update({ busy: true, providerChecking: false, issue: null });
+        update({ busy: true, providerChecking: false, issue: null, compatibility:'checking' });
         suspend();
         const task = (async () => {
             let stage: 'configuration' | 'capabilities' | 'connection' = 'configuration';
             try {
-                const selected = await loadRuntimeConfig();
+                const [selected,manifest] = await Promise.all([loadRuntimeConfig(),localIdentity()]);
+                if(disposed || own!==ticket)return;
+                localManifest=manifest;
                 if (disposed || own !== ticket)
                     return;
                 if (config && (config.auth_mode !== selected.auth_mode || config.web_session_protocol !== selected.web_session_protocol))
@@ -291,6 +321,10 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
             flight = null;
     }
     const transport: WebTransport = Object.freeze({ async send(request: RequestSpec) {
+            if(snapshot.ready && Date.now()-verifiedAt >= 60_000){
+                void run('check'); // Revalidate only. Never continue/replay the caller's captured request.
+                throw new RequestNotDispatchedError('configuration');
+            }
             if (!snapshot.ready || !raw)
                 throw new RequestNotDispatchedError('configuration');
             const own = ticket;
@@ -402,7 +436,7 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
         },
         // Explicit provider-account boundary notification only; never infer continuity from a URL.
         retirePrivacyContext() { ++ticket; sessionCoordinator.begin(); flight = null; retire(); update({ busy: false, providerChecking: false }); },
-        dispose() { disposed = true; ++ticket; unsubscribe(); window.removeEventListener('storage', storageChanged); listeners.clear(); suspendTurnTarget(); },
+        dispose() { disposed = true; ++ticket; unsubscribe(); window.removeEventListener('storage', storageChanged); window.removeEventListener('offline',invalidateCompatibility); window.removeEventListener('online',recoverCompatibility); document.removeEventListener('visibilitychange',visibilityChanged); listeners.clear(); suspendTurnTarget(); },
     };
 }
 export type SessionController = ReturnType<typeof createSessionController>;

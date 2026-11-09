@@ -10,9 +10,9 @@ import { LoginPage } from '../features/auth/LoginPage';
 import { ReauthLayer } from '../features/auth/ReauthLayer';
 import { ConnectionState } from '../features/auth/ConnectionState';
 import { RouterNavigationGuard, UnsavedNavigationDialog } from './UnsavedNavigationDialog';
-import { AppDataBoundary, useAppData, useAppDrafts } from './providers';
+import { AppDataBoundary, useAppData, useAppDrafts, useArtifactIdentity } from './providers';
 import { useI18n } from '../i18n';
-function createWorkbench(drafts: DraftRegistry, clearServerData: () => void) { const controller=createSessionController(epoch => { drafts.retireContext(epoch); clearServerData(); }); controller.subscribe(()=>{drafts.turns.refreshFences();drafts.library.refreshFences(readTurnContext(), sessionCoordinator.current());}); return { drafts, navigation: createNavigationController(drafts), controller }; }
+function createWorkbench(drafts: DraftRegistry, clearServerData: () => void, artifactIdentity: ReturnType<typeof useArtifactIdentity>) { const controller=createSessionController(epoch => { drafts.retireContext(epoch); clearServerData(); },artifactIdentity); controller.subscribe(()=>{drafts.turns.refreshFences();drafts.library.refreshFences(readTurnContext(), sessionCoordinator.current());}); return { drafts, navigation: createNavigationController(drafts), controller }; }
 type Workbench = ReturnType<typeof createWorkbench>;
 const Context = createContext<Workbench | null>(null);
 export function WorkbenchSession({ children }: {
@@ -20,7 +20,8 @@ export function WorkbenchSession({ children }: {
 }) {
     const queryClient = useQueryClient();
     const drafts = useAppDrafts();
-    const [value] = useState(() => createWorkbench(drafts, () => queryClient.clear()));
+    const artifactIdentity=useArtifactIdentity();
+    const [value] = useState(() => createWorkbench(drafts, () => queryClient.clear(),artifactIdentity));
     const state = useSyncExternalStore(value.controller.subscribe, value.controller.getSnapshot);
     const data = useAppData();
     const { session } = useI18n();
@@ -39,7 +40,7 @@ export function WorkbenchSession({ children }: {
    {state.hasWorkspace && <div className="session-workspace" inert={login || !state.ready || undefined}>{children}<LibraryCommandObservers/></div>}
    {!state.hasWorkspace && login && <LoginPage controller={value.controller} state={state} onLogin={coldLogin}/>}
    {state.hasWorkspace && login && <ReauthLayer controller={value.controller} state={state}/>}
-   {!login && (!state.ready || state.providerNeedsReauth) && <ConnectionState controller={value.controller} state={state}/>}
+   {!login && (!state.ready || state.providerNeedsReauth) && <ConnectionState controller={value.controller} state={state} navigation={value.navigation}/>}
    {state.hasWorkspace && state.privacyChanged && <p role="status" className="connection-state">{session.privacy}</p>}
    {dataRouter && <RouterNavigationGuard navigation={value.navigation}/>}<UnsavedNavigationDialog navigation={value.navigation}/>
  </AppDataBoundary></Context.Provider>;

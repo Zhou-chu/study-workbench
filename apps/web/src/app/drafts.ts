@@ -144,7 +144,7 @@ export function createDraftRegistry() {
                     drafts.set(k, Object.freeze({ ...draft, retired: true, ...(draft.creation ? { creation: Object.freeze({ ...draft.creation, status: draft.creation.status === 'pending' ? 'unknown' as const : draft.creation.status }) } : {}) }));
             notify();
         },
-        hasUnsaved: () => transformations.hasUnsaved() || configuration.hasUnsaved() || advanced.hasUnsaved() || settings.hasUnsaved() || library.hasUnsaved() || studio.hasUnsaved() || turns.hasPending() || sources.hasUnsaved() || [...drafts.values()].some(d => !!(d.editor?.dirty || d.editor?.pending || d.question || d.file || d.creation && d.creation.status !== 'succeeded' && (d.creation.name || d.creation.description || ['pending', 'unknown'].includes(d.creation.status)))),
+        hasUnsaved: () => studio.blocked() || transformations.hasUnsaved() || configuration.hasUnsaved() || advanced.hasUnsaved() || settings.hasUnsaved() || library.hasUnsaved() || studio.hasUnsaved() || turns.hasPending() || sources.hasUnsaved() || [...drafts.values()].some(d => !!(d.editor?.dirty || d.editor?.pending || d.editor && ['unknown','conflict','rejected'].includes(d.editor.saveResult) || d.question || d.file || d.creation && d.creation.status !== 'succeeded' && (d.creation.name || d.creation.description || ['pending', 'unknown'].includes(d.creation.status)))),
         subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; } };
 }
 export type DraftRegistry = ReturnType<typeof createDraftRegistry>;
@@ -220,6 +220,11 @@ export function createNavigationController(registry: DraftRegistry) {
             unknown: !!draft?.editor && ['unknown', 'conflict', 'rejected'].includes(draft.editor.saveResult) || draft?.creation?.status === 'unknown' });
     };
     return { registry, getSnapshot: () => snapshot, subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
+        // Document reload loses every in-memory participant. Route-retain is not consent.
+        requestUpdate(reload: () => void): boolean {
+            if (status !== null || registry.hasUnsaved() || registry.studio.getSnapshot().notes.some(r=>['unknown','conflict','rejected'].includes(r.editor.saveResult))) return false;
+            reload(); return true;
+        },
         activate, activateResource,
         deactivateResource,
         holdResource(id: string) {

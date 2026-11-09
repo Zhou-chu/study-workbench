@@ -1,0 +1,19 @@
+# Artifact-first recipe. Build and verify from a clean committed checkout first.
+# No npm install or hidden Next renderer. Runtime/image gates are separate.
+FROM node:24.22.2-bookworm-slim@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9 AS verified
+WORKDIR /work
+COPY scripts/v1/spa-artifact-common.mjs /work/scripts/v1/spa-artifact-common.mjs
+COPY apps/web/gateway/dist /work/gateway
+RUN node --input-type=module -e "import {verifyGateway} from './scripts/v1/spa-artifact-common.mjs'; await verifyGateway('/work/gateway');"
+
+FROM nginx:1.30.6-trixie@sha256:42c68eab6f7e22611786a9fe1d1c019e275c50185bd54b8f75dc2b9184322703 AS web
+COPY --from=verified /work/gateway /srv
+COPY deploy/v1/web-gateway.conf /etc/nginx/nginx.conf
+COPY deploy/v1/bff-proxy.conf /etc/nginx/bff-proxy.conf
+COPY deploy/v1/licenses /usr/share/doc/study-workbench/licenses
+COPY deploy/v1/THIRD_PARTY_NOTICES.md /usr/share/doc/study-workbench/THIRD_PARTY_NOTICES.md
+USER 101:101
+EXPOSE 8080
+# Skip image bootstrap scripts: read-only root, no capabilities, temporary paths in /tmp.
+ENTRYPOINT ["nginx"]
+CMD ["-g", "daemon off;"]

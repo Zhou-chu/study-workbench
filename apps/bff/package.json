@@ -16,13 +16,12 @@
     "dist"
   ],
   "scripts": {
-    "test": "vitest run",
+    "test": "node --test scripts/*.test.mjs && vitest run",
     "typecheck": "tsc --noEmit",
-    "build": "tsc --project tsconfig.build.json",
+    "build": "node scripts/build-manifest.mjs --build",
     "lint": "eslint src/ test/",
     "start": "node dist/cli.js",
-    "pretypecheck": "npm -w @study/contracts run build",
-    "prebuild": "npm -w @study/contracts run build"
+    "pretypecheck": "npm -w @study/contracts run build"
   },
   "dependencies": {
     "@study/contracts": "0.1.0"

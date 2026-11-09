@@ -8,9 +8,8 @@
     "test": "node --test scripts/*.test.mjs && vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
-    "build": "tsc --noEmit && vite build",
+    "build": "node scripts/build-manifest.mjs --build",
     "contrast": "node scripts/check-contrast.mjs",
-    "prebuild": "node scripts/prepare-pdf-assets.mjs",
     "predev": "node scripts/prepare-pdf-assets.mjs",
     "pdf:check": "node scripts/prepare-pdf-assets.mjs --check"
   },

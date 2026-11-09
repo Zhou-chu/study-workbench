@@ -17,7 +17,7 @@ export async function loadRuntimeConfig(signal?: AbortSignal): Promise<RuntimeCo
     if (ingress)
         throw new TransportResponseError(ingress, response.status);
     if (!response.ok)
-        throw new ConfigurationError();
+        throw new TransportResponseError('unavailable',response.status);
     const value = record(await response.json());
     if (value.apiUrl !== '' || value.ui_transport_protocol !== 1 || !Array.isArray(value.client_contracts) || !value.client_contracts.every(item => typeof item === 'string') || !value.client_contracts.includes('workspace-view-v1') || !['legacy_password', 'device_sessions'].includes(String(value.auth_mode)) || (value.auth_mode === 'device_sessions' ? value.web_session_protocol !== 'bff-memory-v1' : value.web_session_protocol !== null))
         throw new ConfigurationError();
@@ -28,8 +28,9 @@ export async function loadClientCapabilities(context: DispatchContext, signal?: 
     const config: RuntimeConfig = { apiUrl: '', auth_mode: context.target.mode, web_session_protocol: context.target.protocol as RuntimeConfig['web_session_protocol'], client_contracts: ['workspace-view-v1'], ui_transport_protocol: 1 };
     const response = await createWebTransport(config).send({ method: 'GET', path: '/personal/client-capabilities', context, ...(signal ? { signal } : {}) });
     if (!response.ok)
-        throw new ConfigurationError();
-    return parseClientCapabilities(await response.json());
+        throw new TransportResponseError('unavailable',response.status);
+    const value:unknown=await response.json();
+    try { return parseClientCapabilities(value); } catch { throw new ConfigurationError(); }
 }
 export type SessionMetadata = Readonly<{
     session_id: string;
