@@ -3,7 +3,7 @@
 ## Status
 
 This source release supplies **inert tooling and planned cases**, not executed SPA acceptance.
-The562-case catalog contains446 individual exact operation anchors plus separate journey,
+The 615-case catalog contains 446 individual exact operation anchors plus separate journey,
 fault, viewport, locale, theme, device, provider, gateway, image, user and old-tab cases.
 Every row starts not_run or blocked. No operation route is promoted to verified.
 There is no actual acceptance summary, screenshot index, deployed service or claim of
@@ -101,6 +101,40 @@ all14 locales at390/1440; system-first/change, override, refresh, denied storage
 retained draft/File/PDF page; actual keyboard, coarse touch, Chinese IME, phone soft
 keyboard, tablet split-view and125%/200% browser zoom. Media keeps original colors,
 not global grayscale/invert.
+
+
+Fix-round case conditions preserve the existing input IDs as starting-condition
+anchors. Actual coarse-touch cases separately bind 360x800 and 390x844 portrait
+phones in light/dark. Soft-keyboard cases bind portrait 390x844 and landscape
+844x390 before keyboard opening; actual layout/visual viewport, orientation,
+keyboard and focus transitions are recorded separately. Tablet split-view cases
+bind 1024x768 and 512x768 starting conditions and record actual split/restore
+measurements, including unsupported targets. An unavailable actual starting
+condition remains blocked rather than borrowing a desktop/emulated observation.
+Each actual 125% and 200% zoom has distinct 390x720 compact and 1280x800 wide
+effective-CSS-viewport cases, measured after setting browser zoom.
+
+All 28 visual rows and four real-touch rows require measured rendered critical
+targets of at least 44x44 CSS px, body/button text contrast at least 4.5:1,
+applicable large text at least 3:1 and necessary non-text boundaries at least 3:1.
+The rendered-accessibility-measurements evidence identifies controls/states,
+dimensions, adjacent foreground/background colors and ratios, including opacity.
+Screenshots and actual input inspection remain required; source token arithmetic
+or unit results cannot substitute for rendered measurements.
+
+B9c has 23 operation-specific ambiguous-outcomes rows and 23 proven-unsent rows.
+Every ambiguous row identifies independent HTTP400/404/409/422/429/500 and
+network-lost-ack runs, each with its own original intent and request ledger:
+one admitted request stays one after duplicate/retry/metadata refresh, while the
+original unknown state and permitted later edits remain distinct. Optional-default
+clearing has a separate field subkey for every optional slot. No status classifier
+or replay authority is inferred. Proven-unsent requires a reviewed transport
+admission fixture proving zero sends with RequestNotDispatchedError; the consumed
+old token cannot replay. Only a fresh explicit confirmation after current gates
+may create one new request. Private cleanup, original destination/model/default
+identity and guarded navigation follow existing product semantics. These synthetic
+case plans remain not_run and cannot replace separately blocked real-provider
+observations. No runtime producer or product reducer is added here.
 
 spa-case-evidence-v1 exact fields: version, run_id, case_id, layer, identities,
 conditions, evidence_type, outcome, files. Identity binds source/API, Web/BFF asset
