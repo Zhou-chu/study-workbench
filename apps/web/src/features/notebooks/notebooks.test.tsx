@@ -153,7 +153,12 @@ it('keeps implemented podcast/search/advanced routes and pending later settings 
     expect(router.state.location.pathname).toBe('/podcasts');
     for (const route of ['/settings', '/settings/models', '/transformations']) {
         await act(async () => router.navigate(route));
-        expect(screen.getByText(/This page is being rebuilt/)).toBeVisible();
+        if (route === '/transformations') {
+            expect(screen.getByText(/This page is being rebuilt/)).toBeVisible();
+        } else {
+            expect(screen.getByRole('heading', {name: route === '/settings' ? 'Settings' : 'Models', level: 1})).toBeVisible();
+            expect(screen.queryByText(/This page is being rebuilt/)).toBeNull();
+        }
         expect(router.state.location.pathname).toBe(route);
     }
     await act(async()=>router.navigate('/advanced'));

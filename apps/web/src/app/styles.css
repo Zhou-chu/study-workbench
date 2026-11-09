@@ -307,3 +307,19 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .setup-warning .button{margin:4px}
 
 .advanced-page{overflow-wrap:anywhere}.advanced-page select{max-width:100%;min-height:44px}.advanced-categories{margin-block:16px;border:1px solid var(--interactive-border)}.advanced-categories label{display:flex;align-items:center;gap:8px;min-height:44px}.advanced-categories input{min-width:44px;min-height:44px}.advanced-page dl>div{display:flex;gap:16px;flex-wrap:wrap}
+
+/* Configuration surfaces share the existing paper/ink semantic palette. */
+.configuration-page { display: grid; gap: 1.5rem; max-width: 70rem; }
+.configuration-page section, .configuration-provider article { display: grid; gap: .75rem; padding-block: 1rem; border-block-start: 1px solid var(--interactive-border); }
+.configuration-page fieldset { min-width: 0; display: grid; gap: 1rem; }
+.configuration-page label, .configuration-field { display: grid; gap: .5rem; min-width: 0; }
+.configuration-page select, .configuration-page input, .configuration-editor select, .configuration-editor input { min-height: 44px; max-width: 100%; }
+.configuration-page label:has(input[type=checkbox]), .configuration-editor label:has(input[type=checkbox]) { display: flex; align-items: center; gap: .75rem; min-height: 44px; }
+.configuration-page dl { display: flex; flex-wrap: wrap; gap: 1rem; }
+.configuration-page summary { min-height: 44px; cursor: pointer; }
+.configuration-page article { overflow-wrap: anywhere; }
+@media (max-width: 600px) { .configuration-page .dialog-actions { display: grid; grid-template-columns: 1fr; } }
+
+.configuration-editor { display: grid; gap: 1rem; }
+.configuration-editor fieldset, .configuration-editor label { display: grid; gap: .5rem; min-width: 0; }
+.configuration-editor fieldset { margin-block: .75rem; }

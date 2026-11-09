@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Restore 50 SPA application settings, provider credential/model and default-assignment controls with private transient credential inputs, presence-aware edits, retained immutable safe intents, complete deletion impact checks and guarded save-to-Advanced navigation. Explicit provider actions and uncertain/partial results never replay automatically. All 14 locales are covered synthetically; B9d/e, independent review, browser/provider/runtime acceptance and deployment remain separate gates.
+
 - Restore 12 SPA Advanced controls with explicit global rebuild cost/scope confirmation, retained original acknowledgements and unknown guards, finite user-triggered progress observation and API version information in all 14 locales. Scheduling counts child submissions, not completed vectors. B9c-e, browser/provider/runtime acceptance and deployment remain pending.
 
 - Restore 33 SPA session, notebook lifecycle and Google connection controls with retained notebook settings, truthful local signout evidence, one-shot safe cold return, complete-selection ownership and explicit two-stage link outcomes. Preserve original retrieval admission, provider proof and nonsecret drafts across all 14 locales. B9b-e and browser/provider/deployment acceptance remain pending.

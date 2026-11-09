@@ -8,7 +8,7 @@ import {createSettingsApi} from '../../data/settings-api';
 import {useI18n} from '../../i18n';
 /** The one safe credential/env projection, reusable by later credential screens. */
 export function useSetupMetadata(){const {transport}=useAppData(),{state}=useWorkbenchSnapshot(),context=readTurnContext();const api=useMemo(()=>transport?createSettingsApi(transport):null,[transport]);
- return useQuery({queryKey:['setup-metadata',context?.epoch,sessionCoordinator.current()],enabled:!!api&&!!context?.ready&&state?.ready===true,queryFn:()=>api!.setup(context!),staleTime:Infinity,retry:false,refetchOnMount:false,refetchOnWindowFocus:false})}
+ return useQuery({queryKey:['setup-metadata',context?.epoch,sessionCoordinator.current()],enabled:!!api&&!!context?.ready&&state?.ready===true,queryFn:()=>api!.setup(context!),staleTime:Infinity,retry:false,refetchOnMount:false,refetchOnWindowFocus:false,refetchOnReconnect:false})}
 export function SetupWarning(){const {t}=useI18n(),read=useSetupMetadata();
  if(read.isPending)return <p className="setup-warning" role="status">{t.common.loading}</p>;
  if(read.isError)return <p className="setup-warning" role="status">{t.common.error}</p>;

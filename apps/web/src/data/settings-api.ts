@@ -1,3 +1,4 @@
+import * as cfg from './configuration-contracts';
 import {commandId,validRebuildRequest,parseRebuildReceipt,parseRebuildStatus,parseApiVersion,rebuildUnknown,type RebuildRequest} from './advanced-contracts';
 import {isRecord} from '@study/contracts';
 import {canDispatch,freezeDispatchContext,readTurnContext,sessionCoordinator,RequestNotDispatchedError,TransportResponseError,type DispatchContext,type WebTransport} from '@study/web-transport';
@@ -50,6 +51,59 @@ export function createSettingsApi(transport:WebTransport){
  const notebook=(n:string)=>'/notebooks/'+encodeURIComponent(n);
  const connection='/personal/connections/notebooklm';
  return Object.freeze({
+async contentSettings(c: DispatchContext) { return cfg.parseContent(await request('GET', '/settings', c)); },
+async saveContentSettings(input: cfg.ContentSettings, c: DispatchContext, key: string) {
+    const fields = Object.keys(input);
+    if (!fields.length || fields.some(k => !cfg.contentKeys.includes(k as cfg.ContentKey) || !cfg.validContent(k as cfg.ContentKey, input[k as cfg.ContentKey])))
+        throw new RequestNotDispatchedError('configuration');
+    const result = cfg.parseContent(await request('PUT', '/settings', c, input, { operationKey: key }));
+    if (fields.some(k => result[k as cfg.ContentKey] !== input[k as cfg.ContentKey]))
+        throw Error('Unconfirmed content save');
+    return result;
+},
+async extractionCapabilities(c: DispatchContext) { return cfg.parseCapabilities(await request('GET', '/capabilities', c)); },
+async webSearchStatus(c: DispatchContext) { return cfg.parseWebSearch(await request('GET', '/personal/web-search/status', c)); },
+async providers(c: DispatchContext) { return cfg.parseProviders(await request('GET', '/providers', c)); },
+async credentialsMetadata(c: DispatchContext) { return cfg.parseCredentials(await request('GET', '/credentials', c)); },
+async models(c: DispatchContext) { return cfg.parseModels(await request('GET', '/models', c)); },
+async modelDefaults(c: DispatchContext) { return cfg.parseDefaults(await request('GET', '/models/defaults', c)); },
+async saveModelDefault(field: cfg.DefaultKey, value: string | null, c: DispatchContext, key: string) {
+    if (!cfg.defaultKeys.includes(field) || value === null && cfg.requiredDefaults.includes(field))
+        throw new RequestNotDispatchedError('configuration');
+    if (value !== null)
+        cfg.identity(value);
+    const result = cfg.parseDefaults(await request('PUT', '/models/defaults', c, { [field]: value }, { operationKey: key }));
+    if (result[field] !== value)
+        throw Error('Unconfirmed default save');
+    return result;
+},
+async saveCredential(id: string | null, input: cfg.CredentialWrite, c: DispatchContext, key: string) {
+    if (id !== null && Object.hasOwn(input, 'provider'))
+        throw new RequestNotDispatchedError('configuration');
+    const result = await request(id === null ? 'POST' : 'PUT', id === null ? '/credentials' : '/credentials/' + encodeURIComponent(cfg.identity(id)), c, input, { operationKey: key });
+    const parsed = cfg.parseCredential(result);
+    if (id !== null && parsed.id !== id)
+        throw Error('Unconfirmed credential save');
+    const privateValues = [input.api_key, ...cfg.privateFields.map(f => input[f])].filter((s): s is string => typeof s === 'string' && !!s);
+    if (privateValues.some(value => JSON.stringify(parsed).includes(value)))
+        throw Error('Unsafe credential response');
+    return Object.freeze({ id: parsed.id });
+},
+async testCredential(id: string, c: DispatchContext, key: string) { return cfg.parseTest(await request('POST', '/credentials/' + encodeURIComponent(cfg.identity(id)) + '/test', c, undefined, { operationKey: key })); },
+async discoverCredentialModels(id: string, provider: string, c: DispatchContext, key: string) { return cfg.parseDiscovery(await request('POST', '/credentials/' + encodeURIComponent(cfg.identity(id)) + '/discover', c, undefined, { operationKey: key }), id, provider); },
+async registerCredentialModels(id: string, models: readonly cfg.Registration[], c: DispatchContext, key: string) {
+    if (!models.length || models.some(m => !m.name.trim() || !cfg.modelTypes.includes(m.model_type)))
+        throw new RequestNotDispatchedError('configuration');
+    return cfg.parseRegistration(await request('POST', '/credentials/' + encodeURIComponent(cfg.identity(id)) + '/register-models', c, { models }, { operationKey: key }));
+},
+async deleteCredential(id: string, migrateTo: string | null, c: DispatchContext, key: string) {
+    const suffix = migrateTo === null ? '' : '?migrate_to=' + encodeURIComponent(cfg.identity(migrateTo));
+    return cfg.parseDeletion(await request('DELETE', '/credentials/' + encodeURIComponent(cfg.identity(id)) + suffix, c, undefined, { operationKey: key }), true);
+},
+async migrateEnvironment(c: DispatchContext, key: string) { return cfg.parseMigration(await request('POST', '/credentials/migrate-from-env', c, undefined, { operationKey: key })); },
+async testModel(id: string, c: DispatchContext, key: string) { return cfg.parseTest(await request('POST', '/models/' + encodeURIComponent(cfg.identity(id)) + '/test', c, undefined, { operationKey: key })); },
+async deleteModel(id: string, c: DispatchContext, key: string) { return cfg.parseDeletion(await request('DELETE', '/models/' + encodeURIComponent(cfg.identity(id)), c, undefined, { operationKey: key }), false); },
+async autoAssignDefaults(c: DispatchContext, key: string) { return cfg.parseAutoAssign(await request('POST', '/models/auto-assign', c, undefined, { operationKey: key })); },
  async rebuild(input:RebuildRequest,c:DispatchContext,operationKey:string){if(!validRebuildRequest(input))throw new RequestNotDispatchedError('configuration');return parseRebuildReceipt(await request('POST','/embeddings/rebuild',c,{mode:input.mode,include_sources:input.include_sources,include_notes:input.include_notes,include_insights:input.include_insights},{operationKey,rebuild:true}))},
  async rebuildStatus(id:string,c:DispatchContext,signal?:AbortSignal){const expected=commandId(id);return parseRebuildStatus(await request('GET','/embeddings/rebuild/'+encodeURIComponent(expected)+'/status',c,undefined,{...(signal?{signal}:{})}),expected)},
  async version(c:DispatchContext,signal?:AbortSignal){return parseApiVersion(await request('GET','/config',c,undefined,{...(signal?{signal}:{})}))},

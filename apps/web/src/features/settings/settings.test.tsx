@@ -439,3 +439,82 @@ it('B9b closing confirmation restores focus to the visible opener or main fallba
  advancedServer();await advancedOpen();fireEvent.click(advancedConfirm().getByRole('button',{name:'Cancel'}));await waitFor(()=>expect(screen.getByRole('button',{name:'Start rebuild'})).toHaveFocus());
  fireEvent.click(advancedConfirm().getByRole('button',{name:'Confirm rebuild'}));await waitFor(()=>expect(screen.getByRole('main')).toHaveFocus());
 });
+
+import {configurationServer,contentSettings,credentialFixture,modelDefaults} from '../../test/configuration-fixtures';
+
+it('B9c edits seven application fields and confirms only the changed owned payload while retaining in-flight edits',async()=>{
+ let resolve!:(r:Response)=>void;
+ const requests=configurationServer(r=>r.method==='PUT'&&r.url.endsWith('/settings')?new Promise<Response>(yes=>resolve=yes):undefined);
+ await renderLibrary('/settings');
+ const doc=await screen.findByLabelText('Document Processing Engine');
+ fireEvent.change(doc,{target:{value:'simple'}});
+ fireEvent.click(screen.getByLabelText('Enable OCR'));
+ fireEvent.click(screen.getByRole('button',{name:'Save content settings'}));
+ await waitFor(()=>expect(resolve).toBeDefined());
+ fireEvent.change(doc,{target:{value:'auto'}});
+ await act(async()=>resolve(json({...contentSettings,default_content_processing_engine_doc:'simple',docling_ocr:false})));
+ expect(doc).toHaveValue('auto');
+ expect(await requests.find(r=>r.method==='PUT')!.clone().json()).toEqual({default_content_processing_engine_doc:'simple',docling_ocr:false});
+ expect(screen.getByRole('button',{name:'Save content settings'})).toBeEnabled();
+});
+it('B9c web-search retry is only a status read and never a provider action',async()=>{
+ const requests=configurationServer();await renderLibrary('/settings#web-search');
+ fireEvent.click(await screen.findByRole('button',{name:'Retry web-search status'}));
+ await waitFor(()=>expect(requests.filter(r=>r.url.endsWith('/web-search/status')).length).toBe(2));
+ expect(requests.filter(r=>r.method!=='GET')).toHaveLength(0);
+ expect(screen.getByText(/server IP/i)).toBeVisible();
+});
+it('B9c inspects models from the list and never renders stored private metadata',async()=>{
+ const requests=configurationServer();const h=await renderLibrary('/settings/models');
+ expect(await screen.findByText('First configuration')).toBeVisible();
+ expect(screen.getByRole('heading',{name:'Chat fixture'})).toBeVisible();
+ expect(document.body.textContent).not.toContain('synthetic-hidden');
+ expect(JSON.stringify(h.queries.getQueryCache().getAll().map(q=>q.state.data))).not.toMatch(/synthetic-hidden|synthetic\/private/);
+ expect(requests.some(r=>new URL(r.url).pathname==='/api/models/model%3Achat')).toBe(false);
+});
+it('B9c sends blank edit key as absence and clears private inputs after a matching save',async()=>{
+ let payload:unknown;
+ configurationServer(async r=>{
+  if(r.method==='PUT'&&r.url.includes('/credentials/')){payload=await r.json();return json(credentialFixture)}
+  return undefined;
+ });
+ const h=await renderLibrary('/settings/models');
+ fireEvent.click(await screen.findByRole('button',{name:'Edit First configuration'}));
+ const dialog=within(screen.getByRole('dialog'));
+ fireEvent.change(dialog.getByLabelText('Name'),{target:{value:'Changed'}});
+ fireEvent.click(dialog.getByRole('button',{name:'Save configuration'}));
+ await waitFor(()=>expect(payload).toEqual({name:'Changed'}));
+ expect(JSON.stringify(h.queries.getMutationCache().getAll())).not.toContain('api_key');
+});
+it('B9c registers explicit deduplicated discovery choices and preserves unknown mutation across remount',async()=>{
+ let resolve!:(r:Response)=>void;
+ const requests=configurationServer(r=>{
+  if(r.url.endsWith('/discover'))return json({credential_id:'credential:one',provider:'openai',discovered:[{name:'Alpha',provider:'openai',description:null},{name:'Alpha',provider:'openai',model_type:null}]});
+  if(r.url.endsWith('/register-models'))return new Promise<Response>(yes=>resolve=yes);
+  return undefined;
+ });
+ const h=await renderLibrary('/settings/models');
+ fireEvent.click(await screen.findByRole('button',{name:'Discover Models First configuration'}));
+ fireEvent.click(within(screen.getByRole('dialog')).getByRole('button',{name:'Confirm action'}));
+ fireEvent.click(await screen.findByLabelText('Alpha'));
+ fireEvent.click(screen.getByRole('button',{name:'Register selected'}));
+ await waitFor(()=>expect(resolve).toBeDefined());
+ await act(async()=>resolve(json({malformed:true})));
+ expect(await screen.findByText(/Do not resend/)).toBeVisible();
+ await act(async()=>h.router.navigate('/settings'));
+ if(screen.queryByRole('button',{name:'Continue and retain'}))fireEvent.click(screen.getByRole('button',{name:'Continue and retain'}));
+ expect(requests.filter(r=>r.url.endsWith('/register-models'))).toHaveLength(1);
+});
+it('B9c waits for matching embedding defaults save before opening the real Advanced target without rebuilding',async()=>{
+ let resolve!:(r:Response)=>void;
+ const requests=configurationServer(r=>r.method==='PUT'&&r.url.endsWith('/models/defaults')?new Promise<Response>(yes=>resolve=yes):undefined);
+ const h=await renderLibrary('/settings/models');
+ fireEvent.change(await screen.findByLabelText('Embedding Model'),{target:{value:'model:next'}});
+ fireEvent.click(within(screen.getByRole('dialog')).getByRole('button',{name:'Confirm and open Advanced'}));
+ await waitFor(()=>expect(resolve).toBeDefined());
+ expect(h.router.state.location.pathname).toBe('/settings/models');
+ await act(async()=>resolve(json({...modelDefaults,default_embedding_model:'model:next'})));
+ await waitFor(()=>expect(h.router.state.location.pathname).toBe('/advanced'));
+ expect(await screen.findByRole('button',{name:'Start rebuild'})).toBeVisible();
+ expect(requests.some(r=>r.url.includes('/embeddings/'))).toBe(false);
+});

@@ -1,3 +1,4 @@
+import {createConfigurationStore,type ConfigurationDraft} from '../features/settings/configuration-store';
 import {createAdvancedStore,type AdvancedDraft} from '../features/settings/advanced-store';
 import { createSettingsStore, type SettingsDraft } from '../features/settings/settings-store';
 import { createLibraryStore, type LibraryDraft } from '../features/library/library-store';
@@ -55,6 +56,7 @@ export function createDraftRegistry() {
     const library = createLibraryStore(notify);
     const settings = createSettingsStore(notify);
     const advanced = createAdvancedStore(notify);
+    const configuration = createConfigurationStore(notify);
     const sources = createSourceOperations(notify);
     const turns = createTurnRuntime(notify);
     const studio = createStudioStore(notify);
@@ -65,7 +67,7 @@ export function createDraftRegistry() {
         notify();
         return id;
     };
-    return { sources, turns, studio, library, settings, advanced,
+    return { sources, turns, studio, library, settings, advanced, configuration,
         registerPrivateClear(epoch: number, clear: () => void) {
             if (retired.has(epoch)) { try { clear(); } catch { /* Continue other participants. */ } return () => {}; }
             const callbacks=privateClears.get(epoch) ?? new Set<() => void>(); callbacks.add(clear); privateClears.set(epoch,callbacks);
@@ -129,6 +131,7 @@ export function createDraftRegistry() {
             callbacks?.forEach(clear => { try { clear(); } catch { /* One private field must not block another. */ } });
             settings.retire(epoch);
             advanced.retire(epoch);
+            configuration.retire(epoch);
             library.retire(epoch);
             sources.retire(epoch);
             turns.retire(epoch);
@@ -138,7 +141,7 @@ export function createDraftRegistry() {
                     drafts.set(k, Object.freeze({ ...draft, retired: true, ...(draft.creation ? { creation: Object.freeze({ ...draft.creation, status: draft.creation.status === 'pending' ? 'unknown' as const : draft.creation.status }) } : {}) }));
             notify();
         },
-        hasUnsaved: () => advanced.hasUnsaved() || settings.hasUnsaved() || library.hasUnsaved() || studio.hasUnsaved() || turns.hasPending() || sources.hasUnsaved() || [...drafts.values()].some(d => !!(d.editor?.dirty || d.editor?.pending || d.question || d.file || d.creation && d.creation.status !== 'succeeded' && (d.creation.name || d.creation.description || ['pending', 'unknown'].includes(d.creation.status)))),
+        hasUnsaved: () => configuration.hasUnsaved() || advanced.hasUnsaved() || settings.hasUnsaved() || library.hasUnsaved() || studio.hasUnsaved() || turns.hasPending() || sources.hasUnsaved() || [...drafts.values()].some(d => !!(d.editor?.dirty || d.editor?.pending || d.question || d.file || d.creation && d.creation.status !== 'succeeded' && (d.creation.name || d.creation.description || ['pending', 'unknown'].includes(d.creation.status)))),
         subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; } };
 }
 export type DraftRegistry = ReturnType<typeof createDraftRegistry>;
@@ -155,7 +158,7 @@ type NotebookCapture = Readonly<{
     activation: number;
     intent: NavigationIntent;
 }>;
-type ResourceDraft = LibraryDraft | SettingsDraft | AdvancedDraft;
+type ResourceDraft = LibraryDraft | SettingsDraft | AdvancedDraft | ConfigurationDraft;
 type ResourceCapture = Readonly<{decision: Exclude<NavigationDecision, 'allow'>; resourceId: string; resourceDraft: ResourceDraft; resourceDrafts: readonly ResourceDraft[]; focusedResourceId: string | null; notebookDraft: DraftState | undefined; activation: number; intent: NavigationIntent}>;
 type Capture = NotebookCapture | ResourceCapture;
 export function createNavigationController(registry: DraftRegistry) {
@@ -193,7 +196,7 @@ export function createNavigationController(registry: DraftRegistry) {
         if (resourceActive === id) resourceActive = [...resourceOwners].at(-1) ?? null;
         activation++; capture = null; status = null; notify();
     };
-    const resourceRows = () => [...resourceOwners].flatMap(id => {const row=(registry.library.get(id) ?? registry.settings.get(id) ?? registry.advanced.get(id));return row?[row]:[];});
+    const resourceRows = () => [...resourceOwners].flatMap(id => {const row=(registry.library.get(id) ?? registry.settings.get(id) ?? registry.advanced.get(id) ?? registry.configuration.get(id));return row?[row]:[];});
     const resourceDecision = (rows: readonly ResourceDraft[]): NavigationDecision => {
         // Source-origin Studio saves still block navigation when no notebook pane is mounted.
         const notebook = decision(active ? registry.get(active) : undefined);
@@ -219,7 +222,7 @@ export function createNavigationController(registry: DraftRegistry) {
         holdResource(id: string) {
             const lease = Symbol(id), leases = resourceLeases.get(id) ?? new Set<symbol>();
             leases.add(lease); resourceLeases.set(id, leases);
-            const row = (registry.library.get(id) ?? registry.settings.get(id) ?? registry.advanced.get(id));
+            const row = (registry.library.get(id) ?? registry.settings.get(id) ?? registry.advanced.get(id) ?? registry.configuration.get(id));
             if (row && (row.dirty || ['pending','accepted','unknown'].includes(row.status)) && !resourceOwners.has(id)) {
                 resourceOwners.add(id); activation++; capture=null; status=null; notify();
             }
