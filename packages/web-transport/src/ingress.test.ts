@@ -10,3 +10,10 @@ it('keeps source stream HTML and redirects unavailable', () => {
     expect(classifyIngressResponse(new Response('<html>', { headers: { 'content-type': 'text/html' } }), '/sources/s/chat/sessions/c/messages')).toBe('ingress-unavailable');
     expect(classifyIngressResponse(new Response(null, { status: 302, headers: { location: '/login' } }), '/sources/s/chat/sessions/c/messages')).toBe('ingress-unavailable');
 });
+
+it('admits only the exact Ask stream, keeping neighboring paths closed', () => {
+ expect(classifyIngressResponse(sse(), '/search/ask')).toBeNull();
+ expect(classifyIngressResponse(sse(), '/search/ask?q=x')).toBeNull();
+ for (const path of ['/search','/search/ask/simple','/search/ask/','/other/search/ask','/search/asking']) expect(classifyIngressResponse(sse(),path)).toBe('unexpected-response');
+ expect(classifyIngressResponse(new Response('<html>',{headers:{'content-type':'text/html'}}),'/search/ask')).toBe('ingress-unavailable');
+});

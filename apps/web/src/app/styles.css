@@ -268,3 +268,16 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .native-chat summary, .classic-context summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
 .classic-context pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 24rem; overflow: auto; }
 .native-chat [role=alert] { border-inline-start: 3px solid var(--interactive-border); padding-inline-start: 12px; font-weight: 600; }
+
+/* Global Search/Ask keeps library content on paper/ink surfaces. */
+.global-search { max-width: 1100px; }
+.global-search form { display: grid; gap: 20px; }
+.global-search label { display: grid; gap: 8px; }
+.global-search .library-check { display: flex; align-items: center; min-height: 44px; gap: 12px; }
+.global-search textarea, .global-search select, .library-dialog select { box-sizing: border-box; min-height: 44px; min-width: 44px; max-width: 100%; padding: 10px; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--interactive-border); }
+.global-search textarea { min-height: 120px; resize: vertical; }
+.global-search fieldset { border: 1px solid var(--decorative-line); padding: 16px; }
+.global-search summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; }
+.global-results { list-style: none; padding: 0; }
+.global-results > li, .global-answer article { padding-block: 20px; border-bottom: 1px solid var(--decorative-line); overflow-wrap: anywhere; }
+.global-search [role=alert] { border-inline-start: 3px solid var(--interactive-border); padding-inline-start: 12px; font-weight: 600; }

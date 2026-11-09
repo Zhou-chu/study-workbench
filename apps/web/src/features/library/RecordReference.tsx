@@ -43,5 +43,5 @@ export function RecordReference({ reference, onClose }: {
     if (reference.kind === 'source')
         return <SourceInspection sourceId={reference.id} onClose={onClose}/>;
     return <LibraryDialog open title={n.reference + ' · ' + reference.id} onOpenChange={value => { if (!value)
-        onClose(); }}>{read.isPending && <p role="status">{t.common.loading}</p>}{read.isError && <p role="alert">{t.common.contentUnavailable.errorTitle}</p>}{read.data?.kind === 'insight' && <InsightContent insight={read.data.value}/>} {read.data?.kind === 'note' && <article><h3>{read.data.value.title}</h3><Markdown>{read.data.value.content ?? t.common.unknown}</Markdown></article>}</LibraryDialog>;
+        onClose(); }}>{read.isPending && <p role="status">{t.common.loading}</p>}{read.isError && <p role="alert">{t.common.contentUnavailable.errorTitle}</p>}{read.data?.kind === 'insight' && <InsightContent insight={read.data.value}/>} {read.data?.kind === 'note' && <article><h3>{read.data.value.title ?? t.sources.untitledNote}</h3><p>{t.common.version+': '+read.data.value.revision}</p><Markdown>{read.data.value.content ?? t.common.unknown}</Markdown></article>}</LibraryDialog>;
 }

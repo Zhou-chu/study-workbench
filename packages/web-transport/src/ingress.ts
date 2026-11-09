@@ -14,7 +14,7 @@ export function classifyIngressResponse(response: Response, path: string): 'ingr
   if (type === 'text/html' || type === 'application/xhtml+xml') return 'ingress-unavailable'
   if (response.status === 204 || response.status === 205) return null
   if (type === 'application/json' || /^application\/[\w.+-]+\+json$/.test(type)) return null
-  if (type === 'text/event-stream' && (/\/events(?:\?|$)/.test(path) || /^\/sources\/[^/?#]+\/chat\/sessions\/[^/?#]+\/messages(?:\?|$)/.test(path))) return null
+  if (type === 'text/event-stream' && (/^\/search\/ask(?:\?|$)/.test(path) || /\/events(?:\?|$)/.test(path) || /^\/sources\/[^/?#]+\/chat\/sessions\/[^/?#]+\/messages(?:\?|$)/.test(path))) return null
   // Protected raw reads retain their binary/text stream; never classify it as application JSON.
   if (/\/(?:download|original|file|content|audio)(?:\?|$)/.test(path) && type) return null
   return 'unexpected-response'

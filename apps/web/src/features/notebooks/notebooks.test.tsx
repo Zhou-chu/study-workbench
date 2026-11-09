@@ -16,6 +16,8 @@ function mount(route = '/notebooks', reply?: (r: RequestSpec) => Response | unde
                 if (result)
                     return result;
             }
+            if (r.path === '/models') return json([]);
+            if (r.path === '/models/defaults') return json({default_chat_model:null,default_embedding_model:null});
             if (r.path.startsWith('/sources?')) return json([]);
             if (r.path.startsWith('/recently-viewed'))
                 return json([{ type: 'notebook', id: 'notebook:beta', title: 'Recently opened Beta', last_viewed_at: '2026-11-08T02:03:04+00:00' }, { type: 'source', id: 'source:classic', title: 'Recent classic source', last_viewed_at: '2026-11-07' }]);
@@ -142,13 +144,15 @@ it('keeps every retained pending route and search deep link instead of falling b
     const { router, requests } = mount('/search?q=synthetic&mode=ask');
     expect(await screen.findByRole('heading', { name: 'Ask and Search', level: 1 })).toBeVisible();
     expect(router.state.location.search).toBe('?q=synthetic&mode=ask');
-    expect(requests).toHaveLength(0);
+    expect(requests.filter(r=>r.method!=='GET')).toHaveLength(0);
+    expect(requests.every(r=>r.path==='/models'||r.path==='/models/defaults'||r.path.startsWith('/notebooks?'))).toBe(true);
     for (const route of ['/podcasts', '/settings', '/settings/models', '/transformations', '/advanced']) {
         await act(async () => router.navigate(route));
         expect(screen.getByText(/This page is being rebuilt/)).toBeVisible();
         expect(router.state.location.pathname).toBe(route);
     }
-    expect(requests).toHaveLength(0);
+    expect(requests.filter(r=>r.method!=='GET')).toHaveLength(0);
+    expect(requests.every(r=>r.path==='/models'||r.path==='/models/defaults'||r.path.startsWith('/notebooks?'))).toBe(true);
 });
 it('does not show a late A response after newer B navigation', async () => {
     let finish!: (r: Response) => void;
@@ -221,7 +225,8 @@ it('connects the real B2 capability-gated session and A4 transport to home and A
         if (path === '/api/notebooks')
             return json(notebookRows);
         // Live B5 entry reads only configuration and canonical history.
-        if (path === '/api/models/defaults') return json({default_chat_model:null});
+        if (path === '/api/models') return json([]);
+        if (path === '/api/models/defaults') return json({default_chat_model:null,default_embedding_model:null});
         if (path.startsWith('/api/personal/chats/') && path.endsWith('/turns') && request.method==='GET') return json([]);
         if (path === '/api/recently-viewed')
             return json([]);
@@ -338,7 +343,8 @@ it('makes the old form usable as a new blank intent only after actual B2 applica
         if (path === '/api/notebooks')
             return failRead ? json({ error: { code: 'AUTH_REQUIRED' } }, 401) : json(notebookRows);
         // Live B5 entry reads only configuration and canonical history.
-        if (path === '/api/models/defaults') return json({default_chat_model:null});
+        if (path === '/api/models') return json([]);
+        if (path === '/api/models/defaults') return json({default_chat_model:null,default_embedding_model:null});
         if (path.startsWith('/api/personal/chats/') && path.endsWith('/turns') && request.method==='GET') return json([]);
         if (path === '/api/recently-viewed')
             return json([]);
@@ -386,7 +392,8 @@ function mountRealCreation(initialEntries = ['/notebooks'], initialIndex = initi
         if (path === '/api/notebooks')
             return request.method === 'POST' ? (post ? post(request) : json({ ...notebookRows[0], id: 'notebook:fresh-result' })) : json(notebookRows);
         // Live B5 entry reads only configuration and canonical history.
-        if (path === '/api/models/defaults') return json({default_chat_model:null});
+        if (path === '/api/models') return json([]);
+        if (path === '/api/models/defaults') return json({default_chat_model:null,default_embedding_model:null});
         if (path.startsWith('/api/personal/chats/') && path.endsWith('/turns') && request.method==='GET') return json([]);
         if (path === '/api/sources' && request.method === 'GET') return json([]);
         if (path === '/api/recently-viewed')

@@ -1,3 +1,4 @@
+import { parseSearch, validScope, type GlobalQuery, type AskModels } from './global-search';
 import { session, messages, parentId, type NativeParent, type ContextConfig } from './native-chat';
 import { isRecord } from '@study/contracts';
 import { canDispatch, freezeDispatchContext, readTurnContext, sessionCoordinator, RequestNotDispatchedError, TransportResponseError, type DispatchContext, type WebTransport } from '@study/web-transport';
@@ -157,7 +158,19 @@ export function createLibraryApi(transport: WebTransport) {
         async delete(p: NativeParent, sid: string, c: DispatchContext, key: string) { const r = record(await request('DELETE', nativePath(p, sid), c, undefined, undefined, key)); if (r.success !== true)
             throw new LibraryError('invalid'); }
     });
+    const checkedScope = (p: GlobalQuery) => { if (!p.question.trim() || !validScope(p.notebooks)) throw new RequestNotDispatchedError('configuration'); return [...p.notebooks]; };
     return {
+        search: {
+            async submit(p: GlobalQuery,c: DispatchContext,signal?:AbortSignal) {
+                const notebook_ids=checkedScope(p);
+                return parseSearch(await request('POST','/search',c,signal,JSON.stringify({query:p.question,type:p.searchType,search_sources:p.includeSources,search_notes:p.includeNotes,limit:100,minimum_score:.2,notebook_ids})));
+            },
+            async ask(p:GlobalQuery,models:AskModels,c:DispatchContext,signal:AbortSignal) {
+                const notebook_ids=checkedScope(p);
+                if(Object.values(models).some(v=>!v.trim()))throw new RequestNotDispatchedError('configuration');
+                return (await response('POST','/search/ask',c,signal,JSON.stringify({question:p.question,strategy_model:models.strategy_model,answer_model:models.answer_model,final_answer_model:models.final_answer_model,notebook_ids}))).res;
+            }
+        },
         notebookChat: { ...native('notebook'), async execute(sid: string, message: string, context: {
                 sources: unknown[];
                 notes: unknown[];
@@ -282,7 +295,7 @@ export function createLibraryApi(transport: WebTransport) {
             return { job_id: commandId, status: str(r.status) };
         },
         metadata: {
-            async defaults(c: DispatchContext, signal?: AbortSignal) { const r = record(await request('GET', '/models/defaults', c, signal)); return { default_chat_model: nullable(r.default_chat_model) }; },
+            async defaults(c: DispatchContext, signal?: AbortSignal) { const r = record(await request('GET', '/models/defaults', c, signal)); return { default_chat_model: nullable(r.default_chat_model), default_embedding_model: nullable(r.default_embedding_model) }; },
             async transformations(c: DispatchContext, signal?: AbortSignal) { return array(await request('GET', '/transformations', c, signal)).map(v => { const r = record(v); return { id: id(r.id), title: str(r.title), description: str(r.description), apply_default: boolean(r.apply_default) }; }); },
             async models(c: DispatchContext, signal?: AbortSignal) { return array(await request('GET', '/models', c, signal)).map(v => { const r = record(v); return { id: id(r.id), name: str(r.name), type: str(r.type) }; }); }
         }

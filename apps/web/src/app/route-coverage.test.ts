@@ -37,7 +37,7 @@ it('keeps lifecycle writes and unfinished study/classic/advanced features pendin
         expect(routeCoverage.find(e => e.coveredOperations.includes(op))?.status).toBe('pending');
 });
 it('records actual recent-source detail wiring without reassigning B2 authentication', () => { expect(routeCoverage.find(e => e.coveredOperations.includes('notebooks.open_recent_source'))).toMatchObject({ ownerTask: 'B8', status: 'implemented' }); expect(routeCoverage.find(e => e.coveredOperations.includes('auth.login'))).toMatchObject({ ownerTask: 'B2', status: 'implemented' }); });
-it('retains the 70 B8a source operations and 29 B8b classic operations without claiming later slices', () => {
+it('retains the 70 B8a source operations and 29 B8b classic and 30 B8c global operations without claiming later slices', () => {
     const doc = readFileSync('../../docs/v1/B8A_SOURCE_ACCEPTANCE.md', 'utf8');
     const allocated = [...doc.matchAll(/^\| \x60([a-z0-9_.]+)\x60 \|/gm)].map(m => m[1]);
     expect(allocated).toHaveLength(70);
@@ -46,10 +46,14 @@ it('retains the 70 B8a source operations and 29 B8b classic operations without c
     const classic = [...classicDoc.matchAll(/^\| \x60([a-z0-9_.]+)\x60 \|/gm)].map(m => m[1]);
     expect(classic).toHaveLength(29);
     expect(new Set(classic).size).toBe(29);
+    const globalDoc = readFileSync('../../docs/v1/B8C_GLOBAL_ACCEPTANCE.md', 'utf8');
+    const global = [...globalDoc.matchAll(/^\| \x60([a-z0-9_.]+)\x60 \|/gm)].map(m => m[1]);
+    expect(global).toHaveLength(30);
+    expect(new Set(global).size).toBe(30);
     const b8 = routeCoverage.filter(r => r.ownerTask === 'B8');
     expect(b8).toHaveLength(172);
     for (const row of b8)
-        expect(row.status).toBe(row.coveredOperations.some(op => allocated.includes(op) || classic.includes(op)) ? 'implemented' : 'pending');
-    expect(b8.filter(r => r.status === 'pending')).toHaveLength(73);
+        expect(row.status).toBe(row.coveredOperations.some(op => allocated.includes(op) || classic.includes(op) || global.includes(op)) ? 'implemented' : 'pending');
+    expect(b8.filter(r => r.status === 'pending')).toHaveLength(43);
     expect(isCoverageComplete(routeCoverage)).toBe(false);
 });

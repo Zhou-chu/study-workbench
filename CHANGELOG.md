@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Restore global Search and Ask in the monochrome SPA with independent notebook scope, exact raw references, explicit three-model streaming answers, known terminal no-answer states and question-titled serial AI-note saves through Studio. Preserve original operation ownership, partial output and per-notebook uncertainty without replay. All 14 locales and 30 B8c operations have synthetic acceptance; podcasts, browser/provider/runtime acceptance and deployment remain pending.
+
 - Restore classic notebook and source conversations in the SPA with independent explicit-empty context, native session controls, synchronous notebook transcripts, whole-answer source SSE, verified legacy references and optional-title AI-note saves through Studio. Retain original uncertain operations without replay. All 14 locales and 29 B8b operations have synthetic acceptance; browser/provider/runtime acceptance, later B8 slices and deployment remain pending.
 
 - Restore the source library and full-ID source detail in the monochrome SPA, including serial retained imports, exact metadata/association changes, guarded retry, insights/embed observation and contained file/media access. Add real shell navigation, command destinations and a read-only retained notebook-creation inspector. All 14 locales and 70 B8a operations have synthetic acceptance; later B8 slices, browser acceptance and deployment remain pending.
