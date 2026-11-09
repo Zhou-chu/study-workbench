@@ -94,10 +94,12 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
     const invalidateCompatibility = () => {
         if (disposed || signedOut) return;
         ++ticket; sessionCoordinator.begin(); flight=null; suspend();
+        // An invalidated cold handshake has no workspace yet, but must expose safe recheck.
+        if(snapshot.phase==='bootstrapping')phase('unavailable');
         update({compatibility:'unavailable',busy:false});
     };
     const recoverCompatibility = () => {
-        if (!disposed && !signedOut && !loginRequired && snapshot.hasWorkspace) void run('check');
+        if (!disposed && !signedOut && !loginRequired && (snapshot.hasWorkspace || snapshot.phase==='unavailable')) void run('check');
     };
     const visibilityChanged = () => { if(document.visibilityState==='hidden') invalidateCompatibility(); else recoverCompatibility(); };
     let unsubscribe = () => { };

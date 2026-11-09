@@ -1,3 +1,7 @@
+import React from 'react';
+import {render,screen,fireEvent,cleanup} from '@testing-library/react';
+import {AppProviders} from './providers';
+import {ConnectionState} from '../features/auth/ConnectionState';
 import {beforeEach,afterEach,it,expect,vi} from 'vitest';
 import {createSessionController} from '../features/auth/session';
 import * as owner from '../features/auth/session';
@@ -87,4 +91,64 @@ it('rejects a late capability receipt after a newer offline suspension',async()=
 it('rejects affirmative malformed evidence rather than trusting contract-name strings alone',()=>{
  expect(owner.evaluateCompatibility(local,{...config,apiUrl:'https://evil.test'},caps)).toBe('blocked');
  expect(owner.evaluateCompatibility(local,config,{contract_version:'client-capabilities-v1',supported_contracts:['workspace-view-v1']})).toBe('blocked');
+});
+
+it.each(['config','identity'] as const)('fix1 I2 recovers cold %s invalidation via online, visible and explicit checks',async(stage)=>{
+ for(const recovery of ['online','visible','explicit'] as const){
+  invalidateTurnContext();sessionCoordinator.begin();sessionCoordinator.setPhase('bootstrapping');
+  let configs=0,identities=0,settleOldConfig!:(r:Response)=>void,settleOldIdentity!:(v:typeof local)=>void,settleCurrent!:(r:Response)=>void;
+  const requests:Request[]=[];
+  vi.stubGlobal('fetch',vi.fn((r:Request)=>{
+   requests.push(r);const target=new URL(r.url).pathname;
+   if(target==='/config'){
+    configs++;
+    if(configs===1&&stage==='config')return new Promise<Response>(resolve=>{settleOldConfig=resolve;});
+    if(configs===2)return new Promise<Response>(resolve=>{settleCurrent=resolve;});
+    return Promise.resolve(json(config));
+   }
+   return Promise.resolve(json(target==='/api/auth/status'?{auth_enabled:false}:caps));
+  }));
+  const identity=()=>{identities++;return identities===1&&stage==='identity'?new Promise<typeof local>(resolve=>{settleOldIdentity=resolve;}):Promise.resolve(local);};
+  const retire=vi.fn(),controller=createSessionController(retire,identity);
+  const initial=controller.start();
+  const visibility=vi.spyOn(document,'visibilityState','get').mockReturnValue('hidden');
+  if(recovery==='visible')document.dispatchEvent(new Event('visibilitychange'));else window.dispatchEvent(new Event('offline'));
+  expect(controller.getSnapshot()).toMatchObject({phase:'unavailable',ready:false,busy:false,hasWorkspace:false});
+  await expect(controller.transport.send({method:'POST',path:'/notebooks',context:{epoch:0,ready:false,target:{mode:'legacy_password',apiBase:'',protocol:null}}})).rejects.toThrow();
+  visibility.mockReturnValue('visible');
+  if(recovery==='explicit'){
+   render(<AppProviders locale="en-US"><ConnectionState controller={controller} state={controller.getSnapshot()}/></AppProviders>);
+   const check=screen.getByRole('button',{name:/check connection/i});
+   expect(check).toBeEnabled();fireEvent.click(check);fireEvent.click(check);
+  }else if(recovery==='online'){
+   window.dispatchEvent(new Event('online'));window.dispatchEvent(new Event('online'));
+  }else{
+   document.dispatchEvent(new Event('visibilitychange'));document.dispatchEvent(new Event('visibilitychange'));
+  }
+  expect(configs).toBe(2);expect(identities).toBe(2);
+  const current=controller.check();
+  if(stage==='config')settleOldConfig(json({...config,ui_transport_protocol:2}));else settleOldIdentity({...local,ui_transport_protocol:2} as unknown as typeof local);
+  await initial;
+  expect(controller.getSnapshot()).toMatchObject({ready:false,busy:true,phase:'unavailable'});
+  settleCurrent(json(config));await current;
+  expect(controller.getSnapshot()).toMatchObject({ready:true,compatibility:'compatible',hasWorkspace:true});
+  expect(requests.filter(r=>r.method==='POST')).toHaveLength(0);
+  expect(requests.filter(r=>new URL(r.url).pathname==='/api/personal/client-capabilities')).toHaveLength(1);
+  expect(retire).not.toHaveBeenCalled();controller.dispose();visibility.mockRestore();cleanup();
+ }
+});
+
+it('fix1 I2 recovery events do not bypass explicit login or local signout',async()=>{
+ const f=fixture();await f.controller.start();
+ window.dispatchEvent(new StorageEvent('storage',{key:'auth-storage'}));
+ const count=f.requests.length;
+ window.dispatchEvent(new Event('offline'));window.dispatchEvent(new Event('online'));
+ await f.controller.check();
+ expect(f.requests).toHaveLength(count);expect(f.controller.getSnapshot().ready).toBe(false);
+ await f.controller.login('synthetic');
+ expect(f.controller.getSnapshot().ready).toBe(true);
+ await f.controller.signoutLocal();const signedOutCount=f.requests.length;
+ window.dispatchEvent(new Event('offline'));window.dispatchEvent(new Event('online'));
+ await f.controller.check();expect(f.requests).toHaveLength(signedOutCount);
+ expect(f.controller.getSnapshot().ready).toBe(false);f.controller.dispose();
 });

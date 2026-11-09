@@ -165,6 +165,70 @@ def source_inventory(kind):
     return rows
 
 
+def reject_dynamic_loading(code):
+    """Conservative token gate, not a sandbox/data-flow proof; never evaluates."""
+    loaders = {
+        "require",
+        "eval",
+        "Function",
+        "createRequire",
+        "importScripts",
+        "getBuiltinModule",
+        "dlopen",
+    }
+
+    def after_trivia(index):
+        while index < len(code):
+            if code[index].isspace() or code[index] == "\ufeff":
+                index += 1
+                continue
+            if code.startswith("//", index):
+                index += 2
+                while index < len(code) and code[index] not in "\r\n\u2028\u2029":
+                    index += 1
+                continue
+            if code.startswith("/*", index):
+                end = code.find("*/", index + 2)
+                if end < 0:
+                    raise ValueError("Unterminated dependency trivia")
+                index = end + 2
+                continue
+            break
+        return index
+
+    index = 0
+    while index < len(code):
+        word = ""
+        cursor = index
+        # Intentionally inspect literal/comment/template text too. This can
+        # reject inert loader-like text, but cannot skip hidden expressions.
+        while cursor < len(code):
+            if (
+                code[cursor]
+                in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$"
+            ):
+                word += code[cursor]
+                cursor += 1
+                continue
+            if code.startswith("\\u", cursor):
+                match = re.match(
+                    r"\\u(?:\{([a-fA-F0-9]{1,6})\}|([a-fA-F0-9]{4}))", code[cursor:]
+                )
+                if match:
+                    word += chr(int(match.group(1) or match.group(2), 16))
+                    cursor += len(match.group(0))
+                    continue
+            break
+        next_index = after_trivia(cursor) if word == "import" else cursor
+        if (
+            word in loaders
+            or word == "import"
+            and code[next_index : next_index + 1] == "("
+        ):
+            raise ValueError("Dynamic BFF dependency loader")
+        index = max(index + 1, cursor)
+
+
 def verify(root, kind, contract, source=True):
     root = Path(root)
     manifest = load_json(root / "spa-artifact-manifest.json")
@@ -247,11 +311,7 @@ def verify(root, kind, contract, source=True):
             if not name.endswith(".js"):
                 raise ValueError("Unexpected BFF closure payload")
             code = read_file(root / name)[0].decode()
-            if re.search(
-                r"\b(?:require|eval)\s*\(|\bimport\s*(?:/\*[\s\S]*?\*/\s*)*\(|\bFunction\s*\(",
-                code,
-            ):
-                raise ValueError("Dynamic BFF dependency")
+            reject_dynamic_loading(code)
             parse = (
                 "import {SourceTextModule} from 'node:vm'; import {readFileSync} from 'node:fs'; "
                 "const m=new SourceTextModule(readFileSync(0,'utf8')); process.stdout.write(JSON.stringify(m.dependencySpecifiers));"

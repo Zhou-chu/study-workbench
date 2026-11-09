@@ -67,7 +67,7 @@ export async function verifyBffClosure(root){
   if(['package.json','artifact-identity.json'].includes(r.path))continue;
   if(!r.path.endsWith('.js'))throw Error('unexpected BFF closure payload');
   const code=(await bytes(path.join(root,r.path))).data.toString();
-  if(/\b(?:require|eval)\s*\(|\bimport\s*(?:\/\*[\s\S]*?\*\/\s*)*\(|\bFunction\s*\(/.test(code))throw Error('dynamic dependency closure');
+  rejectDynamicLoading(code);
   for(const spec of moduleImports(code)){
    if(['node:async_hooks','node:crypto','node:http','node:path','node:url'].includes(spec))continue;
    if(!spec.startsWith('./')||!spec.endsWith('.js')||!names.has(path.posix.join(path.posix.dirname(r.path),spec)))throw Error('external or missing import closure');
@@ -136,13 +136,16 @@ export async function stageGateway(output,artifacts){
   if(slots.has(slot))throw Error('reused release slot');slots.add(slot);
   for(const row of verified.inventory.assets){
    if(!row.path.startsWith('assets/')&&!row.path.startsWith('pdfjs/'))continue;
-   const old=seen.get(row.path);if(old&&old!==row.sha256)throw Error('retained path collision');seen.set(row.path,row.sha256);
+   const old=seen.get(row.path),record=canonical(row);if(old&&old!==record)throw Error('retained path collision');seen.set(row.path,record);
+   if(!old&&row.path.startsWith('pdfjs/')){
+    const destination=path.join(output,row.path);await mkdir(path.dirname(destination),{recursive:true});
+    await cp(path.join(artifact,row.path),destination,{errorOnExist:true,force:false});
+   }
   }
   await cp(artifact,path.join(output,'_spa/releases',slot),{recursive:true,errorOnExist:true,force:false});
   if(canonical(await verifyArtifact(path.join(output,'_spa/releases',slot)))!==canonical(verified))throw Error('retained artifact drift');
  }
  const current=artifacts[0];await cp(path.join(current,'index.html'),path.join(output,'index.html'));
- await cp(path.join(current,'pdfjs'),path.join(output,'pdfjs'),{recursive:true});
  await writeFile(path.join(output,'client-window.json'),canonical({schema_version:'spa-client-window-v1',current:(await verifyArtifact(current)).inventory.release_slot,retained:[...slots]})+'\n',{flag:'wx'});
  await verifyGateway(output);
 }
@@ -164,9 +167,10 @@ export async function verifyGateway(root,{contract}={}){
   for(const entry of await inventory(source,{metadata:true})){
    expected.push({...entry,path:relative+'/'+entry.path});
    if(entry.path.startsWith('assets/')||entry.path.startsWith('pdfjs/')){
-    const before=seen.get(entry.path);if(before&&before!==entry.sha256)throw Error('retained path collision');seen.set(entry.path,entry.sha256);
+    const before=seen.get(entry.path),record=canonical(entry);if(before&&before!==record)throw Error('retained path collision');seen.set(entry.path,record);
+    if(!before&&entry.path.startsWith('pdfjs/'))expected.push(entry);
    }
-   if(slot===window.current&&(entry.path==='index.html'||entry.path.startsWith('pdfjs/')))expected.push(entry);
+   if(slot===window.current&&entry.path==='index.html')expected.push(entry);
   }
  }
  const windowBytes=await bytes(path.join(root,'client-window.json'));
@@ -189,4 +193,47 @@ export function moduleImports(code){
  const parse="import {SourceTextModule} from 'node:vm'; import {readFileSync} from 'node:fs'; const m=new SourceTextModule(readFileSync(0,'utf8')); process.stdout.write(JSON.stringify(m.dependencySpecifiers));";
  try{return JSON.parse(execFileSync(process.execPath,['--experimental-vm-modules','--input-type=module','-e',parse],{input:code,encoding:'utf8',env:{PATH:path.dirname(process.execPath),LANG:'C.UTF-8'},stdio:['pipe','pipe','pipe']}));}
  catch{throw Error('invalid ESM closure syntax');}
+}
+
+/**
+ * Conservative dependency-token gate, not a JavaScript sandbox or data-flow proof.
+ * Scan all text (also literal/comment/template text) rather than risk hiding a
+ * loader inside an incorrectly skipped lexical region. Suspicious inert text
+ * can therefore be rejected. V8 separately validates complete ESM syntax and
+ * enumerates static imports; neither step links or evaluates the candidate.
+ */
+export function rejectDynamicLoading(code){
+ const loaders=new Set(['require','eval','Function','createRequire','importScripts','getBuiltinModule','dlopen']);
+ function afterTrivia(index){
+  while(index<code.length){
+   if(/\s/u.test(code[index])){index++;continue;}
+   if(code.startsWith('//',index)){
+    index+=2;while(index<code.length&&!/[\r\n\u2028\u2029]/u.test(code[index]))index++;
+    continue;
+   }
+   if(code.startsWith('/*',index)){
+    const end=code.indexOf('*/',index+2);if(end<0)throw Error('unterminated dependency trivia');
+    index=end+2;continue;
+   }
+   break;
+  }
+  return index;
+ }
+ for(let index=0;index<code.length;){
+  let word='',cursor=index;
+  while(cursor<code.length){
+   if(/[A-Za-z0-9_$]/.test(code[cursor])){word+=code[cursor++];continue;}
+   if(code.startsWith('\\u',cursor)){
+    const match=/^\\u(?:\{([a-fA-F0-9]{1,6})\}|([a-fA-F0-9]{4}))/.exec(code.slice(cursor));
+    if(match){
+     const point=parseInt(match[1]??match[2],16);
+     if(point>0x10ffff)throw Error('unsupported dependency token');
+     word+=String.fromCodePoint(point);cursor+=match[0].length;continue;
+    }
+   }
+   break;
+  }
+  if(loaders.has(word)||word==='import'&&code[afterTrivia(cursor)]==='(')throw Error('dynamic dependency closure');
+  index=cursor>index?cursor:index+1;
+ }
 }

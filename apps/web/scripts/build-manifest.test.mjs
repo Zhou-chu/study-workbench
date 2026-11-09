@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,writeFile,mkdir,rm,symlink} from 'node:fs/promises';
+import {mkdtemp,writeFile,readFile,mkdir,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 const artifact = await import('./build-manifest.mjs').catch(()=>({}));
@@ -29,14 +29,14 @@ test('canonical inventory digest measures sizes, modes, bytes and sorted paths',
  assert.notEqual(common.digest([{path:'a',size:1,mode:'0644',sha256:'a'}]),common.digest([{path:'a',size:1,mode:'0755',sha256:'a'}]));
 });
 
-async function fixtureWeb(base,slot,suffix='a',pdf='pdf'){
- const root=path.join(base,slot);await mkdir(path.join(root,'assets'),{recursive:true});await mkdir(path.join(root,'pdfjs/6.4.299'),{recursive:true});
+async function fixtureWeb(base,slot,suffix='a',pdf='pdf',version='6.4.299'){
+ const root=path.join(base,slot);await mkdir(path.join(root,'assets'),{recursive:true});await mkdir(path.join(root,'pdfjs',version),{recursive:true});
  const authored=[{path:'source.js',size:1,mode:'0644',sha256:'a'.repeat(64)}];
  const identity={release_slot:slot,source_commit:'b'.repeat(40),authored_digest:common.digest(authored),contract_digest:'c'.repeat(64),ui_transport_protocol:1,supported_contracts:['workspace-view-v1']};
  await writeFile(path.join(root,'artifact-identity.json'),common.canonical(identity)+'\n');
  await writeFile(path.join(root,'assets',suffix+'-12345678.js'),'const identity='+JSON.stringify(identity));
  await writeFile(path.join(root,'index.html'),'<script src="/_spa/releases/'+slot+'/assets/'+suffix+'-12345678.js"></script>');
- await writeFile(path.join(root,'pdfjs/6.4.299/file.bcmap'),pdf);
+ await writeFile(path.join(root,'pdfjs',version,'file.bcmap'),pdf);
  await common.finishArtifact(root,'web',identity,authored);return root;
 }
 test('retains exact release manifests/assets, rejects reused slots and PDF/hash collisions',async()=>{
@@ -72,5 +72,26 @@ test('gateway packaging checks the selected current contract without replacing r
   const output=path.join(root,'gateway');await common.stageGateway(output,[artifact]);
   const contract=path.join(root,'openapi.json');await writeFile(contract,'wrong');
   await assert.rejects(common.verifyGateway(output,{contract}),/contract/);
+ }finally{await rm(root,{recursive:true,force:true});}
+});
+
+test('fix1 I1 publishes and verifies the complete retained absolute PDF-version union',async()=>{
+ const root=await mkdtemp(path.join(tmpdir(),'c1-pdf-union-'));
+ try{
+  const current=await fixtureWeb(root,'synthetic-release-101','a','new-pdf','6.4.299');
+  const old=await fixtureWeb(root,'synthetic-release-102','b','old-pdf','5.4.149');
+  const same=await fixtureWeb(root,'synthetic-release-103','c','old-pdf','5.4.149');
+  const output=path.join(root,'gateway');await common.stageGateway(output,[current,old,same]);
+  assert.equal(await readFile(path.join(output,'pdfjs/6.4.299/file.bcmap'),'utf8'),'new-pdf');
+  const retained=path.join(output,'pdfjs/5.4.149/file.bcmap');
+  assert.equal(await readFile(retained,'utf8'),'old-pdf');
+  await common.verifyGateway(output);
+  await writeFile(retained,'changed');await assert.rejects(common.verifyGateway(output),/inventory/);
+  await writeFile(retained,'old-pdf');await rm(retained);await assert.rejects(common.verifyGateway(output),/inventory/);
+  await writeFile(retained,'old-pdf');
+  await writeFile(path.join(output,'pdfjs/5.4.149/extra.bcmap'),'extra');
+  await assert.rejects(common.verifyGateway(output),/inventory/);
+  const collision=await fixtureWeb(root,'synthetic-release-104','d','wrong-old-pdf','5.4.149');
+  await assert.rejects(common.stageGateway(path.join(root,'collision'),[current,old,collision]),/collision/);
  }finally{await rm(root,{recursive:true,force:true});}
 });

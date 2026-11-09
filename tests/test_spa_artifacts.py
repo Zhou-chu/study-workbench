@@ -265,3 +265,42 @@ def test_local_cli_verification_checks_actual_source_and_web_recipe_contract():
     assert (
         "contracts/v1/openapi.json" in (ROOT / "deploy/v1/Dockerfile.web").read_text()
     )
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "const later = import // ordinary line comment\n('next');",
+        "const later = import /* first */ // second\r\n /* third */ ('react');",
+        "const later = import // line\u2028('next');",
+        "const later = import // line\u2029('next');",
+        "const later = import \ufeff /* space */ ('next');",
+        "const later = `template ${import // line\n('next')}`;",
+        "const later = require // line\n('next');",
+        "const later = require /* comment */ ('next');",
+        "const load = r\\u0065quire; load('next');",
+        "const load = \\u{72}equire; load('next');",
+        "const later = require?.('next');",
+        "const later = (require)('next');",
+        "const later = module.require // line\n('next');",
+        "const later = eval // line\n('1');",
+        "const later = (0,eval)('1');",
+        "const later = e\\u0076al /* comment */ ('1');",
+        "const later = Function // line\n('return 1')();",
+        "const later = new Function /* comment */ ('return 1');",
+        "const later = globalThis['Function']('return 1');",
+        "const later = createRequire // line\n(import.meta.url)('next');",
+        "importScripts // line\n('next');",
+    ],
+)
+def test_fix1_loader_variants_fail_closed_without_evaluation(tmp_path, code):
+    check, root, contract = synthetic(tmp_path, "bff")
+    (root / "server.js").write_text(code)
+    receipt = check.load_json(root / "artifact-inventory.json")
+    receipt["assets"] = check.inventory(root)
+    manifest = check.load_json(root / "spa-artifact-manifest.json")
+    manifest["asset_digest"] = check.digest(receipt["assets"])
+    (root / "artifact-inventory.json").write_text(check.canonical(receipt) + "\n")
+    (root / "spa-artifact-manifest.json").write_text(check.canonical(manifest) + "\n")
+    with pytest.raises(ValueError, match="dependency|loader"):
+        check.verify(root, "bff", contract, source=False)

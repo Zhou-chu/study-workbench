@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add independent clean-source Web/BFF artifacts, immutable release identities and five-service packaging recipes. Compatibility suspension preserves drafts, File objects and uncertain operations; updates refuse to reload unresolved in-memory work. Source checks do not authorize image/runtime/browser/production deployment.
+- Add independent clean-source Web/BFF artifacts, immutable release identities and five-service packaging recipes. Compatibility suspension preserves drafts, File objects and uncertain operations; updates refuse to reload unresolved in-memory work. Source checks do not authorize image/runtime/browser/production deployment. Retained PDF-version assets, cold-start recovery, and non-evaluating dependency checks fail closed across updates.
 
 - Restore the final 18 SPA transformation controls and close the exact 129-operation B9 source set, with memory-only drafts, explicit original model/input confirmation, honest execution identity limits, form-free shared model metadata and retained unknown requests. All 14 locales are covered; browser, runtime and deployment acceptance remain separate gates.
 
