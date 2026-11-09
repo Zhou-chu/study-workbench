@@ -21699,7 +21699,7 @@
         "NOT EXECUTED: requires separately authorized original-owner synthetic runtime/browser and reviewed fault producer; no real provider, account, credential or persistent user data.",
         "Each outcome below is an independent synthetic fixture/owner run, not resetting or bypassing an unknown barrier inside one run. Each optional-clear field also gets its own run. Identify evidence by case ID / outcome / optional-field and record exact original token/context/revision and public intent.",
         "Use valid synthetic metadata and complete admission before the counted window. Capture baseline reads separately. Count only this named mutation/provider-capable request; later explicit metadata refresh is separately bounded to at most one GET per relevant source (settings/capabilities/web status, or providers/credentials/models/defaults). No timer, automatic mutation or real provider request.",
-        "Capture the exact model list [{name:synthetic-chat,model_type:language,provider:fixture-provider}] and original discovery/credential revisions."
+        "Capture the exact model list [{name:synthetic-chat,model_type:language,provider:openai}] and original discovery/credential revisions. credential-a uses the admitted public provider ID openai backed only by the owned synthetic adapter, never a real endpoint."
       ],
       "actions": [
         "HTTP400: Double-confirm the captured intent before rerender; hold the single POST /credentials/credential-a/register-models, then return 400 after the synthetic server admits the request, without proof that effects were absent. Preserve any permitted later edits/public selection separately (never bypass disabled controls). Attempt duplicate confirm and retry from the original surface; perform one ordinary metadata refresh, reselect the original unknown attempt and attempt retry again. Record before/after request counts under this outcome key.",
@@ -21747,7 +21747,7 @@
       "preconditions": [
         "NOT EXECUTED: requires separately authorized original-owner synthetic runtime/browser and reviewed fault producer; no real provider, account, credential or persistent user data.",
         "Independent original-owner synthetic run with current complete admission. The reviewed admission fixture must prove no transport send/server admission occurred; a plain network exception or HTTP response is not this proof. Retain original token and public intent; no production classifier is invented.",
-        "Capture the exact model list [{name:synthetic-chat,model_type:language,provider:fixture-provider}] and original discovery/credential revisions."
+        "Capture the exact model list [{name:synthetic-chat,model_type:language,provider:openai}] and original discovery/credential revisions. credential-a uses the admitted public provider ID openai backed only by the owned synthetic adapter, never a real endpoint."
       ],
       "actions": [
         "proven-unsent: Capture/confirm POST /credentials/credential-a/register-models; the reviewed synthetic transport admission boundary produces branded RequestNotDispatchedError before any send. Record zero transport/server admission and retained original not-sent attempt; trigger duplicate delivery of the consumed old token and ordinary metadata publication without sending again.",

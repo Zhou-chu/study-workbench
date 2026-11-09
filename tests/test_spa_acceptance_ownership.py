@@ -929,3 +929,16 @@ def test_fix1_b9c_proven_unsent_is_not_http_retry_authority(
         assert criterion in expected
     assert "outcome-request-ledger" in case["required_evidence_types"]
     assert case["initial_status"] == "not_run"
+
+
+@pytest.mark.parametrize("variant", ["ambiguous-outcomes", "proven-unsent"])
+def test_fix1_registration_fixture_uses_an_admitted_provider_id(variant):
+    import re
+
+    case = catalog_cases()[f"C2-R-B9c-credentials.register_selected--{variant}"]
+    plan = " ".join(case["preconditions"])
+    provider = re.search(r"provider:([a-z_-]+)", plan)
+    assert provider is not None
+    # Public provider names admitted by the existing UI, not a new fake enum.
+    assert provider.group(1) in {"openai", "ollama"}
+    assert "no real provider" in plan.lower()
