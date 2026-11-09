@@ -413,3 +413,148 @@ it('B9c retired private form releases the dialog and a late callback cannot clea
  expect(JSON.stringify(h.workbench.drafts.configuration.getSnapshot())).not.toMatch(/synthetic-(old|new)-private/);
  expect(requests.filter(r=>r.method==='PUT')).toHaveLength(1);
 });
+
+it.each(['create', 'edit'] as const)('B9c fix1 retains a private key through reveal and metadata edits for %s', async mode => {
+    let resolve!: (response: Response) => void;
+    const requests = configurationServer(r => {
+        if (['POST', 'PUT'].includes(r.method) && new URL(r.url).pathname.startsWith('/api/credentials'))
+            return new Promise<Response>(yes => { resolve = yes; });
+        return undefined;
+    });
+    const h = await modelPage();
+    fireEvent.click(screen.getByRole('button', {name: mode === 'create' ? 'Add Configuration: OpenAI' : 'Edit First configuration'}));
+    const key = dialog().getByLabelText('API Key') as HTMLInputElement;
+    fireEvent.change(key, {target: {value: 'synthetic-rerender-key'}});
+    fireEvent.click(dialog().getByRole('button', {name: 'Show API key'}));
+    expect(key).toHaveValue('synthetic-rerender-key');
+    expect(key.type).toBe('text');
+    fireEvent.click(dialog().getByRole('button', {name: 'Hide API key'}));
+    expect(key).toHaveValue('synthetic-rerender-key');
+    expect(key.type).toBe('password');
+    fireEvent.change(dialog().getByLabelText('Name'), {target: {value: 'Synthetic retained name'}});
+    fireEvent.click(dialog().getByRole('checkbox', {name: 'Language'}));
+    fireEvent.click(dialog().getByRole('checkbox', {name: 'Language'}));
+    expect(key).toHaveValue('synthetic-rerender-key');
+    fireEvent.click(dialog().getByRole('button', {name: 'Save configuration'}));
+    await waitFor(() => expect(resolve).toBeDefined());
+    expect(key).toHaveValue('synthetic-rerender-key');
+    const write = requests.find(r => ['POST', 'PUT'].includes(r.method))!;
+    expect(await write.clone().json()).toEqual({
+        name: 'Synthetic retained name',
+        api_key: 'synthetic-rerender-key',
+        ...(mode === 'create' ? {provider: 'openai', modalities: ['embedding', 'language']} : {modalities: ['embedding', 'language']})
+    });
+    expect(JSON.stringify(h.workbench.drafts.configuration.getSnapshot())).not.toContain('synthetic-rerender-key');
+    expect(JSON.stringify(h.queries.getQueryCache().getAll().map(q => q.state.data))).not.toContain('synthetic-rerender-key');
+    expect(JSON.stringify(h.queries.getMutationCache().getAll())).not.toContain('synthetic-rerender-key');
+    expect(JSON.stringify(h.router.state)).not.toContain('synthetic-rerender-key');
+    await act(async () => resolve(json({...credentialFixture, id: mode === 'create' ? 'credential:new' : credentialFixture.id})));
+    await waitFor(() => expect(key.value).toBe(''));
+    expect(screen.queryByRole('dialog')).toBeNull();
+});
+
+it.each(['azure', 'vertex'] as const)('B9c fix1 keeps multiple %s private replacements while only a replaced field clears', async provider => {
+    let resolve!: (response: Response) => void;
+    const requests = configurationServer(r => {
+        const path = new URL(r.url).pathname;
+        if (path === '/api/providers') return json([{name: provider, display_name: provider, modalities: ['language', 'embedding'], docs_url: null, env_configured: false}]);
+        if (path === '/api/credentials') return json([{...credentialFixture, provider}]);
+        if (r.method === 'PUT') return new Promise<Response>(yes => { resolve = yes; });
+        return undefined;
+    });
+    const h = await modelPage();
+    fireEvent.click(screen.getByRole('button', {name: 'Edit First configuration'}));
+    const key = dialog().getByLabelText('API Key') as HTMLInputElement;
+    fireEvent.change(key, {target: {value: 'synthetic-multiple-key'}});
+    fireEvent.change(dialog().getByLabelText('Base URL'), {target: {value: 'set'}});
+    const oldBase = dialog().getByLabelText('Set replacement: Base URL') as HTMLInputElement;
+    fireEvent.change(oldBase, {target: {value: 'https://synthetic.invalid/?private=synthetic-base'}});
+    const secondLabel = provider === 'azure' ? 'Endpoint' : 'Service Account JSON Path';
+    fireEvent.change(dialog().getByLabelText(secondLabel), {target: {value: 'set'}});
+    const second = dialog().getByLabelText('Set replacement: ' + secondLabel) as HTMLInputElement;
+    const secondValue = provider === 'azure' ? 'https://synthetic.invalid/?private=synthetic-endpoint' : '/synthetic/private-path';
+    fireEvent.change(second, {target: {value: secondValue}});
+    let third: HTMLInputElement | null = null;
+    if (provider === 'azure') {
+        fireEvent.change(dialog().getByLabelText('Endpoint · Language'), {target: {value: 'set'}});
+        third = dialog().getByLabelText('Set replacement: Endpoint · Language') as HTMLInputElement;
+        fireEvent.change(third, {target: {value: 'https://synthetic.invalid/?private=synthetic-llm'}});
+        fireEvent.change(dialog().getByLabelText('API version'), {target: {value: '2026-01'}});
+    } else {
+        fireEvent.change(dialog().getByLabelText('GCP Project ID'), {target: {value: 'synthetic-project'}});
+        fireEvent.change(dialog().getByLabelText('Region'), {target: {value: 'synthetic-region'}});
+    }
+    expect(key).toHaveValue('synthetic-multiple-key');
+    expect(oldBase).toHaveValue('https://synthetic.invalid/?private=synthetic-base');
+    expect(second).toHaveValue(secondValue);
+    if (third) expect(third).toHaveValue('https://synthetic.invalid/?private=synthetic-llm');
+    fireEvent.change(dialog().getByLabelText('Base URL'), {target: {value: 'keep'}});
+    expect(oldBase.value).toBe('');
+    expect(key).toHaveValue('synthetic-multiple-key');
+    expect(second).toHaveValue(secondValue);
+    fireEvent.change(dialog().getByLabelText('Base URL'), {target: {value: 'set'}});
+    const replacementBase = dialog().getByLabelText('Set replacement: Base URL') as HTMLInputElement;
+    expect(replacementBase.value).toBe('');
+    fireEvent.change(replacementBase, {target: {value: 'https://synthetic.invalid/?private=synthetic-final-base'}});
+    fireEvent.click(dialog().getByRole('button', {name: 'Save configuration'}));
+    await waitFor(() => expect(resolve).toBeDefined());
+    expect(await requests.find(r => r.method === 'PUT')!.clone().json()).toEqual({
+        api_key: 'synthetic-multiple-key', base_url: 'https://synthetic.invalid/?private=synthetic-final-base',
+        ...(provider === 'azure' ? {endpoint: secondValue, endpoint_llm: 'https://synthetic.invalid/?private=synthetic-llm', api_version: '2026-01'} : {credentials_path: secondValue, project: 'synthetic-project', location: 'synthetic-region'})
+    });
+    expect(JSON.stringify(h.workbench.drafts.configuration.getSnapshot())).not.toMatch(/synthetic-multiple-key|synthetic-final-base|synthetic-endpoint|synthetic-llm|private-path/);
+    await act(async () => resolve(json({...credentialFixture, provider})));
+    await waitFor(() => expect(key.value).toBe(''));
+    expect(replacementBase.value).toBe('');
+    expect(second.value).toBe('');
+    if (third) expect(third.value).toBe('');
+});
+
+it.each(['cancel', 'retire', 'unmount'] as const)('B9c fix1 clears mounted private URL and path inputs on real %s', async exit => {
+    configurationServer(r => {
+        const path = new URL(r.url).pathname;
+        if (path === '/api/providers') return json([{name: 'vertex', display_name: 'Vertex', modalities: ['language'], docs_url: null, env_configured: false}]);
+        if (path === '/api/credentials') return json([{...credentialFixture, provider: 'vertex'}]);
+        return undefined;
+    });
+    const h = await modelPage();
+    fireEvent.click(screen.getByRole('button', {name: 'Edit First configuration'}));
+    fireEvent.change(dialog().getByLabelText('Base URL'), {target: {value: 'set'}});
+    fireEvent.change(dialog().getByLabelText('Service Account JSON Path'), {target: {value: 'set'}});
+    const inputs = ['API Key', 'Set replacement: Base URL', 'Set replacement: Service Account JSON Path'].map(label => dialog().getByLabelText(label) as HTMLInputElement);
+    const values = ['synthetic-exit-key', 'https://synthetic.invalid/?key=synthetic-exit-url', '/synthetic/exit-path'];
+    inputs.forEach((input, index) => fireEvent.change(input, {target: {value: values[index]}}));
+    inputs.forEach((input, index) => expect(input).toHaveValue(values[index]));
+    if (exit === 'cancel') fireEvent.click(dialog().getByRole('button', {name: 'Cancel'}));
+    else if (exit === 'retire') act(() => h.workbench.drafts.retireContext(readTurnContext()!.epoch));
+    else h.unmount();
+    inputs.forEach(input => expect(input.value).toBe(''));
+    expect(JSON.stringify(h.workbench.drafts.configuration.getSnapshot())).not.toMatch(/synthetic-exit-key|synthetic-exit-url|synthetic\/exit-path/);
+});
+
+it.each(['http', 'malformed'] as const)('B9c fix1 explicit Refresh recovers a %s provider registry failure without provider actions', async failure => {
+    let providerReads = 0;
+    const requests = configurationServer(r => {
+        if (new URL(r.url).pathname === '/api/providers') {
+            providerReads++;
+            if (providerReads === 1) return failure === 'http' ? json({detail: 'Synthetic registry failure'}, 422) : json({invalid: true});
+            return json([{name: 'openai', display_name: 'OpenAI', modalities: ['language', 'embedding'], docs_url: null, env_configured: true}]);
+        }
+        return undefined;
+    });
+    const h = await renderLibrary('/settings/models');
+    const store = h.workbench.drafts.configuration;
+    await waitFor(() => expect(store.getSnapshot().find(row => row.kind === 'models')?.sources.providers?.phase).toBe('error'));
+    const original = store.getSnapshot().find(row => row.kind === 'models')!;
+    expect(screen.getByRole('button', {name: 'Auto-assign Defaults'})).toBeDisabled();
+    await act(async () => h.router.navigate('/settings'));
+    await act(async () => h.router.navigate('/settings/models'));
+    expect(providerReads).toBe(1);
+    fireEvent.click(screen.getByRole('button', {name: 'Refresh'}));
+    await waitFor(() => expect(screen.getByRole('button', {name: 'Edit First configuration'})).toBeEnabled());
+    expect(providerReads).toBe(2);
+    expect(store.get(original.id)?.sources.providers).toEqual({phase: 'ready', revision: 2});
+    expect(store.get(original.id)!.metadataRevision).toBeGreaterThan(original.metadataRevision);
+    expect(store.getSnapshot().filter(row => row.kind === 'models')).toHaveLength(1);
+    expect(requests.filter(r => r.method !== 'GET')).toHaveLength(0);
+});

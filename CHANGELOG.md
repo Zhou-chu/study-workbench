@@ -94,6 +94,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Preserve newly entered credential keys, replacement URLs and paths across normal form rerenders while retaining lifecycle cleanup. Explicit model-settings Refresh now retries failed provider-registry reads without provider actions.
+
 - Notebook settings keep retired drafts and receipts reachable, observe acknowledged queued remote creation explicitly, publish reconciled links through the retained workspace, and fence provider work during connection changes.
 
 - Keep podcast draft identities within their original owner, reject widened selected context, protect pending speaker bindings, preserve acknowledged profile edits and reopen repeated palette creation intents.

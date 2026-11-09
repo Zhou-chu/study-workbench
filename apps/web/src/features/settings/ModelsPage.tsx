@@ -33,7 +33,7 @@ export function ModelsPage() {
         return !!r && (['providers', 'credentials', 'models', 'defaults'] as const).every(k => r.sources[k]?.phase === 'ready') && !setup.isPending && !setup.isError && !!setup.data;
     };
     const refresh = async () => {
-        await config.refresh(['credentials', 'models', 'defaults']);
+        await config.refresh(['providers', 'credentials', 'models', 'defaults']);
         await setup.refetch();
     };
     const credentials = row?.data.credentials ?? [], models = row?.data.models ?? [], defaults = row?.data.defaults;

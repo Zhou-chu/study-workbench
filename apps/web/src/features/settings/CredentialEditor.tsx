@@ -11,6 +11,18 @@ export function CredentialEditor({ config, refresh, enabled }: {
 }) {
     const { t, configuration: m } = useI18n(), form = config.row?.form;
     const inputs = useRef<Partial<Record<PrivateField | 'api_key', HTMLInputElement | null>>>({});
+    const inputRefs = useRef<Partial<Record<PrivateField | 'api_key', (element: HTMLInputElement | null) => void>>>({});
+    const bindInput = (key: PrivateField | 'api_key') => {
+        const existing = inputRefs.current[key];
+        if (existing) return existing;
+        // A stable callback distinguishes a real detach from an ordinary rerender.
+        const bind = (element: HTMLInputElement | null) => {
+            if (!element && inputs.current[key]) inputs.current[key]!.value = '';
+            inputs.current[key] = element;
+        };
+        inputRefs.current[key] = bind;
+        return bind;
+    };
     const pendingBody = useRef<CredentialWrite | null>(null);
     const [reveal, setReveal] = useState(false);
     const alive = useRef(true), version = useRef(0);
@@ -137,8 +149,7 @@ export function CredentialEditor({ config, refresh, enabled }: {
    <fieldset disabled={config.locked || stale}>
     <label>{t.common.name}<input value={form.name} onChange={e => update({ name: e.target.value })}/></label>
     <p>{form.provider.display_name}</p>
-    <label>{t.models.apiKey}<input ref={el => { if (!el && inputs.current.api_key)
-        inputs.current.api_key.value = ''; inputs.current.api_key = el; }} type={reveal ? 'text' : 'password'} autoComplete="off"/></label>
+    <label>{t.models.apiKey}<input ref={bindInput('api_key')} type={reveal ? 'text' : 'password'} autoComplete="off"/></label>
     <Button aria-label={reveal ? t.apiKeys.hideKeyLabel : t.apiKeys.showKeyLabel} onClick={() => setReveal(!reveal)}>{reveal ? t.apiKeys.hideKey : t.apiKeys.showKey}</Button>
     <p>{t.apiKeys.apiKeyEditHint}</p>
     <fieldset><legend>{t.models.modelType}</legend>{form.provider.modalities.map(type => <label key={type}><input type="checkbox" checked={form.modalities.includes(type)} onChange={e => update({ modalities: e.target.checked ? [...form.modalities, type] : form.modalities.filter(v => v !== type) })}/>{typeLabel(type)}</label>)}</fieldset>
@@ -149,8 +160,7 @@ export function CredentialEditor({ config, refresh, enabled }: {
       <option value="set">{m.set}</option>
       {form.credential && <option value="clear">{m.clear}</option>}
      </select></label>
-     {form.modes[key] === 'set' && <label>{m.set}: {fieldLabel(key)}<input ref={el => { if (!el && inputs.current[key])
-            inputs.current[key]!.value = ''; inputs.current[key] = el; }} type={key === 'credentials_path' ? 'text' : 'url'} autoComplete="off"/></label>}
+     {form.modes[key] === 'set' && <label>{m.set}: {fieldLabel(key)}<input ref={bindInput(key)} type={key === 'credentials_path' ? 'text' : 'url'} autoComplete="off"/></label>}
     </div>)}
     {(['project', 'location', 'api_version'] as const).filter(key => key === 'api_version' ? form.provider.name === 'azure' : form.provider.name === 'vertex').map(key => <label key={key}>{key === 'project' ? t.apiKeys.vertexProject : key === 'location' ? t.apiKeys.vertexLocation : m.apiVersion}<input value={form[key]} onChange={e => update({ [key]: e.target.value })}/></label>)}
     {form.provider.name === 'ollama' && <label>{t.apiKeys.numCtx}<input type="number" min="0" value={form.num_ctx} onChange={e => update({ num_ctx: e.target.value })}/></label>}
