@@ -46,3 +46,6 @@ it('provides every reader integrity and historical-version label in all fourteen
 
 import { studioMessages } from './studio-messages';
 it('provides explicit Studio uncertainty, compatibility and download labels in all fourteen locales',()=>{expect(Object.keys(studioMessages).sort()).toEqual([...codes].sort());const keys=Object.keys(studioMessages['en-US']).sort();expect(keys).toHaveLength(12);for(const row of Object.values(studioMessages)){expect(Object.keys(row).sort()).toEqual(keys);for(const value of Object.values(row))expect(value.trim()).not.toBe('');}});
+
+import {retrievalMessages} from './retrieval-messages';
+it('provides B9d safety copy in all fourteen languages without fallback',()=>{expect(Object.keys(retrievalMessages).sort()).toEqual([...codes].sort());for(const values of Object.values(retrievalMessages)){expect(Object.keys(values).sort()).toEqual(Object.keys(retrievalMessages['en-US']).sort());for(const text of Object.values(values))expect(text.trim()).not.toBe('');}});

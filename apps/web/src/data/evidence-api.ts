@@ -38,6 +38,7 @@ export interface ReaderExtraction {
     verification_origin: string | null;
 }
 export interface ReaderDetail {
+    retainedMarkdown: boolean | null;
     version: SourceVersionView & {
         source_version_id: string;
         notebook_id: string;
@@ -85,7 +86,18 @@ export function parseReaderDetail(value: unknown, expected: ReaderRequest): Read
         return invalid();
     if (expected.evidence_id && !evidence.some(e => e.evidence_id === expected.evidence_id))
         throw new EvidenceReadError('unavailable');
-    return { version: { ...version, source_version_id: expected.source_version_id, notebook_id: expected.notebookId }, extraction, evidence };
+    // F52 presence-only projection after every requested identity has been checked.
+    // The raw path is deliberately neither retained nor exposed.
+    const rawVersion = record(r.version), origin = rawVersion.origin, mime = rawVersion.mime_type;
+    let retainedMarkdown: boolean | null = null;
+    if (typeof origin === 'string' && ['upload', 'pasted_text', 'remote_text_snapshot', 'derived_snapshot', 'web_snapshot'].includes(origin) &&
+        typeof mime === 'string' && ['text/plain', 'text/markdown', 'application/pdf'].includes(mime)) {
+        if (origin !== 'web_snapshot' || mime !== 'text/markdown') retainedMarkdown = false;
+        else if (rawVersion.file_path === null || rawVersion.file_path === '') retainedMarkdown = false;
+        else if (typeof rawVersion.file_path === 'string' && rawVersion.file_path.trim().length > 0 &&
+            !/[\x00-\x1f\x7f]/.test(rawVersion.file_path)) retainedMarkdown = true;
+    }
+    return { retainedMarkdown, version: { ...version, source_version_id: expected.source_version_id, notebook_id: expected.notebookId }, extraction, evidence };
 }
 export const MAX_ORIGINAL_BYTES = 64 * 1024 * 1024;
 const MAX_DETAIL_BYTES = 16 * 1024 * 1024;

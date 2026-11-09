@@ -1,3 +1,4 @@
+import * as retrieval from './retrieval-contracts';
 import * as cfg from './configuration-contracts';
 import {commandId,validRebuildRequest,parseRebuildReceipt,parseRebuildStatus,parseApiVersion,rebuildUnknown,type RebuildRequest} from './advanced-contracts';
 import {isRecord} from '@study/contracts';
@@ -51,6 +52,32 @@ export function createSettingsApi(transport:WebTransport){
  const notebook=(n:string)=>'/notebooks/'+encodeURIComponent(n);
  const connection='/personal/connections/notebooklm';
  return Object.freeze({
+async semanticStatus(notebookId:string, selected:readonly string[], c:DispatchContext) {
+ const n=retrieval.identity(notebookId),v=retrieval.versions(selected),q=new URLSearchParams();
+ v.forEach(id=>q.append('source_version_ids',id));
+ return retrieval.parseStatus(await request('GET','/personal/notebooks/'+encodeURIComponent(n)+'/semantic-index?'+q,c),n,v);
+},
+async indexPreview(notebookId:string, selected:readonly string[], profile:retrieval.SemanticProfile,c:DispatchContext) {
+ const n=retrieval.identity(notebookId),v=retrieval.versions(selected);
+ return retrieval.parsePreview(await request('POST','/personal/notebooks/'+encodeURIComponent(n)+'/semantic-index/preview',c,{source_version_ids:v,profile_id:profile.profile_id}),n,v,profile);
+},
+async indexBuild(preview:retrieval.Preview,input:retrieval.IndexRequest,c:DispatchContext,key:string) {
+ const n=retrieval.identity(preview.snapshot.notebook_id),body=retrieval.indexBody(input);
+ return retrieval.parseReceipt(await request('POST','/personal/notebooks/'+encodeURIComponent(n)+'/semantic-index',c,body,{operationKey:key}),preview);
+},
+async indexJob(owned:retrieval.IndexOwned,jobId:string,c:DispatchContext,cancel=false) {
+ if(jobId!==owned.receipt.group_id&&!owned.receipt.job_ids.includes(jobId))throw new RequestNotDispatchedError('configuration');
+ return retrieval.parseIndexJob(await request(cancel?'POST':'GET','/personal/jobs/'+encodeURIComponent(retrieval.identity(jobId))+(cancel?'/cancel':''),c),owned,jobId);
+},
+async maintain(input:retrieval.MaintenanceRequest,c:DispatchContext) {
+ const body=input.operation==='reparse'?{idempotency_key:input.idempotency_key}:{extraction_id:input.extractionId,idempotency_key:input.idempotency_key};
+ return retrieval.parseMaintenance(await request('POST','/personal/source-versions/'+encodeURIComponent(retrieval.identity(input.versionId))+'/'+input.operation,c,body,{operationKey:input.idempotency_key}),input);
+},
+async maintenanceJob(input:retrieval.MaintenanceRequest,job:retrieval.MaintenanceJob,c:DispatchContext) {
+ const result = await retrieval.parseMaintenance(await request('GET','/personal/jobs/'+encodeURIComponent(retrieval.identity(job.job_id)),c),input,job.job_id);
+ if (result.fresh_extraction_id !== job.fresh_extraction_id) throw new Error('Invalid semantic evidence');
+ return result;
+},
 async contentSettings(c: DispatchContext) { return cfg.parseContent(await request('GET', '/settings', c)); },
 async saveContentSettings(input: cfg.ContentSettings, c: DispatchContext, key: string) {
     const fields = Object.keys(input);

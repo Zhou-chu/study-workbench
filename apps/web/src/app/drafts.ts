@@ -202,7 +202,7 @@ export function createNavigationController(registry: DraftRegistry) {
         const notebook = decision(active ? registry.get(active) : undefined);
         if (notebook === 'blocked') return 'blocked';
         if (notebook === 'retain' || rows.some(r=>['pending','accepted','unknown'].includes(r.status))) return 'retain';
-        return notebook === 'confirm' || rows.some(r=>r.dirty) ? 'confirm' : 'allow';
+        return notebook === 'confirm' || rows.some(r=>r.dirty||('retrieval' in r&&r.retrieval.dirty)) ? 'confirm' : 'allow';
     };
     const decision = (draft: DraftState | undefined): NavigationDecision => {
         if (registry.studio.blocked(active?.notebookId)) return 'blocked';
@@ -223,7 +223,7 @@ export function createNavigationController(registry: DraftRegistry) {
             const lease = Symbol(id), leases = resourceLeases.get(id) ?? new Set<symbol>();
             leases.add(lease); resourceLeases.set(id, leases);
             const row = (registry.library.get(id) ?? registry.settings.get(id) ?? registry.advanced.get(id) ?? registry.configuration.get(id));
-            if (row && (row.dirty || ['pending','accepted','unknown'].includes(row.status)) && !resourceOwners.has(id)) {
+            if (row && (row.dirty || ('retrieval' in row && row.retrieval.dirty) || ['pending','accepted','unknown'].includes(row.status)) && !resourceOwners.has(id)) {
                 resourceOwners.add(id); activation++; capture=null; status=null; notify();
             }
             return () => {

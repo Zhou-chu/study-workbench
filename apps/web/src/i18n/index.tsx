@@ -1,3 +1,4 @@
+import {retrievalMessages,type RetrievalMessages} from './retrieval-messages';
 import {configurationMessages,type ConfigurationMessages} from './configuration-messages';
 import {advancedMessages,type AdvancedMessages} from './advanced-messages';
 import {settingsMessages,type SettingsMessages} from './settings-messages';
@@ -22,6 +23,7 @@ export type ShellMessages = {
     [K in keyof typeof shellMessages['en-US']]: string;
 };
 type I18nValue = {
+    retrieval: RetrievalMessages;
     configuration: ConfigurationMessages;
     settings: SettingsMessages;
     advanced: AdvancedMessages;
@@ -66,7 +68,7 @@ export function I18nProvider({ children, initialLocale = detectLocale() }: {
     useEffect(() => { document.documentElement.lang = locale; }, [locale]);
     // Shape type only: parity is tested; this never substitutes English content.
     const t = resources[locale].translation as TranslationKeys;
-    return <Context.Provider value={{ configuration:configurationMessages[locale], advanced:advancedMessages[locale], settings:settingsMessages[locale], podcast:podcastMessages[locale], global:globalMessages[locale], native: nativeMessages[locale], library: libraryMessages[locale], studio: studioMessages[locale], reader: readerMessages[locale], locale, setLocale, t, chat: chatMessages[locale], shell: shellMessages[locale], session: sessionMessages[locale], notebook: notebookMessages[locale], source: sourceMessages[locale] }}>{children}</Context.Provider>;
+    return <Context.Provider value={{ retrieval:retrievalMessages[locale], configuration:configurationMessages[locale], advanced:advancedMessages[locale], settings:settingsMessages[locale], podcast:podcastMessages[locale], global:globalMessages[locale], native: nativeMessages[locale], library: libraryMessages[locale], studio: studioMessages[locale], reader: readerMessages[locale], locale, setLocale, t, chat: chatMessages[locale], shell: shellMessages[locale], session: sessionMessages[locale], notebook: notebookMessages[locale], source: sourceMessages[locale] }}>{children}</Context.Provider>;
 }
 export function useI18n(): I18nValue {
     const value = useContext(Context);

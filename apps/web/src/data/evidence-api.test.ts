@@ -24,3 +24,18 @@ it('cancels oversized streaming bodies instead of blindly buffering them', async
 it('rejects a stale download after hashing, not only after headers', async () => { const c = sourceContext(); const digest = crypto.subtle.digest.bind(crypto.subtle); vi.spyOn(crypto.subtle, 'digest').mockImplementation(async (...args) => { const result = await digest(...args); sessionCoordinator.begin(); return result; }); const api = createEvidenceApi({ send: async () => new Response(bytes, { headers: { 'Content-Type': 'application/pdf' } }) }); await expect(api.download(version, c, sessionCoordinator.current())).rejects.toMatchObject({ kind: 'retired' }); });
 
 it('retains safe evidence provenance and non-independent semantics while stripping raw extras',()=>{const value=readerDetail();Object.assign(value.evidence[0]!,{provenance:{kind:'derived',origin_kind:'note',origin_id:'note-old',note_revision:3,authorship:'user',origin_title:'Synthetic note'},independent_support:false,credentials:'do-not-retain'});const detail=parseReaderDetail(value,request);expect(detail.evidence[0]).toMatchObject({independent_support:false,provenance:{kind:'derived',origin_id:'note-old',note_revision:3}});expect(JSON.stringify(detail)).not.toContain('do-not-retain');});
+
+it.each([
+ ['web_snapshot','text/markdown','/private/retained.md',true],
+ ['web_snapshot','text/markdown','',false],
+ ['web_snapshot','text/markdown',null,false],
+ ['web_snapshot','text/markdown',undefined,null],
+ ['future','text/markdown','/private/retained.md',null],
+ ['web_snapshot','text/markdown',3,null],
+])('F32 projects only retained Markdown presence (%s %s)',(origin,mime,path,expected)=>{
+ const raw=readerDetail();
+ Object.assign(raw.version,{origin,mime_type:mime,file_path:path});
+ const value=parseReaderDetail(raw,request);
+ expect(value).toHaveProperty('retainedMarkdown',expected);
+ expect(JSON.stringify(value)).not.toMatch(/file_path|private|retained\\.md/);
+});

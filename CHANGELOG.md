@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Restore 16 SPA retrieval, semantic indexing and reader-maintenance controls with separate query/document/retry consent, immutable original receipts, finite explicit owned observation, conservative configuration invalidation and presence-only retained-Markdown eligibility. Preserve lexical/hybrid intent and historical extraction identity across all 14 locales. Synthetic checks do not grant browser, provider, runtime or deployment acceptance; independent review and B9e remain separate gates.
+
 - Restore 50 SPA application settings, provider credential/model and default-assignment controls with private transient credential inputs, presence-aware edits, retained immutable safe intents, complete deletion impact checks and guarded save-to-Advanced navigation. Explicit provider actions and uncertain/partial results never replay automatically. All 14 locales are covered synthetically; B9d/e, independent review, browser/provider/runtime acceptance and deployment remain separate gates.
 
 - Restore 12 SPA Advanced controls with explicit global rebuild cost/scope confirmation, retained original acknowledgements and unknown guards, finite user-triggered progress observation and API version information in all 14 locales. Scheduling counts child submissions, not completed vectors. B9c-e, browser/provider/runtime acceptance and deployment remain pending.

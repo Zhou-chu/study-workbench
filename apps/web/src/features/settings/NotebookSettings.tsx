@@ -1,3 +1,5 @@
+import {RetrievalPanel} from './RetrievalPanel';
+import type {RetrievalController} from './use-retrieval';
 import {useEffect,useRef,useState} from 'react';
 import {useQueryClient} from '@tanstack/react-query';
 import {readTurnContext,sessionCoordinator,asRequestNotDispatchedError} from '@study/web-transport';
@@ -10,7 +12,7 @@ import {useSourceSelection} from '../sources/use-source-selection';
 import {useSettings} from './use-settings';
 import {ConnectionsPage} from './ConnectionsPage';
 import {SettingsRequestError,canStartCreateSuccessor,type DeletePreview,type NotebookPatch} from '../../data/settings-api';
-export function NotebookSettings({notebookId,onClose}:{notebookId:string;onClose():void}){
+export function NotebookSettings({notebookId,onClose,retrieval}:{notebookId:string;onClose():void;retrieval?:RetrievalController}){
  const h=useSettings(notebookId),{row,store,id,api}=h,{workspace}=useAppData(),{t,settings,session}=useI18n(),queries=useQueryClient();
  const [connections,setConnections]=useState(false),[read,setRead]=useState<'pending'|'error'|'ready'>('pending'),[error,setError]=useState<number|null>(null);
  const [preview,setPreview]=useState<{value:DeletePreview;generation:number;ownerId:string}|null>(null),[previewing,setPreviewing]=useState(false);
@@ -56,6 +58,7 @@ export function NotebookSettings({notebookId,onClose}:{notebookId:string;onClose
  <label className="field-label">{t.workbench.engine}<select aria-label={t.workbench.engine} value={selected.selection?.engine??String(raw&&'engine'in raw?raw.engine:'')} disabled={!h.ready||selected.unconfirmed||!selected.selection} onChange={e=>select('engine',e.target.value)}>{!selected.selection&&<option value={String(raw&&'engine'in raw?raw.engine:'')}>{t.workbench.unknownEngine}: {String(raw&&'engine'in raw?raw.engine:t.common.unknown)}</option>}<option value="independent">{t.workbench.independent}</option><option value="notebooklm">{t.workbench.notebooklm}</option></select></label>
  <label className="field-label">{t.workbench.scope}<select value={selected.selection?.selection_origin??String(raw&&'selection_origin'in raw?raw.selection_origin:'')} disabled={!h.ready||selected.unconfirmed||!selected.selection} onChange={e=>select('selection_origin',e.target.value)}>{!selected.selection&&<option value={String(raw&&'selection_origin'in raw?raw.selection_origin:'')}>{t.workbench.unknownScope}: {String(raw&&'selection_origin'in raw?raw.selection_origin:t.common.unknown)}</option>}<option value="local">{t.workbench.localScope}</option><option value="remote">{t.workbench.remoteScope}</option></select></label>
  {selected.unconfirmed&&<p role="status">{t.workbench.selectionUnconfirmed}</p>}
+ {retrieval&&<RetrievalPanel control={retrieval}/>}
  <Button aria-expanded={connections} onClick={()=>setConnections(!connections)}>{settings.connections}</Button>{connections&&<ConnectionsPage key={row.id} notebookId={notebookId} owner={h}/>}</>}
  </LibraryDialog>;
 }

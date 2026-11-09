@@ -518,3 +518,11 @@ it('B9c waits for matching embedding defaults save before opening the real Advan
  expect(await screen.findByRole('button',{name:'Start rebuild'})).toBeVisible();
  expect(requests.some(r=>r.url.includes('/embeddings/'))).toBe(false);
 });
+
+it('B9d mounts retrieval controls without starting semantic or job reads on mount', async () => {
+ const requests = server();
+ const h = await open();
+ expect(h.dialog().getByRole('group', { name: 'Semantic indexing' })).toBeVisible();
+ expect(h.dialog().getByRole('button', { name: 'Refresh index status' })).toBeEnabled();
+ expect(requests.filter(r => /semantic-index|personal\/jobs/.test(r.url))).toHaveLength(0);
+});

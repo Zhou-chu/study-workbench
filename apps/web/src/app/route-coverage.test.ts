@@ -61,13 +61,16 @@ it('retains all172 B8 operations across the four implemented slices without clai
     expect(isCoverageComplete(routeCoverage)).toBe(false);
 });
 
-it('retains B9a33 B9b12 and exact B9c50 without completing later B9 or browser gates',()=>{
+it('retains B9a33 B9b12 B9c50 and exact B9d16 without completing B9e or browser gates',()=>{
  const doc=readFileSync('../../docs/v1/B9A_SESSION_ACCEPTANCE.md','utf8');
  const owned=[...doc.matchAll(/^\| `([a-z0-9_.]+)` \|/gm)].map(m=>m[1]);
  expect(owned).toHaveLength(33);expect(new Set(owned).size).toBe(33);
  const b9=routeCoverage.filter(r=>r.ownerTask==='B9');expect(b9).toHaveLength(129);
  const advancedDoc=readFileSync('../../docs/v1/B9B_ADVANCED_ACCEPTANCE.md','utf8');const advanced=[...advancedDoc.matchAll(/^\| `([a-z0-9_.]+)` \|/gm)].map(m=>m[1]);expect(advanced).toHaveLength(12);expect(new Set(advanced).size).toBe(12);
  const configurationDoc=readFileSync('../../docs/v1/B9C_CONFIGURATION_ACCEPTANCE.md','utf8');const configuration=[...configurationDoc.matchAll(/^\| \`([a-z0-9_.]+)\` \|/gm)].map(m=>m[1]);expect(configuration).toHaveLength(50);expect(new Set(configuration).size).toBe(50);
- for(const row of b9)expect(row.status).toBe(row.coveredOperations.some(op=>owned.includes(op)||advanced.includes(op)||configuration.includes(op))?'implemented':'pending');
- expect(b9.filter(r=>r.status==='pending')).toHaveLength(34);
+ const retrieval=["retrieval.choose_lexical", "retrieval.choose_hybrid", "retrieval.choose_profile", "retrieval.acknowledge_query_destination", "index.preview", "index.cancel_preview", "index.acknowledge_document_destination", "index.acknowledge_duplicate_cost", "index.confirm_build", "index.refresh", "index.recover_original", "index.cancel_waiting", "index.retry_full_version", "evidence.reparse", "evidence.revalidate_restored", "evidence.refresh_maintenance_job"];
+ for(const row of b9)expect(row.status).toBe(row.coveredOperations.some(op=>owned.includes(op)||advanced.includes(op)||configuration.includes(op)||retrieval.includes(op))?'implemented':'pending');
+ expect(b9.filter(r=>r.status==='pending')).toHaveLength(18);
 });
+
+it('B9d contributes exactly 16 source operations while transformations and all browser acceptance remain pending',()=>{const operations=['retrieval.choose_lexical','retrieval.choose_hybrid','retrieval.choose_profile','retrieval.acknowledge_query_destination','index.preview','index.cancel_preview','index.acknowledge_document_destination','index.acknowledge_duplicate_cost','index.confirm_build','index.refresh','index.recover_original','index.cancel_waiting','index.retry_full_version','evidence.reparse','evidence.revalidate_restored','evidence.refresh_maintenance_job'];expect(new Set(operations).size).toBe(16);for(const op of operations){const rows=routeCoverage.filter(r=>r.ownerTask==='B9'&&r.coveredOperations.includes(op));expect(rows).toHaveLength(1);expect(rows[0]!.status).toBe('implemented');}expect(routeCoverage.filter(r=>r.ownerTask==='B9'&&r.status==='implemented')).toHaveLength(111);});

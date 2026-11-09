@@ -1,0 +1,7 @@
+export const hash = 'a'.repeat(64);
+export const profile = { profile_id: 'p', model_id: 'm', provider: 'local', model_name: 'embed', revision: 'r1', endpoint: 'http://localhost:9999', credential_binding_id: 'binding', dimension: 3, document_prefix: '', query_prefix: '', preprocessing_revision: 'evidence-identity-v1', max_input_bytes: 8000, cosine_min_score: 0, destination_descriptor_version: 'd1', destination_kind: 'unknown', fingerprint: hash, endpoint_fingerprint: 'b'.repeat(64) };
+export const snapshot = { notebook_id: 'n', entries: [{ version_id: 'v-old', extraction_id: 'ex-old', manifest_hash: hash, scope_epoch: 0 }] };
+export const preview = { snapshot, profile, preview_hash: hash, evidence_count: 2, input_bytes: 60, warnings: [] };
+export const status = { notebook_id: 'n', snapshot, enabled: true, profiles: [{ profile, index: { state: 'not_indexed' } }], jobs: [], retry_safe: false, remote_cancel_confirmed: false };
+export const child = { job_id: 'child', source_version_id: 'v-old', state: 'submission_unknown', stage: 'preflight', completed_evidence: 0, total_evidence: 2, error: null, retry_safe: false, remote_cancel_confirmed: false };
+export const receipt = { group_id: 'group', notebook_id: 'n', profile_id: 'p', profile_fingerprint: hash, preview_hash: hash, job_ids: ['child'], jobs: [child], state: 'submission_unknown', retry_safe: false, remote_cancel_confirmed: false };

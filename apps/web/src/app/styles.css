@@ -323,3 +323,12 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .configuration-editor { display: grid; gap: 1rem; }
 .configuration-editor fieldset, .configuration-editor label { display: grid; gap: .5rem; min-width: 0; }
 .configuration-editor fieldset { margin-block: .75rem; }
+
+/* B9d uses the established light/dark/system grayscale semantic tokens. */
+.retrieval-panel { min-width: 0; max-width: 100%; margin-block: 1rem; padding: 1rem; border: 1px solid var(--interactive-border); overflow-wrap: anywhere; }
+.retrieval-panel label { display: flex; align-items: center; gap: .75rem; min-height: 44px; }
+.retrieval-panel .field-label { display: grid; }
+.retrieval-panel input[type=checkbox], .retrieval-panel input[type=radio] { flex: 0 0 44px; width: 44px; height: 44px; accent-color: var(--text); }
+.retrieval-panel summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.retrieval-panel pre { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
+.retrieval-panel select, .retrieval-panel button { max-width: 100%; white-space: normal; }
