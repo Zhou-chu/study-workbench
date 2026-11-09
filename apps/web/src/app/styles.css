@@ -295,3 +295,13 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .podcast-form .library-check { display: flex; align-items: center; min-height: 44px; gap: .75rem; }
 .podcast-page summary, .podcast-form summary, .podcast-receipt summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
 .podcast-page [role=alert], .podcast-form [role=alert] { border-inline-start: 3px solid var(--interactive-border); padding-inline-start: .75rem; }
+
+/* B9a retained overlays use the existing grayscale contrast and 44px targets. */
+.settings-links,.settings-connections .dialog-actions{display:flex;gap:12px;flex-wrap:wrap}
+.settings-danger{border:2px dashed var(--text);padding:16px;margin-block:16px}
+.settings-danger label{display:flex;align-items:center;gap:8px;min-height:44px}
+.settings-danger input[type=radio]{width:44px;flex:0 0 44px}
+.settings-connections{border-top:1px solid var(--interactive-border);margin-top:24px;padding-top:16px;overflow-wrap:anywhere}
+.setup-warning{margin:16px 24px;padding:16px;border:1px solid var(--interactive-border);background:var(--surface);color:var(--text)}
+.setup-warning h2{font-size:18px}
+.setup-warning .button{margin:4px}

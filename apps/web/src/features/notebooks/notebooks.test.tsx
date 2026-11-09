@@ -230,6 +230,8 @@ it('connects the real B2 capability-gated session and A4 transport to home and A
         if (path === '/api/notebooks')
             return json(notebookRows);
         // Live B5 entry reads only configuration and canonical history.
+        if (path === '/api/credentials/status') return json({configured:{},source:{},encryption_configured:true});
+        if (path === '/api/credentials/env-status') return json({});
         if (path === '/api/models') return json([]);
         if (path === '/api/models/defaults') return json({default_chat_model:null,default_embedding_model:null});
         if (path.startsWith('/api/personal/chats/') && path.endsWith('/turns') && request.method==='GET') return json([]);
@@ -348,6 +350,8 @@ it('makes the old form usable as a new blank intent only after actual B2 applica
         if (path === '/api/notebooks')
             return failRead ? json({ error: { code: 'AUTH_REQUIRED' } }, 401) : json(notebookRows);
         // Live B5 entry reads only configuration and canonical history.
+        if (path === '/api/credentials/status') return json({configured:{},source:{},encryption_configured:true});
+        if (path === '/api/credentials/env-status') return json({});
         if (path === '/api/models') return json([]);
         if (path === '/api/models/defaults') return json({default_chat_model:null,default_embedding_model:null});
         if (path.startsWith('/api/personal/chats/') && path.endsWith('/turns') && request.method==='GET') return json([]);
@@ -397,6 +401,8 @@ function mountRealCreation(initialEntries = ['/notebooks'], initialIndex = initi
         if (path === '/api/notebooks')
             return request.method === 'POST' ? (post ? post(request) : json({ ...notebookRows[0], id: 'notebook:fresh-result' })) : json(notebookRows);
         // Live B5 entry reads only configuration and canonical history.
+        if (path === '/api/credentials/status') return json({configured:{},source:{},encryption_configured:true});
+        if (path === '/api/credentials/env-status') return json({});
         if (path === '/api/models') return json([]);
         if (path === '/api/models/defaults') return json({default_chat_model:null,default_embedding_model:null});
         if (path.startsWith('/api/personal/chats/') && path.endsWith('/turns') && request.method==='GET') return json([]);

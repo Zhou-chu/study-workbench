@@ -23,7 +23,7 @@ it('explicitly retains every public path, deep-link and actual advanced/classic 
     expect(isCoverageComplete(routeCoverage)).toBe(false);
     expect(routeCoverage.some(e => e.status === 'verified')).toBe(false);
 });
-it('keeps lifecycle writes and unfinished study/classic/advanced features pending with real owners and matches the human inventory', () => {
+it('records B9a lifecycle source implementation and keeps later B9 features pending with real owners', () => {
     const doc = readFileSync('../../docs/v1/SPA_ROUTE_COVERAGE.md', 'utf8');
     for (const row of routeCoverage) {
         expect(row.ownerTask.trim()).toBeTruthy();
@@ -32,7 +32,7 @@ it('keeps lifecycle writes and unfinished study/classic/advanced features pendin
             expect(doc, op).toContain('`' + op + '`');
     }
     for (const op of ['notebooks.archive', 'notebooks.unarchive', 'notebooks.preview_delete', 'notebooks.confirm_delete', 'notebooks.keep_exclusive_sources', 'notebooks.delete_exclusive_sources', 'notebooks.cancel_delete'])
-        expect(routeCoverage.find(e => e.coveredOperations.includes(op))).toMatchObject({ ownerTask: 'B9', status: 'pending' });
+        expect(routeCoverage.find(e => e.coveredOperations.includes(op))).toMatchObject({ ownerTask: 'B9', status: 'implemented' });
     for (const op of ['credentials.create', 'advanced.start_rebuild'])
         expect(routeCoverage.find(e => e.coveredOperations.includes(op))?.status).toBe('pending');
 });
@@ -59,4 +59,13 @@ it('retains all172 B8 operations across the four implemented slices without clai
         expect(row.status).toBe(row.coveredOperations.some(op => allocated.includes(op) || classic.includes(op) || global.includes(op) || podcast.includes(op)) ? 'implemented' : 'pending');
     expect(b8.filter(r => r.status === 'pending')).toHaveLength(0);
     expect(isCoverageComplete(routeCoverage)).toBe(false);
+});
+
+it('implements exactly the 33 B9a rows without completing later B9 routes or browser gates',()=>{
+ const doc=readFileSync('../../docs/v1/B9A_SESSION_ACCEPTANCE.md','utf8');
+ const owned=[...doc.matchAll(/^\| `([a-z0-9_.]+)` \|/gm)].map(m=>m[1]);
+ expect(owned).toHaveLength(33);expect(new Set(owned).size).toBe(33);
+ const b9=routeCoverage.filter(r=>r.ownerTask==='B9');expect(b9).toHaveLength(129);
+ for(const row of b9)expect(row.status).toBe(row.coveredOperations.some(op=>owned.includes(op))?'implemented':'pending');
+ expect(b9.filter(r=>r.status==='pending')).toHaveLength(96);
 });

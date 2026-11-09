@@ -11,10 +11,10 @@ function clearVolatile() {
 function storageChanged(event: StorageEvent) {
   if (event.key === 'auth-storage' || event.key === null) { legacyToken = null; clearVolatile() }
 }
-export function purgeLegacyAuth(): void {
+export function purgeLegacyAuth(): boolean {
   legacyToken = null
   clearVolatile()
-  try { if (typeof window !== 'undefined') window.localStorage.removeItem('auth-storage') } catch { /* storage may be disabled */ }
+  try { if (typeof window === 'undefined') return false; window.localStorage.removeItem('auth-storage'); return true } catch { return false }
 }
 export function getAuthToken(mode?: WebSessionMode): string | null {
   if (mode !== 'legacy_password' || typeof window === 'undefined') return null

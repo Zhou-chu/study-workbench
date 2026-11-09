@@ -492,3 +492,28 @@ it('publishes monotonic provider evidence fences for repeated invalidation and e
     expect(requests.every(request => request.method === 'GET')).toBe(true);
     controller.dispose();
 });
+
+it.each(['/sources?q=fixture#item','//evil.example/path','/login','/%2f%2fevil','/bad%zz'])('uses one validated in-memory cold return after explicit login: %s',async destination=>{
+ server({enabled:true});
+ const router=createMemoryRouter([{path:'*',element:<AppProviders locale="en-US"><WorkbenchSession><AppRoutes/></WorkbenchSession></AppProviders>}],{initialEntries:['/login?returnTo='+encodeURIComponent(destination)]});
+ render(<RouterProvider router={router}/>);
+ fireEvent.change(await screen.findByLabelText('Password'),{target:{value:'synthetic'}});
+ fireEvent.click(screen.getByRole('button',{name:'Sign in'}));
+ const expected=destination==='/sources?q=fixture#item'?destination:'/notebooks';
+ await waitFor(()=>expect(router.state.location.pathname+router.state.location.search+router.state.location.hash).toBe(expected));
+ expect(router.state.historyAction).toBe('REPLACE');expect(sessionStorage.getItem('redirectAfterLogin')).toBeNull();
+});
+it('a newer cold navigation invalidates the return captured by an earlier login',async()=>{
+ const requests=server({enabled:true});const original=globalThis.fetch;let resolve!:(r:Response)=>void;
+ vi.stubGlobal('fetch',vi.fn(async(input:Request|string)=>{const r=input instanceof Request?input:new Request(new URL(input,window.location.href));if(r.url.endsWith('/api/notebooks')&&r.headers.has('Authorization'))return new Promise<Response>(yes=>resolve=yes);return original(input)}));
+ const router=createMemoryRouter([{path:'*',element:<AppProviders locale="en-US"><WorkbenchSession><AppRoutes/></WorkbenchSession></AppProviders>}],{initialEntries:['/login?returnTo=%2Fsources']});
+ render(<RouterProvider router={router}/>);fireEvent.change(await screen.findByLabelText('Password'),{target:{value:'synthetic'}});fireEvent.click(screen.getByRole('button',{name:'Sign in'}));await waitFor(()=>expect(resolve).toBeDefined());
+ await act(async()=>router.navigate('/notebooks'));await act(async()=>resolve(json([])));await waitFor(()=>expect(router.state.location.pathname).toBe('/notebooks'));expect(requests.some(r=>r.method==='POST')).toBe(false);
+});
+it('failed legacy local removal remains locked and explicitly retryable without changing the original target',async()=>{
+ server();const controller=createSessionController();await controller.start();
+ const remove=vi.spyOn(Storage.prototype,'removeItem').mockImplementation(()=>{throw Error('synthetic failure')});
+ await controller.signoutLocal();expect(controller.getSnapshot()).toMatchObject({signedOutLocally:true,localSignoutConfirmed:false,ready:false,serverRevocation:'not-performed'});
+ controller.closeReauth();expect(controller.getSnapshot().reauthOpen).toBe(true);await controller.check();expect(controller.getSnapshot().ready).toBe(false);
+ remove.mockRestore();await controller.signoutLocal();expect(controller.getSnapshot()).toMatchObject({localSignoutConfirmed:true,ready:false});controller.dispose();
+});

@@ -1,8 +1,15 @@
+import { parseProviderStatus, type ProviderStatus } from '../../data/provider-status';
+import type { DispatchContext } from '@study/web-transport';
 import type { ClientCapabilitiesV1, RuntimeConfig } from '@study/contracts';
 import { classifyAuthFailure, createSessionClient, createWebTransport, invalidateTurnContext, publishTurnTarget, readTurnContext, sessionCoordinator, suspendTurnTarget, TransportResponseError, RequestNotDispatchedError, type AuthPhase, type SessionClient, type RequestSpec, type WebTransport } from '@study/web-transport';
 import { ConfigurationError, errorCode, loadRuntimeConfig, loadClientCapabilities, parseSessionMetadata, parseWebStatus, type SessionMetadata } from '../../data/config';
 export type ConnectionIssue = 'configuration' | 'capabilities' | 'ingress' | 'connection' | 'invalid-password' | null;
 export type SessionSnapshot = Readonly<{
+    reauthOpen: boolean;
+    signedOutLocally: boolean;
+    localSignoutConfirmed: boolean | null;
+    serverRevocation: 'unconfirmed' | 'not-performed' | null;
+    providerVerification: Readonly<{status: ProviderStatus | null; context: DispatchContext; generation: number; revision: number}> | null;
     phase: AuthPhase;
     ready: boolean;
     busy: boolean;
@@ -17,7 +24,7 @@ export type SessionSnapshot = Readonly<{
 }>;
 /** One mounted application owns the coordinator. Metadata is not identity or authority. */
 export function createSessionController(onRetire: (epoch: number) => void = () => { }) {
-    let snapshot: SessionSnapshot = { phase: 'bootstrapping', ready: false, busy: false, hasWorkspace: false, privacyChanged: false, providerNeedsReauth: false, providerChecking: false, providerEvidenceRevision: 0, issue: null, capabilities: null };
+    let snapshot: SessionSnapshot = { reauthOpen: true, signedOutLocally:false, localSignoutConfirmed:null, serverRevocation:null, providerVerification:null, phase: 'bootstrapping', ready: false, busy: false, hasWorkspace: false, privacyChanged: false, providerNeedsReauth: false, providerChecking: false, providerEvidenceRevision: 0, issue: null, capabilities: null };
     let config: RuntimeConfig | null = null;
     let client: SessionClient | null = null;
     let raw: WebTransport | null = null;
@@ -32,6 +39,9 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
         promise: Promise<boolean>;
     } | null = null;
     let loginRequired = false;
+    let signoutFlight: Promise<void> | null = null;
+    let signoutClient: SessionClient | null = null;
+    let signoutMode: RuntimeConfig['auth_mode'] | null = null;
     const listeners = new Set<() => void>();
     const update = (patch: Partial<SessionSnapshot>) => {
         if (disposed)
@@ -43,13 +53,14 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
         if (next === 'reauth-required' || next === 'anonymous' && snapshot.hasWorkspace && !signedOut)
             loginRequired = true;
         sessionCoordinator.setPhase(next);
-        update({ phase: next });
+        update({ phase: next, ...((next === 'reauth-required' || next === 'anonymous') && snapshot.phase !== next ? {reauthOpen:true} : {}) });
     };
     const suspend = () => { suspendTurnTarget(); update({ ready: false, capabilities: null }); };
     const retire = () => {
         const old = readTurnContext();
         suspend();
         invalidateTurnContext();
+        update({providerEvidenceRevision:++providerRevision,providerVerification:null});
         if (old)
             onRetire(old.epoch);
         if (snapshot.hasWorkspace)
@@ -176,8 +187,9 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
         }
     }
     async function run(kind: 'check' | 'login' | 'refresh', password?: string) {
-        if (disposed || flight)
-            return flight ?? Promise.resolve();
+        if (disposed || flight || signoutFlight)
+            return flight ?? signoutFlight ?? Promise.resolve();
+        if(signedOut && kind!=='login'){phase('anonymous');return;}
         listen();
         if (kind !== 'login' && loginRequired) {
             phase('reauth-required');
@@ -227,7 +239,8 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
                     // A fresh successful login gives no proof of continuity with an old identity.
                     if (snapshot.hasWorkspace)
                         retire();
-                    signedOut = false;
+                    signedOut = false; signoutClient=null; signoutMode=null;
+                    update({signedOutLocally:false,localSignoutConfirmed:null,serverRevocation:null,reauthOpen:true});
                     loginRequired = false;
                     if (config.auth_mode === 'legacy_password')
                         await accept(operation, own);
@@ -316,7 +329,7 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
         const context = readTurnContext();
         if (!context?.ready)
             return false;
-        const evidence = sessionCoordinator.evidence();
+        const evidence = sessionCoordinator.evidence(), generation = sessionCoordinator.current();
         const revision = ++providerRevision;
         update({ providerChecking: true, providerEvidenceRevision: revision });
         const task = (async () => {
@@ -328,14 +341,12 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
                 const value: unknown = await response.json();
                 if (disposed || own !== ticket || evidence !== sessionCoordinator.evidence() || revision !== providerRevision || readTurnContext()?.epoch !== context.epoch || !snapshot.ready || snapshot.phase !== 'authenticated')
                     return false;
-                if (!value || typeof value !== 'object' || Array.isArray(value))
-                    return false;
-                const data = value as Record<string, unknown>;
-                if (data.state !== 'connected' || !['reason', 'last_verified_at', 'account_label'].every(key => data[key] === undefined || data[key] === null || typeof data[key] === 'string') || (data.quota !== undefined && data.quota !== null && (!Number.isSafeInteger(data.quota) || (data.quota as number) < 0)))
-                    return false;
-                providerRevision++;
-                update({ providerNeedsReauth: false, providerEvidenceRevision: providerRevision });
-                return true;
+                let status: ProviderStatus | null = null;
+                try { status = parseProviderStatus(value); } catch { /* Keep malformed evidence visibly non-actionable. */ }
+                const connected = status?.state === 'connected';
+                const published = ++providerRevision;
+                update({ ...(connected ? {providerNeedsReauth:false} : {}), providerEvidenceRevision:published, providerVerification:Object.freeze({status,context,generation,revision:published}) });
+                return connected;
             }
             catch {
                 return false;
@@ -358,23 +369,34 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
     return { getSnapshot: () => snapshot, subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; }, transport,
         verifyProviderConnection,
         start: () => run('check'), check: () => run('check'), login: (password: string) => run('login', password), refresh: () => run('refresh'),
-        async signoutLocal() {
-            if (!client || disposed)
-                return;
-            ++ticket;
+        closeReauth() {
+            if (signedOut) return;
+            ++ticket; sessionCoordinator.begin(); flight=null; suspend();
+            update({reauthOpen:false,busy:false});
+        },
+        openReauth() { if (!signedOut) update({reauthOpen:true}); },
+        signoutLocal() {
+            if (!client || disposed || signedOut && snapshot.localSignoutConfirmed === true) return Promise.resolve();
+            if (signoutFlight) return signoutFlight;
+            const retry = signedOut, own = ++ticket;
+            if(!retry){signoutClient=client;signoutMode=config?.auth_mode??null;}
+            const originalClient=signoutClient??client;
             flight = null;
             const operation = sessionCoordinator.begin();
-            signedOut = true;
-            loginRequired = false;
-            retire();
+            signedOut = true; loginRequired=false;
+            if (!retry) retire();
             phase('anonymous');
-            update({ busy: false });
-            try {
-                await client.signoutLocal(operation);
-            }
-            catch {
-                update({ issue: 'connection' });
-            }
+            update({busy:true,signedOutLocally:true,localSignoutConfirmed:false,serverRevocation:signoutMode==='legacy_password'?'not-performed':'unconfirmed',reauthOpen:true});
+            const task=(async()=>{
+                try {
+                    const result=await originalClient.signoutLocal(operation,retry);
+                    if (!disposed && own===ticket) update({localSignoutConfirmed:result.localConfirmed,serverRevocation:result.serverRevocation,issue:result.localConfirmed?null:'connection'});
+                } catch { if (!disposed && own===ticket) update({issue:'connection'}); }
+                finally { if (!disposed && own===ticket) update({busy:false}); }
+            })();
+            signoutFlight=task;
+            void task.finally(()=>{if(signoutFlight===task)signoutFlight=null;});
+            return task;
         },
         // Explicit provider-account boundary notification only; never infer continuity from a URL.
         retirePrivacyContext() { ++ticket; sessionCoordinator.begin(); flight = null; retire(); update({ busy: false, providerChecking: false }); },

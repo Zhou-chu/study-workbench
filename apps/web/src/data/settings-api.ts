@@ -1,0 +1,64 @@
+import {isRecord} from '@study/contracts';
+import {canDispatch,freezeDispatchContext,readTurnContext,sessionCoordinator,RequestNotDispatchedError,TransportResponseError,type DispatchContext,type WebTransport} from '@study/web-transport';
+import {parseNotebookSummary,type NotebookSummary} from './notebook-api';
+import {parseProviderStatus} from './provider-status';
+export type NotebookPatch=Readonly<{name?:string;description?:string|null;archived?:boolean}>;
+export type DeletePreview=Readonly<{notebook_id:string;notebook_name:string;note_count:number;exclusive_source_count:number;shared_source_count:number}>;
+export type DeleteReceipt=Readonly<{deleted_notes:number;deleted_sources:number;unlinked_sources:number;deleted_chat_sessions:number}>;
+export type LoginFlow=Readonly<{flow_id:string;state:string;expires_at:string;reason:'manual'|'expired'|'unknown'}>;
+export type ConnectionCapability=Readonly<{name:string;support:string;reason:string|null;last_verified_at:string|null;sdk_version:string;adapter_version:string}>;
+export type NotebookPage=Readonly<{items:readonly Readonly<{id:string;title:string}>[];next_cursor:string|null;listing_complete:boolean;completeness_note:string|null}>;
+export type CreateReceipt=Readonly<{job_id:string;state:string;submission_state:string|null;remote_notebook_id:string|null;request_hash:string;notebook_id:string;idempotency_key:string;title:string}>;
+export type SetupMetadata=Readonly<{encryption_configured:boolean;configured:Readonly<Record<string,boolean>>;source:Readonly<Record<string,string>>;environment:Readonly<Record<string,boolean>>}>;
+export class SettingsRequestError extends Error{constructor(readonly status:number){super('Settings request was not confirmed')}}
+const record=(v:unknown)=>{if(!isRecord(v))throw Error('Invalid response');return v};
+const str=(v:unknown)=>{if(typeof v!=='string')throw Error('Invalid text');return v};
+const id=(v:unknown)=>{const s=str(v);if(!s||s.length>500||[...s].some(c=>c.charCodeAt(0)<32))throw Error('Invalid identity');return s};
+const count=(v:unknown)=>{if(!Number.isSafeInteger(v)||Number(v)<0)throw Error('Invalid count');return v as number};
+const nullable=(v:unknown)=>v===null?null:str(v);
+const bool=(v:unknown)=>{if(typeof v!=='boolean')throw Error('Invalid flag');return v};
+const list=(v:unknown)=>{if(!Array.isArray(v))throw Error('Invalid list');return v as unknown[]};
+const safeReason=(v:unknown)=>{const s=nullable(v);return s?.match(/^[A-Z][A-Z0-9_]{0,80}/)?.[0]??null};
+export function parseSetupMetadata(status:unknown,environment:unknown):SetupMetadata{
+ const r=record(status),c=record(r.configured),s=record(r.source),e=record(environment);
+ return Object.freeze({encryption_configured:bool(r.encryption_configured),configured:Object.freeze(Object.fromEntries(Object.entries(c).map(([k,v])=>[k,bool(v)]))),source:Object.freeze(Object.fromEntries(Object.entries(s).map(([k,v])=>[k,str(v)]))),environment:Object.freeze(Object.fromEntries(Object.entries(e).map(([k,v])=>[k,bool(v)])))});
+}
+export function parseCapabilities(value:unknown):readonly ConnectionCapability[]{const r=record(value);str(r.sdk_version);str(r.adapter_version);return Object.freeze(list(r.operations).map(v=>{const x=record(v);return Object.freeze({name:id(x.name),support:id(x.support),reason:safeReason(x.reason),last_verified_at:nullable(x.last_verified_at),sdk_version:str(x.sdk_version),adapter_version:str(x.adapter_version)})}))}
+export function parseLoginFlow(value:unknown):LoginFlow{const r=record(value),expires_at=id(r.expires_at);if(!Number.isFinite(Date.parse(expires_at)))throw Error('Invalid expiry');return Object.freeze({flow_id:id(r.flow_id),state:id(r.state),expires_at,reason:r.reason==='Login flow expired. Start reconnect to try again.'?'expired':r.reason==='This runtime has no approved visible persistent browser profile for Google login. An operator must provide the dedicated runtime browser; do not paste passwords, codes or cookies into this app.'?'manual':'unknown'})}
+async function createHash(title:string){const data=JSON.stringify({operation:'create_notebook',request:{title}});const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(data));return [...new Uint8Array(bytes)].map(v=>v.toString(16).padStart(2,'0')).join('')}
+export async function parseCreateReceipt(value:unknown,input:{notebook_id:string;title:string;idempotency_key:string}):Promise<CreateReceipt>{
+ const r=record(value),request=record(r.request_snapshot),hash=await createHash(input.title);
+ if(r.restored_history===true||r.replay_allowed===false||r.projection_status||r.notebook_id!==input.notebook_id||r.operation!=='create_notebook'||r.provider!=='notebooklm'||r.idempotency_key!==input.idempotency_key||r.request_hash!==hash||Object.keys(request).length!==1||request.title!==input.title)throw Error('Unmatched original job');
+ const state=id(r.state),submission_state=nullable(r.submission_state);
+ if(!['queued','running','waiting_remote','succeeded','failed','needs_reauth','submission_unknown','cancelled_local'].includes(state)||!['not_submitted','confirmed','unknown',null].includes(submission_state))throw Error('Unknown job lifecycle');
+ if(state==='succeeded'&&submission_state!=='confirmed')throw Error('Unconfirmed completion');
+ const remote=state==='succeeded'&&submission_state==='confirmed'?id(record(r.result).remote_notebook_id):null;
+ return Object.freeze({job_id:id(r.job_id),state,submission_state,remote_notebook_id:remote,request_hash:hash,notebook_id:input.notebook_id,title:input.title,idempotency_key:input.idempotency_key});
+}
+export function createSettingsApi(transport:WebTransport){
+ async function request(method:string,path:string,context:DispatchContext,body?:unknown){
+ const c=freezeDispatchContext(context),g=sessionCoordinator.current();if(!canDispatch(c,readTurnContext()))throw new RequestNotDispatchedError('superseded');
+ const response=await transport.send({method,path,context:c,...(body!==undefined?{body:JSON.stringify(body)}:{})});
+ if(!canDispatch(c,readTurnContext())||g!==sessionCoordinator.current()){void response.body?.cancel();throw new TransportResponseError('retired')}
+ if(!response.ok){void response.body?.cancel();throw new SettingsRequestError(response.status)}
+ const result:unknown=await response.json();if(!canDispatch(c,readTurnContext())||g!==sessionCoordinator.current())throw new TransportResponseError('retired');return result;
+ }
+ const notebook=(n:string)=>'/notebooks/'+encodeURIComponent(n);
+ const connection='/personal/connections/notebooklm';
+ return Object.freeze({
+ async notebook(n:string,c:DispatchContext){const v=parseNotebookSummary(await request('GET',notebook(n),c));if(v.id!==n)throw Error('Mismatched notebook');return v},
+ async update(n:string,input:NotebookPatch,c:DispatchContext):Promise<NotebookSummary>{const v=parseNotebookSummary(await request('PUT',notebook(n),c,input));if(v.id!==n)throw Error('Mismatched notebook');return v},
+ async preview(n:string,c:DispatchContext):Promise<DeletePreview>{const r=record(await request('GET',notebook(n)+'/delete-preview',c));if(r.notebook_id!==n)throw Error('Mismatched preview');return Object.freeze({notebook_id:n,notebook_name:str(r.notebook_name),note_count:count(r.note_count),exclusive_source_count:count(r.exclusive_source_count),shared_source_count:count(r.shared_source_count)})},
+ async remove(n:string,exclusive:boolean,c:DispatchContext):Promise<DeleteReceipt>{const r=record(await request('DELETE',notebook(n)+'?delete_exclusive_sources='+String(exclusive),c));str(r.message);return Object.freeze({deleted_notes:count(r.deleted_notes),deleted_sources:count(r.deleted_sources),unlinked_sources:count(r.unlinked_sources),deleted_chat_sessions:count(r.deleted_chat_sessions)})},
+ async setup(c:DispatchContext){const [s,e]=await Promise.all([request('GET','/credentials/status',c),request('GET','/credentials/env-status',c)]);return parseSetupMetadata(s,e)},
+ async connect(reconnect:boolean,c:DispatchContext){return parseLoginFlow(await request('POST',connection+(reconnect?'/reconnect':'/connect'),c))},
+ async flow(flowId:string,c:DispatchContext){const v=parseLoginFlow(await request('GET',connection+'/connect/'+encodeURIComponent(flowId),c));if(v.flow_id!==flowId)throw Error('Mismatched flow');return v},
+ async disconnect(c:DispatchContext){const v=parseProviderStatus(await request('DELETE',connection,c));if(v?.state!=='disconnected')throw Error('Unconfirmed disconnect');return v},
+ async capabilities(c:DispatchContext){return parseCapabilities(await request('GET','/personal/notebooklm/capabilities',c))},
+ async notebooks(cursor:string|null,c:DispatchContext):Promise<NotebookPage>{const r=record(await request('GET','/personal/notebooklm/notebooks'+(cursor===null?'':'?cursor='+encodeURIComponent(cursor)),c));return Object.freeze({items:Object.freeze(list(r.items).map(v=>{const x=record(v);return Object.freeze({id:id(x.id),title:str(x.title)})})),next_cursor:r.next_cursor===null?null:id(r.next_cursor),listing_complete:bool(r.listing_complete),completeness_note:nullable(r.completeness_note)})},
+ async link(n:string,remoteId:string,c:DispatchContext){const r=record(await request('POST','/personal/notebooks/'+encodeURIComponent(n)+'/notebooklm-link',c,{remote_notebook_id:remoteId}));if(r.notebook_id!==n||r.remote_notebook_id!==remoteId||r.connection_id!=='notebooklm')throw Error('Mismatched link');id(r.link_id);str(r.last_checked_at);return Object.freeze({notebook_id:n,remote_notebook_id:remoteId})},
+ async create(input:{notebook_id:string;title:string;idempotency_key:string},c:DispatchContext){return parseCreateReceipt(await request('POST','/personal/notebooklm/notebooks',c,input),input)},
+ async observe(receipt:CreateReceipt,c:DispatchContext){if(!['queued','running','waiting_remote'].includes(receipt.state)||receipt.submission_state!=='confirmed')throw new RequestNotDispatchedError('configuration');const next=await parseCreateReceipt(await request('GET','/personal/jobs/'+encodeURIComponent(receipt.job_id),c),receipt);if(next.job_id!==receipt.job_id)throw Error('Mismatched job');return next}
+ });
+}
+export type SettingsApi=ReturnType<typeof createSettingsApi>;

@@ -1,3 +1,5 @@
+import {SettingsLayout} from '../features/settings/SettingsLayout';
+import {LoginRoute} from '../features/auth/LoginRoute';
 import {PodcastsPage} from '../features/library/PodcastsPage';
 import {GlobalSearchPage} from '../features/library/GlobalSearchPage';
 import { LibraryPage } from '../features/library/LibraryPage';
@@ -26,7 +28,7 @@ export function AppRoutes({ previewContent }: {
 }) {
     return <Routes>
  <Route path="/" element={<Navigate to="/notebooks" replace/>}/><Route path="/notebooks" element={<NotebookHome />}/><Route path="/notebooks/:notebookId" element={<NotebookPage />}/><Route path="/notebooks/:notebookId/study" element={<StudyAlias />}/>
- <Route path="/sources" element={<LibraryPage/>}/><Route path="/sources/:sourceId" element={<SourcePage/>}/><Route path="/search" element={<GlobalSearchPage/>}/><Route path="/podcasts" element={<PodcastsPage/>}/><Route path="/settings" element={<PendingRoute kind="settings"/>}/><Route path="/settings/models" element={<PendingRoute kind="models"/>}/><Route path="/transformations" element={<PendingRoute kind="transformations"/>}/><Route path="/advanced" element={<PendingRoute kind="advanced"/>}/><Route path="/login" element={<PendingRoute kind="login"/>}/>
+ <Route path="/sources" element={<LibraryPage/>}/><Route path="/sources/:sourceId" element={<SourcePage/>}/><Route path="/search" element={<GlobalSearchPage/>}/><Route path="/podcasts" element={<PodcastsPage/>}/><Route path="/settings" element={<SettingsLayout/>}/><Route path="/settings/models" element={<PendingRoute kind="models"/>}/><Route path="/transformations" element={<PendingRoute kind="transformations"/>}/><Route path="/advanced" element={<PendingRoute kind="advanced"/>}/><Route path="/login" element={<LoginRoute/>}/>
  {import.meta.env.DEV && <Route path="/__preview/workspace" element={<NotebookShell {...(previewContent ? { previewContent } : {})}/>}/>}
  <Route path="*" element={<PendingRoute kind="missing"/>}/>
  </Routes>;

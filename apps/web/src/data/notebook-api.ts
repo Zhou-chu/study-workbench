@@ -27,7 +27,7 @@ export interface NotebookApi {
     recent(context: DispatchContext, signal?: AbortSignal): Promise<RecentItem[]>;
     recordOpen(id: string, context: DispatchContext, signal?: AbortSignal): Promise<void>;
 }
-function summary(value: unknown): NotebookSummary {
+export function parseNotebookSummary(value: unknown): NotebookSummary {
     if (!isRecord(value) || typeof value.id !== 'string' || !value.id || typeof value.name !== 'string' || typeof value.description !== 'string' || typeof value.archived !== 'boolean' || typeof value.created !== 'string' || typeof value.updated !== 'string' || !Number.isInteger(value.source_count) || Number(value.source_count) < 0 || !Number.isInteger(value.note_count) || Number(value.note_count) < 0)
         throw new Error('Invalid notebook response');
     return { id: value.id, name: value.name, description: value.description, archived: value.archived, created: value.created, updated: value.updated, source_count: value.source_count as number, note_count: value.note_count as number };
@@ -63,14 +63,14 @@ export function createNotebookApi(transport: WebTransport): NotebookApi {
                 throw new Error('Workspace identity mismatch');
             return value;
         },
-        async list(context: DispatchContext, signal?: AbortSignal) { return listOf(await request('GET', '/notebooks?order_by=updated%20desc', context, signal), summary); },
+        async list(context: DispatchContext, signal?: AbortSignal) { return listOf(await request('GET', '/notebooks?order_by=updated%20desc', context, signal), parseNotebookSummary); },
         async create(input: {
             name: string;
             description?: string;
         }, context: DispatchContext) {
             if (!input.name.trim())
                 throw new RequestNotDispatchedError('configuration');
-            return summary(await request('POST', '/notebooks', context, undefined, JSON.stringify({ name: input.name, ...(input.description !== undefined ? { description: input.description } : {}) })));
+            return parseNotebookSummary(await request('POST', '/notebooks', context, undefined, JSON.stringify({ name: input.name, ...(input.description !== undefined ? { description: input.description } : {}) })));
         },
         async recent(context: DispatchContext, signal?: AbortSignal) { return listOf(await request('GET', '/recently-viewed?limit=12', context, signal), recentItem); },
         async recordOpen(id: string, context: DispatchContext, signal?: AbortSignal) {

@@ -393,13 +393,13 @@ it.each([false, true])('does not substitute fresh Google availability for retire
     expect(attempts).toHaveLength(1);
 });
 
-it('retries the original Google engine even when the current independent engine is unavailable', async () => {
+it.each(['same-owner','replace','A-B-A'] as const)('fences original Google retry after %s while unrelated local model availability remains irrelevant', async change => {
     const attempts = neverDispatchTurns();
     function Consumer() {
         const [local, setLocal] = useState(false), w = sourceWorkspace();
         w.link = { remote_notebook_id: 'rn', connection_id: 'c' };
         if (!local) w.selection = { engine: 'notebooklm', selection_origin: 'remote', source_version_ids: [], remote_source_ids: ['remote'] };
-        return <><button onClick={() => setLocal(true)}>Select independent</button><ConversationPanel notebookId="n" workspace={w}/></>;
+        return <><button onClick={() => setLocal(!local)}>Select independent</button><ConversationPanel notebookId="n" workspace={w}/></>;
     }
     sourceServer(r => { const p = new URL(r.url).pathname; if (p.endsWith('/models/defaults')) return json({ default_chat_model: null }); if (p.endsWith('/connections/notebooklm')) return json({ state: 'connected' }); if (p.endsWith('/notebooklm/capabilities')) return json({ operations: [{ name: 'ask', support: 'available' }] }); return json([]); });
     await renderSourceFeature(<Consumer />);
@@ -408,12 +408,24 @@ it('retries the original Google engine even when the current independent engine 
     fireEvent.change(screen.getByRole('textbox', { name: 'Question' }), { target: { value: 'Original Google question' } });
     fireEvent.click(screen.getByRole('button', { name: 'Ask selected sources' }));
     await screen.findByRole('button', { name: 'Retry original request (sends POST)' });
-    fireEvent.click(screen.getByRole('button', { name: 'Select independent' }));
+    if(change!=='same-owner')fireEvent.click(screen.getByRole('button', { name: 'Select independent' }));
+    if(change==='A-B-A')fireEvent.click(screen.getByRole('button', { name: 'Select independent' }));
     expect(screen.getByRole('button', { name: 'Ask selected sources' })).toBeDisabled();
     const retry = screen.getByRole('button', { name: 'Retry original request (sends POST)' });
-    expect(retry).toBeEnabled();
-    fireEvent.click(retry);
-    await waitFor(() => expect(attempts).toHaveLength(2));
-    expect(attempts[1]).toBe(attempts[0]);
-    expect(JSON.parse(attempts[1]!)).toMatchObject({ engine: 'notebooklm', remote_source_ids: ['remote'] });
+    if(change==='same-owner'){
+        expect(retry).toBeEnabled();fireEvent.click(retry);
+        await waitFor(() => expect(attempts).toHaveLength(2));expect(attempts[1]).toBe(attempts[0]);
+    }else{expect(retry).toBeDisabled();fireEvent.click(retry);expect(attempts).toHaveLength(1);}
+    expect(JSON.parse(attempts[0]!)).toMatchObject({ engine: 'notebooklm', remote_source_ids: ['remote'] });
+    expect(screen.getByRole('button',{name:'Check original request (read only)'})).toBeEnabled();
+});
+
+it.each(['selection','unmount'] as const)('keeps original lexical default admission invalid after %s A-B-A without losing original recovery',async kind=>{
+ const attempts=neverDispatchTurns();
+ function Consumer(){const [b,setB]=useState(false),[show,setShow]=useState(true);const w=sourceWorkspace();if(b)w.selection={...w.selection,engine:'independent',selection_origin:'local',source_version_ids:['v-new'],remote_source_ids:[]};return <><button onClick={()=>setB(!b)}>Change selection</button><button onClick={()=>setShow(!show)}>Mount owner</button>{show&&<ConversationPanel notebookId="n" workspace={w}/>}</>}
+ sourceServer(r=>new URL(r.url).pathname.endsWith('/models/defaults')?json({default_chat_model:'m'}):json([]));
+ const h=await renderSourceFeature(<Consumer/>);await screen.findByText(/A model is selected/);fireEvent.change(screen.getByRole('textbox',{name:'Question'}),{target:{value:'Original lexical'}});fireEvent.click(screen.getByRole('button',{name:'Ask selected sources'}));expect(await screen.findByRole('button',{name:'Retry original request (sends POST)'})).toBeEnabled();
+ const original=h.workbench.drafts.turns.getSnapshot('n').operation!.capture;
+ fireEvent.click(screen.getByRole('button',{name:kind==='selection'?'Change selection':'Mount owner'}));fireEvent.click(screen.getByRole('button',{name:kind==='selection'?'Change selection':'Mount owner'}));
+ await screen.findByText(/A model is selected/);expect(screen.getByRole('button',{name:'Retry original request (sends POST)'})).toBeDisabled();expect(attempts).toHaveLength(1);expect(h.workbench.drafts.turns.getSnapshot('n').operation!.capture).toBe(original);
 });

@@ -55,6 +55,9 @@ export function ConversationPanel({ notebookId, workspace, onCitation, onSaveAns
         context: DispatchContext;
         turns: readonly TurnView[];
     } | null>(null), [rejection, setRejection] = useState(false);
+    const owner = useRef({active:true,revision:0,signature:''});
+    const signature=JSON.stringify([notebookId,selection,retrieval?.options,retrieval?.disclosure]);
+    if(owner.current.signature!==signature){owner.current.signature=signature;owner.current.revision++;}
     const mounted = useRef(true), modelTicket = useRef(0), googleFlight = useRef(false);
     const ready = !!api && !!context?.ready && state?.ready === true;
     const validEvidence = (e: Evidence | null, provider = false) => !!e && ready && e.generation === sessionCoordinator.current() && canDispatch(e.context, readTurnContext()) && (!provider || controller?.getSnapshot().providerEvidenceRevision === e.revision && !controller?.getSnapshot().providerNeedsReauth && !controller?.getSnapshot().providerChecking);
@@ -81,7 +84,7 @@ export function ConversationPanel({ notebookId, workspace, onCitation, onSaveAns
                 setModelBusy(false);
         }
     };
-    useEffect(() => { mounted.current = true; return () => { mounted.current = false; modelTicket.current++; }; }, []);
+    useEffect(() => { mounted.current = true; owner.current.active=true; return () => { mounted.current = false; owner.current.active=false; owner.current.revision++; modelTicket.current++; runtime.refreshFences(); }; }, [runtime]);
     const epoch = context?.epoch, generation = sessionCoordinator.current();
     useEffect(() => {
         if (!ready)
@@ -140,11 +143,13 @@ export function ConversationPanel({ notebookId, workspace, onCitation, onSaveAns
             return;
         }
         const revision = savedDraft?.questionRevision ?? 0, id = draft.id;
+        const selectionRevision=drafts.sources.selectionRevision(notebookId), ownerRevision=owner.current.revision;
+        const originalOwner=()=>owner.current.active && owner.current.revision===ownerRevision && drafts.sources.selectionRevision(notebookId)===selectionRevision;
         const valid = () => g === sessionCoordinator.current() && canDispatch(captured, readTurnContext()) && controller?.getSnapshot().ready === true && (request.engine !== 'notebooklm' || controller.getSnapshot().providerEvidenceRevision === providerRevision && !controller.getSnapshot().providerNeedsReauth && !controller.getSnapshot().providerChecking);
         // Bind admission to the original engine evidence and retrieval callback, never later UI settings.
         const originalEvidence = request.engine === 'independent' ? model : google;
         const retrievalAvailable = retrieval?.available, retrievalCurrent = retrieval?.isCurrent.bind(retrieval);
-        const admission = () => validEvidence(originalEvidence, request.engine === 'notebooklm') && originalEvidence!.available && (request.engine !== 'independent' || !retrievalCurrent || retrievalAvailable === true && retrievalCurrent());
+        const admission = () => originalOwner() && validEvidence(originalEvidence, request.engine === 'notebooklm') && originalEvidence!.available && (request.engine !== 'independent' || !retrievalCurrent || retrievalAvailable === true && retrievalCurrent());
         const result = runtime.start({ sessionId: notebookChatSessionId(notebookId), context: captured, request, owner: { mountId: id.editorSession, questionRevision: revision, requestGeneration: g }, ...(connectionId ? { googleConnectionId: connectionId } : {}), ...(retrieval?.disclosure ? { embeddingDisclosure: retrieval.disclosure } : {}) }, api, valid, () => {
             if (task === 'question')
                 drafts.clearQuestion(id, revision);

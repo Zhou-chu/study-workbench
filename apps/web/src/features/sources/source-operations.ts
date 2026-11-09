@@ -1,3 +1,4 @@
+import {asRequestNotDispatchedError} from '@study/web-transport';
 import { createOperation, reduceOperation, canDispatch, freezeDispatchContext, type OperationModel, type OperationToken, type DispatchContext } from '@study/domain';
 import type { WorkspaceViewV1, WorkbenchSelection } from '@study/contracts';
 import type { UploadReceipt, WebResult, RemoteAction } from '../../data/source-api';
@@ -27,6 +28,7 @@ export type SourceOperation = Readonly<{
     operation: OperationModel;
     retired: boolean;
     hidden: boolean;
+    reserved?: boolean;
     receipt?: UploadReceipt;
     versionIds?: readonly string[];
     jobId?: string;
@@ -73,14 +75,23 @@ export function createSourceOperations(onChange: () => void) {
     const rows = new Map<string, SourceOperation>();
     const workspaceReads = new Map<string, SourceWorkspaceReadToken>();
     const selectionReads = new Map<string, SourceSelectionRead>();
+    const revisions = new Map<string, number>();
+    const advance = (id: string) => revisions.set(id, (revisions.get(id) ?? 0) + 1);
     const latestSelection = (notebookId: string, epoch: number) => [...rows.values()].reverse().find(row => row.notebookId === notebookId && row.payload.kind === 'selection' && !row.retired && row.operation.context.epoch === epoch);
 
     let snapshot: readonly SourceOperation[] = Object.freeze([]);
     const listeners = new Set<() => void>();
     const emit = () => { snapshot = Object.freeze([...rows.values()]); listeners.forEach(fn => fn()); onChange(); };
-    const add = (notebookId: string, payload: SourcePayload, context: DispatchContext, generation: number, file: File | null = null, signature: string | null = null) => { const id = crypto.randomUUID(); rows.set(id, Object.freeze({ id, notebookId, file, fileSignature: signature, payload: freezePayload(payload), operation: createOperation(context, id, { serverIdempotency: false, sessionGeneration: generation }), retired: retiredEpochs.has(context.epoch), hidden: false })); emit(); return id; };
+    const add = (notebookId: string, payload: SourcePayload, context: DispatchContext, generation: number, file: File | null = null, signature: string | null = null) => { const id = crypto.randomUUID(); if (payload.kind === 'selection') advance(notebookId); rows.set(id, Object.freeze({ id, notebookId, file, fileSignature: signature, payload: freezePayload(payload), operation: createOperation(context, id, { serverIdempotency: false, sessionGeneration: generation }), retired: retiredEpochs.has(context.epoch), hidden: false })); emit(); return id; };
     return { get: (id: string) => rows.get(id), getSnapshot: () => snapshot, subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
         getSelectionRead: (notebookId: string) => selectionReads.get(notebookId),
+        selectionRevision: (notebookId: string) => revisions.get(notebookId) ?? 0,
+        reserveSelection(notebookId: string, selection: WorkbenchSelection, context: DispatchContext, generation: number) {
+            if (!context.ready || !selectionFromView(selection) || [...rows.values()].some(r=>r.notebookId===notebookId && r.payload.kind==='selection' && ['idle','submitting','unknown'].includes(r.operation.state))) return null;
+            const id=add(notebookId,{kind:'selection',selection},context,generation); const row=rows.get(id)!; rows.set(id,Object.freeze({...row,reserved:true})); emit(); return id;
+        },
+        releaseUnsentReservation(id: string, evidence: unknown) { const row=rows.get(id); if (!asRequestNotDispatchedError(evidence) || !row?.reserved || row.operation.state!=='idle' || row.operation.token) return false; rows.delete(id); advance(row.notebookId); emit(); return true; },
+        releaseSelection(id: string) { const row=rows.get(id); if (!row || row.retired || !row.reserved) return false; rows.set(id,Object.freeze({...row,reserved:false})); emit(); return true; },
         beginWorkspaceRead(notebookId: string, context: DispatchContext, generation: number): SourceWorkspaceReadToken {
             const token = Object.freeze({ notebookId, context: freezeDispatchContext(context), generation, selectionOperation: latestSelection(notebookId, context.epoch) });
             workspaceReads.set(notebookId, token);
@@ -92,6 +103,7 @@ export function createSourceOperations(onChange: () => void) {
                 return false;
             const parsed = selectionFromView(workspace.selection);
             const payload = parsed ? freezePayload({ kind: 'selection', selection: parsed }) : null;
+            if (JSON.stringify(selectionReads.get(token.notebookId)?.selection) !== JSON.stringify(parsed)) advance(token.notebookId);
             selectionReads.set(token.notebookId, Object.freeze({ token, selection: payload?.kind === 'selection' ? payload.selection : null }));
             emit();
             return true;
@@ -102,7 +114,7 @@ export function createSourceOperations(onChange: () => void) {
             kind: 'upload';
         }>, context: DispatchContext, generation: number) { if (payload.kind === 'selection' && !selectionFromView(payload.selection))
             throw new Error('Unsupported selection'); const existing = [...rows.values()].find(r => r.notebookId === notebookId && (payload.kind === 'selection' ? r.payload.kind === 'selection' && ['idle', 'submitting', 'unknown'].includes(r.operation.state) : payload.kind === 'web' ? r.payload.kind === 'web' && r.payload.result.url === payload.result.url : payload.kind === 'remote' ? r.payload.kind === 'remote' && r.payload.action.kind === payload.action.kind && r.payload.action.remoteNotebookId === payload.action.remoteNotebookId && JSON.stringify([r.payload.action.versionIds, r.payload.action.remoteIds]) === JSON.stringify([payload.action.versionIds, payload.action.remoteIds]) : r.payload.kind === 'cancel' && r.payload.jobId === payload.jobId)); return existing?.id ?? add(notebookId, payload, context, generation); },
-        begin(id: string, current: DispatchContext | null, generation: number) { const r = rows.get(id); if (!r || r.retired || !current || r.payload.kind === 'upload' && !r.file || r.operation.state !== 'idle')
+        begin(id: string, current: DispatchContext | null, generation: number) { const r = rows.get(id); if (!r || r.retired || r.reserved || !current || r.payload.kind === 'upload' && !r.file || r.operation.state !== 'idle')
             return null; const operation = reduceOperation(r.operation, { type: 'begin', context: current, sessionGeneration: generation }); if (operation === r.operation)
             return null; const next = Object.freeze({ ...r, operation }); rows.set(id, next); emit(); return next; },
         settle(id: string, token: OperationToken, outcome: SourceOutcome, current: DispatchContext | null, generation: number) { const r = rows.get(id); if (!r || r.operation.token !== token || r.operation.state !== 'submitting')
@@ -124,7 +136,7 @@ export function createSourceOperations(onChange: () => void) {
         check(check: SourceCheckToken, workspace: WorkspaceViewV1, current: DispatchContext | null, generation: number) { const { id } = check; const r = rows.get(id); if (!r || r.retired || !canDispatch(r.operation.context, current) || !canDispatch(check.context, current) || check.generation !== generation || r.operation.state !== 'unknown' || r.operation.token !== check.operationToken)
             return false; const receipt = r.payload.kind === 'upload' ? reconcileUpload(r, workspace) : null; const selected = r.payload.kind === 'selection' ? selectionFromView(workspace.selection) : null; if (!receipt && !(r.payload.kind === 'selection' && workspace.notebook.id === r.notebookId && selected && sameSelection(r.payload.selection, selected)))
             return false; rows.set(id, Object.freeze({ ...r, ...(receipt ? { receipt, versionIds: Object.freeze([receipt.source_version_id]), jobId: receipt.job_id } : {}), operation: reduceOperation(r.operation, { type: 'succeeded', token: r.operation.token }) })); emit(); return true; },
-        retire(epoch: number) { retiredEpochs.add(epoch); for (const [id, r] of rows)
+        retire(epoch: number) { retiredEpochs.add(epoch); for (const r of rows.values()) if(r.operation.context.epoch===epoch) advance(r.notebookId); for (const [id, r] of rows)
             if (r.operation.context.epoch === epoch)
                 rows.set(id, Object.freeze({ ...r, retired: true, operation: r.operation.state === 'submitting' && r.operation.token ? reduceOperation(r.operation, { type: 'unknown', token: r.operation.token }) : r.operation })); emit(); },
         dismiss(id: string) { const r = rows.get(id); if (r?.operation.state !== 'succeeded')

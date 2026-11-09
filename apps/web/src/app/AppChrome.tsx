@@ -1,3 +1,6 @@
+import {SetupWarning} from '../features/settings/SetupWarning';
+import {useWorkbenchSnapshot} from './WorkbenchSession';
+import {Button} from '../ui/Button';
 import { CommonNavigation } from './CommonNavigation';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
@@ -9,6 +12,7 @@ import { StatusBadge } from '../ui/StatusBadge';
 
 export function AppChrome({ children, title }: { children: ReactNode; title?: string }) {
   const { t, shell, session, locale, setLocale } = useI18n();
+  const {state,controller}=useWorkbenchSnapshot();
   return <>
     <a className="skip-link" href="#main-content">{session.skipMain}</a>
     <header className="app-header">
@@ -19,6 +23,8 @@ export function AppChrome({ children, title }: { children: ReactNode; title?: st
       {title && <span className="header-title">{title}</span>}
       <div className="header-tools">
         <ThemeControl />
+        <Link className="button" to="/settings">{t.navigation.settings}</Link>
+        {controller&&<Button disabled={!state?.ready} onClick={()=>void controller.signoutLocal()}>{t.common.signOut}</Button>}
         <Dialog
           trigger={<><span aria-hidden="true">⚙</span><span className="settings-label">{shell.preferences}</span></>}
           triggerLabel={shell.preferences}
@@ -35,6 +41,7 @@ export function AppChrome({ children, title }: { children: ReactNode; title?: st
       <StatusBadge state="pending" label={shell.previewTitle} /><span>{shell.previewNotice}</span>
     </div>
     <CommonNavigation/>
+    <SetupWarning/>
     <main id="main-content" tabIndex={-1}>{children}</main>
   </>;
 }

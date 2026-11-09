@@ -1,3 +1,4 @@
+import {safeReturnPath} from '../features/auth/cold-return';
 import { LibraryCommandObservers } from '../features/library/LibraryCommandObservers';
 import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { UNSAFE_DataRouterContext } from 'react-router';
@@ -26,9 +27,17 @@ export function WorkbenchSession({ children }: {
     const dataRouter = useContext(UNSAFE_DataRouterContext);
     useEffect(() => { void value.controller.start(); return () => value.controller.dispose(); }, [value]);
     const login = ['anonymous', 'reauth-required'].includes(state.phase);
+    const cold=useRef<{key:string;target:string;attempted:boolean}|null>(null);
+    const location=dataRouter?.router.state.location;
+    if(!state.hasWorkspace && login && location && cold.current?.key!==location.key){
+        cold.current={key:location.key,attempted:false,target:safeReturnPath(location.pathname==='/login'?new URLSearchParams(location.search).get('returnTo'):location.pathname+location.search+location.hash)??'/notebooks'};
+    }
+    const coldLogin=async(password:string)=>{if(cold.current)cold.current.attempted=true;await value.controller.login(password)};
+    useEffect(()=>{const original=cold.current;if(original?.attempted && state.ready && dataRouter?.router.state.location.key===original.key){cold.current=null;void dataRouter.router.navigate(original.target,{replace:true})}},[state.ready,dataRouter,location?.key]);
+
     return <Context.Provider value={value}><AppDataBoundary transport={value.controller.transport} workspace={data.workspace}>
    {state.hasWorkspace && <div className="session-workspace" inert={login || !state.ready || undefined}>{children}<LibraryCommandObservers/></div>}
-   {!state.hasWorkspace && login && <LoginPage controller={value.controller} state={state}/>}
+   {!state.hasWorkspace && login && <LoginPage controller={value.controller} state={state} onLogin={coldLogin}/>}
    {state.hasWorkspace && login && <ReauthLayer controller={value.controller} state={state}/>}
    {!login && (!state.ready || state.providerNeedsReauth) && <ConnectionState controller={value.controller} state={state}/>}
    {state.hasWorkspace && state.privacyChanged && <p role="status" className="connection-state">{session.privacy}</p>}

@@ -1,3 +1,4 @@
+import { createSettingsStore, type SettingsDraft } from '../features/settings/settings-store';
 import { createLibraryStore, type LibraryDraft } from '../features/library/library-store';
 import { createStudioStore } from '../features/studio/studio-store';
 import { createTurnRuntime } from '../features/chat/turn-runtime';
@@ -36,6 +37,7 @@ const key = (id: DraftId) => JSON.stringify([id.epoch, id.notebookId, id.editorS
 export function createDraftRegistry() {
     const drafts = new Map<string, DraftState>();
     const retired = new Set<number>();
+    const privateClears = new Map<number, Set<() => void>>();
     const listeners = new Set<() => void>();
     let activeCreation: DraftId | null = null;
     let creationSnapshot: NotebookCreationSnapshot = Object.freeze({ active: undefined, retained: [] });
@@ -50,6 +52,7 @@ export function createDraftRegistry() {
         listeners.forEach(fn => fn());
     };
     const library = createLibraryStore(notify);
+    const settings = createSettingsStore(notify);
     const sources = createSourceOperations(notify);
     const turns = createTurnRuntime(notify);
     const studio = createStudioStore(notify);
@@ -60,7 +63,12 @@ export function createDraftRegistry() {
         notify();
         return id;
     };
-    return { sources, turns, studio, library, clearQuestion(id: DraftId, revision: number) {
+    return { sources, turns, studio, library, settings,
+        registerPrivateClear(epoch: number, clear: () => void) {
+            if (retired.has(epoch)) { try { clear(); } catch { /* Continue other participants. */ } return () => {}; }
+            const callbacks=privateClears.get(epoch) ?? new Set<() => void>(); callbacks.add(clear); privateClears.set(epoch,callbacks);
+            return () => { callbacks.delete(clear); if (!callbacks.size) privateClears.delete(epoch); };
+        }, clearQuestion(id: DraftId, revision: number) {
             const draft=drafts.get(key(id));
             if (!draft || draft.retired || retired.has(id.epoch) || draft.questionRevision !== revision) return;
             drafts.set(key(id),Object.freeze({...draft,question:'',questionRevision:revision+1})); notify();
@@ -115,6 +123,9 @@ export function createDraftRegistry() {
             notify();
         }, retireContext(epoch: number) {
             retired.add(epoch);
+            const callbacks=privateClears.get(epoch); privateClears.delete(epoch);
+            callbacks?.forEach(clear => { try { clear(); } catch { /* One private field must not block another. */ } });
+            settings.retire(epoch);
             library.retire(epoch);
             sources.retire(epoch);
             turns.retire(epoch);
@@ -124,7 +135,7 @@ export function createDraftRegistry() {
                     drafts.set(k, Object.freeze({ ...draft, retired: true, ...(draft.creation ? { creation: Object.freeze({ ...draft.creation, status: draft.creation.status === 'pending' ? 'unknown' as const : draft.creation.status }) } : {}) }));
             notify();
         },
-        hasUnsaved: () => library.hasUnsaved() || studio.hasUnsaved() || turns.hasPending() || sources.hasUnsaved() || [...drafts.values()].some(d => !!(d.editor?.dirty || d.editor?.pending || d.question || d.file || d.creation && d.creation.status !== 'succeeded' && (d.creation.name || d.creation.description || ['pending', 'unknown'].includes(d.creation.status)))),
+        hasUnsaved: () => settings.hasUnsaved() || library.hasUnsaved() || studio.hasUnsaved() || turns.hasPending() || sources.hasUnsaved() || [...drafts.values()].some(d => !!(d.editor?.dirty || d.editor?.pending || d.question || d.file || d.creation && d.creation.status !== 'succeeded' && (d.creation.name || d.creation.description || ['pending', 'unknown'].includes(d.creation.status)))),
         subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; } };
 }
 export type DraftRegistry = ReturnType<typeof createDraftRegistry>;
@@ -141,7 +152,8 @@ type NotebookCapture = Readonly<{
     activation: number;
     intent: NavigationIntent;
 }>;
-type ResourceCapture = Readonly<{decision: Exclude<NavigationDecision, 'allow'>; resourceId: string; resourceDraft: LibraryDraft; resourceDrafts: readonly LibraryDraft[]; focusedResourceId: string | null; notebookDraft: DraftState | undefined; activation: number; intent: NavigationIntent}>;
+type ResourceDraft = LibraryDraft | SettingsDraft;
+type ResourceCapture = Readonly<{decision: Exclude<NavigationDecision, 'allow'>; resourceId: string; resourceDraft: ResourceDraft; resourceDrafts: readonly ResourceDraft[]; focusedResourceId: string | null; notebookDraft: DraftState | undefined; activation: number; intent: NavigationIntent}>;
 type Capture = NotebookCapture | ResourceCapture;
 export function createNavigationController(registry: DraftRegistry) {
     let active: DraftId | null = null;
@@ -178,8 +190,8 @@ export function createNavigationController(registry: DraftRegistry) {
         if (resourceActive === id) resourceActive = [...resourceOwners].at(-1) ?? null;
         activation++; capture = null; status = null; notify();
     };
-    const resourceRows = () => [...resourceOwners].flatMap(id => {const row=registry.library.get(id);return row?[row]:[];});
-    const resourceDecision = (rows: readonly LibraryDraft[]): NavigationDecision => {
+    const resourceRows = () => [...resourceOwners].flatMap(id => {const row=(registry.library.get(id) ?? registry.settings.get(id));return row?[row]:[];});
+    const resourceDecision = (rows: readonly ResourceDraft[]): NavigationDecision => {
         // Source-origin Studio saves still block navigation when no notebook pane is mounted.
         const notebook = decision(active ? registry.get(active) : undefined);
         if (notebook === 'blocked') return 'blocked';
@@ -204,7 +216,7 @@ export function createNavigationController(registry: DraftRegistry) {
         holdResource(id: string) {
             const lease = Symbol(id), leases = resourceLeases.get(id) ?? new Set<symbol>();
             leases.add(lease); resourceLeases.set(id, leases);
-            const row = registry.library.get(id);
+            const row = (registry.library.get(id) ?? registry.settings.get(id));
             if (row && (row.dirty || ['pending','accepted','unknown'].includes(row.status)) && !resourceOwners.has(id)) {
                 resourceOwners.add(id); activation++; capture=null; status=null; notify();
             }

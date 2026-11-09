@@ -51,3 +51,30 @@ it('allows bootstrap to probe legacy auth without exposing the stored token', as
   const client = createSessionClient(config); storage.set('auth-storage',JSON.stringify({state:{token:'saved-synthetic'}})); await client.probeLegacy()
   const sent = fetcher.mock.calls[0]![0] as Request; expect(sent.method).toBe('GET'); expect(sent.headers.get('authorization')).toBe('Bearer saved-synthetic'); expect(sent.url).toBe('https://fixture.example/api/notebooks')
 })
+
+it('reports failed durable legacy removal without exposing credentials or claiming confirmation', async () => {
+ const client=createSessionClient(config); storage.set('auth-storage','synthetic');
+ window.localStorage.removeItem=()=>{throw new Error('blocked')};
+ expect(await client.signoutLocal()).toEqual({localConfirmed:false,serverRevocation:'not-performed'});
+});
+it('parses exact device local evidence and never calls it remote revocation', async () => {
+ const client=createSessionClient({...config,auth_mode:'device_sessions',web_session_protocol:'bff-memory-v1'});
+ fetcher.mockResolvedValueOnce(json({server_revocation:'unconfirmed'}));
+ expect(await client.signoutLocal()).toEqual({localConfirmed:true,serverRevocation:'unconfirmed'});
+ fetcher.mockResolvedValueOnce(json({server_revocation:'confirmed'}));
+ expect(await client.signoutLocal()).toEqual({localConfirmed:false,serverRevocation:'unconfirmed'});
+});
+it('accepts only exact endpoint AUTH_REQUIRED on an explicit local retry', async () => {
+ const client=createSessionClient({...config,auth_mode:'device_sessions',web_session_protocol:'bff-memory-v1'});
+ fetcher.mockImplementation(async()=>json({error:{code:'AUTH_REQUIRED'}},401));
+ expect(await client.signoutLocal()).toMatchObject({localConfirmed:false});
+ expect(await client.signoutLocal(undefined,true)).toMatchObject({localConfirmed:true,serverRevocation:'unconfirmed'});
+ fetcher.mockImplementation(async()=>json({error:{code:'AUTH_INVALID_CREDENTIALS'}},401));
+ expect(await client.signoutLocal(undefined,true)).toMatchObject({localConfirmed:false});
+});
+
+it('does not call device local signout fully confirmed when legacy browser residue could not be removed',async()=>{
+ const client=createSessionClient({...config,auth_mode:'device_sessions',web_session_protocol:'bff-memory-v1'});
+ window.localStorage.removeItem=()=>{throw Error('synthetic blocked removal')};fetcher.mockResolvedValueOnce(json({server_revocation:'unconfirmed'}));
+ expect(await client.signoutLocal()).toEqual({localConfirmed:false,serverRevocation:'unconfirmed'});
+});
