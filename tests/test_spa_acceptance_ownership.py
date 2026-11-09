@@ -942,3 +942,28 @@ def test_fix1_registration_fixture_uses_an_admitted_provider_id(variant):
     # Public provider names admitted by the existing UI, not a new fake enum.
     assert provider.group(1) in {"openai", "ollama"}
     assert "no real provider" in plan.lower()
+
+
+def test_fix2_proven_unsent_migration_cannot_require_an_unknown_barrier():
+    cases = catalog_cases()
+    base = "C2-R-B9c-credentials.migrate_from_env"
+    unsent = cases[base + "--proven-unsent"]
+    assertions = " ".join(unsent["expected"]).lower()
+    assert "remains unknown" not in assertions
+    assert "partial-uncertainty barrier" not in assertions
+    migration_result = unsent["expected"][-1].lower()
+    for required in [
+        "zero sends",
+        "no migration effects",
+        "no fabricated migration counts",
+        "original not-sent identity",
+        "history",
+        "only the independently confirmed fresh attempt",
+        "matching migration result",
+    ]:
+        assert required in migration_result
+    ambiguous = cases[base + "--ambiguous-outcomes"]
+    assert all("original unknown" in result for result in ambiguous["expected"])
+    assert all(
+        "partial-uncertainty barrier" in result for result in ambiguous["expected"]
+    )

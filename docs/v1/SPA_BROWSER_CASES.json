@@ -22108,7 +22108,7 @@
       "expected": [
         "proven-unsent: Named request count is 0, original attempt is not-sent/editing rather than original unknown; this distinction is not inferred from HTTP status. Re-delivering the old token and ordinary metadata refresh keep count 0; there is no automatic retry.",
         "fresh-confirmation: Only fresh explicit confirmation after current gates creates a new token; named request count becomes 1, and remains 1 after its duplicate. Later edits stay separate from original immutable intent and the old not-sent record is retained in history; private cleanup rules still apply. No unrequested provider/rebuild action follows.",
-        "The original environment migration remains unknown without fabricated migrated/skipped/not_configured/error counts; later edits cannot remove the partial-uncertainty barrier. On a confirmed content save advance only the submitted baseline, never overwrite later permitted edits; a proven-unsent outcome alone advances no baseline."
+        "Zero sends establish no migration effects and no fabricated migration counts (migrated/skipped/not_configured/errors) from the original attempt. Preserve the original not-sent identity and immutable intent when retained in history; later edits do not rewrite that record. Only the independently confirmed fresh attempt may publish its matching migration result, with those counts/effects attributed to the fresh attempt rather than the original not-sent attempt."
       ],
       "conditions": {
         "viewport": [
