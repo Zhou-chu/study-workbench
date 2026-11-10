@@ -33,7 +33,7 @@ export function useStudio(notebookId: string, onChanged?: () => void) {
     }
     async function compare(id: string) {
         const r = store.get(id);
-        if (!ready || !api || !notebooks || !r || !canDispatch(r.context, readTurnContext()) || r.generation !== sessionCoordinator.current())
+        if (!ready || !api || !notebooks || !r || !canDispatch(r.context, readTurnContext()))
             return false;
         try {
             const read = store.beginCompare(id, readTurnContext(), sessionCoordinator.current());

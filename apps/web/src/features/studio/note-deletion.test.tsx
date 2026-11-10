@@ -1,0 +1,66 @@
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { beforeEach, expect, it } from 'vitest';
+import { readTurnContext, sessionCoordinator } from '@study/web-transport';
+import { sourceContext, sourceWorkspace } from '../../test/source-fixtures';
+import { sourceServer, renderSourceFeature } from '../../test/source-harness';
+import { suspendAndRecover } from '../../test/session-recovery';
+import { json } from '../../test/notebook-fixtures';
+import { deferred } from '../../test/reader-fixtures';
+import { StudioPanel } from './StudioPanel';
+import { createStudioStore } from './studio-store';
+const note = { id: 'note:classic', revision: 7, title: 'Classic', content: 'Original', note_type: 'human' };
+const draft = { title: note.title, content: note.content, citations: [] };
+beforeEach(sourceContext);
+it('revokes active, resumed and stale reopened classic editors only after the current DELETE acknowledgment', async () => {
+    const pending = deferred<Response>();
+    const requests = sourceServer(r => r.method === 'DELETE' ? pending.promise : json({}));
+    const h = await renderSourceFeature(<StudioPanel notebookId="n" workspace={{ ...sourceWorkspace(), notes: [note] }}/>);
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    const store = h.workbench.drafts.studio, first = store.getSnapshot().notes[0]!;
+    const second = store.open('other-notebook', draft, readTurnContext()!, sessionCoordinator.current(), note, 'classic');
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' }));
+    expect(requests.filter(r => r.method === 'DELETE')).toHaveLength(1);
+    act(() => store.edit(first.id, { content: 'Must not change during deletion' }));
+    expect(store.get(first.id)?.editor.content).toBe('Original');
+    expect(store.beginSave(second, readTurnContext(), sessionCoordinator.current())).toBeNull();
+    expect(store.promotion(first.id)).toBeNull();
+    await act(async () => pending.resolve(json({ message: 'Note deleted successfully' })));
+    await waitFor(() => expect(store.getSnapshot().operations[0]?.operation.state).toBe('succeeded'));
+    for (const id of [first.id, second]) {
+        expect(store.get(id)?.retired).toBe(true);
+        expect(store.beginSave(id, readTurnContext(), sessionCoordinator.current())).toBeNull();
+        expect(store.promotion(id)).toBeNull();
+    }
+    expect(screen.getByLabelText('Markdown note')).toHaveAttribute('readonly');
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Resume draft' }));
+    expect(screen.getByLabelText('Markdown note')).toHaveValue('Original');
+    const reopened = store.open('third-notebook', draft, readTurnContext()!, sessionCoordinator.current(), note, 'classic');
+    expect(store.get(reopened)?.retired).toBe(true);
+    expect(requests.filter(r => r.method === 'PUT' || r.method === 'POST')).toHaveLength(0);
+});
+it.each(['stale', 'unknown'])('retains %s DELETE uncertainty without confirming a tombstone or admitting writes', async kind => {
+    const pending = deferred<Response>();
+    sourceServer(r => r.method === 'DELETE' ? pending.promise : json({}));
+    const h = await renderSourceFeature(<StudioPanel notebookId="n" workspace={{ ...sourceWorkspace(), notes: [note] }}/>);
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    const store = h.workbench.drafts.studio, first = store.getSnapshot().notes[0]!;
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' }));
+    if (kind === 'stale') await suspendAndRecover(h.workbench.controller);
+    await act(async () => pending.resolve(kind === 'stale' ? json({ message: 'Note deleted successfully' }) : json({}, 500)));
+    expect(store.getSnapshot().operations[0]?.operation.state).toBe('unknown');
+    expect(store.get(first.id)?.retired).toBe(false);
+    expect(store.beginSave(first.id, readTurnContext(), sessionCoordinator.current())).toBeNull();
+    expect(store.promotion(first.id)).toBeNull();
+});
+it('does not begin a DELETE after a matching editor became dirty or began saving', () => {
+    const c = sourceContext(), g = sessionCoordinator.current(), store = createStudioStore(() => {});
+    const editor = store.open('n', draft, c, g, note, 'classic');
+    const deletion = store.capture('n', { kind: 'delete', noteId: note.id }, c, g);
+    store.edit(editor, { content: 'Changed after opening confirmation' });
+    expect(store.begin(deletion, c, g)).toBeNull();
+    expect(store.beginSave(editor, c, g)).not.toBeNull();
+    expect(store.begin(deletion, c, g)).toBeNull();
+});

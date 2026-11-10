@@ -1,7 +1,7 @@
 import type { LibrarySource } from '../../data/library-api';
 import type { NativeSession } from '../../data/native-chat';
 import type { OutlineOrigin } from '../chat/ConversationPanel';
-import { createEditor, reduceEditor, createOperation, reduceOperation, canDispatch, freezeDispatchContext, type EditorModel, type OperationModel, type OperationToken, type DispatchContext } from '@study/domain';
+import { createEditor, reduceEditor, createOperation, reduceOperation, canDispatch, sameTurnTarget, freezeDispatchContext, type EditorModel, type OperationModel, type OperationToken, type DispatchContext } from '@study/domain';
 import type { CreateWorkbenchNoteInput, WorkbenchNote, SnapshotOrigin, SourceSnapshotResult, TurnView } from '@study/contracts';
 import { noteForEditor, parseCitation, parseScope, type StudioJob, type AudioRequest, type PortableImport } from '../../data/studio-api';
 function freezeValue<T>(value: T): Readonly<T> {
@@ -165,22 +165,24 @@ export function createStudioStore(onChange: () => void) {
         active: ReadonlyMap<string, string>;
     }> = Object.freeze({ notes: [], operations: [], active: new Map() });
     const emit = () => { snapshot = Object.freeze({ notes: Object.freeze([...notes.values()]), operations: Object.freeze([...ops.values()]), active: new Map(active) }); listeners.forEach(fn => fn()); onChange(); };
-    const current = (row: {
-        context: DispatchContext;
-        generation: number;
-        retired: boolean;
-    }, c: DispatchContext | null, g: number) => !row.retired && canDispatch(row.context, c) && row.generation === g;
+    const sameOwner = (a: DispatchContext, b: DispatchContext) => a.epoch === b.epoch && sameTurnTarget(a.target, b.target);
+    const deletions = (noteId: string, context: DispatchContext) => [...ops.values()].filter(r => r.payload.kind === 'delete' && r.payload.noteId === noteId && sameOwner(r.operation.context, context));
+    const deleted = (noteId: string, context: DispatchContext) => deletions(noteId, context).some(r => r.operation.state === 'succeeded');
+    const noteMutationBlocked = (noteId: string | null | undefined, context: DispatchContext) => !!noteId && deletions(noteId, context).some(r => ['submitting', 'unknown', 'succeeded'].includes(r.operation.state));
+    // Editor lifetime is the privacy scope, not a request generation. Every
+    // fresh request below captures its own generation; completions keep theirs.
+    const current = (row: NoteSession, c: DispatchContext | null) => !row.retired && canDispatch(row.context, c);
     const immutable = (row: NoteSession) => { notes.set(row.id, Object.freeze(row)); emit(); };
     const open = (notebookId: string, draft: CreateWorkbenchNoteInput, context: DispatchContext, generation: number, note?: WorkbenchNote, mode: 'personal' | 'classic' = 'personal', noteType: string | null = 'human', originKey?: string, outlineOrigin?: OutlineOrigin) => {
-        const existing = [...notes.values()].find(n => n.notebookId === notebookId && n.context.epoch === context.epoch && ((originKey && n.originKey === originKey) || (note && n.editor.noteId === note.id)));
+        const existing = [...notes.values()].find(n => n.notebookId === notebookId && sameOwner(n.context, context) && ((originKey && n.originKey === originKey) || (note && n.editor.noteId === note.id)));
         if (existing)
             return existing.id;
         const id = crypto.randomUUID();
-        immutable({ id, notebookId, context: freezeDispatchContext(context), generation, editor: createEditor(notebookId, draft, note), operation: createOperation(context, crypto.randomUUID(), { serverIdempotency: false, sessionGeneration: generation }), retired: retired.has(context.epoch), mode, noteType, ...(mode === 'classic' ? { classic: freezeValue({ ...(note ? { base: structuredClone(note) } : {}), edits: {} }) } : {}), history: [], ...(originKey ? { originKey } : {}), ...(outlineOrigin ? { outlineOrigin: freezeValue(structuredClone(outlineOrigin)) } : {}) });
+        immutable({ id, notebookId, context: freezeDispatchContext(context), generation, editor: createEditor(notebookId, draft, note), operation: createOperation(context, crypto.randomUUID(), { serverIdempotency: false, sessionGeneration: generation }), retired: retired.has(context.epoch) || !!note && deleted(note.id, context), mode, noteType, ...(mode === 'classic' ? { classic: freezeValue({ ...(note ? { base: structuredClone(note) } : {}), edits: {} }) } : {}), history: [], ...(originKey ? { originKey } : {}), ...(outlineOrigin ? { outlineOrigin: freezeValue(structuredClone(outlineOrigin)) } : {}) });
         return id;
     };
     return {
-        get: (id: string) => notes.get(id), getOperation: (id: string) => ops.get(id), getSnapshot: () => snapshot, subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; }, open,
+        get: (id: string) => notes.get(id), getOperation: (id: string) => ops.get(id), getSnapshot: () => snapshot, subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; }, open, noteMutationBlocked,
         select(notebookId: string, id: string | null) {
             if (id && notes.get(id)?.notebookId !== notebookId)
                 return;
@@ -190,9 +192,9 @@ export function createStudioStore(onChange: () => void) {
                 active.delete(notebookId);
             emit();
         },
-        discardNote(id: string, expected: NoteSession, c: DispatchContext | null, g: number) {
+        discardNote(id: string, expected: NoteSession, c: DispatchContext | null, _g: number) {
             const r = notes.get(id);
-            if (!r || r !== expected || !current(r, c, g) || r.editor.pending || !['idle', 'saved'].includes(r.editor.saveResult))
+            if (!r || r !== expected || !current(r, c) || r.editor.pending || !['idle', 'saved'].includes(r.editor.saveResult))
                 return false;
             notes.delete(id);
             if (active.get(r.notebookId) === id)
@@ -237,7 +239,7 @@ export function createStudioStore(onChange: () => void) {
             content?: string;
         }) {
             const r = notes.get(id);
-            if (!r || r.retired)
+            if (!r || r.retired || noteMutationBlocked(r.editor.noteId, r.context))
                 return;
             const editor = reduceEditor(r.editor, { type: 'edit', ...patch });
             const classic = r.classic ? freezeValue({ ...r.classic, edits: { ...r.classic.edits, ...(patch.title !== undefined ? { title: (r.classic.edits.title ?? 0) + 1 } : {}), ...(patch.content !== undefined ? { content: (r.classic.edits.content ?? 0) + 1 } : {}) } }) : undefined;
@@ -245,7 +247,7 @@ export function createStudioStore(onChange: () => void) {
         },
         beginSave(id: string, c: DispatchContext | null, g: number) {
             const r = notes.get(id);
-            if (!r || !c || !current(r, c, g))
+            if (!r || !c || !current(r, c) || noteMutationBlocked(r.editor.noteId, r.context))
                 return null;
             const key = crypto.randomUUID();
             let classic = r.classic;
@@ -264,7 +266,7 @@ export function createStudioStore(onChange: () => void) {
                 if (classic)
                     classic = freezeValue({ ...classic, pending: { edits: classic.edits } });
             }
-            const operation = reduceOperation(createOperation(r.context, key, { serverIdempotency: false, sessionGeneration: r.generation }), { type: 'begin', context: c, sessionGeneration: g });
+            const operation = reduceOperation(createOperation(r.context, key, { serverIdempotency: false, sessionGeneration: g }), { type: 'begin', context: c, sessionGeneration: g });
             if (!operation.token)
                 return null;
             const next = Object.freeze({ ...r, editor, operation, ...(classic ? { classic } : {}) });
@@ -275,7 +277,7 @@ export function createStudioStore(onChange: () => void) {
             const r = notes.get(id);
             if (!r || r.operation.token !== token || r.editor.saveResult !== 'saving')
                 return;
-            const result = current(r, c, g) ? outcome : { kind: 'unknown' as const };
+            const result = current(r, c) && token.sessionGeneration === g ? outcome : { kind: 'unknown' as const };
             const operationId = token.operationKey;
             let editor = reduceEditor(r.editor, result.kind === 'saved' ? { type: 'save-success', operationId, note: r.classic ? { ...result.note, title: result.note.title ?? '', content: result.note.content ?? '' } : result.note } : result.kind === 'conflict' ? { type: 'save-conflict', operationId, status: result.status } : { type: result.kind === 'not-sent' ? 'save-not-sent' : result.kind === 'rejected' ? 'save-rejected' : 'save-unknown', operationId });
             const operation = reduceOperation(r.operation, { type: editor.saveResult === 'unknown' ? 'unknown' : result.kind === 'saved' ? 'succeeded' : result.kind === 'not-sent' ? 'not-sent' : result.kind === 'unknown' ? 'unknown' : 'failed', token });
@@ -303,15 +305,15 @@ export function createStudioStore(onChange: () => void) {
         },
         beginCompare(id: string, c: DispatchContext | null, g: number): NoteReadToken | null {
             const r = notes.get(id);
-            if (!r || !current(r, c, g) || !r.operation.token || !['conflict', 'unknown', 'rejected'].includes(r.editor.saveResult))
+            if (!r || !current(r, c) || !r.operation.token || !['conflict', 'unknown', 'rejected'].includes(r.editor.saveResult))
                 return null;
-            const token = Object.freeze({ id, operationToken: r.operation.token, context: r.context, generation: g, ticket: ++readSequence });
+            const token = Object.freeze({ id, operationToken: r.operation.token, context: freezeDispatchContext(c!), generation: g, ticket: ++readSequence });
             comparisons.set(id, token);
             return token;
         },
         compare(read: NoteReadToken, candidates: WorkbenchNote[], c: DispatchContext | null, g: number) {
             const r = notes.get(read.id);
-            if (!r || comparisons.get(read.id) !== read || r.operation.token !== read.operationToken || !current(r, c, g) || read.generation !== g || !['conflict', 'unknown', 'rejected'].includes(r.editor.saveResult))
+            if (!r || comparisons.get(read.id) !== read || r.operation.token !== read.operationToken || !current(r, c) || read.generation !== g || !['conflict', 'unknown', 'rejected'].includes(r.editor.saveResult))
                 return;
             const safe = candidates.filter(n => !!noteForEditor(n));
             const matches = safe.filter(n => n.id === r.editor.noteId);
@@ -319,7 +321,7 @@ export function createStudioStore(onChange: () => void) {
         },
         reedit(id: string, expected: NoteSession, c: DispatchContext | null, g: number) {
             const r = notes.get(id);
-            if (!r || r !== expected || !current(r, c, g) || !r.latest || !r.editor.noteId || !['conflict', 'rejected'].includes(r.editor.saveResult))
+            if (!r || r !== expected || !current(r, c) || !r.latest || !r.editor.noteId || !['conflict', 'rejected'].includes(r.editor.saveResult))
                 return false;
             const parsed = noteForEditor(r.latest);
             if (!parsed || parsed.mode !== r.mode || !compatibleNoteMetadata(r))
@@ -328,20 +330,20 @@ export function createStudioStore(onChange: () => void) {
             const draft = r.mode === 'personal' ? { ...r.editor.base, title: parsed.draft.title, content: parsed.draft.content } : parsed.draft;
             let editor = createEditor(r.notebookId, draft, r.latest);
             editor = reduceEditor(editor, { type: 'edit', ...(r.classic ? { ...(r.classic.edits.title !== undefined ? { title: r.editor.title } : {}), ...(r.classic.edits.content !== undefined ? { content: r.editor.content } : {}) } : { title: r.editor.title, content: r.editor.content }) });
-            immutable({ ...r, editor, ...(r.classic ? { classic: freezeValue({ base: structuredClone(r.latest), edits: r.classic.edits }) } : {}), latest: undefined, comparison: undefined, history: [...r.history, { editor: r.editor, operation: r.operation, latest: r.latest, ...(r.comparison ? { comparison: r.comparison } : {}), ...(r.classic ? { classic: r.classic } : {}) }], operation: createOperation(r.context, crypto.randomUUID(), { serverIdempotency: false, sessionGeneration: r.generation }) });
+            immutable({ ...r, editor, ...(r.classic ? { classic: freezeValue({ base: structuredClone(r.latest), edits: r.classic.edits }) } : {}), latest: undefined, comparison: undefined, history: [...r.history, { editor: r.editor, operation: r.operation, latest: r.latest, ...(r.comparison ? { comparison: r.comparison } : {}), ...(r.classic ? { classic: r.classic } : {}) }], operation: createOperation(r.context, crypto.randomUUID(), { serverIdempotency: false, sessionGeneration: g }) });
             return true;
         },
         reload(id: string, expected: NoteSession, c: DispatchContext | null, g: number) {
             const r = notes.get(id);
-            if (!r || r !== expected || !current(r, c, g) || !r.latest || !r.editor.noteId || !['conflict', 'rejected'].includes(r.editor.saveResult))
+            if (!r || r !== expected || !current(r, c) || !r.latest || !r.editor.noteId || !['conflict', 'rejected'].includes(r.editor.saveResult))
                 return false;
             const parsed = noteForEditor(r.latest);
             if (!parsed || parsed.mode !== r.mode)
                 return false;
-            immutable({ ...r, editor: createEditor(r.notebookId, parsed.draft, r.latest), ...(r.classic ? { classic: freezeValue({ base: structuredClone(r.latest), edits: {} }) } : {}), latest: undefined, comparison: undefined, history: [...r.history, { editor: r.editor, operation: r.operation, ...(r.classic ? { classic: r.classic } : {}) }], operation: createOperation(r.context, crypto.randomUUID(), { serverIdempotency: false, sessionGeneration: r.generation }) });
+            immutable({ ...r, editor: createEditor(r.notebookId, parsed.draft, r.latest), ...(r.classic ? { classic: freezeValue({ base: structuredClone(r.latest), edits: {} }) } : {}), latest: undefined, comparison: undefined, history: [...r.history, { editor: r.editor, operation: r.operation, ...(r.classic ? { classic: r.classic } : {}) }], operation: createOperation(r.context, crypto.randomUUID(), { serverIdempotency: false, sessionGeneration: g }) });
             return true;
         },
-        promotion(id: string): SnapshotOrigin | null { const r = notes.get(id); return r && !r.retired && !r.editor.dirty && !r.editor.pending && r.editor.noteId && r.editor.baseRevision && !['unknown', 'conflict', 'rejected'].includes(r.editor.saveResult) ? { kind: 'note', id: r.editor.noteId, revision: r.editor.baseRevision } : null; },
+        promotion(id: string): SnapshotOrigin | null { const r = notes.get(id); return r && !r.retired && !noteMutationBlocked(r.editor.noteId, r.context) && !r.editor.dirty && !r.editor.pending && r.editor.noteId && r.editor.baseRevision && !['unknown', 'conflict', 'rejected'].includes(r.editor.saveResult) ? { kind: 'note', id: r.editor.noteId, revision: r.editor.baseRevision } : null; },
         capture(notebookId: string, payload: StudioPayload, context: DispatchContext, generation: number) {
             const existing = [...ops.values()].find(r => r.notebookId === notebookId && r.operation.context.epoch === context.epoch && r.payload.kind === payload.kind && !(['export', 'audio', 'download'].includes(r.payload.kind) && ['succeeded', 'failed'].includes(r.operation.state)) && (payload.kind === 'import' ? r.payload.kind === 'import' && r.payload.file === payload.file : payload.kind === 'promote' ? r.payload.kind === 'promote' && JSON.stringify(r.payload.origin) === JSON.stringify(payload.origin) : payload.kind === 'download' ? r.payload.kind === 'download' && r.payload.remoteArtifactId === payload.remoteArtifactId && r.payload.remoteNotebookId === payload.remoteNotebookId : payload.kind === 'delete' ? r.payload.kind === 'delete' && r.payload.noteId === payload.noteId : !['succeeded', 'failed'].includes(r.operation.state)));
             if (existing)
@@ -363,6 +365,11 @@ export function createStudioStore(onChange: () => void) {
         begin(id: string, c: DispatchContext | null, g: number) {
             const r = ops.get(id);
             if (!r || r.retired || !c || r.operation.state !== 'idle')
+                return null;
+            const payload = r.payload;
+            if (payload.kind === 'delete' && (noteMutationBlocked(payload.noteId, r.operation.context) || [...notes.values()].some(note => note.editor.noteId === payload.noteId && sameOwner(note.context, r.operation.context) && (note.editor.dirty || note.editor.pending))))
+                return null;
+            if (payload.kind === 'promote' && payload.origin.kind === 'note' && noteMutationBlocked(payload.origin.id, r.operation.context))
                 return null;
             const operation = reduceOperation(r.operation, { type: 'begin', context: c, sessionGeneration: g });
             if (operation === r.operation)
@@ -391,6 +398,13 @@ export function createStudioStore(onChange: () => void) {
                     extra = { promoted: freezeValue(result.result) };
             }
             ops.set(id, Object.freeze({ ...r, ...extra, operation }));
+            if (r.payload.kind === 'delete' && result.kind === 'succeeded') {
+                for (const [noteId, note] of notes) {
+                    if (note.editor.noteId !== r.payload.noteId || !sameOwner(note.context, r.operation.context)) continue;
+                    notes.set(noteId, Object.freeze({ ...note, retired: true }));
+                    comparisons.delete(noteId);
+                }
+            }
             emit();
         },
         beginObserve(id: string, c: DispatchContext | null, g: number) {

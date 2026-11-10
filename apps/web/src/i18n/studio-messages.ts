@@ -1,5 +1,6 @@
 export const studioMessages = {
   "en-US": {
+    "noteDeletion": "This note has a pending or confirmed deletion. Its retained text is read-only.",
     "reedit": "Edit my draft against this revision",
     "retained": "Retained drafts",
     "keepOpen": "Keep draft and open",
@@ -14,6 +15,7 @@ export const studioMessages = {
     "metadataChanged": "The saved citations or source scope changed. Re-editing is blocked to avoid attaching different evidence to your text. Your draft is kept."
   },
   "zh-CN": {
+    "noteDeletion": "此笔记的删除尚待确认或已完成。保留的文本仅供阅读。",
     "reedit": "基于此版本重新编辑草稿",
     "retained": "保留的草稿",
     "keepOpen": "保留草稿并打开",
@@ -28,6 +30,7 @@ export const studioMessages = {
     "metadataChanged": "已保存的引用或资料范围发生变化。为避免给你的文本附上不同证据，暂不能重新编辑保存。草稿已保留。"
   },
   "zh-TW": {
+    "noteDeletion": "此筆記的刪除尚待確認或已完成。保留的文字僅供閱讀。",
     "reedit": "依此版本重新編輯草稿",
     "retained": "保留的草稿",
     "keepOpen": "保留草稿並開啟",
@@ -42,6 +45,7 @@ export const studioMessages = {
     "metadataChanged": "已儲存的引用或資料範圍已變更。為避免替文字附上不同證據，目前無法重新編輯儲存。草稿已保留。"
   },
   "pt-BR": {
+    "noteDeletion": "A exclusão desta nota está pendente ou confirmada. O texto mantido é somente leitura.",
     "reedit": "Editar meu rascunho com esta revisão",
     "retained": "Rascunhos mantidos",
     "keepOpen": "Manter rascunho e abrir",
@@ -56,6 +60,7 @@ export const studioMessages = {
     "metadataChanged": "As citações ou fontes salvas mudaram. A reedição está bloqueada para não associar outras evidências ao texto. O rascunho foi mantido."
   },
   "ja-JP": {
+    "noteDeletion": "このノートの削除は確認待ち、または完了しています。保持された文章は読み取り専用です。",
     "reedit": "この版を基に下書きを編集",
     "retained": "保持した下書き",
     "keepOpen": "下書きを保持して開く",
@@ -70,6 +75,7 @@ export const studioMessages = {
     "metadataChanged": "保存された引用または資料範囲が変更されました。異なる根拠が文章に付くのを防ぐため、再編集を停止しています。下書きは保持されています。"
   },
   "it-IT": {
+    "noteDeletion": "L’eliminazione di questa nota è in attesa o confermata. Il testo conservato è di sola lettura.",
     "reedit": "Modifica la bozza su questa revisione",
     "retained": "Bozze conservate",
     "keepOpen": "Conserva la bozza e apri",
@@ -84,6 +90,7 @@ export const studioMessages = {
     "metadataChanged": "Le citazioni o le fonti salvate sono cambiate. La modifica è bloccata per non associare prove diverse al testo. La bozza è conservata."
   },
   "fr-FR": {
+    "noteDeletion": "La suppression de cette note est en attente ou confirmée. Le texte conservé est en lecture seule.",
     "reedit": "Modifier mon brouillon sur cette révision",
     "retained": "Brouillons conservés",
     "keepOpen": "Conserver le brouillon et ouvrir",
@@ -98,6 +105,7 @@ export const studioMessages = {
     "metadataChanged": "Les citations ou sources enregistrées ont changé. La réédition est bloquée pour éviter d’associer d’autres preuves au texte. Votre brouillon est conservé."
   },
   "ru-RU": {
+    "noteDeletion": "Удаление этой заметки ожидает подтверждения или уже подтверждено. Сохранённый текст доступен только для чтения.",
     "reedit": "Редактировать черновик на основе этой версии",
     "retained": "Сохранённые черновики",
     "keepOpen": "Сохранить черновик и открыть",
@@ -112,6 +120,7 @@ export const studioMessages = {
     "metadataChanged": "Сохранённые цитаты или источники изменились. Повторное редактирование заблокировано, чтобы не привязать к тексту другие доказательства. Черновик сохранён."
   },
   "bn-IN": {
+    "noteDeletion": "এই নোট মুছে ফেলার ফল নিশ্চিত হওয়া বাকি অথবা নিশ্চিত হয়েছে। রাখা লেখাটি শুধু পড়া যাবে।",
     "reedit": "এই সংস্করণ ধরে খসড়া সম্পাদনা করুন",
     "retained": "রাখা খসড়া",
     "keepOpen": "খসড়া রেখে খুলুন",
@@ -126,6 +135,7 @@ export const studioMessages = {
     "metadataChanged": "সংরক্ষিত উদ্ধৃতি বা উৎসের পরিসর বদলেছে। আপনার লেখায় অন্য প্রমাণ যুক্ত হওয়া ঠেকাতে পুনঃসম্পাদনা বন্ধ আছে। খসড়া রাখা হয়েছে।"
   },
   "ca-ES": {
+    "noteDeletion": "La supressió d’aquesta nota està pendent o confirmada. El text conservat és de només lectura.",
     "reedit": "Edita l’esborrany sobre aquesta revisió",
     "retained": "Esborranys conservats",
     "keepOpen": "Conserva l’esborrany i obre",
@@ -140,6 +150,7 @@ export const studioMessages = {
     "metadataChanged": "Les citacions o fonts desades han canviat. La reedició està bloquejada per evitar associar altres proves al text. L’esborrany es conserva."
   },
   "es-ES": {
+    "noteDeletion": "La eliminación de esta nota está pendiente o confirmada. El texto conservado es de solo lectura.",
     "reedit": "Editar mi borrador sobre esta revisión",
     "retained": "Borradores conservados",
     "keepOpen": "Conservar borrador y abrir",
@@ -154,6 +165,7 @@ export const studioMessages = {
     "metadataChanged": "Las citas o fuentes guardadas cambiaron. Se bloquea la reedición para evitar asociar otras pruebas al texto. Tu borrador se conserva."
   },
   "de-DE": {
+    "noteDeletion": "Die Löschung dieser Notiz ist ausstehend oder bestätigt. Der aufbewahrte Text ist schreibgeschützt.",
     "reedit": "Entwurf auf dieser Revision bearbeiten",
     "retained": "Aufbewahrte Entwürfe",
     "keepOpen": "Entwurf behalten und öffnen",
@@ -168,6 +180,7 @@ export const studioMessages = {
     "metadataChanged": "Gespeicherte Zitate oder Quellen haben sich geändert. Die erneute Bearbeitung ist gesperrt, damit keine anderen Belege mit dem Text verknüpft werden. Der Entwurf bleibt erhalten."
   },
   "pl-PL": {
+    "noteDeletion": "Usunięcie tej notatki oczekuje na potwierdzenie lub zostało potwierdzone. Zachowany tekst jest tylko do odczytu.",
     "reedit": "Edytuj szkic na podstawie tej wersji",
     "retained": "Zachowane szkice",
     "keepOpen": "Zachowaj szkic i otwórz",
@@ -182,6 +195,7 @@ export const studioMessages = {
     "metadataChanged": "Zapisane cytaty lub źródła uległy zmianie. Ponowna edycja jest zablokowana, aby nie przypisać innych dowodów do tekstu. Szkic został zachowany."
   },
   "tr-TR": {
+    "noteDeletion": "Bu notun silinmesi bekliyor veya onaylandı. Korunan metin salt okunurdur.",
     "reedit": "Taslağımı bu sürüme göre düzenle",
     "retained": "Saklanan taslaklar",
     "keepOpen": "Taslağı koru ve aç",

@@ -1,5 +1,5 @@
 import {asRequestNotDispatchedError} from '@study/web-transport';
-import { createOperation, reduceOperation, canDispatch, freezeDispatchContext, type OperationModel, type OperationToken, type DispatchContext } from '@study/domain';
+import { createOperation, reduceOperation, canDispatch, sameTurnTarget, freezeDispatchContext, type OperationModel, type OperationToken, type DispatchContext } from '@study/domain';
 import type { WorkspaceViewV1, WorkbenchSelection } from '@study/contracts';
 import type { UploadReceipt, WebResult, RemoteAction } from '../../data/source-api';
 import { selectionFromView, sameSelection } from './source-selection';
@@ -77,6 +77,10 @@ const matchesLink=(r:SourceOperation,w:WorkspaceViewV1)=>!r.transaction||r.works
 /** App-lifetime in-memory ownership. No disk cache, automatic queue, or server replay claim. */
 export function createSourceOperations(onChange: () => void) {
     const retiredEpochs = new Set<number>();
+    const neverSent = (r: SourceOperation) => r.operation.state === 'idle' && !r.operation.token && !r.operation.receipt;
+    // Ambiguous originals suppress duplicate capture across recovery. Only an
+    // explicitly selected, proven-unsent input may start in a new privacy scope.
+    const duplicate = (r: SourceOperation, c: DispatchContext) => !neverSent(r) || !r.retired && r.operation.context.epoch === c.epoch && sameTurnTarget(r.operation.context.target, c.target);
     const rows = new Map<string, SourceOperation>();
     const workspaceReads = new Map<string, SourceWorkspaceReadToken>();
     const selectionReads = new Map<string, SourceSelectionRead>();
@@ -117,20 +121,23 @@ export function createSourceOperations(onChange: () => void) {
             emit();
             return true;
         },
-        async captureUpload(notebookId: string, file: File | null, context: DispatchContext, generation: number, sourceId?: string) { const captured = freezeDispatchContext(context); const signature = await fileSignature(file); const existing = [...rows.values()].find(r => r.payload.kind === 'upload' && r.notebookId === notebookId && r.payload.sourceId === sourceId && signature !== null && r.fileSignature === signature); if (existing)
+        async captureUpload(notebookId: string, file: File | null, context: DispatchContext, generation: number, sourceId?: string) { const captured = freezeDispatchContext(context); const signature = await fileSignature(file); const existing = [...rows.values()].find(r => r.payload.kind === 'upload' && duplicate(r, captured) && r.notebookId === notebookId && r.payload.sourceId === sourceId && signature !== null && r.fileSignature === signature); if (existing)
             return existing.id; return add(notebookId, { kind: 'upload', ...(sourceId ? { sourceId } : {}) }, captured, generation, file, signature); },
         capture(notebookId: string, payload: Exclude<SourcePayload, {
             kind: 'upload';
         }>, context: DispatchContext, generation: number) { if (payload.kind === 'selection' && !selectionFromView(payload.selection))
-            throw new Error('Unsupported selection'); const existing = [...rows.values()].find(r => r.notebookId === notebookId && (payload.kind === 'selection' ? unconfirmedSelection(r,notebookId,context.epoch) : payload.kind === 'web' ? r.payload.kind === 'web' && r.payload.result.url === payload.result.url : payload.kind === 'remote' ? r.payload.kind === 'remote' && r.payload.action.kind === payload.action.kind && r.payload.action.remoteNotebookId === payload.action.remoteNotebookId && JSON.stringify([r.payload.action.versionIds, r.payload.action.remoteIds]) === JSON.stringify([payload.action.versionIds, payload.action.remoteIds]) : r.payload.kind === 'cancel' && r.payload.jobId === payload.jobId)); return existing?.id ?? add(notebookId, payload, context, generation); },
+            throw new Error('Unsupported selection'); const existing = [...rows.values()].find(r => r.notebookId === notebookId && (payload.kind === 'selection' || duplicate(r, context)) && (payload.kind === 'selection' ? unconfirmedSelection(r,notebookId,context.epoch) : payload.kind === 'web' ? r.payload.kind === 'web' && r.payload.result.url === payload.result.url : payload.kind === 'remote' ? r.payload.kind === 'remote' && r.payload.action.kind === payload.action.kind && r.payload.action.remoteNotebookId === payload.action.remoteNotebookId && JSON.stringify([r.payload.action.versionIds, r.payload.action.remoteIds]) === JSON.stringify([payload.action.versionIds, payload.action.remoteIds]) : r.payload.kind === 'cancel' && r.payload.jobId === payload.jobId)); return existing?.id ?? add(notebookId, payload, context, generation); },
         begin(id: string, current: DispatchContext | null, generation: number, providerRevision?:number) { const r = rows.get(id); if (!r || r.retired || r.reserved || r.transaction && r.transaction.providerRevision!==providerRevision || !current || r.payload.kind === 'upload' && !r.file || r.operation.state !== 'idle')
-            return null; const operation = reduceOperation(r.operation, { type: 'begin', context: current, sessionGeneration: generation }); if (operation === r.operation)
+            return null;
+            const base = r.payload.kind !== 'selection' && neverSent(r) && canDispatch(r.operation.context, current) && r.operation.sessionGeneration !== generation
+                ? createOperation(r.operation.context, r.id, { serverIdempotency: false, sessionGeneration: generation }) : r.operation;
+            const operation = reduceOperation(base, { type: 'begin', context: current, sessionGeneration: generation }); if (operation === base)
             return null; const next = Object.freeze({ ...r, operation }); rows.set(id, next); emit(); return next; },
         settle(id: string, token: OperationToken, outcome: SourceOutcome, current: DispatchContext | null, generation: number) { const r = rows.get(id); if (!r || r.operation.token !== token || r.operation.state !== 'submitting')
-            return; const valid = !r.retired && canDispatch(r.operation.context, current) && generation === token.sessionGeneration; let operation = r.operation; let extra: Partial<SourceOperation> = {}; if (!valid || outcome.kind === 'unknown')
-            operation = reduceOperation(operation, { type: 'unknown', token });
-        else if (outcome.kind === 'not-sent')
+            return; const valid = !r.retired && canDispatch(r.operation.context, current) && generation === token.sessionGeneration; let operation = r.operation; let extra: Partial<SourceOperation> = {}; if (outcome.kind === 'not-sent')
             operation = reduceOperation(operation, { type: 'not-sent', token });
+        else if (!valid || outcome.kind === 'unknown')
+            operation = reduceOperation(operation, { type: 'unknown', token });
         else {
             operation = reduceOperation(operation, { type: 'succeeded', token });
             if (outcome.kind === 'upload')
@@ -148,6 +155,7 @@ export function createSourceOperations(onChange: () => void) {
         retire(epoch: number) { retiredEpochs.add(epoch); for (const r of rows.values()) if(r.operation.context.epoch===epoch) advance(r.notebookId); for (const [id, r] of rows)
             if (r.operation.context.epoch === epoch)
                 rows.set(id, Object.freeze({ ...r, retired: true, operation: r.operation.state === 'submitting' && r.operation.token ? reduceOperation(r.operation, { type: 'unknown', token: r.operation.token }) : r.operation })); emit(); },
+        discardUnsent(id: string) { const row = rows.get(id); if (!row || !neverSent(row) || row.payload.kind === 'selection') return false; rows.delete(id); emit(); return true; },
         dismiss(id: string) { const r = rows.get(id); if (r?.operation.state !== 'succeeded')
             return; rows.set(id, Object.freeze({ ...r, hidden: true })); emit(); },
         pending(notebookId: string) { return [...rows.values()].some(r => r.notebookId === notebookId && ['submitting', 'unknown'].includes(r.operation.state)); },

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Preserve Notebook reader position and note drafts across verified same-owner session checks, while fencing old responses and uncertain writes. Restore two-second read-only extraction observation, safe explicit continuation/discard of never-sent uploads, classic-note deletion locks and retirement, and verified opaque HTML artifact downloads. These are source-only corrections; new candidate builds and browser/runtime/deployment acceptance remain pending.
+
 - Keep malformed-request parser errors as native nginx 400 responses instead of redirecting an empty URI into a 500. Parsed ambiguous targets retain the existing plain 404 denial. Source-policy regressions do not establish corrected nginx runtime acceptance.
 
 - Bind cutover old-tab evidence to its nonempty primary runtime record and cited entry, validate each operation's current custody epoch, and preserve historical reverse/backup evidence across fresh directional entry gates. These are source-only checks, not deployment or acceptance.

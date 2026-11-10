@@ -1,5 +1,6 @@
 export const sourceMessages = {
   "en-US": {
+    "discardUnsent": "Discard unsent input",
     "add": "Add sources",
     "choose": "Choose files",
     "upload": "Upload",
@@ -14,6 +15,7 @@ export const sourceMessages = {
     "accepted": "Saved receipt"
   },
   "zh-CN": {
+    "discardUnsent": "丢弃未发送内容",
     "add": "添加资料",
     "choose": "选择文件",
     "upload": "上传",
@@ -28,6 +30,7 @@ export const sourceMessages = {
     "accepted": "已保存回执"
   },
   "zh-TW": {
+    "discardUnsent": "捨棄未傳送內容",
     "add": "新增資料",
     "choose": "選擇檔案",
     "upload": "上傳",
@@ -42,6 +45,7 @@ export const sourceMessages = {
     "accepted": "已儲存回執"
   },
   "pt-BR": {
+    "discardUnsent": "Descartar entrada não enviada",
     "add": "Adicionar fontes",
     "choose": "Escolher arquivos",
     "upload": "Enviar",
@@ -56,6 +60,7 @@ export const sourceMessages = {
     "accepted": "Comprovante salvo"
   },
   "ja-JP": {
+    "discardUnsent": "未送信の入力を破棄",
     "add": "資料を追加",
     "choose": "ファイルを選択",
     "upload": "アップロード",
@@ -70,6 +75,7 @@ export const sourceMessages = {
     "accepted": "保存済みの受領情報"
   },
   "it-IT": {
+    "discardUnsent": "Scarta contenuto non inviato",
     "add": "Aggiungi fonti",
     "choose": "Scegli file",
     "upload": "Carica",
@@ -84,6 +90,7 @@ export const sourceMessages = {
     "accepted": "Ricevuta salvata"
   },
   "fr-FR": {
+    "discardUnsent": "Supprimer la saisie non envoyée",
     "add": "Ajouter des sources",
     "choose": "Choisir des fichiers",
     "upload": "Importer",
@@ -98,6 +105,7 @@ export const sourceMessages = {
     "accepted": "Accusé enregistré"
   },
   "ru-RU": {
+    "discardUnsent": "Удалить неотправленные данные",
     "add": "Добавить источники",
     "choose": "Выбрать файлы",
     "upload": "Загрузить",
@@ -112,6 +120,7 @@ export const sourceMessages = {
     "accepted": "Сохранённое подтверждение"
   },
   "bn-IN": {
+    "discardUnsent": "না পাঠানো তথ্য বাদ দিন",
     "add": "উৎস যোগ করুন",
     "choose": "ফাইল বাছুন",
     "upload": "আপলোড",
@@ -126,6 +135,7 @@ export const sourceMessages = {
     "accepted": "সংরক্ষিত প্রাপ্তিস্বীকার"
   },
   "ca-ES": {
+    "discardUnsent": "Descarta l’entrada no enviada",
     "add": "Afegeix fonts",
     "choose": "Tria fitxers",
     "upload": "Puja",
@@ -140,6 +150,7 @@ export const sourceMessages = {
     "accepted": "Rebut desat"
   },
   "es-ES": {
+    "discardUnsent": "Descartar contenido no enviado",
     "add": "Añadir fuentes",
     "choose": "Elegir archivos",
     "upload": "Subir",
@@ -154,6 +165,7 @@ export const sourceMessages = {
     "accepted": "Recibo guardado"
   },
   "de-DE": {
+    "discardUnsent": "Nicht gesendete Eingabe verwerfen",
     "add": "Quellen hinzufügen",
     "choose": "Dateien auswählen",
     "upload": "Hochladen",
@@ -168,6 +180,7 @@ export const sourceMessages = {
     "accepted": "Gespeicherte Bestätigung"
   },
   "pl-PL": {
+    "discardUnsent": "Odrzuć niewysłane dane",
     "add": "Dodaj źródła",
     "choose": "Wybierz pliki",
     "upload": "Prześlij",
@@ -182,6 +195,7 @@ export const sourceMessages = {
     "accepted": "Zapisane potwierdzenie"
   },
   "tr-TR": {
+    "discardUnsent": "Gönderilmemiş girdiyi sil",
     "add": "Kaynak ekle",
     "choose": "Dosya seç",
     "upload": "Yükle",

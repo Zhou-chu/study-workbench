@@ -1,5 +1,5 @@
 import { parseTurnView, type EvidenceCitationView } from '@study/contracts';
-import { canDispatch, freezeDispatchContext, readTurnContext, sessionCoordinator, type DispatchContext } from '@study/web-transport';
+import { canDispatch, sameTurnTarget, freezeDispatchContext, readTurnContext, sessionCoordinator, type DispatchContext } from '@study/web-transport';
 import type { CitationOrigin } from '../chat/Message';
 import type { SourceReadIntent } from '../sources/source-selection';
 import type { ReaderEvidence, ReaderLocator } from '../../data/evidence-api';
@@ -20,6 +20,8 @@ export type ReaderIntent = Readonly<ReaderCapture & {
     origin: ReaderOrigin | null;
 }>;
 const positive = (v: unknown): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0;
+/** Loaded presentation survives dispatch suspension only within its original privacy scope. */
+export function readerIsOwned(intent: ReaderIntent) { const current = readTurnContext(); return !!current && intent.context.epoch === current.epoch && sameTurnTarget(intent.context.target, current.target); }
 export function readerIsCurrent(intent: ReaderIntent) { return canDispatch(intent.context, readTurnContext()) && intent.generation === sessionCoordinator.current(); }
 /** A bound controller supplies notebook, target and generation without global selection inference. */
 export function createReaderNavigation(capture: ReaderCapture) {
