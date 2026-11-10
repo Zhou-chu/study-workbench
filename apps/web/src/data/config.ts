@@ -57,11 +57,14 @@ export function parseWebStatus(value: unknown): {
         throw new ConfigurationError();
     return { phase: web.phase as Exclude<AuthPhase, 'bootstrapping'>, session };
 }
-export async function errorCode(response: Response): Promise<string | null> {
+export async function errorCode(response: Response, legacyProbe = false): Promise<string | null> {
     try {
         const body = record(await response.clone().json());
         if (Object.keys(body).length === 1 && body.detail === 'Invalid password')
             return 'LEGACY_INVALID_PASSWORD';
+        // Only the legacy status probe admits this exact anonymous response.
+        if (legacyProbe && Object.keys(body).length === 1 && body.detail === 'Missing authorization header')
+            return 'AUTH_REQUIRED';
         return typeof record(body.error).code === 'string' ? String(record(body.error).code) : null;
     }
     catch {

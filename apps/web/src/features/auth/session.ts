@@ -200,7 +200,7 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
                 if (disposed || own !== ticket)
                     return;
                 if (!probe.ok) {
-                    const code = await errorCode(probe);
+                    const code = await errorCode(probe, true);
                     if (disposed || own !== ticket)
                         return;
                     if (probe.status === 401 && ['LEGACY_INVALID_PASSWORD', 'AUTH_REQUIRED', 'AUTH_INVALID_CREDENTIALS'].includes(code ?? '')) {
