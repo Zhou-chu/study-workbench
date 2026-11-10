@@ -1,6 +1,7 @@
 """C1 pure file gates. No runtime, image or network acceptance."""
 
 import importlib.util
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,6 +76,23 @@ def test_gateway_preserves_raw_gate_and_never_generic_spa_fallback():
     assert "try_files $uri $uri/ /index.html" not in config
     assert "$host" not in config
     assert "immutable" in config
+
+
+def test_gateway_leaves_parser_bad_requests_native():
+    """Source-policy guard, not nginx execution: empty-URI 400 cannot redirect."""
+    config = (ROOT / "deploy/v1/web-gateway.conf").read_text()
+    directives = re.findall(r"(?m)^\s*error_page\s+([^;]+);", config)
+    for directive in directives:
+        statuses = {word for word in directive.split() if word.isdecimal()}
+        assert "400" not in statuses, "Parser 400 must not enter an error-page redirect"
+
+
+def test_gateway_keeps_parsed_bad_targets_on_the_not_found_path():
+    """Keep the existing plain 404 policy after separating parser-level 400."""
+    config = (ROOT / "deploy/v1/web-gateway.conf").read_text()
+    gate = re.search(r"if\s*\(\$bad_target\)\s*\{\s*return\s+(\d+)\s*;\s*}", config)
+    assert gate is not None, "Raw-target rejection must remain configured"
+    assert gate.group(1) == "404", "Parsed bad targets retain the plain 404 handler"
 
 
 import json
