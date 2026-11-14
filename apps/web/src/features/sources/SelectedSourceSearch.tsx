@@ -34,8 +34,29 @@ export function SelectedSourceSearch({ notebookId, selection, workspace, disable
         latest.current = fingerprint;
         sequence.current++;
     }
-    useEffect(() => { mounted.current = true; const invalidate = () => { sequence.current++; setResult(null); }; const a = subscribeTurnContext(invalidate), b = drafts.sources.subscribe(invalidate), c = client.getQueryCache().subscribe(e => { if (e.query.queryKey[0] === 'workspace' && e.query.queryKey.at(-1) === notebookId)
-        invalidate(); }); return () => { mounted.current = false; sequence.current++; a(); b(); c(); }; }, [drafts, client, notebookId]);
+    useEffect(() => {
+        mounted.current = true;
+        let active = true;
+        const invalidate = () => {
+            // Cache entries can be created by another component during render.
+            // Retire reads immediately, but publish React state only after that stack ends.
+            const invalidatedSequence = ++sequence.current;
+            const epoch = readTurnContext()?.epoch;
+            const session = sessionCoordinator.current();
+            queueMicrotask(() => {
+                if (active && mounted.current && sequence.current === invalidatedSequence
+                    && readTurnContext()?.epoch === epoch && sessionCoordinator.current() === session)
+                    setResult(null);
+            });
+        };
+        const a = subscribeTurnContext(invalidate);
+        const b = drafts.sources.subscribe(invalidate);
+        const c = client.getQueryCache().subscribe(e => {
+            if (e.query.queryKey[0] === 'workspace' && e.query.queryKey.at(-1) === notebookId)
+                invalidate();
+        });
+        return () => { active = false; mounted.current = false; sequence.current++; a(); b(); c(); };
+    }, [drafts, client, notebookId]);
     const valid = (c: Capture) => mounted.current && c.sequence === sequence.current && c.fingerprint === latest.current && c.session === sessionCoordinator.current() && canDispatch(c.context, readTurnContext());
     const ready = connection.ready && !disabled && selection?.selection_origin === 'local' && readySources(workspace, selection.source_version_ids);
     const search = async () => { const c = readTurnContext(); if (!ready || !selection || !connection.api || !c?.ready || composing.current || pending.current || !query.trim())

@@ -13,6 +13,7 @@ _OPERATIONS = frozenset(
         "llm_error_classification",
         "model_list",
         "source_get",
+        "source_preflight",
         "source_file_check",
         "source_file_download",
         "source_status",

@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Retire selected-source search results synchronously on workspace changes while deferring React cleanup outside parent render; prevent retired cleanup from affecting newer searches or unmounted components.
+
 - Return a safe unsuccessful credential probe when lookup/configuration fails before provider dispatch, instead of an unbound exception handler or a misleading successful model-not-found classification.
 - Suppress retired citation lookup errors after newer reader navigation or workbench unmount, while preserving current failures and independent question-source selection.
 
@@ -248,6 +250,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.env.example` names the chunking variables Open Notebook actually reads (`OPEN_NOTEBOOK_CHUNK_SIZE` / `OPEN_NOTEBOOK_CHUNK_OVERLAP`)
 
 ### Security
+
+- Keep advisory source preflight failures free of file paths and exception prose in logs; retain unsupported-file rejection and include defensive failure handling in coverage.
 
 - Redact unexpected model-route exceptions from HTTP responses and logs, retaining allowlisted operation names and exception types rather than credential/provider values or traceback locals.
 

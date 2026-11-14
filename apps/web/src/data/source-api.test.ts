@@ -13,3 +13,15 @@ it('does not dispatch retired captures and preserves unsafe error classification
     await expect(a.api.upload({ notebookId: 'n', file: new File(['x'], 'x.txt'), idempotencyKey: 'k' }, readTurnContext()!)).rejects.toMatchObject({ code: 'UPLOAD_COMMIT_UNKNOWN' });
 } });
 it('discovery and remote writes keep exact existing wire fields and captured targets', async () => { const h = harness(r => json(r.path.endsWith('/web-import') ? { state: 'queued', ...receipt, url: 'https://example.invalid/x', warning: null } : { job_id: 'job', state: 'queued' })); const c = readTurnContext()!; await h.api.importWeb('n', { id: 'r', url: 'https://example.invalid/x', title: 'Title', snippet: 'Snippet', domain: 'example.invalid' }, 'web-key', c); await h.api.remoteAction('n', { kind: 'import', remoteNotebookId: 'remote/%2F', versionIds: [], remoteIds: ['rs'], idempotencyKey: 'remote-key' }, c); expect(JSON.parse(h.requests[0]!.body as string)).toEqual({ url: 'https://example.invalid/x', title: 'Title', snippet: 'Snippet', provider: 'firecrawl', idempotency_key: 'web-key' }); expect(JSON.parse(h.requests[1]!.body as string)).toEqual({ remote_notebook_id: 'remote/%2F', remote_source_ids: ['rs'], include_text: true, idempotency_key: 'remote-key' }); });
+
+it('projects each version in a multi-row response using the real schema without retaining raw extras', async () => {
+    const rows = [
+        { source_version_id: 'first', title: 'First', private_extra: 'not-for-reader' },
+        { source_version_id: 'second', title: 'Second', status: 'ready', private_extra: 'also-private' },
+    ];
+    const { api } = harness(() => json(rows));
+    const result = await api.versions('s/opaque', readTurnContext()!);
+    expect(result.map(row => row.source_version_id)).toEqual(['first', 'second']);
+    expect(result[1]).toMatchObject({ title: 'Second', status: 'ready' });
+    expect(JSON.stringify(result)).not.toContain('private_extra');
+});

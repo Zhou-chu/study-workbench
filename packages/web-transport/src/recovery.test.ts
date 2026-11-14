@@ -50,3 +50,14 @@ it.each(['success', 'root marker', 'duplicate parent', 'unknown job', 'missing r
   expect(send).toHaveBeenCalledTimes(2)
   expect(send.mock.calls.every(([spec]) => spec.method === 'GET')).toBe(true)
 })
+
+it.each([0, 1, 2])('recovers the exact canonical turn at multi-row history index %s', async index => {
+  const f = fixture();
+  const unrelated = { ...f.turn, turn_id: 'unrelated', message: 'Different question', idempotency_key: 'other' };
+  const history = [unrelated, { ...unrelated, turn_id: 'another' }];
+  history.splice(index, 0, { ...f.turn });
+  const send = vi.fn().mockResolvedValueOnce(json(f.workspace)).mockResolvedValueOnce(json(history));
+  const result = await checkTurnRecovery({ send }, f.capture);
+  expect(result).toMatchObject({ kind: 'complete', jobId: 'j', turnId: 't', turn: { answer: 'A' } });
+  expect(history.map(row => row.turn_id)).toContain('t');
+});

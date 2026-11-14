@@ -5,6 +5,18 @@ import { createHttpAdapter } from '../src/http-adapter.js'
 import { config } from './fixtures.js'
 import { closeFixtures, collect, deferred, listen, sendJson, sha256, startUpstream } from './fixtures/upstream.js'
 
+
+function chunkedUpload(run: Awaited<ReturnType<typeof startUpstream>>, body: Buffer, boundary: string, firstArrived: Promise<void>, beforeEnd: () => void) {
+  return new Promise<number>((resolve, reject) => {
+    const request = httpRequest(run.bff + '/api/personal/imports/portable', { method: 'POST', headers: { ...run.headers, 'content-type': `multipart/form-data; boundary=${boundary}` } }, res => {
+      res.resume(); res.on('end', () => resolve(res.statusCode!));
+    });
+    request.on('error', reject);
+    request.write(body.subarray(0, 65536));
+    void firstArrived.then(() => { beforeEnd(); request.end(body.subarray(65536)); }).catch(error => { reject(error); request.destroy(); });
+  });
+}
+
 afterEach(closeFixtures)
 describe.each(['legacy_password', 'device_sessions'] as const)('incremental native HTTP %s', mode => {
   it('delivers split UTF-8 and split JSON before completion without rewriting any SSE bytes', async () => {
@@ -58,14 +70,8 @@ describe.each(['legacy_password', 'device_sessions'] as const)('incremental nati
     } })
     await run.activate()
     let ended = false
-    const result = new Promise<number>((resolve, reject) => {
-      const request = httpRequest(run.bff + '/api/personal/imports/portable', { method: 'POST', headers: { ...run.headers, 'content-type': `multipart/form-data; boundary=${boundary}` } }, res => {
-        res.resume(); res.on('end', () => resolve(res.statusCode!))
-      }); request.on('error', reject)
-      request.write(body.subarray(0, 65536))
-      void firstArrived.promise.then(() => { expect(ended).toBe(false); run.events.push('api:upload-before-client-eof'); ended = true; request.end(body.subarray(65536)) })
-    })
-    expect(await result).toBe(200); expect(received).toEqual(body)
+    const result = chunkedUpload(run, body, boundary, firstArrived.promise, () => { expect(ended).toBe(false); run.events.push('api:upload-before-client-eof'); ended = true; });
+    expect(await result).toBe(200); expect(received.equals(body)).toBe(true)
     expect(sha256(received.subarray(head.length, head.length + file.length))).toBe('198fe22858bf90dd34cba065bf3e3d4680918f930e94ce51807b9b3055f2eb1e')
     expect(sha256(received)).toBe('3033dc9ebd2843ec3c1dd72ee1f6cd2ccd8246012b5cbad1f7df786fc521f44c')
     expect(run.ingress.at(-1)!.cookie).toContain('CF_Authorization=synthetic-ingress')
@@ -166,3 +172,25 @@ it('does not pull a second response chunk while the native response is waiting f
   expect(writes).toBe(1); expect(pulls).toBe(1)
   controller.abort(); await canceled.promise; release.resolve(); await response.body?.cancel().catch(() => {})
 })
+
+it('exact binary equality rejects changed bytes and lengths without reducing the upload fixture', () => {
+  const original = Buffer.from(Array.from({ length: 1_048_593 }, (_, i) => i % 256));
+  expect(Buffer.from(original).equals(original)).toBe(true);
+  for (const index of [0, Math.floor(original.length / 2), original.length - 1]) {
+    const changed = Buffer.from(original); changed[index] = changed[index]! ^ 1;
+    expect(changed.equals(original)).toBe(false);
+  }
+  expect(original.subarray(0, -1).equals(original)).toBe(false);
+  expect(Buffer.concat([original, Buffer.from([0])]).equals(original)).toBe(false);
+});
+
+it('propagates a before-EOF assertion failure to the owning upload instead of hanging', async () => {
+  const first = deferred();
+  const run = await startUpstream('legacy_password', { respond: async req => { for await (const chunk of req) { void chunk; first.resolve(); } } });
+  const failure = new Error('synthetic before-EOF assertion');
+  const result = chunkedUpload(run, Buffer.alloc(65537), 'synthetic', first.promise, () => { throw failure; });
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('fixture completion did not settle')), 250); });
+  try { await expect(Promise.race([result, deadline])).rejects.toBe(failure); }
+  finally { clearTimeout(timer); }
+});

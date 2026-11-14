@@ -10,6 +10,6 @@ export async function checkTurnRecovery(transport: WebTransport, capture: TurnCa
     if (!workspaceResponse.ok || !historyResponse.ok) return { kind: 'unknown', reason: 'unconfirmed' }
     const workspace = parseWorkspaceView(await workspaceResponse.json())
     const history: unknown = await historyResponse.json()
-    return reconcileTurn(capture,workspace,Array.isArray(history) ? history.map(parseTurnView) : history,receipt,'workspace-view-v1')
+    return reconcileTurn(capture,workspace,Array.isArray(history) ? history.map(value => parseTurnView(value)) : history,receipt,'workspace-view-v1')
   } catch { return { kind: 'unknown', reason: 'unconfirmed' } }
 }

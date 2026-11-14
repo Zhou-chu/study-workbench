@@ -69,8 +69,8 @@ async def _assert_file_supported(file_path: str) -> None:
     """
     try:
         support = await check_file_support(file_path)
-    except Exception as e:  # pragma: no cover - defensive
-        logger.debug(f"Pre-flight file-support check skipped for {file_path}: {e}")
+    except Exception as e:
+        log_boundary_failure("source_preflight", e, level="DEBUG")
         return
 
     if not support.supported:

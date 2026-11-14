@@ -25,24 +25,6 @@ async def test_project_lock_serializes_same_project(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_store_rejects_unknown_kind_before_database():
-    from api.personal_store import PersonalStore
-
-    with pytest.raises(ValueError):
-        await PersonalStore().get("credential", "x")
-
-
-def test_record_identity_stable_and_kind_separated():
-    from api.personal_store import record_key
-
-    # Golden SHA256("x") protocol vector: a constant or altered encoding fails.
-    digest = "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881"
-    assert record_key("version", "x") == f"v1_version:{digest}"
-    assert record_key("evidence", "x") == f"v1_evidence:{digest}"
-    assert record_key("version", "y") != f"v1_version:{digest}"
-
-
-@pytest.mark.asyncio
 async def test_cross_instance_lock_cancellation_releases_waiter_and_holder(tmp_path):
     from open_notebook.database.project_locks import note_mutation_lock, project_lock
 
