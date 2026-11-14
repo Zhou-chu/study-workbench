@@ -1,3 +1,4 @@
+import {SetupLink} from '../settings/SetupLink';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { readTurnContext, sessionCoordinator } from '@study/web-transport';
@@ -104,7 +105,7 @@ export function PodcastGenerationDialog({ onClose }: {
  {Object.keys(form.selection).filter(id => !notebooks.data?.some(n => n.id === id)).map(id => <label key={id}><input type="checkbox" checked onChange={() => { const selection = { ...form.selection }; delete selection[id]; changeSelection(selection); }}/>{id + ' · ' + t.common.unknown}</label>)}
  <label>{t.podcasts.episodeProfile}<select value={form.profileId} onChange={e => s.edit({ profileId: e.target.value })}><option value="">{t.podcasts.episodeProfilePlaceholder}</option>{data.profiles.data?.map(profile => <option key={profile.id} value={profile.id}>{profile.name + ' · ' + profile.id}</option>)}</select></label>
  <label>{t.podcasts.episodeName}<input value={form.name} onChange={e => s.edit({ name: e.target.value })}/></label><label>{t.podcasts.additionalInstructions}<textarea value={form.instructions} onChange={e => s.edit({ instructions: e.target.value })}/></label></fieldset>
- {selectedProfile && !configured && <p role="alert">{t.podcasts.setupRequiredDesc}</p>}
+ {selectedProfile && !configured && <div role="alert"><p>{t.podcasts.setupRequiredDesc}</p><SetupLink className="button" to="/settings/models" returnTo="/podcasts?create=1">{t.navigation.models}</SetupLink><SetupLink className="button" to="/podcasts?tab=profiles">{t.podcasts.templatesTab}</SetupLink></div>}
  <Button disabled={s.locked || busy || !chosen || blockedPreview} onClick={() => void inspect()}>{p.preview}</Button>
  {preview && preview.selectionVersion === form.selectionVersion && preview.issues.map((issue, i) => <p role="alert" key={i}>{issue.kind === 'missing' ? p.missing : issue.kind === 'unusable' ? p.unusable : t.podcasts.buildContextFailed} {issue.id} {p.revise}</p>)}
  {validPreview && preview && <details open><summary>{p.preview}</summary><p>{p.estimate}</p><p>{t.podcasts.tokens.replace('{{value}}', String(preview.tokens)) + ' · ' + t.podcasts.chars.replace('{{value}}', String(preview.chars))}</p><pre>{preview.content}</pre></details>}

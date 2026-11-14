@@ -172,3 +172,6 @@ history.txt
 /node_modules/
 /apps/*/node_modules/
 /packages/*/node_modules/
+
+# Generated coverage reports (source denominator is configured explicitly)
+/coverage/

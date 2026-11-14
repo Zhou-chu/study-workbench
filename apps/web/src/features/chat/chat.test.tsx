@@ -122,7 +122,9 @@ it('uncertain selection disables submission and keeps the source-scope draft vis
     act(() => { x.workbench.drafts.sources.capture('n', { kind: 'selection', selection: { engine: 'independent', selection_origin: 'local', source_version_ids: ['v-new'], remote_source_ids: [] } }, context, generation); });
     fireEvent.change(screen.getByRole('textbox', { name: 'Question' }), { target: { value: 'No stale scope' } });
     expect(screen.getByRole('button', { name: 'Ask selected sources' })).toBeDisabled();
-    expect(screen.getByText('v-new')).toBeInTheDocument();
+    expect(screen.queryByText('v-new')).not.toBeInTheDocument();
+    expect(JSON.stringify(x.workbench.drafts.sources.getSnapshot())).toContain('v-new');
+    expect(screen.getByRole('textbox', { name: 'Question' })).toHaveValue('No stale scope');
     expect(x.submits()).toHaveLength(0);
 });
 it('keeps one accepted observer and the newer draft while conversation is unmounted and restored', async () => {
@@ -233,13 +235,15 @@ it('never treats derived independent_support metadata as corroboration and rende
     expect(screen.getByText('A saved snapshot, not independent evidence. Its original references are retained.')).toBeInTheDocument();
     expect(document.body.textContent).not.toContain('[object Object]');
 });
-it('keeps bounded outline and context-budget limits visible with semantic coverage beside the answer', async () => {
+it('keeps coverage risks visible while technical statistics remain expandable', async () => {
     const w = sourceWorkspace();
     w.turns = [{ turn_id: 'coverage', status: 'succeeded', message: 'Coverage question', answer: 'Answer', warnings: ['BOUNDED_OVERVIEW:4', 'CONTEXT_BUDGET:2048'], retrieval: { retrieval_method: 'lexical_fallback', fallback_reason: 'profile unavailable', indexed_version_count: 1, selected_version_count: 3, warnings: [] } }];
     sourceServer(r => new URL(r.url).pathname.endsWith('/models/defaults') ? json({ default_chat_model: 'm' }) : json([]));
     await renderSourceFeature(<ConversationPanel notebookId="n" workspace={w}/>);
     expect(screen.getByText('Bounded outline: based on selected evidence excerpts, not an exhaustive outline of all selected material.')).toBeVisible();
     expect(screen.getByText('Context limit: some retrieved evidence could not be included.')).toBeVisible();
+    expect(screen.getByText('Semantic coverage: 1 / 3 selected versions')).not.toBeVisible();
+    fireEvent.click(screen.getByText('Technical details'));
     expect(screen.getByText('Semantic coverage: 1 / 3 selected versions')).toBeVisible();
 });
 it('submits an explicit outline and retains its completed B7 handoff until a consumer is connected', async () => {

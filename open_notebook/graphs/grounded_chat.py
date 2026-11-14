@@ -549,7 +549,16 @@ class GroundedChatService:
         else:
             content = getattr(output, "content", output)
             text = clean_thinking_content(extract_text_content(content))
-            text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip())
+            # Preserve the historical optional fences without searching every
+            # whitespace suffix for a closing fence (quadratic on long spaces).
+            text = text.strip()
+            if text.startswith("```"):
+                text = text[3:]
+                if text.startswith("json"):
+                    text = text[4:]
+                text = text.lstrip()
+            if text.endswith("```"):
+                text = text[:-3].rstrip()
             try:
                 data = json.loads(text)
             except (json.JSONDecodeError, TypeError) as exc:

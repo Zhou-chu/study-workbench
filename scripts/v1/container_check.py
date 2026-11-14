@@ -260,6 +260,7 @@ def _validate(data, root):
                 if name != "db":
                     allowed |= {
                         "SURREAL_URL",
+                        "SURREAL_INSECURE_ALLOW_URL",
                         "SURREAL_NAMESPACE",
                         "SURREAL_DATABASE",
                         "STUDY_WORKBENCH_DATA_DIR",
@@ -296,7 +297,8 @@ def _validate(data, root):
         env = service.get("environment", {})
         if isinstance(env, dict):
             for key, value in {
-                "SURREAL_URL": "ws://db:8000/rpc",
+                "SURREAL_URL": "${SURREAL_URL:?Explicit database endpoint required}",
+                "SURREAL_INSECURE_ALLOW_URL": "${SURREAL_INSECURE_ALLOW_URL:-}",
                 "SURREAL_NAMESPACE": "open_notebook",
                 "SURREAL_DATABASE": "open_notebook",
                 "STUDY_WORKBENCH_DATA_DIR": "/app/data/personal",

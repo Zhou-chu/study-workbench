@@ -1,3 +1,5 @@
+import {useAppData} from './providers';
+import {SetupLink, SetupReturnLink} from '../features/settings/SetupLink';
 import {SetupWarning} from '../features/settings/SetupWarning';
 import {useWorkbenchSnapshot} from './WorkbenchSession';
 import {Button} from '../ui/Button';
@@ -13,17 +15,18 @@ import { StatusBadge } from '../ui/StatusBadge';
 export function AppChrome({ children, title }: { children: ReactNode; title?: string }) {
   const { t, shell, session, locale, setLocale } = useI18n();
   const {state,controller}=useWorkbenchSnapshot();
+  const { workspace } = useAppData();
   return <>
     <a className="skip-link" href="#main-content">{session.skipMain}</a>
     <header className="app-header">
       <Link className="brand" to="/" aria-label={shell.homeTitle}>
-        <span className="brand-mark" aria-hidden="true">▥</span><span>Notebook</span>
+        <span className="brand-mark" aria-hidden="true">N.</span><span>Notebook</span>
       </Link>
       <span className="header-divider" aria-hidden="true" />
       {title && <span className="header-title">{title}</span>}
       <div className="header-tools">
         <ThemeControl />
-        <Link className="button" to="/settings">{t.navigation.settings}</Link>
+        <SetupLink className="button" to="/settings">{t.navigation.settings}</SetupLink>
         {controller&&<Button disabled={!state?.ready} onClick={()=>void controller.signoutLocal()}>{t.common.signOut}</Button>}
         <Dialog
           trigger={<><span aria-hidden="true">⚙</span><span className="settings-label">{shell.preferences}</span></>}
@@ -37,11 +40,11 @@ export function AppChrome({ children, title }: { children: ReactNode; title?: st
         </Dialog>
       </div>
     </header>
-    <div className="preview-notice">
+    {!controller && !workspace && <div className="preview-notice">
       <StatusBadge state="pending" label={shell.previewTitle} /><span>{shell.previewNotice}</span>
-    </div>
+    </div>}
     <CommonNavigation/>
     <SetupWarning/>
-    <main id="main-content" tabIndex={-1}>{children}</main>
+    <main id="main-content" tabIndex={-1}><SetupReturnLink/>{children}</main>
   </>;
 }

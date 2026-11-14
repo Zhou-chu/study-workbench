@@ -115,7 +115,9 @@ PBKDF2_ITERATIONS: int = 600_000
 # design: the threat model assumes a high-entropy OPEN_NOTEBOOK_ENCRYPTION_KEY
 # (see docs/7-DEVELOPMENT/security.md), so the salt slows brute force without
 # acting as a per-install secret. Recorded in ADR-009.
-PBKDF2_SALT: bytes = b"open-notebook-credential-v1"
+# Ordinary assignment keeps Sonar Python 5.32 S2053 analyzable (annotation NPE).
+# This declaration compatibility workaround does not resolve the fixed-salt risk.
+PBKDF2_SALT = b"open-notebook-credential-v1"  # type: bytes
 
 
 def derive_fernet_key(passphrase: str) -> str:

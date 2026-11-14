@@ -1,5 +1,7 @@
 # Changelog
 
+- Notebook 浮层采用柔和黑白玻璃层并提供减少透明度/高对比降级；阅读器原件维护默认收纳为单行，任务与错误仍常显。
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
@@ -7,7 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Rebuild Notebook typography with self-hosted licensed Chinese and Latin fonts, accessible light/dark palettes, a shared reading/UI scale, open searchable/sortable collection rows, and a responsive source/reader/discussion workspace with reading and answer focus modes. Keep source opening separate from question selection and expose a scope-adjustment shortcut; retain technical retrieval details in diagnostics. Provider execution and deployment acceptance remain separately verified.
+
+- Rebuild the Notebook frontend around a monochrome editorial workspace with persistent Sources, Conversation and Results navigation, contextual reading, quieter note management, and responsive light/dark layouts. Keep operation controllers and data contracts intact while replacing machine identifiers and raw job listings with meaningful content and localized status. This is an isolated source/UI change, not a deployment or live-service acceptance.
+
 ### Fixed
+
+- Return a safe unsuccessful credential probe when lookup/configuration fails before provider dispatch, instead of an unbound exception handler or a misleading successful model-not-found classification.
+- Prevent duplicate or cancelled InlineEdit submissions across batched keyboard/blur events, preserve IME confirmation and latest parent values on rejected saves, and avoid late acknowledgements stealing focus.
+
+- Make legacy wizard steps native keyboard-focusable buttons and report URL copy success only after the clipboard write succeeds; handle clipboard failures, concurrent clicks and late unmount completion without false success.
+
+- Reveal the reader when a citation is opened from expanded answers, while retaining drafts and stable DOM slots. Isolate background controls and transfer focus when an already-open reader becomes a narrow-screen modal. Add the approved five-reference product DESIGN.md and explicit verification boundaries.
+
+- Recover completed local independent turns whose persisted scope omits the inapplicable remote notebook field, without accepting remote IDs, unknown scope values or weakening Google identity checks. Project the existing extraction success flag and warning list with strict types so legitimate extraction jobs do not mark the whole workspace unknown; unknown jobs and root projections still block recovery. Preserve the validated optional mapping version when capturing a real answer as a note, rather than silently rejecting its scope metadata.
+
+- Admit extracted Notebook sources for questions and selected-source search using the real version status returned by workspace views, while rejecting missing, unknown or conflicting readiness. Cover status-only producer responses and extraction observation in frontend regressions. This source/build fix does not imply deployment or live-provider acceptance.
+
+- Clarify the Notebook model setup journey with separate saved configuration, registered model, global chat default and explicit test states. Show each model’s linked configuration and choose a metadata-backed next navigation step: add a chat configuration, register a specific saved configuration, review multiple pending configurations, or select a registered chat model. Unknown or inconsistent state leads only to status review. Positive check receipts do not prove a model response, and guidance never automatically tests providers or changes defaults. Synthetic checks do not establish real-provider or deployment acceptance.
+
+- Wrap narrow-screen header controls at enlarged text sizes instead of placing theme buttons outside the viewport, and return keyboard focus to the opener after closing controlled library dialogs.
+
+- Preserve the originating notebook route when opening Models from the Tools menu, so users can return after configuration without losing the in-memory question or selected sources. Synthetic route regressions cover cancel, save and failed-save recovery; live-service acceptance remains pending.
+
+- Keep provider credential creation available when unrelated model/default reads fail; explain missing prerequisites and form validation without silently erasing unsent inputs. Add direct model/search settings links and a safe return to the originating workflow.
 
 - Show the Notebook password login form for the exact legacy anonymous missing-authorization response, while keeping protected readiness, unknown failures and device-session errors closed. This source correction does not establish browser or deployment acceptance.
 
@@ -217,6 +244,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.env.example` names the chunking variables Open Notebook actually reads (`OPEN_NOTEBOOK_CHUNK_SIZE` / `OPEN_NOTEBOOK_CHUNK_OVERLAP`)
 
 ### Security
+
+- Reject replaced, symlinked or group/world-writable QA child temporary/cache directories before starting the review; matching environment path strings alone no longer admit them.
+
+- Validate historical database-test child scratch custody before pytest can clean basetemp; independent commit-blob byte comparison now backs snapshot archive parity while retaining Git object-format IDs. These isolated tooling changes neither authenticate source authors nor deploy services.
+
+- Replace quadratic grounded-response fence stripping and Markdown link detection with linear scans while preserving existing Unicode, delimiter and rejection semantics. No source content or citation offsets are changed.
+
+- Reject remote plaintext database URLs by default before SDK construction; preserve loopback and supported embedded schemes. An exact SURREAL_INSECURE_ALLOW_URL opt-out remains explicitly unsafe. Docker candidate startup now requires an operator-selected endpoint instead of silently using plaintext; no deployment or real configuration was changed.
+
+- Pin Git-backed coverage and SPA provenance to an explicitly provisioned, checksum-verified POSIX installation instead of ambient PATH; isolate Git configuration and fail closed on untrusted tools. Native Windows checks require WSL until ACL verification is available.
 
 - Patch the independent SPA workspace Zod runtime and Vite/Vitest/source-map-js tooling dependencies to reviewed official versions. The legacy frontend lock is unchanged.
 - **Fresh hybrid query admission (2026-11-02).** Revalidate selected scope after the actual embedding-slot wait and before provisioning/send; preserve immutable extraction archive origins through canonical rereads, and reject disappearing accepted profiles as stale disclosure rather than ordinary fallback. Query admission is call-local and never changes document/indexing behavior. Hybrid remains disabled and runtime/provider acceptance is still pending.

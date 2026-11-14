@@ -9,6 +9,8 @@ def test_environment_discards_live_inputs(tmp_path):
         {
             "SURREAL_URL": "ws://private",
             "OPENAI_API_KEY": "secret",
+            "SURREAL_PASSWORD": "ambient-client",
+            "SURREAL_PASS": "ambient-server",
             "AUTH_TEST_SURREAL_URL": "ws://private",
             "PATH": "/usr/bin",
         },
@@ -18,7 +20,14 @@ def test_environment_discards_live_inputs(tmp_path):
         env["SURREAL_URL"] == env["AUTH_TEST_SURREAL_URL"] == "ws://127.0.0.1:12345/rpc"
     )
     assert "OPENAI_API_KEY" not in env
-    assert env["SURREAL_USER"] == env["SURREAL_PASSWORD"] == "synthetic"
+    assert env["SURREAL_USER"] == "synthetic"
+    assert env["SURREAL_PASSWORD"] not in {
+        "synthetic",
+        "ambient-client",
+        "ambient-server",
+    }
+    assert len(env["SURREAL_PASSWORD"]) >= 32
+    assert "SURREAL_PASS" not in env
     assert env["PYTHON_DOTENV_DISABLED"] == "1"
     assert env["STUDY_WORKBENCH_TEST_SURREAL"] == "1"
     assert env["WEB_DISCOVERY_TEST_DB"] == "1"
@@ -142,10 +151,12 @@ def _termination_harness(monkeypatch, tmp_path, phase):
     database = Mock(closed=False)
     child = Mock(closed=False)
     created: list[Mock] = []
+    launches = []
 
     def start(*args, **kwargs):
         assert callable(signal.getsignal(signal.SIGTERM))
         assert signal.getsignal(signal.SIGTERM) is not previous
+        launches.append((args[0], kwargs))
         proc = database if not created else child
         created.append(proc)
         return proc
@@ -187,6 +198,7 @@ def _termination_harness(monkeypatch, tmp_path, phase):
     assert created == ([database] if phase == "readiness" else [database, child])
     assert all(proc.closed for proc in created)
     stop.assert_called_once()
+    return launches
 
 
 def test_sigterm_during_spawn_defers_until_owned_registration(monkeypatch):
@@ -231,3 +243,116 @@ def test_cleanup_failure_still_restores_original_handler(monkeypatch):
         with runner.owned_processes():
             pass
     assert signal.getsignal(signal.SIGTERM) is previous
+
+
+def test_each_run_has_private_matching_password_without_command_line_leak(
+    monkeypatch, tmp_path, capsys
+):
+    from pathlib import Path
+
+    monkeypatch.setenv("SURREAL_PASSWORD", "ambient-client")
+    monkeypatch.setenv("SURREAL_PASS", "ambient-server")
+    monkeypatch.setenv("TMPDIR", "/private-do-not-use")
+    passwords = []
+    for _ in range(2):
+        database, child = _termination_harness(monkeypatch, tmp_path, "success")
+        database_args, database_options = database
+        child_args, child_options = child
+        env = child_options["env"]
+        password = env["SURREAL_PASSWORD"]
+        passwords.append(password)
+        assert password not in {"synthetic", "ambient-client", "ambient-server"}
+        assert len(password) >= 32
+        assert database_options["env"] == {
+            "PATH": "/usr/bin:/bin",
+            "HOME": str(database_options["cwd"]),
+            "SURREAL_PASS": password,
+        }
+        assert "--pass" not in database_args
+        assert "--password" not in database_args
+        assert password not in " ".join(database_args + child_args)
+        assert database_args[-1] == "memory"
+        assert database_args[database_args.index("--bind") + 1] == "127.0.0.1:12345"
+        run = Path(database_options["cwd"])
+        assert Path(env["TMPDIR"]) == run / "tmp"
+        assert Path(env["HOME"]) == run / "home"
+        assert not run.exists()  # Owned temporary directory removed after cleanup.
+        assert "SURREAL_PASS" not in env
+    assert passwords[0] != passwords[1]
+    output = capsys.readouterr()
+    assert all(password not in output.out + output.err for password in passwords)
+
+
+def test_direct_child_rejects_foreign_tmp_before_hooks(monkeypatch, tmp_path):
+    import pytest
+
+    marker = tmp_path / "keep"
+    marker.write_text("foreign")
+    monkeypatch.setenv("TMPDIR", str(tmp_path))
+    monkeypatch.setattr(
+        runner.sys, "addaudithook", lambda *a: pytest.fail("hook before custody")
+    )
+    with pytest.raises(ValueError, match="temporary"):
+        runner.child_main(12345)
+    assert marker.read_text() == "foreign"
+
+
+def test_child_temporary_custody_matrix(monkeypatch):
+    import tempfile
+    from pathlib import Path
+
+    import pytest
+
+    assert hasattr(runner, "validate_child_temporary")
+    with tempfile.TemporaryDirectory(prefix="historical-db-", dir="/tmp") as root:
+        root = Path(root)
+        scratch = root / "tmp"
+        scratch.mkdir(mode=0o700)
+        monkeypatch.setenv("TMPDIR", str(scratch))
+        assert runner.validate_child_temporary() == scratch
+        scratch.chmod(0o777)
+        with pytest.raises(ValueError):
+            runner.validate_child_temporary()
+        scratch.chmod(0o700)
+        root.chmod(0o755)
+        with pytest.raises(ValueError):
+            runner.validate_child_temporary()
+        root.chmod(0o700)
+        scratch.rmdir()
+        other = root / "foreign"
+        other.mkdir()
+        marker = other / "keep"
+        marker.write_text("foreign")
+        scratch.symlink_to(other, target_is_directory=True)
+        with pytest.raises(ValueError):
+            runner.validate_child_temporary()
+        assert marker.read_text() == "foreign"
+        scratch.unlink()
+        monkeypatch.setenv("TMPDIR", str(root / "nested" / "tmp"))
+        with pytest.raises(ValueError):
+            runner.validate_child_temporary()
+        monkeypatch.delenv("TMPDIR")
+        with pytest.raises(ValueError):
+            runner.validate_child_temporary()
+
+
+def test_real_allocator_and_normal_child_environment_under_permissive_umask(
+    monkeypatch,
+):
+    import os
+    import tempfile
+    from pathlib import Path
+
+    old = os.umask(0)
+    try:
+        with tempfile.TemporaryDirectory(
+            prefix="historical-db-", dir="/tmp"
+        ) as directory:
+            root = Path(directory)
+            env = runner.build_test_environment(root, {}, "ws://127.0.0.1:12345/rpc")
+            monkeypatch.setenv("TMPDIR", env["TMPDIR"])
+            assert root.stat().st_mode & 0o777 == 0o700
+            assert runner.validate_child_temporary() == root / "tmp"
+    finally:
+        os.umask(old)
+    assert not root.exists()

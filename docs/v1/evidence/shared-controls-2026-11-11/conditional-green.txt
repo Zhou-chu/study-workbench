@@ -1,0 +1,10 @@
+[Publication copy: personal filesystem paths replaced; original results/failures unchanged.]
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-shared-controls-20261111/apps/web
+
+ ✓ src/features/library/LibraryDialog.focus.test.tsx (7 tests) 304ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  15:19:52
+   Duration  1.09s (transform 67ms, setup 170ms, import 96ms, tests 304ms, environment 413ms)

@@ -263,6 +263,34 @@ def _calculate_html_score(text: str) -> float:
     return min(score, 1.0)
 
 
+def _count_markdown_links(text: str) -> int:
+    """Count the legacy non-overlapping [.+?](.+?) matches in linear time.
+
+    Dot in the historical expression excludes only LF, not other Unicode line
+    separators. Each match consumes a nonempty label and destination. The first
+    eligible ]( delimiter can use the first eligible closing ), so if either is
+    absent no later opening [ on that line can succeed. Successful scans advance
+    beyond the entire match; failed scans abandon the line, never retry suffixes.
+    This deliberately preserves the old heuristic, not a full Markdown parser.
+    """
+    count = 0
+    for line in text.split("\n"):
+        position = 0
+        while True:
+            opening = line.find("[", position)
+            if opening < 0:
+                break
+            delimiter = line.find("](", opening + 2)
+            if delimiter < 0:
+                break
+            closing = line.find(")", delimiter + 3)
+            if closing < 0:
+                break
+            count += 1
+            position = closing + 1
+    return count
+
+
 def _calculate_markdown_score(text: str) -> float:
     """Calculate confidence score for Markdown content."""
     score = 0.0
@@ -278,7 +306,7 @@ def _calculate_markdown_score(text: str) -> float:
         indicators += 1
 
     # Links [text](url) - strong indicator
-    link_matches = len(re.findall(r"\[.+?\]\(.+?\)", text))
+    link_matches = _count_markdown_links(text)
     if link_matches >= 2:
         score += 0.25
         indicators += 1

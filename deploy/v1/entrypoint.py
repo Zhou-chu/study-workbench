@@ -78,8 +78,18 @@ def prepare(role, source):
             "0.0.0.0:8000",
             "rocksdb:/app/data/db/database.db",
         ], env
+    # Resolve only the immutable application root, never the working directory.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from open_notebook.database.connection_url import validate_database_url
+    from open_notebook.exceptions import ConfigurationError
+
+    try:
+        validate_database_url(
+            env.get("SURREAL_URL", ""), env.get("SURREAL_INSECURE_ALLOW_URL", "")
+        )
+    except ConfigurationError as exc:
+        raise ValueError(str(exc)) from None
     for name, expected in {
-        "SURREAL_URL": "ws://db:8000/rpc",
         "STUDY_WORKBENCH_DATA_DIR": "/app/data/personal",
         "OPEN_NOTEBOOK_DATA_DIR": "/app/data/upstream-data",
     }.items():

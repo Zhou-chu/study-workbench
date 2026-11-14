@@ -1,3 +1,4 @@
+import liveRecovery from '../../domain/src/fixtures/live-turn-recovery.js'
 import { expect, it, vi } from 'vitest'
 import { createTurnRegistry } from '@study/domain'
 import { checkTurnRecovery } from './recovery.js'
@@ -34,4 +35,18 @@ it('accepts an exact projected receipt for check-only binding, not body-inferred
   const f = fixture(); Object.assign(f.parent, { state: 'submission_unknown', dispatch_receipt: { validity: 'valid', receipt: { dispatch_ack: 'unknown', job_id: 'j', turn_id: 't', retry_safe: false } } })
   const send = vi.fn().mockResolvedValueOnce(json(f.workspace)).mockResolvedValueOnce(json([f.turn]))
   expect(await checkTurnRecovery({ send }, f.capture)).toEqual({ kind: 'bound', jobId: 'j', turnId: 't', state: 'submission_unknown' })
+})
+
+it.each(['success', 'root marker', 'duplicate parent', 'unknown job', 'missing receipt'])('handles actual projected extraction history without erasing %s', async variant => {
+  const live = structuredClone(liveRecovery)
+  const parent = live.workspace.jobs.find(j => j.operation === 'chat')!
+  const capture = { dto: parent.request_snapshot, sessionId: parent.chat_session_id } as unknown as Parameters<typeof checkTurnRecovery>[1]
+  if (variant === 'root marker') Object.assign(live.workspace, { projection_status: 'unknown' })
+  if (variant === 'duplicate parent') live.workspace.jobs.push({ ...parent, projection_status: 'unknown' } as typeof parent)
+  if (variant === 'unknown job') Object.assign(live.workspace.jobs[0]!, { operation: 'future' })
+  const send = vi.fn().mockResolvedValueOnce(json(live.workspace)).mockResolvedValueOnce(json(live.history))
+  const receipt = variant === 'missing receipt' ? undefined : { jobId: parent.job_id, turnId: parent.turn_id! }
+  expect((await checkTurnRecovery({ send }, capture, receipt)).kind === 'complete').toBe(variant === 'success' || variant === 'missing receipt')
+  expect(send).toHaveBeenCalledTimes(2)
+  expect(send.mock.calls.every(([spec]) => spec.method === 'GET')).toBe(true)
 })

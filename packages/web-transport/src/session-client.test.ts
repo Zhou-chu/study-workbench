@@ -78,3 +78,29 @@ it('does not call device local signout fully confirmed when legacy browser resid
  window.localStorage.removeItem=()=>{throw Error('synthetic blocked removal')};fetcher.mockResolvedValueOnce(json({server_revocation:'unconfirmed'}));
  expect(await client.signoutLocal()).toEqual({localConfirmed:false,serverRevocation:'unconfirmed'});
 });
+
+it('rejects stale explicit session operations before dispatch', async () => {
+  const client = createSessionClient(config)
+  const old = sessionCoordinator.begin(); sessionCoordinator.begin()
+  await expect(client.status(old)).rejects.toMatchObject({ reason: 'superseded' })
+  await expect(client.signoutLocal(old)).rejects.toMatchObject({ reason: 'superseded' })
+  expect(fetcher).not.toHaveBeenCalled()
+})
+it('rejects session operations reserved for the other auth mode', async () => {
+  const legacy = createSessionClient(config)
+  await expect(legacy.revoke()).rejects.toMatchObject({ reason: 'configuration' })
+  const device = createSessionClient({ ...config, auth_mode: 'device_sessions', web_session_protocol: 'bff-memory-v1' })
+  await expect(device.probeLegacy()).rejects.toMatchObject({ reason: 'configuration' })
+  expect(fetcher).not.toHaveBeenCalled()
+})
+it('uses legacy status for refresh and supports revoking all device sessions', async () => {
+  await createSessionClient(config).refresh()
+  const device = createSessionClient({ ...config, auth_mode: 'device_sessions', web_session_protocol: 'bff-memory-v1' })
+  await device.revoke()
+  expect(fetcher.mock.calls.map(([r]) => [(r as Request).method, new URL((r as Request).url).pathname])).toEqual([['GET', '/api/auth/status'], ['DELETE', '/api/auth/sessions']])
+})
+it.each([null, [], 'invalid'])('does not confirm local signout from malformed response %j', async value => {
+  const client = createSessionClient({ ...config, auth_mode: 'device_sessions', web_session_protocol: 'bff-memory-v1' })
+  fetcher.mockResolvedValueOnce(json(value))
+  expect(await client.signoutLocal()).toEqual({ localConfirmed: false, serverRevocation: 'unconfirmed' })
+})

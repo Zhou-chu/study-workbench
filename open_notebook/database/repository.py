@@ -8,6 +8,7 @@ from loguru import logger
 from surrealdb import AsyncSurreal, RecordID  # type: ignore
 from surrealdb.data.types.table import Table  # type: ignore
 
+from open_notebook.database.connection_url import validate_database_url
 from open_notebook.utils.boundary_logging import log_boundary_failure
 from open_notebook.utils.proxy import ensure_internal_no_proxy
 
@@ -42,14 +43,18 @@ def get_database_url() -> str:
     """Get database URL with backward compatibility"""
     surreal_url = os.getenv("SURREAL_URL")
     if surreal_url:
-        return surreal_url
+        return validate_database_url(
+            surreal_url, os.getenv("SURREAL_INSECURE_ALLOW_URL", "")
+        )
 
     # Fallback to the legacy variables. SURREAL_ADDRESS may already carry the
     # port ("host:8000", "[::1]:8000"); SURREAL_PORT only applies when it doesn't.
     address = os.getenv("SURREAL_ADDRESS", "localhost")
     if ":" not in address.rsplit("]", 1)[-1]:
         address = f"{address}:{os.getenv('SURREAL_PORT', '8000')}"
-    return f"ws://{address}/rpc"
+    return validate_database_url(
+        f"ws://{address}/rpc", os.getenv("SURREAL_INSECURE_ALLOW_URL", "")
+    )
 
 
 def get_database_password() -> str:

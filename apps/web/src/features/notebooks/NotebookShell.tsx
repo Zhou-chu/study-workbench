@@ -2,6 +2,7 @@ import {MaintenanceControls} from '../settings/MaintenanceControls';
 import {useRetrieval} from '../settings/use-retrieval';
 import {NotebookSettings} from '../settings/NotebookSettings';
 import {Link} from 'react-router';
+import {SetupLink} from '../settings/SetupLink';
 import { ClassicNotebookPanel } from '../library/ClassicContext';
 import { WorkspaceHistory } from './WorkspaceRecords';
 import { Button } from '../../ui/Button';
@@ -73,15 +74,19 @@ export function NotebookShell({ previewContent, readStatus, notebookId: routeNot
     const contentProps = previewContent ? { content: previewContent } : {};
     return <AppChrome title={name}>
     <div className="workspace-heading">
-      <div><span className="eyebrow">Notebook / {workspace ? '01' : '00'}</span><h1>{name}</h1></div>
-      {!workspace && <StatusBadge state="unknown" label={shell.notConnected}/>}
+      <div><Link className="eyebrow notebook-back" to="/notebooks">← {shell.homeTitle}</Link><h1>{name}</h1></div>
+      <div className="notebook-heading-actions">
+        {!workspace && <StatusBadge state="unknown" label={shell.notConnected}/>}
+        {workspace && <details className="notebook-menu"><summary>{settings.tools}<span aria-hidden="true">···</span></summary><div className="notebook-menu-content">
+          <Button onClick={() => setSettingsOpen(true)}>{settings.notebookSettings}</Button>
+          <Button onClick={() => setClassic(!classic)} aria-pressed={classic}>{classic ? n.personal : n.classic}</Button>
+          <Button aria-expanded={toolsOpen} onClick={() => setToolsOpen(!toolsOpen)}>{t.navigation.settings}</Button>
+          {toolsOpen && <nav className="settings-links"><SetupLink to="/settings/models">{t.navigation.models}</SetupLink><Link to="/transformations">{t.navigation.transformations}</Link><Link to="/advanced">{t.navigation.advanced}</Link></nav>}
+        </div></details>}
+      </div>
     </div>
-    {workspace && <Button onClick={() => setClassic(!classic)} aria-pressed={classic}>{classic ? n.personal : n.classic}</Button>}
-    {workspace&&<div className="dialog-actions"><Button onClick={()=>setSettingsOpen(true)}>{settings.notebookSettings}</Button><Button aria-expanded={toolsOpen} onClick={()=>setToolsOpen(!toolsOpen)}>{settings.tools}</Button></div>}
-    {toolsOpen&&<nav className="settings-links"><Link className="button" to="/settings/models">{t.navigation.models}</Link><Link className="button" to="/transformations">{t.navigation.transformations}</Link><Link className="button" to="/advanced">{t.navigation.advanced}</Link></nav>}
     {settingsOpen&&notebookId&&<NotebookSettings key={notebookId} notebookId={notebookId} onClose={()=>setSettingsOpen(false)} retrieval={retrievalControl}/>}
-    {readStatus}
-    {workspace && <WorkspaceScope workspace={workspace}/>}
-    <WorkspaceLayout activeSection={activeSection} onSectionChange={setSection} readerOpen={readerOpen} sources={workspace ? <><SourcesPanel key={notebookId} notebookId={notebookId ?? 'preview'} workspace={workspace} onRead={intent => { onSourceRead?.(intent); reader.openSource(intent); }}/><NotebookSourcesPanel notebookId={notebookId ?? 'preview'} classicContext={classic}/></> : <SourceScaffold {...contentProps} onRead={() => setReaderOpen(true)}/>} conversation={workspace ? classic ? <><ClassicNotebookPanel key={notebookId} notebookId={notebookId!}/><WorkspaceHistory workspace={workspace}/></> : <ConversationPanel key={notebookId} notebookId={notebookId ?? 'preview'} workspace={workspace} onCitation={(citation, origin) => { onCitation?.(citation, origin); reader.openCitation(citation, origin); }} onSaveAnswer={saveAnswer} onOutlineReady={acceptOutline} retrieval={retrieval ?? retrievalControl.conversation}/> : <ConversationScaffold history={undefined} {...contentProps} question={question} readOnly={draft.retired} onNewDraft={() => setQuestionSession(`question:${crypto.randomUUID()}`)} onQuestionChange={setQuestion} onRead={() => setReaderOpen(true)}/>} studio={workspace ? <StudioPanel key={notebookId} notebookId={notebookId ?? 'preview'} workspace={workspace} onCitation={reader.openNoteCitation}/> : <StudioScaffold />} reader={reader.intent ? <ReaderPane maintenance={detail => reader.open ? <MaintenanceControls key={reader.intent!.key} control={retrievalControl} detail={detail} intent={reader.intent!}/> : null} intent={reader.intent} onClose={reader.close} onPositionChange={reader.onPositionChange} {...(reader.unsavedPosition ? { positionSave: { blocked: reader.positionSaveBlocked, onSave: reader.savePosition } } : {})}/> : <ReaderScaffold {...contentProps} onClose={() => setReaderOpen(false)}/>}/>
+    <div className="notebook-context">{workspace && <WorkspaceScope workspace={workspace}/>} {readStatus}</div>
+    <WorkspaceLayout readerKey={reader.intent?.key} activeSection={activeSection} onSectionChange={setSection} readerOpen={readerOpen} sources={workspace ? <><SourcesPanel key={notebookId} notebookId={notebookId ?? 'preview'} workspace={workspace} onRead={intent => { onSourceRead?.(intent); reader.openSource(intent); }}/><NotebookSourcesPanel notebookId={notebookId ?? 'preview'} classicContext={classic}/></> : <SourceScaffold {...contentProps} onRead={() => setReaderOpen(true)}/>} conversation={workspace ? classic ? <><ClassicNotebookPanel key={notebookId} notebookId={notebookId!}/><WorkspaceHistory workspace={workspace}/></> : <ConversationPanel key={notebookId} notebookId={notebookId ?? 'preview'} workspace={workspace} onCitation={(citation, origin) => { onCitation?.(citation, origin); reader.openCitation(citation, origin); }} onAdjustScope={() => { reader.close(); setSection('sources'); }} onSaveAnswer={saveAnswer} onOutlineReady={acceptOutline} retrieval={retrieval ?? retrievalControl.conversation}/> : <ConversationScaffold history={undefined} {...contentProps} question={question} readOnly={draft.retired} onNewDraft={() => setQuestionSession(`question:${crypto.randomUUID()}`)} onQuestionChange={setQuestion} onRead={() => setReaderOpen(true)}/>} studio={workspace ? <StudioPanel key={notebookId} notebookId={notebookId ?? 'preview'} workspace={workspace} onCitation={reader.openNoteCitation}/> : <StudioScaffold />} reader={reader.intent ? <ReaderPane maintenance={detail => reader.open ? <MaintenanceControls key={reader.intent!.key} control={retrievalControl} detail={detail} intent={reader.intent!}/> : null} intent={reader.intent} onClose={reader.close} onPositionChange={reader.onPositionChange} {...(reader.unsavedPosition ? { positionSave: { blocked: reader.positionSaveBlocked, onSave: reader.savePosition } } : {})}/> : <ReaderScaffold {...contentProps} onClose={() => setReaderOpen(false)}/>}/>
   </AppChrome>;
 }

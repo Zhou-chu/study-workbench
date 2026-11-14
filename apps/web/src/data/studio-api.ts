@@ -18,8 +18,10 @@ const keys = (r: Record<string, unknown>, allowed: string[]) => {
 };
 export function parseScope(value: unknown): ScopeSnapshot {
     const r = rec(value);
-    keys(r, ['engine', 'selection_origin', 'source_version_ids', 'remote_source_ids', 'remote_notebook_id', 'scope_hash', 'mappings']);
+    keys(r, ['engine', 'selection_origin', 'source_version_ids', 'remote_source_ids', 'remote_notebook_id', 'scope_hash', 'mappings', 'mapping_version']);
     const result: ScopeSnapshot = { source_version_ids: strings(r.source_version_ids) };
+    if (Object.hasOwn(r, 'mapping_version'))
+        result.mapping_version = num(r.mapping_version);
     if (r.engine !== undefined) {
         if (!['independent', 'notebooklm'].includes(String(r.engine)))
             invalid();

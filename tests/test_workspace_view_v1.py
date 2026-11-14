@@ -339,3 +339,37 @@ def test_malformed_reserved_markers_preserve_identifiable_history_rows(case):
     wire = project_workspace_view(raw).model_dump(exclude_unset=True)
     assert wire["turns"] == [case["turn_view"], {"turn_id": "adjacent-safe"}]
     assert wire["projection_status"] == "invalid"
+
+
+def test_actual_extraction_command_result_is_known_without_erasing_fields():
+    raw = copy.deepcopy(example()["raw_workspace"])
+    result = {
+        "success": True,
+        "source_version_id": "sv_live",
+        "extraction_id": "ex_live",
+        "status": "ready",
+        "evidence_count": 3,
+        "warnings": [],
+    }
+    raw["jobs"] = [
+        {"operation": "extract_evidence", "job_id": "job_live", "result": result}
+    ]
+    wire = project_workspace_view(raw).model_dump(exclude_unset=True)
+    assert wire["jobs"][0]["result"] == result
+    assert "projection_status" not in wire["jobs"][0]
+
+
+@pytest.mark.parametrize(
+    "patch", [{"success": "true"}, {"warnings": [1]}, {"future": True}]
+)
+def test_extraction_result_invalid_or_unknown_fields_still_block(patch):
+    raw = copy.deepcopy(example()["raw_workspace"])
+    raw["jobs"] = [
+        {
+            "operation": "extract_evidence",
+            "job_id": "job_live",
+            "result": {"success": True, "warnings": [], **patch},
+        }
+    ]
+    wire = project_workspace_view(raw).model_dump(exclude_unset=True)
+    assert wire["jobs"][0]["projection_status"] in ("unknown", "invalid")

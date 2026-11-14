@@ -135,3 +135,19 @@ it('audio uses contained GET only and owns object URLs until close; explicit dow
     await act(async () => { });
     expect(revoke).toHaveBeenCalledWith('blob:podcast');
 });
+
+it('links missing podcast models to settings and exposes profile setup directly', async()=>{
+ podcastServer(r=>new URL(r.url).pathname==='/api/models'?json([]):undefined);
+ await renderLibrary('/podcasts');
+ const setup=await screen.findByRole('heading',{name:/setup required/i});
+ const box=within(setup.parentElement!);
+ expect(box.getByRole('link',{name:'Models'})).toHaveAttribute('href','/settings/models');
+ fireEvent.click(box.getByRole('link',{name:'Profiles'}));
+ expect(await screen.findByText(ep.name)).toBeVisible();
+});
+it('opens profile configuration from a direct workflow link', async()=>{
+ podcastServer();
+ await renderLibrary('/podcasts?tab=profiles');
+ expect(await screen.findByText(ep.name)).toBeVisible();
+ expect(screen.getByRole('button',{name:'Profiles'})).toHaveAttribute('aria-pressed','true');
+});

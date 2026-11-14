@@ -1,0 +1,46 @@
+{
+  "journey-red.txt": {
+    "sha256_original": "9e4e42e28730ceb40fb10b3837d99e8aee09020f1ae930c3d35fab65346293bb",
+    "bytes_original": 84504
+  },
+  "journey-green.txt": {
+    "sha256_original": "f721b5c035210facaf4510ae656361f1a2bec96df74de5c68469f740b2b21002",
+    "bytes_original": 959
+  },
+  "full-tests-final.txt": {
+    "sha256_original": "dd8eeaeb7748e28247c5814b06984d8ab70e59c7c694e27145c66b7d3d3ac790",
+    "bytes_original": 89538
+  },
+  "full-tests-timeout.txt": {
+    "sha256_original": "519002f3ed9c4a51bb2e63397360535e3ebe3ffc9cab8af9752bcaad3e005172",
+    "bytes_original": 94607
+  },
+  "typecheck.txt": {
+    "sha256_original": "849ec434272a2de92d9ce709ac577ee4d5ac871f28fbc3db009d9cf9ec3b1c1c",
+    "bytes_original": 855
+  },
+  "lint.txt": {
+    "sha256_original": "13c5846799700ecff1e1159e9f7828df16aaa97aa4b7ae3352f1bece03de066c",
+    "bytes_original": 297
+  },
+  "build-final.txt": {
+    "sha256_original": "67fab5cebf58bc54f87b1696b21b74ec4ce46c28d5464bb3aa1caf868397caf0",
+    "bytes_original": 15533
+  },
+  "adjacent-rerun.txt": {
+    "sha256_original": "882daf04d654164112ca5bcf3dfda68af94ed3851ce15665394580c0d6e72e72",
+    "bytes_original": 2173
+  },
+  "baseline.txt": {
+    "sha256_original": "fa76d9539064dbab059a18f7e2c4359d0345825c6ed66834ac469136594cb228",
+    "bytes_original": 799
+  },
+  "full-tests-missing-scratch.txt": {
+    "sha256_original": "f4e6fc5dc84a913aefc2c46f6bfdeed06d164eabb48f8c9b0fc66e8fc25d7276",
+    "bytes_original": 17403
+  },
+  "typecheck-initial.txt": {
+    "sha256_original": "dcf6999f802bb23e46dc6b2118731cb91441245297c61743f56a7dfc1d2cb174",
+    "bytes_original": 5214
+  }
+}

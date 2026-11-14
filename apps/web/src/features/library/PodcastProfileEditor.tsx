@@ -1,3 +1,4 @@
+import {SetupLink} from '../settings/SetupLink';
 import { useMemo, useRef } from 'react';
 import { readTurnContext } from '@study/web-transport';
 import { useQuery } from '@tanstack/react-query';
@@ -57,6 +58,7 @@ export function PodcastProfileEditor({ type, value, onClose }: {
     }
     return <LibraryDialog open={s.ready} onOpenChange={v => { if (!v)
         onClose(); }} title={type === 'episode' ? (form?.targetId ? t.podcasts.editEpisodeProfile : t.podcasts.createEpisodeProfile) : (form?.targetId ? t.podcasts.editSpeakerProfile : t.podcasts.createSpeakerProfile)}>
+ <SetupLink className="button" to="/settings/models" returnTo="/podcasts?tab=profiles">{t.navigation.models}</SetupLink>
  {v && <form className="podcast-form" onSubmit={e => { e.preventDefault(); void save(); }} onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }}><fieldset disabled={s.locked}><legend>{t.podcasts.profile}</legend>
  <label>{t.podcasts.profileName}<input value={v.name} onChange={e => change({ name: e.target.value })}/></label><label>{t.common.description}<textarea value={v.description ?? ''} onChange={e => change({ description: e.target.value })}/></label>
  {'speaker_config' in v ? <><label>{t.podcasts.speakerConfig}<select value={v.speaker_config} onChange={e => change({ speaker_config: e.target.value })}><option value="">{t.podcasts.selectSpeakerProfile}</option>{v.speaker_config && !data.speakers.data?.some(x => x.id === v.speaker_config) && <option value={v.speaker_config}>{v.speaker_config + ' · ' + t.common.unknown}</option>}{data.speakers.data?.map(x => <option value={x.id} key={x.id}>{x.name + ' · ' + x.id}</option>)}</select></label>

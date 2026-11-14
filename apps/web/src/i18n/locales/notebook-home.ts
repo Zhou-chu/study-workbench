@@ -1,5 +1,9 @@
 export const notebookMessages = {
   "en-US": {
+    "sortLabel": "Sort notebooks",
+    "sortUpdated": "Recently updated",
+    "sortName": "Name",
+
     "homeHint": "Keep your sources, questions and ideas together.",
     "listFailed": "Refresh failed. The last loaded notebooks are kept.",
     "recentFailed": "Recent activity could not be refreshed. The last loaded activity is kept.",
@@ -15,6 +19,10 @@ export const notebookMessages = {
     "retainCreationHint": "This creation stays in memory with its original input and identity. It may still complete. Continuing does not cancel, discard, retry or resolve it."
   },
   "zh-CN": {
+    "sortLabel": "排序",
+    "sortUpdated": "最近更新",
+    "sortName": "名称",
+
     "homeHint": "将资料、问题与想法收在一起。",
     "listFailed": "刷新失败，保留上次载入的笔记本。",
     "recentFailed": "无法刷新最近活动，保留上次载入的记录。",
@@ -30,6 +38,10 @@ export const notebookMessages = {
     "retainCreationHint": "此创建请求会连同原有输入和身份保留在内存中，之后仍可能完成。继续不会取消、丢弃、重试或解决它。"
   },
   "zh-TW": {
+    "sortLabel": "排序",
+    "sortUpdated": "最近更新",
+    "sortName": "名稱",
+
     "homeHint": "將資料、問題與想法收在一起。",
     "listFailed": "重新整理失敗，保留上次載入的筆記本。",
     "recentFailed": "無法重新整理最近活動，保留上次載入的紀錄。",
@@ -45,6 +57,10 @@ export const notebookMessages = {
     "retainCreationHint": "此建立請求會連同原有輸入和身分保留在記憶體中，之後仍可能完成。繼續不會取消、捨棄、重試或解決它。"
   },
   "pt-BR": {
+    "sortLabel": "Ordenar cadernos",
+    "sortUpdated": "Atualizados recentemente",
+    "sortName": "Nome",
+
     "homeHint": "Reúna suas fontes, perguntas e ideias.",
     "listFailed": "Falha ao atualizar. Os últimos cadernos carregados foram mantidos.",
     "recentFailed": "Não foi possível atualizar a atividade recente. A última atividade carregada foi mantida.",
@@ -60,6 +76,10 @@ export const notebookMessages = {
     "retainCreationHint": "Esta criação permanece na memória com os dados e a identidade originais. Ela ainda pode ser concluída. Continuar não cancela, descarta, repete nem resolve a solicitação."
   },
   "ja-JP": {
+    "sortLabel": "ノートブックの並べ替え",
+    "sortUpdated": "更新が新しい順",
+    "sortName": "名前",
+
     "homeHint": "資料、質問、アイデアを一つにまとめましょう。",
     "listFailed": "更新に失敗しました。前回読み込んだノートブックを保持しています。",
     "recentFailed": "最近の操作を更新できませんでした。前回の記録を保持しています。",
@@ -75,6 +95,10 @@ export const notebookMessages = {
     "retainCreationHint": "この作成リクエストは元の入力と識別情報とともにメモリに保持され、後で完了する場合があります。続行してもキャンセル、破棄、再送、解決はされません。"
   },
   "it-IT": {
+    "sortLabel": "Ordina quaderni",
+    "sortUpdated": "Aggiornati di recente",
+    "sortName": "Nome",
+
     "homeHint": "Riunisci fonti, domande e idee.",
     "listFailed": "Aggiornamento non riuscito. Gli ultimi taccuini caricati sono conservati.",
     "recentFailed": "Impossibile aggiornare le attività recenti. Le ultime attività caricate sono conservate.",
@@ -90,6 +114,10 @@ export const notebookMessages = {
     "retainCreationHint": "Questa creazione resta in memoria con i dati e l’identità originali. Potrebbe ancora completarsi. Continuare non annulla, elimina, ripete o risolve la richiesta."
   },
   "fr-FR": {
+    "sortLabel": "Trier les carnets",
+    "sortUpdated": "Mise à jour récente",
+    "sortName": "Nom",
+
     "homeHint": "Réunissez vos sources, questions et idées.",
     "listFailed": "Échec de l’actualisation. Les derniers carnets chargés sont conservés.",
     "recentFailed": "Impossible d’actualiser l’activité récente. La dernière activité chargée est conservée.",
@@ -105,6 +133,10 @@ export const notebookMessages = {
     "retainCreationHint": "Cette création reste en mémoire avec la saisie et l’identité d’origine. Elle peut encore aboutir. Continuer ne l’annule, ne la supprime, ne la réessaie et ne la résout pas."
   },
   "ru-RU": {
+    "sortLabel": "Сортировка блокнотов",
+    "sortUpdated": "Недавно обновлённые",
+    "sortName": "Название",
+
     "homeHint": "Соберите источники, вопросы и идеи вместе.",
     "listFailed": "Не удалось обновить. Последние загруженные блокноты сохранены.",
     "recentFailed": "Не удалось обновить недавние действия. Последние загруженные записи сохранены.",
@@ -120,6 +152,10 @@ export const notebookMessages = {
     "retainCreationHint": "Этот запрос остаётся в памяти с исходным вводом и идентификатором. Он ещё может завершиться. Продолжение не отменяет, не удаляет, не повторяет и не разрешает запрос."
   },
   "bn-IN": {
+    "sortLabel": "নোটবুক সাজান",
+    "sortUpdated": "সম্প্রতি আপডেট হয়েছে",
+    "sortName": "নাম",
+
     "homeHint": "উৎস, প্রশ্ন ও ভাবনা একসঙ্গে রাখুন।",
     "listFailed": "রিফ্রেশ ব্যর্থ হয়েছে। সর্বশেষ লোড করা নোটবুকগুলি রাখা হয়েছে।",
     "recentFailed": "সাম্প্রতিক কার্যকলাপ রিফ্রেশ করা যায়নি। সর্বশেষ লোড করা তথ্য রাখা হয়েছে।",
@@ -135,6 +171,10 @@ export const notebookMessages = {
     "retainCreationHint": "তৈরির অনুরোধটি মূল লেখা ও পরিচয়সহ মেমরিতে থাকবে। এটি পরেও সম্পূর্ণ হতে পারে। এগিয়ে গেলে এটি বাতিল, বাদ, আবার পাঠানো বা সমাধান করা হবে না।"
   },
   "ca-ES": {
+    "sortLabel": "Ordena les llibretes",
+    "sortUpdated": "Actualitzades recentment",
+    "sortName": "Nom",
+
     "homeHint": "Reuneix les teves fonts, preguntes i idees.",
     "listFailed": "No s’ha pogut actualitzar. Es conserven les darreres llibretes carregades.",
     "recentFailed": "No s’ha pogut actualitzar l’activitat recent. Es conserva la darrera activitat carregada.",
@@ -150,6 +190,10 @@ export const notebookMessages = {
     "retainCreationHint": "Aquesta creació es manté en memòria amb les dades i la identitat originals. Encara es pot completar. Continuar no la cancel·la, descarta, repeteix ni resol."
   },
   "es-ES": {
+    "sortLabel": "Ordenar cuadernos",
+    "sortUpdated": "Actualizados recientemente",
+    "sortName": "Nombre",
+
     "homeHint": "Reúne tus fuentes, preguntas e ideas.",
     "listFailed": "No se pudo actualizar. Se conservan los últimos cuadernos cargados.",
     "recentFailed": "No se pudo actualizar la actividad reciente. Se conserva la última actividad cargada.",
@@ -165,6 +209,10 @@ export const notebookMessages = {
     "retainCreationHint": "Esta creación permanece en memoria con los datos y la identidad originales. Aún puede completarse. Continuar no la cancela, descarta, repite ni resuelve."
   },
   "de-DE": {
+    "sortLabel": "Notizbücher sortieren",
+    "sortUpdated": "Zuletzt aktualisiert",
+    "sortName": "Name",
+
     "homeHint": "Sammle Quellen, Fragen und Ideen an einem Ort.",
     "listFailed": "Aktualisierung fehlgeschlagen. Die zuletzt geladenen Notizbücher bleiben erhalten.",
     "recentFailed": "Die letzten Aktivitäten konnten nicht aktualisiert werden. Die zuletzt geladenen Einträge bleiben erhalten.",
@@ -180,6 +228,10 @@ export const notebookMessages = {
     "retainCreationHint": "Diese Erstellung bleibt mit den ursprünglichen Eingaben und ihrer Identität im Arbeitsspeicher. Sie kann noch abgeschlossen werden. Fortfahren bricht sie nicht ab, verwirft, wiederholt oder klärt sie nicht."
   },
   "pl-PL": {
+    "sortLabel": "Sortuj notatniki",
+    "sortUpdated": "Ostatnio zaktualizowane",
+    "sortName": "Nazwa",
+
     "homeHint": "Zbierz źródła, pytania i pomysły w jednym miejscu.",
     "listFailed": "Odświeżanie nie powiodło się. Zachowano ostatnio wczytane notatniki.",
     "recentFailed": "Nie udało się odświeżyć ostatniej aktywności. Zachowano ostatnio wczytane wpisy.",
@@ -195,6 +247,10 @@ export const notebookMessages = {
     "retainCreationHint": "To żądanie pozostaje w pamięci z pierwotnymi danymi i tożsamością. Może się jeszcze zakończyć. Kontynuacja nie anuluje, nie odrzuca, nie ponawia ani nie rozstrzyga go."
   },
   "tr-TR": {
+    "sortLabel": "Defterleri sırala",
+    "sortUpdated": "Son güncellenen",
+    "sortName": "Ad",
+
     "homeHint": "Kaynaklarınızı, sorularınızı ve fikirlerinizi bir arada tutun.",
     "listFailed": "Yenileme başarısız. Son yüklenen not defterleri korundu.",
     "recentFailed": "Son etkinlikler yenilenemedi. Son yüklenen etkinlikler korundu.",

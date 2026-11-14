@@ -236,9 +236,10 @@ class NoteUpdate(BaseModel):
 class NoteResponse(BaseModel):
     revision: Revision
     id: str
-    title: Optional[str]
-    content: Optional[str]
-    note_type: Optional[str]
+    # Nullable response values remain required keys, not omission defaults.
+    title: str | None
+    content: str | None
+    note_type: str | None
     created: str
     updated: str
     command_id: Optional[str] = None
@@ -390,10 +391,11 @@ class SourceUpdate(BaseModel):
 
 class SourceResponse(BaseModel):
     id: str
-    title: Optional[str]
-    topics: Optional[List[str]]
-    asset: Optional[AssetModel]
-    full_text: Optional[str]
+    # Nullable response values remain required keys, not omission defaults.
+    title: str | None
+    topics: List[str] | None
+    asset: AssetModel | None
+    full_text: str | None
     embedded: bool
     embedded_chunks: int
     file_available: Optional[bool] = None
@@ -409,9 +411,10 @@ class SourceResponse(BaseModel):
 
 class SourceListResponse(BaseModel):
     id: str
-    title: Optional[str]
-    topics: Optional[List[str]]
-    asset: Optional[AssetModel]
+    # Nullable response values remain required keys, not omission defaults.
+    title: str | None
+    topics: List[str] | None
+    asset: AssetModel | None
     embedded: bool  # Boolean flag indicating if source has embeddings
     embedded_chunks: int  # Number of embedded chunks
     insights_count: int

@@ -295,6 +295,16 @@ describe('SourceDetailContent', () => {
     expect(toast.error).not.toHaveBeenCalledWith('Stale failure')
   })
   it('retains insight selection and gates a new attempt after uncertainty and remount', async () => {
+    const startAndSettleSubmission = async () => {
+      await screen.findByText('Loaded source')
+      fireEvent.change(screen.getByRole('combobox', { name: 'transformation' }), {
+        target: { value: 'transformation:summary' },
+      })
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'common.create' }))
+      })
+      await waitFor(() => expect(screen.getByRole('button', { name: 'common.create' })).not.toBeDisabled())
+    }
     const id = 'source:uncertain-insight'
     mockSourcesGet.mockResolvedValue({ ...loadedSource, id })
     const unknown = { response: { status: 409, data: { detail: {
@@ -303,7 +313,7 @@ describe('SourceDetailContent', () => {
     mockCreateInsight.mockRejectedValue(unknown)
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
     const view = renderContent(undefined, id)
-    await startInsightGeneration()
+    await startAndSettleSubmission()
     await waitFor(() => expect(toast.warning).toHaveBeenCalledWith('commandSubmission.title', { description: 'commandSubmission.warning' }))
     expect(screen.getByRole('combobox', { name: 'transformation' })).toHaveValue('transformation:summary')
     expect(toast.error).not.toHaveBeenCalled()
@@ -311,12 +321,21 @@ describe('SourceDetailContent', () => {
     expect(mockWaitForCommand).not.toHaveBeenCalled()
     view.unmount()
     renderContent(undefined, id)
-    await startInsightGeneration()
+    await startAndSettleSubmission()
     await waitFor(() => expect(confirm).toHaveBeenCalledWith('commandSubmission.newAttemptConfirm'))
     expect(mockCreateInsight).toHaveBeenCalledTimes(1)
+    const warningsBeforeRetry = vi.mocked(toast.warning).mock.calls.length
     confirm.mockReturnValue(true)
-    fireEvent.click(screen.getByRole('button', { name: 'common.create' }))
-    await waitFor(() => expect(mockCreateInsight).toHaveBeenCalledTimes(2))
+    // The second rejected submission must settle through catch/finally before
+    // leaving the test, not merely reach the API mock's invocation counter.
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'common.create' }))
+    })
+    await waitFor(() => {
+      expect(mockCreateInsight).toHaveBeenCalledTimes(2)
+      expect(toast.warning).toHaveBeenCalledTimes(warningsBeforeRetry + 1)
+      expect(screen.getByRole('button', { name: 'common.create' })).not.toBeDisabled()
+    })
     confirm.mockRestore()
   })
 
@@ -333,6 +352,69 @@ describe('SourceDetailContent', () => {
     expect(toast.error).not.toHaveBeenCalled()
     expect(toast.success).not.toHaveBeenCalled()
     expect(JSON.stringify(vi.mocked(toast.warning).mock.calls)).not.toContain('private-secret')
+  })
+
+  it('announces clipboard success only after the write actually completes', async () => {
+    const url = 'https://example.test/source'
+    mockSourcesGet.mockResolvedValue({ ...loadedSource, asset: { url } })
+    let complete!: () => void
+    const writeText = vi.fn(() => new Promise<void>(resolve => { complete = resolve }))
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+    try {
+      renderContent(undefined, loadedSource.id)
+      const code = await screen.findByText(url, { selector: 'code' })
+      fireEvent.click(code.parentElement!.querySelector('button')!)
+      expect(writeText).toHaveBeenCalledWith(url)
+      expect(toast.success).not.toHaveBeenCalled()
+      await act(async () => complete())
+      expect(toast.success).toHaveBeenCalledWith('sources.urlCopied')
+    } finally {
+      if (descriptor) Object.defineProperty(navigator, 'clipboard', descriptor)
+      else Reflect.deleteProperty(navigator, 'clipboard')
+    }
+  })
+
+  it.each(['rejected', 'unavailable'])('reports clipboard %s without claiming success', async mode => {
+    mockSourcesGet.mockResolvedValue({ ...loadedSource, asset: { url: 'https://example.test/source' } })
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: mode === 'unavailable' ? undefined : { writeText: vi.fn().mockRejectedValue(new Error('private browser failure')) },
+    })
+    try {
+      renderContent(undefined, loadedSource.id)
+      const button = await screen.findByRole('button', { name: 'common.copyToClipboard' })
+      fireEvent.click(button)
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith('common.error'))
+      expect(toast.success).not.toHaveBeenCalled()
+      expect(button).not.toBeDisabled()
+    } finally {
+      if (descriptor) Object.defineProperty(navigator, 'clipboard', descriptor)
+      else Reflect.deleteProperty(navigator, 'clipboard')
+    }
+  })
+
+  it('does not repeat an in-flight copy or toast after its source is unmounted', async () => {
+    mockSourcesGet.mockResolvedValue({ ...loadedSource, asset: { url: 'https://example.test/source' } })
+    let complete!: () => void
+    const writeText = vi.fn(() => new Promise<void>(resolve => { complete = resolve }))
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+    try {
+      const view = renderContent(undefined, loadedSource.id)
+      const button = await screen.findByRole('button', { name: 'common.copyToClipboard' })
+      act(() => { fireEvent.click(button); fireEvent.click(button) })
+      expect(writeText).toHaveBeenCalledTimes(1)
+      expect(button).toBeDisabled()
+      view.unmount()
+      await act(async () => complete())
+      expect(toast.success).not.toHaveBeenCalled()
+      expect(toast.error).not.toHaveBeenCalled()
+    } finally {
+      if (descriptor) Object.defineProperty(navigator, 'clipboard', descriptor)
+      else Reflect.deleteProperty(navigator, 'clipboard')
+    }
   })
 
 })

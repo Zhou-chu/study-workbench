@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '../../i18n';
+import { settingsControlCopy } from '../../i18n/settings-control-messages';
 import { Button } from '../../ui/Button';
 import { LibraryDialog } from '../library/LibraryDialog';
 import { privateFields, type CredentialWrite, type PrivateField } from '../../data/configuration-contracts';
@@ -9,7 +10,7 @@ export function CredentialEditor({ config, refresh, enabled }: {
     refresh: () => Promise<unknown>;
     enabled: boolean;
 }) {
-    const { t, configuration: m } = useI18n(), form = config.row?.form;
+    const { t, configuration: m, locale } = useI18n(), form = config.row?.form;
     const inputs = useRef<Partial<Record<PrivateField | 'api_key', HTMLInputElement | null>>>({});
     const inputRefs = useRef<Partial<Record<PrivateField | 'api_key', (element: HTMLInputElement | null) => void>>>({});
     const bindInput = (key: PrivateField | 'api_key') => {
@@ -24,6 +25,16 @@ export function CredentialEditor({ config, refresh, enabled }: {
         return bind;
     };
     const pendingBody = useRef<CredentialWrite | null>(null);
+    const copy = settingsControlCopy(locale);
+    const [fieldError, setFieldError] = useState<string | null>(null);
+    const [validationAttempt, setValidationAttempt] = useState(0);
+    const errorRef = useRef<HTMLParagraphElement | null>(null);
+    useEffect(() => {
+        if (fieldError) {
+            errorRef.current?.focus({ preventScroll: true });
+            errorRef.current?.scrollIntoView?.({ block: 'nearest' });
+        }
+    }, [fieldError, validationAttempt]);
     const [reveal, setReveal] = useState(false);
     const alive = useRef(true), version = useRef(0);
     const clear = () => {
@@ -36,6 +47,7 @@ export function CredentialEditor({ config, refresh, enabled }: {
                 delete body[key];
         version.current++;
         setReveal(false);
+        setFieldError(null);
     };
     const epoch = config.row?.context.epoch;
     const identity = form?.identity;
@@ -66,6 +78,37 @@ export function CredentialEditor({ config, refresh, enabled }: {
     const close = () => { clear(); config.store.setForm(row.id, null); };
     const submit = async () => {
         const before = version.current, body: CredentialWrite = {}, old = form.credential;
+        let consumed = false;
+        setValidationAttempt(value => value + 1);
+        const required = (label: string) => { setFieldError(copy.required + ': ' + label); };
+        setFieldError(null);
+        // Validate before reserving a mutation or consuming any private input.
+        if (config.locked || stale) { setFieldError(m.stale); return; }
+        if (!form.name.trim()) { required(t.common.name); return; }
+        if (!form.modalities.length) { setFieldError(copy.modalities); return; }
+        if (form.provider.name === 'vertex') {
+            if (!form.project.trim()) { required(t.apiKeys.vertexProject); return; }
+            if (!form.location.trim()) { required(t.apiKeys.vertexLocation); return; }
+        }
+        if (form.provider.name === 'ollama' && form.num_ctx.trim() &&
+            (!Number.isSafeInteger(Number(form.num_ctx)) || Number(form.num_ctx) < 0)) {
+            setFieldError(t.apiKeys.numCtx + ': ' + copy.wholeNumber); return;
+        }
+        for (const key of privateFields) {
+            if (form.modes[key] !== 'set') continue;
+            const input = inputs.current[key];
+            if (!input?.value.trim()) { required(fieldLabel(key)); return; }
+            if (key !== 'credentials_path') {
+                try { const url = new URL(input.value.trim()); if (!['http:', 'https:'].includes(url.protocol)) throw Error(); }
+                catch { setFieldError(copy.invalid + ' ' + fieldLabel(key)); return; }
+            }
+        }
+        const needsKey = !old && !['vertex', 'ollama', 'omlx', 'openai_compatible'].includes(form.provider.name);
+        if (needsKey && !inputs.current.api_key?.value.trim()) { required(t.models.apiKey); return; }
+        if (form.provider.name === 'anthropic_compatible' &&
+            (form.modes.base_url === 'clear' || !old && form.modes.base_url !== 'set')) {
+            required(t.apiKeys.baseUrl); return;
+        }
         try {
             if (config.locked || stale || !form.name.trim() || config.store.get(row.id)?.sources.credentials?.phase !== 'ready' || config.store.get(row.id)?.sources.credentials?.revision !== form.credentialRevision)
                 return;
@@ -106,9 +149,10 @@ export function CredentialEditor({ config, refresh, enabled }: {
             const token = config.capture(old
                 ? {kind:'credential-edit',id:old.id,provider:old.provider,fields,presence}
                 : {kind:'credential-create',provider:form.provider.name,fields,presence});
-            if (!token) return;
+            if (!token) { setFieldError(m.stale); return; }
             pendingBody.current = body;
             const result = await config.run(token, () => {
+            consumed = true;
             const entered = inputs.current.api_key?.value.trim();
             if (entered)
                 body.api_key = entered;
@@ -133,19 +177,27 @@ export function CredentialEditor({ config, refresh, enabled }: {
                 if (alive.current && before === version.current)
                     config.store.setForm(row.id, null);
                 await refresh();
+            } else if (alive.current && before === version.current) {
+                const phase = config.store.get(row.id)?.attempt?.phase;
+                setFieldError(phase === 'unknown' ? copy.uncertain : copy.notSent);
             }
         }
         finally {
             for (const key of Object.keys(body) as (keyof CredentialWrite)[])
                 delete body[key];
             if (pendingBody.current === body) pendingBody.current = null;
-            if (alive.current && before === version.current) clear();
+            if (consumed && alive.current && before === version.current) {
+                const phase = config.store.get(row.id)?.attempt?.phase;
+                clear();
+                if (phase === 'unknown' || phase === 'not-sent') setFieldError(phase === 'unknown' ? copy.uncertain : copy.notSent);
+            }
         }
     };
     return <LibraryDialog open onOpenChange={open => { if (!open)
         close(); }} title={form.credential ? t.apiKeys.editConfig : t.apiKeys.addConfig} description={m.privateHint}>
-  <form className="configuration-editor" onSubmit={e => { e.preventDefault(); void submit(); }}>
+  <form className="configuration-editor" noValidate onSubmit={e => { e.preventDefault(); void submit(); }}>
    {stale && <p role="status">{m.stale}</p>}
+   {fieldError && <p ref={errorRef} tabIndex={-1} role="alert">{fieldError}</p>}
    <fieldset disabled={config.locked || stale}>
     <label>{t.common.name}<input value={form.name} onChange={e => update({ name: e.target.value })}/></label>
     <p>{form.provider.display_name}</p>
@@ -164,7 +216,7 @@ export function CredentialEditor({ config, refresh, enabled }: {
     </div>)}
     {(['project', 'location', 'api_version'] as const).filter(key => key === 'api_version' ? form.provider.name === 'azure' : form.provider.name === 'vertex').map(key => <label key={key}>{key === 'project' ? t.apiKeys.vertexProject : key === 'location' ? t.apiKeys.vertexLocation : m.apiVersion}<input value={form[key]} onChange={e => update({ [key]: e.target.value })}/></label>)}
     {form.provider.name === 'ollama' && <label>{t.apiKeys.numCtx}<input type="number" min="0" value={form.num_ctx} onChange={e => update({ num_ctx: e.target.value })}/></label>}
-    <Button type="submit" disabled={!form.name.trim()}>{m.saveConfiguration}</Button>
+    <Button type="submit">{m.saveConfiguration}</Button>
    </fieldset>
    <Button onClick={close}>{t.common.cancel}</Button>
   </form>

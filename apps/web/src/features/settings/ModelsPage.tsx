@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { canDispatch, readTurnContext, sessionCoordinator } from '@study/web-transport';
 import { AppChrome } from '../../app/AppChrome';
 import { useI18n } from '../../i18n';
+import { modelSetupCopy } from '../../i18n/model-setup-messages';
+import { settingsControlCopy } from '../../i18n/settings-control-messages';
 import { Button } from '../../ui/Button';
 import { LibraryDialog } from '../library/LibraryDialog';
 import { supportedProviders, defaultKeys, defaultTypes, modelTypes, requiredDefaults, type Credential, type DefaultKey, type Discovery, type Provider, type Registration } from '../../data/configuration-contracts';
@@ -10,10 +12,11 @@ import type { ConfigurationIntent, ConfigurationToken } from './configuration-st
 import { useConfiguration } from './use-configuration';
 import { ConfigurationStatus } from './ConfigurationStatus';
 import { CredentialEditor } from './CredentialEditor';
+import { credentialSetupAnchor, CredentialSetupHint, ModelCredentialLink, ModelSetupGuide } from './ModelSetupGuide';
 import { useSetupMetadata } from './SetupWarning';
 export function ModelsPage() {
     const config = useConfiguration('models'), { row } = config, setup = useSetupMetadata();
-    const { t, configuration: m } = useI18n(), navigate = useNavigate(), location = useLocation();
+    const { t, configuration: m, locale } = useI18n(), navigate = useNavigate(), location = useLocation();
     const [confirm, setConfirm] = useState<ConfigurationToken | null>(null);
     const [migrateTo, setMigrateTo] = useState('');
     const [viewResult, setViewResult] = useState(false);
@@ -27,6 +30,8 @@ export function ModelsPage() {
     }, [row?.id, setup.data, setup.isPending, setup.isError, config.store]);
     const touch = () => { intentRevision.current++; if (row)
         config.store.touch(row.id); };
+    const copy = settingsControlCopy(locale), journeyCopy = modelSetupCopy(locale);
+    const credentialReady = !!row && (['providers', 'credentials'] as const).every(k => row.sources[k]?.phase === 'ready') && !setup.isPending && !setup.isError && !!setup.data;
     const complete = !!row && (['providers', 'credentials', 'models', 'defaults'] as const).every(k => row.sources[k]?.phase === 'ready') && !setup.isPending && !setup.isError && !!setup.data;
     const currentComplete = () => {
         const r = row && config.store.get(row.id);
@@ -50,7 +55,7 @@ export function ModelsPage() {
             setConfirm(token);
     };
     const editor = (provider: Provider, credential: Credential | null) => {
-        if (!row || config.locked || !complete || !setup.data?.encryption_configured || !knownProvider(provider) || credential?.decryption_problem)
+        if (!row || config.locked || !(credential ? complete : credentialReady) || !setup.data?.encryption_configured || !knownProvider(provider) || credential?.decryption_problem)
             return;
         touch();
         config.store.setForm(row.id, {
@@ -176,19 +181,34 @@ export function ModelsPage() {
     const zero = !!deleting && complete && deleting.model_count === 0 && links.length === 0;
     const affected = defaultKeys.filter(key => links.some(model => model.id === defaults?.[key]));
     const result = row?.attempt?.result;
+    const guideCurrent = config.ready && !config.locked;
     return <AppChrome><section className="notebook-home configuration-page">
   <h1>{t.navigation.models}</h1><ConfigurationStatus config={config}/>
+  <ModelSetupGuide row={row} current={guideCurrent} navigationReady={complete} canAddConfiguration={setup.data?.encryption_configured === true} supportedProviderNames={providers.filter(knownProvider).map(p => p.name)} testCurrent={!!row && config.ready && complete && !!row.attempt &&
+    row.metadataRevision === row.attempt.token.metadataRevision + 2 &&
+    sessionCoordinator.current() === row.attempt.token.generation &&
+    config.controller?.getSnapshot().providerEvidenceRevision === row.attempt.token.providerRevision}/>
+  <div id="model-setup-status" tabIndex={-1}>
   <Button disabled={!config.ready} onClick={() => void refresh()}>{t.common.refresh}</Button>
-  {!complete && <p role="status">{setup.isError || Object.values(row?.sources ?? {}).some(s => s.phase === 'error') ? t.common.error : t.common.loading}</p>}
+  {!complete && <section aria-label={copy.retry}>
+   {(['providers', 'credentials', 'models', 'defaults'] as const).filter(key => row?.sources[key]?.phase !== 'ready').map(key => <p key={key} role={row?.sources[key]?.phase === 'error' ? 'alert' : 'status'}>{row?.sources[key]?.phase === 'error' ? copy.failed : copy.loading}: {copy[key]}</p>)}
+   {(setup.isPending || setup.isError) && <p role={setup.isError ? 'alert' : 'status'}>{setup.isError ? copy.failed : copy.loading}: {copy.setup}</p>}
+   <p>{copy.dependent}</p>
+   <Button disabled={!config.ready} onClick={() => void refresh()}>{copy.retry}</Button>
+  </section>}
   {setup.data && !setup.data.encryption_configured && <p role="alert">{t.apiKeys.encryptionRequired}</p>}
+  </div>
   <p>{m.providerRisk}</p>
   <Button disabled={config.locked || !complete || !setup.data?.encryption_configured} onClick={() => queue({ kind: 'migrate-env' })}>{t.apiKeys.migrateToDatabase}</Button>
+  <div id="model-setup-providers" tabIndex={-1}>
   {providers.map(provider => <section key={provider.name} className="configuration-provider">
    <h2>{provider.display_name}</h2><p>{provider.modalities.map(typeLabel).join(' · ')}</p>
    {provider.docs_url && <a href={provider.docs_url} target="_blank" rel="noopener noreferrer">{t.setupBanner.viewDocs}</a>}
-   <Button disabled={!complete || config.locked || !setup.data?.encryption_configured || !knownProvider(provider)} onClick={() => editor(provider, null)}>{t.apiKeys.addConfig}: {provider.display_name}</Button>
-   {credentials.filter(c => c.provider === provider.name).map(c => <article key={c.id}>
+   <Button disabled={!credentialReady || config.locked || !setup.data?.encryption_configured || !knownProvider(provider)} onClick={() => editor(provider, null)}>{t.apiKeys.addConfig}: {provider.display_name}</Button>
+   {!knownProvider(provider) && <p role="status">{copy.unsupported}</p>}
+   {credentials.filter(c => c.provider === provider.name).map(c => <article key={c.id} id={credentialSetupAnchor(c.id)} tabIndex={-1}>
     <h3>{c.name}</h3><p>{c.modalities.map(typeLabel).join(' · ')} · {c.model_count}</p>
+    <CredentialSetupHint row={guideCurrent ? row : undefined} credential={c}/>
     {c.decryption_problem && <p role="alert">{t.apiKeys.decryptionError}</p>}
     <div className="dialog-actions">
      <Button aria-label={t.common.edit + ' ' + c.name} disabled={!complete || config.locked || c.decryption_problem || !setup.data?.encryption_configured || !knownProvider(provider)} onClick={() => editor(provider, c)}>{t.common.edit}</Button>
@@ -199,7 +219,8 @@ export function ModelsPage() {
    </article>)}
   </section>)}
   {credentials.filter(c => !providers.some(p => p.name === c.provider)).map(c => <p key={c.id}>{c.name}: {t.common.unknown} ({c.provider})</p>)}
-  <section><h2>{t.models.defaultAssignments}</h2>
+  </div>
+  <section id="model-default-assignments" tabIndex={-1}><h2>{t.models.defaultAssignments}</h2>
    {defaultKeys.map(field => <label key={field}>{labels[field]}<select disabled={!complete || config.locked} value={defaults?.[field] ?? ''} onChange={e => defaultChange(field, e.target.value)}>
     <option value="" disabled={requiredDefaults.includes(field)}>{requiredDefaults.includes(field) ? t.models.requiredModelPlaceholder : ['default_text_to_speech_model', 'default_speech_to_text_model'].includes(field) ? t.models.noneOption : t.models.noneFallbackToChat}</option>
     {defaults?.[field] && !models.some(model => model.id === defaults[field] && model.type === defaultTypes[field]) && <option value={defaults[field]!} disabled>{t.common.unknown}: {defaults[field]}</option>}
@@ -207,8 +228,9 @@ export function ModelsPage() {
    </select>{!defaults?.[field] && field === 'default_text_to_speech_model' && <span>{t.models.ttsUnsetHint}</span>}{!defaults?.[field] && field === 'default_speech_to_text_model' && <span>{t.models.sttUnsetHint}</span>}</label>)}
    <Button disabled={!complete || config.locked} onClick={() => queue({ kind: 'auto-assign' })}>{t.models.autoAssign}</Button>
   </section>
-  <section><h2>{t.navigation.models}</h2>{models.map(model => <article key={model.id}>
+  <section id="registered-models" tabIndex={-1}><h2>{t.navigation.models}</h2>{models.map(model => <article key={model.id}>
    <h3>{model.name}</h3><p>{model.provider} · {typeLabel(model.type)}</p>
+   <ModelCredentialLink row={guideCurrent ? row : undefined} model={model}/>
    <Button aria-label={t.models.testModel + ' ' + model.name} disabled={!complete || config.locked || !(modelTypes as readonly string[]).includes(model.type)} onClick={() => queue({ kind: 'model-test', id: model.id })}>{t.models.testModel}</Button>
    <Button aria-label={t.common.delete + ' ' + model.name} disabled={!complete || config.locked || !(modelTypes as readonly string[]).includes(model.type)} onClick={() => queue({ kind: 'model-delete', id: model.id })}>{t.common.delete}</Button>
   </article>)}</section>
@@ -226,7 +248,7 @@ export function ModelsPage() {
   {result && <dl>{(['created', 'existing', 'deleted_models', 'migrated', 'skipped', 'not_configured', 'errors'] as const).filter(key => typeof result[key] === 'number').map(key => <div key={key}><dt>{m.counts[key]}</dt><dd>{String(result[key])}</dd></div>)}</dl>}
   {result && typeof result.assigned === 'object' && result.assigned !== null && <dl>{(['assigned', 'skipped', 'missing'] as const).map(key => <div key={key}><dt>{m.counts[key]}</dt><dd>{Object.entries(result[key] as object).map(([name, value]) => labels[(key === 'assigned' ? name : value) as DefaultKey] ?? t.common.unknown).join(' · ') || t.models.noneOption}</dd></div>)}</dl>}
   <Link className="button" to="/advanced">{m.openAdvanced}</Link>
-  <CredentialEditor config={config} refresh={refresh} enabled={complete && setup.data?.encryption_configured === true}/>
+  <CredentialEditor config={config} refresh={refresh} enabled={(row?.form?.credential ? complete : credentialReady) && setup.data?.encryption_configured === true}/>
   {confirm && <LibraryDialog open onOpenChange={open => { if (!open)
             close(); }} title={m.confirm} description={deleting ? m.deleteRisk : m.providerRisk}>
    {(confirm.intent.kind === 'credential-test' || confirm.intent.kind === 'discover') && <p>{credentials.find(c => c.id === (confirm.intent as {id:string}).id)?.name ?? t.common.unknown} · {confirm.intent.provider} · {confirm.intent.id}</p>}
@@ -252,6 +274,6 @@ export function ModelsPage() {
    {confirm.intent.kind === 'defaults' && confirm.intent.field === 'default_embedding_model' && <Button disabled={!admissible(confirm)} onClick={() => void submit(true)}>{m.confirmAdvanced}</Button>}
    <Button onClick={close}>{t.common.cancel}</Button>
   </LibraryDialog>}
-  {viewResult && <LibraryDialog open onOpenChange={setViewResult} title={result?.success === true ? t.models.testModelSuccess : t.models.testModelFailed} description={m.safeDetails}><p>{result?.details_present ? t.common.unknown : t.models.noneOption}</p></LibraryDialog>}
+  {viewResult && <LibraryDialog open onOpenChange={setViewResult} title={result?.success === true ? journeyCopy.received : journeyCopy.failed} description={m.safeDetails + ' ' + journeyCopy.testLimit}>{null}</LibraryDialog>}
  </section></AppChrome>;
 }

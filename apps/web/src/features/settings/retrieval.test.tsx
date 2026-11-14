@@ -126,8 +126,9 @@ it('T14-T16 uses the resolved historical extraction and exact acknowledged maint
   return undefined;
  });
  const h=await open();fireEvent.click(h.q().getByRole('button',{name:'Close'}));
- fireEvent.click(screen.getByRole('button',{name:'Same title'}));
- fireEvent.click(screen.getByRole('button',{name:'Read v-old'}));
+ fireEvent.click(screen.getByRole('button',{name:'Current question scope'}));
+ fireEvent.click(screen.getByRole('button',{name:'Read Same title · Version 1'}));
+ fireEvent.click(await screen.findByText('Original and verification',{selector:'summary'}));
  fireEvent.click(await screen.findByRole('button',{name:'Revalidate archived references'}));
  fireEvent.click(screen.getByRole('button',{name:'Confirm'}));
  await waitFor(()=>expect(maintenance).not.toBeNull());
@@ -200,14 +201,16 @@ it('T05 refuses a preview whose extraction changed since the disclosed status',a
 it.each(['remote_text_snapshot','future'])('T14 does not expose repair for unsupported origin %s',async origin=>{
  const raw=readerDetail();Object.assign(raw.version,{origin,original_status:'available',mime_type:'text/markdown'});
  server(r=>new URL(r.url).pathname==='/api/personal/source-versions/v-old'?json(raw):undefined);
- const h=await open();fireEvent.click(h.q().getByRole('button',{name:'Close'}));fireEvent.click(screen.getByRole('button',{name:'Same title'}));fireEvent.click(screen.getByRole('button',{name:'Read v-old'}));
+ const h=await open();fireEvent.click(h.q().getByRole('button',{name:'Close'}));fireEvent.click(screen.getByRole('button',{name:'Current question scope'}));fireEvent.click(screen.getByRole('button',{name:'Read Same title · Version 1'}));
+ fireEvent.click(await screen.findByText('Original and verification',{selector:'summary'}));
  expect(await screen.findByRole('button',{name:'Re-extract original'})).toBeDisabled();
  expect(screen.getByRole('button',{name:'Revalidate archived references'})).toBeDisabled();
 });
 it('T14 retained Markdown repair posts once, leaves unknown frozen, and never exposes the retained path',async()=>{
  const raw=readerDetail();Object.assign(raw.version,{origin:'web_snapshot',mime_type:'text/markdown'});
  const requests=server(r=>new URL(r.url).pathname==='/api/personal/source-versions/v-old'?json(raw):r.url.endsWith('/reparse')?json({malformed:true}):undefined);
- const h=await open();fireEvent.click(h.q().getByRole('button',{name:'Close'}));fireEvent.click(screen.getByRole('button',{name:'Same title'}));fireEvent.click(screen.getByRole('button',{name:'Read v-old'}));
+ const h=await open();fireEvent.click(h.q().getByRole('button',{name:'Close'}));fireEvent.click(screen.getByRole('button',{name:'Current question scope'}));fireEvent.click(screen.getByRole('button',{name:'Read Same title · Version 1'}));
+ fireEvent.click(await screen.findByText('Original and verification',{selector:'summary'}));
  fireEvent.click(await screen.findByRole('button',{name:'Re-extract original'}));
  fireEvent.click(screen.getByRole('button',{name:'Confirm'}));fireEvent.click(screen.queryByRole('button',{name:'Confirm'})??screen.getByRole('button',{name:'Re-extract original'}));
  await waitFor(()=>expect(screen.getByRole('button',{name:'Re-extract original'})).toBeDisabled());
@@ -290,7 +293,8 @@ it.each([false,true])('T10 explicit refresh reads at most one group plus twenty 
  fireEvent.click(await h.q().findByLabelText('I acknowledge processing these document excerpts at the disclosed destination; quota may be consumed.'));
  fireEvent.click(h.q().getByRole('button',{name:'Confirm indexing'}));await h.q().findByText('child19');
  fireEvent.click(h.q().getByRole('button',{name:'Refresh index status'}));
- await waitFor(()=>expect(h.q().getByRole('button',{name:'Refresh index status'})).toBeEnabled());
+ // This explicit observation performs up to 21 sequential reads; wait for settlement, not a one-second scheduler budget.
+ await waitFor(()=>expect(h.q().getByRole('button',{name:'Refresh index status'})).toBeEnabled(),{timeout:5000});
  const reads=requests.filter(r=>r.url.includes('/personal/jobs/'));
  expect(reads).toHaveLength(malformed?2:21);
  expect(new Set(reads.map(r=>r.url)).size).toBe(reads.length);
@@ -338,7 +342,8 @@ it('T16 closes the reader during an owned refresh without canceling CPU work or 
   if(path==='/api/personal/jobs/maint')return new Promise(yes=>pending=yes);
   return undefined;
  });
- const h=await open();fireEvent.click(h.q().getByRole('button',{name:'Close'}));fireEvent.click(screen.getByRole('button',{name:'Same title'}));fireEvent.click(screen.getByRole('button',{name:'Read v-old'}));
+ const h=await open();fireEvent.click(h.q().getByRole('button',{name:'Close'}));fireEvent.click(screen.getByRole('button',{name:'Current question scope'}));fireEvent.click(screen.getByRole('button',{name:'Read Same title · Version 1'}));
+ fireEvent.click(await screen.findByText('Original and verification',{selector:'summary'}));
  fireEvent.click(await screen.findByRole('button',{name:'Re-extract original'}));fireEvent.click(screen.getByRole('button',{name:'Confirm'}));
  fireEvent.click(await screen.findByRole('button',{name:'Refresh this maintenance job'}));await waitFor(()=>expect(pending).toBeDefined());
  fireEvent.keyDown(document.querySelector('.reader-pane')!,{key:'Escape'});
@@ -376,7 +381,8 @@ it('T16 rejects a maintenance refresh that changes its originally acknowledged f
   if(path==='/api/personal/jobs/stable-maint')return json({...job,fresh_extraction_id:'different-extraction'});
   return undefined;
  });
- const h=await open();fireEvent.click(h.q().getByRole('button',{name:'Close'}));fireEvent.click(screen.getByRole('button',{name:'Same title'}));fireEvent.click(screen.getByRole('button',{name:'Read v-old'}));
+ const h=await open();fireEvent.click(h.q().getByRole('button',{name:'Close'}));fireEvent.click(screen.getByRole('button',{name:'Current question scope'}));fireEvent.click(screen.getByRole('button',{name:'Read Same title · Version 1'}));
+ fireEvent.click(await screen.findByText('Original and verification',{selector:'summary'}));
  fireEvent.click(await screen.findByRole('button',{name:'Re-extract original'}));fireEvent.click(screen.getByRole('button',{name:'Confirm'}));
  fireEvent.click(await screen.findByRole('button',{name:'Refresh this maintenance job'}));
  await waitFor(()=>expect(screen.getByRole('button',{name:'Refresh this maintenance job'})).toBeEnabled());
@@ -553,4 +559,31 @@ it('B9e read-only model owner invalidates original F52 captures, while transform
  act(()=>{const c=readTurnContext()!,rev=owner.loading(c)!;owner.publish(rev,[],c);});
  expect(next.isCurrent()).toBe(false);expect(original.isCurrent()).toBe(false);
  expect(h.q().getByLabelText('Hybrid (explicit submit only)')).toBeChecked();
+});
+
+it.each([false,true])('keeps maintenance off the reading path and preserves unknown results when folded (narrow=%s)',async narrow=>{
+ vi.mocked(window.matchMedia).mockImplementation(query=>({matches:narrow && query==='(max-width: 899px)',media:query,onchange:null,addListener(){},removeListener(){},addEventListener(){},removeEventListener(){},dispatchEvent(){return true;}} as MediaQueryList));
+ const raw=readerDetail();Object.assign(raw.version,{origin:'upload',original_status:'available'});
+ let resolve!: (response:Response)=>void;
+ const requests=server(r=>new URL(r.url).pathname==='/api/personal/source-versions/v-old'?json(raw):r.url.endsWith('/reparse')?new Promise<Response>(yes=>{resolve=yes;}):undefined);
+ const h=await open();fireEvent.click(h.q().getByRole('button',{name:'Close'}));
+ fireEvent.click(screen.getByRole('button',{name:'Current question scope'}));fireEvent.click(screen.getByRole('button',{name:'Read Same title · Version 1'}));
+ const summary=await screen.findByText('Original and verification',{selector:'summary'});
+ expect(screen.queryByRole('button',{name:'Re-extract original'})).toBeNull();
+ fireEvent.click(summary);const reparse=screen.getByRole('button',{name:'Re-extract original'});
+ reparse.focus();fireEvent.click(reparse);fireEvent.keyDown(screen.getByRole('button',{name:'Confirm'}),{key:'Escape'});
+ expect(summary).toHaveFocus();expect(summary.closest('details')).not.toHaveAttribute('open');
+ expect(document.querySelector('.workspace-reader')).not.toHaveAttribute('hidden');
+ expect(requests.filter(r=>r.url.endsWith('/reparse'))).toHaveLength(0);
+ fireEvent.click(summary);expect(screen.queryByRole('button',{name:'Confirm'})).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'Re-extract original'}));fireEvent.click(screen.getByRole('button',{name:'Confirm'}));
+ await waitFor(()=>expect(resolve).toBeDefined());
+ fireEvent.click(summary);
+ const panel=summary.closest('section')!;
+ expect(within(panel).getByRole('status')).toBeVisible();
+ await act(async()=>resolve(json({malformed:true})));
+ expect(within(panel).getByRole('status')).toBeVisible();
+ await waitFor(()=>expect(h.workbench.drafts.settings.getSnapshot()[0]!.retrieval.maintenance[0]!.phase).toBe('unknown'));
+ fireEvent.click(summary);expect(screen.getByRole('button',{name:'Re-extract original'})).toBeDisabled();
+ expect(requests.filter(r=>r.url.endsWith('/reparse'))).toHaveLength(1);
 });

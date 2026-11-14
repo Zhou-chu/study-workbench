@@ -1,4 +1,5 @@
 /** Pure source/artifact gates. Never opens a socket or reads ambient credentials. */
+import {trustedGit} from '../coverage-trusted-git.mjs';
 import {createHash,randomUUID} from 'node:crypto';
 import {constants} from 'node:fs';
 import {lstat,open,readdir,writeFile,mkdir,rename,cp} from 'node:fs/promises';
@@ -9,7 +10,9 @@ export const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../
 export const MANIFEST='spa-artifact-manifest.json', INVENTORY='artifact-inventory.json';
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 export const canonical=value=>JSON.stringify(sort(value));
-function sort(v){return Array.isArray(v)?v.map(sort):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,sort(v[k])])):v;}
+// Artifact identity requires historical UTF-16 key order, never locale collation.
+const compareUtf16 = (a,b) => a < b ? -1 : a > b ? 1 : 0;
+function sort(v){return Array.isArray(v)?v.map(sort):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort(compareUtf16).map(k=>[k,sort(v[k])])):v;}
 export const digest=value=>sha(canonical(value));
 export function safePath(name){
  if(typeof name!=='string'||!name||name.length>512||name.includes('\\')||name.startsWith('/')||name.split('/').some(p=>!p||p==='.'||p==='..'||!/^[-A-Za-z0-9_@.]+$/.test(p)||/^(?:\.|node_modules$|private(?:\.|$)|secrets?(?:\.|$)|credentials?(?:\.|$)|browser[-_]profile)/i.test(p)||/\.(?:pem|key|secret|sqlite3?|db|p12|pfx)$/i.test(p)))throw Error('unsafe/private path');
@@ -44,12 +47,12 @@ function validateRows(rows,authored=false){
  let previous='';
  for(const r of rows){keys(r,['path','size','mode','sha256']);if(!(authored&&r.path==='.dockerignore'))safePath(r.path);if(r.path<=previous||!Number.isSafeInteger(r.size)||r.size<0||r.size>32*1024*1024||!['0644','0755'].includes(r.mode)||!/^[a-f0-9]{64}$/.test(r.sha256))throw Error('invalid inventory entry');previous=r.path;}
 }
-const git=(...args)=>execFileSync('git',args,{cwd:ROOT,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
+const git=(...args)=>trustedGit(args,{cwd:ROOT}).trim();
 export const sourceCommit=()=>git('rev-parse','HEAD');
 export function cleanSource(){if(git('status','--porcelain','--untracked-files=all'))throw Error('clean committed source required');return sourceCommit();}
 export function authoredPaths(kind){
  if(!['web','bff'].includes(kind))throw Error('artifact kind');
- const roots=['package.json','package-lock.json','tsconfig.base.json','contracts/v1/openapi.json','packages/contracts','deploy/v1','scripts/v1/spa-artifact-common.mjs','scripts/v1/check_spa_artifacts.py','scripts/v1/container_check.py','.dockerignore','apps/'+kind];
+ const roots=['package.json','package-lock.json','tsconfig.base.json','contracts/v1/openapi.json','packages/contracts','deploy/v1','scripts/v1/spa-artifact-common.mjs','scripts/coverage-trusted-git.mjs','scripts/coverage-git-provision.mjs','scripts/v1/check_spa_artifacts.py','scripts/v1/container_check.py','.dockerignore','apps/'+kind];
  if(kind==='web')roots.push('packages/domain','packages/web-transport');
  return git('ls-files','-z','--',...roots).split('\0').filter(Boolean).filter(p=>!p.includes('/dist/')).sort();
 }

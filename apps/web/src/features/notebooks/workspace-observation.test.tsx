@@ -11,7 +11,7 @@ import { readySources } from '../chat/chat-admission';
 beforeEach(sourceContext);
 const extracting = () => {
     const w = sourceWorkspace();
-    w.sources = [{ source_id: 's', title: 'Extracting document', versions: [{ source_version_id: 'v-old', source_id: 's', notebook_id: 'n', status: 'extracting', extraction_status: 'extracting', origin: 'upload' }] }];
+    w.sources = [{ source_id: 's', title: 'Extracting document', versions: [{ source_version_id: 'v-old', source_id: 's', notebook_id: 'n', status: 'extracting', origin: 'upload' }] }];
     return w;
 };
 it.each(['ready', 'error'])('observes extraction %s at the two-second workspace cadence without dispatching jobs or writes', async status => {
@@ -26,7 +26,7 @@ it.each(['ready', 'error'])('observes extraction %s at the two-second workspace 
         const w = extracting();
         if (!received) { w.sources = []; return json(w); }
         ++calls;
-        if (calls > 1) w.sources = [{ source_id: 's', title: 'Observed ' + status, versions: [{ source_version_id: 'v-old', source_id: 's', notebook_id: 'n', status, extraction_status: status, origin: 'upload' }] }];
+        if (calls > 1) w.sources = [{ source_id: 's', title: 'Observed ' + status, versions: [{ source_version_id: 'v-old', source_id: 's', notebook_id: 'n', status, origin: 'upload' }] }];
         return json(w);
     });
     function Panel() { query = useQueryClient(); return <NotebookPage/>; }

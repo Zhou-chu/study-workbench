@@ -242,8 +242,18 @@ async def test_cleanup_failure_preserves_acknowledged_id(backend):
 
 
 def test_fresh_loops_have_independent_lifetimes(backend):
-    assert asyncio.run(submit()) == asyncio.run(submit())
-    assert backend.create.await_count == 2
+    loops = []
+
+    async def create(table, payload):
+        loops.append(asyncio.get_running_loop())
+        return {"id": RecordID("command", f"fixture-{len(loops)}")}
+
+    backend.create.side_effect = create
+    assert asyncio.run(submit()) == RecordID("command", "fixture-1")
+    assert asyncio.run(submit()) == RecordID("command", "fixture-2")
+    assert len(loops) == 2 and loops[0] is not loops[1]
+    assert all(loop.is_closed() for loop in loops)
+    assert backend.close.await_count == 2
 
 
 @pytest.mark.asyncio

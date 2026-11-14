@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+from open_notebook.exceptions import ConfigurationError
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -202,7 +204,7 @@ def entry():
 @pytest.fixture
 def valid_env(tmp_path):
     env = {
-        "SURREAL_URL": "ws://db:8000/rpc",
+        "SURREAL_URL": "wss://db.example:8000/rpc",
         "SURREAL_NAMESPACE": "open_notebook",
         "SURREAL_DATABASE": "open_notebook",
         "STUDY_WORKBENCH_DATA_DIR": "/app/data/personal",
@@ -372,7 +374,7 @@ def test_entrypoint_fail_closed_without_secret_disclosure(
         valid_env["OPEN_NOTEBOOK_WORKER_MAX_TASKS"] = "0"
     elif case == "runtime_download":
         valid_env["OPEN_NOTEBOOK_ENABLE_DOCLING"] = "true"
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises((ValueError, ConfigurationError)) as exc:
         entry.prepare(role, valid_env)
     assert "do-not-print-me" not in str(exc.value)
     assert "a-secure-test" not in str(exc.value)
@@ -602,3 +604,37 @@ def test_frontend_builders_copy_exact_public_contract(filename):
     assert "COPY contracts/v1/openapi.json /app/contracts/v1/openapi.json" in builder
     assert "COPY contracts/ " not in builder
     assert "COPY . " not in builder
+
+
+@pytest.mark.parametrize("role", ["api", "worker"])
+def test_database_transport_requires_operator_choice(entry, valid_env, role):
+    valid_env["SURREAL_URL"] = "ws://db:8000/rpc"
+    with pytest.raises(ValueError):
+        entry.prepare(role, valid_env)
+    valid_env["SURREAL_INSECURE_ALLOW_URL"] = "ws://db:8000/rpc"
+    _, result = entry.prepare(role, valid_env)
+    assert result["SURREAL_URL"] == "ws://db:8000/rpc"
+
+
+def test_compose_never_supplies_plaintext_exception():
+    for role in ("api", "worker"):
+        env = manifest()["services"][role]["environment"]
+        assert (
+            env["SURREAL_URL"] == "${SURREAL_URL:?Explicit database endpoint required}"
+        )
+        assert env["SURREAL_INSECURE_ALLOW_URL"] == "${SURREAL_INSECURE_ALLOW_URL:-}"
+
+
+def test_cli_remote_transport_failure_is_sanitized(valid_env):
+    valid_env["SURREAL_URL"] = "ws://secret:password@db:8000/rpc"
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "deploy/v1/entrypoint.py"), "api"],
+        env=valid_env,
+        text=True,
+        capture_output=True,
+        cwd="/tmp",
+    )
+    assert result.returncode == 2
+    assert "Configuration error:" in result.stderr
+    assert "Traceback" not in result.stderr
+    assert valid_env["SURREAL_URL"] not in result.stderr

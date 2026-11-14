@@ -1,0 +1,18 @@
+[Publication copy: personal filesystem paths replaced; original results/failures unchanged.]
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-shared-controls-20261111/apps/web
+
+ ✓ src/features/library/LibraryDialog.focus.test.tsx (2 tests) 191ms
+ ✓ src/features/settings/setup-journey.test.tsx (3 tests) 3830ms
+   ✓ returns from Tools model setup after cancel with question and chosen sources intact  1693ms
+   ✓ returns from Tools model setup after save with question and chosen sources intact  1100ms
+   ✓ returns from Tools model setup after failure with question and chosen sources intact  1034ms
+ ✓ src/features/settings/settings-controls.test.tsx (60 tests) 8781ms
+   ✓ allows new credentials independently of failed models metadata  542ms
+   ✓ allows new credentials independently of failed models/defaults metadata  329ms
+   ✓ opens and saves 'ollama' with controlled 'error' response  342ms
+
+ Test Files  3 passed (3)
+      Tests  65 passed (65)
+   Start at  04:11:13
+   Duration  11.83s (transform 3.43s, setup 436ms, import 4.92s, tests 12.80s, environment 1.11s)

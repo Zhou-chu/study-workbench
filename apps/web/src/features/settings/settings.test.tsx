@@ -181,7 +181,7 @@ it('shows unsupported engine and origin visibly without coercing or writing eith
  expect(h.dialog().getByLabelText('Answer engine')).toBeDisabled();expect(h.dialog().getByLabelText('Source scope')).toBeDisabled();expect(h.dialog().getByText(/future-engine/)).toBeInTheDocument();expect(requests.some(r=>r.method==='PATCH')).toBe(false);
 });
 it('mounts tools and guarded settings destinations and reuses one setup metadata projection',async()=>{
- const requests=server();await renderLibrary('/notebooks/n');fireEvent.click(await screen.findByRole('button',{name:'Tools'}));expect(screen.getAllByRole('link',{name:'Models'}).some(a=>a.getAttribute('href')==='/settings/models')).toBe(true);
+ const requests=server();await renderLibrary('/notebooks/n');fireEvent.click(await screen.findByText('Tools',{selector:'summary'}));fireEvent.click(screen.getByRole('button',{name:'Settings'}));expect(screen.getAllByRole('link',{name:'Models'}).some(a=>a.getAttribute('href')==='/settings/models')).toBe(true);
  const docs=await screen.findByRole('link',{name:/documentation|docs/i});expect(docs).toHaveAttribute('href','https://github.com/lfnovo/open-notebook/blob/main/docs/3-USER-GUIDE/api-configuration.md#encryption-setup');
  fireEvent.click(screen.getByRole('link',{name:'Settings'}));expect(await screen.findByRole('heading',{name:'Settings'})).toBeVisible();for(const name of ['Models','Transformations','Advanced'])expect(screen.getAllByRole('link',{name}).length).toBeGreaterThan(0);
  expect(requests.filter(r=>new URL(r.url).pathname==='/api/credentials/status')).toHaveLength(1);
@@ -213,7 +213,8 @@ it.each(['A',null])('publishes a reconciled link from %s to the real retained wo
  const requests=linkServer(initial),h=await remoteOpen();await chooseLink(h);
  await waitFor(()=>expect(h.workbench.drafts.settings.getSnapshot()[0]?.command?.status).toBe('succeeded'));
  fireEvent.click(h.dialog().getByRole('button',{name:'Close'}));
- await waitFor(()=>expect(screen.getByRole('region',{name:'Google connection'})).toHaveTextContent('remote/one'));
+ await waitFor(()=>expect(h.queries.getQueriesData({queryKey:['workspace']}).some(([,data])=>!!data && typeof data==='object' && 'link' in data && !!data.link && typeof data.link==='object' && 'remote_notebook_id' in data.link && data.link.remote_notebook_id==='remote/one')).toBe(true));
+ expect(screen.getByRole('region',{name:'Google connection'})).toHaveTextContent('NotebookLM personal connection');
  expect(requests.filter(r=>r.method==='PATCH')).toHaveLength(1);
  expect(requests.filter(r=>r.url.endsWith('/notebooklm-link'))).toHaveLength(1);
 });
@@ -223,7 +224,7 @@ it.each(['link-unknown','clear-unknown'] as const)('blocks retained remote sync 
  fireEvent.click(h.dialog().getByRole('button',{name:'Close'}));
  const remote=within(screen.getByRole('region',{name:'Google connection'}));
  fireEvent.click(remote.getByRole('button',{name:'Verify Google connection'}));
- await remote.findByText('upload_source: available');
+ await remote.findByText('Sync selected originals to Google: Available');
  expect(remote.getByRole('button',{name:'Sync selected originals to Google'})).toBeDisabled();
  fireEvent.click(remote.getByRole('button',{name:'Sync selected originals to Google'}));
  expect(requests.filter(r=>r.method==='POST')).toHaveLength(1);
@@ -329,7 +330,8 @@ it('publishes an exactly reconciled unknown clear without repeating either trans
  fireEvent.click(h.dialog().getByRole('button',{name:'Check original request (read only)'}));
  await waitFor(()=>expect(h.workbench.drafts.settings.getSnapshot()[0]?.command?.status).toBe('succeeded'));
  fireEvent.click(h.dialog().getByRole('button',{name:'Close'}));
- await waitFor(()=>expect(screen.getByRole('region',{name:'Google connection'})).toHaveTextContent('remote/one'));
+ await waitFor(()=>expect(h.queries.getQueriesData({queryKey:['workspace']}).some(([,data])=>!!data && typeof data==='object' && 'link' in data && !!data.link && typeof data.link==='object' && 'remote_notebook_id' in data.link && data.link.remote_notebook_id==='remote/one')).toBe(true));
+ expect(screen.getByRole('region',{name:'Google connection'})).toHaveTextContent('NotebookLM personal connection');
  expect(h.workbench.drafts.sources.selectionUnconfirmed('n',readTurnContext()!.epoch)).toBe(false);
  expect(requests.filter(r=>r.method==='PATCH')).toHaveLength(1);expect(requests.filter(r=>r.url.endsWith('/notebooklm-link'))).toHaveLength(1);
 });

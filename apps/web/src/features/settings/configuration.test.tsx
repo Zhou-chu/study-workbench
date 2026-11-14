@@ -14,7 +14,7 @@ it('B9c unknown registry providers stay visible but cannot create credentials', 
     expect(await screen.findByRole('heading', { name: 'Future provider' })).toBeVisible();
     expect(screen.getByRole('button', { name: /Add Configuration: Future provider/ })).toBeDisabled();
 });
-it('B9c clears invalid private submission and never stores private input in resources or caches', async () => {
+it('B9c retains invalid unsent private input until explicit cancellation without storing it in resources or caches', async () => {
     const requests = configurationServer();
     const h = await modelPage();
     fireEvent.click(screen.getByRole('button', { name: 'Edit First configuration' }));
@@ -25,8 +25,10 @@ it('B9c clears invalid private submission and never stores private input in reso
     expect(key.type).toBe('text');
     fireEvent.change(dialog().getByLabelText('Base URL'), { target: { value: 'set' } });
     fireEvent.click(dialog().getByRole('button', { name: 'Save configuration' }));
-    await waitFor(() => expect(key.value).toBe(''));
-    expect(key.type).toBe('password');
+    expect(dialog().getByRole('alert')).toHaveTextContent('Base URL');
+    expect(key.value).toBe(secret);
+    fireEvent.click(dialog().getByRole('button', { name: 'Cancel' }));
+    expect(key.value).toBe('');
     expect(JSON.stringify(h.workbench.drafts.configuration.getSnapshot())).not.toContain(secret);
     expect(JSON.stringify(h.queries.getQueryCache().getAll().map(q => q.state.data))).not.toContain(secret);
     expect(JSON.stringify(h.queries.getMutationCache().getAll())).not.toContain(secret);

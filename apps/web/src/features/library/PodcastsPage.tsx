@@ -1,3 +1,4 @@
+import {SetupLink} from '../settings/SetupLink';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 import { canDispatch, readTurnContext, sessionCoordinator, type DispatchContext } from '@study/web-transport';
@@ -28,7 +29,7 @@ export function PodcastsPage() {
     } | null>(null), [action, setAction] = useState<Action | null>(null), [actionId, setActionId] = useState<string | null>(null), leases = useRef(new Map<string, () => void>()), latestAction = useRef<Action | null>(null), attempted = useRef(new Set<string>());
     latestAction.current = action;
     useEffect(() => { if (new URLSearchParams(location.search).get('create') === '1')
-        setGenerate(true); }, [location.search, location.key]);
+        setGenerate(true); if (new URLSearchParams(location.search).get('tab') === 'profiles') { setTab('profiles'); setGenerate(false); } }, [location.search, location.key]);
     useEffect(() => { const ids = new Set(s.rows.filter(r => r.input.kind === 'podcast-operation' && ['pending', 'accepted', 'unknown'].includes(r.status)).map(r => r.id)); for (const [id, release] of leases.current)
         if (!ids.has(id)) {
             release();
@@ -62,7 +63,7 @@ export function PodcastsPage() {
     const status = (e: PodcastEpisode) => e.job_status === 'completed' ? t.podcasts.completedLabel : podcastRetryable(e.job_status) ? t.podcasts.failedLabel : podcastActive(e.job_status) ? t.podcasts.processingLabel : t.common.unknown;
     return <AppChrome><div className="notebook-home podcast-page"><header><h1>{t.podcasts.listTitle}</h1><p>{t.podcasts.listDesc}</p></header>
  <div className="library-actions"><Button aria-pressed={tab === 'episodes'} onClick={() => setTab('episodes')}>{t.podcasts.episodesTab}</Button><Button aria-pressed={tab === 'profiles'} onClick={() => setTab('profiles')}>{t.podcasts.templatesTab}</Button><Button disabled={!s.ready} onClick={() => setGenerate(true)}>{t.podcasts.generateBtn}</Button><Button disabled={!s.ready || s.episodes.isFetching} onClick={() => void s.episodes.refetch()}>{t.common.refresh}</Button></div>
- {setup && <aside role="status"><h2>{t.podcasts.setupRequired}</h2><p>{t.podcasts.setupRequiredDesc}</p></aside>}
+ {setup && <aside role="status"><h2>{t.podcasts.setupRequired}</h2><p>{t.podcasts.setupRequiredDesc}</p><div className="library-actions"><SetupLink className="button" to="/settings/models" returnTo={tab === "profiles" ? "/podcasts?tab=profiles" : undefined}>{t.navigation.models}</SetupLink><SetupLink className="button" to="/podcasts?tab=profiles">{t.podcasts.templatesTab}</SetupLink></div></aside>}
  {(s.episodes.isError || s.profiles.isError || s.speakers.isError || s.models.isError) && <p role="alert">{t.podcasts.loadErrorDesc}</p>}
  {tab === 'episodes' ? <section aria-label={t.podcasts.episodesTab}>{s.episodes.isPending && <p role="status">{t.podcasts.loadingEpisodes}</p>}{s.episodes.data?.length === 0 && <p>{t.podcasts.noEpisodesYet}</p>}
  {s.episodes.data?.map(e => <article className="podcast-card" key={e.id}><h2>{e.name}</h2><p>{status(e)}</p><p className="meta">{e.id}</p>{e.created && !Number.isNaN(Date.parse(e.created)) && <time dateTime={e.created}>{new Date(e.created).toLocaleString()}</time>}

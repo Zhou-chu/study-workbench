@@ -15,18 +15,106 @@ import math
 import os
 import shutil
 import socket
+import stat
 import struct
 import subprocess
 import tempfile
 import time
 import wave
 import zipfile
+from contextlib import contextmanager
 from pathlib import Path
 from urllib.parse import quote
 
 import httpx
 from local_check import ROOT, build_fixture_environment
-from playwright.sync_api import expect, sync_playwright
+
+
+def cleanup_owned_profile(profile, owned_identity):
+    """Refuse replacement paths; assumes no malicious same-UID concurrent races."""
+    current = profile.lstat()
+    if (
+        not stat.S_ISDIR(current.st_mode)
+        or (current.st_dev, current.st_ino) != owned_identity
+    ):
+        raise RuntimeError(
+            f"Owned profile identity changed; refusing cleanup: {profile}"
+        )
+    shutil.rmtree(profile)
+
+
+@contextmanager
+def owned_audio_context(inherited, *, playwright_factory=None, scratch_parent=None):
+    """Own only a fresh profile. Retain it if driver shutdown cannot be confirmed.
+
+    Browser environment is restricted; driver inherits this Python process's
+    environment. Run this acceptance script only from its isolated launcher.
+    """
+    if playwright_factory is None:
+        from playwright.sync_api import sync_playwright
+
+        playwright_factory = sync_playwright
+    # mkdtemp is private (0700), exclusive and available on Python 3.11.
+    # No finalizer: a failed driver shutdown must leave its files in place.
+    profile = Path(
+        tempfile.mkdtemp(prefix="sw-audio-browser-", dir=scratch_parent)
+    ).absolute()
+    identity = profile.lstat()
+    owned_identity = (identity.st_dev, identity.st_ino)
+    environment = {
+        key: value
+        for key, value in inherited.items()
+        if key in {"PATH", "LANG", "LC_ALL", "LC_CTYPE", "TZ"}
+    }
+    environment.update(
+        HOME=str(profile),
+        TMPDIR=str(profile),
+        XDG_CONFIG_HOME=str(profile / "config"),
+        XDG_CACHE_HOME=str(profile / "cache"),
+    )
+    driver = browser = context = None
+    errors = []
+    stopped = False
+    try:
+        driver = playwright_factory().start()
+        browser = driver.firefox.launch(headless=True, timeout=30000, env=environment)
+        context = browser.new_context(
+            viewport={"width": 1440, "height": 1000},
+            locale="en-US",
+            accept_downloads=True,
+        )
+        yield context
+    except BaseException as error:
+        errors.append(error)
+    finally:
+        for resource in (context, browser):
+            if resource is not None:
+                try:
+                    resource.close()
+                except BaseException as error:
+                    errors.append(error)
+        if driver is not None:
+            try:
+                driver.stop()
+                stopped = True
+            except BaseException as error:
+                error.add_note(
+                    f"Owned profile retained because driver shutdown failed: {profile}"
+                )
+                errors.append(error)
+        # If start() failed, no reliable driver handle exists: retain rather than
+        # delete files a partially launched process might still be using.
+        if stopped:
+            try:
+                cleanup_owned_profile(profile, owned_identity)
+            except BaseException as error:
+                errors.append(error)
+        elif errors:
+            errors[0].add_note(
+                f"Owned profile retained pending shutdown verification: {profile}"
+            )
+    if errors:
+        raise BaseExceptionGroup("Audio browser lifecycle failed", errors)
 
 
 def digest(data):
@@ -88,6 +176,8 @@ def fixture(path):
 
 
 def main():
+    from playwright.sync_api import expect
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
@@ -241,25 +331,7 @@ def main():
                         "playback": [],
                     }
                     report["cases"].append(case)
-                    with sync_playwright() as pw:
-                        profile_home = tempfile.mkdtemp(
-                            prefix="sw-audio-browser-", dir="/tmp"
-                        )
-                        browser = pw.firefox.launch(
-                            headless=True,
-                            timeout=30000,
-                            env={
-                                **env,
-                                "HOME": profile_home,
-                                "XDG_CONFIG_HOME": profile_home + "/config",
-                                "XDG_CACHE_HOME": profile_home + "/cache",
-                            },
-                        )
-                        context = browser.new_context(
-                            viewport={"width": 1440, "height": 1000},
-                            locale="en-US",
-                            accept_downloads=True,
-                        )
+                    with owned_audio_context(env) as context:
                         page = context.new_page()
                         errors = []
                         page.on("pageerror", lambda error: errors.append(str(error)))
@@ -320,7 +392,6 @@ def main():
                         page.screenshot(
                             path=str(args.out / f"{phase}.png"), full_page=True
                         )
-                        browser.close()
                     if phase == "imported-fixture":
                         response = client.post(
                             f"/api/personal/notebooks/{notebook}/exports",

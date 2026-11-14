@@ -1,3 +1,4 @@
+import liveRecovery from './fixtures/live-turn-recovery.js'
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import type { EvidenceCitation } from '@study/contracts'
 import { createTurnRegistry, type TurnReceipt } from './turn-operations.js'
@@ -42,6 +43,44 @@ const receipt: TurnReceipt = { jobId: 'parent:one', turnId: 'turn:one' }
 function match(f = fixture(), known?: TurnReceipt) { return reconcileTurn(f.capture, f.workspace, f.history, known) }
 
 describe('read-only turn reconciliation', () => {
+  it('releases the sanitized live persisted turn alongside unrelated extraction history', () => {
+    const live = structuredClone(liveRecovery)
+    const parent = live.workspace.jobs.find(job => job.operation === 'chat')!
+    const capture = { dto: parent.request_snapshot, sessionId: parent.chat_session_id } as unknown as Parameters<typeof reconcileTurn>[0]
+    const result = reconcileTurn(capture, live.workspace, live.history, { jobId: parent.job_id, turnId: parent.turn_id! }, 'workspace-view-v1')
+    expect(result.kind).toBe('complete')
+    const registry = createTurnRegistry(() => parent.idempotency_key)
+    const admitted = registry.admit({ sessionId: capture.sessionId, request: capture.dto, owner: { mountId: 'live-test' }, context: { epoch: 1, ready: true, target: { mode: 'legacy_password', apiBase: 'https://fixture.example/api', protocol: null } } })
+    if (!admitted.ok) throw Error('Invalid fixture admission')
+    registry.settlePost(admitted.token, { kind: 'bound', jobId: parent.job_id, turnId: parent.turn_id!, state: 'unknown', dispatchUnknown: false })
+    const check = registry.beginCheck(parent.idempotency_key)!
+    registry.settleCheck(check, result)
+    registry.releaseCompleted(parent.idempotency_key)
+    expect(registry.getSnapshot(parent.notebook_id)).toBeNull()
+    live.workspace.jobs.push({ ...parent, projection_status: 'unknown' } as typeof parent)
+    expect(reconcileTurn(capture, live.workspace, live.history, { jobId: parent.job_id, turnId: parent.turn_id! }, 'workspace-view-v1').kind).not.toBe('complete')
+  })
+  it('recovers the persisted independent local scope which omits remote_notebook_id', () => {
+    const f = fixture()
+    delete (f.turn.scope_snapshot as Row).remote_notebook_id
+    delete ((f.parent.result as Row).scope_snapshot as Row).remote_notebook_id
+    delete (f.parent.request_snapshot as Row).model_id
+    delete (f.parent.request_snapshot as Row).remote_notebook_id
+    expect(match(f).kind).toBe('complete')
+  })
+  it.each(['remote:notebook', '', false, { projection_status: 'unknown' }])('rejects a non-null independent remote notebook %j', value => {
+    const f = fixture()
+    ;(f.turn.scope_snapshot as Row).remote_notebook_id = value
+    ;((f.parent.result as Row).scope_snapshot as Row).remote_notebook_id = value
+    expect(match(f).kind).not.toBe('complete')
+  })
+  it.each(['local', 'remote'] as const)('still requires the Google remote notebook for %s scope', origin => {
+    const f = fixture('notebooklm', origin)
+    delete (f.turn.scope_snapshot as Row).remote_notebook_id
+    delete ((f.parent.result as Row).scope_snapshot as Row).remote_notebook_id
+    expect(match(f).kind).not.toBe('complete')
+  })
+
   it.each(['independent', 'notebooklm'] as const)('completes only a bound actual %s parent/result/canonical answer', engine => {
     const f = fixture(engine)
     expect(match(f, receipt)).toEqual({ kind: 'complete', ...receipt, turn: f.turn })

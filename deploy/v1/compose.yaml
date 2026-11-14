@@ -76,7 +76,8 @@
       "init": true,
       "restart": "unless-stopped",
       "environment": {
-        "SURREAL_URL": "ws://db:8000/rpc",
+        "SURREAL_URL": "${SURREAL_URL:?Explicit database endpoint required}",
+        "SURREAL_INSECURE_ALLOW_URL": "${SURREAL_INSECURE_ALLOW_URL:-}",
         "SURREAL_NAMESPACE": "open_notebook",
         "SURREAL_DATABASE": "open_notebook",
         "SURREAL_USER_FILE": "/run/secrets/db_user",
@@ -136,7 +137,8 @@
       "init": true,
       "restart": "unless-stopped",
       "environment": {
-        "SURREAL_URL": "ws://db:8000/rpc",
+        "SURREAL_URL": "${SURREAL_URL:?Explicit database endpoint required}",
+        "SURREAL_INSECURE_ALLOW_URL": "${SURREAL_INSECURE_ALLOW_URL:-}",
         "SURREAL_NAMESPACE": "open_notebook",
         "SURREAL_DATABASE": "open_notebook",
         "SURREAL_USER_FILE": "/run/secrets/db_user",

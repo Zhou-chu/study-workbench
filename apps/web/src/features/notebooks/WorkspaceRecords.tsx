@@ -15,14 +15,18 @@ export function WorkspaceHistory({ workspace }: {
 }) {
     return <LegacyHistory history={workspace.legacy_history}/>;
 }
-export function WorkspaceScope({ workspace }: {
-    workspace: WorkspaceViewV1;
-}) {
+export function WorkspaceScope({ workspace }: { workspace: WorkspaceViewV1 }) {
     const { t } = useI18n();
     const selection = workspace.selection;
     const engine = selection && 'engine' in selection ? selection.engine : undefined;
     const origin = selection && 'selection_origin' in selection ? selection.selection_origin : undefined;
-    const versions = selection && 'source_version_ids' in selection ? selection.source_version_ids : undefined;
-    const remote = selection && 'remote_source_ids' in selection ? selection.remote_source_ids : undefined;
-    return <section className="workspace-scope" aria-label={t.workbench.askScope}><strong>{t.workbench.askScope}</strong><dl><dt>{t.workbench.engine}</dt><dd>{text(engine) ? engine : t.common.unknown}</dd><dt>{t.workbench.scope}</dt><dd>{text(origin) ? origin : t.common.unknown}</dd><dt>{t.workbench.selectedVersions}</dt><dd>{Array.isArray(versions) ? versions.join(', ') : t.common.unknown}</dd><dt>{t.workbench.selectedRemoteSources}</dt><dd>{Array.isArray(remote) ? remote.join(', ') : t.common.unknown}</dd></dl>{!['independent', 'notebooklm'].includes(text(engine) ? engine : '') && <p>{t.workbench.unknownEngine}</p>}{!['local', 'remote'].includes(text(origin) ? origin : '') && <p>{t.workbench.unknownScope}</p>}<p>{t.workbench.readingScopeHint}</p></section>;
+    const versions = selection && 'source_version_ids' in selection && Array.isArray(selection.source_version_ids) ? selection.source_version_ids : [];
+    const remote = selection && 'remote_source_ids' in selection && Array.isArray(selection.remote_source_ids) ? selection.remote_source_ids : [];
+    return <section className="workspace-scope" aria-label={t.workbench.askScope}>
+      <span className="scope-dot" aria-hidden="true" />
+      <span>{engine === 'notebooklm' ? t.workbench.notebooklm : engine === 'independent' ? t.workbench.independent : t.workbench.unknownEngine}</span>
+      {!['local', 'remote'].includes(typeof origin === 'string' ? origin : '') && <span>{t.workbench.unknownScope}</span>}
+      <span className="scope-separator" aria-hidden="true">/</span>
+      <span>{t.workbench.selectedCount.replace('{{count}}', String(versions.length + remote.length))}</span>
+    </section>;
 }

@@ -295,6 +295,8 @@ class SourceResultView(PublicView):
 
 
 class MaintenanceResultView(PublicView):
+    success: bool | None | NonActionableValue = None
+    warnings: list[str] | None | NonActionableValue = None
     source_version_id: str | None | NonActionableValue = None
     extraction_id: str | None | NonActionableValue = None
     fresh_extraction_id: str | None | NonActionableValue = None

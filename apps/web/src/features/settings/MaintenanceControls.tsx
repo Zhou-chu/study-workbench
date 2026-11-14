@@ -14,6 +14,9 @@ export function MaintenanceControls({ control: c, detail, intent }: {
     const { t, retrieval: m } = useI18n(), w = t.workbench;
     const [confirm, setConfirm] = useState<{ operation: 'reparse' | 'revalidate'; fence: RetrievalFence } | null>(null);
     const [busy, setBusy] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+    const summary = useRef<HTMLElement>(null);
+    const collapse = () => { setExpanded(false); setConfirm(null); };
     const lifetime = useRef({ active: true, busy: false });
     useEffect(() => { lifetime.current.active = true; return () => { lifetime.current.active = false; }; }, []);
     const origin = detail.version.origin;
@@ -67,7 +70,10 @@ export function MaintenanceControls({ control: c, detail, intent }: {
         } catch { patch(a.id, { observationFailed: true }); }
         finally { lifetime.current.busy = false; if (lifetime.current.active) setBusy(false); }
     };
-    return <section className="retrieval-panel" aria-label={w.maintenanceMeaning}>
+    return <section className="maintenance-controls" aria-label={m.maintenanceTitle}>
+        <details open={expanded} onKeyDown={event => { if (event.key === 'Escape' && expanded) { event.preventDefault(); event.stopPropagation(); collapse(); summary.current?.focus(); } }}>
+        <summary ref={summary} onClick={event => { event.preventDefault(); if (expanded) collapse(); else setExpanded(true); }}>{m.maintenanceTitle}</summary>
+        <div className="retrieval-panel" hidden={!expanded}>
         <p>{w.maintenanceMeaning}</p>
         {detail.retainedMarkdown === true && <p>{m.retainedMarkdown}</p>}
         {(!canReparse || !canRevalidate) && <p role="status">{w.unavailable}</p>}
@@ -78,13 +84,14 @@ export function MaintenanceControls({ control: c, detail, intent }: {
         {confirm && <section><p className="source-id">{detail.version.source_version_id} · {confirm.operation === 'revalidate' ? detail.extraction?.extraction_id : ''}</p>
             <Button disabled={!current(confirm.fence) || busy} onClick={() => void submit()}>{t.common.confirm}</Button>
             <Button onClick={() => setConfirm(null)}>{t.common.cancel}</Button></section>}
+        </div></details>
         {rows.map(a => <section key={a.id} className={a.phase === 'unknown' || a.observationFailed ? 'settings-danger' : 'operation-notice'}>
-            <p className="source-id">{a.id}</p>
+            <details><summary>{w.jobTechnicalDetails}</summary><p className="source-id">{a.id}</p>{a.job && <p className="source-id">{a.job.job_id}</p>}</details>
             <p role="status">{a.phase === 'pending' ? t.common.processing : a.phase === 'not-sent' ? t.noteConflict.notSent :
                 a.phase === 'unknown' || a.observationFailed ? t.commandSubmission.warning :
                     w.states[a.job?.state as keyof typeof w.states] ?? t.common.unknown}</p>
             {a.httpStatus !== undefined && <p>{t.common.error}: {a.httpStatus}</p>}
-            {a.job && <><p className="source-id">{a.job.job_id}</p><p>{m.maintenanceRefreshWarning}</p>
+            {a.job && <><p>{m.maintenanceRefreshWarning}</p>
                 <Button disabled={a.readerKey !== intent.key || !current(a.fence) || busy}
                     onClick={() => void refresh(a)}>{m.maintenanceRefresh}</Button></>}
             {a.job?.result && ('checked_count' in a.job.result ?

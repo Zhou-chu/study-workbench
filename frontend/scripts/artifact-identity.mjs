@@ -16,9 +16,11 @@ const SKIP_FILES = new Set(['AGENTS.md', 'CLAUDE.md', 'README.md', '.gitignore',
 const REQUIRED = ['package.json', 'package-lock.json', 'next.config.ts', 'tsconfig.json', 'postcss.config.mjs', 'start-server.js']
 const TRANSPORT = ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'all_proxy', 'no_proxy', 'NODE_EXTRA_CA_CERTS', 'SSL_CERT_FILE', 'SSL_CERT_DIR', 'REQUESTS_CA_BUNDLE', 'CURL_CA_BUNDLE']
 
+// Preserve historical UTF-16 key order: locale collation would change artifact digests.
+const compareUtf16 = (a, b) => a < b ? -1 : a > b ? 1 : 0
 function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical)
-  if (value !== null && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])]))
+  if (value !== null && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort(compareUtf16).map(key => [key, canonical(value[key])]))
   return value
 }
 export const digest = value => createHash('sha256').update(JSON.stringify(canonical(value))).digest('hex')

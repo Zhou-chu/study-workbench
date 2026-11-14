@@ -53,6 +53,7 @@ export interface ScopeMappingSnapshot {
   last_checked_at: string | null
 }
 export interface ScopeSnapshot {
+  mapping_version?: number
   engine?: Engine
   selection_origin?: 'local' | 'remote'
   source_version_ids: string[]

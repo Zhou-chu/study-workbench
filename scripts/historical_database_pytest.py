@@ -7,8 +7,11 @@ tripwire permits only the owned endpoint (not an OS firewall). No provider calls
 import argparse
 import hashlib
 import os
+import re
+import secrets
 import signal
 import socket
+import stat
 import subprocess
 import sys
 import tempfile
@@ -33,12 +36,14 @@ TESTS = [
 
 
 def build_test_environment(run, inherited, url):
+    # Fresh parent-owned scratch, independent of a permissive ambient umask.
+    (run / "tmp").mkdir(mode=0o700)
     env = build_environment(run, inherited)
     env.update(
         SURREAL_URL=url,
         AUTH_TEST_SURREAL_URL=url,
         SURREAL_USER="synthetic",
-        SURREAL_PASSWORD="synthetic",
+        SURREAL_PASSWORD=secrets.token_urlsafe(32),
         SURREAL_NAMESPACE="historical_" + uuid4().hex,
         SURREAL_DATABASE="unused_" + uuid4().hex,
         STUDY_WORKBENCH_TEST_SURREAL="1",
@@ -64,7 +69,54 @@ def network_guard(port, event, args):
             raise OSError("Only owned synthetic database connections allowed")
 
 
+def validate_child_temporary():
+    """Reject direct child invocation into unowned/reused public scratch space.
+
+    Same-UID/root modification is outside the filesystem custody boundary.
+    Never resolves symlinks, creates directories, or removes rejected paths.
+    """
+    raw = os.environ.get("TMPDIR", "")
+    scratch = Path(raw)
+    if (
+        not raw
+        or str(scratch) != raw
+        or scratch.parent.parent != Path("/tmp")
+        or scratch.name != "tmp"
+        or not re.fullmatch(r"historical-db-[A-Za-z0-9_-]+", scratch.parent.name)
+    ):
+        raise ValueError("Invalid historical temporary directory custody")
+    descriptors = []
+    try:
+        flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+        parent = os.open("/tmp", flags)
+        descriptors.append(parent)
+        parent_info = os.fstat(parent)
+        if parent_info.st_uid != 0 or not parent_info.st_mode & stat.S_ISVTX:
+            raise ValueError("Invalid historical temporary parent custody")
+        root = os.open(scratch.parent.name, flags, dir_fd=parent)
+        descriptors.append(root)
+        root_info = os.fstat(root)
+        if root_info.st_uid != os.getuid() or stat.S_IMODE(root_info.st_mode) != 0o700:
+            raise ValueError("Invalid historical temporary root custody")
+        child = os.open("tmp", flags, dir_fd=root)
+        descriptors.append(child)
+        child_info = os.fstat(child)
+        if (
+            child_info.st_uid != os.getuid()
+            or stat.S_IMODE(child_info.st_mode) & 0o022
+            or child_info.st_dev != root_info.st_dev
+        ):
+            raise ValueError("Invalid historical temporary scratch custody")
+    except OSError:
+        raise ValueError("Invalid historical temporary directory custody") from None
+    finally:
+        for descriptor in reversed(descriptors):
+            os.close(descriptor)
+    return scratch
+
+
 def child_main(port):
+    temporary = validate_child_temporary()
     sys.addaudithook(lambda event, args: network_guard(port, event, args))
     import pytest
 
@@ -80,9 +132,9 @@ def child_main(port):
             "-v",
             "-ra",
             "-o",
-            f"cache_dir={os.environ['TMPDIR']}/pytest-cache",
+            f"cache_dir={temporary}/pytest-cache",
             "--basetemp",
-            f"{os.environ['TMPDIR']}/pytest-tmp",
+            f"{temporary}/pytest-tmp",
         ]
     )
 
@@ -156,12 +208,16 @@ def main():
                     f"127.0.0.1:{port}",
                     "--user",
                     "synthetic",
-                    "--pass",
-                    "synthetic",
                     "memory",
                 ],
                 cwd=run,
-                env={"PATH": "/usr/bin:/bin", "HOME": str(run)},
+                # Surreal CLI uses SURREAL_PASS; the Python client uses
+                # SURREAL_PASSWORD. Keep the per-run secret out of argv/logs.
+                env={
+                    "PATH": "/usr/bin:/bin",
+                    "HOME": str(run),
+                    "SURREAL_PASS": env["SURREAL_PASSWORD"],
+                },
                 stdout=log,
                 stderr=subprocess.STDOUT,
             )

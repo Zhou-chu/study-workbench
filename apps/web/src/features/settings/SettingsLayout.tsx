@@ -1,5 +1,5 @@
 import {ApplicationSettings} from './ApplicationSettings';
-import {Link} from 'react-router';
+import {SetupLink as Link} from './SetupLink';
 import {useI18n} from '../../i18n';
 import {AppChrome} from '../../app/AppChrome';
 /** Shared entry shell only. Later settings slices remain explicitly pending. */

@@ -1,7 +1,7 @@
 import { mergeTurnHistory } from './turn-history';
 import { readySources, originalScopeAvailable } from './chat-admission';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { Link } from 'react-router';
+import { SetupLink as Link } from '../settings/SetupLink';
 import type { WorkspaceViewV1, TurnView, RetrievalOptions } from '@study/contracts';
 import { canReplayCapturedTurn, type EmbeddingDisclosure, type TurnOwner } from '@study/domain';
 import { canDispatch, freezeDispatchContext, readTurnContext, sessionCoordinator, subscribeTurnContext, type DispatchContext } from '@study/web-transport';
@@ -37,7 +37,8 @@ type Evidence = {
     available: boolean;
     revision?: number;
 };
-export function ConversationPanel({ notebookId, workspace, onCitation, onSaveAnswer, onOutlineReady, retrieval }: {
+export function ConversationPanel({ notebookId, workspace, onCitation, onSaveAnswer, onOutlineReady, retrieval, onAdjustScope }: {
+    onAdjustScope?: (() => void) | undefined;
     notebookId: string;
     workspace: WorkspaceViewV1;
     onCitation?: CitationHandler | undefined;
@@ -172,5 +173,5 @@ export function ConversationPanel({ notebookId, workspace, onCitation, onSaveAns
     }, [snapshot.outlines, snapshot.retired, onOutlineReady, notebookId, ready, runtime]);
     return <><div className="panel-heading"><h2>{t.workbench.conversation}</h2><span className="meta">{turns.length}</span></div><div className="conversation-scroll" aria-label={t.workbench.history}>{historyError && <p role="status">{chat.historyFailed}</p>}<WorkspaceHistory workspace={workspace}/>{turns.map((turn, i) => <Message key={i} turn={turn} index={i} onCitation={onCitation} onSaveAnswer={onSaveAnswer}/>)}<TurnRecovery snapshot={snapshot} canCheck={ready && !snapshot.retired && !!snapshot.operation && canDispatch(snapshot.operation.capture.context, context)} canRetry={runtime.canRetry(notebookId, retryAvailable)} onCheck={() => { void runtime.check(notebookId); }} onRetry={() => runtime.retry(notebookId, retryAvailable)} onAbandon={() => runtime.abandon(notebookId)} onStop={() => runtime.stop(notebookId)}/></div>
  <div className="chat-admission">{!selection && <p>{t.workbench.selectionUnsupported}</p>}{selection?.selection_origin === 'local' && !readySources(workspace, selection.source_version_ids) && <p>{selection.source_version_ids.length ? t.workbench.selectedSourcesBlocked : t.workbench.emptySelection}</p>}{selection?.engine === 'independent' && <><p role="status">{modelBusy ? t.workbench.modelChecking : modelError ? t.workbench.modelCheckFailed : validEvidence(model) && model?.available ? t.workbench.modelConfigured : t.workbench.notConfigured}</p><Button disabled={!ready || modelBusy} onClick={() => { void readModel(); }}>{t.workbench.retry}</Button></>}{selection?.engine === 'notebooklm' && <><p>{validEvidence(google, true) && google?.available ? t.workbench.connectionStates.connected : state?.providerNeedsReauth ? session.google : t.workbench.connectionNotVerified}</p><Button disabled={!ready || googleBusy || state?.providerChecking} onClick={() => { void verifyGoogle(); }}>{session.verifyGoogle}</Button>{!remote && <p>{t.workbench.googleLinkRequired}</p>}</>}<Link className="record-link" to="/settings/models">{t.workbench.modelSettings}</Link>{options.retrieval_mode === 'hybrid' && <p>{t.workbench.hybridOutlineUnavailable}</p>}{rejection && <p role="alert">{t.workbench.turnRecoveryInvalid}</p>}</div>
- <Composer question={question} onChange={value => drafts.update(draft.id, { question: value })} onSubmit={() => submit('question')} onOutline={options.retrieval_mode === 'hybrid' ? undefined : () => submit('outline')} disabled={!canAsk || !!snapshot.operation} readOnly={draft.retired} onNewDraft={() => setDraftSession(`question:${crypto.randomUUID()}`)} scope={<ScopeSummary selection={selection} unconfirmed={unconfirmed}/>}/><p className="panel-hint chat-outline-hint">{chat.outlineOnly}</p></>;
+ <Composer question={question} onChange={value => drafts.update(draft.id, { question: value })} onSubmit={() => submit('question')} onOutline={options.retrieval_mode === 'hybrid' ? undefined : () => submit('outline')} disabled={!canAsk || !!snapshot.operation} readOnly={draft.retired} onNewDraft={() => setDraftSession(`question:${crypto.randomUUID()}`)} scope={<ScopeSummary selection={selection} unconfirmed={unconfirmed} onAdjustScope={onAdjustScope}/>}/><p className="panel-hint chat-outline-hint">{chat.outlineOnly}</p></>;
 }

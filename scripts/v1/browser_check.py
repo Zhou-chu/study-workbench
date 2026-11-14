@@ -76,6 +76,30 @@ def successful_response(response, method, url):
     )
 
 
+def validate_mobile_metrics(metrics, reader=False):
+    assert metrics["viewport"] == 390, metrics
+    assert metrics["document_width"] <= 391, metrics
+    assert metrics["main_width"] >= 389, metrics
+    assert metrics["panels"], metrics
+    for panel in metrics["panels"]:
+        assert panel["width"] >= 350, metrics
+        assert panel["content_width"] <= panel["client_width"] + 1, metrics
+    if reader:
+        assert metrics["canvas"] and metrics["canvas"]["width"] >= 300, metrics
+        assert 0 <= metrics["canvas"]["left"] < metrics["canvas"]["right"] <= 390, (
+            metrics
+        )
+
+
+def validate_viewport_metrics(metrics):
+    assert metrics["document_height"] <= metrics["viewport"] + 1, metrics
+    assert metrics["body_height"] <= metrics["viewport"] + 1, metrics
+
+
+def validate_pdf_pixels(pixels):
+    assert pixels > 100, ("Blank PDF raster", pixels)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-context", required=True)
@@ -132,8 +156,7 @@ def run_browser(guard: BrowserContext, engine: str, executable: Path | None = No
             (out / "viewport-checks.json").write_text(
                 json.dumps(viewport_checks, indent=2)
             )
-            assert metrics["document_height"] <= metrics["viewport"] + 1, metrics
-            assert metrics["body_height"] <= metrics["viewport"] + 1, metrics
+            validate_viewport_metrics(metrics)
 
         def assert_pdf_page(number):
             canvas = page.locator("canvas[data-page-number]")
@@ -153,7 +176,7 @@ def run_browser(guard: BrowserContext, engine: str, executable: Path | None = No
                 }
                 return marked;
             }""")
-            assert pixels > 100, ("Blank PDF raster", pixels)
+            validate_pdf_pixels(pixels)
             raster_checks.append({"physical_page": number, "nonwhite_pixels": pixels})
 
         def assert_mobile_layout(label, reader=False):
@@ -171,18 +194,7 @@ def run_browser(guard: BrowserContext, engine: str, executable: Path | None = No
                     canvas: bounds ? {width: bounds.width, left: bounds.left, right: bounds.right} : null,
                 };
             }""")
-            assert metrics["viewport"] == 390, metrics
-            assert metrics["document_width"] <= 391, metrics
-            assert metrics["main_width"] >= 389, metrics
-            assert metrics["panels"], metrics
-            for panel in metrics["panels"]:
-                assert panel["width"] >= 350, metrics
-                assert panel["content_width"] <= panel["client_width"] + 1, metrics
-            if reader:
-                assert metrics["canvas"] and metrics["canvas"]["width"] >= 300, metrics
-                assert (
-                    0 <= metrics["canvas"]["left"] < metrics["canvas"]["right"] <= 390
-                ), metrics
+            validate_mobile_metrics(metrics, reader=reader)
             mobile_checks.append({"view": label, **metrics})
 
         def loaded_workspace(action, url):

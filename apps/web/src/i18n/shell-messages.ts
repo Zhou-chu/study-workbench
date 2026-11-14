@@ -21,7 +21,11 @@ export const shellMessages = {
         "openReader": "Open reader",
         "closeReader": "Close reader",
         "previewBody": "Synthetic content for layout testing, not a saved document.",
-        "preferences": "Appearance and language"
+        "preferences": "Appearance and language",
+        "viewMode": "View mode",
+        "sideBySide": "Side by side",
+        "expandReading": "Expand reading",
+        "expandAnswers": "Expand answers"
     },
     "zh-CN": {
         "previewTitle": "界面骨架预览",
@@ -45,7 +49,11 @@ export const shellMessages = {
         "openReader": "打开阅读器",
         "closeReader": "关闭阅读器",
         "previewBody": "用于布局测试的合成内容，并非已保存的文档。",
-        "preferences": "外观与语言"
+        "preferences": "外观与语言",
+        "viewMode": "工作区视图",
+        "sideBySide": "并排显示",
+        "expandReading": "展开阅读",
+        "expandAnswers": "展开问答"
     },
     "zh-TW": {
         "previewTitle": "介面骨架預覽",
@@ -69,7 +77,11 @@ export const shellMessages = {
         "openReader": "開啟閱讀器",
         "closeReader": "關閉閱讀器",
         "previewBody": "用於版面測試的合成內容，並非已儲存的文件。",
-        "preferences": "外觀與語言"
+        "preferences": "外觀與語言",
+        "viewMode": "工作區檢視",
+        "sideBySide": "並排顯示",
+        "expandReading": "展開閱讀",
+        "expandAnswers": "展開問答"
     },
     "pt-BR": {
         "previewTitle": "Prévia da estrutura",
@@ -93,7 +105,11 @@ export const shellMessages = {
         "openReader": "Abrir leitor",
         "closeReader": "Fechar leitor",
         "previewBody": "Conteúdo sintético para testar o layout, não um documento salvo.",
-        "preferences": "Aparência e idioma"
+        "preferences": "Aparência e idioma",
+        "viewMode": "Modo de visualização",
+        "sideBySide": "Lado a lado",
+        "expandReading": "Expandir leitura",
+        "expandAnswers": "Expandir respostas"
     },
     "ja-JP": {
         "previewTitle": "画面構成のプレビュー",
@@ -117,7 +133,11 @@ export const shellMessages = {
         "openReader": "リーダーを開く",
         "closeReader": "リーダーを閉じる",
         "previewBody": "レイアウト確認用の合成コンテンツで、保存済み文書ではありません。",
-        "preferences": "外観と言語"
+        "preferences": "外観と言語",
+        "viewMode": "表示モード",
+        "sideBySide": "並べて表示",
+        "expandReading": "閲覧を拡大",
+        "expandAnswers": "回答を拡大"
     },
     "it-IT": {
         "previewTitle": "Anteprima della struttura",
@@ -141,7 +161,11 @@ export const shellMessages = {
         "openReader": "Apri lettore",
         "closeReader": "Chiudi lettore",
         "previewBody": "Contenuto sintetico per verificare il layout, non un documento salvato.",
-        "preferences": "Aspetto e lingua"
+        "preferences": "Aspetto e lingua",
+        "viewMode": "Modalità di visualizzazione",
+        "sideBySide": "Affiancati",
+        "expandReading": "Espandi lettura",
+        "expandAnswers": "Espandi risposte"
     },
     "fr-FR": {
         "previewTitle": "Aperçu de la structure",
@@ -165,7 +189,11 @@ export const shellMessages = {
         "openReader": "Ouvrir le lecteur",
         "closeReader": "Fermer le lecteur",
         "previewBody": "Contenu synthétique pour tester la mise en page, pas un document enregistré.",
-        "preferences": "Apparence et langue"
+        "preferences": "Apparence et langue",
+        "viewMode": "Mode d’affichage",
+        "sideBySide": "Côte à côte",
+        "expandReading": "Agrandir la lecture",
+        "expandAnswers": "Agrandir les réponses"
     },
     "ru-RU": {
         "previewTitle": "Предпросмотр каркаса",
@@ -189,7 +217,11 @@ export const shellMessages = {
         "openReader": "Открыть чтение",
         "closeReader": "Закрыть чтение",
         "previewBody": "Синтетическое содержимое для проверки макета, не сохранённый документ.",
-        "preferences": "Оформление и язык"
+        "preferences": "Оформление и язык",
+        "viewMode": "Режим просмотра",
+        "sideBySide": "Рядом",
+        "expandReading": "Развернуть чтение",
+        "expandAnswers": "Развернуть ответы"
     },
     "bn-IN": {
         "previewTitle": "কাঠামোর পূর্বরূপ",
@@ -213,7 +245,11 @@ export const shellMessages = {
         "openReader": "পাঠক খুলুন",
         "closeReader": "পাঠক বন্ধ করুন",
         "previewBody": "বিন্যাস পরীক্ষার কৃত্রিম বিষয়বস্তু, সংরক্ষিত নথি নয়।",
-        "preferences": "চেহারা ও ভাষা"
+        "preferences": "চেহারা ও ভাষা",
+        "viewMode": "প্রদর্শন মোড",
+        "sideBySide": "পাশাপাশি",
+        "expandReading": "পাঠ বড় করুন",
+        "expandAnswers": "উত্তর বড় করুন"
     },
     "ca-ES": {
         "previewTitle": "Vista prèvia de l’estructura",
@@ -237,7 +273,11 @@ export const shellMessages = {
         "openReader": "Obre el lector",
         "closeReader": "Tanca el lector",
         "previewBody": "Contingut sintètic per provar el disseny, no és un document desat.",
-        "preferences": "Aparença i llengua"
+        "preferences": "Aparença i llengua",
+        "viewMode": "Mode de visualització",
+        "sideBySide": "De costat",
+        "expandReading": "Amplia la lectura",
+        "expandAnswers": "Amplia les respostes"
     },
     "es-ES": {
         "previewTitle": "Vista previa de la estructura",
@@ -261,7 +301,11 @@ export const shellMessages = {
         "openReader": "Abrir lector",
         "closeReader": "Cerrar lector",
         "previewBody": "Contenido sintético para probar el diseño, no un documento guardado.",
-        "preferences": "Apariencia e idioma"
+        "preferences": "Apariencia e idioma",
+        "viewMode": "Modo de vista",
+        "sideBySide": "En paralelo",
+        "expandReading": "Ampliar lectura",
+        "expandAnswers": "Ampliar respuestas"
     },
     "de-DE": {
         "previewTitle": "Strukturvorschau",
@@ -285,7 +329,11 @@ export const shellMessages = {
         "openReader": "Leseansicht öffnen",
         "closeReader": "Leseansicht schließen",
         "previewBody": "Synthetischer Inhalt zum Prüfen des Layouts, kein gespeichertes Dokument.",
-        "preferences": "Darstellung und Sprache"
+        "preferences": "Darstellung und Sprache",
+        "viewMode": "Ansichtsmodus",
+        "sideBySide": "Nebeneinander",
+        "expandReading": "Lesen erweitern",
+        "expandAnswers": "Antworten erweitern"
     },
     "pl-PL": {
         "previewTitle": "Podgląd struktury",
@@ -309,7 +357,11 @@ export const shellMessages = {
         "openReader": "Otwórz czytnik",
         "closeReader": "Zamknij czytnik",
         "previewBody": "Syntetyczna treść do testowania układu, nie zapisany dokument.",
-        "preferences": "Wygląd i język"
+        "preferences": "Wygląd i język",
+        "viewMode": "Tryb widoku",
+        "sideBySide": "Obok siebie",
+        "expandReading": "Rozwiń czytanie",
+        "expandAnswers": "Rozwiń odpowiedzi"
     },
     "tr-TR": {
         "previewTitle": "İskelet önizlemesi",
@@ -333,6 +385,10 @@ export const shellMessages = {
         "openReader": "Okuyucuyu aç",
         "closeReader": "Okuyucuyu kapat",
         "previewBody": "Düzeni sınamak için sentetik içerik, kaydedilmiş bir belge değil.",
-        "preferences": "Görünüm ve dil"
+        "preferences": "Görünüm ve dil",
+        "viewMode": "Görünüm modu",
+        "sideBySide": "Yan yana",
+        "expandReading": "Okumayı genişlet",
+        "expandAnswers": "Yanıtları genişlet"
     }
 } as const;

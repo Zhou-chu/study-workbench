@@ -3,8 +3,11 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import { WorkbenchSession } from './app/WorkbenchSession';
 import { AppProviders } from './app/providers';
 import { AppRoutes } from './app/router';
+import './theme/fonts/fonts.css';
 import './theme/tokens.css';
 import './app/styles.css';
+import './theme/editorial.css';
+import './theme/study-layout.css';
 async function mount() {
     const preview = import.meta.env.DEV && location.pathname === '/__preview/workspace' ? await import('./test/fixtures') : undefined;
     const routes=<AppRoutes {...(preview ? {previewContent:preview.longPreviewContent} : {})}/>;

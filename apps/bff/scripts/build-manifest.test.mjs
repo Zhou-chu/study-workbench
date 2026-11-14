@@ -11,7 +11,7 @@ test('standalone BFF closure accepts measured ESM package and local modules only
   await writeFile(path.join(root,'package.json'),'{"type":"module","private":true}');
   await writeFile(path.join(root,'cli.js'),"import './server.js';");
   await writeFile(path.join(root,'server.js'),"import {createServer} from 'node:http'; export {createServer};");
-  await common.verifyBffClosure(root);
+  await assert.doesNotReject(common.verifyBffClosure(root));
   for(const source of ["import React from 'react';","import next from 'next';","import '../outside.js';","const x = import('next');","const x = require('next');","const x = import /* hidden */ ('next');","export {x} from 'next';","import 'node:child_process';"]){
    await writeFile(path.join(root,'server.js'),source);
    await assert.rejects(common.verifyBffClosure(root),/closure|import|dependency/i);
@@ -27,7 +27,7 @@ test('parses actual emitted ESM without confusing import route literals or execu
   await writeFile(path.join(root,'package.json'),'{"type":"module","private":true}');
   await writeFile(path.join(root,'cli.js'),"import './server.js'; throw Error('must-not-execute');");
   await writeFile(path.join(root,'server.js'),"import /* static */ // trivia\n{AsyncLocalStorage} from 'node:async_hooks';\nconst routes=[['POST','/import'],\n ['GET','/x']];\nexport {AsyncLocalStorage};");
-  await common.verifyBffClosure(root);
+  await assert.doesNotReject(common.verifyBffClosure(root));
  }finally{await rm(root,{recursive:true,force:true});}
 });
 

@@ -241,6 +241,8 @@ export interface SourceResultView extends PublicView {
 }
 
 export interface MaintenanceResultView extends PublicView {
+  success?: boolean | null | NonActionableValue | undefined
+  warnings?: string[] | null | NonActionableValue | undefined
   source_version_id?: string | null | NonActionableValue | undefined
   extraction_id?: string | null | NonActionableValue | undefined
   fresh_extraction_id?: string | null | NonActionableValue | undefined
@@ -643,6 +645,8 @@ const SourceResultViewShape = () => ({
 const SourceResultViewSchema: z.ZodType<SourceResultView> = z.lazy(() => view(SourceResultViewShape(), []))
 
 const MaintenanceResultViewShape = () => ({
+  success: field(z.boolean()),
+  warnings: field(z.array(z.string())),
   source_version_id: field(z.string()),
   extraction_id: field(z.string()),
   fresh_extraction_id: field(z.string()),

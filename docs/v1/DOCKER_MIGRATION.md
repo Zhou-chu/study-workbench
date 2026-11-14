@@ -126,3 +126,10 @@ frontend same-origin configuration/allowlist, portable streaming import, streami
 answers and access authentication. No new model/Google credentials were accessed.
 Google strict-isolation remains fail-closed and real model/Google evidence is a separate
 release gate; independent-model-only release requires explicit scope acceptance.
+
+## Database transport policy update
+Remote plaintext endpoints now fail closed unless `SURREAL_INSECURE_ALLOW_URL`
+exactly matches the explicit endpoint. This opt-out is unsafe, not TLS.
+See [the policy and compatibility boundaries](../quality/database-transport-policy.md).
+No exception is enabled by default. The bundled database does not provide TLS;
+the candidate therefore requires an explicit operator decision before startup.

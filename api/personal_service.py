@@ -244,10 +244,13 @@ class PersonalService:
             else:
                 from api.notebooklm_service import NotebookLMService
 
+                if google_turn is None:
+                    raise InvalidInputError(
+                        "INVALID_ENGINE: unsupported stored turn engine"
+                    )
                 result = await NotebookLMService(store=self.store).ask(
                     request, chat_session_id=job["chat_session_id"]
                 )
-                assert google_turn is not None
                 google_turn.update(result, status="succeeded", completed_at=now())
                 result = google_turn
             if result.get("status") != "succeeded":

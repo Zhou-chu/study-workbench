@@ -1,5 +1,7 @@
 export const sourceMessages = {
   "en-US": {
+    "unavailableOperation": "Unavailable",
+    "version": "Version {{number}}",
     "discardUnsent": "Discard unsent input",
     "add": "Add sources",
     "choose": "Choose files",
@@ -15,6 +17,8 @@ export const sourceMessages = {
     "accepted": "Saved receipt"
   },
   "zh-CN": {
+    "unavailableOperation": "不可用",
+    "version": "版本 {{number}}",
     "discardUnsent": "丢弃未发送内容",
     "add": "添加资料",
     "choose": "选择文件",
@@ -30,6 +34,8 @@ export const sourceMessages = {
     "accepted": "已保存回执"
   },
   "zh-TW": {
+    "unavailableOperation": "無法使用",
+    "version": "版本 {{number}}",
     "discardUnsent": "捨棄未傳送內容",
     "add": "新增資料",
     "choose": "選擇檔案",
@@ -45,6 +51,8 @@ export const sourceMessages = {
     "accepted": "已儲存回執"
   },
   "pt-BR": {
+    "unavailableOperation": "Indisponível",
+    "version": "Versão {{number}}",
     "discardUnsent": "Descartar entrada não enviada",
     "add": "Adicionar fontes",
     "choose": "Escolher arquivos",
@@ -60,6 +68,8 @@ export const sourceMessages = {
     "accepted": "Comprovante salvo"
   },
   "ja-JP": {
+    "unavailableOperation": "利用不可",
+    "version": "バージョン {{number}}",
     "discardUnsent": "未送信の入力を破棄",
     "add": "資料を追加",
     "choose": "ファイルを選択",
@@ -75,6 +85,8 @@ export const sourceMessages = {
     "accepted": "保存済みの受領情報"
   },
   "it-IT": {
+    "unavailableOperation": "Non disponibile",
+    "version": "Versione {{number}}",
     "discardUnsent": "Scarta contenuto non inviato",
     "add": "Aggiungi fonti",
     "choose": "Scegli file",
@@ -90,6 +102,8 @@ export const sourceMessages = {
     "accepted": "Ricevuta salvata"
   },
   "fr-FR": {
+    "unavailableOperation": "Indisponible",
+    "version": "Version {{number}}",
     "discardUnsent": "Supprimer la saisie non envoyée",
     "add": "Ajouter des sources",
     "choose": "Choisir des fichiers",
@@ -105,6 +119,8 @@ export const sourceMessages = {
     "accepted": "Accusé enregistré"
   },
   "ru-RU": {
+    "unavailableOperation": "Недоступно",
+    "version": "Версия {{number}}",
     "discardUnsent": "Удалить неотправленные данные",
     "add": "Добавить источники",
     "choose": "Выбрать файлы",
@@ -120,6 +136,8 @@ export const sourceMessages = {
     "accepted": "Сохранённое подтверждение"
   },
   "bn-IN": {
+    "unavailableOperation": "অনুপলব্ধ",
+    "version": "সংস্করণ {{number}}",
     "discardUnsent": "না পাঠানো তথ্য বাদ দিন",
     "add": "উৎস যোগ করুন",
     "choose": "ফাইল বাছুন",
@@ -135,6 +153,8 @@ export const sourceMessages = {
     "accepted": "সংরক্ষিত প্রাপ্তিস্বীকার"
   },
   "ca-ES": {
+    "unavailableOperation": "No disponible",
+    "version": "Versió {{number}}",
     "discardUnsent": "Descarta l’entrada no enviada",
     "add": "Afegeix fonts",
     "choose": "Tria fitxers",
@@ -150,6 +170,8 @@ export const sourceMessages = {
     "accepted": "Rebut desat"
   },
   "es-ES": {
+    "unavailableOperation": "No disponible",
+    "version": "Versión {{number}}",
     "discardUnsent": "Descartar contenido no enviado",
     "add": "Añadir fuentes",
     "choose": "Elegir archivos",
@@ -165,6 +187,8 @@ export const sourceMessages = {
     "accepted": "Recibo guardado"
   },
   "de-DE": {
+    "unavailableOperation": "Nicht verfügbar",
+    "version": "Version {{number}}",
     "discardUnsent": "Nicht gesendete Eingabe verwerfen",
     "add": "Quellen hinzufügen",
     "choose": "Dateien auswählen",
@@ -180,6 +204,8 @@ export const sourceMessages = {
     "accepted": "Gespeicherte Bestätigung"
   },
   "pl-PL": {
+    "unavailableOperation": "Niedostępne",
+    "version": "Wersja {{number}}",
     "discardUnsent": "Odrzuć niewysłane dane",
     "add": "Dodaj źródła",
     "choose": "Wybierz pliki",
@@ -195,6 +221,8 @@ export const sourceMessages = {
     "accepted": "Zapisane potwierdzenie"
   },
   "tr-TR": {
+    "unavailableOperation": "Kullanılamıyor",
+    "version": "Sürüm {{number}}",
     "discardUnsent": "Gönderilmemiş girdiyi sil",
     "add": "Kaynak ekle",
     "choose": "Dosya seç",

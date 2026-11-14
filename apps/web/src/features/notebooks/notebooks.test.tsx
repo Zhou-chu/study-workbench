@@ -120,7 +120,7 @@ it.each(['/notebooks/notebook%3Aalpha', '/notebooks/notebook%3Aalpha/study'])('l
     expect(screen.getByText('Derived note')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Classic without versions' })).toHaveAttribute('href', '/sources/source%3Aclassic');
     expect(screen.getByText('Synthetic older archive')).toBeInTheDocument();
-    expect(screen.getByText('future-engine')).toBeInTheDocument();
+    expect(screen.queryByText('future-engine')).not.toBeInTheDocument();
     expect(screen.getByText('Unsupported engine')).toBeInTheDocument();
     expect(requests.some(r => r.method !== 'GET')).toBe(false);
     expect(requests.some(r => r.path === '/notebooks/notebook%3Aalpha')).toBe(true);
@@ -188,9 +188,10 @@ it('does not let a late create redirect away from newer navigation', async () =>
 });
 it('displays unsupported source-origin values without replacing them with a fabricated authorized scope', async () => {
     mount('/notebooks/notebook%3Aalpha', r => r.path.endsWith('/workspace-view') ? json({ ...notebookWorkspace(), selection: { engine: 'independent', selection_origin: 'future-origin', source_version_ids: ['version:missing'], remote_source_ids: [] } }) : undefined);
-    await screen.findByText('future-origin');
+    await screen.findByText('Unsupported source origin');
     expect(screen.getByText('Unsupported source origin')).toBeVisible();
-    expect(screen.getByText('version:missing')).toBeVisible();
+    expect(screen.queryByText('version:missing')).not.toBeInTheDocument();
+    expect(screen.getByText('1 selected')).toBeVisible();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
 });
 it('retains a creation form but freezes its original epoch after privacy retirement', async () => {
@@ -539,4 +540,20 @@ it('does not let creation success hijack a newer navigation awaiting retention c
     await act(async () => finish(json({ ...notebookRows[0], id: 'notebook:late-success' })));
     expect(router.state.location.pathname).toBe('/notebooks');
     expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
+});
+
+it('offers local updated/name sorting without mutating source data or issuing writes', async () => {
+    const rows = [
+        { ...notebookRows[0], name: 'Zulu research', updated: '2026-11-09' },
+        { ...notebookRows[1], name: 'Alpha reading', updated: '2026-11-07' }
+    ];
+    const { requests } = mount('/notebooks', r => r.path.startsWith('/notebooks?') ? json(rows) : undefined);
+    await screen.findByRole('link', { name: 'Zulu research' });
+    const collection = document.querySelector('.notebook-collection')!;
+    expect(within(collection as HTMLElement).getAllByRole('heading').map(h => h.textContent)).toEqual(['Zulu research', 'Alpha reading']);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Sort notebooks' }), { target: { value: 'name' } });
+    expect(within(collection as HTMLElement).getAllByRole('heading').map(h => h.textContent)).toEqual(['Alpha reading', 'Zulu research']);
+    expect(rows.map(row => row.name)).toEqual(['Zulu research', 'Alpha reading']);
+    expect(requests.every(r => r.method === 'GET')).toBe(true);
+    expect(screen.getByRole('button', { name: 'New Notebook' })).toBeVisible();
 });

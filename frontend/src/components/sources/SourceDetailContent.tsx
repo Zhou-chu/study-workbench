@@ -109,6 +109,18 @@ function SourceDetailContentInner({
   const [loadingInsights, setLoadingInsights] = useState(false)
   const [creatingInsight, setCreatingInsight] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [isCopying, setIsCopying] = useState(false)
+  const copyingRef = useRef(false)
+  const copyMountedRef = useRef(false)
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    copyMountedRef.current = true
+    return () => {
+      copyMountedRef.current = false
+      if (copiedTimerRef.current !== null) clearTimeout(copiedTimerRef.current)
+    }
+  }, [])
   const [isEmbedding, setIsEmbedding] = useState(false)
   const [isDownloadingFile, setIsDownloadingFile] = useState(false)
   const [fileAvailable, setFileAvailable] = useState<boolean | null>(null)
@@ -380,12 +392,23 @@ function SourceDetailContentInner({
 
   const externalHref = useMemo(() => safeExternalHref(source?.asset?.url), [source?.asset?.url])
 
-  const handleCopyUrl = useCallback(() => {
-    if (source?.asset?.url) {
-      navigator.clipboard.writeText(source.asset.url)
+  const handleCopyUrl = useCallback(async () => {
+    if (!source?.asset?.url || copyingRef.current) return
+    copyingRef.current = true
+    setIsCopying(true)
+    setCopied(false)
+    if (copiedTimerRef.current !== null) clearTimeout(copiedTimerRef.current)
+    try {
+      await navigator.clipboard.writeText(source.asset.url)
+      if (!copyMountedRef.current) return
       setCopied(true)
       toast.success(t('sources.urlCopied'))
-      setTimeout(() => setCopied(false), 2000)
+      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000)
+    } catch {
+      if (copyMountedRef.current) toast.error(t('common.error'))
+    } finally {
+      copyingRef.current = false
+      if (copyMountedRef.current) setIsCopying(false)
     }
   }, [source, t])
 
@@ -732,7 +755,9 @@ function SourceDetailContentInner({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={handleCopyUrl}
+                          aria-label={t('common.copyToClipboard')}
+                          disabled={isCopying}
+                          onClick={() => { void handleCopyUrl() }}
                         >
                           {copied ? (
                             <CheckCircle className="h-4 w-4" />

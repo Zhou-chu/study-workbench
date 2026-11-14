@@ -1,5 +1,5 @@
 import {useQuery} from '@tanstack/react-query';
-import {Link} from 'react-router';
+import {SetupLink} from './SetupLink';
 import {useMemo} from 'react';
 import {readTurnContext,sessionCoordinator} from '@study/web-transport';
 import {useAppData} from '../../app/providers';
@@ -15,5 +15,5 @@ export function SetupWarning(){const {t}=useI18n(),read=useSetupMetadata();
  const data=read.data;if(!data)return null;
  const count=Object.keys(data.environment).filter(k=>data.environment[k]&&data.source[k]==='environment').length;
  if(data.encryption_configured&&!count)return null;
- return <aside className="setup-warning" role="status"><h2>{data.encryption_configured?t.setupBanner.migrationAvailable:t.setupBanner.encryptionRequired}</h2><p>{data.encryption_configured?t.setupBanner.migrationDescription.replace('{{count}}',String(count)):t.setupBanner.encryptionRequiredDescription}</p><Link className="button" to="/settings/models">{t.setupBanner.goToSettings}</Link>{!data.encryption_configured&&<a className="button" href="https://github.com/lfnovo/open-notebook/blob/main/docs/3-USER-GUIDE/api-configuration.md#encryption-setup" target="_blank" rel="noopener noreferrer">{t.setupBanner.viewDocs}</a>}</aside>;
+ return <aside className="setup-warning" role="status"><h2>{data.encryption_configured?t.setupBanner.migrationAvailable:t.setupBanner.encryptionRequired}</h2><p>{data.encryption_configured?t.setupBanner.migrationDescription.replace('{{count}}',String(count)):t.setupBanner.encryptionRequiredDescription}</p><SetupLink className="button" to="/settings/models">{t.setupBanner.goToSettings}</SetupLink>{!data.encryption_configured&&<a className="button" href="https://github.com/lfnovo/open-notebook/blob/main/docs/3-USER-GUIDE/api-configuration.md#encryption-setup" target="_blank" rel="noopener noreferrer">{t.setupBanner.viewDocs}</a>}</aside>;
 }

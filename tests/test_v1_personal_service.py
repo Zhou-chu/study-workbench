@@ -363,3 +363,30 @@ async def test_bridge_unknown_submission_remains_unknown(monkeypatch):
     result = await service.run_turn(job["job_id"])
     assert result["state"] == "submission_unknown"
     assert result["submission_state"] == "unknown"
+
+
+@pytest.mark.asyncio
+async def test_unknown_stored_engine_never_dispatches_notebooklm(monkeypatch):
+    from api.notebooklm_service import NotebookLMService
+    from api.personal_service import PersonalService
+
+    store = MemoryStore()
+    ask = AsyncMock(return_value={"answer": "must not be requested"})
+    monkeypatch.setattr(NotebookLMService, "ask", ask)
+    await store.put(
+        "job",
+        "job_unknown",
+        {
+            "job_id": "job_unknown",
+            "notebook_id": "nb",
+            "chat_session_id": "session",
+            "turn_id": "turn_unknown",
+            "state": "queued",
+            "request_snapshot": {"engine": "unknown", "message": "fixture"},
+        },
+    )
+    result = await PersonalService(store).run_turn("job_unknown")
+    ask.assert_not_awaited()
+    assert result["state"] == "failed"
+    assert "INVALID_ENGINE" in result["error"]["message"]
+    assert await store.list("turn") == []

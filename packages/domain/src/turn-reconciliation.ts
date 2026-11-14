@@ -46,7 +46,9 @@ function succeeded(value: Row): boolean {
 }
 function validScope(value: unknown, capture: TurnCapture): boolean {
   if (!record(value) || value.engine !== capture.dto.engine || value.selection_origin !== capture.dto.selection_origin || !ids(value.source_version_ids) || !ids(value.remote_source_ids)) return false
-  if (capture.dto.engine === 'notebooklm' ? value.remote_notebook_id !== capture.dto.remote_notebook_id : value.remote_notebook_id !== null) return false
+  if (capture.dto.engine === 'notebooklm') {
+    if (value.remote_notebook_id !== capture.dto.remote_notebook_id) return false
+  } else if (value.selection_origin !== 'local' || (has(value, 'remote_notebook_id') && value.remote_notebook_id !== null)) return false
   return !has(value, 'scope_hash') || text(value.scope_hash)
 }
 function validCitations(value: unknown): boolean {

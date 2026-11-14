@@ -159,3 +159,5 @@ it('lets a newer context scroll retire an older explicit page request still wait
     expect(h.onPositionChange).toHaveBeenCalledTimes(2);
     expect(h.onPositionChange).toHaveBeenLastCalledWith({ source_version_id: 'v-old', page_index: 3 });
 });
+
+it('does not print internal version and extraction identifiers in reader details',async()=>{setup();await screen.findByRole('searchbox');expect(screen.queryByText('v-old')).not.toBeInTheDocument();expect(document.querySelector('.reader-identity')).toBeNull();});

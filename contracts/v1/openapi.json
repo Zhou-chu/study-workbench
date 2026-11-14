@@ -4574,6 +4574,20 @@
             ],
             "title": "Status"
           },
+          "success": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Success"
+          },
           "unverified_count": {
             "anyOf": [
               {
@@ -4601,6 +4615,23 @@
               }
             ],
             "title": "Verified Count"
+          },
+          "warnings": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "$ref": "#/components/schemas/NonActionableValue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warnings"
           }
         },
         "title": "MaintenanceResultView",

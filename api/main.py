@@ -250,7 +250,11 @@ async def lifespan(app: FastAPI):
         try:
             await dispatcher
         except asyncio.CancelledError:
-            pass
+            # Expected dispatcher cancellation is not cancellation of its owner.
+            # Preserve an external shutdown cancellation while awaiting cleanup.
+            owner = asyncio.current_task()
+            if owner is not None and owner.cancelling():
+                raise
 
     # Shutdown: cleanup if needed
     logger.info("API shutdown complete")
