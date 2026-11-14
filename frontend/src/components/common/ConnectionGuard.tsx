@@ -1,8 +1,12 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
+import { useRecoveryBannerHost } from '@/lib/hooks/use-recovery-banner-host'
 import { ConnectionError } from '@/lib/types/config'
 import { ConnectionErrorOverlay } from '@/components/errors/ConnectionErrorOverlay'
+import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/lib/hooks/use-translation'
 import { getConfig, resetConfig } from '@/lib/config'
 
 interface ConnectionGuardProps {
@@ -10,8 +14,11 @@ interface ConnectionGuardProps {
 }
 
 export function ConnectionGuard({ children }: ConnectionGuardProps) {
+  const { t } = useTranslation()
   const [error, setError] = useState<ConnectionError | null>(null)
   const [isChecking, setIsChecking] = useState(true)
+  const [hasConnected, setHasConnected] = useState(false)
+  const bannerHost = useRecoveryBannerHost(hasConnected && !!error, true)
   // Use a ref to track checking status to avoid dependency cycles
   const isCheckingRef = useRef(false)
 
@@ -47,7 +54,8 @@ export function ConnectionGuard({ children }: ConnectionGuardProps) {
         return
       }
 
-      // If we got here, connection is good
+      // Once connected, keep the mounted work even across later checks.
+      setHasConnected(true)
       setError(null)
       isCheckingRef.current = false
       setIsChecking(false)
@@ -77,13 +85,18 @@ export function ConnectionGuard({ children }: ConnectionGuardProps) {
 
   // Check connection on mount
   useEffect(() => {
-    checkConnection()
+    void checkConnection()
+    const recheck = () => { void checkConnection() }
+    window.addEventListener('online', recheck)
+    return () => window.removeEventListener('online', recheck)
   }, [checkConnection])
 
   // Add keyboard shortcut for retry (R key)
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (error && (e.key === 'r' || e.key === 'R')) {
+      const target = e.target as HTMLElement | null
+      if (target?.matches('input, textarea, [contenteditable=true]')) return
+      if (error && !e.ctrlKey && !e.metaKey && (e.key === 'r' || e.key === 'R')) {
         e.preventDefault()
         checkConnection()
       }
@@ -93,16 +106,11 @@ export function ConnectionGuard({ children }: ConnectionGuardProps) {
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [error, checkConnection])
 
-  // Show overlay if there's an error
-  if (error) {
-    return <ConnectionErrorOverlay error={error} onRetry={checkConnection} />
-  }
-
-  // Show nothing while checking (prevents flash of content)
-  if (isChecking) {
-    return null
-  }
-
-  // Render children if connection is good
-  return <>{children}</>
+  return <>
+    {(hasConnected || (!error && !isChecking)) && <div>{children}</div>}
+    {error && (hasConnected ? bannerHost && createPortal(<section role="alert" className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-2xl rounded-lg border bg-card p-4 shadow-overlay space-y-2">
+      <h2 className="font-semibold">{t('auth.connectionPausedTitle')}</h2><p className="text-sm">{t('auth.draftsPreserved')}</p>
+      <Button disabled={isChecking} onClick={() => void checkConnection()}>{t('auth.checkConnection')}</Button>
+    </section>, bannerHost) : <ConnectionErrorOverlay error={error} onRetry={checkConnection} />)}
+  </>
 }

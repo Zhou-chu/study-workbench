@@ -456,3 +456,41 @@ def test_migrate_endpoint_missing_key_is_bad_request(client):
         response = client.post("/api/credentials/migrate-encryption")
 
     assert response.status_code == 400
+
+
+# Synthetic vectors captured from unmodified 92f7a3a, never user credentials.
+# Literal expectations ensure salt/cost/derivation drift cannot regenerate them.
+def test_pbkdf2_production_golden_key(enc_key):
+    assert (
+        enc.derive_fernet_key(enc_key) == "g2hpCyTpsD3HUcpWVgCu4nOCdMhLqfkgF5jwdu_dIPQ="
+    )
+
+
+@pytest.mark.parametrize(
+    "stored",
+    [
+        "pbkdf2v1:gAAAAABlU_EAwieFwsAB5PDMdwB1f4qZdUINoBmB2Yig1stSun2hviyLlQU9BZUq4veHg6goIcsCgmGIJYuPeSMjx78feOmtDvin5Jx1t8_wl-UZq4IICU-edh8FfC9jrnUuQKSp5wdk",
+        "gAAAAABlU_EAcrZ64bQ5pBPJpJKYvJqrGI-U8ojqYd5P58enUFNhLWznB8n1g0Ht7_VVhAfdQD5UwOKgwALPOMEBe2VuME-EaOE1SIbPeE6xJUhk7UpisYwz26PWB-XmINqSv05nnURR",
+    ],
+)
+def test_pre_analyzer_fix_ciphertext_remains_readable(enc_key, stored):
+    assert decrypt_value(stored) == "golden credential / compatibility"
+
+
+def test_salt_declaration_remains_analyzable():
+    """Sonar Python 5.32 S2053 requires an ordinary assignment location."""
+    import ast
+    from pathlib import Path
+
+    tree = ast.parse(Path(enc.__file__).read_text(), type_comments=True)
+    assignments = [
+        node
+        for node in tree.body
+        if isinstance(node, ast.Assign)
+        and any(
+            isinstance(target, ast.Name) and target.id == "PBKDF2_SALT"
+            for target in node.targets
+        )
+    ]
+    assert len(assignments) == 1
+    assert ast.literal_eval(assignments[0].value) == b"open-notebook-credential-v1"

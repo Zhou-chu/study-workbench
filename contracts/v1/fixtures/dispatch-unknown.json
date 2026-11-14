@@ -1,0 +1,35 @@
+{
+  "request": {
+    "engine": "independent",
+    "idempotency_key": "synthetic-turn-1",
+    "message": "Summarize the synthetic example.",
+    "model_id": null,
+    "notebook_id": "notebook:synthetic",
+    "remote_notebook_id": null,
+    "remote_source_ids": [],
+    "selection_origin": "local",
+    "source_version_ids": [],
+    "task": "question"
+  },
+  "status": 400,
+  "body": {
+    "detail": "WORKER_UNAVAILABLE",
+    "dispatch_receipt": {
+      "dispatch_ack": "unknown",
+      "job_id": "job_560b3e7ae92ec7eb7dbf3a18438d4a02d38bcaa6cf72a17b8c213fc1ff8d6400",
+      "turn_id": "turn_afc55daaffd20fe0cef41ea854df2f27988a32602691f77761b5358ae0b0010b",
+      "retry_safe": false
+    }
+  },
+  "same_key_response": {
+    "job_id": "job_560b3e7ae92ec7eb7dbf3a18438d4a02d38bcaa6cf72a17b8c213fc1ff8d6400",
+    "turn_id": "turn_afc55daaffd20fe0cef41ea854df2f27988a32602691f77761b5358ae0b0010b",
+    "state": "failed",
+    "dispatch_receipt": {
+      "dispatch_ack": "unknown",
+      "job_id": "job_560b3e7ae92ec7eb7dbf3a18438d4a02d38bcaa6cf72a17b8c213fc1ff8d6400",
+      "turn_id": "turn_afc55daaffd20fe0cef41ea854df2f27988a32602691f77761b5358ae0b0010b",
+      "retry_safe": false
+    }
+  }
+}

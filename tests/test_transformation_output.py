@@ -21,7 +21,8 @@ def transformation_call():
     chain = AsyncMock()
     with (
         patch(
-            "open_notebook.graphs.transformation.DefaultPrompts",
+            "open_notebook.graphs.transformation.DefaultPrompts.get_instance",
+            new_callable=AsyncMock,
             return_value=SimpleNamespace(transformation_instructions=None),
         ),
         patch(
@@ -165,6 +166,11 @@ async def test_commands_log_incomplete_generation_as_permanent(during_import):
         graph_path = "commands.source_commands.transform_graph.ainvoke"
 
     with (
+        patch(
+            "commands.source_commands.start_worker",
+            new=AsyncMock(return_value={"processing_attempt": {"token": "owned"}}),
+        ),
+        patch("commands.source_commands.finish_worker", new=AsyncMock()),
         patch(
             "commands.source_commands.Source.get", new=AsyncMock(return_value=source)
         ),

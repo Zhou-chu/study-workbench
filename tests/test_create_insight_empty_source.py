@@ -44,7 +44,7 @@ def test_source_with_text_is_queued(client):
         patch("api.routers.sources.Transformation.get", new=AsyncMock()),
         patch(
             "api.routers.sources.submit_command",
-            new=MagicMock(return_value="command:1"),
+            new=AsyncMock(return_value="command:1"),
         ) as mock_submit,
     ):
         response = client.post(

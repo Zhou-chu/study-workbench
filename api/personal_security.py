@@ -10,6 +10,10 @@ from open_notebook.utils.encryption import get_secret_from_env
 
 class PersonalSecurityMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
+        # Device mode owns credential observation and Origin policy, including
+        # outage epoch invalidation. Never consult the legacy fallback loader.
+        if os.environ.get("STUDY_WORKBENCH_AUTH_MODE") not in (None, "legacy_password"):
+            return await call_next(request)
         private_mode = os.environ.get("STUDY_WORKBENCH_PRIVATE_MODE") != "0"
         protected = request.url.path.startswith("/api/personal/") or (
             private_mode and request.url.path.startswith("/api/")

@@ -244,6 +244,14 @@ class TestNotebookDomain:
 
         with (
             patch.object(Notebook, "get_notes", new=fake_get_notes),
+            patch(
+                "open_notebook.database.note_repository.repo_query",
+                new=AsyncMock(return_value=[]),
+            ),
+            patch(
+                "open_notebook.database.note_repository.delete_notebook_notes_locked",
+                new=AsyncMock(return_value=0),
+            ),
             patch.object(Notebook, "get_chat_sessions", new=fake_get_chat_sessions),
             patch(
                 "open_notebook.domain.notebook.repo_query",
@@ -279,10 +287,11 @@ class TestSourceDomain:
         source2 = Source(title="Test", command=None)
         assert source2.command is None
 
-        # Test command is included in save data prep
+        # Existing-source saves must not overwrite separately claimed ownership
         source3 = Source(id="source:123", title="Test", command="command:456")
         save_data = source3._prepare_save_data()
-        assert "command" in save_data
+        assert "command" not in save_data
+        assert "command" in source._prepare_save_data()
 
     @pytest.mark.asyncio
     async def test_source_delete_cleans_up_file(self):
@@ -304,9 +313,15 @@ class TestSourceDomain:
             assert tmp_path.exists()
 
             # Mock the parent delete method to avoid database operations
-            with patch.object(
-                Source.__bases__[0], "delete", new_callable=AsyncMock
-            ) as mock_delete:
+            with (
+                patch.object(
+                    Source.__bases__[0], "delete", new_callable=AsyncMock
+                ) as mock_delete,
+                patch(
+                    "open_notebook.domain.notebook.repo_query",
+                    new=AsyncMock(return_value=[]),
+                ),
+            ):
                 mock_delete.return_value = True
 
                 # Delete the source
@@ -331,9 +346,15 @@ class TestSourceDomain:
         source = Source(id="source:test_no_file", title="Test Source", asset=None)
 
         # Mock the parent delete method
-        with patch.object(
-            Source.__bases__[0], "delete", new_callable=AsyncMock
-        ) as mock_delete:
+        with (
+            patch.object(
+                Source.__bases__[0], "delete", new_callable=AsyncMock
+            ) as mock_delete,
+            patch(
+                "open_notebook.domain.notebook.repo_query",
+                new=AsyncMock(return_value=[]),
+            ),
+        ):
             mock_delete.return_value = True
 
             # Delete should complete without error
@@ -352,9 +373,15 @@ class TestSourceDomain:
         )
 
         # Mock the parent delete method
-        with patch.object(
-            Source.__bases__[0], "delete", new_callable=AsyncMock
-        ) as mock_delete:
+        with (
+            patch.object(
+                Source.__bases__[0], "delete", new_callable=AsyncMock
+            ) as mock_delete,
+            patch(
+                "open_notebook.domain.notebook.repo_query",
+                new=AsyncMock(return_value=[]),
+            ),
+        ):
             mock_delete.return_value = True
 
             # Delete should complete even though file doesn't exist
@@ -518,7 +545,7 @@ class TestPodcastService:
         async def fake_get_for_sources(cls, source_ids):
             return {sid: [] for sid in source_ids}
 
-        def fake_submit_command(app_name, command_name, command_args):
+        async def fake_submit_command(app_name, command_name, command_args):
             submitted_args.update(command_args)
             return "command:podcast"
 

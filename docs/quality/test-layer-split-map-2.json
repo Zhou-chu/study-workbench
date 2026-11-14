@@ -1,0 +1,432 @@
+{
+  "base": "2c9f83a7c6b017b2be108a787dad6676a00d5bb2",
+  "method": "Exact original test-function AST including decorators verified against base before/after relocation and formatting; class methods retain class/node names. Shared non-test helpers imported by integration files; no test functions imported. Expanded after IDs from actual collect; before IDs reconstructed by exact unchanged-node relocation, not separate old-tree execution.",
+  "groups": [
+    {
+      "original": "tests/test_portable_zip.py",
+      "unit": "tests/test_portable_zip_unit.py",
+      "unit_test_nodes": [
+        "test_exact_limit_and_zip64_preserve_position",
+        "test_over_limit_rejected_before_zipinfo_construction",
+        "test_forged_low_eocd_count_still_rejects_actual_entries",
+        "test_malformed_directory_is_typed_error_and_preserves_position",
+        "test_variable_metadata_is_skipped_not_materialized",
+        "test_invalid_zip_rejected",
+        "test_forged_low_zip64_count_still_rejects_actual_entries",
+        "test_older_python_zip64_location_convention",
+        "test_zip64_extensible_data_matches_stdlib"
+      ],
+      "remaining_test_nodes": [
+        "test_path_input_and_archive_comment"
+      ],
+      "test_function_ast_equal": true,
+      "static_expanded_counts": {
+        "remaining": 1,
+        "unit": 16,
+        "total": 17
+      },
+      "case_map": [
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_path_input_and_archive_comment",
+          "after_nodeid": "tests/test_portable_zip.py::test_path_input_and_archive_comment"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_exact_limit_and_zip64_preserve_position[-False]",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_exact_limit_and_zip64_preserve_position[-False]"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_exact_limit_and_zip64_preserve_position[-True]",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_exact_limit_and_zip64_preserve_position[-True]"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_exact_limit_and_zip64_preserve_position[prepended bytes-False]",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_exact_limit_and_zip64_preserve_position[prepended bytes-False]"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_exact_limit_and_zip64_preserve_position[prepended bytes-True]",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_exact_limit_and_zip64_preserve_position[prepended bytes-True]"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_over_limit_rejected_before_zipinfo_construction[False]",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_over_limit_rejected_before_zipinfo_construction[False]"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_over_limit_rejected_before_zipinfo_construction[True]",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_over_limit_rejected_before_zipinfo_construction[True]"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_forged_low_eocd_count_still_rejects_actual_entries",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_forged_low_eocd_count_still_rejects_actual_entries"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_malformed_directory_is_typed_error_and_preserves_position[size]",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_malformed_directory_is_typed_error_and_preserves_position[size]"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_malformed_directory_is_typed_error_and_preserves_position[signature]",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_malformed_directory_is_typed_error_and_preserves_position[signature]"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_malformed_directory_is_typed_error_and_preserves_position[variable_length]",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_malformed_directory_is_typed_error_and_preserves_position[variable_length]"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_malformed_directory_is_typed_error_and_preserves_position[short_header]",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_malformed_directory_is_typed_error_and_preserves_position[short_header]"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_variable_metadata_is_skipped_not_materialized",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_variable_metadata_is_skipped_not_materialized"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_invalid_zip_rejected",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_invalid_zip_rejected"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_forged_low_zip64_count_still_rejects_actual_entries",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_forged_low_zip64_count_still_rejects_actual_entries"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_older_python_zip64_location_convention",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_older_python_zip64_location_convention"
+        },
+        {
+          "before_nodeid": "tests/test_portable_zip.py::test_zip64_extensible_data_matches_stdlib",
+          "after_nodeid": "tests/test_portable_zip_unit.py::test_zip64_extensible_data_matches_stdlib"
+        }
+      ]
+    },
+    {
+      "original": "tests/test_podcast_path.py",
+      "unit": "tests/test_podcast_path_unit.py",
+      "unit_test_nodes": [
+        "TestBuildEpisodeOutputDir::test_directory_name_is_valid_uuid",
+        "TestBuildEpisodeOutputDir::test_path_structure",
+        "TestBuildEpisodeOutputDir::test_defaults_to_podcasts_folder",
+        "TestBuildEpisodeOutputDir::test_no_collision_between_calls",
+        "TestBuildEpisodeOutputDir::test_path_is_independent_of_episode_name",
+        "TestBuildEpisodeOutputDir::test_path_works_on_posix",
+        "TestResolveModelConfigMaxTokens::test_includes_max_tokens_when_configured",
+        "TestResolveModelConfigMaxTokens::test_omits_max_tokens_when_not_configured",
+        "TestEpisodeProfileMaxTokens::test_accepts_max_tokens",
+        "TestEpisodeProfileMaxTokens::test_max_tokens_defaults_to_none"
+      ],
+      "remaining_test_nodes": [
+        "TestBuildEpisodeOutputDir::test_directory_can_be_created"
+      ],
+      "test_function_ast_equal": true,
+      "static_expanded_counts": {
+        "remaining": 1,
+        "unit": 10,
+        "total": 11
+      },
+      "case_map": [
+        {
+          "before_nodeid": "tests/test_podcast_path.py::TestBuildEpisodeOutputDir::test_directory_can_be_created",
+          "after_nodeid": "tests/test_podcast_path.py::TestBuildEpisodeOutputDir::test_directory_can_be_created"
+        },
+        {
+          "before_nodeid": "tests/test_podcast_path.py::TestBuildEpisodeOutputDir::test_directory_name_is_valid_uuid",
+          "after_nodeid": "tests/test_podcast_path_unit.py::TestBuildEpisodeOutputDir::test_directory_name_is_valid_uuid"
+        },
+        {
+          "before_nodeid": "tests/test_podcast_path.py::TestBuildEpisodeOutputDir::test_path_structure",
+          "after_nodeid": "tests/test_podcast_path_unit.py::TestBuildEpisodeOutputDir::test_path_structure"
+        },
+        {
+          "before_nodeid": "tests/test_podcast_path.py::TestBuildEpisodeOutputDir::test_defaults_to_podcasts_folder",
+          "after_nodeid": "tests/test_podcast_path_unit.py::TestBuildEpisodeOutputDir::test_defaults_to_podcasts_folder"
+        },
+        {
+          "before_nodeid": "tests/test_podcast_path.py::TestBuildEpisodeOutputDir::test_no_collision_between_calls",
+          "after_nodeid": "tests/test_podcast_path_unit.py::TestBuildEpisodeOutputDir::test_no_collision_between_calls"
+        },
+        {
+          "before_nodeid": "tests/test_podcast_path.py::TestBuildEpisodeOutputDir::test_path_is_independent_of_episode_name",
+          "after_nodeid": "tests/test_podcast_path_unit.py::TestBuildEpisodeOutputDir::test_path_is_independent_of_episode_name"
+        },
+        {
+          "before_nodeid": "tests/test_podcast_path.py::TestBuildEpisodeOutputDir::test_path_works_on_posix",
+          "after_nodeid": "tests/test_podcast_path_unit.py::TestBuildEpisodeOutputDir::test_path_works_on_posix"
+        },
+        {
+          "before_nodeid": "tests/test_podcast_path.py::TestResolveModelConfigMaxTokens::test_includes_max_tokens_when_configured",
+          "after_nodeid": "tests/test_podcast_path_unit.py::TestResolveModelConfigMaxTokens::test_includes_max_tokens_when_configured"
+        },
+        {
+          "before_nodeid": "tests/test_podcast_path.py::TestResolveModelConfigMaxTokens::test_omits_max_tokens_when_not_configured",
+          "after_nodeid": "tests/test_podcast_path_unit.py::TestResolveModelConfigMaxTokens::test_omits_max_tokens_when_not_configured"
+        },
+        {
+          "before_nodeid": "tests/test_podcast_path.py::TestEpisodeProfileMaxTokens::test_accepts_max_tokens",
+          "after_nodeid": "tests/test_podcast_path_unit.py::TestEpisodeProfileMaxTokens::test_accepts_max_tokens"
+        },
+        {
+          "before_nodeid": "tests/test_podcast_path.py::TestEpisodeProfileMaxTokens::test_max_tokens_defaults_to_none",
+          "after_nodeid": "tests/test_podcast_path_unit.py::TestEpisodeProfileMaxTokens::test_max_tokens_defaults_to_none"
+        }
+      ]
+    },
+    {
+      "original": "tests/test_error_message_sanitization.py",
+      "unit": "tests/test_error_message_sanitization_unit.py",
+      "unit_test_nodes": [
+        "TestPodcastServiceDoesNotLeakExceptionText::test_get_job_status_failure_returns_generic_message",
+        "TestPodcastServiceDoesNotLeakExceptionText::test_list_episodes_failure_returns_generic_message",
+        "TestPodcastServiceDoesNotLeakExceptionText::test_get_episode_failure_returns_generic_not_found",
+        "TestPodcastServiceDoesNotLeakExceptionText::test_submit_generation_job_failure_returns_generic_message",
+        "TestTruncateErrorHelper::test_none_passes_through",
+        "TestTruncateErrorHelper::test_empty_string_passes_through",
+        "TestTruncateErrorHelper::test_short_message_unchanged",
+        "TestTruncateErrorHelper::test_message_at_limit_unchanged",
+        "TestTruncateErrorHelper::test_long_message_truncated_with_ellipsis",
+        "TestTruncateErrorHelper::test_custom_limit"
+      ],
+      "remaining_test_nodes": [
+        "TestSourcesRouterDoesNotLeakExceptionText::test_list_sources_failure_returns_generic_message",
+        "TestSourcesRouterDoesNotLeakExceptionText::test_delete_source_failure_returns_generic_message",
+        "TestSourcesRouterDoesNotLeakExceptionText::test_get_source_insights_failure_returns_generic_message",
+        "TestSourcesRouterDoesNotLeakExceptionText::test_update_source_failure_returns_generic_message",
+        "TestInvalidInputErrorsStillReturnTheirOwnSafeMessage::test_update_source_invalid_input_still_returns_its_message"
+      ],
+      "test_function_ast_equal": true,
+      "static_expanded_counts": {
+        "remaining": 5,
+        "unit": 10,
+        "total": 15
+      },
+      "case_map": [
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestSourcesRouterDoesNotLeakExceptionText::test_list_sources_failure_returns_generic_message",
+          "after_nodeid": "tests/test_error_message_sanitization.py::TestSourcesRouterDoesNotLeakExceptionText::test_list_sources_failure_returns_generic_message"
+        },
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestSourcesRouterDoesNotLeakExceptionText::test_delete_source_failure_returns_generic_message",
+          "after_nodeid": "tests/test_error_message_sanitization.py::TestSourcesRouterDoesNotLeakExceptionText::test_delete_source_failure_returns_generic_message"
+        },
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestSourcesRouterDoesNotLeakExceptionText::test_get_source_insights_failure_returns_generic_message",
+          "after_nodeid": "tests/test_error_message_sanitization.py::TestSourcesRouterDoesNotLeakExceptionText::test_get_source_insights_failure_returns_generic_message"
+        },
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestSourcesRouterDoesNotLeakExceptionText::test_update_source_failure_returns_generic_message",
+          "after_nodeid": "tests/test_error_message_sanitization.py::TestSourcesRouterDoesNotLeakExceptionText::test_update_source_failure_returns_generic_message"
+        },
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestInvalidInputErrorsStillReturnTheirOwnSafeMessage::test_update_source_invalid_input_still_returns_its_message",
+          "after_nodeid": "tests/test_error_message_sanitization.py::TestInvalidInputErrorsStillReturnTheirOwnSafeMessage::test_update_source_invalid_input_still_returns_its_message"
+        },
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestPodcastServiceDoesNotLeakExceptionText::test_get_job_status_failure_returns_generic_message",
+          "after_nodeid": "tests/test_error_message_sanitization_unit.py::TestPodcastServiceDoesNotLeakExceptionText::test_get_job_status_failure_returns_generic_message"
+        },
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestPodcastServiceDoesNotLeakExceptionText::test_list_episodes_failure_returns_generic_message",
+          "after_nodeid": "tests/test_error_message_sanitization_unit.py::TestPodcastServiceDoesNotLeakExceptionText::test_list_episodes_failure_returns_generic_message"
+        },
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestPodcastServiceDoesNotLeakExceptionText::test_get_episode_failure_returns_generic_not_found",
+          "after_nodeid": "tests/test_error_message_sanitization_unit.py::TestPodcastServiceDoesNotLeakExceptionText::test_get_episode_failure_returns_generic_not_found"
+        },
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestPodcastServiceDoesNotLeakExceptionText::test_submit_generation_job_failure_returns_generic_message",
+          "after_nodeid": "tests/test_error_message_sanitization_unit.py::TestPodcastServiceDoesNotLeakExceptionText::test_submit_generation_job_failure_returns_generic_message"
+        },
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestTruncateErrorHelper::test_none_passes_through",
+          "after_nodeid": "tests/test_error_message_sanitization_unit.py::TestTruncateErrorHelper::test_none_passes_through"
+        },
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestTruncateErrorHelper::test_empty_string_passes_through",
+          "after_nodeid": "tests/test_error_message_sanitization_unit.py::TestTruncateErrorHelper::test_empty_string_passes_through"
+        },
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestTruncateErrorHelper::test_short_message_unchanged",
+          "after_nodeid": "tests/test_error_message_sanitization_unit.py::TestTruncateErrorHelper::test_short_message_unchanged"
+        },
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestTruncateErrorHelper::test_message_at_limit_unchanged",
+          "after_nodeid": "tests/test_error_message_sanitization_unit.py::TestTruncateErrorHelper::test_message_at_limit_unchanged"
+        },
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestTruncateErrorHelper::test_long_message_truncated_with_ellipsis",
+          "after_nodeid": "tests/test_error_message_sanitization_unit.py::TestTruncateErrorHelper::test_long_message_truncated_with_ellipsis"
+        },
+        {
+          "before_nodeid": "tests/test_error_message_sanitization.py::TestTruncateErrorHelper::test_custom_limit",
+          "after_nodeid": "tests/test_error_message_sanitization_unit.py::TestTruncateErrorHelper::test_custom_limit"
+        }
+      ]
+    },
+    {
+      "original": "tests/test_v1_source_snapshot_provenance.py",
+      "unit": "tests/test_v1_source_snapshot_provenance_unit.py",
+      "unit_test_nodes": [
+        "test_evidence_record_limit_is_opt_in_and_never_truncates"
+      ],
+      "remaining_test_nodes": [
+        "test_derived_provenance_survives_reparse_and_model_payload",
+        "test_web_snapshot_has_remote_text_semantics",
+        "test_deterministic_web_ingest_keeps_bytes_on_unknown_commit_and_reconciles",
+        "test_web_snapshot_reparse_repairs_local_extraction_but_never_revalidates_html",
+        "test_snapshot_publication_fsyncs_directory_and_fails_closed_on_unsupported_fs",
+        "test_snapshot_durability_boundary_only_syncs_data_root_and_created_parents"
+      ],
+      "test_function_ast_equal": true,
+      "static_expanded_counts": {
+        "remaining": 7,
+        "unit": 1,
+        "total": 8
+      },
+      "case_map": [
+        {
+          "before_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_derived_provenance_survives_reparse_and_model_payload",
+          "after_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_derived_provenance_survives_reparse_and_model_payload"
+        },
+        {
+          "before_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_web_snapshot_has_remote_text_semantics",
+          "after_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_web_snapshot_has_remote_text_semantics"
+        },
+        {
+          "before_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_deterministic_web_ingest_keeps_bytes_on_unknown_commit_and_reconciles",
+          "after_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_deterministic_web_ingest_keeps_bytes_on_unknown_commit_and_reconciles"
+        },
+        {
+          "before_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_web_snapshot_reparse_repairs_local_extraction_but_never_revalidates_html",
+          "after_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_web_snapshot_reparse_repairs_local_extraction_but_never_revalidates_html"
+        },
+        {
+          "before_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_snapshot_publication_fsyncs_directory_and_fails_closed_on_unsupported_fs",
+          "after_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_snapshot_publication_fsyncs_directory_and_fails_closed_on_unsupported_fs"
+        },
+        {
+          "before_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_snapshot_durability_boundary_only_syncs_data_root_and_created_parents[True]",
+          "after_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_snapshot_durability_boundary_only_syncs_data_root_and_created_parents[True]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_snapshot_durability_boundary_only_syncs_data_root_and_created_parents[False]",
+          "after_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_snapshot_durability_boundary_only_syncs_data_root_and_created_parents[False]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_source_snapshot_provenance.py::test_evidence_record_limit_is_opt_in_and_never_truncates",
+          "after_nodeid": "tests/test_v1_source_snapshot_provenance_unit.py::test_evidence_record_limit_is_opt_in_and_never_truncates"
+        }
+      ]
+    },
+    {
+      "original": "tests/test_v1_model_acceptance_contract.py",
+      "unit": "tests/test_v1_model_acceptance_contract_unit.py",
+      "unit_test_nodes": [
+        "test_public_suite_exact_distribution_and_evidence",
+        "test_default_and_live_mode_never_call",
+        "test_invalid_budget_fails_closed",
+        "test_budget_reserves_before_each_turn_and_stops",
+        "test_failure_is_single_attempt_and_error_is_not_echoed",
+        "test_complete_simulation_never_claims_semantic_or_live_success",
+        "test_missing_scope_mapping_rejected_before_any_call",
+        "test_malformed_or_failed_turn_stops_without_false_structural_success",
+        "test_call_limit_stops_even_when_money_reservation_remains",
+        "test_forged_citation_and_wrong_scope_fail_structure_not_semantic_review"
+      ],
+      "remaining_test_nodes": [
+        "test_real_grounded_service_public_fixtures_and_scope_switch"
+      ],
+      "test_function_ast_equal": true,
+      "static_expanded_counts": {
+        "remaining": 1,
+        "unit": 17,
+        "total": 18
+      },
+      "case_map": [
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_real_grounded_service_public_fixtures_and_scope_switch",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract.py::test_real_grounded_service_public_fixtures_and_scope_switch"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_public_suite_exact_distribution_and_evidence",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_public_suite_exact_distribution_and_evidence"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_default_and_live_mode_never_call",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_default_and_live_mode_never_call"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_invalid_budget_fails_closed[max_calls-0]",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_invalid_budget_fails_closed[max_calls-0]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_invalid_budget_fails_closed[budget_microusd-0]",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_invalid_budget_fails_closed[budget_microusd-0]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_invalid_budget_fails_closed[per_call_microusd-0]",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_invalid_budget_fails_closed[per_call_microusd-0]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_invalid_budget_fails_closed[max_calls-True]",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_invalid_budget_fails_closed[max_calls-True]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_invalid_budget_fails_closed[budget_microusd-nan]",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_invalid_budget_fails_closed[budget_microusd-nan]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_budget_reserves_before_each_turn_and_stops",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_budget_reserves_before_each_turn_and_stops"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_failure_is_single_attempt_and_error_is_not_echoed",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_failure_is_single_attempt_and_error_is_not_echoed"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_complete_simulation_never_claims_semantic_or_live_success",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_complete_simulation_never_claims_semantic_or_live_success"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_missing_scope_mapping_rejected_before_any_call",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_missing_scope_mapping_rejected_before_any_call"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_malformed_or_failed_turn_stops_without_false_structural_success[None]",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_malformed_or_failed_turn_stops_without_false_structural_success[None]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_malformed_or_failed_turn_stops_without_false_structural_success[turn1]",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_malformed_or_failed_turn_stops_without_false_structural_success[turn1]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_malformed_or_failed_turn_stops_without_false_structural_success[turn2]",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_malformed_or_failed_turn_stops_without_false_structural_success[turn2]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_malformed_or_failed_turn_stops_without_false_structural_success[turn3]",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_malformed_or_failed_turn_stops_without_false_structural_success[turn3]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_call_limit_stops_even_when_money_reservation_remains",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_call_limit_stops_even_when_money_reservation_remains"
+        },
+        {
+          "before_nodeid": "tests/test_v1_model_acceptance_contract.py::test_forged_citation_and_wrong_scope_fail_structure_not_semantic_review",
+          "after_nodeid": "tests/test_v1_model_acceptance_contract_unit.py::test_forged_citation_and_wrong_scope_fail_structure_not_semantic_review"
+        }
+      ]
+    }
+  ],
+  "static_expanded_totals": {
+    "remaining": 15,
+    "unit": 54,
+    "total": 69
+  },
+  "verification": {
+    "collect_exit": 0,
+    "test_exit": 0,
+    "passed": 69,
+    "warnings": 2,
+    "seconds": 5.52,
+    "unit_cases": 54,
+    "remaining_cases": 15,
+    "evidence_directory": "/home/USER/notebook-quality-20261113/python/unit-split-second-five",
+    "coverage": "Not measured; no global unit coverage claim."
+  }
+}

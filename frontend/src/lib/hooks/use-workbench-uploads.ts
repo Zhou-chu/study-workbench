@@ -2,11 +2,12 @@
 import { useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { workbenchApi } from '@/lib/api/workbench'
+import { uploadRetryProblem, type UploadRetryProblem } from '@/lib/utils/upload-outcome'
 import { requestError } from '@/lib/utils/workbench'
 
-type UploadState = 'uploading' | 'uploadAccepted' | 'uploadFailed' | 'uploadUncertain'
-interface UploadItem { id: string; name: string; state: UploadState; error?: string | null }
-interface PendingUpload { notebookId: string; file: File; sourceId?: string; inFlight: boolean }
+type UploadState = 'uploading' | 'uploadAccepted' | 'uploadFailed' | 'uploadUncertain' | 'uploadBlocked'
+interface UploadItem { id: string; name: string; state: UploadState; error?: string | null; problem?: UploadRetryProblem }
+interface PendingUpload { notebookId: string; file: File; sourceId?: string; inFlight: boolean; retryBlocked?: boolean }
 
 // Files and recovery keys live only in this mounted workbench, never browser storage.
 export function useWorkbenchUploads(notebookId: string, onAccepted: () => unknown) {
@@ -20,7 +21,7 @@ export function useWorkbenchUploads(notebookId: string, onAccepted: () => unknow
 
   const retryUpload = async (id: string) => {
     const entry = pending.current.get(id)
-    if (!entry || entry.inFlight) return
+    if (!entry || entry.inFlight || entry.retryBlocked) return
     entry.inFlight = true
     setUploads(items => items.map(item => item.id === id ? { ...item, state: 'uploading', error: null } : item))
     try {
@@ -32,6 +33,14 @@ export function useWorkbenchUploads(notebookId: string, onAccepted: () => unknow
     } catch (error) {
       if (pending.current.get(id) !== entry) return
       entry.inFlight = false
+      const problem = uploadRetryProblem(error)
+      // The backend may have committed metadata before losing its acknowledgement.
+      // This fence is independent of HTTP status, and cannot be cleared by a read.
+      if (problem) {
+        entry.retryBlocked = true
+        setUploads(items => items.map(item => item.id === id ? { ...item, state: 'uploadBlocked', error: null, problem } : item))
+        return
+      }
       const status = axios.isAxiosError(error) ? error.response?.status : undefined
       // A missing response or server error cannot prove the upload wasn't saved.
       const rejected = status !== undefined && status >= 400 && status < 500 && status !== 408
@@ -42,7 +51,7 @@ export function useWorkbenchUploads(notebookId: string, onAccepted: () => unknow
     if (!files) return
     const ids: string[] = []
     for (const file of Array.from(files)) {
-      // Re-selecting a pending file must not create a second submission. Use its row to retry.
+      // Re-selection must not create a second submission, including after an unsafe outcome.
       if ([...pending.current.values()].some(entry => entry.sourceId === sourceId && entry.file.name === file.name && entry.file.size === file.size && entry.file.lastModified === file.lastModified && entry.file.type === file.type)) continue
       const id = crypto.randomUUID()
       pending.current.set(id, { notebookId, file, sourceId, inFlight: false })
@@ -52,7 +61,9 @@ export function useWorkbenchUploads(notebookId: string, onAccepted: () => unknow
     await Promise.all(ids.map(retryUpload))
   }
   const dismissUpload = (id: string) => {
-    if (pending.current.get(id)?.inFlight) return
+    const entry = pending.current.get(id)
+    // Forgetting this row would let re-selection bypass the unresolved-operation fence.
+    if (entry?.inFlight || entry?.retryBlocked) return
     pending.current.delete(id)
     setUploads(items => items.filter(item => item.id !== id))
   }

@@ -1,5 +1,6 @@
 """Launcher isolation uses synthetic environments, never live configuration."""
 
+import os
 from io import StringIO
 
 import pytest
@@ -153,8 +154,13 @@ def test_cleanup_signals_owned_groups_even_after_parent_exit(monkeypatch):
     monkeypatch.setattr(
         "scripts.v1.run_native.os.killpg", lambda pid, sig: calls.append((pid, sig))
     )
-    proc = Mock(pid=12345, poll=lambda: 0)
-    stop_processes([proc])
+    from scripts.v1 import runtime_lifecycle
+
+    monkeypatch.setattr(
+        runtime_lifecycle, "process_identity", lambda pid: (pid, pid, 1)
+    )
+    proc = runtime_lifecycle.OwnedProcess(Mock(pid=12345))
+    stop_processes([proc], grace=0)
     assert (12345, signal.SIGTERM) in calls
     assert (12345, signal.SIGKILL) in calls
 
@@ -192,10 +198,12 @@ def test_http_probe_rejects_errors_and_disables_proxy(monkeypatch):
     assert http_ready("http://127.0.0.1:5055/health")
 
 
+@pytest.mark.skipif(
+    os.environ.get("STUDY_WORKBENCH_DISPOSABLE_LIFECYCLE") != "1",
+    reason="Set STUDY_WORKBENCH_DISPOSABLE_LIFECYCLE=1 for owned disposable OS tests",
+)
 def test_cleanup_kills_real_owned_descendant_after_leader_exits(tmp_path):
-    import os
-    import signal
-    import subprocess
+    """Opt in with STUDY_WORKBENCH_DISPOSABLE_LIFECYCLE=1; owned dummy processes only."""
     import sys
     import time
     from pathlib import Path
@@ -209,11 +217,16 @@ def test_cleanup_kills_real_owned_descendant_after_leader_exits(tmp_path):
         f'p=subprocess.Popen([sys.executable,"-c",{child!r}]); '
         f"Path({str(pidfile)!r}).write_text(str(p.pid))"
     )
-    parent = subprocess.Popen([sys.executable, "-c", code], start_new_session=True)
+    from scripts.v1.runtime_lifecycle import start_owned
+
+    parent = start_owned([sys.executable, "-c", code])
     try:
-        parent.wait(timeout=5)
+        deadline = time.monotonic() + 5
+        while parent.poll() is None and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert parent.poll() == 0
         pid = int(pidfile.read_text())
-        stop_processes([parent])
+        stop_processes([parent], grace=0.01)
         deadline = time.monotonic() + 5
         while time.monotonic() < deadline:
             status = Path(f"/proc/{pid}/stat")
@@ -224,7 +237,8 @@ def test_cleanup_kills_real_owned_descendant_after_leader_exits(tmp_path):
             pytest.fail("Owned descendant survived group cleanup")
     finally:
         try:
-            os.killpg(parent.pid, signal.SIGKILL)
+            if not parent.closed:
+                stop_processes([parent], grace=0)
         except ProcessLookupError:
             pass
 

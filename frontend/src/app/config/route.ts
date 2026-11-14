@@ -1,4 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getWebSessionConfig, isAllowedWebRead } from '@/lib/api/session-proxy-policy'
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
+const PUBLIC_CONFIG_HEADERS = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }
+
+export async function GET(request: NextRequest) {
+  try {
+    const config = getWebSessionConfig()
+    if (config.mode === 'device_sessions' && !isAllowedWebRead(request.headers, config.publicOrigin)) {
+      return NextResponse.json({ error: { code: 'CROSS_SITE_REQUEST', message: 'Cross-site request rejected.' } },
+        { status: 403, headers: PUBLIC_CONFIG_HEADERS })
+    }
+    return NextResponse.json({
+      apiUrl: config.mode === 'device_sessions' ? '' : await getLegacyApiUrl(request),
+      auth_mode: config.mode,
+      web_session_protocol: config.webSessionProtocol,
+    }, { headers: PUBLIC_CONFIG_HEADERS })
+  } catch {
+    return NextResponse.json({
+      error: { code: 'AUTH_UNAVAILABLE', message: 'Web session configuration unavailable' },
+    }, { status: 503, headers: PUBLIC_CONFIG_HEADERS })
+  }
+}
 
 // Basic hostname/IPv4 validation (letters, digits, dots, hyphens) plus a
 // bracketed-IPv6-literal form. Host and X-Forwarded-Proto are client-
@@ -60,14 +85,13 @@ function extractHostname(hostHeader: string): string | null {
  *
  * This allows the same Docker image to work in different deployment scenarios.
  */
-export async function GET(request: NextRequest) {
+async function getLegacyApiUrl(request: NextRequest): Promise<string> {
+  // Legacy compatibility only; device mode never calls this URL discovery.
   // Priority 1: Check if API_URL is explicitly set
   const envApiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL
 
   if (envApiUrl) {
-    return NextResponse.json({
-      apiUrl: envApiUrl,
-    })
+    return envApiUrl
   }
 
   // Priority 2: Auto-detect from request headers
@@ -96,9 +120,7 @@ export async function GET(request: NextRequest) {
 
         console.log(`[runtime-config] Auto-detected API URL: ${apiUrl} (proto=${proto}, host=${hostHeader})`)
 
-        return NextResponse.json({
-          apiUrl,
-        })
+        return apiUrl
       }
 
       console.warn(`[runtime-config] Rejected malformed Host header, falling back to localhost: ${hostHeader}`)
@@ -109,7 +131,5 @@ export async function GET(request: NextRequest) {
 
   // Priority 3: Fallback to localhost
   console.log('[runtime-config] Using fallback: http://localhost:5055')
-  return NextResponse.json({
-    apiUrl: 'http://localhost:5055',
-  })
+  return 'http://localhost:5055'
 }

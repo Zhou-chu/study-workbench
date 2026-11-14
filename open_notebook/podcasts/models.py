@@ -6,6 +6,7 @@ from surrealdb import RecordID
 
 from open_notebook.database.repository import ensure_record_id, repo_query
 from open_notebook.domain.base import ObjectModel
+from open_notebook.exceptions import ConfigurationError
 
 
 async def _resolve_model_config(
@@ -22,9 +23,12 @@ async def _resolve_model_config(
     config: dict = {}
     if model.credential:
         credential = await model.get_credential_obj()
-        if credential:
-            config = credential.to_esperanto_config()
-    if not config:
+        config = credential.to_esperanto_config()
+        if not config:
+            raise ConfigurationError(
+                "The credential linked to this model has no configuration"
+            )
+    else:
         from open_notebook.ai.key_provider import provision_provider_keys
 
         await provision_provider_keys(model.provider)

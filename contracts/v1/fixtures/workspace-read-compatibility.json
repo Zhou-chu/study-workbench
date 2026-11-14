@@ -1,0 +1,263 @@
+{
+  "workspace": {
+    "notebook": {
+      "id": "notebook:synthetic",
+      "name": "Synthetic"
+    },
+    "sources": [
+      {
+        "source_id": "source:synthetic",
+        "title": null,
+        "versions": [
+          {
+            "source_version_id": "sv_known",
+            "provenance": {
+              "kind": "future",
+              "extension": [
+                null,
+                {
+                  "retained": true
+                }
+              ]
+            }
+          },
+          {
+            "created_at": null,
+            "status": {
+              "future": true
+            },
+            "provenance": [
+              "opaque"
+            ]
+          },
+          {}
+        ]
+      }
+    ],
+    "notes": [
+      {
+        "id": "note:null",
+        "revision": 1,
+        "title": null,
+        "content": null
+      },
+      {
+        "id": "note:native",
+        "revision": 2
+      }
+    ],
+    "turns": [],
+    "jobs": [],
+    "link": null,
+    "legacy_history": [],
+    "selection": null,
+    "extension": {
+      "nullable": null
+    }
+  },
+  "selections": [
+    {
+      "name": "null_selection",
+      "value": null
+    },
+    {
+      "name": "source_version_ids_null",
+      "value": {
+        "engine": "independent",
+        "selection_origin": "local",
+        "source_version_ids": null,
+        "remote_source_ids": []
+      }
+    },
+    {
+      "name": "source_version_ids_object",
+      "value": {
+        "engine": "independent",
+        "selection_origin": "local",
+        "source_version_ids": {
+          "opaque": true
+        },
+        "remote_source_ids": []
+      }
+    },
+    {
+      "name": "source_version_ids_mixed",
+      "value": {
+        "engine": "independent",
+        "selection_origin": "local",
+        "source_version_ids": [
+          "sv_known",
+          9
+        ],
+        "remote_source_ids": []
+      }
+    },
+    {
+      "name": "source_version_ids_blank",
+      "value": {
+        "engine": "independent",
+        "selection_origin": "local",
+        "source_version_ids": [
+          " "
+        ],
+        "remote_source_ids": []
+      }
+    },
+    {
+      "name": "source_version_ids_missing",
+      "value": {
+        "engine": "independent",
+        "selection_origin": "local",
+        "remote_source_ids": []
+      }
+    },
+    {
+      "name": "remote_source_ids_null",
+      "value": {
+        "engine": "independent",
+        "selection_origin": "local",
+        "source_version_ids": [
+          "sv_known"
+        ],
+        "remote_source_ids": null
+      }
+    },
+    {
+      "name": "remote_source_ids_object",
+      "value": {
+        "engine": "independent",
+        "selection_origin": "local",
+        "source_version_ids": [
+          "sv_known"
+        ],
+        "remote_source_ids": {
+          "opaque": true
+        }
+      }
+    },
+    {
+      "name": "remote_source_ids_mixed",
+      "value": {
+        "engine": "independent",
+        "selection_origin": "local",
+        "source_version_ids": [
+          "sv_known"
+        ],
+        "remote_source_ids": [
+          "sv_known",
+          9
+        ]
+      }
+    },
+    {
+      "name": "remote_source_ids_blank",
+      "value": {
+        "engine": "independent",
+        "selection_origin": "local",
+        "source_version_ids": [
+          "sv_known"
+        ],
+        "remote_source_ids": [
+          " "
+        ]
+      }
+    },
+    {
+      "name": "remote_source_ids_missing",
+      "value": {
+        "engine": "independent",
+        "selection_origin": "local",
+        "source_version_ids": [
+          "sv_known"
+        ]
+      }
+    },
+    {
+      "name": "engine_null",
+      "value": {
+        "engine": null,
+        "selection_origin": "local",
+        "source_version_ids": [
+          "sv_known"
+        ],
+        "remote_source_ids": []
+      }
+    },
+    {
+      "name": "engine_future",
+      "value": {
+        "engine": "future",
+        "selection_origin": "local",
+        "source_version_ids": [
+          "sv_known"
+        ],
+        "remote_source_ids": []
+      }
+    },
+    {
+      "name": "engine_object",
+      "value": {
+        "engine": {
+          "opaque": true
+        },
+        "selection_origin": "local",
+        "source_version_ids": [
+          "sv_known"
+        ],
+        "remote_source_ids": []
+      }
+    },
+    {
+      "name": "selection_origin_null",
+      "value": {
+        "engine": "independent",
+        "selection_origin": null,
+        "source_version_ids": [
+          "sv_known"
+        ],
+        "remote_source_ids": []
+      }
+    },
+    {
+      "name": "selection_origin_future",
+      "value": {
+        "engine": "independent",
+        "selection_origin": "future",
+        "source_version_ids": [
+          "sv_known"
+        ],
+        "remote_source_ids": []
+      }
+    },
+    {
+      "name": "selection_origin_object",
+      "value": {
+        "engine": "independent",
+        "selection_origin": {
+          "opaque": true
+        },
+        "source_version_ids": [
+          "sv_known"
+        ],
+        "remote_source_ids": []
+      }
+    },
+    {
+      "name": "opaque_reading",
+      "value": {
+        "engine": "independent",
+        "selection_origin": "local",
+        "source_version_ids": [
+          "sv_known"
+        ],
+        "remote_source_ids": [],
+        "reading": [
+          "opaque"
+        ],
+        "extension": {
+          "retained": null
+        }
+      }
+    }
+  ]
+}

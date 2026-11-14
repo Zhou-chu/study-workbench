@@ -1,5 +1,132 @@
 # StudyWorkbench V1 progress
 
+## 第二轮 UX 整合源码与构建通过：2026-11-02 UTC
+
+[最终修复报告](UX_REPAIR_PROGRESS_2026-11-02.md) · [验证记录](UX_REPAIR_VERIFICATION_2026-11-02.json)。六类UX问题已分四批修复并独立复审，整合复审无产品代码发现。最终源码 `9fa6567b00bb86c20589aed0d41401cbd289255e`。根任务前端 **2,069单元+25工具检查通过**，后端 **2,778通过/128跳过/2警告**，types/lint及Python静态检查通过，正式构建与独立产物关联通过。
+
+**浏览器/真实PDF/实际服务总门禁仍未通过，未合并main或部署。** 原中断构建没有计作成功，重跑与校验已完成。下一阶段是已选择的SurrealDB/模型基础设施复用混合检索实现；它尚未实现，也未调用真实模型。下方“凭据UI等继续推进”均为历史检查点，以本节为准。
+
+## 第二轮 UX 第三批已复审：2026-11-02 UTC
+
+[最新修复进度](UX_REPAIR_PROGRESS_2026-11-02.md)。PDF原位缩放、正尺寸resize重绘与有界串行渲染已完成，独立审查通过。完整前端 **2,044单元+25工具检查通过**，types通过，lint0错误/7项继承警告。可选StrictMode mock诊断与真实浏览器/PDF观感未验证；凭据UI修复、整合构建和混合检索实现继续推进。
+
+## 第二轮 UX 第二批已复审：2026-11-02 UTC
+
+[最新修复与验证进度](UX_REPAIR_PROGRESS_2026-11-02.md)。证据身份标签、同日版本辨识与长内容换行已完成，独立审查通过。完整前端 **2,024单元+25工具检查通过**，types通过，lint0错误/7项继承警告。PDF缩放、凭据可访问性、混合检索实现继续推进；本批仍未运行真实浏览器/服务验收或生产构建。
+
+## 第二轮 UX 第一批已修复并复审：2026-11-02 UTC
+
+[修复与验证进度](UX_REPAIR_PROGRESS_2026-11-02.md)。资料就绪门禁与空文本提示完成，缓存事件 ABA 缺口经独立探针关闭。修正后完整前端 **2,002 单元+25工具检查通过**，types通过，lint0错误/7项继承警告；真实浏览器/服务和本批生产构建未执行。
+
+证据身份/换行、PDF缩放、凭据显隐仍在后续；复用现有SurrealDB的混合检索设计已复核，但语义功能未实现。下方审查提交的“尚未修复”表述属于该提交的历史状态，以本节和修复报告为准。
+
+## 第二轮视觉/RAG 审查完成，改进进行中：2026-11-02 UTC
+
+[审查总览与新鲜探针](REDTEAM_2026-11-02.md) · [视觉](VISUAL_REDTEAM_2026-11-02.md) · [RAG/旅程](RAG_REDTEAM_2026-11-02.md) · [内嵌 RAG 选型](EMBEDDED_RAG_RESEARCH_2026-11-02.md)。
+
+本轮是固定 df94d8c 产品源码的新审查，不是上一轮测试重跑。发现三类视觉/阅读问题与三项 RAG 操作体验缺陷，并以五例隔离源码探针确认词法检索的指定边界。**本次提交仅审查/研究/探针与进度，产品修复尚未实施。** 用户已选择复用现有 SurrealDB/模型基础设施补混合检索，不引入第二套向量库；设计与修复进入下一阶段。
+
+当前完整浏览器与真实服务门禁仍未通过。台式机独立测试工作区的聊天授权已收到，但平台任务访问未开放；下方旧文档“授权待回复”只代表历史。未使用 ZC_LAPTOP、未合并 main、未部署或调用实际提供方。
+
+## 历史检查点
+
+## 产品体验源码与离线门禁通过，真实PM门禁阻塞：2026-10-28 UTC
+
+[完整修复、决策代价与门禁状态](PM_UX_AUDIT_2026-10-28.md) · [精确验证记录](PM_UX_VERIFICATION_2026-10-28.json)。四批修复及一次最终整合修复独立复审通过，无本轮已建立的剩余可行动源码问题。受测源码 `4f059899bd02159f98102ef449d354ce16a748a5` / tree `db6ab7b2ff0951a6b2639c3bf8c6bb9db05f6ed8`。
+
+根任务新鲜完整前端 **1,959单元 +25工具检查**、types/lint通过（7条继承警告）；后端 **2,778通过 /128跳过 /2警告**，318文件静态及OpenAPI通过。正式生产build和独立artifact verify通过，构建ID `bba76ae3-faea-4653-b7e1-f0218d79e273`。
+
+**总产品经理门禁为BLOCKED / NOT PASSED。** 尚无当前浏览器像素、触控/缩放/resize/完整服务旅程验收，Taste安装器启动失败并未安装；独立测试工作区授权仍待回复。没有本机DSH或真实笔记操作，没有降低隔离、main合并、CI或部署。继续运行门禁前需支持且获授权的隔离环境，不以代码/构建成功替代。
+
+## 先前阶段记录
+
+## F1 本轮最终源码与构建通过：2026-10-26 UTC
+
+[完整实现、审查裁定与验证](FRONTEND_TURN_PROGRESS_2026-10-26.md)及[精确验证记录](FRONTEND_TURN_VERIFICATION_2026-10-26.json)：Task 1–3 与整项最终审查修复完成；最后 UUID 能力异常时整页崩溃及 full-range whitespace 问题已独立复审关闭。受测源码 `152250609b142b12aa86dc0e7f1f2cc2436ef0f5`，tree `53ade43f81b08759ff445434023c030b92409981`。
+
+前端 **1,739 单元 + 25 artifact 工具测试**、407 定向、类型/lint 通过（7 个继承警告）；整合后端新鲜 **2,778 / 128 跳过 / 2 警告**、318 文件静态与 OpenAPI 通过。正式 `npm run build` 和独立真实产物关联复核通过，构建 ID `4876fd5d-8638-424f-87f8-12428a4fa267`。文档/验证记录为其后补充，不改变构建输入。
+
+**未部署、未合并 main，未运行真实浏览器/数据库/worker/提供方或 CI。** 保留当前 document 内存恢复、未知结果保守占槽、endpoint 不等于账户身份等限制；实际 keyed 路由使同实例 notebook-tagging 防御项非当前阻塞。未新增自动搜索、OCR/PPT 解析能力，也不把源码备份视作用户数据备份。
+
+## 先前检查点（以下待办描述为历史）
+
+## 当前 F1 前端检查点：Tasks 1–3 已实现并通过各任务审查，2026-10-26 UTC
+
+[当前实现、审查与证据](FRONTEND_TURN_PROGRESS_2026-10-26.md)：Ask/Outline 的操作身份、显式同 key 恢复、只读检查、UI/editor 所有权和真实 JobsPanel 窄 fence 已接入。Task 3 完成读取/历史缓存新鲜度 P2 已修复并独立复审通过；覆盖完成时不在场、完成后 remount、替代视图先 remount 后旧 Check 完成三种顺序，断言实际答案与 Save Answer 可用、无重复 POST/generic job GET/新草稿覆盖；退役隐私/目标 context 不 invalidation。
+
+受测源码 `1f7bb9518fd6e4f65af05b0e550d5de67ffe3ffc` / tree `afbfba281185d890e30555313651cfc6984d069f`：前端 **1,733 单元 + 25 synthetic artifact identity**，定向 401；TypeScript/lint 通过（0 错误、7 个继承警告）。本次仅更新文档，不重跑测试；组合后端 **2,778 / 128 跳过**仍是 Task 2 历史证据，非本次后端重跑。
+
+**整项功能最终独立审查正在另行进行，生产 build 与真实产物关联待执行；不是浏览器、运行期、CI 或部署验收。** exact-target 仅指浏览器可见模式/API endpoint，不证明服务器或人类/Google 账户连续性；恢复仅在当前 document 内存，reload/crash/关 tab/sign-out/根 Provider 替换丢失 capture 不证明或停止远端工作。轻微 hook notebook-tagging P3 仅涉及未来同实例切换 notebookId；实际路由已 keyed remount，非当前阻塞。未修改 main、上游或部署。
+
+## 历史阶段记录
+
+以下保留当时检查点；“前端/恢复 UI 待实施”等旧限制与旧测试数不是当前状态，以本页顶部和链接页的当前检查点为准。
+
+## F1 核心与关联读取组合验收：2026-10-26 UTC
+
+[Task 2 核心/Provider](FRONTEND_TURN_PROGRESS_2026-10-26.md)已通过独立复审，真实引用 null 兼容问题关闭；[NotebookLM 关联物理键](NOTEBOOKLM_LINK_IDENTITY_2026-10-26.md)已对齐并保护历史重绑定。组合后端 2,778 / 128 跳过，前端 1,701 单元 + 25 artifact，静态/类型/lint/OpenAPI 通过。实际恢复 UI、build、浏览器与部署仍未完成。
+
+## F1 前端基础边界：2026-10-26 UTC
+
+[Task 1 进展与证据](FRONTEND_TURN_PROGRESS_2026-10-26.md)加入可选 context-bound 请求保护、旧配置 generation 防护和显式退出/本人撤销同步失效。前端 1,499 单元 + 25 artifact 测试、类型/lint 通过；尚未接入 registry/恢复 UI，未运行新 build 或浏览器验收，不能声称重复提交风险已整体解决。
+
+## 工程质量跟进与持久化错误边界：2026-10-26 UTC
+
+[本轮审查及修复证据](ENGINEERING_QUALITY_FOLLOWUP_2026-10-26.md)修复新 extraction/maintenance 错误记录透传原异常的问题，保留原文件、历史数据和执行语义。完整离线后端 2,678 通过 / 128 跳过，静态/OpenAPI 通过。前端操作身份、未知状态解锁与纯读取恢复仍是待实施项，不把通过的旧测试当作正确契约。
+
+## 队列确认未知回执：2026-10-26 UTC
+
+[F1 后端回执与验证](DISPATCH_RECEIPT_2026-10-26.md)保留既有状态/HTTP detail/去重规则，首次 400 与同 key POST 的 200 增加原任务未知回执；不授权重试、不覆盖 advanced 记录。新鲜完整离线后端 2,647 通过 / 128 跳过，静态/OpenAPI 通过；历史文档链接检查仍有一处继承缺口。前端恢复、真实运行和部署未完成。
+
+## 四处选定提供方日志：2026-10-26 UTC
+
+[本批修复与验证](SELECTED_PROVIDER_LOGS_2026-10-26.md)迁移两个 SSE、默认模型加载与回滚失败日志，保留原响应/回退/错误身份。新鲜完整离线后端 2,631 通过 / 128 跳过，Ruff、格式、mypy、OpenAPI 通过。原六文件方案的分类器与选定日志部分已实现；typed 消息来源和其他 sink 仍非全局脱敏，运行期/部署门槛不变。
+
+## 提供方分类器边界：2026-10-26 UTC
+
+[本批实现与验证](PROVIDER_CLASSIFIER_BOUNDARY_2026-10-26.md)关闭分类器三条原文透传路径与未匹配警告日志，保留类型、规则顺序、cause 和结构化回执。新鲜完整离线后端 2,559 通过 / 128 跳过；Ruff、格式、mypy、OpenAPI 检查通过。其余四处选定日志出口与真实运行验收尚未完成，不宣称全局脱敏或上线。
+
+## 原生原型分支对齐：2026-10-24 UTC
+
+[有界源码审查](NATIVE_BRANCH_ALIGNMENT_2026-10-24.md)核验 Core/UI 为叠加切片（UI ahead 1 / behind 0），共享 domain/fixture 与既有后端契约对齐；新宽松 workspace fixture 尚未覆盖。当前仍是 RN 内存原型，不是已连接或可安装应用；未运行新的原生测试/构建/设备验收，未发现新的高置信度生产结构缺陷。真实 port 与持久保存所有权设计保留为下一步。
+
+## 下一阶段设计草案：2026-10-24
+
+[操作身份恢复与提供方边界设计](NEXT_BOUNDARY_DESIGN_2026-10-24.md) 区分只读检查、显式同 key 写恢复和后端 dispatch 不确定性回执；另提出六文件分类器/选定日志收窄。**尚未实现或通过修复验收**；8 个合成探针仅确认现有缺陷。第一阶段源码/产物记录保持不变，后续需先红后绿与独立审查。
+
+## 架构边界第一阶段完成：2026-10-24
+
+[四项修复与验证记录](ARCHITECTURE_PHASE_ONE_2026-10-24.md)：已核验私有源码检查点 `abcc5084`，组合后端 **2519 / 128 跳过 / 2 警告**，312 文件静态检查与 OpenAPI 通过；前端 **1434 + 25** 测试、types 与 lint（7 条既有警告）通过。严格离线 `IUxGTu` 构建与真实产物关联通过；不是运行或浏览器验收。F1、提供方分类器及其他错误出口仍待后续，queued ACK 限制保留。下方原审查与旧检查点为历史，不代表本阶段未执行或全部债务清零。
+
+## 最新源码审查与分批计划：2026-10-24
+
+[架构与 code smell 审查](ARCHITECTURE_REVIEW_2026-10-24.md) 基于 `e8c5c572` / tree `07eaf90`：保留模块化单体，优先修异常边界、任务 ACK 竞争、Web 宽松响应读取和安全开发入口，不做重写或全仓搬迁。
+[可执行修复计划](../superpowers/plans/2026-10-24-architecture-boundary-repair.md) 已完成文档自审，安排四个独立回归/提交批次；Ask/Outline fresh-key 重复风险、提供方错误分类器及测试替身契约等仍明确在后续清单。
+本检查点**仅源码审查与文档**，未运行测试、构建、数据库、浏览器或提供方；旧通过数不是本轮证据。应用修复、独立审查及远端发布分别记录，不代表 main 合并、部署或数据备份。下方仍为历史检查点。
+
+## 最新离线加固增量：2026-10-23
+
+[保留输入与证据读取加固](VERIFIED_HARDENING_2026-10-23.md)：本地受测 `90bcf371`，后端 **2443 通过 / 128 跳过 / 2 警告**，聚焦 **188 通过**；308 文件静态检查与 OpenAPI 通过。
+对应源码已核验发布到私有分支 [`0c428117`](https://github.com/Zhou-chu/study-workbench/commit/0c4281177d260d696adab17e874f8e89b31934ee)，不代表主分支或部署。
+包含详情读取批处理、存储证据身份/归属检查及同步处理异常后的保留保护；模拟查询次数下降不等于真实数据库延迟改善。
+前端未变，本轮未重跑前端或浏览器；netlink 准备 **BLOCKED** 与其他运行边界不变。下方检查点保留为历史。
+
+## 最新恢复检查点：2026-10-23
+
+[恢复后的验证检查点](RECOVERED_CHECKPOINT_2026-10-23.md) 记录从 `4d2b3e42` 重建后的五次私有源码发布，最新为 `680d2eb8`。
+新鲜后端 **2325 通过 / 128 跳过 / 2 条警告**；未改变的前端 **1354 + 25 测试通过**，独立离线 LSN97G 构建与关联通过。
+实际浏览器尝试在网络命名空间 loopback 准备时 **BLOCKED**，应用服务和浏览器均未启动，不是页面 PASS/FAIL。
+旧工作区及旧验收不可替代新证据；主分支、部署、提供方、Harmony、Docker 运行与用户数据恢复边界未解除。
+以下原有章节保留为历史，不代表恢复后的最新验收。
+
+## Current priority: repository remediation, 2026-10-22
+
+The owner requested risk/error repairs before completing feature gaps. See [the repository audit](REPOSITORY_AUDIT_2026-10-22.md) and [the revised gap plan](GAP_CLOSURE_PLAN.md). Changes are integrated separately from the running preview; this is not a deployment announcement.
+
+First remediation checkpoint: **1965 backend tests passed / 60 opt-in skips / 2 existing dependency warnings**, plus **14 separately executed disposable SurrealDB tests**; **1207 frontend tests across 78 files**, frontend types/build and lint (0 errors / 7 existing warnings) passed. Full Python Ruff/format/mypy passed for 268 files. [Machine-readable evidence](evidence/repository-audit-2026-10-22/summary.json) identifies the verified code and exclusions. The remaining 46 opt-in skips are not passed gates. Default Compose now has no services and inherited unsafe operations fail closed; actual Docker acceptance remains pending.
+
+The latest preview checkpoint is the owner-approved **fresh empty** 2026-10-22 instance with public-fixture authentication/worker/original-byte checks. User-data restoration, user browser login, live web discovery, actual model/Google calls, Docker runtime and native clients are not inferred. Earlier sections are historical, not the current release gate result.
+
 Original checkpoint: 2026-10-18 UTC. Continuation updated: 2026-10-21 UTC. Branch: `feature/study-workbench-v1`. Baseline: Open Notebook 1.15.0 at `a0f6f3081ae06328f0a451b3a3ef2959ca25721d`. Exact handoff commit and archive hashes are recorded in the accompanying delivery manifest; use `git rev-parse HEAD` in the Git bundle checkout.
 
 This is a reproducible development delivery with a working local document workflow, **not a fully accepted personal NotebookLM deployment**. No real Google login, model call, NotebookLM write or paid resource was used. Dedicated private runtime credentials were authorized and provisioned on 2026-10-21; values remain outside source. Protected external access remains pending.
@@ -147,3 +274,15 @@ The new Docker and Android/HarmonyOS 6/iPadOS scope is at architecture planning:
 ## 2026-10-21 multi-client architecture proposal
 
 The user selected native-oriented clients: shared React Native Android/iPadOS core and an ArkTS/ArkUI HarmonyOS 6 client, retaining Web. The [written architecture and phased branch roadmap](MULTICLIENT_ARCHITECTURE.md) is ready for review before detailed implementation planning and branch creation. It includes four-service Docker migration, revocable device sessions, shared contracts, protected local draft recovery, canonical private Git baseline normalization and distinct build/simulator/device/signed-package evidence. Sites native access and dot tunnel registration are explicit separate feasibility gates. This is documentation only; existing runtime acceptance remains checkpoint g.
+
+## 2026-10-21 multi-client construction foundations
+
+The architecture is approved; the user explicitly requested self-reviewed plans followed by direct execution, without another review pause. The canonical private Git baseline is normalized and isolated branches now contain real work. See [implementation plan](MULTICLIENT_IMPLEMENTATION_PLAN.md), [baseline audit](MULTICLIENT_BASELINE.md), and [current multiclient acceptance](MULTICLIENT_ACCEPTANCE.md).
+
+Reviewed local foundation batches: actual API schema snapshot/drift guard (including isolated dotenv regression), static four-service deployment (including public-Origin import regression), and offline exact-tree publication helper (including no implicit Git fetch and shallow-parent metadata regressions). No deployed containers or native clients are claimed. Conditional note revisions must cover legacy/domain writers, deletes and archives, not only personal PATCH; that implementation continues separately.
+
+Final integrated foundation regression: **1473 backend tests passed, 1 opt-in skipped, 2 existing deprecation warnings**. Canonical frontend baseline remains **390 tests**, typecheck, lint (7 existing warnings) and production build passed; no frontend production code changed in these foundation batches. No live model calls are claimed. Reviewed API and Docker feature branches are published with exact-tree verification; this is progress delivery, not completed container/native/Sites acceptance.
+
+## 2026-10-21 atomic note backend
+
+Backend revisions, legacy/domain writer closure, coherent note/snapshot transactions, deletion-race guards and portable revision preservation are implemented and independently reviewed. Two compatibility defects found by review were fixed before integration. Combined backend: 1499 passed, 19 gated skips; 77 native database note/portable checks passed separately. Default remains legacy_single_web. Both Web editors' conflict handling and device sessions are still in progress.

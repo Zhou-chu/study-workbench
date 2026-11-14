@@ -1,6 +1,24 @@
-# Development Setup
+# Historical Development Setup — Non-operational Reference
 
-This is the one page for running Open Notebook from a source checkout. Other pages (README.dev.md, the contributing guide, the quick start) link here instead of repeating it.
+> **Historical only — do not follow the commands below as current setup steps.**
+> Use the [safe V1 entrypoints](../v1/ENTRYPOINTS.md),
+> [V1 runbook](../v1/RUNBOOK.md), and [offline testing guide](testing.md).
+> Legacy stack/database/Docker/release targets and `make clean-cache` now fail
+> closed; root Compose has no services. Old default credentials, install commands,
+> network assumptions and automatic CI/publication claims below are not current
+> operational guidance. API startup migrates its selected database and workers
+> consume jobs: use only explicitly authorized configuration and owned data.
+
+Current source requirements are Python `>=3.11,<3.13` and Node
+`>=22.13.0 || >=24` (see `pyproject.toml` and `frontend/package.json`). This private
+source delivery has no active checked-in CI. The Docker candidate is **not
+runtime-accepted**; see [V1 migration gates](../v1/DOCKER_MIGRATION.md).
+
+## Archived upstream procedure
+
+The remainder preserves the former upstream instructions for historical context,
+including disabled commands and superseded Node/CI statements. It is not a fallback
+setup path, a current verification record, or permission to run those commands.
 
 The stack has four processes. Start them in this order, because each one depends on the one before it:
 

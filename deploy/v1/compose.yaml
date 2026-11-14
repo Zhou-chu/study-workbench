@@ -1,0 +1,244 @@
+{
+  "name": "study-workbench-v1",
+  "services": {
+    "web": {
+      "init": true,
+      "restart": "unless-stopped",
+      "read_only": true,
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,size=64m"
+      ],
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "image": "study-workbench-web:v1-local",
+      "build": {
+        "context": "../..",
+        "dockerfile": "deploy/v1/Dockerfile.web",
+        "target": "web"
+      },
+      "user": "101:101",
+      "ports": [
+        "127.0.0.1:8502:8080"
+      ],
+      "depends_on": {
+        "bff": {
+          "condition": "service_started"
+        }
+      }
+    },
+    "bff": {
+      "init": true,
+      "restart": "unless-stopped",
+      "read_only": true,
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,size=64m"
+      ],
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "image": "study-workbench-bff:v1-local",
+      "build": {
+        "context": "../..",
+        "dockerfile": "deploy/v1/Dockerfile.bff",
+        "target": "bff"
+      },
+      "user": "node",
+      "environment": {
+        "NODE_ENV": "production",
+        "PORT": "3000",
+        "STUDY_WORKBENCH_BFF_LISTEN_HOST": "0.0.0.0",
+        "STUDY_WORKBENCH_AUTH_MODE": "legacy_password",
+        "STUDY_WORKBENCH_WEB_ORIGIN": "${PUBLIC_ORIGIN:?Set frontend origin without trailing slash}",
+        "INTERNAL_API_URL": "http://api:5055",
+        "STUDY_WORKBENCH_WEB_NATIVE_PASSTHROUGH": "false"
+      },
+      "depends_on": {
+        "api": {
+          "condition": "service_healthy"
+        }
+      }
+    },
+    "api": {
+      "image": "study-workbench-backend:v1-local",
+      "build": {
+        "context": "../..",
+        "dockerfile": "deploy/v1/Dockerfile.backend",
+        "target": "backend"
+      },
+      "user": "10001:10001",
+      "init": true,
+      "restart": "unless-stopped",
+      "environment": {
+        "SURREAL_URL": "${SURREAL_URL:?Explicit database endpoint required}",
+        "SURREAL_INSECURE_ALLOW_URL": "${SURREAL_INSECURE_ALLOW_URL:-}",
+        "SURREAL_NAMESPACE": "open_notebook",
+        "SURREAL_DATABASE": "open_notebook",
+        "SURREAL_USER_FILE": "/run/secrets/db_user",
+        "SURREAL_PASSWORD_FILE": "/run/secrets/db_password",
+        "OPEN_NOTEBOOK_ENCRYPTION_KEY_FILE": "/run/secrets/encryption_key",
+        "OPEN_NOTEBOOK_PASSWORD_FILE": "/run/secrets/access_password",
+        "STUDY_WORKBENCH_DATA_DIR": "/app/data/personal",
+        "OPEN_NOTEBOOK_DATA_DIR": "/app/data/upstream-data",
+        "PYTHON_DOTENV_DISABLED": "1",
+        "CORS_ORIGINS": "${PUBLIC_ORIGIN:?Set frontend origin without trailing slash}"
+      },
+      "secrets": [
+        "db_user",
+        "db_password",
+        "encryption_key",
+        "access_password"
+      ],
+      "volumes": [
+        "personal:/app/data/personal",
+        "upstream:/app/data/upstream-data"
+      ],
+      "depends_on": {
+        "db": {
+          "condition": "service_healthy"
+        }
+      },
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "command": [
+        "api"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "/usr/local/bin/python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5055/health', timeout=2).close()"
+        ],
+        "interval": "10s",
+        "timeout": "3s",
+        "retries": 6,
+        "start_period": "30s"
+      }
+    },
+    "worker": {
+      "image": "study-workbench-backend:v1-local",
+      "build": {
+        "context": "../..",
+        "dockerfile": "deploy/v1/Dockerfile.backend",
+        "target": "backend"
+      },
+      "user": "10001:10001",
+      "init": true,
+      "restart": "unless-stopped",
+      "environment": {
+        "SURREAL_URL": "${SURREAL_URL:?Explicit database endpoint required}",
+        "SURREAL_INSECURE_ALLOW_URL": "${SURREAL_INSECURE_ALLOW_URL:-}",
+        "SURREAL_NAMESPACE": "open_notebook",
+        "SURREAL_DATABASE": "open_notebook",
+        "SURREAL_USER_FILE": "/run/secrets/db_user",
+        "SURREAL_PASSWORD_FILE": "/run/secrets/db_password",
+        "OPEN_NOTEBOOK_ENCRYPTION_KEY_FILE": "/run/secrets/encryption_key",
+        "OPEN_NOTEBOOK_PASSWORD_FILE": "/run/secrets/access_password",
+        "STUDY_WORKBENCH_DATA_DIR": "/app/data/personal",
+        "OPEN_NOTEBOOK_DATA_DIR": "/app/data/upstream-data",
+        "PYTHON_DOTENV_DISABLED": "1"
+      },
+      "secrets": [
+        "db_user",
+        "db_password",
+        "encryption_key",
+        "access_password"
+      ],
+      "volumes": [
+        "personal:/app/data/personal",
+        "upstream:/app/data/upstream-data"
+      ],
+      "depends_on": {
+        "db": {
+          "condition": "service_healthy"
+        },
+        "api": {
+          "condition": "service_healthy"
+        }
+      },
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "command": [
+        "worker"
+      ]
+    },
+    "db": {
+      "image": "study-workbench-db:2.3.10-local",
+      "build": {
+        "context": "../..",
+        "dockerfile": "deploy/v1/Dockerfile.backend",
+        "target": "db"
+      },
+      "user": "10001:10001",
+      "init": true,
+      "restart": "unless-stopped",
+      "command": [
+        "db"
+      ],
+      "environment": {
+        "SURREAL_USER_FILE": "/run/secrets/db_user",
+        "SURREAL_PASSWORD_FILE": "/run/secrets/db_password"
+      },
+      "secrets": [
+        "db_user",
+        "db_password"
+      ],
+      "volumes": [
+        "database:/app/data/db"
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "/usr/local/bin/surreal",
+          "is-ready",
+          "--endpoint",
+          "http://127.0.0.1:8000"
+        ],
+        "interval": "10s",
+        "timeout": "3s",
+        "retries": 6,
+        "start_period": "10s"
+      },
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "cap_drop": [
+        "ALL"
+      ]
+    }
+  },
+  "volumes": {
+    "personal": {},
+    "upstream": {},
+    "database": {}
+  },
+  "secrets": {
+    "db_user": {
+      "file": "${DB_USER_FILE:?Set absolute secret file outside checkout}"
+    },
+    "db_password": {
+      "file": "${DB_PASSWORD_FILE:?Set absolute secret file outside checkout}"
+    },
+    "encryption_key": {
+      "file": "${ENCRYPTION_KEY_FILE:?Set absolute secret file outside checkout}"
+    },
+    "access_password": {
+      "file": "${ACCESS_PASSWORD_FILE:?Set absolute secret file outside checkout}"
+    }
+  }
+}

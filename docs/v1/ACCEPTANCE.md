@@ -1,5 +1,7 @@
 # V1 acceptance matrix
 
+> Historical checkpoints below are not current service-availability claims. For the 2026-10-22 interruption, source-only recovery and current test/deployment boundaries, see [Research workspace V2 acceptance](RESEARCH_WORKSPACE_V2_ACCEPTANCE.md). Runtime configuration and user data have not been recovered; moving source into a different temporary directory does not establish durable storage.
+
 Original checkpoint: 2026-10-18 UTC. Continuation: 2026-10-21 UTC. Environment: requested dot cloud Linux workspace, native SurrealDB 2.3.10, Python 3.12.14, Node 24.19.0. Baseline and versions: `UPSTREAM.md`. This is a development delivery, **not all acceptance criteria passed**.
 
 Definitions: **Real local** uses actual CPU/filesystem/HTTP/DB/browser operations with public fixtures. **Simulated** uses injected store/provider/Google doubles. **Partial** has a useful implemented/tested subset but a missing required gate. **Blocked** names a permission, runtime or SDK blocker. No real Google operation or model inference was performed.

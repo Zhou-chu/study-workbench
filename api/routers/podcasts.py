@@ -11,7 +11,7 @@ from api.podcast_service import (
     PodcastService,
 )
 from open_notebook.ai.models import Model
-from open_notebook.exceptions import OpenNotebookError
+from open_notebook.exceptions import CommandSubmissionUnknownError, OpenNotebookError
 from open_notebook.podcasts.audio_paths import resolve_contained_audio_path
 from open_notebook.podcasts.models import PodcastEpisode
 
@@ -348,7 +348,7 @@ async def stream_podcast_episode_audio(episode_id: str):
 
 @router.post("/podcasts/episodes/{episode_id}/retry")
 async def retry_podcast_episode(episode_id: str):
-    """Retry a failed podcast episode by deleting it and submitting a new job"""
+    """Submit a separate attempt without destroying the previous episode/audio."""
     try:
         episode = await PodcastService.get_episode(episode_id)
 
@@ -372,12 +372,8 @@ async def retry_podcast_episode(episode_id: str):
                 detail="Cannot retry: episode or speaker profile name missing from stored data",
             )
 
-        # Delete audio file if any
-        _delete_episode_audio(episode, episode_id)
-
-        # Delete the failed episode
-        await episode.delete()
-
+        # A new attempt is a separate job. Preserve the previous result even if
+        # its acknowledgement is lost; deletion remains an explicit user action.
         # Submit a new job
         job_id = await PodcastService.submit_generation_job(
             episode_profile_name=ep_profile_name,
@@ -388,6 +384,10 @@ async def retry_podcast_episode(episode_id: str):
 
         return {"job_id": job_id, "message": "Retry submitted successfully"}
 
+    except CommandSubmissionUnknownError as exc:
+        exc.resource_id = episode_id
+        exc.resource_type = "podcast_episode"
+        raise
     except HTTPException:
         raise
     except OpenNotebookError:

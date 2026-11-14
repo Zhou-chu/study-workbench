@@ -38,7 +38,7 @@ export function NotebookCard({ notebook }: NotebookCardProps) {
   }
 
   const handleCardClick = () => {
-    router.push(`/notebooks/${encodeURIComponent(notebook.id)}`)
+    router.push(`/notebooks/${encodeURIComponent(notebook.id)}/study`)
   }
 
   return (

@@ -1,10 +1,8 @@
 import os
-import traceback
 from typing import Dict, List, Optional
 
 from esperanto import AIFactory
 from fastapi import APIRouter, HTTPException, Query
-from loguru import logger
 from pydantic import BaseModel
 
 from api.models import (
@@ -28,6 +26,7 @@ from open_notebook.exceptions import (
     NotFoundError,
     OpenNotebookError,
 )
+from open_notebook.utils.boundary_logging import log_boundary_failure
 
 router = APIRouter()
 
@@ -198,8 +197,11 @@ async def get_models(
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error fetching models: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error fetching models: {str(e)}")
+        log_boundary_failure("model_list", e)
+        raise HTTPException(
+            status_code=500,
+            detail="Error fetching models. Check server logs for details.",
+        )
 
 
 @router.post("/models", response_model=ModelResponse)
@@ -255,8 +257,11 @@ async def create_model(model_data: ModelCreate):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error creating model: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error creating model: {str(e)}")
+        log_boundary_failure("model_create", e)
+        raise HTTPException(
+            status_code=500,
+            detail="Error creating model. Check server logs for details.",
+        )
 
 
 @router.delete("/models/{model_id}")
@@ -275,8 +280,11 @@ async def delete_model(model_id: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error deleting model {model_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error deleting model: {str(e)}")
+        log_boundary_failure("model_delete", e)
+        raise HTTPException(
+            status_code=500,
+            detail="Error deleting model. Check server logs for details.",
+        )
 
 
 @router.post("/models/{model_id}/test", response_model=ModelTestResponse)
@@ -297,10 +305,10 @@ async def test_model(model_id: str):
         success, message = await test_individual_model(model)
         return ModelTestResponse(success=success, message=message)
     except Exception as e:
-        logger.error(f"Error testing model {model_id}: {traceback.format_exc()}")
+        log_boundary_failure("model_test", e)
         return ModelTestResponse(
             success=False,
-            message=str(e)[:200],
+            message="Model test failed. Check server logs for details.",
         )
 
 
@@ -324,9 +332,10 @@ async def get_default_models():
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error fetching default models: {str(e)}")
+        log_boundary_failure("model_defaults_get", e)
         raise HTTPException(
-            status_code=500, detail=f"Error fetching default models: {str(e)}"
+            status_code=500,
+            detail="Error fetching default models. Check server logs for details.",
         )
 
 
@@ -378,9 +387,10 @@ async def update_default_models(defaults_data: DefaultModelsResponse):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error updating default models: {str(e)}")
+        log_boundary_failure("model_defaults_update", e)
         raise HTTPException(
-            status_code=500, detail=f"Error updating default models: {str(e)}"
+            status_code=500,
+            detail="Error updating default models. Check server logs for details.",
         )
 
 
@@ -521,9 +531,10 @@ async def get_provider_availability():
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error checking provider availability: {str(e)}")
+        log_boundary_failure("model_provider_availability", e)
         raise HTTPException(
-            status_code=500, detail=f"Error checking provider availability: {str(e)}"
+            status_code=500,
+            detail="Error checking provider availability. Check server logs for details.",
         )
 
 
@@ -559,7 +570,7 @@ async def discover_models(provider: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error discovering models for {provider}: {str(e)}")
+        log_boundary_failure("model_discover", e)
         raise HTTPException(
             status_code=500,
             detail="Error discovering models. Check server logs for details.",
@@ -593,7 +604,7 @@ async def sync_models(provider: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error syncing models for {provider}: {str(e)}")
+        log_boundary_failure("model_sync", e)
         raise HTTPException(
             status_code=500,
             detail="Error syncing models. Check server logs for details.",
@@ -636,9 +647,10 @@ async def sync_all_models():
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error syncing all models: {str(e)}")
+        log_boundary_failure("model_sync_all", e)
         raise HTTPException(
-            status_code=500, detail=f"Error syncing all models: {str(e)}"
+            status_code=500,
+            detail="Error syncing all models. Check server logs for details.",
         )
 
 
@@ -663,9 +675,10 @@ async def get_model_count(provider: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error getting model count for {provider}: {str(e)}")
+        log_boundary_failure("model_count", e)
         raise HTTPException(
-            status_code=500, detail=f"Error getting model count: {str(e)}"
+            status_code=500,
+            detail="Error getting model count. Check server logs for details.",
         )
 
 
@@ -701,8 +714,11 @@ async def get_models_by_provider(provider: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error fetching models for {provider}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error fetching models: {str(e)}")
+        log_boundary_failure("model_by_provider", e)
+        raise HTTPException(
+            status_code=500,
+            detail="Error fetching models. Check server logs for details.",
+        )
 
 
 def _get_preferred_model(
@@ -843,7 +859,8 @@ async def auto_assign_defaults():
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error auto-assigning defaults: {str(e)}")
+        log_boundary_failure("model_auto_assign", e)
         raise HTTPException(
-            status_code=500, detail=f"Error auto-assigning defaults: {str(e)}"
+            status_code=500,
+            detail="Error auto-assigning defaults. Check server logs for details.",
         )

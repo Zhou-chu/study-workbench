@@ -51,17 +51,26 @@ from api.routers import commands as commands_router
 from api.routers import evidence as personal_evidence
 from api.routers import notebooklm as personal_notebooklm
 from api.routers import portable as personal_portable
+from api.routers import source_snapshots as personal_source_snapshots
+from api.routers import web_discovery as personal_web_discovery
 from open_notebook.database.async_migrate import AsyncMigrationManager
 from open_notebook.exceptions import (
     AuthenticationError,
+    CommandSubmissionUnknownError,
     ConfigurationError,
+    DatabaseOperationError,
     ExternalServiceError,
     InvalidInputError,
     NetworkError,
+    NoteRevisionConflict,
+    NoteRevisionRequired,
     NotFoundError,
     OpenNotebookError,
+    PersonalTurnDispatchUnknownError,
     RateLimitError,
+    UnsupportedCapabilityError,
     UnsupportedTypeException,
+    UploadCommitUnknownError,
 )
 from open_notebook.integrations.notebooklm.contracts import BridgeError
 from open_notebook.utils.encryption import get_secret_from_env
@@ -192,6 +201,10 @@ async def lifespan(app: FastAPI):
     Lifespan event handler for the FastAPI application.
     Runs database migrations automatically on startup.
     """
+    from open_notebook.config import get_note_write_mode
+
+    get_note_write_mode()
+
     # Startup: Security checks
     logger.info("Starting API initialization...")
 
@@ -213,6 +226,9 @@ async def lifespan(app: FastAPI):
         # Fail fast - don't start the API with an outdated database schema
         raise RuntimeError(f"Failed to run database migrations: {str(e)}") from e
 
+    from api.device_session_runtime import initialize_device_auth
+
+    await initialize_device_auth(app)
     logger.success("API initialization completed successfully")
 
     async def dispatch_personal_jobs():
@@ -234,7 +250,11 @@ async def lifespan(app: FastAPI):
         try:
             await dispatcher
         except asyncio.CancelledError:
-            pass
+            # Expected dispatcher cancellation is not cancellation of its owner.
+            # Preserve an external shutdown cancellation while awaiting cleanup.
+            owner = asyncio.current_task()
+            if owner is not None and owner.cancelling():
+                raise
 
     # Shutdown: cleanup if needed
     logger.info("API shutdown complete")
@@ -245,6 +265,10 @@ app = FastAPI(
     description="API for Open Notebook - Research Assistant",
     lifespan=lifespan,
 )
+
+from api.device_session_runtime import install_auth_handlers
+
+install_auth_handlers(app)
 
 if CORS_IS_DEFAULT_WILDCARD:
     logger.warning(
@@ -329,6 +353,20 @@ async def not_found_error_handler(request: Request, exc: NotFoundError):
 
 @app.exception_handler(InvalidInputError)
 async def invalid_input_error_handler(request: Request, exc: InvalidInputError):
+    if isinstance(exc, PersonalTurnDispatchUnknownError):
+        return JSONResponse(
+            status_code=400,
+            content={
+                "detail": "WORKER_UNAVAILABLE",
+                "dispatch_receipt": {
+                    "dispatch_ack": "unknown",
+                    "job_id": exc.job_id,
+                    "turn_id": exc.turn_id,
+                    "retry_safe": False,
+                },
+            },
+            headers=_cors_headers(request),
+        )
     return JSONResponse(
         status_code=400,
         content={"detail": str(exc)},
@@ -392,6 +430,67 @@ async def unsupported_type_error_handler(
     )
 
 
+@app.exception_handler(UnsupportedCapabilityError)
+async def unsupported_capability_error_handler(
+    request: Request, exc: UnsupportedCapabilityError
+):
+    return JSONResponse(
+        status_code=501,
+        content={"detail": str(exc)},
+        headers=_cors_headers(request),
+    )
+
+
+@app.exception_handler(CommandSubmissionUnknownError)
+async def command_submission_unknown_handler(
+    request: Request, exc: CommandSubmissionUnknownError
+):
+    detail = {
+        "code": "COMMAND_SUBMISSION_UNKNOWN",
+        "message": "Submission may already be accepted. Do not retry; check existing work first.",
+        "retry_safe": False,
+    }
+    resource_id = exc.source_id or exc.resource_id
+    resource_type = "source" if exc.source_id else exc.resource_type
+    if resource_id and resource_type:
+        detail.update(resource_id=resource_id, resource_type=resource_type)
+    if exc.command_id:
+        detail["command_id"] = exc.command_id
+    return JSONResponse(
+        status_code=409, content={"detail": detail}, headers=_cors_headers(request)
+    )
+
+
+@app.exception_handler(UploadCommitUnknownError)
+async def upload_commit_unknown_handler(
+    request: Request, exc: UploadCommitUnknownError
+):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": {
+                "code": "UPLOAD_COMMIT_UNKNOWN",
+                "message": str(exc),
+                "retry_safe": False,
+                "source_id": exc.source_id,
+                "source_version_id": exc.source_version_id,
+            }
+        },
+        headers=_cors_headers(request),
+    )
+
+
+@app.exception_handler(DatabaseOperationError)
+async def database_operation_error_handler(
+    request: Request, exc: DatabaseOperationError
+):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Database operation failed"},
+        headers=_cors_headers(request),
+    )
+
+
 @app.exception_handler(OpenNotebookError)
 async def open_notebook_error_handler(request: Request, exc: OpenNotebookError):
     return JSONResponse(
@@ -424,6 +523,8 @@ async def personal_bridge_error_handler(request: Request, exc: BridgeError):
 app.include_router(personal_evidence.router, prefix="/api")
 app.include_router(personal_notebooklm.router, prefix="/api")
 app.include_router(personal_portable.router, prefix="/api")
+app.include_router(personal_source_snapshots.router, prefix="/api")
+app.include_router(personal_web_discovery.router, prefix="/api")
 app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(config.router, prefix="/api", tags=["config"])
 app.include_router(notebooks.router, prefix="/api", tags=["notebooks"])
@@ -458,3 +559,26 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+
+@app.exception_handler(NoteRevisionConflict)
+async def note_revision_conflict_handler(request: Request, exc: NoteRevisionConflict):
+    return JSONResponse(
+        status_code=409,
+        content={
+            "detail": {
+                "code": "NOTE_REVISION_CONFLICT",
+                "current_revision": exc.current_revision,
+            }
+        },
+        headers=_cors_headers(request),
+    )
+
+
+@app.exception_handler(NoteRevisionRequired)
+async def note_revision_required_handler(request: Request, exc: NoteRevisionRequired):
+    return JSONResponse(
+        status_code=428,
+        content={"detail": {"code": "NOTE_REVISION_REQUIRED"}},
+        headers=_cors_headers(request),
+    )

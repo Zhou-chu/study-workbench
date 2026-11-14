@@ -55,6 +55,7 @@ export function SettingsForm() {
     control,
     handleSubmit,
     reset,
+    getValues,
     formState: { isDirty }
   } = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
@@ -91,7 +92,18 @@ export function SettingsForm() {
   }, [hasResetForm, reset, settings])
 
   const onSubmit = async (data: SettingsFormData) => {
-    await updateSettings.mutateAsync(data)
+    try {
+      const saved = await updateSettings.mutateAsync(data)
+      const draft = getValues()
+      // Strip settings not owned by this form before advancing its baseline.
+      const baseline = settingsSchema.parse(saved)
+      // keepValues alone does not recalculate dirty state. Restore the current
+      // draft against the new defaults, including edits made during the save.
+      reset(baseline, { keepValues: true })
+      reset(draft, { keepDefaultValues: true })
+    } catch {
+      // The mutation hook reports failures; retain the draft and saved baseline.
+    }
   }
 
   if (isLoading) {

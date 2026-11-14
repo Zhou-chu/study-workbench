@@ -1,0 +1,25 @@
+{
+  "name": "@study/web-transport",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --project tsconfig.build.json",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@study/contracts": "0.1.0",
+    "@study/domain": "0.1.0"
+  }
+}

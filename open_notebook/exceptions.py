@@ -10,6 +10,39 @@ class DatabaseOperationError(OpenNotebookError):
     pass
 
 
+class UploadCommitUnknownError(OpenNotebookError):
+    """Version metadata may be committed; retain originals and never auto-replay."""
+
+    def __init__(self, *, source_id: str, source_version_id: str):
+        # These allocated identities aid inspection; they do not confirm a commit.
+        self.source_id = source_id
+        self.source_version_id = source_version_id
+        super().__init__(
+            "Upload may already be saved. Do not retry; inspect the existing source "
+            "before taking further action."
+        )
+
+
+class CommandSubmissionUnknownError(OpenNotebookError):
+    """CREATE may have committed; automatic replay can duplicate queued work."""
+
+    def __init__(
+        self,
+        *,
+        source_id: str | None = None,
+        command_id: str | None = None,
+        resource_id: str | None = None,
+        resource_type: str | None = None,
+    ):
+        self.source_id = source_id
+        self.command_id = command_id
+        self.resource_id = source_id or resource_id
+        self.resource_type = "source" if source_id else resource_type
+        super().__init__(
+            "Command submission may already be committed; do not automatically retry."
+        )
+
+
 class UnsupportedTypeException(OpenNotebookError):
     """Raised when an unsupported type is provided."""
 
@@ -20,6 +53,15 @@ class InvalidInputError(OpenNotebookError):
     """Raised when invalid input is provided."""
 
     pass
+
+
+class PersonalTurnDispatchUnknownError(InvalidInputError):
+    """Queue ACK is unknown; allocated parent IDs do not authorize replay."""
+
+    def __init__(self, *, job_id: str, turn_id: str):
+        self.job_id = job_id
+        self.turn_id = turn_id
+        super().__init__("WORKER_UNAVAILABLE")
 
 
 class NotFoundError(OpenNotebookError):
@@ -81,3 +123,22 @@ class NoTranscriptFound(OpenNotebookError):
     """Raised when no transcript is found for a video."""
 
     pass
+
+
+class NoteRevisionConflict(OpenNotebookError):
+    def __init__(self, current_revision: int):
+        super().__init__("NOTE_REVISION_CONFLICT")
+        self.current_revision = current_revision
+
+
+class NoteRevisionRequired(OpenNotebookError):
+    def __init__(self):
+        super().__init__("NOTE_REVISION_REQUIRED")
+
+
+class NoteCommitOutcomeUnknown(OpenNotebookError):
+    """Read/reconcile before retrying; commit may already have succeeded."""
+
+
+class UnsupportedCapabilityError(OpenNotebookError):
+    """Raised when an operation is explicitly unavailable, rather than successful."""

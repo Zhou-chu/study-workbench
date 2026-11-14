@@ -144,13 +144,16 @@ def browser_check(base, client, notebook, env, out):
                 key = re.search(r'name="idempotency_key"\r\n\r\n([^\r]+)', body)
                 assert key, "No multipart idempotency key"
                 keys.append(key.group(1))
-                file_match = re.search(
-                    r'name="file"; filename="[^\"]+"\r\n.*?\r\n\r\n(.*?)\r\n--',
-                    body,
-                    re.S,
-                )
-                assert file_match, "No multipart file payload"
-                file_payloads.append(file_match.group(1))
+                file_header = re.search(r'name="file"; filename="[^\"]+"\r\n', body)
+                assert file_header, "No multipart file payload"
+                # Locate each delimiter once. Repeated lazy wildcards rescanned
+                # every possible header ending when the payload terminator was absent.
+                header_end = body.find("\r\n\r\n", file_header.end())
+                assert header_end >= 0, "No multipart file payload"
+                payload_start = header_end + 4
+                payload_end = body.find("\r\n--", payload_start)
+                assert payload_end >= 0, "No multipart file payload"
+                file_payloads.append(body[payload_start:payload_end])
                 response = route.fetch()
                 assert response.ok, response.status
                 uploads.append(response.json())

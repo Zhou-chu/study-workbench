@@ -1,0 +1,38 @@
+import {TransformationsPage} from '../features/settings/TransformationsPage';
+import {ModelsPage} from '../features/settings/ModelsPage';
+import {AdvancedPage} from '../features/settings/AdvancedPage';
+import {SettingsLayout} from '../features/settings/SettingsLayout';
+import {LoginRoute} from '../features/auth/LoginRoute';
+import {PodcastsPage} from '../features/library/PodcastsPage';
+import {GlobalSearchPage} from '../features/library/GlobalSearchPage';
+import { LibraryPage } from '../features/library/LibraryPage';
+import { SourcePage } from '../features/library/SourcePage';
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router';
+import { NotebookHome } from '../features/notebooks/NotebookHome';
+import { NotebookPage } from '../features/notebooks/NotebookPage';
+import { NotebookShell } from '../features/notebooks/NotebookShell';
+import { AppChrome } from './AppChrome';
+import { notebookIdFromPathname } from './notebook-route';
+import { useI18n } from '../i18n';
+function StudyAlias() { const location = useLocation(); const id = notebookIdFromPathname(location.pathname); return id ? <Navigate replace to={`/notebooks/${encodeURIComponent(id)}${location.search}${location.hash}`}/> : <PendingRoute kind="missing"/>; }
+/** Retained path, explicitly NOT completed functionality. No reads or provider work on mount. */
+function PendingRoute({ kind }: {
+    kind: 'sources' | 'search' | 'podcasts' | 'settings' | 'models' | 'transformations' | 'advanced' | 'login' | 'missing';
+}) {
+    const { t, notebook, shell } = useI18n();
+    const title = { sources: t.sources.title, search: t.navigation.askAndSearch, podcasts: t.navigation.podcasts, settings: t.navigation.settings, models: t.navigation.models, transformations: t.navigation.transformations, advanced: t.navigation.advanced, login: t.common.notebook, missing: t.common.noResults }[kind];
+    return <AppChrome><div className="notebook-home"><h1>{title}</h1><p>{kind === 'missing' ? notebook.notFound : notebook.pending}</p><Link className="button" to="/notebooks">{shell.homeTitle}</Link></div></AppChrome>;
+}
+export function AppRoutes({ previewContent }: {
+    previewContent?: {
+        title: string;
+        paragraphs: string[];
+    };
+}) {
+    return <Routes>
+ <Route path="/" element={<Navigate to="/notebooks" replace/>}/><Route path="/notebooks" element={<NotebookHome />}/><Route path="/notebooks/:notebookId" element={<NotebookPage />}/><Route path="/notebooks/:notebookId/study" element={<StudyAlias />}/>
+ <Route path="/sources" element={<LibraryPage/>}/><Route path="/sources/:sourceId" element={<SourcePage/>}/><Route path="/search" element={<GlobalSearchPage/>}/><Route path="/podcasts" element={<PodcastsPage/>}/><Route path="/settings" element={<SettingsLayout/>}/><Route path="/settings/models" element={<ModelsPage/>}/><Route path="/transformations" element={<TransformationsPage/>}/><Route path="/advanced" element={<AdvancedPage/>}/><Route path="/login" element={<LoginRoute/>}/>
+ {import.meta.env.DEV && <Route path="/__preview/workspace" element={<NotebookShell {...(previewContent ? { previewContent } : {})}/>}/>}
+ <Route path="*" element={<PendingRoute kind="missing"/>}/>
+ </Routes>;
+}

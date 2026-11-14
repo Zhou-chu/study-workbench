@@ -1,0 +1,374 @@
+{
+  "schema_version": 2,
+  "date_utc": "2026-11-03",
+  "scope": "Integrated R1-R5 fixes, synthetic offline tests and installed production build; not runtime, privacy, cost or quality acceptance",
+  "implementation_base_commit": "9d03d9b217cc0bcb1ebab4b7e959c94f229a048d",
+  "fix_commit": "567e6b99a52f8a014403086e5408677d52619184",
+  "last_tested_product_commit": "3a083e49e12f63e70f9cb1a0d8d9790b17461592",
+  "last_tested_product_tree": "3e36d070f695ebb6005d4a11d789082258e3ef26",
+  "documentation_association": {
+    "commit": "The commit containing this manifest is a documentation-only descendant of last_tested_product_commit.",
+    "allowed_followup_paths": [
+      "docs/v1/HYBRID_RETRIEVAL.md",
+      "docs/v1/HYBRID_RETRIEVAL_VERIFICATION_2026-11-03.json"
+    ],
+    "claim": "All full test/build claims bind the product/test commit. Only these two documentation files are excluded from the frozen file ledger; no product or build input changes in the documentation followup."
+  },
+  "environment": {
+    "repository": "/workspace/scratch/7ae04dc66900/workbench-redteam-20261102",
+    "python": "3.12.14",
+    "node": "v24.22.1",
+    "npm": "11.9.0",
+    "vitest": "4.1.9",
+    "dependency_installation": "none; used prepared .venv and installed frontend node_modules",
+    "backend_isolation": "Supported runner: allowlisted environment, fresh temporary state, dotenv disabled, verified existing tiktoken cache, Python network tripwire (not OS firewall)",
+    "frontend_isolation": "Exact env -i prefix recorded with every frontend command; offline npm and telemetry disabled"
+  },
+  "finding_dispositions": {
+    "R1": "Addressed: per-call document admission after slot, resolution and provisioning binds full scope, running child, attempt and frozen profile. Hard errors, no replay, no global callback leakage and no project lock over provider I/O.",
+    "R2": "Addressed: immutable parent identity/current admission through lexical/hybrid retrieval, every paid phase and final commit; settlement cannot overwrite changed ownership/stopped receipts. Already-dispatched unknown outcomes remain honest.",
+    "R3": "Addressed: independent/local-only options and preflight; remote NotebookLM default lexical Ask/Outline preserve existing auth/service path. Unsupported hybrid rejects. Actual frontend DTO/backend route fixture tested with flag false and true.",
+    "R4": "Addressed: explicit hits/retrieval envelope in backend/OpenAPI/TypeScript; actual route JSON through transport and hook preserves method/fallback/unknown/coverage, including empty hits; legacy hits-only supported.",
+    "R5": "Addressed: frozen nonsecret provider/model name/ID/revision visible before document and query consent; same-ID/same-endpoint rotation updates disclosure and resets acknowledgment. English/Chinese rendered UI and all 14 locale parity pass.",
+    "review_status": "Implementation and offline verification complete; parent-owned single scoped independent rereview pending. Earlier task approvals do not replace rereview of these five findings."
+  },
+  "red_green_evidence": {
+    "original_review_probes": {
+      "unchanged_sha256_ledger": "c99e20f91f2968c2e4fba7e917f08c4091c0cb62dea0d86858c9fd74157efc46",
+      "backend_red_failed": 4,
+      "backend_red_passed": 1,
+      "wire_red_failed": 1,
+      "backend_green_passed": 5,
+      "wire_green_passed": 1
+    },
+    "permanent_boundary_matrix": {
+      "red_failed": 22,
+      "green_passed": 22,
+      "tests": "tests/test_workbench_hybrid_boundaries.py"
+    },
+    "parent_ownership_extension": {
+      "red_failed": 4,
+      "green_combined_passed": 121,
+      "scope": "Same immutable parent admission contract at final settlement"
+    },
+    "initial_disclosure_ui": {
+      "red_failed": 4,
+      "green_passed": 4,
+      "languages": [
+        "en-US",
+        "zh-CN"
+      ]
+    },
+    "actual_wire_transport_hook": {
+      "red_failed": 6,
+      "fixture": "contracts/v1/fixtures/hybrid-search.json",
+      "tests": [
+        "tests/test_workbench_hybrid_wire.py",
+        "frontend/src/lib/hooks/use-workbench-evidence-search.wire.test.tsx"
+      ]
+    },
+    "actual_turn_dtos": {
+      "fixture": "contracts/v1/fixtures/hybrid-turn-requests.json",
+      "tests": [
+        "tests/test_workbench_hybrid_contracts.py",
+        "frontend/src/components/workbench/StudyWorkbench.test.tsx"
+      ]
+    },
+    "focused_backend_before_final_changes": {
+      "passed": 721,
+      "warnings": 1,
+      "claim": "Intermediate focused evidence only; superseded by the final full frozen run."
+    },
+    "focused_ui": {
+      "passed": 302,
+      "files": 5,
+      "includes": "English/Chinese initial document/query consent and all 14 locales"
+    },
+    "setup_failures": "Temporary probe module resolution, three wrong cancel fixture arguments, empty route snapshot setup, test locale cleanup, type/style and stale revision fixtures are retained separately from genuine behavioral RED."
+  },
+  "backend": {
+    "passed": 3262,
+    "failed": 0,
+    "skipped": 128,
+    "warnings": 2,
+    "duration_seconds": 97.69,
+    "stable_full_runs": 1,
+    "command": ".venv/bin/python scripts/offline_pytest.py --tiktoken-cache /workspace/scratch/7ae04dc66900/inspection/workbench-token-cache-20261102 -- tests/ -q",
+    "exit_code": 0,
+    "skip_note": "Existing opt-in real/disposable database, repository, portable restore and OS lifecycle gates remain skipped; no live-service opt-in forwarded. Skip reasons are not individually enumerated by this -q run.",
+    "warning_note": [
+      "Installed surreal-commands Pydantic class Config deprecation",
+      "Installed FastAPI/Starlette httpx TestClient deprecation"
+    ]
+  },
+  "frontend": {
+    "vitest_passed": 2171,
+    "vitest_failed": 0,
+    "vitest_files": 117,
+    "artifact_tool_passed": 25,
+    "artifact_tool_failed": 0,
+    "vitest_duration_seconds": 48.42,
+    "exit_code": 0,
+    "types_exit_code": 0,
+    "lint_exit_code": 0,
+    "lint_errors": 0,
+    "lint_inherited_warnings": 7,
+    "test_stderr": "Inherited React act warnings and intentional negative-path diagnostics; not pristine"
+  },
+  "static": {
+    "ruff_exit_code": 0,
+    "format_exit_code": 0,
+    "mypy_exit_code": 0,
+    "python_files": 336,
+    "types_exit_code": 0,
+    "lint_exit_code": 0,
+    "lint_errors": 0,
+    "lint_inherited_warnings": 7
+  },
+  "frozen_product_source": {
+    "tracked_files": 1342,
+    "manifest_file_sha256": "be5e6ddc59209dffa3e3e64a7030819d3236897d082b4fda0c3bc7ba1052cccf",
+    "excluded_documentation_paths": [
+      "docs/v1/HYBRID_RETRIEVAL.md",
+      "docs/v1/HYBRID_RETRIEVAL_VERIFICATION_2026-11-03.json"
+    ],
+    "verification_before_and_after_build_exit_code": 0,
+    "untracked_parent_progress": "not read, changed or staged"
+  },
+  "build": {
+    "status": "passed",
+    "artifact": "/tmp/sw-frontend-artifact-vC8O3J",
+    "manifest_sha256": "4420a396cedcca1756e067aca626aa40d92665e22be4cd9d208a151d0430c081",
+    "build_id": "d92dd822-0577-4db0-b3c1-c0cd5477e627",
+    "source_sha256": "99aa69b73489a8c27732d5385d62f677d3a7a6852a4984eb5dfe54eed5c00470",
+    "artifact_sha256": "9987e3fcc2d30ef131fbbeb843eb4e6fab8136324f75fab8f0c7a4ffaf83c531",
+    "generated_sha256": "52d6dbf123c1155f4ecf503800bea441b5473eaadfb3378c303edd079642711d",
+    "claim": "source-artifact-association-not-reproducibility",
+    "exit_code": 0,
+    "independent_verify": "passed",
+    "independent_verify_exit_code": 0,
+    "manifest_file_sha256": "086cc07741a7d7bec41259854984bd527b96d713a18180f240734f366c0d3308",
+    "receipt_file_sha256": "9c3e4f5dbc9bf4ef1844df1fd8049ab760ed9a18098eefe183e02960eef8eb75",
+    "output_note": "Existing workflow suppresses compiler subprocess output to avoid transport-secret leakage. This is not a warning-free compile or reproducibility claim.",
+    "build_lock_cleanup": "No manual cleanup or process termination."
+  },
+  "superseded_freeze": {
+    "product_commit": "567e6b99a52f8a014403086e5408677d52619184",
+    "backend_passed": 3262,
+    "backend_skipped": 128,
+    "frontend_passed": 2157,
+    "frontend_failed": 9,
+    "frontend_artifact_passed": 25,
+    "build_performed": false,
+    "cause": "R5 revision-bearing summaries exposed incomplete profile fixtures in two tests and a stale exact safe-key assertion in a third. Corrected fixtures, added invalid/missing revision regressions, and made disabled-feature UI mock explicit. Production validation unchanged.",
+    "correction_commit": "3a083e49e12f63e70f9cb1a0d8d9790b17461592",
+    "fresh_full_gates": "Every full test/static/build gate above reran against the corrected frozen source; no first-freeze result is claimed for changed tests."
+  },
+  "prior_verification": {
+    "product_commit": "93b0417e15f492358e26111de6d887f94f87e2a8",
+    "product_tree": "5e836a07a8a694468aa65280fb35429195b4d62d",
+    "recorded_in_documentation_commit": "9d03d9b217cc0bcb1ebab4b7e959c94f229a048d",
+    "scope": "Earlier Task 7 composed synthetic offline verification. Its test-harness observations are historical and do not negate the subsequent five confirmed integrated defects."
+  },
+  "feature_flag": {
+    "default": "false",
+    "activation": "not performed; remains unconfigured/default false",
+    "synthetic_fixture": "Temporarily true only in isolated monkeypatched tests"
+  },
+  "pending_gates": {
+    "integrated_independent_code_security_review": "pending parent-owned single scoped rereview of the integrated R1-R5 fix package",
+    "real_database_queue_migration_atomicity_and_query_syntax": "pending separate isolated runtime authorization and evidence",
+    "actual_embedding_quality_privacy_retention_retry_behavior_and_spend": "pending explicit destination/profile/budget authorization and real evidence",
+    "real_browser_keyboard_geometry_focus_readability_and_comfort": "pending isolated browser authorization and evidence",
+    "source_upload": "denied/pending owner approval; no retry/reroute",
+    "CI_merge_deployment": "not performed"
+  },
+  "commands_and_log_hashes": [
+    {
+      "label": "43-full-backend",
+      "cwd": "/workspace/scratch/7ae04dc66900/workbench-redteam-20261102",
+      "argv": [
+        ".venv/bin/python",
+        "scripts/offline_pytest.py",
+        "--tiktoken-cache",
+        "/workspace/scratch/7ae04dc66900/inspection/workbench-token-cache-20261102",
+        "--",
+        "tests/",
+        "-q"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 101.12,
+      "log_sha256": "b1b0b25ce4c008a2bee5cfb2c7b3c617cc4bd6fa03bd4917292bd820ae79039c"
+    },
+    {
+      "label": "44-full-frontend",
+      "cwd": "/workspace/scratch/7ae04dc66900/workbench-redteam-20261102/frontend",
+      "argv": [
+        "env",
+        "-i",
+        "PATH=/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/usr/local/bin:/usr/bin:/bin",
+        "HOME=/workspace/shared/redteam-20261102/test-home",
+        "NPM_CONFIG_OFFLINE=true",
+        "NPM_CONFIG_UPDATE_NOTIFIER=false",
+        "NPM_CONFIG_AUDIT=false",
+        "NPM_CONFIG_FUND=false",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "npm",
+        "run",
+        "test"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 50.34,
+      "log_sha256": "e1faeec9bfb1643ff7d5ec901316a33beedc95312543c693e335eb22b2cb6e9d"
+    },
+    {
+      "label": "45-ruff",
+      "cwd": "/workspace/scratch/7ae04dc66900/workbench-redteam-20261102",
+      "argv": [
+        ".venv/bin/ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.01,
+      "log_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    {
+      "label": "46-format",
+      "cwd": "/workspace/scratch/7ae04dc66900/workbench-redteam-20261102",
+      "argv": [
+        ".venv/bin/ruff",
+        "format",
+        "--check",
+        "."
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.01,
+      "log_sha256": "310ff7fe44085ac9829ebe9c45d9962372ca05fd6a70463b9fa858597376b469"
+    },
+    {
+      "label": "47-mypy",
+      "cwd": "/workspace/scratch/7ae04dc66900/workbench-redteam-20261102",
+      "argv": [
+        ".venv/bin/python",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.85,
+      "log_sha256": "158d87132d5dc04d5dd95fef22d87053cc7badcc106dfafd777dad0b105aa008"
+    },
+    {
+      "label": "48-types",
+      "cwd": "/workspace/scratch/7ae04dc66900/workbench-redteam-20261102/frontend",
+      "argv": [
+        "env",
+        "-i",
+        "PATH=/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/usr/local/bin:/usr/bin:/bin",
+        "HOME=/workspace/shared/redteam-20261102/test-home",
+        "NPM_CONFIG_OFFLINE=true",
+        "NPM_CONFIG_UPDATE_NOTIFIER=false",
+        "NPM_CONFIG_AUDIT=false",
+        "NPM_CONFIG_FUND=false",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "--incremental",
+        "false"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 16.51,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "49-lint",
+      "cwd": "/workspace/scratch/7ae04dc66900/workbench-redteam-20261102/frontend",
+      "argv": [
+        "env",
+        "-i",
+        "PATH=/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/usr/local/bin:/usr/bin:/bin",
+        "HOME=/workspace/shared/redteam-20261102/test-home",
+        "NPM_CONFIG_OFFLINE=true",
+        "NPM_CONFIG_UPDATE_NOTIFIER=false",
+        "NPM_CONFIG_AUDIT=false",
+        "NPM_CONFIG_FUND=false",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "npm",
+        "run",
+        "lint"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 6.68,
+      "log_sha256": "051361647e895d2fc0a0fa06e49c46d52f648a0867c1e4387246b2838fea2bfa"
+    },
+    {
+      "label": "50-freeze-prebuild",
+      "cwd": "/workspace/scratch/7ae04dc66900/workbench-redteam-20261102",
+      "argv": [
+        "sha256sum",
+        "-c",
+        "/workspace/scratch/7ae04dc66900/workbench-redteam-20261102/.superpowers/sdd/hybrid-20261102/final-fix-logs/frozen-source.sha256"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.03,
+      "log_sha256": "babc4030e48c1b907e56b6589cd2f121bc6bbf8c51f53528680a30cd59b77451"
+    },
+    {
+      "label": "51-production-build",
+      "cwd": "/workspace/scratch/7ae04dc66900/workbench-redteam-20261102/frontend",
+      "argv": [
+        "env",
+        "-i",
+        "PATH=/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/usr/local/bin:/usr/bin:/bin",
+        "HOME=/workspace/shared/redteam-20261102/test-home",
+        "NPM_CONFIG_OFFLINE=true",
+        "NPM_CONFIG_UPDATE_NOTIFIER=false",
+        "NPM_CONFIG_AUDIT=false",
+        "NPM_CONFIG_FUND=false",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 40.75,
+      "log_sha256": "af7da24baa4357460ee232bf138962f594610e21946eae9416b3eb4907fa4a84"
+    },
+    {
+      "label": "52-artifact-independent-verify",
+      "cwd": "/workspace/scratch/7ae04dc66900/workbench-redteam-20261102/frontend",
+      "argv": [
+        "env",
+        "-i",
+        "PATH=/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin:/usr/local/bin:/usr/bin:/bin",
+        "HOME=/workspace/shared/redteam-20261102/test-home",
+        "NPM_CONFIG_OFFLINE=true",
+        "NPM_CONFIG_UPDATE_NOTIFIER=false",
+        "NPM_CONFIG_AUDIT=false",
+        "NPM_CONFIG_FUND=false",
+        "NEXT_TELEMETRY_DISABLED=1",
+        "node",
+        "scripts/build-artifact.mjs",
+        "--verify",
+        "/tmp/sw-frontend-artifact-vC8O3J"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.67,
+      "log_sha256": "8a0dc64f76b700a3fa8c7ac9d88c3611ac02c72f8f9563bd526cf66c27ec630a"
+    },
+    {
+      "label": "53-freeze-final",
+      "cwd": "/workspace/scratch/7ae04dc66900/workbench-redteam-20261102",
+      "argv": [
+        "sha256sum",
+        "-c",
+        "/workspace/scratch/7ae04dc66900/workbench-redteam-20261102/.superpowers/sdd/hybrid-20261102/final-fix-logs/frozen-source.sha256"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.04,
+      "log_sha256": "babc4030e48c1b907e56b6589cd2f121bc6bbf8c51f53528680a30cd59b77451"
+    }
+  ]
+}

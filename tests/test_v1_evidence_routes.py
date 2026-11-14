@@ -23,6 +23,7 @@ from open_notebook.exceptions import InvalidInputError, NotFoundError
 @pytest_asyncio.fixture
 async def routes(tmp_path, monkeypatch):
     import api.routers.evidence as module
+    from api.main import app as application
     from api.main import invalid_input_error_handler, not_found_error_handler
 
     store = MemoryStore()
@@ -88,6 +89,7 @@ async def routes(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(module, "submit_job", submit)
     app = FastAPI()
+    app.exception_handlers.update(application.exception_handlers)
     app.include_router(module.router, prefix="/api")
 
     async def invalid_input_handler(request: Request, exc: Exception) -> Response:
@@ -101,7 +103,8 @@ async def routes(tmp_path, monkeypatch):
     app.add_exception_handler(InvalidInputError, invalid_input_handler)
     app.add_exception_handler(NotFoundError, not_found_handler)
     async with httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app), base_url="http://test"
+        transport=httpx.ASGITransport(app=app),
+        base_url="http://test",
     ) as client:
         yield SimpleNamespace(
             client=client,
@@ -269,10 +272,72 @@ async def test_worker_queue_failure_preserves_downloadable_original_and_failed_j
 
 
 @pytest.mark.asyncio
-async def test_rejected_upload_rolls_back_new_native_source_without_orphan_job(routes):
-    response = await upload(routes, source_id=None, content=b"\xff\xfe")
+@pytest.mark.parametrize("source_id", [None, "source:a"])
+@pytest.mark.parametrize("committed", [False, True])
+async def test_unknown_upload_commit_retains_source_and_bytes_without_queuing(
+    routes, monkeypatch, source_id, committed
+):
+    original_put = routes.store.put
+    attempts = []
+
+    async def uncertain_put(kind, identity, value, create_only=False):
+        attempts.append((kind, identity))
+        if committed:
+            await original_put(kind, identity, value, create_only=create_only)
+        # A typed persistence error must not be mistaken for input validation.
+        raise InvalidInputError("private database acknowledgement failure")
+
+    monkeypatch.setattr(routes.store, "put", uncertain_put)
+    content = "\ufeff🌞 原始证据。\r\n".encode()
+    response = await upload(routes, source_id=source_id, content=content)
+    retained_source = source_id or "source:created_2"
+    assert retained_source in routes.native
+    assert retained_source in routes.memberships["notebook:a"]
+    originals = list(routes.evidence.data_root.glob("originals/*/original.txt"))
+    assert len(originals) == 1
+    assert originals[0].read_bytes() == content
+    assert response.status_code == 500
+    detail = response.json()["detail"]
+    assert detail["code"] == "UPLOAD_COMMIT_UNKNOWN"
+    assert detail["retry_safe"] is False
+    assert detail["source_id"] == retained_source
+    assert len(attempts) == 1
+    assert detail["source_version_id"] == attempts[0][1]
+    assert "private" not in response.text
+    assert await routes.store.list("job") == []
+    assert await routes.store.list("extraction") == []
+    assert routes.queue == []
+    versions = await routes.store.list("version")
+    assert len(versions) == int(committed)
+    if committed:
+        original = await routes.client.get(
+            f"/api/personal/source-versions/{detail['source_version_id']}/download"
+        )
+        assert original.status_code == 200
+        assert original.content == content
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "content,filename,error",
+    [
+        (b"\xff\xfe", "bad.txt", "UTF-8"),
+        (b"", "empty.txt", "size"),
+        (b"unsupported", "bad.bin", "supported"),
+    ],
+)
+async def test_rejected_upload_rolls_back_new_native_source_without_orphan_job(
+    routes, content, filename, error
+):
+    response = await upload(
+        routes,
+        source_id=None,
+        content=content,
+        filename=filename,
+        mime_type="application/octet-stream",
+    )
     assert response.status_code == 400
-    assert "UTF-8" in response.json()["detail"]
+    assert error in response.json()["detail"]
     assert set(routes.native) == {"source:a", "source:b"}
     assert routes.memberships["notebook:a"] == ["source:a"]
     assert await routes.store.list("version") == []
@@ -378,6 +443,82 @@ async def test_historical_reader_returns_requested_old_extraction_and_exact_code
         params={"evidence_id": "ev_missing"},
     )
     assert missing.status_code == 404
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("endpoint", ["detail", "selected", "direct", "search"])
+@pytest.mark.parametrize("corruption", ["alias", "missing", "non_string"])
+async def test_evidence_reads_reject_physical_payload_identity_mismatch(
+    routes, historical, endpoint, corruption
+):
+    identity = historical.current["evidence_ids"][0]
+    record = await routes.evidence.evidence(identity)
+    if corruption == "missing":
+        record.pop("evidence_id")
+    else:
+        record["evidence_id"] = (
+            historical.old["evidence_ids"][0] if corruption == "alias" else []
+        )
+    record["quote_hash"] = "corrupt"
+    await routes.store.put("evidence", identity, record)
+    version_id = historical.version["source_version_id"]
+    if endpoint == "search":
+        response = await routes.client.post(
+            "/api/personal/search",
+            json={"query": "原始", "source_version_ids": [version_id]},
+        )
+    else:
+        response = await routes.client.get(
+            f"/api/personal/evidence/{identity}"
+            if endpoint == "direct"
+            else f"/api/personal/source-versions/{version_id}",
+            params={"evidence_id": identity} if endpoint == "selected" else {},
+        )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Stored evidence integrity check failed"}
+    assert await routes.store.get("evidence", identity) == record
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("endpoint", ["detail", "search"])
+@pytest.mark.parametrize("foreign", ["version", "extraction"])
+async def test_selected_extraction_cannot_return_intact_foreign_evidence(
+    routes, historical, endpoint, foreign
+):
+    extraction = historical.current
+    extraction["evidence_ids"] = (
+        historical.other_ex if foreign == "version" else historical.old
+    )["evidence_ids"]
+    await routes.store.put("extraction", extraction["extraction_id"], extraction)
+    version_id = historical.version["source_version_id"]
+    if endpoint == "search":
+        response = await routes.client.post(
+            "/api/personal/search",
+            json={"query": "evidence 原始", "source_version_ids": [version_id]},
+        )
+    else:
+        response = await routes.client.get(
+            f"/api/personal/source-versions/{version_id}"
+        )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Stored evidence integrity check failed"}
+
+
+@pytest.mark.asyncio
+async def test_direct_evidence_marks_foreign_retained_extraction_invalid(
+    routes, historical
+):
+    extraction = historical.old
+    extraction["source_version_id"] = historical.other["source_version_id"]
+    await routes.store.put("extraction", extraction["extraction_id"], extraction)
+    response = await routes.client.get(
+        f"/api/personal/evidence/{extraction['evidence_ids'][0]}"
+    )
+    assert response.status_code == 200
+    assert response.json()["reference_validity"] == "invalid"
+    assert (
+        response.json()["reference_reason"] == "Stored evidence integrity check failed"
+    )
 
 
 def parse_events(text):

@@ -5,15 +5,23 @@ from typing import Any, ClassVar, Dict, List, Literal, Optional, Union
 
 from loguru import logger
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from surreal_commands import submit_command
 from surrealdb import RecordID
 
+from open_notebook.database.note_contract import Revision
 from open_notebook.database.repository import ensure_record_id, repo_query
 from open_notebook.domain.base import ObjectModel
 from open_notebook.exceptions import (
+    CommandSubmissionUnknownError,
     DatabaseOperationError,
     InvalidInputError,
     NotFoundError,
+    OpenNotebookError,
+)
+from open_notebook.utils.boundary_logging import log_boundary_failure
+from open_notebook.utils.command_submission import submit_command
+from open_notebook.utils.source_execution import (
+    source_owner_progress,
+    source_processing_status,
 )
 
 
@@ -45,9 +53,8 @@ class Notebook(ObjectModel):
             )
             return [Source(**src["source"]) for src in srcs] if srcs else []
         except Exception as e:
-            logger.error(f"Error fetching sources for notebook {self.id}: {str(e)}")
-            logger.exception(e)
-            raise DatabaseOperationError(e)
+            log_boundary_failure("notebook_sources", e)
+            raise DatabaseOperationError(e) from e
 
     async def get_notes(self, include_content: bool = False) -> List["Note"]:
         try:
@@ -67,9 +74,8 @@ class Notebook(ObjectModel):
             )
             return [Note(**src["note"]) for src in srcs] if srcs else []
         except Exception as e:
-            logger.error(f"Error fetching notes for notebook {self.id}: {str(e)}")
-            logger.exception(e)
-            raise DatabaseOperationError(e)
+            log_boundary_failure("notebook_notes", e)
+            raise DatabaseOperationError(e) from e
 
     async def get_context(self) -> str:
         """
@@ -213,6 +219,16 @@ class Notebook(ObjectModel):
             raise DatabaseOperationError(e)
 
     async def delete(self, delete_exclusive_sources: bool = False) -> Dict[str, int]:
+        from open_notebook.database.note_repository import notebook_mutation_locks
+
+        if not self.id:
+            raise InvalidInputError("Cannot delete notebook without an ID")
+        async with notebook_mutation_locks(str(self.id)):
+            return await self._delete_locked(delete_exclusive_sources)
+
+    async def _delete_locked(
+        self, delete_exclusive_sources: bool = False
+    ) -> Dict[str, int]:
         """
         Delete notebook with cascade deletion of notes and optional source deletion.
 
@@ -228,6 +244,15 @@ class Notebook(ObjectModel):
             raise InvalidInputError("Cannot delete notebook without an ID")
 
         try:
+            from open_notebook.database.evidence_embedding_repository import (
+                EvidenceEmbeddingRepository,
+            )
+
+            # Revoke before the first cascade operation, even if cleanup fails.
+            # The caller owns the existing notebook mutation/project barrier.
+            await EvidenceEmbeddingRepository(
+                query=repo_query
+            ).invalidate_notebook_locked(str(self.id))
             notebook_id = ensure_record_id(self.id)
             deleted_notes = 0
             deleted_sources = 0
@@ -236,16 +261,8 @@ class Notebook(ObjectModel):
 
             # 1. Get and delete all notes linked to this notebook
             notes = await self.get_notes()
-            for note in notes:
-                await note.delete()
-                deleted_notes += 1
+            deleted_notes = len(notes)
             logger.info(f"Deleted {deleted_notes} notes for notebook {self.id}")
-
-            # Delete artifact relationships
-            await repo_query(
-                "DELETE artifact WHERE out = $notebook_id",
-                {"notebook_id": notebook_id},
-            )
 
             # 2. Handle sources
             if delete_exclusive_sources:
@@ -267,7 +284,7 @@ class Notebook(ObjectModel):
                         # Exclusive source - delete it
                         try:
                             source = await Source.get(str(source_id))
-                            await source.delete()
+                            await source._delete_under_notebook_barrier()
                             deleted_sources += 1
                         except Exception as e:
                             logger.warning(
@@ -303,7 +320,11 @@ class Notebook(ObjectModel):
             )
 
             # 4. Delete the notebook record itself
-            await super().delete()
+            from open_notebook.database.note_repository import (
+                delete_notebook_notes_locked,
+            )
+
+            deleted_notes = await delete_notebook_notes_locked(str(self.id))
             logger.info(f"Deleted notebook {self.id}")
 
             return {
@@ -313,6 +334,8 @@ class Notebook(ObjectModel):
                 "deleted_chat_sessions": deleted_chat_sessions,
             }
 
+        except OpenNotebookError:
+            raise
         except Exception as e:
             logger.error(f"Error deleting notebook {self.id}: {e}")
             logger.exception(e)
@@ -369,9 +392,8 @@ class SourceInsight(ObjectModel):
                 {"source_ids": [ensure_record_id(sid) for sid in grouped]},
             )
         except Exception as e:
-            logger.error(f"Error batch-fetching insights for sources: {str(e)}")
-            logger.exception(e)
-            raise DatabaseOperationError("Failed to fetch insights for sources")
+            log_boundary_failure("notebook_insights", e)
+            raise DatabaseOperationError("Failed to fetch insights for sources") from e
         for row in result:
             key = str(row.get("source"))
             grouped.setdefault(key, []).append(cls(**row))
@@ -397,9 +419,7 @@ class SourceInsight(ObjectModel):
             title=f"{self.insight_type} from source {source.title}",
             content=self.content,
         )
-        await note.save()
-        if notebook_id:
-            await note.add_to_notebook(notebook_id)
+        await note.save(notebook_id=notebook_id)
         return note
 
 
@@ -415,6 +435,8 @@ class Source(ObjectModel):
     command: Optional[Union[str, RecordID]] = Field(
         default=None, description="Link to surreal-commands processing job"
     )
+
+    processing_attempt: Optional[Dict[str, Any]] = None
 
     @field_validator("command", mode="before")
     @classmethod
@@ -436,6 +458,8 @@ class Source(ObjectModel):
 
     async def get_status(self) -> Optional[str]:
         """Get the processing status of the associated command"""
+        if self.processing_attempt and not self.processing_attempt.get("command"):
+            return "unknown"
         if not self.command:
             return None
 
@@ -443,10 +467,12 @@ class Source(ObjectModel):
             from surreal_commands import get_command_status
 
             status = await get_command_status(str(self.command))
-            return status.status if status else "unknown"
+            return source_processing_status(
+                self.processing_attempt, status.status if status else "unknown"
+            )
         except Exception as e:
-            logger.warning(f"Failed to get command status for {self.command}: {e}")
-            return "unknown"
+            log_boundary_failure("notebook_status", e, level="WARNING")
+            return source_processing_status(self.processing_attempt, "unknown")
 
     async def get_processing_progress(self) -> Optional[Dict[str, Any]]:
         """Get detailed processing information for the associated command"""
@@ -458,7 +484,15 @@ class Source(ObjectModel):
 
             status_result = await get_command_status(str(self.command))
             if not status_result:
-                return None
+                return source_owner_progress(
+                    self.processing_attempt,
+                    source_processing_status(self.processing_attempt, "unknown"),
+                )
+            public_status = source_processing_status(
+                self.processing_attempt, status_result.status
+            )
+            if public_status != status_result.status:
+                return source_owner_progress(self.processing_attempt, public_status)
 
             # Extract execution metadata if available
             result = getattr(status_result, "result", None)
@@ -474,8 +508,11 @@ class Source(ObjectModel):
                 "result": result,
             }
         except Exception as e:
-            logger.warning(f"Failed to get command progress for {self.command}: {e}")
-            return None
+            log_boundary_failure("notebook_progress", e, level="WARNING")
+            return source_owner_progress(
+                self.processing_attempt,
+                source_processing_status(self.processing_attempt, "unknown"),
+            )
 
     async def get_context(
         self,
@@ -525,9 +562,8 @@ class Source(ObjectModel):
             )
             return [SourceInsight(**insight) for insight in result]
         except Exception as e:
-            logger.error(f"Error fetching insights for source {self.id}: {str(e)}")
-            logger.exception(e)
-            raise DatabaseOperationError("Failed to fetch insights for source")
+            log_boundary_failure("notebook_source_insights", e)
+            raise DatabaseOperationError("Failed to fetch insights for source") from e
 
     async def add_to_notebook(self, notebook_id: str) -> Any:
         if not notebook_id:
@@ -560,7 +596,7 @@ class Source(ObjectModel):
                 raise ValueError(f"Source {self.id} has no text to vectorize")
 
             # Submit the embed_source command
-            command_id = submit_command(
+            command_id = await submit_command(
                 "open_notebook",
                 "embed_source",
                 {"source_id": str(self.id)},
@@ -574,7 +610,7 @@ class Source(ObjectModel):
 
             return command_id_str
 
-        except ValueError:
+        except (ValueError, CommandSubmissionUnknownError):
             raise
         except Exception as e:
             logger.error(f"Failed to submit embed_source job for source {self.id}: {e}")
@@ -616,7 +652,7 @@ class Source(ObjectModel):
         try:
             # Submit create_insight command (fire-and-forget)
             # Command handles retries internally for transaction conflicts
-            command_id = submit_command(
+            command_id = await submit_command(
                 "open_notebook",
                 "create_insight",
                 {
@@ -631,6 +667,8 @@ class Source(ObjectModel):
             )
             return str(command_id)
 
+        except CommandSubmissionUnknownError:
+            raise
         except Exception as e:
             logger.exception(
                 f"Error submitting create_insight for source {self.id}: {e}"
@@ -638,17 +676,47 @@ class Source(ObjectModel):
             raise DatabaseOperationError(e)
 
     def _prepare_save_data(self) -> dict:
-        """Override to ensure command field is always RecordID format for database"""
+        """Ordinary saves cannot overwrite a separately claimed queue owner."""
         data = super()._prepare_save_data()
-
-        # Ensure command field is RecordID format if not None
-        if data.get("command") is not None:
+        if self.id:
+            data.pop("command", None)
+            data.pop("processing_attempt", None)
+        elif data.get("command") is not None:
             data["command"] = ensure_record_id(data["command"])
-
         return data
 
     async def delete(self) -> bool:
-        """Delete source and clean up associated file, embeddings, and insights."""
+        """Revoke every retained semantic scope before ordinary source cleanup."""
+        from open_notebook.database.evidence_embedding_repository import (
+            EvidenceEmbeddingRepository,
+        )
+
+        if not self.id:
+            raise InvalidInputError("Cannot delete source without an ID")
+        async with EvidenceEmbeddingRepository(
+            query=repo_query
+        ).source_deletion_barrier(str(self.id)):
+            return await self._delete_after_scope_revocation()
+
+    async def _delete_under_notebook_barrier(self) -> bool:
+        """Cascade owns its barrier; DB guard writes revoke ALL retained scopes.
+
+        Do not reacquire project locks here. Epoch/CAS writes are the authority
+        for other notebooks/independent data roots, including unlinked history.
+        """
+        from open_notebook.database.evidence_embedding_repository import (
+            EvidenceEmbeddingRepository,
+        )
+
+        if not self.id:
+            raise InvalidInputError("Cannot delete source without an ID")
+        await EvidenceEmbeddingRepository(query=repo_query).invalidate_source_locked(
+            str(self.id)
+        )
+        return await self._delete_after_scope_revocation()
+
+    async def _delete_after_scope_revocation(self) -> bool:
+        """Common classic cleanup; scope revocation must already be acknowledged."""
         # Clean up uploaded file if it exists
         if self.asset and self.asset.file_path:
             file_path = Path(self.asset.file_path)
@@ -689,6 +757,7 @@ class Source(ObjectModel):
 
 
 class Note(ObjectModel):
+    revision: Revision = 1
     table_name: ClassVar[str] = "note"
     title: Optional[str] = None
     note_type: Optional[Literal["human", "ai"]] = None
@@ -701,21 +770,47 @@ class Note(ObjectModel):
             raise InvalidInputError("Note content cannot be empty")
         return v
 
-    async def save(self) -> Optional[str]:
-        """
-        Save the note and submit embedding command.
+    async def save(
+        self,
+        *,
+        expected_revision: int | None = None,
+        fields: dict | None = None,
+        notebook_id: str | None = None,
+    ) -> Optional[str]:
+        from open_notebook.database.note_repository import create_note, update_note
 
-        Overrides ObjectModel.save() to submit an async embed_note command
-        after saving, instead of inline embedding.
+        # ObjectModel.save validated assignments and omitted unloaded/None fields.
+        # Keep both semantics without falling back to its non-CAS persistence.
+        self.model_validate(self.model_dump(), strict=True)
+        candidates = self._prepare_save_data() if fields is None else fields
+        values = {
+            key: value
+            for key, value in candidates.items()
+            if key in ("title", "content", "note_type")
+            and (value is not None or key in self.nullable_fields)
+        }
+        if fields is not None:
+            self.model_validate({**self.model_dump(), **values}, strict=True)
+        if self.id:
+            result = await update_note(
+                note_id=str(self.id),
+                fields=values,
+                expected_revision=self.revision
+                if expected_revision is None
+                else expected_revision,
+            )
+        else:
+            result = await create_note(fields=values, notebook_id=notebook_id)
+        saved = type(self)(**result.native)
+        for name in type(self).model_fields:
+            setattr(self, name, getattr(saved, name))
+        return await self.submit_embedding()
 
-        Returns:
-            Optional[str]: The command_id if embedding was submitted, None
-                otherwise (either no content to embed, or submission failed)
-        """
-        # Call parent save (without embedding)
-        await super().save()
-
-        # Submit embedding command (fire-and-forget) if note has content.
+    async def submit_embedding(self, *, strict: bool = False) -> Optional[str]:
+        """Submit embedding after editorial commit; explicit callers propagate uncertainty."""
+        # Automatic post-save embedding is best effort; strict explicit requests
+        # must not describe an ambiguous CREATE as a definite enqueue failure.
+        # Submit embedding command if note has content.
         # Unlike Source.vectorize()/add_insight() (explicit, dedicated calls
         # whose whole point is the submission), this runs automatically
         # inside save() - the note itself is already durably saved above,
@@ -723,13 +818,20 @@ class Note(ObjectModel):
         # save with a 500. Best-effort: log and move on.
         if self.id and self.content and self.content.strip():
             try:
-                command_id = submit_command(
+                command_id = await submit_command(
                     "open_notebook",
                     "embed_note",
                     {"note_id": str(self.id)},
                 )
                 logger.debug(f"Submitted embed_note command {command_id} for {self.id}")
                 return command_id
+            except CommandSubmissionUnknownError as exc:
+                if strict:
+                    exc.resource_id = str(self.id)
+                    exc.resource_type = "note"
+                    raise
+                logger.warning("Automatic note embedding submission outcome is unknown")
+                return None
             except Exception as e:
                 logger.error(f"Failed to submit embed_note command for {self.id}: {e}")
                 return None
@@ -737,10 +839,18 @@ class Note(ObjectModel):
         return None
 
     async def add_to_notebook(self, notebook_id: str) -> Any:
-        if not notebook_id:
-            raise InvalidInputError("Notebook ID must be provided")
-        await Notebook.get(notebook_id)  # raises NotFoundError if invalid/missing
-        return await self.relate("artifact", notebook_id)
+        from open_notebook.database.note_repository import add_to_notebook
+
+        if not self.id or not notebook_id:
+            raise InvalidInputError("Note and notebook IDs must be provided")
+        return await add_to_notebook(str(self.id), notebook_id)
+
+    async def delete(self):
+        from open_notebook.database.note_repository import delete_note
+
+        if not self.id:
+            raise InvalidInputError("Cannot delete note without an ID")
+        await delete_note(str(self.id))
 
     def get_context(
         self, context_size: Literal["short", "long"] = "short"

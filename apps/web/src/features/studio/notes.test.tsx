@@ -1,0 +1,160 @@
+import { expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { createStudioStore, compatibleNoteMetadata } from './studio-store';
+import { NoteEditor } from './NoteEditor';
+import { AppProviders } from '../../app/providers';
+import { createStudioApi, noteForEditor } from '../../data/studio-api';
+import { sourceContext } from '../../test/source-fixtures';
+import { json } from '../../test/notebook-fixtures';
+import { sessionCoordinator, type RequestSpec } from '@study/web-transport';
+const draft = { title: 'Base', content: 'Original', citations: [], scope_snapshot: { source_version_ids: ['v1'] } };
+function setup(note = true) { const c = sourceContext(), g = sessionCoordinator.current(), store = createStudioStore(() => { }); const id = store.open('n', draft, c, g, note ? { id: 'note:1', revision: 7 } : undefined); return { store, id, c, g }; }
+it.each([409, 428] as const)('retains revision and newer draft on %s without replay', status => { const { store, id, c, g } = setup(); store.edit(id, { content: 'New' }); const attempt = store.beginSave(id, c, g)!; store.settleSave(id, attempt.operation.token!, { kind: 'conflict', status }, c, g); expect(store.get(id)?.editor).toMatchObject({ content: 'New', baseRevision: 7, saveResult: 'conflict' }); expect(store.beginSave(id, c, g)).toBeNull(); });
+it('retains unknown unkeyed create identity even for equal candidates and repeated Save Answer', () => { const { store, id, c, g } = setup(false); const a = store.beginSave(id, c, g)!; store.settleSave(id, a.operation.token!, { kind: 'unknown' }, c, g); store.compare(store.beginCompare(id, c, g)!, [{ id: 'note:equal', revision: 1, ...draft }], c, g); expect(store.beginSave(id, c, g)).toBeNull(); expect(store.get(id)?.editor.noteId).toBeNull(); expect(store.get(id)?.editor.saveResult).toBe('unknown'); });
+it('merges late save base but never replaces newer title or frozen citations/scope', () => { const { store, id, c, g } = setup(); store.edit(id, { content: 'Saved' }); const a = store.beginSave(id, c, g)!; store.edit(id, { title: 'Newer title' }); store.settleSave(id, a.operation.token!, { kind: 'saved', note: { id: 'note:1', revision: 8, title: 'Base', content: 'Saved', citations: [], scope_snapshot: draft.scope_snapshot } }, c, g); expect(store.get(id)?.editor).toMatchObject({ title: 'Newer title', baseRevision: 8, dirty: true }); expect(a.editor.pending?.payload.scope_snapshot).toEqual(draft.scope_snapshot); expect(store.promotion(id)).toBeNull(); });
+it('compares without mutation and requires explicit revision-bound re-edit', () => { const { store, id, c, g } = setup(); store.edit(id, { content: 'Local' }); const a = store.beginSave(id, c, g)!; store.settleSave(id, a.operation.token!, { kind: 'conflict', status: 409 }, c, g); store.compare(store.beginCompare(id, c, g)!, [{ id: 'note:1', revision: 8, ...draft, content: 'External' }], c, g); const snapshot = store.get(id)!; expect(snapshot.editor.content).toBe('Local'); store.edit(id, { title: 'Later' }); expect(store.reedit(id, snapshot, c, g)).toBe(false); const latest = store.get(id)!; expect(store.reedit(id, latest, c, g)).toBe(true); expect(store.get(id)?.editor).toMatchObject({ title: 'Later', content: 'Local', baseRevision: 8, saveResult: 'idle', dirty: true }); });
+it('rejects old token and changed session generation instead of acknowledging late bytes', () => { const { store, id, c, g } = setup(); const a = store.beginSave(id, c, g)!; store.settleSave(id, { ...a.operation.token!, attempt: 9 }, { kind: 'saved', note: { id: 'note:1', revision: 8, ...draft } }, c, g); expect(store.get(id)?.editor.saveResult).toBe('saving'); store.settleSave(id, a.operation.token!, { kind: 'saved', note: { id: 'note:1', revision: 8, ...draft } }, c, g + 1); expect(store.get(id)?.editor.saveResult).toBe('unknown'); });
+it('keeps drafts and the original operation in app-lifetime custody on retire', () => { const { store, id, c, g } = setup(); store.edit(id, { title: 'Retained' }); const a = store.beginSave(id, c, g)!; store.retire(c.epoch); expect(store.get(id)).toMatchObject({ retired: true, editor: { title: 'Retained', saveResult: 'unknown' } }); expect(store.beginSave(id, c, g)).toBeNull(); expect(store.get(id)?.operation.token).toBe(a.operation.token); });
+it('does not make unknown read projections writable or erase unsupported scope', () => { expect(noteForEditor({ id: 'n', revision: 0, ...draft })).toBeNull(); expect(noteForEditor({ id: 'n', revision: 1, ...draft, citations: [{ projection_status: 'unknown' }] })).toBeNull(); expect(noteForEditor({ id: 'n', revision: 1, ...draft, scope_snapshot: { projection_status: 'unknown' } })).toBeNull(); expect(noteForEditor({ id: 'n', revision: 1, title: 'Classic', content: 'Old' })).toMatchObject({ mode: 'classic' }); });
+it('shows conflict and controlled draft without an automatic save or reload', () => { const { store, id, c, g } = setup(); store.edit(id, { content: 'Local' }); const a = store.beginSave(id, c, g)!; store.settleSave(id, a.operation.token!, { kind: 'conflict', status: 409 }, c, g); const save = vi.fn(); render(<AppProviders locale="en-US"><NoteEditor draft={store.get(id)!.editor} onEdit={() => { }} onSave={save} onClose={() => { }}/></AppProviders>); expect(screen.getByLabelText('Markdown note')).toHaveValue('Local'); expect(screen.getByText('This note changed elsewhere. Your draft is safe here. Compare before replacing it.')).toBeVisible(); expect(screen.getByRole('button', { name: 'Save note' })).toBeDisabled(); expect(save).not.toHaveBeenCalled(); });
+it('uses exact personal CAS and classic PUT payloads without invented idempotency keys', async () => { const requests: RequestSpec[] = []; const api = createStudioApi({ send: async (r) => { requests.push(r); return json({ id: 'note:1', revision: 8, ...draft, note_type: 'human', notebook_id: 'n/a' }); } }); const c = sourceContext(); await api.updateNote('n/a', 'note:1', { ...draft, expected_revision: 7 }, c); await api.updateClassic('note:1', { title: 'Classic', content: 'Text', expected_revision: 8 }, c); expect(requests.map(r => [r.method, r.path])).toEqual([['PATCH', '/personal/notebooks/n%2Fa/notes/note%3A1'], ['PUT', '/notes/note%3A1']]); expect(JSON.parse(String(requests[0]?.body))).toEqual({ ...draft, expected_revision: 7 }); });
+it('distinguishes actual revision error envelopes from an uncertain mutation', async () => { const c = sourceContext(); const api = createStudioApi({ send: async () => json({ detail: { code: 'NOTE_REVISION_CONFLICT', current_revision: 8 } }, 409) }); await expect(api.updateNote('n', 'note:1', { ...draft, expected_revision: 7 }, c)).rejects.toMatchObject({ kind: 'conflict', status: 409 }); });
+it('preserves the exact legacy empty note scope but never promotes it into turn scope', () => { const result = noteForEditor({ id: 'note:1', revision: 1, title: 'Legacy', content: 'Text', citations: [], scope_snapshot: {} }); expect(result?.draft.scope_snapshot).toEqual({}); expect(result?.mode).toBe('personal'); expect(noteForEditor({ id: 'note:1', revision: 1, title: 'Legacy', content: 'Text', citations: [], scope_snapshot: { engine: 'unknown' } })).toBeNull(); });
+it('retains outline owner and a distinct editor session without replacing a dirty note', () => { const { store, id, c, g } = setup(); store.edit(id, { content: 'My newer work' }); store.select('n', id); const turn = { turn_id: 'outline-turn', notebook_id: 'n', status: 'succeeded', message: 'Outline', answer: 'Outline body', citations: [], scope_snapshot: { source_version_ids: ['v1'] } }; const origin = { notebookId: 'n', sessionId: 'v1_n', turnId: 'outline-turn', operationId: 'question-operation', owner: { mountId: 'original-question-owner', questionRevision: 4 } }; const outline = store.captureTurn('n', turn, c, g, 'outline:question-operation', origin)!; expect(outline).not.toBe(id); expect(store.get(outline)?.outlineOrigin).toEqual(origin); expect(store.get(id)?.editor.content).toBe('My newer work'); expect(store.getSnapshot().active.get('n')).toBe(id); expect(store.captureTurn('n', turn, c, g, 'outline:question-operation', origin)).toBe(outline); expect(store.captureTurn('n', turn, c, g, 'bad', { ...origin, turnId: 'different' })).toBeNull(); });
+it('does not silently rebase local text onto changed evidence metadata', () => { const { store, id, c, g } = setup(); store.edit(id, { content: 'Local reasoning' }); const a = store.beginSave(id, c, g)!; store.settleSave(id, a.operation.token!, { kind: 'conflict', status: 409 }, c, g); store.compare(store.beginCompare(id, c, g)!, [{ id: 'note:1', revision: 8, ...draft, scope_snapshot: { source_version_ids: ['different'] } }], c, g); const before = store.get(id)!; expect(store.reedit(id, before, c, g)).toBe(false); expect(store.get(id)?.editor.base.scope_snapshot).toEqual(draft.scope_snapshot); expect(store.reload(id, before, c, g)).toBe(true); expect(store.get(id)?.history[0]?.editor).toMatchObject({ content: 'Local reasoning', base: { scope_snapshot: draft.scope_snapshot } }); });
+it('does not unlock unknown PATCH merely because a latest copy can be read', () => { const { store, id, c, g } = setup(); const a = store.beginSave(id, c, g)!; store.settleSave(id, a.operation.token!, { kind: 'unknown' }, c, g); store.compare(store.beginCompare(id, c, g)!, [{ id: 'note:1', revision: 8, ...draft }], c, g); const before = store.get(id)!; expect(store.reedit(id, before, c, g)).toBe(false); expect(store.reload(id, before, c, g)).toBe(false); expect(store.beginSave(id, c, g)).toBeNull(); });
+it('ignores older compare responses and readbacks owned by a previous save operation', () => { const { store, id, c, g } = setup(); const a = store.beginSave(id, c, g)!; store.settleSave(id, a.operation.token!, { kind: 'conflict', status: 409 }, c, g); const first = store.beginCompare(id, c, g)!, second = store.beginCompare(id, c, g)!; store.compare(second, [{ id: 'note:1', revision: 9, ...draft }], c, g); store.compare(first, [{ id: 'note:1', revision: 8, ...draft }], c, g); expect(store.get(id)?.latest?.revision).toBe(9); });
+import { classicCandidate } from './StudioPanel';
+it('does not use classic DTO stripping to bypass personal or unsupported workspace metadata', () => { const native = { id: 'note:1', revision: 7, title: 'Native', content: 'Text', note_type: 'human' }; expect(classicCandidate(native, [{ ...native, citations: [{ projection_status: 'unknown' }], scope_snapshot: {} }])).toBe(false); expect(classicCandidate(native, [{ ...native, citations: [], scope_snapshot: {} }])).toBe(false); expect(classicCandidate(native, [native])).toBe(true); expect(noteForEditor({ ...native, note_type: { projection_status: 'unknown' } })).toBeNull(); expect(noteForEditor({ ...native, provenance: { projection_status: 'unknown' } })).toBeNull(); });
+it('edits nullable classic fields with partial CAS while retaining untouched null and absence', () => { const c = sourceContext(), g = sessionCoordinator.current(), store = createStudioStore(() => { }), raw = { id: 'note:classic', revision: 7, title: null, content: null }; const parsed = noteForEditor(raw)!; expect(parsed.draft).toMatchObject({ title: '', content: '' }); const id = store.open('n', parsed.draft, c, g, parsed.note, 'classic', null); expect(store.get(id)?.classic?.base).toEqual(raw); expect(store.beginSave(id, c, g)).toBeNull(); store.edit(id, { title: 'Named' }); const a = store.beginSave(id, c, g)!; expect(a.classic?.pending?.patch).toEqual({ title: 'Named', expected_revision: 7 }); store.edit(id, { content: 'Late body' }); store.settleSave(id, a.operation.token!, { kind: 'saved', note: { ...raw, revision: 8, title: 'Named' } }, c, g); expect(store.get(id)?.classic?.base?.content).toBeNull(); expect(store.get(id)?.editor).toMatchObject({ content: 'Late body', dirty: true, baseRevision: 8 }); const next = store.beginSave(id, c, g)!; expect(next.classic?.pending?.patch).toEqual({ content: 'Late body', expected_revision: 8 }); const absent = noteForEditor({ id: 'note:absent', revision: 1, title: null })!; expect(absent.note).not.toHaveProperty('content'); });
+it('keeps untouched classic fields from the latest copy during explicit conflict re-edit', () => { const c = sourceContext(), g = sessionCoordinator.current(), store = createStudioStore(() => { }), raw = { id: 'note:classic', revision: 7, title: null, content: null }; const parsed = noteForEditor(raw)!; const id = store.open('n', parsed.draft, c, g, parsed.note, 'classic', null); store.edit(id, { title: 'Mine' }); const a = store.beginSave(id, c, g)!; store.settleSave(id, a.operation.token!, { kind: 'conflict', status: 409 }, c, g); store.compare(store.beginCompare(id, c, g)!, [{ ...raw, revision: 8, content: 'Server body' }], c, g); expect(store.reedit(id, store.get(id)!, c, g)).toBe(true); expect(store.get(id)?.editor.content).toBe('Server body'); expect(store.beginSave(id, c, g)?.classic?.pending?.patch).toEqual({ title: 'Mine', expected_revision: 8 }); });
+it('discards only the exact explicitly confirmed draft without unresolved writes', () => { const { store, id, c, g } = setup(false); const original = store.get(id)!; store.edit(id, { title: 'Changed' }); expect(store.discardNote(id, original, c, g)).toBe(false); const current = store.get(id)!; expect(store.discardNote(id, current, c, g)).toBe(true); const next = store.open('n', draft, c, g); const a = store.beginSave(next, c, g)!; store.settleSave(next, a.operation.token!, { kind: 'unknown' }, c, g); expect(store.discardNote(next, store.get(next)!, c, g)).toBe(false); });
+it('clears only acknowledged per-field classic edits after a conflict re-edit resets the display revision', () => {
+    const c = sourceContext(), g = sessionCoordinator.current(), store = createStudioStore(() => { }), raw = { id: 'note:classic', revision: 7, title: null, content: null };
+    const parsed = noteForEditor(raw)!;
+    const id = store.open('n', parsed.draft, c, g, parsed.note, 'classic');
+    for (const title of ['M', 'My', 'Mine'])
+        store.edit(id, { title });
+    let a = store.beginSave(id, c, g)!;
+    store.settleSave(id, a.operation.token!, { kind: 'conflict', status: 409 }, c, g);
+    store.compare(store.beginCompare(id, c, g)!, [{ ...raw, revision: 8 }], c, g);
+    store.reedit(id, store.get(id)!, c, g);
+    a = store.beginSave(id, c, g)!;
+    store.settleSave(id, a.operation.token!, { kind: 'saved', note: { ...raw, revision: 9, title: 'Mine' } }, c, g);
+    expect(store.get(id)?.editor.dirty).toBe(false);
+    expect(store.beginSave(id, c, g)).toBeNull();
+});
+
+import { producerCitation, producerScope } from '../../test/studio-fixtures';
+it.each([false,true])('captures answer and outline mapped scope and nullable citations without losing provenance (%s)',populated=>{const c=sourceContext(),g=sessionCoordinator.current(),store=createStudioStore(()=>{}),scope=producerScope(populated),citation=producerCitation('Restored archive evidence has not been verified by a fresh local extraction'),turn={turn_id:'mapped-turn',notebook_id:'n',status:'succeeded',message:'Mapped question',answer:'Mapped body',citations:[citation],scope_snapshot:scope};const origin={notebookId:'n',sessionId:'v1_n',turnId:'mapped-turn',operationId:'outline:1',owner:{mountId:'owner',questionRevision:1}};for(const [key,o] of [['answer:1',undefined],['outline:1',origin]] as const){const id=store.captureTurn('n',turn,c,g,key,o)!;expect(id).toBeTruthy();expect(store.get(id)?.editor.base).toMatchObject({scope_snapshot:scope,citations:[citation]});expect(Object.isFrozen(store.get(id)?.editor.base.scope_snapshot)).toBe(true);}expect(scope.mappings).toEqual(producerScope(populated).mappings);});
+
+import { parseWorkspaceView, type EvidenceCitation, type WorkbenchNote } from '@study/contracts';
+import { producerCitationRepresentations } from '../../test/studio-fixtures';
+import { sourceWorkspace } from '../../test/source-fixtures';
+const nullableCitationFields = ['remote_reference', 'independent_support', 'provenance', 'reason'] as const;
+function conflictWithCitations(citations: EvidenceCitation[], scope = producerScope()) {
+    const c = sourceContext(), g = sessionCoordinator.current(), store = createStudioStore(() => {});
+    const base = { title: 'Cited base', content: 'Original body', citations, scope_snapshot: scope };
+    const id = store.open('n', base, c, g, { id: 'note:1', revision: 7 });
+    store.edit(id, { content: 'Retained reasoning' });
+    const attempt = store.beginSave(id, c, g)!;
+    store.settleSave(id, attempt.operation.token!, { kind: 'conflict', status: 409 }, c, g);
+    return { store, id, c, g, base };
+}
+const omissionCases = nullableCitationFields.map(field => [field]).concat([[...nullableCitationFields]]);
+it.each(omissionCases.flatMap(fields => [false, true].map(reverse => ({ fields, reverse }))))(
+    'permits only the approved null/absence comparison for $fields (reverse=$reverse) while retaining both raw captures',
+    ({ fields, reverse }) => {
+        const { withNulls } = producerCitationRepresentations();
+        const omitted: EvidenceCitation = { ...withNulls };
+        for (const field of fields) delete omitted[field];
+        const original = reverse ? omitted : withNulls, latestCitation = reverse ? withNulls : omitted;
+        const { store, id, c, g, base } = conflictWithCitations([original]);
+        const latest = { id: 'note:1', revision: 8, ...base, content: 'External body', citations: [latestCitation] };
+        const originalJson = JSON.stringify(original), latestJson = JSON.stringify(latest);
+        store.compare(store.beginCompare(id, c, g)!, [latest], c, g);
+        const before = store.get(id)!;
+        expect(compatibleNoteMetadata(before)).toBe(true);
+        expect(store.beginSave(id, c, g)).toBeNull();
+        expect(store.reedit(id, before, c, g)).toBe(true);
+        const after = store.get(id)!;
+        expect(after.editor).toMatchObject({ baseRevision: 8, content: 'Retained reasoning', saveResult: 'idle' });
+        expect(after.editor.base.citations).toEqual([original]);
+        expect(after.editor.base.scope_snapshot).toEqual(base.scope_snapshot);
+        expect(after.history[0]?.editor).toBe(before.editor);
+        expect(after.history[0]).toMatchObject({ latest, comparison: [latest] });
+        expect(Object.isFrozen(after.editor.base.citations[0])).toBe(true);
+        expect(JSON.stringify(original)).toBe(originalJson);
+        expect(JSON.stringify(latest)).toBe(latestJson);
+        expect(before.latest).toEqual(latest);
+        const next = store.beginSave(id, c, g)!;
+        expect(next.editor.pending?.payload).toMatchObject({ expected_revision: 8, citations: [original], scope_snapshot: base.scope_snapshot });
+    }
+);
+
+it('does not unlock an unknown save even when the four optional fields are comparison-equivalent', () => {
+    const { withNulls, withoutNulls } = producerCitationRepresentations();
+    const c = sourceContext(), g = sessionCoordinator.current(), store = createStudioStore(() => {});
+    const base = { ...draft, citations: [withNulls] }, id = store.open('n', base, c, g, { id: 'note:1', revision: 7 });
+    const attempt = store.beginSave(id, c, g)!;
+    store.settleSave(id, attempt.operation.token!, { kind: 'unknown' }, c, g);
+    store.compare(store.beginCompare(id, c, g)!, [{ id: 'note:1', revision: 8, ...base, citations: [withoutNulls] }], c, g);
+    const retained = store.get(id)!;
+    expect(compatibleNoteMetadata(retained)).toBe(true);
+    expect(store.reedit(id, retained, c, g)).toBe(false);
+    expect(store.reload(id, retained, c, g)).toBe(false);
+    expect(store.beginSave(id, c, g)).toBeNull();
+    expect(store.get(id)?.operation.token).toBe(attempt.operation.token);
+    expect(store.get(id)?.editor.base.citations).toEqual([withNulls]);
+});
+
+const unchangedCitation = producerCitationRepresentations().withNulls;
+const strictCitationChanges: [string, Record<string, unknown>][] = [
+    ['independent support false', { independent_support: false }],
+    ['independent support true', { independent_support: true }],
+    ['reason string', { reason: 'Restored archive evidence' }],
+    ['reason empty string', { reason: '' }],
+    ['remote reference object', { remote_reference: {} }],
+    ['provenance object', { provenance: { kind: 'web', source_url: null, retrieved_at: '2026-11-08', provider: 'firecrawl' } }],
+    ['validity', { reference_validity: 'unverified' }],
+    ['kind', { kind: 'derived_snapshot' }],
+    ['citation identity', { citation_id: 'different' }],
+    ['evidence identity', { evidence_id: 'different' }],
+    ['version identity', { source_version_id: 'different' }],
+    ['source title', { source_title: 'Different title' }],
+    ['quote', { quote: 'Different quote' }],
+    ['locator', { locator: { ...unchangedCitation.locator, page_label: null } }],
+    ['unknown citation key', { unexpected: null }],
+    ['unknown citation marker', { projection_status: 'unknown' }],
+    ['unknown provenance marker', { provenance: { projection_status: 'unknown' } }]
+];
+it.each(strictCitationChanges)('keeps %s strict despite optional-null equivalence', (_label, patch) => {
+    const { store, id, c, g, base } = conflictWithCitations([unchangedCitation]);
+    const raw = { id: 'note:1', revision: 8, ...base, citations: [{ ...unchangedCitation, ...patch }] };
+    const view = parseWorkspaceView({ ...sourceWorkspace(), notes: [raw] }).notes[0]!;
+    const parsed = noteForEditor(view);
+    store.compare(store.beginCompare(id, c, g)!, parsed ? [parsed.note] : [], c, g);
+    const before = store.get(id)!;
+    expect(compatibleNoteMetadata(before)).toBe(false);
+    expect(store.reedit(id, before, c, g)).toBe(false);
+    expect(store.get(id)?.editor.base).toEqual(base);
+});
+it.each(['count', 'order', 'scope', 'mapping', 'nested null omission'] as const)('never applies the four-field exception to %s', change => {
+    const first: EvidenceCitation = { ...unchangedCitation, provenance: { kind: 'web', source_url: null, retrieved_at: '2026-11-08', provider: 'firecrawl', search_result_title: null } };
+    const second = { ...unchangedCitation, citation_id: 'c2' };
+    const { store, id, c, g, base } = conflictWithCitations([first, second]);
+    const latest: WorkbenchNote = structuredClone({ id: 'note:1', revision: 8, ...base });
+    if (change === 'count') latest.citations = [first];
+    if (change === 'order') latest.citations = [second, first];
+    if (change === 'scope') latest.scope_snapshot = { ...base.scope_snapshot, source_version_ids: ['other'] };
+    if (change === 'mapping') latest.scope_snapshot = { ...base.scope_snapshot, mappings: [{ ...base.scope_snapshot.mappings[0]!, mapping_method: 'other' }] };
+    if (change === 'nested null omission') {
+        const p = latest.citations![0]!.provenance;
+        if (p?.kind === 'web') delete p.search_result_title;
+    }
+    store.compare(store.beginCompare(id, c, g)!, [latest], c, g);
+    const before = store.get(id)!;
+    expect(compatibleNoteMetadata(before)).toBe(false);
+    expect(store.reedit(id, before, c, g)).toBe(false);
+    expect(store.get(id)?.editor.base).toEqual(base);
+});

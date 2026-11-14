@@ -29,12 +29,17 @@ __all__ = [
 ]
 
 # StudyWorkbench V1: CPU extraction and explicit answer jobs
-from .evidence_commands import extract_evidence_command, maintain_evidence_command
+from .evidence_commands import (
+    extract_evidence_command,
+    index_evidence_command,
+    maintain_evidence_command,
+)
 from .personal_commands import personal_turn_command
 
 __all__ += [
     "extract_evidence_command",
     "maintain_evidence_command",
+    "index_evidence_command",
     "personal_turn_command",
 ]
 

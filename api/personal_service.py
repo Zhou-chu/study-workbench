@@ -2,10 +2,17 @@
 
 import hashlib
 import json
+from copy import deepcopy
 from datetime import datetime, timezone
 
+from api.notebooklm_links import read_notebooklm_link
 from api.personal_store import get_store
-from open_notebook.exceptions import InvalidInputError, NotFoundError
+from api.personal_turn_admission import PersonalTurnAdmission
+from open_notebook.exceptions import (
+    InvalidInputError,
+    NotFoundError,
+    PersonalTurnDispatchUnknownError,
+)
 
 
 def now():
@@ -65,7 +72,29 @@ class PersonalService:
             await self.store.put("selection", notebook_id, selection)
         return selection
 
+    async def turn_receipt(self, chat_session_id, request):
+        """Read an exact retained intent, without admission, enqueue or replay.
+
+        New admission must still use submit_turn, whose locked hash check closes
+        races after this read. Mutable retrieval configuration is not a condition
+        for learning the outcome of an already accepted immutable request.
+        """
+        request = deepcopy(request)
+        notebook_id = request.get("notebook_id")
+        if not notebook_id or not request.get("idempotency_key"):
+            raise InvalidInputError("notebook_id and idempotency_key are required")
+        identity = "job_" + digest(
+            {"session": chat_session_id, "key": request["idempotency_key"]}
+        )
+        request_hash = digest(request)
+        async with self.store.project_lock(notebook_id):
+            retained = await self.store.get("job", identity)
+            if retained and retained["request_hash"] != request_hash:
+                raise InvalidInputError("IDEMPOTENCY_CONFLICT")
+            return retained
+
     async def submit_turn(self, chat_session_id, request):
+        request = deepcopy(request)
         notebook_id = request.get("notebook_id")
         if not notebook_id or not request.get("idempotency_key"):
             raise InvalidInputError("notebook_id and idempotency_key are required")
@@ -101,16 +130,31 @@ class PersonalService:
         try:
             worker_id = await self.submit("personal_turn", {"job_id": identity})
         except Exception as exc:
-            # Worker queue submission is local and querying this durable job remains safe.
-            job.update(
-                state="failed",
-                error={
-                    "code": "WORKER_UNAVAILABLE",
-                    "message": "Could not enqueue answer; worker/database availability must be checked",
-                },
-            )
-            await self.store.put("job", identity, job)
-            raise InvalidInputError("WORKER_UNAVAILABLE") from exc
+            async with self.store.project_lock(notebook_id):
+                latest = await self.store.get("job", identity)
+                if latest is None:
+                    raise NotFoundError("Job not found") from exc
+                if latest != job:
+                    return latest
+                # Keep the existing unchanged-queued failure policy. A lost queue
+                # ACK does not prove rejection or provider submission uncertainty.
+                latest.update(
+                    state="failed",
+                    error={
+                        "code": "WORKER_UNAVAILABLE",
+                        "message": "Could not enqueue answer; worker/database availability must be checked",
+                    },
+                    dispatch_receipt={
+                        "dispatch_ack": "unknown",
+                        "job_id": job["job_id"],
+                        "turn_id": job["turn_id"],
+                        "retry_safe": False,
+                    },
+                )
+                await self.store.put("job", identity, latest)
+            raise PersonalTurnDispatchUnknownError(
+                job_id=job["job_id"], turn_id=job["turn_id"]
+            ) from exc
         async with self.store.project_lock(notebook_id):
             latest = await self.store.get("job", identity)
             if latest is None:
@@ -157,6 +201,11 @@ class PersonalService:
             await self.store.put("job", job_id, job)
         google_turn = None
         request = {**job["request_snapshot"], "_turn_id": job["turn_id"]}
+        parent_admission = (
+            PersonalTurnAdmission.capture(job)
+            if request["engine"] == "independent"
+            else None
+        )
         if request["engine"] == "notebooklm":
             google_turn = {
                 "turn_id": job["turn_id"],
@@ -187,15 +236,21 @@ class PersonalService:
                 from open_notebook.graphs.grounded_chat import GroundedChatService
 
                 result = await GroundedChatService(store=self.store).turn(
-                    job["notebook_id"], job["chat_session_id"], request
+                    job["notebook_id"],
+                    job["chat_session_id"],
+                    request,
+                    parent_admission=parent_admission,
                 )
             else:
                 from api.notebooklm_service import NotebookLMService
 
+                if google_turn is None:
+                    raise InvalidInputError(
+                        "INVALID_ENGINE: unsupported stored turn engine"
+                    )
                 result = await NotebookLMService(store=self.store).ask(
                     request, chat_session_id=job["chat_session_id"]
                 )
-                assert google_turn is not None
                 google_turn.update(result, status="succeeded", completed_at=now())
                 result = google_turn
             if result.get("status") != "succeeded":
@@ -233,6 +288,15 @@ class PersonalService:
             current = await self.store.get("job", job_id)
             if current and current.get("state") == "cancelled_local":
                 return current
+            if parent_admission is not None:
+                # A different owner/attempt or stopped parent is not ours to
+                # overwrite, including after a rejected child admission.
+                try:
+                    await parent_admission.assert_locked(self.store)
+                except InvalidInputError:
+                    if current is None:
+                        raise NotFoundError("Job not found") from None
+                    return current
             merged = {**(current or {}), **job}
             if current and current.get("worker_job_id"):
                 merged["worker_job_id"] = current["worker_job_id"]
@@ -246,11 +310,11 @@ class PersonalService:
         notebook = await Notebook.get(notebook_id)
         sources = await notebook.get_sources()
         versions = await self.store.list("version", notebook_id=notebook_id)
-        notes = await notebook.get_notes(include_content=True)
-        snapshots = {
-            n["note_id"]: n
-            for n in await self.store.list("note_snapshot", notebook_id=notebook_id)
-        }
+        from open_notebook.database.note_repository import read_project_notes_locked
+
+        async with self.store.project_lock(notebook_id):
+            bundles = await read_project_notes_locked(notebook_id)
+        notes = [{**(bundle.snapshot or {}), **bundle.native} for bundle in bundles]
         return {
             "notebook": {"id": notebook.id, "name": notebook.name},
             "sources": [
@@ -261,12 +325,10 @@ class PersonalService:
                 }
                 for s in sources
             ],
-            "notes": [
-                {**snapshots.get(n.id, {}), **n.model_dump(mode="json")} for n in notes
-            ],
+            "notes": notes,
             "turns": await self.store.list("turn", notebook_id=notebook_id),
             "jobs": await self.store.list("job", notebook_id=notebook_id),
-            "link": await self.store.get("link", notebook_id),
+            "link": await read_notebooklm_link(self.store, notebook_id),
             "selection": await self.store.get("selection", notebook_id),
             "legacy_history": await self.store.list(
                 "legacy_chat", notebook_id=notebook_id
@@ -274,11 +336,8 @@ class PersonalService:
         }
 
     async def save_note(self, notebook_id, value, note_id=None):
-        from open_notebook.database.repository import (
-            repo_create,
-            repo_relate,
-            repo_update,
-        )
+        from open_notebook.config import get_note_write_mode
+        from open_notebook.database.note_repository import create_note, update_note
 
         title = str(value.get("title") or "Study note")[:500]
         content = str(value.get("content") or "")
@@ -318,29 +377,25 @@ class PersonalService:
                 )
             else:
                 citations.append(await evidence.validate_citation(citation, versions))
-        async with self.store.project_lock(notebook_id):
-            if note_id:
-                previous = await self.store.get("note_snapshot", note_id)
-                if not previous or previous["notebook_id"] != notebook_id:
-                    raise NotFoundError("V1 note not found")
-                await repo_update("note", note_id, {"title": title, "content": content})
-            else:
-                result = await repo_create(
-                    "note", {"title": title, "content": content, "embedding": []}
-                )
-                result = result[0] if isinstance(result, list) else result
-                note_id = result["id"]
-                await repo_relate(note_id, "artifact", notebook_id)
-            snapshot = {
-                "note_id": note_id,
-                "id": note_id,
-                "notebook_id": notebook_id,
-                "title": title,
-                "content": content,
-                "citations": citations,
-                "scope_snapshot": value.get("scope_snapshot", {}),
-                "created_at": now(),
-                "updated_at": now(),
-            }
-            await self.store.put("note_snapshot", note_id, snapshot)
-        return snapshot
+        snapshot = {
+            "citations": citations,
+            "scope_snapshot": value.get("scope_snapshot", {}),
+        }
+        fields = {"title": title, "content": content}
+        if note_id:
+            result = await update_note(
+                note_id=note_id,
+                notebook_id=notebook_id,
+                fields=fields,
+                snapshot=snapshot,
+                expected_revision=value.get("expected_revision"),
+                mode=get_note_write_mode(),
+            )
+        else:
+            result = await create_note(
+                fields=fields, notebook_id=notebook_id, snapshot=snapshot
+            )
+        from open_notebook.domain.notebook import Note
+
+        await Note(**result.native).submit_embedding()
+        return result.snapshot

@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
@@ -12,12 +12,17 @@ export default defineConfig({
   // to resolve the postcss config; this bypasses it outright.
   css: { postcss: { plugins: [] } },
   test: {
+    // This stdlib Node suite has its own runner; preserve all other discovery.
+    exclude: [...configDefaults.exclude, 'scripts/artifact-identity.test.mjs'],
     environment: 'jsdom',
     globals: true,
     css: false,
     setupFiles: ['./src/test/setup.ts'],
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': path.resolve(__dirname, './src'),
+      // Tests may exercise server modules; Next still enforces the production
+      // server-only import boundary. This alias is scoped to Vitest only.
+      'server-only': path.resolve(__dirname, './node_modules/next/dist/compiled/server-only/empty.js')
     },
     coverage: {
       provider: 'v8',

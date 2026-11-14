@@ -55,3 +55,18 @@ describe('saved audio assets', () => {
     expect(portableApi.download).toHaveBeenCalledTimes(1)
   })
 })
+
+it.each([
+  { result: { artifact: { artifact_id: { invalid: true }, mime_type: 42 }, downloaded: true } },
+  { state: 'constructor', result: null },
+  { state: 'toString', result: null },
+  { state: 'future_state', result: { download_url: '/personal/exports/opaque/download' } },
+  { operation: 'future_operation', result: { download_url: '/personal/exports/opaque/download' } },
+  { restored_history: true, replay_allowed: false, state: 'queued', operation: null, result: ['historical', null], error: { message: { nested: true } } },
+])('renders unknown/historical data read-only without unsafe actions: %j', payload => {
+  mount({ ...saved, ...payload } as BridgeJob)
+  if ('state' in payload && ['constructor', 'toString', 'future_state'].includes(payload.state || '')) expect(screen.getByRole('status')).toHaveTextContent('workbench.unavailable')
+  expect(screen.queryByRole('button', { name: 'workbench.downloadResult' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'workbench.playAudio' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'workbench.cancelWaiting' })).not.toBeInTheDocument()
+})

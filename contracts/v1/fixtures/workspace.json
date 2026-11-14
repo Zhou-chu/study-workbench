@@ -1,0 +1,20 @@
+{
+  "jobs": [],
+  "legacy_history": [],
+  "link": null,
+  "notebook": {
+    "id": "notebook:synthetic",
+    "name": "Public synthetic workspace"
+  },
+  "notes": [
+    {
+      "content": "Saved synthetic note",
+      "id": "note:synthetic",
+      "revision": 1,
+      "title": "Synthetic revision example"
+    }
+  ],
+  "selection": null,
+  "sources": [],
+  "turns": []
+}

@@ -1,0 +1,50 @@
+import {useAppData} from './providers';
+import {SetupLink, SetupReturnLink} from '../features/settings/SetupLink';
+import {SetupWarning} from '../features/settings/SetupWarning';
+import {useWorkbenchSnapshot} from './WorkbenchSession';
+import {Button} from '../ui/Button';
+import { CommonNavigation } from './CommonNavigation';
+import type { ReactNode } from 'react';
+import { Link } from 'react-router';
+import { ThemeControl } from '../theme/ThemeControl';
+import { Dialog } from '../ui/Dialog';
+import { useI18n, languages } from '../i18n';
+import type { LanguageCode } from '../i18n';
+import { StatusBadge } from '../ui/StatusBadge';
+
+export function AppChrome({ children, title }: { children: ReactNode; title?: string }) {
+  const { t, shell, session, locale, setLocale } = useI18n();
+  const {state,controller}=useWorkbenchSnapshot();
+  const { workspace } = useAppData();
+  return <>
+    <a className="skip-link" href="#main-content">{session.skipMain}</a>
+    <header className="app-header">
+      <Link className="brand" to="/" aria-label={shell.homeTitle}>
+        <span className="brand-mark" aria-hidden="true">N.</span><span>Notebook</span>
+      </Link>
+      <span className="header-divider" aria-hidden="true" />
+      {title && <span className="header-title">{title}</span>}
+      <div className="header-tools">
+        <ThemeControl />
+        <SetupLink className="button" to="/settings">{t.navigation.settings}</SetupLink>
+        {controller&&<Button disabled={!state?.ready} onClick={()=>void controller.signoutLocal()}>{t.common.signOut}</Button>}
+        <Dialog
+          trigger={<><span aria-hidden="true">⚙</span><span className="settings-label">{shell.preferences}</span></>}
+          triggerLabel={shell.preferences}
+          title={shell.preferences} description={shell.previewNotice} closeLabel={t.common.close}
+        >
+          <label className="field-label" htmlFor="language">{t.common.language}</label>
+          <select id="language" value={locale} onChange={event => setLocale(event.target.value as LanguageCode)}>
+            {languages.map(item => <option key={item.code} value={item.code}>{item.label}</option>)}
+          </select>
+        </Dialog>
+      </div>
+    </header>
+    {!controller && !workspace && <div className="preview-notice">
+      <StatusBadge state="pending" label={shell.previewTitle} /><span>{shell.previewNotice}</span>
+    </div>}
+    <CommonNavigation/>
+    <SetupWarning/>
+    <main id="main-content" tabIndex={-1}><SetupReturnLink/>{children}</main>
+  </>;
+}

@@ -8,8 +8,10 @@ import { canonicalCitationLocator, verifiedQuoteRange } from '@/lib/utils/eviden
 import { useTranslation } from '@/lib/hooks/use-translation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { SourceProvenance } from './SourceProvenance'
 import { EvidenceMaintenance } from './EvidenceMaintenance'
 import { PdfCanvas, PdfTextFallback } from './PdfCanvas'
+import type { PdfZoom } from './pdf-render-sizing'
 
 interface Props {
   sourceVersionId?: string
@@ -25,6 +27,8 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
   const [revision, setRevision] = useState(0)
   const [detail, setDetail] = useState<VersionDetail | null>(null)
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null)
+  const [pdfZoom, setPdfZoom] = useState<{ versionId: string | undefined; zoom: PdfZoom }>({ versionId: sourceVersionId, zoom: 'fit' })
+  const zoom = pdfZoom.versionId === sourceVersionId ? pdfZoom.zoom : 'fit'
   const [page, setPage] = useState(initialPage)
   const [search, setSearch] = useState('')
   const [error, setError] = useState<'load' | 'pdf' | null>(null)
@@ -48,7 +52,19 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
   const locator = isLocalCitation ? canonicalLocator ?? (citation?.reference_validity === 'verified' ? citation.locator : undefined) : undefined
   const evidenceId = citation?.source_version_id === sourceVersionId ? citation?.evidence_id || savedEvidenceId : savedEvidenceId
   const citedPage = locator?.page_index
+  // Labels such as c1 are answer-local. Compare the original reference's
+  // content/location, not object identity or asynchronously verified location.
+  // Equivalent parent rerenders and ordinary reading movement keep the filter.
+  const filterCitationIdentity = citation ? JSON.stringify([
+    citation.citation_id, citation.kind, citation.source_version_id, citation.evidence_id, citation.quote,
+    citation.locator?.page_index, citation.locator?.page_label, citation.locator?.block_id,
+    citation.locator?.start_offset, citation.locator?.end_offset, citation.locator?.bbox,
+  ]) : null
 
+  useEffect(() => {
+    setPdfZoom(previous => previous.versionId === sourceVersionId ? previous : { versionId: sourceVersionId, zoom: 'fit' })
+  }, [sourceVersionId])
+  useEffect(() => { setSearch('') }, [sourceVersionId, evidenceId, filterCitationIdentity])
   useEffect(() => { setPage(initialPage) }, [sourceVersionId, initialPage])
   useEffect(() => { if (citedPage != null) setPage(citedPage) }, [sourceVersionId, citation?.citation_id, citedPage])
   useEffect(() => {
@@ -110,13 +126,18 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
   const range = citation && quoteBlock && locator?.start_offset != null && locator.end_offset != null
     ? verifiedQuoteRange(quoteBlock.text, locator.start_offset, locator.end_offset, citation.quote) : null
 
+  const webSnapshot = detail?.version.origin === 'web_snapshot' && detail.version.mime_type === 'text/markdown'
+  const derivedSnapshot = detail?.version.origin === 'derived_snapshot' || detail?.version.provenance?.kind === 'derived'
+  const canMaintain = detail?.version.original_status === 'available' || webSnapshot
   return <section className="space-y-3" aria-label={t('workbench.reader')}>
-    {citation && <div className="border-l-2 border-teal pl-4 py-1 space-y-2">
+    {citation && <div className="workbench-reader-citation border-l-2 border-teal pl-4 py-1 space-y-2">
       <p className="font-medium">{citation.source_title}</p>
       <p className="text-xs text-muted-foreground">{t('workbench.validity', { status: t(currentValidity === 'verified' ? 'workbench.referenceVerified' : currentValidity === 'out_of_scope' ? 'workbench.referenceOutOfScope' : currentValidity === 'invalid' ? 'workbench.referenceInvalid' : 'workbench.referenceUnverified') })}</p>
       <p className="text-xs text-muted-foreground">{t('workbench.verificationMeaning')}</p>
       <p className="text-xs font-medium">{t('workbench.quote')}</p>
       <p className="whitespace-pre-wrap text-sm leading-7">{citation.quote}</p>
+      {citation.provenance && <SourceProvenance provenance={citation.provenance} /> }
+      {citation.kind === 'derived_snapshot' && !citation.provenance && <p className="text-xs text-muted-foreground">{t('sourceSnapshots.notIndependentEvidence')}</p>}
       {citation.kind === 'remote_unmapped' && <p className="text-sm text-muted-foreground">{t('workbench.remoteUnmapped')}</p>}
       {citation.locator?.page_label && <p>{t('workbench.printPage', { label: citation.locator.page_label })}</p>}
     </div>}
@@ -125,11 +146,16 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
     {downloadError && <p role="alert" className="text-destructive">{t('workbench.readerDownloadFailed')}</p>}
     {sourceVersionId && !detail && !error && <p role="status">{t('common.loading')}</p>}
     {detail && <>
+      {detail.version.provenance && !citation?.provenance && <SourceProvenance provenance={detail.version.provenance} />}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="min-w-0"><p className="text-sm font-medium truncate">{detail.version.source_title || detail.version.title}</p><p className="text-xs text-muted-foreground truncate max-w-48" title={detail.version.source_version_id}>{detail.version.source_version_id}</p></div>
-        {detail.version.original_status === 'available' ? <Button size="sm" variant="outline" onClick={download} disabled={downloading}>{t('workbench.downloadOriginal')}</Button> : <p className="text-sm text-muted-foreground">{t('workbench.originalMissing')}</p>}
+        <div className="min-w-0"><p className="text-sm font-medium truncate">{detail.version.source_title || detail.version.title}</p></div>
+        {detail.version.original_status === 'available' ? <Button size="sm" variant="outline" onClick={download} disabled={downloading}>{t(derivedSnapshot ? 'common.download' : 'workbench.downloadOriginal')}</Button> : <p className="text-sm text-muted-foreground">{t('workbench.originalMissing')}</p>}
       </div>
-      {detail.version.original_status === 'available' && <details key={`${sourceVersionId}:${evidenceId || ''}`} open={detail.extraction?.verification_origin === 'restored_archive'} className="border-b pb-3 text-xs"><summary className="cursor-pointer py-1 text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring rounded-sm">{t('workbench.documentTools')}</summary><EvidenceMaintenance key={`${sourceVersionId}:${evidenceId || ''}`} versionId={detail.version.source_version_id} extractionId={detail.extraction?.extraction_id} restored={detail.extraction?.verification_origin === 'restored_archive'} onComplete={() => { setRevision(value => value + 1); onChanged?.() }} /></details>}
+      <details key={`${sourceVersionId}:${evidenceId || ''}`} open={canMaintain && detail.extraction?.verification_origin === 'restored_archive'} className="border-b pb-3 text-xs">
+        <summary className="cursor-pointer py-1 text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring rounded-sm">{t('workbench.documentTools')}</summary>
+        <p className="break-all py-2 text-muted-foreground">{detail.version.source_version_id}</p>
+        {canMaintain && <EvidenceMaintenance key={`${sourceVersionId}:${evidenceId || ''}`} versionId={detail.version.source_version_id} extractionId={detail.extraction?.extraction_id} snapshot={webSnapshot} restored={detail.extraction?.verification_origin === 'restored_archive'} onComplete={() => { setRevision(value => value + 1); onChanged?.() }} />}
+      </details>
       {detail.extraction?.warnings?.map((warning, index) => <p className="text-sm text-muted-foreground" key={index}>{warning}</p>)}
       {detail.version.mime_type === 'application/pdf' && <>
         <div className="flex flex-wrap items-center gap-2">
@@ -138,16 +164,18 @@ export function EvidenceReader({ sourceVersionId, evidenceId: savedEvidenceId, c
           <span className="text-xs">{t('workbench.pageOf', { page: page + 1, count: detail.extraction?.page_count ?? undefined })}</span>
         </div>
         <p className="text-xs text-muted-foreground">{t('workbench.highlightUnavailable')}</p>
-        {pdfBlob ? <PdfCanvas blob={pdfBlob} pageIndex={page} fallbackText={blocks.filter(block => block.page_index === page).map(block => block.text).join('\n\n')} /> : error || detail.version.original_status !== 'available' ? <PdfTextFallback text={blocks.filter(block => block.page_index === page).map(block => block.text).join('\n\n')} /> : <p role="status" className="text-sm text-muted-foreground">{t('workbench.pdfRendering')}</p>}
+        {pdfBlob ? <PdfCanvas blob={pdfBlob} pageIndex={page} zoom={zoom} onZoomChange={value => setPdfZoom({ versionId: sourceVersionId, zoom: value })} fallbackText={blocks.filter(block => block.page_index === page).map(block => block.text).join('\n\n')} /> : error || detail.version.original_status !== 'available' ? <PdfTextFallback text={blocks.filter(block => block.page_index === page).map(block => block.text).join('\n\n')} /> : <p role="status" className="text-sm text-muted-foreground">{t('workbench.pdfRendering')}</p>}
       </>}
-      <label className="block text-sm" htmlFor="evidence-search">{t('workbench.searchEvidence')}</label>
-      <Input id="evidence-search" value={search} onChange={event => setSearch(event.target.value)} />
+      <div className="space-y-2">
+        <label className="block text-sm" htmlFor="evidence-search">{t('workbench.searchEvidence')}</label>
+        <div className="flex items-center gap-2"><Input id="evidence-search" value={search} onChange={event => setSearch(event.target.value)} />{search && <Button size="sm" variant="outline" onClick={() => setSearch('')}>{t('workbench.clearReaderSearch')}</Button>}</div>
+      </div>
       {citation && !range && detail.version.mime_type !== 'application/pdf' && <p className="text-xs text-muted-foreground">{t('workbench.quoteMismatch')}</p>}
       <div className="max-h-[55vh] overflow-y-auto space-y-3">
         {matchingBlocks.length ? matchingBlocks.map(block => <div key={block.block_id} className="rounded-md border p-3">
           {block.page_index != null && <Button size="sm" variant="ghost" onClick={() => changePage(block.page_index! + 1)}>{t('workbench.pageOf', { page: block.page_index + 1, count: detail.extraction?.page_count ?? undefined })}</Button>}
           <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-7">{range && block === quoteBlock ? <>{range.before}<mark className="bg-warn-tint text-foreground">{range.quote}</mark>{range.after}</> : block.text}</pre>
-        </div>) : <p className="text-sm text-muted-foreground">{t('workbench.noEvidence')}</p>}
+        </div>) : <p role="status" className="text-sm text-muted-foreground">{t(blocks.length ? 'workbench.readerNoMatches' : 'workbench.noEvidence')}</p>}
       </div>
     </>}
   </section>

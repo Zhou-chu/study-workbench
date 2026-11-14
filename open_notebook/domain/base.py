@@ -25,6 +25,7 @@ from open_notebook.exceptions import (
     InvalidInputError,
     NotFoundError,
 )
+from open_notebook.utils.boundary_logging import log_boundary_failure
 
 T = TypeVar("T", bound="ObjectModel")
 
@@ -94,13 +95,14 @@ class ObjectModel(BaseModel):
                 try:
                     objects.append(target_class(**obj))
                 except Exception as e:
-                    logger.critical(f"Error creating object: {str(e)}")
+                    log_boundary_failure(
+                        "object_get_all_validation", e, level="CRITICAL"
+                    )
 
             return objects
         except Exception as e:
-            logger.error(f"Error fetching all {cls.table_name}: {str(e)}")
-            logger.exception(e)
-            raise DatabaseOperationError(e)
+            log_boundary_failure("object_get_all", e)
+            raise DatabaseOperationError(e) from e
 
     @classmethod
     async def get(cls: Type[T], id: str) -> T:
@@ -131,8 +133,7 @@ class ObjectModel(BaseModel):
             # A database failure (connection, SurrealDB transaction conflict...)
             # is not "not found": callers treat NotFoundError as permanent (404,
             # no retry), so surface it as DatabaseOperationError instead.
-            logger.error(f"Error fetching object with id {id}: {str(e)}")
-            logger.exception(e)
+            log_boundary_failure("object_get", e)
             raise DatabaseOperationError(f"Failed to fetch object with id {id}") from e
 
     @classmethod
@@ -174,7 +175,7 @@ class ObjectModel(BaseModel):
                     if isinstance(self.created, datetime)
                     else self.created
                 )
-                logger.debug(f"Updating record with id {self.id}")
+                logger.debug("Updating database record")
                 repo_result = await repo_update(
                     self.__class__.table_name, self.id, data
                 )
@@ -191,14 +192,14 @@ class ObjectModel(BaseModel):
                         setattr(self, key, value)
 
         except ValidationError as e:
-            logger.error(f"Validation failed: {e}")
+            log_boundary_failure("object_save_validation", e)
             raise
         except RuntimeError:
             # Transaction conflicts should propagate for retry
             raise
         except Exception as e:
-            logger.error(f"Error saving record: {e}")
-            raise DatabaseOperationError(e)
+            log_boundary_failure("object_save", e)
+            raise DatabaseOperationError(e) from e
 
     def _prepare_save_data(self) -> Dict[str, Any]:
         data = self.model_dump()
@@ -212,15 +213,13 @@ class ObjectModel(BaseModel):
         if self.id is None:
             raise InvalidInputError("Cannot delete object without an ID")
         try:
-            logger.debug(f"Deleting record with id {self.id}")
+            logger.debug("Deleting database record")
             return await repo_delete(self.id)
         except Exception as e:
-            logger.error(
-                f"Error deleting {self.__class__.table_name} with id {self.id}: {str(e)}"
-            )
+            log_boundary_failure("object_delete", e)
             raise DatabaseOperationError(
                 f"Failed to delete {self.__class__.table_name}"
-            )
+            ) from e
 
     async def relate(
         self, relationship: str, target_id: str, data: Optional[Dict] = {}
@@ -232,9 +231,8 @@ class ObjectModel(BaseModel):
                 source=self.id, relationship=relationship, target=target_id, data=data
             )
         except Exception as e:
-            logger.error(f"Error creating relationship: {str(e)}")
-            logger.exception(e)
-            raise DatabaseOperationError(e)
+            log_boundary_failure("object_relate", e)
+            raise DatabaseOperationError(e) from e
 
     @field_validator("created", "updated", mode="before")
     @classmethod

@@ -57,9 +57,19 @@ async def test_missing_transformation_raises_permanent_error():
         embed=True,
     )
 
-    with patch(
-        "commands.source_commands.Transformation.get",
-        new=AsyncMock(side_effect=NotFoundError("transformation not found")),
+    with (
+        patch(
+            "commands.source_commands.Source.get", new=AsyncMock(return_value=object())
+        ),
+        patch(
+            "commands.source_commands.start_worker",
+            new=AsyncMock(return_value={"processing_attempt": {"token": "owned"}}),
+        ),
+        patch("commands.source_commands.finish_worker", new=AsyncMock()),
+        patch(
+            "commands.source_commands.Transformation.get",
+            new=AsyncMock(side_effect=NotFoundError("transformation not found")),
+        ),
     ):
         with pytest.raises(ValueError, match="no longer exists"):
             await process_source_command(input_data)
@@ -147,6 +157,11 @@ async def test_source_deleted_during_processing_fails_permanently():
 
     source = SimpleNamespace(id="source:abc", command=None, save=AsyncMock())
     with (
+        patch(
+            "commands.source_commands.start_worker",
+            new=AsyncMock(return_value={"processing_attempt": {"token": "owned"}}),
+        ),
+        patch("commands.source_commands.finish_worker", new=AsyncMock()),
         patch(
             "commands.source_commands.Source.get", new=AsyncMock(return_value=source)
         ),

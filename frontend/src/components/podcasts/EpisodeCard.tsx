@@ -164,42 +164,31 @@ export function EpisodeCard({ episode, onDelete, deleting, onRetry, retrying }: 
 
   useEffect(() => {
     let revokeUrl: string | undefined
+    let disposed = false
+    const controller = new AbortController()
     setAudioError(null)
-
-    // If backend exposed a protected endpoint, fetch it with auth headers
+    setAudioSrc(undefined)
     const loadProtectedAudio = async () => {
-      // First resolve the audio URL
-      const directAudioUrl = await resolvePodcastAssetUrl(episode.audio_url ?? episode.audio_file)
-
-      if (!directAudioUrl || !episode.audio_url) {
-        setAudioSrc(directAudioUrl)
-        return
-      }
-
       try {
-        // apiClient attaches the auth header; directAudioUrl is absolute so
-        // the dynamic baseURL is ignored.
-        const response = await apiClient.get<Blob>(directAudioUrl, {
-          responseType: 'blob',
-        })
-
+        // Server file-system paths and external URLs are never browser targets.
+        const candidate = episode.audio_url || (episode.audio_file ? `/api/podcasts/episodes/${encodeURIComponent(episode.id)}/audio` : undefined)
+        const path = await resolvePodcastAssetUrl(candidate)
+        if (!path || disposed) return
+        const response = await apiClient.get<Blob>(path, { responseType: 'blob', signal: controller.signal })
+        if (disposed) return
         revokeUrl = URL.createObjectURL(response.data)
         setAudioSrc(revokeUrl)
-      } catch (error) {
-        console.error('Unable to load podcast audio', error)
-        setAudioError(t('podcasts.audioUnavailable'))
-        setAudioSrc(undefined)
+      } catch {
+        if (!disposed) { setAudioError(t('podcasts.audioUnavailable')); setAudioSrc(undefined) }
       }
     }
-
     void loadProtectedAudio()
-
     return () => {
-      if (revokeUrl) {
-        URL.revokeObjectURL(revokeUrl)
-      }
+      disposed = true
+      controller.abort()
+      if (revokeUrl) URL.revokeObjectURL(revokeUrl)
     }
-  }, [episode.audio_url, episode.audio_file, t])
+  }, [episode.id, episode.audio_url, episode.audio_file, t])
 
   const distance = episode.created
     ? formatDistanceToNow(new Date(episode.created), {

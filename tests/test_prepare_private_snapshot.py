@@ -261,3 +261,48 @@ def test_repository_local_secret_conventions_excluded(name):
 )
 def test_private_credential_configuration_excluded(name):
     assert module().exclusion(name)
+
+
+def test_archive_bytes_must_match_independent_commit_blob_even_if_sha1_matches(
+    repo, tmp_path, monkeypatch
+):
+    m = module()
+    real_archive = m.read_archive
+    real_sha = m.object_sha
+
+    def changed_archive(data):
+        files = real_archive(data)
+        files["LICENSE"] = (b"hostile replacement", files["LICENSE"][1])
+        return files
+
+    def colliding_sha(kind, data):
+        return real_sha(kind, b"license" if data == b"hostile replacement" else data)
+
+    monkeypatch.setattr(m, "read_archive", changed_archive)
+    monkeypatch.setattr(m, "object_sha", colliding_sha)
+    output = tmp_path / "rejected-independent"
+    with pytest.raises(ValueError, match="byte parity"):
+        m.prepare(repo, "HEAD", output)
+    assert not output.exists()
+
+
+def test_independent_blob_reads_are_pinned_to_resolved_commit(
+    repo, tmp_path, monkeypatch
+):
+    m = module()
+    commit = git(repo, "rev-parse", "HEAD")
+    (repo / "LICENSE").write_bytes(b"uncommitted replacement")
+    calls = []
+    actual_git = m.git
+
+    def recording_git(repo, *args):
+        if args[:2] == ("cat-file", "blob"):
+            calls.append(args[2])
+        return actual_git(repo, *args)
+
+    monkeypatch.setattr(m, "git", recording_git)
+    output = tmp_path / "pinned"
+    m.prepare(repo, "HEAD", output)
+    assert calls and all(value.startswith(commit + ":") for value in calls)
+    assert commit + ":LICENSE" in calls
+    assert (output / "LICENSE").read_bytes() == b"license"

@@ -1,0 +1,172 @@
+import type {LanguageCode} from './locales';
+export const podcastMessages = {
+  "en-US": {
+    "preview": "Preview context",
+    "missing": "Selected content was not returned.",
+    "unusable": "Selected content is empty or unreadable.",
+    "revise": "Revise your selection and build a fresh preview before generating.",
+    "estimate": "Source-context estimate, before final formatting.",
+    "loadAudio": "Load audio",
+    "removeSpeaker": "Remove speaker",
+    "retryLimit": "Retry uses current profiles and omits the original additional instructions. The old episode and audio are retained.",
+    "newDraft": "New draft",
+    "audio": "audio"
+  },
+  "zh-CN": {
+    "preview": "预览上下文",
+    "missing": "未返回所选内容。",
+    "unusable": "所选内容为空或无法读取。",
+    "revise": "请修改选择并重新预览，再生成播客。",
+    "estimate": "源上下文估算，尚未计入最终格式。",
+    "loadAudio": "加载音频",
+    "removeSpeaker": "移除说话者",
+    "retryLimit": "重试使用当前配置，不包含原附加指令；原播客和音频会保留。",
+    "newDraft": "新草稿",
+    "audio": "音频"
+  },
+  "zh-TW": {
+    "preview": "預覽上下文",
+    "missing": "未傳回所選內容。",
+    "unusable": "所選內容為空或無法讀取。",
+    "revise": "請修改選擇並重新預覽，再產生播客。",
+    "estimate": "來源上下文估算，尚未計入最終格式。",
+    "loadAudio": "載入音訊",
+    "removeSpeaker": "移除說話者",
+    "retryLimit": "重試使用目前設定，不包含原附加指示；原播客和音訊會保留。",
+    "newDraft": "新草稿",
+    "audio": "音訊"
+  },
+  "pt-BR": {
+    "preview": "Visualizar contexto",
+    "missing": "O conteúdo selecionado não foi retornado.",
+    "unusable": "O conteúdo selecionado está vazio ou ilegível.",
+    "revise": "Altere a seleção e gere uma nova prévia antes de continuar.",
+    "estimate": "Estimativa do contexto, antes da formatação final.",
+    "loadAudio": "Carregar áudio",
+    "removeSpeaker": "Remover participante",
+    "retryLimit": "A nova tentativa usa os perfis atuais, sem as instruções adicionais originais. O episódio e o áudio anteriores são mantidos.",
+    "newDraft": "Novo rascunho",
+    "audio": "áudio"
+  },
+  "ja-JP": {
+    "preview": "コンテキストをプレビュー",
+    "missing": "選択した内容が返されませんでした。",
+    "unusable": "選択した内容が空か、読み取れません。",
+    "revise": "選択を変更し、新しいプレビューを確認してから生成してください。",
+    "estimate": "最終整形前のコンテキストの推定値です。",
+    "loadAudio": "音声を読み込む",
+    "removeSpeaker": "話者を削除",
+    "retryLimit": "再試行では現在のプロファイルを使い、元の追加指示は含みません。元のエピソードと音声は保持されます。",
+    "newDraft": "新しい下書き",
+    "audio": "音声"
+  },
+  "it-IT": {
+    "preview": "Anteprima del contesto",
+    "missing": "Il contenuto selezionato non è stato restituito.",
+    "unusable": "Il contenuto selezionato è vuoto o illeggibile.",
+    "revise": "Modifica la selezione e crea una nuova anteprima prima di generare.",
+    "estimate": "Stima del contesto prima della formattazione finale.",
+    "loadAudio": "Carica audio",
+    "removeSpeaker": "Rimuovi interlocutore",
+    "retryLimit": "Il nuovo tentativo usa i profili attuali senza le istruzioni aggiuntive originali. Episodio e audio precedenti vengono conservati.",
+    "newDraft": "Nuova bozza",
+    "audio": "audio"
+  },
+  "fr-FR": {
+    "preview": "Aperçu du contexte",
+    "missing": "Le contenu sélectionné n’a pas été renvoyé.",
+    "unusable": "Le contenu sélectionné est vide ou illisible.",
+    "revise": "Modifiez la sélection et créez un nouvel aperçu avant de générer.",
+    "estimate": "Estimation du contexte avant la mise en forme finale.",
+    "loadAudio": "Charger l’audio",
+    "removeSpeaker": "Retirer l’intervenant",
+    "retryLimit": "La nouvelle tentative utilise les profils actuels sans les instructions supplémentaires originales. L’ancien épisode et son audio sont conservés.",
+    "newDraft": "Nouveau brouillon",
+    "audio": "audio"
+  },
+  "ru-RU": {
+    "preview": "Предпросмотр контекста",
+    "missing": "Выбранный материал не получен.",
+    "unusable": "Выбранный материал пуст или недоступен для чтения.",
+    "revise": "Измените выбор и создайте новый предпросмотр перед генерацией.",
+    "estimate": "Оценка контекста до окончательного форматирования.",
+    "loadAudio": "Загрузить аудио",
+    "removeSpeaker": "Удалить говорящего",
+    "retryLimit": "Повтор использует текущие профили без исходных дополнительных инструкций. Старый эпизод и аудио сохраняются.",
+    "newDraft": "Новый черновик",
+    "audio": "аудио"
+  },
+  "bn-IN": {
+    "preview": "প্রসঙ্গের পূর্বরূপ",
+    "missing": "নির্বাচিত বিষয়বস্তু ফেরত আসেনি।",
+    "unusable": "নির্বাচিত বিষয়বস্তু খালি বা পড়া যাচ্ছে না।",
+    "revise": "তৈরি করার আগে নির্বাচন বদলে নতুন পূর্বরূপ দেখুন।",
+    "estimate": "চূড়ান্ত বিন্যাসের আগের প্রসঙ্গের আনুমানিক হিসাব।",
+    "loadAudio": "অডিও লোড করুন",
+    "removeSpeaker": "বক্তা সরান",
+    "retryLimit": "পুনরায় চেষ্টা বর্তমান প্রোফাইল ব্যবহার করে, মূল অতিরিক্ত নির্দেশ ছাড়া। পুরোনো পর্ব ও অডিও রাখা হয়।",
+    "newDraft": "নতুন খসড়া",
+    "audio": "অডিও"
+  },
+  "ca-ES": {
+    "preview": "Previsualitza el context",
+    "missing": "No s’ha retornat el contingut seleccionat.",
+    "unusable": "El contingut seleccionat és buit o il·legible.",
+    "revise": "Canvia la selecció i crea una previsualització nova abans de generar.",
+    "estimate": "Estimació del context abans del format final.",
+    "loadAudio": "Carrega l’àudio",
+    "removeSpeaker": "Elimina el parlant",
+    "retryLimit": "El nou intent utilitza els perfils actuals sense les instruccions addicionals originals. Es conserven l’episodi i l’àudio anteriors.",
+    "newDraft": "Esborrany nou",
+    "audio": "àudio"
+  },
+  "es-ES": {
+    "preview": "Vista previa del contexto",
+    "missing": "No se devolvió el contenido seleccionado.",
+    "unusable": "El contenido seleccionado está vacío o no se puede leer.",
+    "revise": "Cambia la selección y crea una nueva vista previa antes de generar.",
+    "estimate": "Estimación del contexto antes del formato final.",
+    "loadAudio": "Cargar audio",
+    "removeSpeaker": "Eliminar hablante",
+    "retryLimit": "El nuevo intento usa los perfiles actuales sin las instrucciones adicionales originales. Se conservan el episodio y el audio anteriores.",
+    "newDraft": "Nuevo borrador",
+    "audio": "audio"
+  },
+  "de-DE": {
+    "preview": "Kontextvorschau",
+    "missing": "Der ausgewählte Inhalt wurde nicht zurückgegeben.",
+    "unusable": "Der ausgewählte Inhalt ist leer oder nicht lesbar.",
+    "revise": "Ändere die Auswahl und erstelle vor der Generierung eine neue Vorschau.",
+    "estimate": "Kontextschätzung vor der endgültigen Formatierung.",
+    "loadAudio": "Audio laden",
+    "removeSpeaker": "Sprecher entfernen",
+    "retryLimit": "Der erneute Versuch nutzt aktuelle Profile ohne die ursprünglichen Zusatzanweisungen. Alte Episode und Audiodatei bleiben erhalten.",
+    "newDraft": "Neuer Entwurf",
+    "audio": "Audio"
+  },
+  "pl-PL": {
+    "preview": "Podgląd kontekstu",
+    "missing": "Wybrana treść nie została zwrócona.",
+    "unusable": "Wybrana treść jest pusta lub nieczytelna.",
+    "revise": "Zmień wybór i utwórz nowy podgląd przed generowaniem.",
+    "estimate": "Szacunek kontekstu przed końcowym formatowaniem.",
+    "loadAudio": "Wczytaj dźwięk",
+    "removeSpeaker": "Usuń mówcę",
+    "retryLimit": "Ponowna próba używa obecnych profili bez pierwotnych instrukcji dodatkowych. Stary odcinek i dźwięk zostają zachowane.",
+    "newDraft": "Nowy szkic",
+    "audio": "dźwięk"
+  },
+  "tr-TR": {
+    "preview": "Bağlamı önizle",
+    "missing": "Seçilen içerik döndürülmedi.",
+    "unusable": "Seçilen içerik boş veya okunamıyor.",
+    "revise": "Oluşturmadan önce seçimi değiştirip yeni bir önizleme hazırlayın.",
+    "estimate": "Son biçimlendirmeden önceki bağlam tahmini.",
+    "loadAudio": "Sesi yükle",
+    "removeSpeaker": "Konuşmacıyı kaldır",
+    "retryLimit": "Yeniden deneme, özgün ek talimatlar olmadan mevcut profilleri kullanır. Eski bölüm ve ses korunur.",
+    "newDraft": "Yeni taslak",
+    "audio": "ses"
+  }
+} satisfies Record<LanguageCode,Record<string,string>>;
+export type PodcastMessages = {[K in keyof typeof podcastMessages['en-US']]:string};

@@ -29,12 +29,15 @@ from api.personal_store import get_store, record_key
 from api.portable_limits import get_portable_limits
 from api.portable_zip import validate_zip_directory
 from open_notebook.exceptions import (
+    CommandSubmissionUnknownError,
     DatabaseOperationError,
     InvalidInputError,
     NotFoundError,
 )
 
-FORMAT_VERSION = 1
+# Older format-1 readers drop native revisions; reject new exports there.
+FORMAT_VERSION = 2
+SUPPORTED_FORMAT_VERSIONS = frozenset({1, 2})
 FILES = {
     "notebook": "notebook.json",
     "sources": "sources.json",
@@ -104,6 +107,7 @@ DROP_KEYS = {
     "connection_id",
     "worker_job_id",
     "command",
+    "processing_attempt",
     "model_override",
     "lease_until",
     "next_poll_at",
@@ -227,6 +231,40 @@ def _rows(project, kind):
     return [project["notebook"]] if kind == "notebook" else project.get(kind, [])
 
 
+def normalize_note_revisions(
+    notes: list[dict[str, Any]], snapshots: list[dict[str, Any]]
+) -> None:
+    """Normalize legacy absence only; never lower or guess an archive revision."""
+
+    def checked(row):
+        value = row.get("revision", 1)
+        if type(value) is not int or value < 1:
+            raise InvalidInputError("Invalid portable note revision")
+        return value
+
+    native = {row["id"]: checked(row) for row in notes}
+    for row in snapshots:
+        value = checked(row)
+        if row.get("note_id") not in native or native[row["note_id"]] != value:
+            raise InvalidInputError("Inconsistent portable note revisions")
+    for row in notes:
+        row["revision"] = native[row["id"]]
+    for row in snapshots:
+        row["revision"] = native[row["note_id"]]
+
+
+def _mark_historical_web_urls(value):
+    # The global sanitizer remains unchanged: structured URLs are not portable.
+    if isinstance(value, dict):
+        if value.get("kind") == "web" and "source_url" not in value:
+            value["historical_url_omitted"] = True
+        for child in value.values():
+            _mark_historical_web_urls(child)
+    elif isinstance(value, list):
+        for child in value:
+            _mark_historical_web_urls(child)
+
+
 def _validate_project(project, files):
     """Check entity closure before copying or accepting any destination records."""
     if set(project) != set(FILES) or not isinstance(project["notebook"], dict):
@@ -240,6 +278,7 @@ def _validate_project(project, files):
         if len(set(identities)) != len(identities):
             raise InvalidInputError(f"Duplicate {kind} identity")
         ids[kind] = set(identities)
+    normalize_note_revisions(project["notes"], project["note_snapshot"])
     notebook_id = project["notebook"]["id"]
     if (
         not isinstance(project["notebook"].get("name"), str)
@@ -333,6 +372,44 @@ def _validate_project(project, files):
         ):
             raise InvalidInputError("Unsupported artifact MIME type")
     for version in versions.values():
+        origin = version.get("origin", "upload")
+        if origin not in (
+            "upload",
+            "pasted_text",
+            "remote_text_snapshot",
+            "derived_snapshot",
+            "web_snapshot",
+        ):
+            raise InvalidInputError("Unsupported source provenance origin")
+        if origin in ("derived_snapshot", "web_snapshot"):
+            from pydantic import ValidationError
+
+            from open_notebook.domain.evidence import DerivedProvenance, WebProvenance
+
+            try:
+                provenance_type = (
+                    DerivedProvenance if origin == "derived_snapshot" else WebProvenance
+                )
+                provenance = provenance_type.model_validate(version.get("provenance"))
+            except (ValidationError, TypeError, ValueError) as exc:
+                raise InvalidInputError("Invalid source snapshot provenance") from exc
+            if isinstance(provenance, DerivedProvenance):
+                if (
+                    provenance.content_sha256 != version.get("sha256")
+                    or provenance.origin_title != version.get("source_title")
+                    or (
+                        provenance.origin_kind == "note"
+                        and provenance.note_revision is None
+                    )
+                    or (
+                        provenance.origin_kind == "turn"
+                        and (
+                            provenance.note_revision is not None
+                            or provenance.authorship != "ai"
+                        )
+                    )
+                ):
+                    raise InvalidInputError("Inconsistent derived source provenance")
         if version.get("mime_type") not in (
             "application/pdf",
             "text/plain",
@@ -353,6 +430,13 @@ def _validate_project(project, files):
         ):
             raise InvalidInputError("Available original has no file reference")
     for row in evidence.values():
+        if (
+            versions[row["source_version_id"]].get("origin") == "derived_snapshot"
+            and row.get("evidence_kind") != "derived_snapshot"
+        ):
+            raise InvalidInputError(
+                "Derived evidence provenance cannot become original evidence"
+            )
         extraction = extractions[row["extraction_id"]]
         if extraction["source_version_id"] != row["source_version_id"]:
             raise InvalidInputError("Evidence version reference mismatch")
@@ -394,8 +478,17 @@ def _validate_project(project, files):
 
     # A manifest hash is not proof of a model citation. Verify every claimed
     # citation against retained extraction text and the answer's frozen scope.
-    for kind in ("turn", "note_snapshot"):
-        for record in project[kind]:
+    for kind in ("turn", "note_snapshot", "derived_provenance"):
+        records = (
+            project[kind]
+            if kind != "derived_provenance"
+            else [
+                version["provenance"]
+                for version in versions.values()
+                if version.get("origin") == "derived_snapshot"
+            ]
+        )
+        for record in records:
             scope = record.get("scope_snapshot", {})
             allowed = scope.get("source_version_ids")
             for citation in record.get("citations", []):
@@ -456,7 +549,9 @@ class SurrealProjectRepository:
         if not notebook:
             raise NotFoundError("Notebook not found")
         sources = await notebook.get_sources(include_full_text=True)
-        notes = await notebook.get_notes(include_content=True)
+        from open_notebook.database.note_repository import read_project_notes_locked
+
+        bundles = await read_project_notes_locked(notebook_id)
         parents = [
             ensure_record_id(notebook_id),
             *[ensure_record_id(str(s.id)) for s in sources],
@@ -505,7 +600,8 @@ class SurrealProjectRepository:
         return {
             "notebook": notebook.model_dump(mode="json"),
             "sources": [s.model_dump(mode="json") for s in sources],
-            "notes": [n.model_dump(mode="json") for n in notes],
+            "notes": [bundle.native for bundle in bundles],
+            "note_snapshot": [bundle.snapshot for bundle in bundles if bundle.snapshot],
             "chat_sessions": sessions,
             "legacy_chat": history,
             "source_insights": insights,
@@ -589,7 +685,7 @@ class SurrealProjectRepository:
                 note["id"],
                 {
                     key: note.get(key)
-                    for key in ("title", "content", "note_type")
+                    for key in ("title", "content", "note_type", "revision")
                     if note.get(key) is not None
                 },
             )
@@ -644,7 +740,9 @@ class PortableService:
             before = await self.projects.read(notebook_id)
             project = _clean(copy.deepcopy(before))
             for kind in PERSONAL_KINDS:
-                if kind == "legacy_chat":
+                if kind == "legacy_chat" or (
+                    kind == "note_snapshot" and kind in project
+                ):
                     continue
                 project[kind] = _clean(
                     await self.store.list(kind, notebook_id=notebook_id)
@@ -663,6 +761,7 @@ class PortableService:
                 raise InvalidInputError(
                     "Project changed during legacy snapshot; retry after writes complete"
                 )
+            _mark_historical_web_urls(project)
             _validate_project(project, files)
             return project, files, missing
 
@@ -860,7 +959,7 @@ class PortableService:
             (stage / name).write_bytes(raw)
             files[name] = {"sha256": _sha(raw), "byte_size": len(raw)}
         readme = (
-            "StudyWorkbench portable project, format 1.\n\n"
+            f"StudyWorkbench portable project, format {FORMAT_VERSION}.\n\n"
             "Includes immutable originals, extraction text, evidence, notes, normalized visible chat and saved assets.\n"
             "Missing originals and unfinished jobs are listed in manifest.json.\n"
             "Credentials, Google sessions, model keys, embeddings and raw LangGraph checkpoints are excluded.\n"
@@ -1009,7 +1108,7 @@ class PortableService:
                 raise InvalidInputError("Invalid portable manifest object")
             if (
                 type(manifest.get("format_version")) is not int
-                or manifest["format_version"] != FORMAT_VERSION
+                or manifest["format_version"] not in SUPPORTED_FORMAT_VERSIONS
             ):
                 raise InvalidInputError("Unsupported portable format version")
             files = manifest.get("files")
@@ -1297,11 +1396,32 @@ class PortableService:
             }
             await self.store.put("job", job_id, job, create_only=True)
         try:
-            from surreal_commands import submit_command
+            from open_notebook.utils.command_submission import submit_command
 
-            worker_id = await asyncio.to_thread(
-                submit_command, "open_notebook", "export_portable", {"job_id": job_id}
+            worker_id = await submit_command(
+                "open_notebook", "export_portable", {"job_id": job_id}
             )
+        except (CommandSubmissionUnknownError, asyncio.CancelledError) as exc:
+            # CREATE may have committed. Preserve any worker progress and never
+            # invite a new-key replay merely because its acknowledgement was lost.
+            async with self.store.project_lock(notebook_id):
+                current = await self.store.get("job", job_id)
+                if current is not None and current.get("state") == "queued":
+                    current.update(
+                        state="submission_unknown",
+                        submission_state="unknown",
+                        error={
+                            "code": "QUEUE_SUBMISSION_UNKNOWN",
+                            "message": "Export may be queued; do not automatically retry",
+                        },
+                        updated_at=_now(),
+                    )
+                    await self.store.put("job", job_id, current)
+            if isinstance(exc, asyncio.CancelledError) or current is None:
+                raise
+            # Return the durable identity so clients can refresh this job rather
+            # than create a new idempotency key after an ambiguous acknowledgement.
+            return current
         except Exception as exc:
             async with self.store.project_lock(notebook_id):
                 job.update(
@@ -1346,8 +1466,11 @@ class PortableService:
                     )
                 if job.get("state") in ("succeeded", "cancelled_local"):
                     return job
+                if (job.get("error") or {}).get("code") == "QUEUE_SUBMISSION_UNKNOWN":
+                    job.pop("error", None)
                 job.update(
                     state="running",
+                    submission_state="confirmed",
                     attempts=job.get("attempts", 0) + 1,
                     updated_at=_now(),
                 )

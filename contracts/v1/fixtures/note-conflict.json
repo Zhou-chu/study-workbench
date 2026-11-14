@@ -1,0 +1,9 @@
+{
+  "body": {
+    "detail": {
+      "code": "NOTE_REVISION_CONFLICT",
+      "current_revision": 2
+    }
+  },
+  "status": 409
+}

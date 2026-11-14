@@ -17,17 +17,9 @@ os.environ["OPEN_NOTEBOOK_PASSWORD"] = ""
 # tests explicitly turn private mode on and real-stack tests run separately.
 os.environ["STUDY_WORKBENCH_PRIVATE_MODE"] = "0"
 
-# Load environment variables from .env file
-# This must be done BEFORE any imports that depend on environment variables
-from dotenv import load_dotenv
-
-# Load .env file from project root
-dotenv_path = Path(__file__).parent.parent / ".env"
-if dotenv_path.exists():
-    load_dotenv(dotenv_path)
-    print(f"Loaded environment variables from {dotenv_path}")
-else:
-    print(f"Warning: .env file not found at {dotenv_path}")
+# Disable implicit configuration discovery, including later api.main imports.
+# Disposable integration/lifecycle suites supply explicit environment separately.
+os.environ["PYTHON_DOTENV_DISABLED"] = "1"
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent

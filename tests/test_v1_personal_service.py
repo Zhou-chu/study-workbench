@@ -12,6 +12,14 @@ class MemoryStore:
     async def get(self, k, i):
         return deepcopy(self.data.get((k, i)))
 
+    async def get_many(self, kind, identities):
+        return {
+            identity: {"payload": deepcopy(self.data[(kind, identity)])}
+            if (kind, identity) in self.data
+            else None
+            for identity in identities
+        }
+
     async def put(self, k, i, v, create_only=False):
         self.data[k, i] = deepcopy(v)
         return v
@@ -145,14 +153,26 @@ async def test_notebooklm_answer_saved_as_canonical_turn(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_note_cannot_forge_verified_citation(monkeypatch):
-    import open_notebook.database.repository as repo
     from api.personal_service import PersonalService
 
     store = MemoryStore()
+    from open_notebook.database import note_repository
+
+    async def create_note(**kwargs):
+        return note_repository.NoteWriteResult(
+            native={
+                "id": "note:test",
+                "content": kwargs["fields"]["content"],
+                "revision": 1,
+            },
+            snapshot={**kwargs["snapshot"], "id": "note:test", "revision": 1},
+        )
+
+    monkeypatch.setattr(note_repository, "create_note", create_note)
     monkeypatch.setattr(
-        repo, "repo_create", AsyncMock(return_value={"id": "note:test"})
+        "open_notebook.domain.notebook.Note.submit_embedding",
+        AsyncMock(return_value=None),
     )
-    monkeypatch.setattr(repo, "repo_relate", AsyncMock())
     note = await PersonalService(store).save_note(
         "nb",
         {
@@ -223,13 +243,24 @@ async def test_completion_preserves_worker_ack_written_during_call(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_remote_note_reference_retains_remote_identity(monkeypatch):
-    import open_notebook.database.repository as repo
     from api.personal_service import PersonalService
+    from open_notebook.database import note_repository
 
+    async def create_note(**kwargs):
+        return note_repository.NoteWriteResult(
+            native={
+                "id": "note:test",
+                "content": kwargs["fields"]["content"],
+                "revision": 1,
+            },
+            snapshot={**kwargs["snapshot"], "id": "note:test", "revision": 1},
+        )
+
+    monkeypatch.setattr(note_repository, "create_note", create_note)
     monkeypatch.setattr(
-        repo, "repo_create", AsyncMock(return_value={"id": "note:test"})
+        "open_notebook.domain.notebook.Note.submit_embedding",
+        AsyncMock(return_value=None),
     )
-    monkeypatch.setattr(repo, "repo_relate", AsyncMock())
     cite = {
         "citation_id": "c1",
         "kind": "remote_unmapped",
@@ -286,6 +317,19 @@ async def test_workspace_keeps_canonical_note_edits(monkeypatch):
         get_notes=AsyncMock(return_value=[note]),
     )
     monkeypatch.setattr(Notebook, "get", AsyncMock(return_value=nb))
+    from open_notebook.database import note_repository
+
+    monkeypatch.setattr(
+        note_repository,
+        "read_project_notes_locked",
+        AsyncMock(
+            return_value=[
+                note_repository.NoteWriteResult(
+                    native=note.model_dump(), snapshot={"citations": []}
+                )
+            ]
+        ),
+    )
     assert (await PersonalService(store).workspace("nb"))["notes"][0][
         "content"
     ] == "New content"
@@ -319,3 +363,30 @@ async def test_bridge_unknown_submission_remains_unknown(monkeypatch):
     result = await service.run_turn(job["job_id"])
     assert result["state"] == "submission_unknown"
     assert result["submission_state"] == "unknown"
+
+
+@pytest.mark.asyncio
+async def test_unknown_stored_engine_never_dispatches_notebooklm(monkeypatch):
+    from api.notebooklm_service import NotebookLMService
+    from api.personal_service import PersonalService
+
+    store = MemoryStore()
+    ask = AsyncMock(return_value={"answer": "must not be requested"})
+    monkeypatch.setattr(NotebookLMService, "ask", ask)
+    await store.put(
+        "job",
+        "job_unknown",
+        {
+            "job_id": "job_unknown",
+            "notebook_id": "nb",
+            "chat_session_id": "session",
+            "turn_id": "turn_unknown",
+            "state": "queued",
+            "request_snapshot": {"engine": "unknown", "message": "fixture"},
+        },
+    )
+    result = await PersonalService(store).run_turn("job_unknown")
+    ask.assert_not_awaited()
+    assert result["state"] == "failed"
+    assert "INVALID_ENGINE" in result["error"]["message"]
+    assert await store.list("turn") == []

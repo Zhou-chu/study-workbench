@@ -27,16 +27,28 @@ from open_notebook.utils.url_validation import prepare_pinned_http_target
 pytestmark = pytest.mark.asyncio
 
 
+@pytest.fixture
+def public_dns():
+    """Resolve happy-path hostnames without replacing URL/SSRF validation."""
+    with patch(
+        "open_notebook.utils.url_validation.socket.getaddrinfo",
+        return_value=[
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0)),
+        ],
+    ):
+        yield
+
+
 class TestUrlValidation:
     """Test suite for URL validation to prevent SSRF attacks."""
 
-    async def test_valid_https_url(self):
+    async def test_valid_https_url(self, public_dns):
         """Valid HTTPS URLs should pass."""
         await validate_url("https://api.openai.com", "openai")
         await validate_url("https://example.com/api", "anthropic")
         # Should not raise
 
-    async def test_valid_http_url(self):
+    async def test_valid_http_url(self, public_dns):
         """Valid HTTP URLs should pass."""
         await validate_url("http://example.com", "openai")
         # Should not raise
@@ -106,7 +118,7 @@ class TestUrlValidation:
         with pytest.raises(ValueError):
             await validate_url("not-a-url", "openai")
 
-    async def test_public_hostnames_allowed(self):
+    async def test_public_hostnames_allowed(self, public_dns):
         """Public hostnames should be allowed."""
         await validate_url("https://api.openai.com/v1", "openai")
         await validate_url("https://api.anthropic.com", "anthropic")
@@ -114,14 +126,14 @@ class TestUrlValidation:
         await validate_url("https://api.groq.com", "groq")
         # Should not raise
 
-    async def test_azure_specific_urls(self):
+    async def test_azure_specific_urls(self, public_dns):
         """Azure OpenAI endpoints should be validated."""
         await validate_url("https://my-resource.openai.azure.com", "azure")
         # Localhost is allowed for self-hosted
         await validate_url("http://localhost:8000", "azure")
         # Should not raise
 
-    async def test_openai_compatible_urls(self):
+    async def test_openai_compatible_urls(self, public_dns):
         """OpenAI-compatible provider URLs should be validated."""
         await validate_url("https://api.together.xyz", "openai_compatible")
         # Private IPs are allowed for self-hosted

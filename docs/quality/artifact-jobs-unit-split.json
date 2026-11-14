@@ -1,0 +1,62 @@
+{
+  "before": "a64bf9b",
+  "assertionBodiesUnchanged": true,
+  "mapping": [
+    {
+      "old": "tests/test_v1_artifact_jobs.py::test_same_idempotency_key_returns_original_and_conflicts_on_different_request",
+      "new": "tests/test_v1_artifact_jobs_unit.py::test_same_idempotency_key_returns_original_and_conflicts_on_different_request"
+    },
+    {
+      "old": "tests/test_v1_artifact_jobs.py::test_audio_persists_id_releases_slot_and_polls_original_only",
+      "new": "tests/test_v1_artifact_jobs_unit.py::test_audio_persists_id_releases_slot_and_polls_original_only"
+    },
+    {
+      "old": "tests/test_v1_artifact_jobs.py::test_lost_response_is_unknown_and_never_automatically_replayed",
+      "new": "tests/test_v1_artifact_jobs_unit.py::test_lost_response_is_unknown_and_never_automatically_replayed"
+    },
+    {
+      "old": "tests/test_v1_artifact_jobs.py::test_worker_crash_after_intent_marks_unknown_on_recovery",
+      "new": "tests/test_v1_artifact_jobs_unit.py::test_worker_crash_after_intent_marks_unknown_on_recovery"
+    },
+    {
+      "old": "tests/test_v1_artifact_jobs.py::test_concurrent_worker_delivery_does_not_duplicate_remote_submission",
+      "new": "tests/test_v1_artifact_jobs_unit.py::test_concurrent_worker_delivery_does_not_duplicate_remote_submission"
+    },
+    {
+      "old": "tests/test_v1_artifact_jobs.py::test_cancel_explains_remote_may_continue_and_does_not_poll",
+      "new": "tests/test_v1_artifact_jobs_unit.py::test_cancel_explains_remote_may_continue_and_does_not_poll"
+    },
+    {
+      "old": "tests/test_v1_artifact_jobs.py::test_empty_or_unknown_source_scope_cannot_generate",
+      "new": "tests/test_v1_artifact_jobs_unit.py::test_empty_or_unknown_source_scope_cannot_generate"
+    },
+    {
+      "old": "tests/test_v1_artifact_jobs.py::test_audio_completion_downloads_verified_asset_without_generating_again",
+      "new": "tests/test_v1_artifact_jobs.py::test_audio_completion_downloads_verified_asset_without_generating_again"
+    },
+    {
+      "old": "tests/test_v1_artifact_jobs.py::test_unsupported_audio_capability_blocks_before_submission",
+      "new": "tests/test_v1_artifact_jobs_unit.py::test_unsupported_audio_capability_blocks_before_submission"
+    },
+    {
+      "old": "tests/test_v1_artifact_jobs.py::test_cancel_before_remote_submission_prevents_generation",
+      "new": "tests/test_v1_artifact_jobs_unit.py::test_cancel_before_remote_submission_prevents_generation"
+    },
+    {
+      "old": "tests/test_v1_artifact_jobs.py::test_restored_historical_job_cannot_be_dispatched",
+      "new": "tests/test_v1_artifact_jobs_unit.py::test_restored_historical_job_cannot_be_dispatched"
+    },
+    {
+      "old": "tests/test_v1_artifact_jobs.py::test_account_slot_also_serializes_short_read_calls",
+      "new": "tests/test_v1_artifact_jobs_unit.py::test_account_slot_also_serializes_short_read_calls"
+    },
+    {
+      "old": "tests/test_v1_artifact_jobs.py::test_remote_id_is_durable_before_account_slot_is_released",
+      "new": "tests/test_v1_artifact_jobs_unit.py::test_remote_id_is_durable_before_account_slot_is_released"
+    },
+    {
+      "old": "tests/test_v1_artifact_jobs.py::test_successful_capability_evidence_survives_worker_instance",
+      "new": "tests/test_v1_artifact_jobs_unit.py::test_successful_capability_evidence_survives_worker_instance"
+    }
+  ]
+}

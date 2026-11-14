@@ -1,0 +1,87 @@
+{
+  "archived_citation": {
+    "evidence": {
+      "evidence_id": "ev_synthetic",
+      "evidence_kind": "text",
+      "extraction_id": "ex_synthetic",
+      "locator": {
+        "bbox": null,
+        "block_id": "block_synthetic",
+        "end_offset": 34,
+        "page_index": null,
+        "page_label": null,
+        "start_offset": 0
+      },
+      "notebook_id": "notebook:synthetic",
+      "quote": "Public synthetic archive evidence.",
+      "quote_hash": "449e2e9957e481fe2de0826621384355e2c8e1be96b6c5ec8ab402237cc44ead",
+      "source_title": "Public synthetic source",
+      "source_version_id": "sv_synthetic",
+      "verification_origin": "restored_archive"
+    },
+    "extraction": {
+      "blocks": [
+        {
+          "block_id": "block_synthetic",
+          "text": "Public synthetic archive evidence."
+        }
+      ],
+      "created_at": "2026-01-01T00:00:00+00:00",
+      "evidence_ids": [
+        "ev_synthetic"
+      ],
+      "extraction_id": "ex_synthetic",
+      "notebook_id": "notebook:synthetic",
+      "parser_name": "synthetic",
+      "parser_version": "1",
+      "source_version_id": "sv_synthetic",
+      "status": "ready",
+      "verification_origin": "restored_archive"
+    },
+    "response": {
+      "citation_id": "c1",
+      "evidence_id": "ev_synthetic",
+      "kind": "local_evidence",
+      "locator": {
+        "bbox": null,
+        "block_id": "block_synthetic",
+        "end_offset": 34,
+        "page_index": null,
+        "page_label": null,
+        "start_offset": 0
+      },
+      "quote": "Public synthetic archive evidence.",
+      "reason": "Restored archive evidence has not been verified by a fresh local extraction",
+      "reference_validity": "unverified",
+      "remote_reference": null,
+      "source_title": "Public synthetic source",
+      "source_version_id": "sv_synthetic"
+    }
+  },
+  "cancelled_event": {
+    "error": null,
+    "remote_may_continue": true,
+    "state": "cancelled_local",
+    "turn_id": "turn_afc55daaffd20fe0cef41ea854df2f27988a32602691f77761b5358ae0b0010b"
+  },
+  "unmapped_citation": {
+    "citation_id": "c1",
+    "evidence_id": null,
+    "kind": "remote_unmapped",
+    "locator": null,
+    "quote": "A public synthetic quote.",
+    "reference_validity": "unverified",
+    "remote_reference": {
+      "citation_number": 1,
+      "quote": "A public synthetic quote.",
+      "remote_source_id": "remote-synthetic"
+    },
+    "source_title": null,
+    "source_version_id": null
+  },
+  "unmapped_reference": {
+    "citation_number": 1,
+    "quote": "A public synthetic quote.",
+    "remote_source_id": "remote-synthetic"
+  }
+}

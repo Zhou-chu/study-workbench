@@ -1,0 +1,225 @@
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { expect, it } from 'vitest';
+import { createMemoryRouter, RouterProvider, useNavigate } from 'react-router';
+import { createEditor, reduceEditor } from '@study/domain';
+import { createDraftRegistry, createNavigationController } from './drafts';
+import { AppProviders } from './providers';
+import { UnsavedNavigationDialog, RouterNavigationGuard } from './UnsavedNavigationDialog';
+const id = { epoch: 1, notebookId: 'A', editorSession: 'editor-1' };
+const draft = () => createEditor('A', { title: 'Title', content: 'Unsaved', citations: [] });
+it('separates notebook/editor sessions and retires epochs without losing retained File identity', () => {
+    const registry = createDraftRegistry();
+    const file = new File(['x'], 'x.txt');
+    registry.update(id, { editor: draft(), file, question: 'q' });
+    registry.update({ ...id, notebookId: 'B' }, { editor: createEditor('B', { title: '', content: 'B', citations: [] }) });
+    expect(registry.get(id)?.file).toBe(file);
+    expect(registry.get({ ...id, editorSession: 'other' })).toBeUndefined();
+    registry.retireContext(1);
+    expect(registry.get(id)?.retired).toBe(true);
+    registry.update(id, { question: 'changed' });
+    expect(registry.get(id)?.question).toBe('q');
+});
+it.each(['saving', 'unknown', 'conflict', 'rejected'] as const)('blocks %s saves from generic discard or late not-sent', state => {
+    const registry = createDraftRegistry();
+    let editor = reduceEditor(draft(), { type: 'begin-save', operationId: 'original' });
+    if (state !== 'saving')
+        editor = reduceEditor(editor, state === 'conflict' ? { type: 'save-conflict', operationId: 'original', status: 409 } : { type: state === 'unknown' ? 'save-unknown' : 'save-rejected', operationId: 'original' });
+    if (state !== 'saving')
+        editor = reduceEditor(editor, { type: 'save-not-sent', operationId: 'original' });
+    registry.update(id, { editor });
+    const nav = createNavigationController(registry);
+    nav.activate(id);
+    expect(nav.requestNavigation({ destination: '/notebooks/B' })).toBe('blocked');
+    expect(nav.confirm()).toBeNull();
+    expect(registry.get(id)?.editor?.pending?.operationId).toBe('original');
+});
+it('binds confirmations to original editor revision and retires A to B to A', () => {
+    const registry = createDraftRegistry();
+    registry.update(id, { editor: draft() });
+    const nav = createNavigationController(registry);
+    nav.activate(id);
+    expect(nav.requestNavigation({ destination: '/B' })).toBe('confirm');
+    nav.activate({ ...id, editorSession: 'second' });
+    nav.activate(id);
+    expect(nav.confirm()).toBeNull();
+    nav.requestNavigation({ destination: '/B' });
+    registry.update(id, { editor: reduceEditor(draft(), { type: 'edit', content: 'new' }) });
+    expect(nav.confirm()).toBeNull();
+    expect(registry.get(id)?.editor?.content).toBe('new');
+});
+it('cancel restores opener; beforeunload only warns and never clears or saves', async () => {
+    const registry = createDraftRegistry();
+    registry.update(id, { editor: draft() });
+    const nav = createNavigationController(registry);
+    nav.activate(id);
+    function View() { return <><button onClick={event => nav.requestNavigation({ destination: '/B', opener: event.currentTarget })}>Leave</button><UnsavedNavigationDialog navigation={nav}/></>; }
+    render(<AppProviders locale="en-US"><View /></AppProviders>);
+    const opener = screen.getByText('Leave');
+    opener.focus();
+    fireEvent.click(opener);
+    fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
+    await waitFor(() => expect(opener).toHaveFocus());
+    const event = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(registry.get(id)?.editor?.content).toBe('Unsaved');
+});
+it('intercepts real router Back, cancels without changing page, and handles confirmed navigation once', async () => {
+    const registry = createDraftRegistry();
+    registry.update(id, { editor: draft() });
+    const nav = createNavigationController(registry);
+    nav.activate(id);
+    function View() { const navigate = useNavigate(); return <><button onClick={() => navigate(-1)}>Back</button><RouterNavigationGuard navigation={nav}/><UnsavedNavigationDialog navigation={nav}/></>; }
+    const router = createMemoryRouter([{ path: '*', element: <AppProviders locale="en-US"><View /></AppProviders> }], { initialEntries: ['/B', '/A'], initialIndex: 1 });
+    render(<RouterProvider router={router}/>);
+    fireEvent.click(screen.getByText('Back'));
+    expect(await screen.findByRole('dialog')).toBeVisible();
+    fireEvent.click(screen.getByText('Keep editing'));
+    expect(router.state.location.pathname).toBe('/A');
+    fireEvent.click(screen.getByText('Back'));
+    fireEvent.click(screen.getByText('Leave without saving'));
+    await act(async () => { });
+    expect(router.state.location.pathname).toBe('/B');
+});
+it('ignores a delayed confirmation from a retired dialog even after a new confirmation exists', () => {
+    const registry = createDraftRegistry();
+    registry.update(id, { editor: draft() });
+    const nav = createNavigationController(registry);
+    nav.activate(id);
+    nav.requestNavigation({ destination: '/old' });
+    const old = nav.getSnapshot().capture;
+    nav.activate({ ...id, editorSession: 'other' });
+    nav.activate(id);
+    nav.requestNavigation({ destination: '/new' });
+    expect(nav.confirm(old)).toBeNull();
+    expect(nav.getSnapshot().capture?.intent.destination).toBe('/new');
+});
+it('guards Forward and rejects confirmation if the draft changed while the dialog was open', async () => {
+    const registry = createDraftRegistry();
+    registry.update(id, { editor: draft() });
+    const nav = createNavigationController(registry);
+    nav.activate(id);
+    function View() { const navigate = useNavigate(); return <><button onClick={() => navigate(1)}>Forward</button><RouterNavigationGuard navigation={nav}/><UnsavedNavigationDialog navigation={nav}/></>; }
+    const router = createMemoryRouter([{ path: '*', element: <AppProviders locale="en-US"><View /></AppProviders> }], { initialEntries: ['/A', '/B'], initialIndex: 0 });
+    render(<RouterProvider router={router}/>);
+    fireEvent.click(screen.getByText('Forward'));
+    await screen.findByRole('dialog');
+    registry.update(id, { editor: reduceEditor(draft(), { type: 'edit', content: 'newer' }) });
+    fireEvent.click(screen.getByText('Leave without saving'));
+    await act(async () => { });
+    expect(router.state.location.pathname).toBe('/A');
+    expect(registry.get(id)?.editor?.content).toBe('newer');
+});
+it('exposes retired context even when no draft was ever created', () => {
+    const registry = createDraftRegistry();
+    expect(registry.get(id)).toBeUndefined();
+    registry.retireContext(id.epoch);
+    expect(registry.isRetired(id)).toBe(true);
+    registry.update(id, { question: 'late write' });
+    expect(registry.get(id)).toBeUndefined();
+    const next = { ...id, epoch: 2, editorSession: 'new-explicit-editor' };
+    registry.update(next, { question: 'new work' });
+    expect(registry.isRetired(next)).toBe(false);
+    expect(registry.get(next)?.question).toBe('new work');
+});
+const creationContext = (epoch: number) => ({ epoch, ready: true, target: { mode: 'legacy_password' as const, apiBase: 'http://localhost:3000/api', protocol: null } });
+it('keeps typed creation captures and sticky uncertainty through retirement and a separate successful intent', () => {
+    const registry = createDraftRegistry();
+    const context = creationContext(5);
+    const original = registry.openNotebookCreation(context)!;
+    registry.editNotebookCreation(original, { name: 'Original unknown', description: 'Retained description' });
+    const captured = registry.beginNotebookCreation(original, context)!;
+    expect(captured.context.epoch).toBe(5);
+    registry.settleNotebookCreation(original, 'unknown', context);
+    const old = registry.get(original);
+    registry.settleNotebookCreation(original, 'not-sent', context);
+    expect(registry.get(original)).toBe(old);
+    registry.retireContext(5);
+    const next = registry.startFreshNotebookCreation(creationContext(6))!;
+    expect(next).not.toEqual(original);
+    expect(registry.getNotebookCreationSnapshot().active?.creation).toMatchObject({ name: '', description: '', status: 'editing', context: { epoch: 6 } });
+    registry.editNotebookCreation(original, { name: 'Must not rebind' });
+    expect(registry.get(original)?.creation).toMatchObject({ name: 'Original unknown', description: 'Retained description', status: 'unknown', context: { epoch: 5 } });
+    const nav = createNavigationController(registry);
+    nav.activate(next);
+    expect(nav.requestNavigation({ destination: '/notebooks/other' })).toBe('allow');
+    registry.editNotebookCreation(next, { name: 'Different notebook' });
+    registry.beginNotebookCreation(next, creationContext(6));
+    expect(nav.requestNavigation({ destination: '/other' })).toBe('retain');
+    registry.settleNotebookCreation(next, { notebookId: 'notebook:created' }, creationContext(6));
+    expect(nav.requestNavigation({ destination: '/notebooks/notebook%3Acreated' })).toBe('allow');
+    expect(registry.hasUnsaved()).toBe(true);
+    expect(registry.getNotebookCreationSnapshot().retained[0]?.creation).toMatchObject({ status: 'unknown', name: 'Original unknown' });
+});
+it('cannot mark a creation complete with an empty result identity', () => {
+    const registry = createDraftRegistry();
+    const context = creationContext(8);
+    const original = registry.openNotebookCreation(context)!;
+    registry.editNotebookCreation(original, { name: 'Needs real result' });
+    registry.beginNotebookCreation(original, context);
+    registry.settleNotebookCreation(original, { notebookId: '' }, context);
+    const nav = createNavigationController(registry);
+    nav.activate(original);
+    expect(nav.requestNavigation({ destination: '/other' })).toBe('retain');
+    expect(registry.get(original)?.creation?.status).toBe('unknown');
+});
+it('owner cleanup is callback-safe and cannot deactivate a newer notebook question', () => {
+    const registry = createDraftRegistry();
+    const creation = registry.openNotebookCreation(creationContext(3))!;
+    const nav = createNavigationController(registry);
+    nav.activate(creation);
+    registry.update(id, { question: 'Keep real notebook question' });
+    nav.activate(id);
+    const release = nav.deactivate;
+    release(creation);
+    expect(nav.requestNavigation({ destination: '/other' })).toBe('confirm');
+    release(id);
+    expect(nav.requestNavigation({ destination: '/other' })).toBe('allow');
+});
+it('retains creation identity on explicit navigation while rejecting stale and A-to-B-to-A confirmations', () => {
+    const registry = createDraftRegistry();
+    const context = creationContext(12);
+    const creation = registry.openNotebookCreation(context)!;
+    registry.editNotebookCreation(creation, { name: 'Keep exact unknown' });
+    registry.beginNotebookCreation(creation, context);
+    registry.settleNotebookCreation(creation, 'unknown', context);
+    const original = registry.get(creation);
+    const nav = createNavigationController(registry);
+    nav.activate(creation);
+    expect(nav.requestNavigation({ destination: '/sources' })).toBe('retain');
+    const capture = nav.getSnapshot().capture;
+    expect(nav.confirm(capture)?.destination).toBe('/sources');
+    expect(registry.get(creation)).toBe(original);
+    expect(registry.get(creation)?.creation?.status).toBe('unknown');
+    nav.requestNavigation({ destination: '/old' });
+    const old = nav.getSnapshot().capture;
+    nav.activate(id);
+    nav.activate(creation);
+    nav.requestNavigation({ destination: '/new' });
+    expect(nav.confirm(old)).toBeNull();
+    expect(nav.getSnapshot().capture?.intent.destination).toBe('/new');
+    expect(nav.confirm()?.destination).toBe('/new');
+    expect(registry.get(creation)).toBe(original);
+});
+it.each(['saving', 'unknown', 'conflict', 'rejected'] as const)('does not let creation retain semantics relax %s note/editor protection', state => {
+    const registry = createDraftRegistry();
+    let editor = reduceEditor(draft(), { type: 'begin-save', operationId: 'note-owned' });
+    if (state !== 'saving')
+        editor = reduceEditor(editor, state === 'conflict' ? { type: 'save-conflict', operationId: 'note-owned', status: 409 } : { type: state === 'unknown' ? 'save-unknown' : 'save-rejected', operationId: 'note-owned' });
+    registry.update(id, { editor });
+    const creation = registry.openNotebookCreation(creationContext(13))!;
+    registry.editNotebookCreation(creation, { name: 'Uncertain creation' });
+    registry.beginNotebookCreation(creation, creationContext(13));
+    registry.settleNotebookCreation(creation, 'unknown', creationContext(13));
+    const nav = createNavigationController(registry);
+    nav.activate(creation);
+    expect(nav.requestNavigation({ destination: '/source' })).toBe('retain');
+    nav.activate(id);
+    expect(nav.requestNavigation({ destination: '/source' })).toBe('blocked');
+    expect(nav.confirm()).toBeNull();
+    expect(registry.get(id)?.editor).toBe(editor);
+});
+
+it('rejects a captured creation-retain confirmation when the original pending record changes',()=>{
+ const registry=createDraftRegistry();const context=creationContext(17);const id=registry.openNotebookCreation(context)!;registry.editNotebookCreation(id,{name:'Pending exact revision'});registry.beginNotebookCreation(id,context);const nav=createNavigationController(registry);nav.activate(id);expect(nav.requestNavigation({destination:'/old-result'})).toBe('retain');const capture=nav.getSnapshot().capture;registry.settleNotebookCreation(id,'unknown',context);expect(nav.confirm(capture)).toBeNull();expect(registry.get(id)?.creation?.status).toBe('unknown');nav.requestNavigation({destination:'/current-result'});expect(nav.confirm()?.destination).toBe('/current-result');expect(registry.get(id)?.creation?.status).toBe('unknown');
+});

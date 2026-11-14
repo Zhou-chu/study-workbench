@@ -1,148 +1,104 @@
-/**
- * Runtime configuration for the frontend.
- * This allows the same Docker image to work in different environments.
- */
+/** Runtime configuration without application-supplied credentials. */
+import { browserTurnTarget } from '@/lib/api/browser-target'
+import { publishTurnTarget, suspendTurnTarget } from '@/lib/workbench/turn-context'
+import { purgeLegacyAuth } from '@/lib/auth-token'
+import { AppConfig, BackendConfigResponse, WEB_SESSION_PROTOCOL, type WebSessionMode } from '@/lib/types/config'
 
-import { AppConfig, BackendConfigResponse } from '@/lib/types/config'
-
-// Build timestamp for debugging - set at build time
 const BUILD_TIME = new Date().toISOString()
-
 let config: AppConfig | null = null
 let configPromise: Promise<AppConfig> | null = null
+let configGeneration = 0
+const PUBLIC_CONFIG_FETCH = { cache: 'no-store', credentials: 'same-origin', redirect: 'error' } as const
 
-/**
- * Get the API URL to use for requests.
- *
- * Priority:
- * 1. Runtime config from API server (/api/config endpoint)
- * 2. Environment variable (NEXT_PUBLIC_API_URL)
- * 3. Default fallback (http://localhost:5055)
- */
 export async function getApiUrl(): Promise<string> {
-  // If we already have config, return it
-  if (config) {
-    return config.apiUrl
-  }
-
-  // If we're already fetching, wait for that
-  if (configPromise) {
-    const cfg = await configPromise
-    return cfg.apiUrl
-  }
-
-  // Start fetching config
-  configPromise = fetchConfig()
-  const cfg = await configPromise
-  return cfg.apiUrl
+  return (await getConfig()).apiUrl
 }
 
-/**
- * Get the full configuration.
- */
 export async function getConfig(): Promise<AppConfig> {
-  if (config) {
-    return config
-  }
-
-  if (configPromise) {
-    return await configPromise
-  }
-
-  configPromise = fetchConfig()
-  return await configPromise
+  if (config) return config
+  const generation = configGeneration
+  if (!configPromise) configPromise = fetchConfig(generation)
+  const result = await configPromise
+  assertCurrentConfig(generation)
+  return result
 }
 
-/**
- * Fetch configuration from the API or use defaults.
- */
-async function fetchConfig(): Promise<AppConfig> {
-  const isDev = process.env.NODE_ENV === 'development'
-  
-  if (isDev) {
-    console.log('🔧 [Config] Starting configuration detection...')
-    console.log('🔧 [Config] Build time:', BUILD_TIME)
+function unavailable(): never {
+  throw new Error('Web session configuration unavailable')
+}
+
+function runtimeMetadata(data: unknown): {
+  apiUrl: string
+  authMode: WebSessionMode
+  webSessionProtocol: typeof WEB_SESSION_PROTOCOL | null
+} {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return unavailable()
+  const metadata = data as Record<string, unknown>
+  // Older successful /config responses are legacy compatibility, not fallback
+  // from a failed lookup, explicit invalid mode, or incompatible Web protocol.
+  const authMode = Object.hasOwn(metadata, 'auth_mode') ? metadata.auth_mode : 'legacy_password'
+  if (authMode !== 'legacy_password' && authMode !== 'device_sessions') return unavailable()
+  if (authMode === 'device_sessions') {
+    if (metadata.web_session_protocol !== WEB_SESSION_PROTOCOL || metadata.apiUrl !== '') return unavailable()
+    return { apiUrl: '', authMode, webSessionProtocol: WEB_SESSION_PROTOCOL }
   }
-
-  // STEP 1: Try to get runtime config from Next.js server-side endpoint
-  // This allows API_URL to be set at runtime (not baked into build)
-  // Note: Endpoint is at /config (not /api/config) to avoid reverse proxy conflicts
-  let runtimeApiUrl: string | null = null
-  try {
-    if (isDev) console.log('🔧 [Config] Attempting to fetch runtime config from /config endpoint...')
-    const runtimeResponse = await fetch('/config', {
-      cache: 'no-store',
-    })
-    if (runtimeResponse.ok) {
-      const runtimeData = await runtimeResponse.json()
-      runtimeApiUrl = runtimeData.apiUrl
-      // Treat empty string as "not set" to allow fallback to env var or default
-      if (runtimeApiUrl === '') {
-        runtimeApiUrl = null
-      }
-      if (isDev) console.log('✅ [Config] Runtime API URL from server:', runtimeApiUrl)
-    } else {
-      if (isDev) console.log('⚠️ [Config] Runtime config endpoint returned status:', runtimeResponse.status)
-    }
-  } catch (error) {
-    if (isDev) console.log('⚠️ [Config] Could not fetch runtime config:', error)
-  }
-
-  // STEP 2: Fallback to build-time environment variable
-  const envApiUrl = process.env.NEXT_PUBLIC_API_URL
-  if (isDev) console.log('🔧 [Config] NEXT_PUBLIC_API_URL from build:', envApiUrl || '(not set)')
-
-  // STEP 3: Smart default - prefer relative path to use Next.js Rewrites
-  // This avoids CORS issues and port mapping complexities by proxying through Next.js
-  const defaultApiUrl = ''
-
-  if (typeof window !== 'undefined' && isDev) {
-      console.log('🔧 [Config] Using relative path (rewrites) as default')
-  }
-
-  // Priority: Runtime config > Build-time env var > Smart default
-  // Note: runtimeApiUrl must be checked against null explicitly as empty string might be valid if intended (though we treat '' as null above)
-  const baseUrl = runtimeApiUrl !== null && runtimeApiUrl !== undefined ? runtimeApiUrl : (envApiUrl || defaultApiUrl)
-  if (isDev) {
-    console.log('🔧 [Config] Final base URL to try:', baseUrl)
-    console.log('🔧 [Config] Selection priority: runtime=' + (runtimeApiUrl ? '✅' : '❌') +
-                ', build-time=' + (envApiUrl ? '✅' : '❌') +
-                ', smart-default=' + (!runtimeApiUrl && !envApiUrl ? '✅' : '❌'))
-  }
-
-  try {
-    if (isDev) console.log('🔧 [Config] Fetching backend config from:', `${baseUrl}/api/config`)
-    // Try to fetch runtime config from backend API
-    const response = await fetch(`${baseUrl}/api/config`, {
-      cache: 'no-store',
-    })
-
-    if (response.ok) {
-      const data: BackendConfigResponse = await response.json()
-      config = {
-        apiUrl: baseUrl, // Use baseUrl from runtime-config (Python no longer returns this)
-        version: data.version || 'unknown',
-        buildTime: BUILD_TIME,
-        latestVersion: data.latestVersion || null,
-        hasUpdate: data.hasUpdate || false,
-        dbStatus: data.dbStatus, // Can be undefined for old backends
-      }
-      if (isDev) console.log('✅ [Config] Successfully loaded API config:', config)
-      return config
-    } else {
-      // Don't log error here - ConnectionGuard will display it
-      throw new Error(`API config endpoint returned status ${response.status}`)
-    }
-  } catch (error) {
-    // Don't log error here - ConnectionGuard will display it with proper UI
-    throw error
+  if (metadata.web_session_protocol !== undefined && metadata.web_session_protocol !== null) return unavailable()
+  if (metadata.apiUrl !== undefined && metadata.apiUrl !== null && typeof metadata.apiUrl !== 'string') return unavailable()
+  return {
+    apiUrl: (metadata.apiUrl as string | null | undefined) || process.env.NEXT_PUBLIC_API_URL || '',
+    authMode, webSessionProtocol: null,
   }
 }
 
-/**
- * Reset the configuration cache (useful for testing).
- */
+function assertCurrentConfig(generation: number): void {
+  if (generation !== configGeneration) unavailable()
+}
+
+async function fetchConfig(generation: number): Promise<AppConfig> {
+  let metadata: ReturnType<typeof runtimeMetadata>
+  try {
+    // Failure must stop bootstrap: neither build-time URLs nor saved passwords
+    // may select a legacy path before the server's mode has been discovered.
+    const response = await fetch('/config', PUBLIC_CONFIG_FETCH)
+    assertCurrentConfig(generation)
+    if (!response.ok) return unavailable()
+    metadata = runtimeMetadata(await response.json())
+    assertCurrentConfig(generation)
+    // Retire an actual destination change before waiting for API readiness.
+    publishTurnTarget(browserTurnTarget(metadata), false)
+    // Device discovery is sufficient to retire browser password persistence,
+    // even if the later public API readiness/config request fails or hangs.
+    if (metadata.authMode === 'device_sessions') purgeLegacyAuth()
+  } catch {
+    return unavailable()
+  }
+
+  // Device apiUrl:'' is authoritative. Ambient same-origin cookies can satisfy
+  // an owner-private ingress; no application Authorization/password is supplied.
+  // Never include cross-origin cookies or follow redirects. The BFF metadata
+  // dispatcher strips Cookie/Authorization before contacting the backend.
+  const target = browserTurnTarget(metadata)
+  const response = await fetch(metadata.apiUrl ? `${target.apiBase}/config` : '/api/config', PUBLIC_CONFIG_FETCH)
+  assertCurrentConfig(generation)
+  if (!response.ok) throw new Error(`API config endpoint returned status ${response.status}`)
+  const data: BackendConfigResponse = await response.json()
+  assertCurrentConfig(generation)
+  config = {
+    ...metadata,
+    version: data.version || 'unknown',
+    buildTime: BUILD_TIME,
+    latestVersion: data.latestVersion || null,
+    hasUpdate: data.hasUpdate || false,
+    dbStatus: data.dbStatus,
+  }
+  publishTurnTarget(target, true)
+  return config
+}
+
+/** Reset only on an explicit caller action; configuration errors never retry. */
 export function resetConfig(): void {
+  configGeneration++
+  suspendTurnTarget()
   config = null
   configPromise = null
 }

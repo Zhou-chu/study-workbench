@@ -164,3 +164,14 @@ history.txt
 .env.v1*
 *.secret
 !.env.v1.example
+
+# Local implementation coordination artifacts
+.superpowers/
+
+# Independent SPA workspace dependencies
+/node_modules/
+/apps/*/node_modules/
+/packages/*/node_modules/
+
+# Generated coverage reports (source denominator is configured explicitly)
+/coverage/

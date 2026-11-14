@@ -10,11 +10,8 @@ transient submission failure shouldn't turn an otherwise-successful save
 into a 500, unlike Source.vectorize()/add_insight() which are dedicated
 "submit this job" calls with nothing useful to fall back on.
 
-api/routers/embedding.py's POST /embed endpoint is the one exception: for
-item_type=note it reuses Note.save() specifically *because* embedding
-submission is the explicit point of that call (mirroring
-Source.vectorize()) - so it now explicitly checks for a submission failure
-(content present, no command_id) and still surfaces it as a failure.
+The explicit POST /embed endpoint submits embeddings without saving editorial
+content or advancing the note revision, and still reports submission failure.
 """
 
 from unittest.mock import AsyncMock, patch
@@ -34,70 +31,62 @@ def client():
 
 class TestNoteSaveEmbedResilience:
     @pytest.mark.asyncio
-    async def test_save_does_not_raise_when_submission_fails(self):
-        note = Note(title="Test", content="some content")
-        with (
-            patch(
-                "open_notebook.domain.base.ObjectModel.save",
-                new=AsyncMock(),
-            ),
-            patch(
-                "open_notebook.domain.notebook.submit_command",
-                side_effect=RuntimeError("job queue is down"),
-            ),
-        ):
-            object.__setattr__(note, "id", "note:abc123")
-            command_id = await note.save()
+    @pytest.mark.parametrize(
+        "content,submission,expected",
+        [
+            ("some content", "command:xyz789", "command:xyz789"),
+            ("some content", RuntimeError("queue down"), None),
+            (None, "unused", None),
+        ],
+    )
+    async def test_commit_precedes_best_effort_embedding(
+        self, monkeypatch, content, submission, expected
+    ):
+        from open_notebook.database.note_repository import NoteWriteResult
 
-        assert command_id is None
+        events = []
+
+        async def commit(**kwargs):
+            events.append("commit")
+            return NoteWriteResult(
+                native={"id": "note:abc123", **kwargs["fields"], "revision": 2},
+                snapshot=None,
+            )
+
+        async def submit(*args):
+            assert events == ["commit"]
+            events.append("submit")
+            if isinstance(submission, Exception):
+                raise submission
+            return submission
+
+        monkeypatch.setattr(
+            "open_notebook.database.note_repository.update_note", commit
+        )
+        monkeypatch.setattr("open_notebook.domain.notebook.submit_command", submit)
+        note = Note(id="note:abc123", title="Test", content=content)
+        assert await note.save() == expected
+        assert note.revision == 2
+        assert events == (["commit", "submit"] if content else ["commit"])
 
     @pytest.mark.asyncio
-    async def test_save_still_calls_super_save_before_attempting_submission(self):
-        """The note's core save must happen (and succeed) regardless of
-        whether the embedding submission afterward fails."""
-        note = Note(title="Test", content="some content")
-        with (
-            patch(
-                "open_notebook.domain.base.ObjectModel.save",
-                new=AsyncMock(),
-            ) as mock_super_save,
-            patch(
-                "open_notebook.domain.notebook.submit_command",
-                side_effect=RuntimeError("job queue is down"),
-            ),
-        ):
-            object.__setattr__(note, "id", "note:abc123")
+    async def test_failed_commit_never_submits_embedding(self, monkeypatch):
+        from open_notebook.exceptions import NoteRevisionConflict
+
+        async def rejected(**kwargs):
+            raise NoteRevisionConflict(2)
+
+        async def submit(*args):
+            raise AssertionError("embedding before confirmed commit")
+
+        monkeypatch.setattr(
+            "open_notebook.database.note_repository.update_note", rejected
+        )
+        monkeypatch.setattr("open_notebook.domain.notebook.submit_command", submit)
+        note = Note(id="note:abc123", content="draft")
+        with pytest.raises(NoteRevisionConflict):
             await note.save()
-
-        mock_super_save.assert_awaited_once()
-
-    @pytest.mark.asyncio
-    async def test_save_returns_command_id_on_success(self):
-        note = Note(title="Test", content="some content")
-        with (
-            patch("open_notebook.domain.base.ObjectModel.save", new=AsyncMock()),
-            patch(
-                "open_notebook.domain.notebook.submit_command",
-                return_value="command:xyz789",
-            ),
-        ):
-            object.__setattr__(note, "id", "note:abc123")
-            command_id = await note.save()
-
-        assert command_id == "command:xyz789"
-
-    @pytest.mark.asyncio
-    async def test_save_returns_none_when_no_content(self):
-        note = Note(title="Test", content=None)
-        with (
-            patch("open_notebook.domain.base.ObjectModel.save", new=AsyncMock()),
-            patch("open_notebook.domain.notebook.submit_command") as mock_submit,
-        ):
-            object.__setattr__(note, "id", "note:abc123")
-            command_id = await note.save()
-
-        assert command_id is None
-        mock_submit.assert_not_called()
+        assert note.revision == 1
 
 
 class TestEmbeddingEndpointNoteBranch:
@@ -109,7 +98,7 @@ class TestEmbeddingEndpointNoteBranch:
 
         with (
             patch("api.routers.embedding.Note.get", new=AsyncMock(return_value=note)),
-            patch.object(Note, "save", new=AsyncMock(return_value=None)),
+            patch.object(Note, "submit_embedding", return_value=None),
             patch(
                 "open_notebook.ai.models.model_manager.get_embedding_model",
                 new=AsyncMock(return_value=object()),
@@ -133,7 +122,7 @@ class TestEmbeddingEndpointNoteBranch:
 
         with (
             patch("api.routers.embedding.Note.get", new=AsyncMock(return_value=note)),
-            patch.object(Note, "save", new=AsyncMock(return_value="command:abc123")),
+            patch.object(Note, "submit_embedding", return_value="command:abc123"),
             patch(
                 "open_notebook.ai.models.model_manager.get_embedding_model",
                 new=AsyncMock(return_value=object()),
@@ -161,7 +150,7 @@ class TestEmbeddingEndpointNoteBranch:
 
         with (
             patch("api.routers.embedding.Note.get", new=AsyncMock(return_value=note)),
-            patch.object(Note, "save", new=AsyncMock(return_value=None)),
+            patch.object(Note, "submit_embedding", return_value=None),
             patch(
                 "open_notebook.ai.models.model_manager.get_embedding_model",
                 new=AsyncMock(return_value=object()),
@@ -180,3 +169,29 @@ class TestEmbeddingEndpointNoteBranch:
         body = response.json()
         assert body["success"] is True
         assert body["command_id"] is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("field_override", [False, True])
+async def test_invalid_mutable_note_fields_never_reach_coordinator(
+    monkeypatch, field_override
+):
+    from pydantic import ValidationError
+
+    calls = []
+
+    async def forbidden(**kwargs):
+        calls.append(kwargs)
+        raise AssertionError("invalid note reached coordinator")
+
+    monkeypatch.setattr("open_notebook.database.note_repository.update_note", forbidden)
+    monkeypatch.setattr(
+        "open_notebook.domain.notebook.submit_command",
+        AsyncMock(side_effect=lambda *a: calls.append(a)),
+    )
+    note = Note(id="note:synthetic", content="Retained body", note_type="human")
+    if not field_override:
+        note.note_type = "invalid"  # type: ignore[assignment]
+    with pytest.raises(ValidationError):
+        await note.save(fields={"note_type": "invalid"} if field_override else None)
+    assert calls == []

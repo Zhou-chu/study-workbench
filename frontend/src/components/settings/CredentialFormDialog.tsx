@@ -63,6 +63,10 @@ export function CredentialFormDialog({
   const [modalities, setModalities] = useState<string[]>([])
 
   useEffect(() => {
+    setShowApiKey(false)
+  }, [open, provider, credential?.id])
+
+  useEffect(() => {
     if (credential) {
       setName(credential.name || '')
       setBaseUrl(credential.base_url || '')
@@ -201,25 +205,28 @@ export function CredentialFormDialog({
                 {t('models.apiKey')}
                 {!requiresApiKey && <span className="text-muted-foreground font-normal ml-1">({t('common.optional')})</span>}
               </Label>
-              <div className="relative">
+              <div className="flex items-center gap-2">
                 <input
                   id="api-key"
                   type={showApiKey ? 'text' : 'password'}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pr-10"
+                  className="flex h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder={isEditing ? '••••••••••••' : 'sk-...'}
                   disabled={isSubmitting}
                   autoComplete="off"
                 />
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setShowApiKey(!showApiKey)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
-                  tabIndex={-1}
+                  className="h-10 shrink-0 focus-visible:ring-ring"
+                  aria-controls="api-key"
+                  aria-label={t(showApiKey ? 'apiKeys.hideKeyLabel' : 'apiKeys.showKeyLabel')}
+                  disabled={isSubmitting}
                 >
-                  {showApiKey ? 'Hide' : 'Show'}
-                </button>
+                  {t(showApiKey ? 'apiKeys.hideKey' : 'apiKeys.showKey')}
+                </Button>
               </div>
               {isEditing && <p className="text-xs text-muted-foreground">{t('apiKeys.apiKeyEditHint')}</p>}
               {docsUrl && (

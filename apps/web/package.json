@@ -1,0 +1,40 @@
+{
+  "name": "@study/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "test": "node --test scripts/*.test.mjs && vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "build": "node scripts/build-manifest.mjs --build",
+    "contrast": "node scripts/check-contrast.mjs",
+    "predev": "node scripts/prepare-pdf-assets.mjs",
+    "pdf:check": "node scripts/prepare-pdf-assets.mjs --check"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "1.1.23",
+    "@radix-ui/react-tabs": "1.1.21",
+    "@study/contracts": "0.1.0",
+    "@study/domain": "0.1.0",
+    "@study/web-transport": "0.1.0",
+    "@tanstack/react-query": "5.103.3",
+    "katex": "0.18.2",
+    "pdfjs-dist": "6.4.299",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-markdown": "10.1.0",
+    "react-router": "7.18.5",
+    "rehype-katex": "7.0.1",
+    "remark-gfm": "4.0.1",
+    "remark-math": "6.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "jsdom": "26.1.0"
+  }
+}

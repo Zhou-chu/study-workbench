@@ -195,6 +195,8 @@ async def test_model_manager_uses_default_database_credential_when_unlinked(
         patch.object(
             Credential, "get_by_provider", AsyncMock(return_value=[credential])
         ),
+        # This test exercises credential/factory wiring, not DNS policy.
+        patch("open_notebook.ai.models.validate_url", AsyncMock()) as validate_url_mock,
         patch(
             "open_notebook.ai.models.AIFactory.create_language",
             return_value=factory_model,
@@ -203,6 +205,9 @@ async def test_model_manager_uses_default_database_credential_when_unlinked(
         result = await ModelManager().get_model("model:test")
 
     assert result is factory_model
+    validate_url_mock.assert_awaited_with(
+        "https://api.example.com/models", "anthropic_compatible"
+    )
     create_language.assert_called_once_with(
         model_name="compatible-model",
         provider="anthropic",

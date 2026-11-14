@@ -2,6 +2,8 @@ from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from open_notebook.database.note_contract import Revision
+
 
 # Notebook models
 class NotebookCreate(BaseModel):
@@ -225,16 +227,19 @@ class NoteCreate(BaseModel):
 
 
 class NoteUpdate(BaseModel):
+    expected_revision: Revision | None = None
     title: Optional[str] = Field(None, description="Note title")
     content: Optional[str] = Field(None, description="Note content")
     note_type: Optional[str] = Field(None, description="Type of note (human, ai)")
 
 
 class NoteResponse(BaseModel):
+    revision: Revision
     id: str
-    title: Optional[str]
-    content: Optional[str]
-    note_type: Optional[str]
+    # Nullable response values remain required keys, not omission defaults.
+    title: str | None
+    content: str | None
+    note_type: str | None
     created: str
     updated: str
     command_id: Optional[str] = None
@@ -386,10 +391,11 @@ class SourceUpdate(BaseModel):
 
 class SourceResponse(BaseModel):
     id: str
-    title: Optional[str]
-    topics: Optional[List[str]]
-    asset: Optional[AssetModel]
-    full_text: Optional[str]
+    # Nullable response values remain required keys, not omission defaults.
+    title: str | None
+    topics: List[str] | None
+    asset: AssetModel | None
+    full_text: str | None
     embedded: bool
     embedded_chunks: int
     file_available: Optional[bool] = None
@@ -405,9 +411,10 @@ class SourceResponse(BaseModel):
 
 class SourceListResponse(BaseModel):
     id: str
-    title: Optional[str]
-    topics: Optional[List[str]]
-    asset: Optional[AssetModel]
+    # Nullable response values remain required keys, not omission defaults.
+    title: str | None
+    topics: List[str] | None
+    asset: AssetModel | None
     embedded: bool  # Boolean flag indicating if source has embeddings
     embedded_chunks: int  # Number of embedded chunks
     insights_count: int

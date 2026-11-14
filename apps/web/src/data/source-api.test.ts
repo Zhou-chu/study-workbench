@@ -1,0 +1,27 @@
+import { beforeEach, expect, it } from 'vitest';
+import { invalidateTurnContext, readTurnContext, sessionCoordinator, type RequestSpec, type WebTransport } from '@study/web-transport';
+import { createSourceApi } from './source-api';
+import { json } from '../test/notebook-fixtures';
+import { sourceContext, sourceWorkspace, selection, receipt } from '../test/source-fixtures';
+beforeEach(sourceContext);
+function harness(reply: (r: RequestSpec) => Response | Promise<Response>) { const requests: RequestSpec[] = []; const transport: WebTransport = { send: async (r) => { requests.push(r); return reply(r); } }; return { api: createSourceApi(transport), requests }; }
+it('uploads exact multipart through guarded transport, with opaque notebook/source identity and no manual headers', async () => { const { api, requests } = harness(() => json(receipt)); const file = new File(['synthetic'], 'a.txt', { type: 'text/plain' }); expect(await api.upload({ notebookId: 'n/%2F', file, idempotencyKey: 'original-key', sourceId: 's/%2F' }, readTurnContext()!)).toEqual(receipt); const req = requests[0]!; expect([req.method, req.path]).toEqual(['POST', '/personal/notebooks/n%2F%252F/sources/upload']); const form = req.body as FormData; expect([...form.keys()]).toEqual(['file', 'title', 'idempotency_key', 'source_id']); expect(form.get('file')).toBe(file); expect(form.get('idempotency_key')).toBe('original-key'); expect(form.get('source_id')).toBe('s/%2F'); expect(req).not.toHaveProperty('headers'); });
+it('selection preserves reading and both scope lists, while recovery reads only workspace-view', async () => { const { api, requests } = harness(r => json(r.method === 'PATCH' ? selection : sourceWorkspace())); await api.saveSelection('n', selection, readTurnContext()!); await api.workspace('n', readTurnContext()!); expect(requests.map(r => [r.method, r.path])).toEqual([['PATCH', '/personal/notebooks/n/selection'], ['GET', '/personal/notebooks/n/workspace-view']]); expect(JSON.parse(requests[0]!.body as string)).toEqual(selection); });
+it('rejects missing receipt identity and late JSON settlement after session generation changes', async () => { const { api } = harness(() => json({ ...receipt, job_id: '' })); await expect(api.upload({ notebookId: 'n', file: new File(['x'], 'x.txt'), idempotencyKey: 'k' }, readTurnContext()!)).rejects.toThrow(); let finish!: (v: unknown) => void; const response = json({}); response.json = () => new Promise(r => { finish = r; }); const delayed = harness(() => response); const pending = delayed.api.workspace('n', readTurnContext()!); await Promise.resolve(); await Promise.resolve(); sessionCoordinator.begin(); finish(sourceWorkspace()); await expect(pending).rejects.toThrow(); });
+it('does not dispatch retired captures and preserves unsafe error classification across status/envelopes', async () => { const old = readTurnContext()!; invalidateTurnContext(); const h = harness(() => json(receipt)); await expect(h.api.upload({ notebookId: 'n', file: new File(['x'], 'x.txt'), idempotencyKey: 'k' }, old)).rejects.toThrow(); expect(h.requests).toHaveLength(0); sourceContext(); for (const status of [400, 409, 422, 500]) {
+    const a = harness(() => json({ detail: { code: 'UPLOAD_COMMIT_UNKNOWN', retry_safe: false } }, status));
+    await expect(a.api.upload({ notebookId: 'n', file: new File(['x'], 'x.txt'), idempotencyKey: 'k' }, readTurnContext()!)).rejects.toMatchObject({ code: 'UPLOAD_COMMIT_UNKNOWN' });
+} });
+it('discovery and remote writes keep exact existing wire fields and captured targets', async () => { const h = harness(r => json(r.path.endsWith('/web-import') ? { state: 'queued', ...receipt, url: 'https://example.invalid/x', warning: null } : { job_id: 'job', state: 'queued' })); const c = readTurnContext()!; await h.api.importWeb('n', { id: 'r', url: 'https://example.invalid/x', title: 'Title', snippet: 'Snippet', domain: 'example.invalid' }, 'web-key', c); await h.api.remoteAction('n', { kind: 'import', remoteNotebookId: 'remote/%2F', versionIds: [], remoteIds: ['rs'], idempotencyKey: 'remote-key' }, c); expect(JSON.parse(h.requests[0]!.body as string)).toEqual({ url: 'https://example.invalid/x', title: 'Title', snippet: 'Snippet', provider: 'firecrawl', idempotency_key: 'web-key' }); expect(JSON.parse(h.requests[1]!.body as string)).toEqual({ remote_notebook_id: 'remote/%2F', remote_source_ids: ['rs'], include_text: true, idempotency_key: 'remote-key' }); });
+
+it('projects each version in a multi-row response using the real schema without retaining raw extras', async () => {
+    const rows = [
+        { source_version_id: 'first', title: 'First', private_extra: 'not-for-reader' },
+        { source_version_id: 'second', title: 'Second', status: 'ready', private_extra: 'also-private' },
+    ];
+    const { api } = harness(() => json(rows));
+    const result = await api.versions('s/opaque', readTurnContext()!);
+    expect(result.map(row => row.source_version_id)).toEqual(['first', 'second']);
+    expect(result[1]).toMatchObject({ title: 'Second', status: 'ready' });
+    expect(JSON.stringify(result)).not.toContain('private_extra');
+});

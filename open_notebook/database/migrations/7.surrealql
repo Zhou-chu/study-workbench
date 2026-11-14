@@ -1,4 +1,12 @@
-DEFINE TABLE IF NOT EXISTS episode_profile SCHEMAFULL;
+-- Automatic conversion of unknown legacy podcast schemas is not safe.
+-- Keep the record guard and all writes in one transaction: a failed statement in
+-- an ordinary multi-statement query does not prevent later statements running.
+BEGIN TRANSACTION;
+IF array::len(SELECT * FROM speaker_profile LIMIT 1) > 0 OR array::len(SELECT * FROM episode_profile LIMIT 1) > 0 OR array::len(SELECT * FROM episode LIMIT 1) > 0 OR array::len(SELECT * FROM podcast_config LIMIT 1) > 0 {
+    THROW 'MIGRATION_7_LEGACY_PODCAST_REVIEW_REQUIRED';
+};
+
+DEFINE TABLE episode_profile SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS name ON TABLE episode_profile TYPE string;
 DEFINE FIELD IF NOT EXISTS description ON TABLE episode_profile TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS speaker_config ON TABLE episode_profile TYPE string;
@@ -11,9 +19,8 @@ DEFINE FIELD IF NOT EXISTS num_segments ON TABLE episode_profile TYPE int DEFAUL
 DEFINE FIELD IF NOT EXISTS created ON TABLE episode_profile TYPE datetime DEFAULT time::now();
 DEFINE FIELD IF NOT EXISTS updated ON TABLE episode_profile TYPE datetime DEFAULT time::now();
 
--- Create Speaker Profile table
-remove table speaker_profile;
-DEFINE TABLE IF NOT EXISTS speaker_profile SCHEMAFULL;
+-- Create Speaker Profile table only after the fresh-schema preflight.
+DEFINE TABLE speaker_profile SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS name ON TABLE speaker_profile TYPE string;
 DEFINE FIELD IF NOT EXISTS description ON TABLE speaker_profile TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS tts_provider ON TABLE speaker_profile TYPE string;
@@ -28,7 +35,7 @@ DEFINE FIELD IF NOT EXISTS updated ON TABLE speaker_profile TYPE datetime DEFAUL
 
 
 -- Enhance PodcastEpisode table
-DEFINE TABLE IF NOT EXISTS episode SCHEMAFULL;
+DEFINE TABLE episode SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS created ON episode DEFAULT time::now() VALUE $before OR time::now();
 DEFINE FIELD IF NOT EXISTS updated ON episode DEFAULT time::now() VALUE time::now();
 DEFINE FIELD IF NOT EXISTS name ON TABLE episode TYPE string;
@@ -41,11 +48,11 @@ DEFINE FIELD IF NOT EXISTS command ON TABLE episode TYPE option<record<command>>
 DEFINE FIELD IF NOT EXISTS content ON TABLE episode TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS audio_file ON TABLE episode TYPE option<string>;
 
--- Create indexes for better performance
-DEFINE INDEX IF NOT EXISTS idx_episode_profile_name ON TABLE episode_profile COLUMNS name UNIQUE CONCURRENTLY;
-DEFINE INDEX IF NOT EXISTS idx_speaker_profile_name ON TABLE speaker_profile COLUMNS name UNIQUE CONCURRENTLY;
-DEFINE INDEX IF NOT EXISTS idx_episode_profile ON TABLE episode COLUMNS episode_profile CONCURRENTLY;
-DEFINE INDEX IF NOT EXISTS idx_episode_command ON TABLE episode COLUMNS command CONCURRENTLY;
+-- Build these small fresh-table indexes synchronously inside the transaction.
+DEFINE INDEX IF NOT EXISTS idx_episode_profile_name ON TABLE episode_profile COLUMNS name UNIQUE;
+DEFINE INDEX IF NOT EXISTS idx_speaker_profile_name ON TABLE speaker_profile COLUMNS name UNIQUE;
+DEFINE INDEX IF NOT EXISTS idx_episode_profile ON TABLE episode COLUMNS episode_profile;
+DEFINE INDEX IF NOT EXISTS idx_episode_command ON TABLE episode COLUMNS command;
 
 
 --Sample data
@@ -149,4 +156,4 @@ insert into speaker_profile
             }
         ];
 
-
+COMMIT TRANSACTION;

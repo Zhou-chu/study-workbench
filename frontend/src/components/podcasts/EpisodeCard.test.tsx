@@ -135,3 +135,21 @@ describe('EpisodeCard model details', () => {
     expect(screen.getAllByText('— / —')).toHaveLength(3)
   })
 })
+
+it('aborts protected audio on unmount and never creates a leaked late object URL', async () => {
+  const { act, waitFor } = await import('@testing-library/react')
+  const { default: apiClient } = await import('@/lib/api/client')
+  const { resolvePodcastAssetUrl } = await import('@/lib/api/podcasts')
+  vi.mocked(resolvePodcastAssetUrl).mockResolvedValueOnce('/podcasts/episodes/episode:1/audio')
+  let finish!: (response: { data: Blob }) => void
+  vi.mocked(apiClient.get).mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
+  const create = vi.fn(() => 'blob:fixture'); vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: create, revokeObjectURL: vi.fn() }))
+  const view = render(<EpisodeCard episode={makeEpisode({ audio_url: '/api/podcasts/episodes/episode:1/audio' })} onDelete={vi.fn()} />)
+  await waitFor(() => expect(apiClient.get).toHaveBeenCalled())
+  const options = vi.mocked(apiClient.get).mock.calls.at(-1)?.[1]
+  view.unmount()
+  expect(options?.signal?.aborted).toBe(true)
+  await act(async () => finish({ data: new Blob(['audio']) }))
+  expect(create).not.toHaveBeenCalled()
+  vi.unstubAllGlobals()
+})

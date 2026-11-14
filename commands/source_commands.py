@@ -1,19 +1,26 @@
+import sys
 import time
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 from langchain_core.runnables import RunnableConfig
 from loguru import logger
 from surreal_commands import CommandInput, CommandOutput, command
 
-from open_notebook.database.repository import ensure_record_id
+from open_notebook.database.source_attempt_repository import finish_worker, start_worker
 from open_notebook.domain.notebook import Source
 from open_notebook.domain.transformation import Transformation
 from open_notebook.exceptions import (
+    CommandSubmissionUnknownError,
     ConfigurationError,
     ContextLengthExceededError,
     IncompleteGenerationError,
     InvalidInputError,
     NotFoundError,
+)
+from open_notebook.utils.source_execution import (
+    SourceExecutionSafety,
+    source_execution_safety,
 )
 
 try:
@@ -26,6 +33,7 @@ except ImportError as e:
 
 class SourceProcessingInput(CommandInput):
     source_id: str
+    submission_token: Optional[str] = None
     content_state: Dict[str, Any]
     notebook_ids: List[str]
     transformations: List[str]
@@ -49,7 +57,9 @@ class SourceProcessingOutput(CommandOutput):
         "wait_strategy": "exponential_jitter",
         "wait_min": 1,
         "wait_max": 120,  # Allow queue to drain
+        "retry_on": [Exception],  # Never replay task cancellation (BaseException).
         "stop_on": [
+            CommandSubmissionUnknownError,
             ValueError,
             ConfigurationError,
             ContextLengthExceededError,
@@ -68,6 +78,11 @@ async def process_source_command(
     Process source content using the source_graph workflow
     """
     start_time = time.time()
+    execution_owner = uuid4().hex
+    acquired_token = None
+    pipeline_succeeded = False
+    safety = SourceExecutionSafety()
+    safety_token = source_execution_safety.set(safety)
 
     try:
         logger.info(f"Starting source processing for source: {input_data.source_id}")
@@ -75,22 +90,7 @@ async def process_source_command(
         logger.info(f"Transformations: {input_data.transformations}")
         logger.info(f"Embed: {input_data.embed}")
 
-        # 1. Load transformation objects from IDs
-        transformations = []
-        for trans_id in input_data.transformations:
-            logger.info(f"Loading transformation: {trans_id}")
-            try:
-                transformation = await Transformation.get(trans_id)
-            except NotFoundError as e:
-                # Same as a deleted source below: permanent, not transient.
-                raise ValueError(f"Transformation '{trans_id}' no longer exists") from e
-            if not transformation:
-                raise ValueError(f"Transformation '{trans_id}' not found")
-            transformations.append(transformation)
-
-        logger.info(f"Loaded {len(transformations)} transformations")
-
-        # 2. Get existing source record to update its command field
+        # Verify the source before acquiring this execution's ownership
         try:
             source = await Source.get(input_data.source_id)
         except NotFoundError as e:
@@ -106,15 +106,30 @@ async def process_source_command(
         if not source:
             raise ValueError(f"Source '{input_data.source_id}' not found")
 
-        # Update source with command reference
-        source.command = (
-            ensure_record_id(input_data.execution_context.command_id)
+        claimed = await start_worker(
+            input_data.source_id,
+            input_data.submission_token,
+            input_data.execution_context.command_id
             if input_data.execution_context
-            else None
+            else None,
+            execution_owner,
         )
-        await source.save()
+        acquired_token = claimed["processing_attempt"]["token"]
 
-        logger.info(f"Updated source {source.id} with command reference")
+        # Load transformation objects only after this execution owns the attempt
+        transformations = []
+        for trans_id in input_data.transformations:
+            logger.info(f"Loading transformation: {trans_id}")
+            try:
+                transformation = await Transformation.get(trans_id)
+            except NotFoundError as e:
+                # Same as a deleted source below: permanent, not transient.
+                raise ValueError(f"Transformation '{trans_id}' no longer exists") from e
+            if not transformation:
+                raise ValueError(f"Transformation '{trans_id}' not found")
+            transformations.append(transformation)
+
+        logger.info(f"Loaded {len(transformations)} transformations")
 
         # 3. Process source with all notebooks
         logger.info(f"Processing source with {len(input_data.notebook_ids)} notebooks")
@@ -128,7 +143,9 @@ async def process_source_command(
                 "notebook_ids": input_data.notebook_ids,  # Use notebook_ids (plural) as expected by SourceState
                 "apply_transformations": transformations,
                 "embed": input_data.embed,
-                "source_id": input_data.source_id,  # Add the source_id to the state
+                "source_id": input_data.source_id,
+                "submission_token": acquired_token,
+                "execution_owner": execution_owner,
             }
         )
 
@@ -148,6 +165,10 @@ async def process_source_command(
         )
         logger.info(f"Created {insights_created} insights, embedding {embed_status}")
 
+        if safety.uncertain:
+            raise CommandSubmissionUnknownError(source_id=input_data.source_id)
+        pipeline_succeeded = True
+        await finish_worker(input_data.source_id, acquired_token, execution_owner, True)
         return SourceProcessingOutput(
             success=True,
             source_id=str(processed_source.id),
@@ -182,6 +203,25 @@ async def process_source_command(
         logger.debug(f"Transient error processing source {input_data.source_id}: {e}")
         raise
 
+    finally:
+        # Draining proves termination, not absence of accepted external effects:
+        # a sibling's cancellation/unknown exception may be hidden by another
+        # ordinary error. The shared latch survives that graph exception choice.
+        error = sys.exc_info()[1]
+        try:
+            if (
+                acquired_token is not None
+                and not pipeline_succeeded
+                and not safety.uncertain
+                and isinstance(error, Exception)
+                and not isinstance(error, CommandSubmissionUnknownError)
+            ):
+                await finish_worker(
+                    input_data.source_id, acquired_token, execution_owner, False
+                )
+        finally:
+            source_execution_safety.reset(safety_token)
+
 
 # =============================================================================
 # RUN TRANSFORMATION COMMAND
@@ -213,7 +253,9 @@ class RunTransformationOutput(CommandOutput):
         "wait_strategy": "exponential_jitter",
         "wait_min": 1,
         "wait_max": 60,
+        "retry_on": [Exception],  # Never replay task cancellation (BaseException).
         "stop_on": [
+            CommandSubmissionUnknownError,
             ValueError,
             ConfigurationError,
             ContextLengthExceededError,

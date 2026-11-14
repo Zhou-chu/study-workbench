@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo, useId } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useCreateDialogs } from '@/lib/hooks/use-create-dialogs'
 import { useNotebooks } from '@/lib/hooks/use-notebooks'
 import { useTheme } from '@/lib/stores/theme-store'
@@ -17,11 +17,8 @@ import {
   Book,
   Search,
   Mic,
-  Bot,
-  Shuffle,
   Settings,
   FileText,
-  Wrench,
   MessageCircleQuestion,
   Plus,
   Sun,
@@ -37,10 +34,7 @@ const getNavigationItems = (t: TFunction) => [
   { name: t('navigation.notebooks'), href: '/notebooks', icon: Book, keywords: ['notes', 'research', 'projects'] },
   { name: t('navigation.askAndSearch'), href: '/search', icon: Search, keywords: ['find', 'query'] },
   { name: t('navigation.podcasts'), href: '/podcasts', icon: Mic, keywords: ['audio', 'episodes', 'generate'] },
-  { name: t('navigation.models'), href: '/settings/models', icon: Bot, keywords: ['ai', 'llm', 'providers', 'openai', 'anthropic'] },
-  { name: t('navigation.transformations'), href: '/transformations', icon: Shuffle, keywords: ['prompts', 'templates', 'actions'] },
   { name: t('navigation.settings'), href: '/settings', icon: Settings, keywords: ['preferences', 'config', 'options'] },
-  { name: t('navigation.advanced'), href: '/advanced', icon: Wrench, keywords: ['debug', 'system', 'tools'] },
 ]
 
 const getCreateItems = (t: TFunction) => [
@@ -65,6 +59,7 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const router = useRouter()
+  const pathname = usePathname()
   const { openSourceDialog, openNotebookDialog, openPodcastDialog } = useCreateDialogs()
   const { setTheme } = useTheme()
   const { data: notebooks, isLoading: notebooksLoading } = useNotebooks(false)
@@ -109,8 +104,11 @@ export function CommandPalette() {
   }, [])
 
   const handleNavigate = useCallback((href: string) => {
-    handleSelect(() => router.push(href))
-  }, [handleSelect, router])
+    if (href === '/settings' && pathname?.endsWith('/study')) {
+      window.open(href, '_blank', 'noopener,noreferrer')
+      handleSelect(() => {})
+    } else handleSelect(() => router.push(href))
+  }, [handleSelect, router, pathname])
 
   const handleSearch = useCallback(() => {
     if (!query.trim()) return
@@ -226,7 +224,7 @@ export function CommandPalette() {
               <CommandItem
                 key={notebook.id}
                 value={`notebook ${notebook.name} ${notebook.description || ''}`}
-                onSelect={() => handleNavigate(`/notebooks/${notebook.id}`)}
+                onSelect={() => handleNavigate(`/notebooks/${encodeURIComponent(notebook.id)}/study`)}
               >
                 <Book className="h-4 w-4" />
                 <span>{notebook.name}</span>
