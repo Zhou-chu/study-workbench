@@ -21,3 +21,12 @@ Stable red/green logs: `/home/USER/notebook-quality-20261113/python/regex-bounda
 `api.evidence_service._paragraphs` has a surprising existing behavior: `a\n\nb` forms a single regex match because the optional group first seeks a second non-whitespace character. A naive blank-line split would change source segments and offsets. This review has not established an adversarial superlinear case for that expression, so it was not changed or declared fixed.
 
 `open_notebook.utils.text_utils` blank-line cleanup remains unchanged. Its surrounding operation already has a 100000-character processing limit, but this alone is not a proof of acceptable latency. No disposition or blanket safety claim is made for that finding in this batch.
+
+
+## Cold-return path boundary (2026-11-14 candidate)
+
+The trailing-slash regexp could retry a long nonterminal slash run quadratically. The candidate scans backward once and preserves URL parsing, decoded unsafe-character checks and login-loop rejection. A bounded Node child imports the real production function: the original algorithm exceeded the 3-second deadline for a 200,000-slash nonterminal run; the linear candidate passed. Two earlier harness attempts failed on an invalid transformed module URL and are not algorithm evidence.
+
+Ten new unit cases cover encoded login paths, unsafe targets, preserved query/fragment, root and long-path handling. The original targeted group passed 17 cases; a fresh reconnect run passed all 10 new cases. ESLint and SPA TypeScript checks passed before reconnect. The child uses project-supported Node 24 native TypeScript and changes no process-global timeout. No real data or service is accessed.
+
+This is not a complete web-suite pass. The preceding formal run still had three setup-journey flow timeouts; integrated flow coverage must not be described as pure unit coverage.

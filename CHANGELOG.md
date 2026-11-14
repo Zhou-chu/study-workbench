@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+- Security: Project worker failure prose safely in source list/detail/status and remove exception content from seven lookup error logs; preserve lifecycle and retry refusal semantics.
+
 ## [Unreleased]
 
 ### Changed
@@ -18,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Return a safe unsuccessful credential probe when lookup/configuration fails before provider dispatch, instead of an unbound exception handler or a misleading successful model-not-found classification.
+- Suppress retired citation lookup errors after newer reader navigation or workbench unmount, while preserving current failures and independent question-source selection.
+
 - Prevent duplicate or cancelled InlineEdit submissions across batched keyboard/blur events, preserve IME confirmation and latest parent values on rejected saves, and avoid late acknowledgements stealing focus.
 
 - Make legacy wizard steps native keyboard-focusable buttons and report URL copy success only after the clipboard write succeeds; handle clipboard failures, concurrent clicks and late unmount completion without false success.
@@ -245,9 +249,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Redact unexpected model-route exceptions from HTTP responses and logs, retaining allowlisted operation names and exception types rather than credential/provider values or traceback locals.
+
 - Reject replaced, symlinked or group/world-writable QA child temporary/cache directories before starting the review; matching environment path strings alone no longer admit them.
 
 - Validate historical database-test child scratch custody before pytest can clean basetemp; independent commit-blob byte comparison now backs snapshot archive parity while retaining Git object-format IDs. These isolated tooling changes neither authenticate source authors nor deploy services.
+- Keep cold-return path normalization linear for long slash runs while preserving login-loop and unsafe-target rejection.
 
 - Replace quadratic grounded-response fence stripping and Markdown link detection with linear scans while preserving existing Unicode, delimiter and rejection semantics. No source content or citation offsets are changed.
 

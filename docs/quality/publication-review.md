@@ -25,3 +25,14 @@ Compressed evidence copies (nine JSON gzip reports and two tar.gz bundles) also 
 The candidate also includes the code diff c74bc17..fdacc75295319d6e2cf09315c4f0b8379cd63a9f without importing private commit ancestry. Reported upstream focused results: historical custody 57 cases, credentials 240 cases (module lines 98.25%, branches 93.89%), QA 41 cases and UI 20 cases. These are focused results, not an updated whole-repository coverage or Sonar result; the last full baseline remains c74 with the failures disclosed above. Candidate-specific post-integration checks are recorded separately.
 
 Post-integration candidate checks: four focused Python files 154 passed (3.75s elapsed); four legacy UI files 27 passed (9.27s); frontend TypeScript noEmit exit 0 (23.96s); changed Python Ruff exit 0. Browser helper import ordering was normalized after adding pwd. These results do not replace a full run or Sonar scan.
+
+
+## Incremental quality candidate (2026-11-14, not acceptance)
+
+This candidate adds safe model-route error/log projection, credential/model router boundary tests, stale citation failure ownership, linear cold-return normalization, and studio operation boundary tests. It preserves the prior sanitized fixture and publication ancestry. Original unsanitized development ancestry is not merged.
+
+Coverage terminology correction: existing Python and eleven Node partition reports select mixed test layers. They are not pure-unit coverage reports. API/React multi-component/CLI integration coverage must remain separate from the requested unit coverage above 90%. A reviewed test-layer inventory and independent unit measurements are still required, with the full production source denominator unchanged. Shell execution coverage remains unmeasured.
+
+Focused checks do not establish the full quality gate: the latest formal SPA run had three setup-journey timeouts, and the previous Sonar analysis still failed its gate. No main merge, deployment, credential migration, or live-data change is authorized by this checkpoint.
+
+Focused verification of this incremental candidate: 30 source-error pure unit tests passed separately; 132 credential/model route tests passed as a mixed boundary suite; 39 SPA tests (mixed layers) and 10 reader-navigation integration tests passed. Ruff, changed-file ESLint and both frontend TypeScript checks passed. Type checks used preserveSymlinks for the shared prepared dependency installation; no type exclusions were changed. The first SPA attempt could not find candidate dependencies and ran no tests; only the corrected run is counted. A new formal full SPA run remains pending.

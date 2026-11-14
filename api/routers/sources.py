@@ -44,6 +44,7 @@ from open_notebook.exceptions import (
     OpenNotebookError,
     UnsupportedTypeException,
 )
+from open_notebook.utils.boundary_logging import log_boundary_failure
 from open_notebook.utils.command_submission import submit_command
 from open_notebook.utils.source_execution import (
     source_owner_progress,
@@ -80,15 +81,31 @@ async def _assert_file_supported(file_path: str) -> None:
 
 
 def _truncate_error(msg: Optional[str], limit: int = 200) -> Optional[str]:
-    """Cap error text surfaced to clients.
+    """Legacy length-only utility; never use this as a privacy boundary.
 
-    Command/processing failures can carry arbitrary internal exception text;
-    return at most ``limit`` characters so a raw traceback message can't leak
-    to the API response. ``None`` passes through unchanged.
+    Truncation can retain secrets. Public processing errors are projected by
+    _public_processing_info instead. None passes through unchanged.
     """
     if not msg:
         return msg
     return msg if len(msg) <= limit else msg[:limit] + "…"
+
+
+def _public_processing_info(info: Optional[dict[str, Any]]) -> Optional[dict[str, Any]]:
+    """Project untrusted worker error text without changing lifecycle metadata.
+
+    Arbitrary exception prose is not a trustworthy error code: do not infer
+    permissions, retryability or submission outcome from it. Those remain
+    governed by typed errors and existing status/attempt fields.
+    """
+    if info is None:
+        return None
+    result = dict(info)
+    if result.get("error"):
+        result["error"] = (
+            "Source processing failed. Review the source and processing settings."
+        )
+    return result
 
 
 SOURCE_SORT_FIELDS = {
@@ -352,7 +369,7 @@ async def get_sources(
                 processing_info = {
                     "started_at": execution_metadata.get("started_at"),
                     "completed_at": execution_metadata.get("completed_at"),
-                    "error": _truncate_error(command.get("error_message")),
+                    "error": command.get("error_message"),
                 }
             elif command:
                 # Command exists but FETCH failed to resolve it (broken reference)
@@ -390,7 +407,7 @@ async def get_sources(
                     # Status fields from fetched command
                     command_id=command_id,
                     status=status,
-                    processing_info=processing_info,
+                    processing_info=_public_processing_info(processing_info),
                 )
             )
 
@@ -838,7 +855,7 @@ async def get_source(source_id: str):
             if source.command and not unresolved
             else None,
             status=status,
-            processing_info=processing_info,
+            processing_info=_public_processing_info(processing_info),
             # Notebook associations
             notebooks=notebook_ids,
         )
@@ -849,7 +866,7 @@ async def get_source(source_id: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error fetching source {source_id}: {str(e)}")
+        log_boundary_failure("source_get", e)
         raise HTTPException(status_code=500, detail="Error fetching source")
 
 
@@ -864,7 +881,7 @@ async def check_source_file(source_id: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error checking file for source {source_id}: {str(e)}")
+        log_boundary_failure("source_file_check", e)
         raise HTTPException(status_code=500, detail="Failed to verify file")
 
 
@@ -883,7 +900,7 @@ async def download_source_file(source_id: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error downloading file for source {source_id}: {str(e)}")
+        log_boundary_failure("source_file_download", e)
         raise HTTPException(status_code=500, detail="Failed to download source file")
 
 
@@ -937,7 +954,7 @@ async def get_source_status(source_id: str):
             return SourceStatusResponse(
                 status=status,
                 message=message,
-                processing_info=processing_info,
+                processing_info=_public_processing_info(processing_info),
                 command_id=str(source.command) if source.command else None,
             )
 
@@ -955,7 +972,7 @@ async def get_source_status(source_id: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error fetching status for source {source_id}: {str(e)}")
+        log_boundary_failure("source_status", e)
         raise HTTPException(status_code=500, detail="Error fetching source status")
 
 
@@ -1125,7 +1142,7 @@ async def retry_source_processing(source_id: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error retrying source processing for {source_id}: {str(e)}")
+        log_boundary_failure("source_retry", e)
         raise HTTPException(status_code=500, detail="Error retrying source processing")
 
 
@@ -1145,7 +1162,7 @@ async def delete_source(source_id: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error deleting source {source_id}: {str(e)}")
+        log_boundary_failure("source_delete", e)
         raise HTTPException(status_code=500, detail="Error deleting source")
 
 
@@ -1174,7 +1191,7 @@ async def get_source_insights(source_id: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error fetching insights for source {source_id}: {str(e)}")
+        log_boundary_failure("source_insights", e)
         raise HTTPException(status_code=500, detail="Error fetching insights")
 
 

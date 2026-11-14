@@ -18,7 +18,7 @@ Base: c74bc179. Scope: two components selected from Sonar5bfa S6848/S9383. No is
 | InlineEdit S9383 (three calls) | handleSave already catches onSave rejection. This is not evidence of a leaked rejection. Enter/onBlur/Escape batching and save races require their own characterization before a change; deliberately untouched here. |
 | SystemInfo S9383 | loadConfig catches getConfig failure internally; no established leaked rejection at this call. Unchanged. |
 | use-notebook-chat S9383 | updateContextCounts catches errors and checks active state before updates. No established leaked rejection at this call. Unchanged. |
-| StudyWorkbench S9383 | search.submit's downstream promise lifecycle has not been fully traced in this batch; deferred, not declared safe or fixed. |
+| StudyWorkbench S9383 | Corrected mapping: the issue is openCitation at the search-result onOpen callback, not search.submit. Its evidence read is internally caught. The follow-up below fixes a demonstrated stale failure effect, not an unhandled-rejection claim. |
 
 ## Verification boundaries
 
@@ -40,3 +40,12 @@ A fourth regression failed with `Original` instead of `Fresh server value`: a re
 SystemInfo remains production-unchanged. Its two new tests verify normal and post-unmount configuration rejection is caught internally. console.error is observed with a forwarding spy, not suppressed; the fixture diagnostic output is expected. Its getConfig dependency already shares an in-flight promise and validates configuration generation, so different fabricated concurrent mock results would not prove a real race. use-notebook-chat likewise already has an active-instance guard and internal catch. Neither finding is declared a real leaked rejection or silently closed.
 
 Follow-up verification uses InlineEdit regressions, SystemInfo rejection tests and existing NoteEditorDialog inline-title/recovery integration tests, plus targeted ESLint and legacy TypeScript checking. No browser/E2E/full-suite acceptance or Sonar closure is implied.
+
+
+## Follow-up: stale citation failure ownership
+
+The c74bc17 Sonar issue `19bac1bd-7ff8-4e20-bdfa-b141037ab9c5` (S9383, StudyWorkbench line449) maps to openCitation, as confirmed against the exact scanned source; it is still OPEN. The code in the independent branch and integrated fdacc candidate matched before this change.
+
+A real workbench/reader/selection-hook regression opened unverified citation A, then resolved citation B on a different source version to canonical page6, then rejected A. Before the fix the retired A produced quoteMismatch despite B having succeeded. The error branch now requires both the current citation request generation and existing saveSelection.ownsIntent ownership. The latter also rejects unmounted/retired workbench owners without adding a new lifecycle authority. Success navigation and question-scope selection semantics are unchanged.
+
+The test checks the real page, unchanged question source IDs, retained turn context and absence of additional selection writes after A fails. Positive controls retain the error for a current failure, including after a scope-only edit; unmount suppresses late errors and writes. Only external API/PDF rendering and toast output boundaries are mocked. No live data, model call, deployment or full-suite run is involved. No blind void change or Sonar issue closure was used to claim a fix. Evidence: node/ui-reliability/citation-red.log and citation-final.log.

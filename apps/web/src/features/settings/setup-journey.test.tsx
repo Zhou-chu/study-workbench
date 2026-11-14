@@ -27,7 +27,7 @@ it.each(['cancel', 'save', 'failure'] as const)('returns from Tools model setup 
   const h = await renderLibrary('/notebooks/n?tab=conversation#composer');
   const question = await screen.findByRole('textbox', { name: 'Question' });
   fireEvent.change(question, { target: { value: 'Keep this question through configuration' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Current question scope' }));
+  fireEvent.click(within(screen.getByRole('region', { name: 'Sources' })).getByRole('button', { name: 'Current question scope' }));
   const choices = screen.getAllByRole('checkbox');
   expect(choices).toHaveLength(2);
   expect(choices[0]).toBeChecked();
@@ -35,14 +35,15 @@ it.each(['cancel', 'save', 'failure'] as const)('returns from Tools model setup 
   await waitFor(() => expect(choices[1]).toBeChecked());
   await waitFor(() => expect(requests.some(r => r.method === 'PATCH')).toBe(true));
   fireEvent.click(screen.getByText('Tools', { selector: 'summary' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
   const tools = document.querySelector('.notebook-menu') as HTMLElement;
+  fireEvent.click(within(tools).getByRole('button', { name: 'Settings' }));
   fireEvent.click(within(tools).getByRole('link', { name: 'Models' }));
-  await screen.findByRole('dialog', { name: 'Leave this draft?' });
-  fireEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
+  const leaveDraft = await screen.findByRole('dialog', { name: 'Leave this draft?' });
+  fireEvent.click(within(leaveDraft).getByRole('button', { name: 'Keep editing' }));
   expect(question).toHaveValue('Keep this question through configuration');
   fireEvent.click(within(tools).getByRole('link', { name: 'Models' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Leave without saving' }));
+  const leaveAgain = await screen.findByRole('dialog', { name: 'Leave this draft?' });
+  fireEvent.click(within(leaveAgain).getByRole('button', { name: 'Leave without saving' }));
   await screen.findByRole('heading', { name: 'Models', level: 1 });
   const back = screen.getByRole('link', { name: 'Back' });
   expect(back).toHaveAttribute('href', '/notebooks/n?tab=conversation#composer');
@@ -64,7 +65,7 @@ it.each(['cancel', 'save', 'failure'] as const)('returns from Tools model setup 
   const returned = await screen.findByRole('textbox', { name: 'Question' });
   expect(returned).toHaveValue('Keep this question through configuration');
   expect(h.router.state.location.pathname + h.router.state.location.search + h.router.state.location.hash).toBe('/notebooks/n?tab=conversation#composer');
-  fireEvent.click(screen.getByRole('button', { name: 'Current question scope' }));
+  fireEvent.click(within(screen.getByRole('region', { name: 'Sources' })).getByRole('button', { name: 'Current question scope' }));
   for (const choice of screen.getAllByRole('checkbox')) expect(choice).toBeChecked();
   expect(requests.filter(r => r.method === 'POST')).toHaveLength(outcome === 'cancel' ? 0 : 1);
   expect(requests.some(r => /discover|\/test|\/turns/.test(new URL(r.url).pathname) && r.method === 'POST')).toBe(false);

@@ -12,6 +12,9 @@ import type { EvidenceCitation, EvidenceRecord, SourceVersion, TurnRecord, Works
 import { invalidateTurnContext, publishTurnTarget, readTurnContext } from '@/lib/workbench/turn-context'
 import { workbenchRules } from '@/test/workbench-css'
 import { StudyWorkbench } from './StudyWorkbench'
+import { toast } from 'sonner'
+
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }))
 
 // Keep the workbench, reader, query hooks and selection ownership real. Only
 // external API boundaries and PDF rasterization are replaced in this scenario.
@@ -116,6 +119,63 @@ describe('StudyWorkbench with its actual evidence reader', () => {
     expect(page).toHaveValue(navigation === 'source' ? 1 : 5)
     expect(workbenchApi.saveSelection).toHaveBeenCalledTimes(2)
     expect(vi.mocked(workbenchApi.saveSelection).mock.lastCall?.[1].reading).toMatchObject({ source_version_id: navigation === 'source' ? 'sv_new' : 'sv_old', page_index: navigation === 'source' ? 0 : 4 })
+  })
+
+  it('ignores an older citation failure after a newer canonical citation succeeds without changing question scope', async () => {
+    const next = { ...archived, citation_id: 'c2', evidence_id: 'ev2', source_title: 'Next PDF', source_version_id: 'sv_new' }
+    const nextEvidence = { ...canonical, evidence_id: 'ev2', source_version_id: 'sv_new', locator: { page_index: 5 } }
+    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), turns: [{ ...turn, citations: [archived, next] }] })
+    vi.mocked(evidenceApi.version).mockImplementation(async id => ({ version: { ...version, source_version_id: id }, extraction: { extraction_id: 'ex_old', status: 'ready', page_count: 10, warnings: [] }, evidence: [] }))
+    let rejectOld!: (reason: Error) => void
+    vi.mocked(evidenceApi.evidence)
+      .mockImplementationOnce(() => new Promise((_, reject) => { rejectOld = reject }))
+      .mockResolvedValueOnce(nextEvidence)
+    await openArchived()
+    fireEvent.click(screen.getByRole('button', { name: 'workbench.conversation' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Next PDF · c2' }))
+    const page = await screen.findByLabelText('workbench.pdfPage')
+    await waitFor(() => expect(page).toHaveValue(6))
+    await screen.findByText('workbench.selectionSaved')
+    expect(evidenceApi.evidence).toHaveBeenNthCalledWith(2, 'ev2')
+    const writes = vi.mocked(workbenchApi.saveSelection).mock.calls.length
+    const selection = vi.mocked(workbenchApi.saveSelection).mock.lastCall?.[1]
+    expect(selection).toMatchObject({ source_version_ids: ['sv_old'], reading: { source_version_id: 'sv_new', page_index: 5, evidence_id: 'ev2' } })
+    const context = readTurnContext()
+    await act(async () => rejectOld(new Error('older request failed')))
+    expect(toast.error).not.toHaveBeenCalledWith('workbench.quoteMismatch', expect.anything())
+    expect(page).toHaveValue(6)
+    expect(readTurnContext()).toEqual(context)
+    expect(workbenchApi.saveSelection).toHaveBeenCalledTimes(writes)
+    expect(vi.mocked(workbenchApi.saveSelection).mock.lastCall?.[1]).toEqual(selection)
+  })
+
+  it.each([false, true])('still reports the active citation failure after a scope-only edit=%s', async scopeEdit => {
+    let reject!: (reason: Error) => void
+    vi.mocked(evidenceApi.evidence).mockImplementationOnce(() => new Promise((_, fail) => { reject = fail }))
+    await openArchived()
+    if (scopeEdit) {
+      fireEvent.click(screen.getByRole('checkbox', { name: 'My PDF · sv_new' }))
+      await screen.findByText('workbench.selectionSaved')
+    }
+    const writes = vi.mocked(workbenchApi.saveSelection).mock.calls.length
+    await act(async () => reject(new Error('current request failed')))
+    expect(toast.error).toHaveBeenCalledWith('workbench.quoteMismatch', { description: undefined })
+    expect(workbenchApi.saveSelection).toHaveBeenCalledTimes(writes)
+  })
+
+  it('does not announce a citation lookup failure after the workbench unmounts', async () => {
+    let reject!: (reason: Error) => void
+    vi.mocked(evidenceApi.evidence).mockImplementationOnce(() => new Promise((_, fail) => { reject = fail }))
+    const view = show()
+    await screen.findByText('Lecture notes')
+    fireEvent.click(screen.getByRole('button', { name: 'Old PDF · c1' }))
+    await screen.findByLabelText('workbench.pdfPage')
+    await screen.findByText('workbench.selectionSaved')
+    const writes = vi.mocked(workbenchApi.saveSelection).mock.calls.length
+    view.unmount()
+    await act(async () => reject(new Error('unmounted request failed')))
+    expect(toast.error).not.toHaveBeenCalled()
+    expect(workbenchApi.saveSelection).toHaveBeenCalledTimes(writes)
   })
 
   it('wraps the full long source identity and quote after following a citation into the reader', async () => {

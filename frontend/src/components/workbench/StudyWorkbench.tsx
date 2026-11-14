@@ -367,7 +367,12 @@ export function StudyWorkbench({ notebookId }: { notebookId: string }) {
         if (request === citationRequest.current && locator) {
           updateSelection({ reading: { source_version_id: evidence.source_version_id, page_index: locator.page_index ?? 0, evidence_id: evidence.evidence_id } })
         }
-      } catch { toast({ title: t('workbench.quoteMismatch'), variant: 'destructive' }) }
+      } catch {
+        // Errors belong to the same admitted reading intent as successful locators.
+        if (request === citationRequest.current && saveSelection.ownsIntent()) {
+          toast({ title: t('workbench.quoteMismatch'), variant: 'destructive' })
+        }
+      }
     }
   }
   const saveAnswer = (turn: TurnRecord) => submitNote({ answerTurnId: turn.turn_id, title: turn.message, content: turn.answer || '', citations: turn.citations || [], scope_snapshot: turn.scope_snapshot })

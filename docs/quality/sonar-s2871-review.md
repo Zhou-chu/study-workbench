@@ -30,3 +30,30 @@ Source snapshot: Sonar d119643/issues-2.json and rule-metadata.json, reviewed ag
 Added `apps/web/scripts/canonical-order.test.mjs` before implementation; all 3 characterization tests passed against original code. They assert fixed UTF-16 order for numeric-looking strings, case, combining accents, CJK, surrogate pairs versus BMP private-use; distinct canonically equivalent strings; recursive object sorting; unchanged array order/input; JSON integer-key enumeration and empty/primitive values. Both digest implementations must match independently assembled expected serialization and SHA-256. Then only the two canonical object-key sorts gained explicit relational string comparators. No localeCompare, Unicode normalization, numeric coercion, or hash protocol version change.
 
 After change: characterization plus legacy artifact tests 29/29 passed using one Node test worker. SPA manifest plus characterization tests separately passed 10/10 (7 existing + the same 3 new), also with one worker. Both edited .mjs files passed node --check; git diff --check passed. These are targeted checks, not a full repository run. Persistent diagnostics: `/home/USER/notebook-quality-20261113/node/canonical-sort-regression.log` and `spa-canonical-sort-regression.log` in the same directory. No live data, services, database, build deployment or external model calls were used.
+
+## 2026-11-14 independent follow-up
+
+The earlier table records its historical review state. A second, independent review
+against the c74bc179 analysis found 14 still-open S2871 findings. Each was matched
+to its exact project, file, line and current issue identity before a local
+FALSE_POSITIVE disposition; comments and before/after readback were retained.
+No rule, profile, source exclusion, threshold, or production sorting was changed.
+
+The reviewed uses were exact ASCII schema-key allowlists, primitive ID-set
+equality, request hashing, reproducible input-file hashing, and stable diagnostic
+path ordering. None sorted numeric values or user-facing natural-language labels.
+The new coverage-integrity finding includes the trusted Git registration receipt
+and is distinct from the older issue listed above. The coverage-scope ordering
+is diagnostic ordering, not a wire-hash protocol.
+
+Evidence was a fresh reading of actual consumers and existing assertions, not a
+new execution of every test. Existing tests for inventory/input binding are not
+a dedicated cross-locale Unicode sorting test; the older canonical-order vectors
+cover two other implementations and must not be attributed to all 14 uses.
+No direct sorting-specific test was found for the legacy session-schema predicate
+or the semantic-cache ID equality helper. Their reviewed input types and equality
+consumers establish the limited disposition. Python digest compatibility remains
+limited to the current ASCII protocol field names.
+
+This triage does not establish a passing overall quality gate or resolve other
+security, reliability, coverage, or full-suite failures.
