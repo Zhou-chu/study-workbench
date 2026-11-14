@@ -28,8 +28,8 @@ export function inventory(root,partition,directory) {
  if(partition==='legacy-node-tools')files.push(resolve(root,'frontend/start-server.js'));
  return files.sort(comparePaths);
 }
-export function auditReport(root,partition,directory) {
- const path=resolve(root,'coverage',partition,'coverage-summary.json');
+export function auditReport(root,partition,directory,outputBase='coverage') {
+ const path=resolve(root,outputBase,partition,'coverage-summary.json');
  const expected=inventory(root,partition,directory);
  const summary=existsSync(path)?JSON.parse(readFileSync(path,'utf8')):{};
  const actual=new Set(Object.keys(summary).filter(key=>key!=='total').map(key=>resolve(key)));

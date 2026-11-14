@@ -19,14 +19,14 @@ export function inputDigest(root) {
     }
     return hash.digest('hex');
 }
-export function saveManifest(root, name, row) {
-    const path = resolve(root, 'coverage', 'run-' + name + '.json');
+export function saveManifest(root, name, row, outputBase = 'coverage') {
+    const path = resolve(root, outputBase, 'run-' + name + '.json');
     mkdirSync(dirname(path), { recursive: true });
     const temporary = path + '.' + process.pid + '.tmp';
     writeFileSync(temporary, JSON.stringify({ generatedAt: new Date().toISOString(), partitions: [row] }, null, 2) + '\n');
     renameSync(temporary, path);
 }
-export function beginRun(root, names, digest) {
+export function beginRun(root, names, digest, outputBase = 'coverage') {
     for (const name of names)
-        saveManifest(root, name, { partition: name, phase: 'pending', testExitCode: null, inputDigest: digest });
+        saveManifest(root, name, { partition: name, phase: 'pending', testExitCode: null, inputDigest: digest }, outputBase);
 }

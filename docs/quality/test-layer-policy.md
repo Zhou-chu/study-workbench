@@ -376,3 +376,306 @@ Current isolated inventory: 465 files, 123 unit, 88 mixed, 182 unclassified,
 26 tool, 21 API, 17 component and 8 static-contract. Validator reports 451
 expected unresolved/missing-target errors and zero additional defects. The
 strict full-project selector remains blocked; these counts are not coverage.
+
+
+## Fourth forty-file follow-up (reviewed at a3877a2)
+
+Reviewed all executable cases and fixture setup in the twenty shortest remaining
+Python files and twenty shortest remaining non-Python files. Python AST display
+omitted docstrings/comments only where useful; it did not filter test bodies.
+Rechecked selected production boundaries: podcast audio None short-circuits disk,
+SDK factory is replaced in the retry-options case, NotebookLM account locks use
+the injected store, and source-dialog uncertainty hooks are replaced in the local
+form test. No production/test code or coverage denominators changed.
+
+Forty formerly unknown files: 11 unit, 17 mixed, 5 tool, 6 component and 1 API.
+Current 465-file inventory: 134 unit, 105 mixed, 142 unclassified, 31 tool,
+23 component, 22 API, 8 static. Validator emits 388 intentional unresolved/missing
+-target errors and zero structural/hash/inventory errors. No application test or
+coverage run was performed. These are classification counts, not measured unit
+coverage; global selection remains blocked. Later selector tests/new main-tree
+entries must be merged and reviewed separately rather than silently omitted.
+
+### Exact low-risk split candidates (not yet moved or retested)
+
+- `test_command_uncertainty_boundaries.py`:
+  `test_automatic_note_embedding_still_preserves_saved_content` is direct unit;
+  leave actual ASGI/retained-audio cases outside unit.
+- `test_migration_integrity.py`: retain
+  `test_evidence_vector_migration_is_registered_and_derived_only` outside unit;
+  other direct migration cases use the exact production AST and fake DB. Their
+  module-import coverage limit must remain explicit.
+- `test_anthropic_compatible_provider.py`: retain
+  `test_langchain_bridge_forwards_base_url` as SDK interoperability, move only
+  the other direct functions with DB/DNS/HTTP/factory doubles.
+- `test_v1_personal_enqueue_reconciliation.py`: retain
+  `test_unchanged_queued_ack_loss_reports_unknown_without_reenqueue` (both
+  acceptance parameters) as ASGI. Remaining service cases use memory/queue doubles;
+  `test_store_snapshots_and_create_only_are_independent` tests the fixture itself
+  and must never be claimed as new production coverage.
+- `test_v1_personal_dispatch_receipt.py`:
+  `test_receipt_persistence_error_is_not_a_durable_dispatch_receipt` (both commit
+  parameters) can move to unit; OpenAPI/ASGI/archive interoperability remains.
+- `test_v1_artifact_jobs.py`: retain
+  `test_audio_completion_downloads_verified_asset_without_generating_again` as
+  filesystem integration. The other job transitions use a fake bridge and memory
+  store/async locks, not a database or file lock.
+- `test_v1_notebooklm_sdk.py`:
+  `test_pinned_config_disables_hidden_mutation_retries` replaces from_storage;
+  actual SDK option DTOs are internal configuration values. Other cases exercise
+  real profile-file existence/rewrite/removal and are not unit as a group.
+- `test_connection_tester_offline_paths.py`: isolate
+  `test_audio_fallback_is_valid_silent_pcm` and
+  `test_audio_reads_only_supplied_fixture`. They specifically exercise real open
+  failure/success, not merely consume an imported authored fixture. Provider
+  status/response/type tests replace HTTP, pinning and provider instances.
+- `test_podcast_audio_containment.py`:
+  `TestResolveContainedAudioPath.test_empty_and_none_are_rejected` is direct early
+  rejection. Do not move the whole class: symlink/custody cases require actual FS.
+- `test_v1_launcher_environment.py` exact direct candidates:
+  `test_fixture_environment_drops_host_credentials_and_disables_dotenv`,
+  `test_readiness_fails_closed_on_timeout_or_process_exit`,
+  `test_loopback_validation_rejects_wildcard_listener`,
+  `test_http_probe_rejects_errors_and_disables_proxy`,
+  `test_port_preflight_supports_restart_but_rejects_occupied_port`.
+  Recheck helpers before moving; leave real config/log/chmod/dotenv compatibility
+  and opted-in real descendant lifecycle in integration.
+- `test_v1_notebooklm_chat.py` exact remote-only unit candidates:
+  `test_remote_citation_outside_selected_scope_never_gets_local_locator`,
+  `test_lost_chat_reply_never_reasks_on_same_idempotency_key`,
+  `test_confirmed_chat_restart_finishes_from_saved_answer_without_reasking`,
+  `test_pending_chat_rechecks_strict_capability_before_submission` (all params),
+  `test_confirmed_chat_recovery_does_not_require_current_ask_capability`.
+  Keep local-scope ingest/extract/mapping cases as file/parser integration.
+- `features/studio/note-deletion.test.tsx`: move only
+  `does not begin a DELETE after a matching editor became dirty or began saving`;
+  real DELETE acknowledgment/controller retirement cases remain integration.
+- `features/settings/model-owner.test.ts`: separate first
+  `B9e acquires a single current models owner without selecting forms or navigation`
+  (actual navigation/controller compatibility) from the three direct configuration
+  source/handle transition cases.
+- `features/settings/ownership.test.ts` direct candidates:
+  `clears each private callback in its original epoch despite another callback throwing`,
+  `rejects non-root, login, control, protocol relative and backslash cold-return destinations`,
+  `reserves the sole selection writer and invalidates old revisions even through A-B-A`,
+  `releases a link reservation only on actual never-dispatched proof, never generic failure`,
+  `retains a foreign-epoch reservation without returning it as the new epoch writer`.
+  Leave resource-navigation collaboration and parent-registry propagation into
+  settings ownership separate. Stable context values are not automatically an
+  independent session integration.
+
+A single controlled component can remain unit with presentation children or
+QueryClient machinery. AddSourceDialog.uncertainty replaces the mutation hook and
+never drives the shared latch, unlike command-submission/RebuildEmbeddings review
+cases that deliberately retain owner state across remount. TurnRecoveryPanel is
+classified as producer/consumer trust integration here because the fixture creates
+and settles a real registry-issued capability and the view checks rehydrated or
+forged capability behavior, not just a plain display DTO. This boundary can be
+narrowed only by an explicit independent review, not import counting.
+
+
+## Fifth forty-file follow-up (reviewed at 39935e1)
+
+Read all cases/fixtures of forty remaining frontend files. Dense compressed lines
+were read fully; native-store/global-save were reread after output truncation.
+Production checks included store reducers, retrieval consent/cache handling,
+NotebookSettingsDialog parent/child admission, SSE delegation and setup mocks.
+
+Added 15 unit, 13 mixed, 12 component. Current 465 files: 149 unit, 118 mixed,
+102 unknown, 35 component, 31 tool, 22 API, 8 static. Actual validator reports
+322 intentional unresolved/missing-target errors, zero other errors. No tests,
+coverage or browser ran; production/test bytes and all denominators unchanged.
+Pending selector files from another tree are deliberately not imported/classified.
+
+Direct Studio/native-library store cases each control one logical store. Domain
+operation/editor reducers and schema helpers are internal pure implementation,
+not independent observers/controllers/transports. DraftRegistry only constructs
+these stores here. NotebookSettingsDialog instead tests parent scope/unmount into
+real NotebookLMPanel deferred admission; NoteEditorDialog.inline-title tests an
+independently buffered InlineEdit against parent save settlement, then recovery.
+QueryClient/import counts alone do not make integration.
+
+### Exact split candidates (not moved/tested)
+- sources/upload-recovery.test.tsx unit:
+  `continues only proven-unsent captures after suspension, including an explicitly not-dispatched result`.
+- sources/selection-refresh.test.tsx units:
+  `rejects a workspace read that began before a new selection intent or before its settlement`;
+  `never releases an unknown selection through a background workspace refresh`;
+  `blocks transaction admission until an exact post-settlement workspace is accepted, rejecting older and wrong-link projections`.
+- settings/advanced.test.ts: separate component case
+  `Advanced participates in the existing resource guard without changing notebook SettingsDraft`.
+  Other store/fake-send adapter/callback-driven observer/parser/value cases do not
+  run store and observer together.
+- library/classic-reference.test.tsx direct unit:
+  `has explicit translated labels in every supported locale and preserves full opaque reference identity`.
+  Final `native controls retain explicit labels, 44px control targets and monochrome tokens`
+  itself needs source-CSS and mounted-DOM assertion separation.
+- Legacy api/session-races.test.ts direct candidates:
+  `review: legacy credential removal in another tab must stop sending the removed password`;
+  `review: server supplied export paths must not select unrelated personal resource routes`.
+- Legacy api/session-recovery-edges.test.ts token-only candidates:
+  `review: a legacy login remains usable in memory if writes fail while reads still work`;
+  `volatile legacy authorization is invalidated by another tab and by device purge`;
+  `volatile legacy fallback yields to a changed persistent baseline`.
+  Storage is isolated JSDOM, not a real user profile.
+- RebuildEmbeddings.test.tsx candidate:
+  `keeps definite validation failure localized and available for correction`.
+  Verify isolated shared-latch setup first; remount/observation cases stay component.
+- app/layout.test.tsx synthetic-slot unit cases:
+  `keeps slot DOM and draft while reader opens and sections change`;
+  `expands reading or answers without remounting live editors, then restores side-by-side`;
+  `does not advertise reader focus before any document is open`;
+  `reveals a new citation without replacing the draft or reader slots`;
+  `isolates the narrow reader and moves background focus inside on resize, restoring prior inert state`.
+  Keep source CSS static and renderApp router/provider cases component.
+- Legacy font-delivery.test.tsx:
+  `emits exactly three real SSR preloads (equivalent prior hints: %s)` (two params)
+  can be a component unit after moving unrelated existsSync source guard. Bytes,
+  license, layout and CSS remain static delivery contracts.
+- app/route-coverage.test.ts direct unit:
+  `does not count pending or implemented placeholders as completed coverage`.
+  Source-document/table conformance remains static, never browser acceptance.
+- Legacy api/evidence.test.ts and api/workbench-contract.test.ts combine wire
+  projection, actual context-retirement/browser-adapter cooperation and expectTypeOf
+  inside runtime nodes. Separate static types; runtime green does not prove types.
+- TurnOperationProvider.test.tsx static:
+  `is nested inside I18nProvider and outside ConnectionGuard in the actual root layout`.
+  Remaining real provider/registry/context lifecycle stays component; synthetic
+  Consumer does not substitute the actual registry.
+
+
+## Ninth detailed classification batch (40 remaining SPA/legacy files)
+
+Reviewed against parent manifest HEAD 49cc98a in the isolated classification tree.
+All 40 complete test bodies, including compressed one-line cases and parameter
+matrices, were read. Truncated output was reread before classification. Production
+SnapshotPromotionButton/useSourceSnapshot, JobsPanel, PortableControls,
+SemanticIndexPanel, useWorkbenchUploads/useNotebookChat, auth-store,
+browser-transport and config GET boundaries were traced where necessary.
+No application tests, browser, network, coverage run or production change occurred.
+
+This batch is 11 unit, 17 mixed and 12 component-integration files. It leaves
+465 files: 160 unit, 135 mixed, 47 component, 31 tool, 22 API, 8 static and 62
+unclassified. Full inventory/hash validation has 259 expected unresolved/missing
+classification errors and zero unexpected errors. Pure-unit gate remains blocked.
+Existing test paths, bytes, production denominator and selector are unchanged.
+
+### Important boundary decisions
+
+- JobsPanel, SnapshotPromotionButton, PortableControls and useNotebookChat are
+  logical units with external APIs replaced. Real QueryClient, thin mutation/query
+  helpers, pure classifiers and local digest are implementation, not reasons for
+  automatic demotion. Snapshot remount recomputes a key; it does not consult a
+  separately owned unresolved-operation registry. Portable tests never open ZIPs.
+- Config GET is called directly using synthetic NextRequest/env, not an HTTP app.
+  Local origin/config predicates do not make it an API integration test.
+- personal-transport explicitly verifies API wrappers through the real shared
+  Axios interceptors/auth policy/multipart transformation boundary, replacing only
+  the final adapter. It is component integration, not actual network/API-server IO.
+- Full library/podcast/native-chat/global-search routes use real controller,
+  registry, query, transport and navigation collaborations. Mocking fetch does not
+  make these pure units. Reader geometry is synthetic, never visual acceptance.
+- Merely constructing a library/transformation store via createDraftRegistry or
+  making pure domain reducer values does not make a test integration. Explicit
+  navigation leases, cross-resource retirement and auth protocol collaboration do.
+
+### Exact mixed split candidates and exclusions
+
+These are review candidates, NOT a node-selector authorization. Preserve original
+assertions/parameters and separately re-audit setup before moving cases.
+
+- use-workbench.test.tsx: direct queue/error/polling cases can be units. Keep
+  `retires queued dispatch and late acknowledgement after %s changes` privacy,
+  target, auth and readiness parameters, plus privacy in
+  `does not rebind a retained selection handler after %s changes`, integrated.
+  Notebook-only parameters can be separated with the same local hook boundary.
+- configuration-contracts.test.ts: isolate
+  `B9c both navigation lookups recognize selected configuration resources and stale retained confirmation`;
+  remaining direct store/parser/fake-send adapter/locale-value cases are candidates.
+- compatibility.test.tsx units:
+  `evaluates real BFF and authenticated API evidence independently` and
+  `rejects affirmative malformed evidence rather than trusting contract-name strings alone`.
+  Keep handshake, readiness events, navigation and UI recovery collaborations.
+- browser-transport.test.ts: keep
+  `direct SSE sends one private POST with signal, cookie/CSRF and redirect rejection`
+  as search-adapter/shared-transport compatibility; also separate
+  `a custom AbortSignal reason stays cancellation, not an auth or service outage`
+  with its real coordinator subscriber. Direct classifiers/request-policy/error
+  branding/token checks are unit candidates; synthetic storage is not a real profile.
+- studio/notes.test.tsx: direct store/adapter cases are candidates, but isolate
+  `shows conflict and controlled draft without an automatic save or reload` and
+  `keeps %s strict despite optional-null equivalence` (all 17 patches), which feed
+  independent producer/projection outputs into real consumer components/store.
+- locales/index.test.ts: key/placeholder imported-value checks can be unit;
+  `all en-US leaf keys should be referenced in source files` stays static.
+- reader/reader.test.tsx: isolate
+  `retires pending reads on session generation change` and
+  `hides already-loaded protected content after session retirement` as actual
+  coordinator/context collaboration. Direct navigation predicates and otherwise
+  single ReaderPane cases with fake send/geometry remain unit candidates.
+- library-state.test.ts direct-store candidates:
+  `terminal partial receipts remain immutable and require a separate new editor intent`;
+  `canonical resource ownership ignores object property order`;
+  `late original acknowledgments stay locked after a readiness uncertainty`;
+  `I1 recovery cannot issue a current intent in an explicitly retired epoch`;
+  `I1 fresh recovery never unlocks or copies %s operations` (both parameters);
+  `I1 fresh ownership rejects late edits to the unchanged retained record`.
+  Other cases deliberately test registry/navigation/coordinator cooperation.
+- transformation-store.test.ts: isolate
+  `registers transformation dirty and unknown state in both navigation lookups without weakening retrieval dirty`;
+  other direct transformation-store cases are unit candidates.
+- StudyWorkbench.reader-navigation.test.tsx remains component integration; last
+  `wraps the full long source identity and quote after following a citation into the reader`
+  mixes source-CSS rule assertions with the journey. Move those static assertions
+  without dropping the actual reader/selection checks.
+- app/navigation.test.tsx direct registry candidates:
+  `separates notebook/editor sessions and retires epochs without losing retained File identity`;
+  `exposes retired context even when no draft was ever created`.
+  Other navigation/controller/registry and real Router dialog cases remain integrated.
+- markdown-editor.test.tsx: theme-store/editor and real third-party preview/plugin
+  security/feature compatibility remain integrated. The list-marker case also reads
+  project/vendor CSS; separate static portions, not a blanket unit approval.
+- auth-store.test.ts direct failure-path candidate:
+  `does not read/send passwords until config establishes an explicit legacy mode`.
+  It exits at mocked config failure, unlike the real auth API/coordinator handshake,
+  token retirement and QueryObserver recovery exercised by other cases.
+- NoteEditorDialog.test.tsx: earlier direct editor/API-double cases are candidates;
+  keep `retains notebook note predecessor and draft for a manual retry after %s`
+  (both outcomes) and `retains unknown-save reconciliation after reauthentication instead of silently resubmitting`
+  as real SessionRecovery/auth-store/editor collaboration.
+- CredentialFormDialog.test.tsx: isolate
+  `visibility_action_is_localized (%s)` (14 locales) and
+  `language_change_updates_the_visible_and_accessible_action` as actual
+  i18next/resources/React compatibility. Other controlled masking/callback cases
+  may use a fixed translation environment without testing independent language change.
+- SemanticIndexPanel.test.tsx: isolate
+  `fences a late submission receipt across privacy invalidation` as actual
+  context-subscriber/panel collaboration. Other direct single-panel API-double,
+  controlled-cache and props scenarios are unit candidates, not real provider tests.
+- SessionRecovery.test.tsx: isolated explanatory label/password/callback views are
+  candidates; keep DashboardLayout editor/File preservation, cold navigation and
+  cross-dialog focus recovery interactions separate. Do not select the whole file.
+
+
+## Tenth detailed classification batch (three legacy boundary files)
+
+All three complete test bodies were read, including parameter tables and fixtures; production imports and calls were checked. This bounded batch releases the worker without starting another review or test run. All three remain mixed, not approved unit files. Existing test bytes, inventory and production denominator are unchanged.
+
+Next precise split candidates:
+
+- `frontend/src/lib/config.test.ts`: separate the `turn target config-flight boundary` describe block, particularly `suspends on reset, preserving same-target identity through failure and recovery`, `publishes a changed target before awaiting its readiness and retires A to B to A`, and the four `a superseded A %s flight cannot publish or return usable config after B` variants. These exercise the shared context protocol. The final invalid-target table can stay a configuration unit candidate; do not mechanically move every case just because it shares a describe. Other fake-fetch parser/priority/ingress cases can be reviewed as direct unit behavior.
+- `frontend/src/lib/api/session-proxy-policy.test.ts`: move `covers every static current apiClient operation without widening unsupported model GET` to static-contract coverage. In `allows reviewed $method $template as $kind`, preserve every parameter and separate the OpenAPI membership assertion from direct route-policy assertions rather than deleting it. Header, configuration, malformed route and legitimate-ID tables remain direct pure-policy candidates.
+- `frontend/src/lib/workbench/turn-reconciliation.test.ts`: move `types retained citation/evidence support metadata as nullable boolean, not corroboration proof` to static-contract checks. Keep the seven `binds a verified %s parent with no canonical turn, making recovery check-only` variants as component integration, or split their direct reconciliation assertions from the real registry settlement/retry assertions without losing either. Other projection cases only consume fixture values; constructing those with a registry does not itself prove an independent workflow collaboration.
+
+Validation: 465 manifest paths and all test hashes preserved; 3 unknown entries became mixed, leaving 59 unknown. Full-inventory validation returned 256 expected unresolved/missing-target blockers and zero unexpected errors. No application tests or coverage were run, and no pure-unit coverage increase is claimed.
+
+
+## Web discovery provider boundary review
+
+`test_web_discovery_provider.py` is unit: the real adapter's outbound HTTP boundary
+is replaced with `httpx.MockTransport`; tests use no ASGI application, listener,
+DNS lookup or SDK client interoperability. URL validation is metadata parsing, not
+remote resolution. Keyless mode forbids secret lookup, unconfigured mode clears
+key/file environment inputs, and configured tests inject synthetic credentials.
+The suite exercises production bounded response parsing, fixed-origin policy,
+metadata normalization and cancellation rather than testing only mock calls.

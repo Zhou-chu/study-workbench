@@ -7,7 +7,9 @@ import hashlib
 import json
 import re
 import stat
+import sys
 from pathlib import Path, PurePosixPath
+from typing import TypeGuard, cast
 
 LAYERS = {
     "unit",
@@ -45,7 +47,7 @@ def test_paths(inventory: list[str]) -> list[str]:
     )
 
 
-def _safe_path(value: object) -> bool:
+def _safe_path(value: object) -> TypeGuard[str]:
     return (
         isinstance(value, str)
         and bool(value)
@@ -60,7 +62,11 @@ def validate_manifest(
 ) -> list[str]:
     """Pure validation; caller supplies complete authoritative tracked inventory."""
     errors: list[str] = []
-    if not isinstance(document, dict) or document.get("version") != 1:
+    if (
+        not isinstance(document, dict)
+        or type(document.get("version")) is not int
+        or document["version"] != 1
+    ):
         return ["invalid manifest version/document"]
     entries = document.get("entries")
     if not isinstance(entries, list):
@@ -115,8 +121,86 @@ def select_unit_paths(
     if errors:
         raise ValueError("; ".join(errors))
     return sorted(
-        entry["path"] for entry in document["entries"] if entry["layer"] == "unit"
+        entry["path"]
+        for entry in cast(dict, document)["entries"]
+        if entry["layer"] == "unit"
     )
+
+
+def _binding_digest(value: object) -> str:
+    """Unambiguous canonical JSON digest; evidence binding, not authentication."""
+    raw = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def build_unit_selection(
+    *, revision: str, inventory: list[str], hashes: dict[str, str], document: object
+) -> dict:
+    """Pure protocol builder. Caller MUST obtain inputs from trusted current Git.
+
+    This function does not authenticate caller-supplied paths or establish a Git
+    trust boundary. Executing adapters must capture their own complete snapshot;
+    never accept an artifact's inventory/hash claims as the current inputs.
+    """
+    if not isinstance(revision, str) or not re.fullmatch(
+        r"(?:[a-f0-9]{40}|[a-f0-9]{64})", revision
+    ):
+        raise ValueError("invalid full revision")
+    if (
+        not isinstance(inventory, list)
+        or not inventory
+        or not all(_safe_path(path) for path in inventory)
+        or len(inventory) != len(set(inventory))
+    ):
+        raise ValueError("invalid complete inventory")
+    if not isinstance(hashes, dict) or set(hashes) != set(inventory):
+        raise ValueError("hashes must cover exactly the complete inventory")
+    if any(
+        not isinstance(digest, str) or not re.fullmatch(r"[a-f0-9]{64}", digest)
+        for digest in hashes.values()
+    ):
+        raise ValueError("invalid file digest")
+    unit_files = select_unit_paths(document, inventory, hashes)
+    if not unit_files:
+        raise ValueError("empty unit selection; no directory fallback")
+    ordered = sorted(inventory)
+    file_hashes = {path: hashes[path] for path in ordered}
+    tests = test_paths(ordered)
+    # Bind every non-test tracked input, not merely reviewed production targets.
+    # This deliberately includes configs, helper fixtures, and documentation.
+    source_hashes = {path: hashes[path] for path in ordered if path not in tests}
+    return {
+        "version": 1,
+        "layer": "unit",
+        "revision": revision,
+        "inventory": ordered,
+        "fileHashes": file_hashes,
+        "testHashes": {path: hashes[path] for path in tests},
+        "inventorySha256": _binding_digest(ordered),
+        "classificationSha256": _binding_digest(document),
+        "sourceSha256": _binding_digest(source_hashes),
+        "unitFiles": unit_files,
+    }
+
+
+def validate_unit_selection(
+    artifact: object,
+    *,
+    revision: str,
+    inventory: list[str],
+    hashes: dict[str, str],
+    document: object,
+) -> list[str]:
+    """Runner preflight: recompute from independently obtained current inputs."""
+    expected = build_unit_selection(
+        revision=revision, inventory=inventory, hashes=hashes, document=document
+    )
+    # Canonical serialization also distinguishes JSON true from integer 1.
+    if not isinstance(artifact, dict) or _binding_digest(artifact) != _binding_digest(
+        expected
+    ):
+        raise ValueError("unit selection does not match current authoritative inputs")
+    return list(expected["unitFiles"])
 
 
 def main() -> int:
@@ -154,7 +238,7 @@ def main() -> int:
     except (OSError, ValueError, TypeError) as error:
         print(json.dumps({"ok": False, "errors": [str(error)]}))
         return 1
-    counts = {}
+    counts: dict[str, int] = {}
     entries = document.get("entries", []) if isinstance(document, dict) else []
     for entry in entries if isinstance(entries, list) else []:
         if isinstance(entry, dict):
@@ -165,5 +249,22 @@ def main() -> int:
     return int(bool(errors))
 
 
+def binding_main() -> int:
+    """Internal pure-policy bridge. Only the Node adapter establishes provenance."""
+    try:
+        request = json.load(sys.stdin)
+        current = request["current"]
+        artifact = (
+            validate_unit_selection(request["artifact"], **current)
+            if "artifact" in request
+            else build_unit_selection(**current)
+        )
+        print(json.dumps({"ok": True, "value": artifact}))
+        return 0
+    except (OSError, ValueError, TypeError, KeyError) as error:
+        print(json.dumps({"ok": False, "error": str(error)}))
+        return 1
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(binding_main() if sys.argv[1:] == ["--binding-stdin"] else main())

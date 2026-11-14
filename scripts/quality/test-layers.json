@@ -191,23 +191,31 @@
     },
     {
       "path": "apps/web/src/app/compatibility.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/features/auth/session.ts"
+      ],
+      "reason": "Direct evaluateCompatibility predicates are unit candidates; controller handshakes, admission, registry retention/navigation and real recovery UI on online/visibility/signout are component integration.",
       "sha256": "48fb510d8e2fb7bcbdaeff6cc5df00285296a39b560d3e6ffd0e957db7cc4c0a"
     },
     {
       "path": "apps/web/src/app/layout.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/app/WorkspaceLayout.tsx",
+        "apps/web/src/app/styles.css",
+        "apps/web/src/app/router.tsx"
+      ],
+      "reason": "Controlled synthetic-slot layout/focus cases are unit; CSS source check is static; renderApp router/provider cases are component integration. Split per case, not whole file.",
       "sha256": "4bede002bb05224a1a03571d960267ce799efe2997a743310e13428ac4c5be7b"
     },
     {
       "path": "apps/web/src/app/navigation.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/app/drafts.ts"
+      ],
+      "reason": "Direct registry retention/retired-context cases are unit candidates. Other cases coordinate independent navigation controller/registry and actual Router Back/Forward dialogs. Pure editor reducer fixture construction alone is not an integration boundary.",
       "sha256": "98f52e590cc3e8b3c10a41a3f2b59d391a071349a9423ae66c9cf7bfa5492de0"
     },
     {
@@ -221,9 +229,11 @@
     },
     {
       "path": "apps/web/src/app/route-coverage.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/app/route-coverage.ts"
+      ],
+      "reason": "Pure isCoverageComplete/route inventory values plus source documentation/table/hash conformance. Static evidence cannot count as behavioral coverage; separate source-read cases.",
       "sha256": "4e0b3851f0f60e655f5a6bf210fdf76141256898c3123e228fa9757c604bb209"
     },
     {
@@ -438,16 +448,22 @@
     },
     {
       "path": "apps/web/src/features/library/classic-chat.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/library/NativeChatPanel.tsx"
+      ],
+      "reason": "Actual routed classic/source chat context/session/registry/transport/navigation executes complete send/retry/save controls with fake responses; not pure predicate tests.",
       "sha256": "3e919af73220256d49b2f9ae19eb90742cd68ebf5e32868286902025b507cf0e"
     },
     {
       "path": "apps/web/src/features/library/classic-reference.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/features/library/RecordReference.tsx",
+        "apps/web/src/features/library/library-store.ts",
+        "apps/web/src/app/styles.css"
+      ],
+      "reason": "Mounted classic reference/history/save/source-grant workflow plus direct recordReferences/locale-value case and CSS source check. Split explicit-translated-labels/full-identity case to unit; final controls case itself needs static/DOM separation.",
       "sha256": "0de1325d5d15099ad698c950151d3fb5d2750bc6cfd1391e49897b6d96bdbd07"
     },
     {
@@ -472,9 +488,12 @@
     },
     {
       "path": "apps/web/src/features/library/global-ask.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/library/global-state.ts",
+        "apps/web/src/features/library/library-store.ts"
+      ],
+      "reason": "Actual global Ask routes/dialogs, metadata-query invalidation, streaming and owned output/admission; transport fake but independent app components real.",
       "sha256": "8083af6bcd8fdb2d2e9f717637e3e1f8a191115fc11865517215f999aa6cd705"
     },
     {
@@ -491,23 +510,31 @@
     },
     {
       "path": "apps/web/src/features/library/global-lifecycle.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/library/use-global-search.ts"
+      ],
+      "reason": "Mounted route, stream observer, store/auth/navigation cooperate on UTF8/terminal output/cancellation and retained reference authority; synthetic streams still exercise multi-component contracts.",
       "sha256": "9030dea0485ac477310d2862fbaf46ee759a4f4266de62ddfbc3404c4df81faa"
     },
     {
       "path": "apps/web/src/features/library/global-save.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/library/global-state.ts",
+        "apps/web/src/features/library/library-store.ts",
+        "apps/web/src/features/studio/studio-store.ts"
+      ],
+      "reason": "Real global answer then multi-destination save crosses library batch owner and Studio receipts/cancellation/reauth; fake transport not a pure unit.",
       "sha256": "3f184f4a3160810081b4109cbb502048732bb75c30511751dbc5668f369bc48d"
     },
     {
       "path": "apps/web/src/features/library/global-search.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/library/GlobalSearchPage.tsx"
+      ],
+      "reason": "Every case uses actual route/session/query/registry/adapter scope, reference, metadata admission or palette navigation. Keyboard cases prove workflow admission, not an isolated form.",
       "sha256": "0b02e9d9cba06ecfd5479c2b2b3b489c2d1c3b44c3f62119e1f39654d58192b0"
     },
     {
@@ -548,30 +575,38 @@
     },
     {
       "path": "apps/web/src/features/library/library-state.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/features/library/library-store.ts"
+      ],
+      "reason": "Direct receipt/immutability/fresh-intent store cases are unit candidates even through registry factory. Other cases couple registry retirement/navigation leases or real coordinator readiness to resource ownership; factory/import count alone does not make integration.",
       "sha256": "62c8d2434ca7c64ae3d33162af68d31a72292cf825d280fee9321009ff4c94bd"
     },
     {
       "path": "apps/web/src/features/library/library.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/library/LibraryPage.tsx"
+      ],
+      "reason": "Actual library/router/session/query/draft stack follows import, detail, association, command, deletion and retained-creation workflows using fake HTTP responses; no live browser/server.",
       "sha256": "532c2ab9870504abdf1cbc9cc51ef51cfc4fa95f5a6432a5de4c11e5234e68cf"
     },
     {
       "path": "apps/web/src/features/library/native-lifecycle.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/library/use-native-chat.ts"
+      ],
+      "reason": "All cases mount classic/source route, owned session/stream/command state, history and auth cancellation with fake responses. No isolated predicate cases.",
       "sha256": "6c270a0af358452cec9f7b2f5f8bb49e1362b611680c6f74a6333ef71b94d524"
     },
     {
       "path": "apps/web/src/features/library/native-ownership.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/library/use-native-chat.ts"
+      ],
+      "reason": "Actual parent/session/context/route/navigation/receipt ownership with late sends/deletes and orphan inspection. All cases cross real page/controller/store contracts; external HTTP fake.",
       "sha256": "7fde0d3faae06e12d8d80b2bd561e828c4a765254d9260c8bc8cf469dac46f33"
     },
     {
@@ -586,9 +621,12 @@
     },
     {
       "path": "apps/web/src/features/library/native-store.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/library/library-store.ts",
+        "apps/web/src/features/studio/studio-store.ts"
+      ],
+      "reason": "Each case directly one library or studio store using static sessions/messages and synthetic generation. DraftRegistry only constructs stores; no cross-store operation, controller or adapter. Pure reducers/schema internal.",
       "sha256": "beeb391b4930aa56e1999c2dfa76051d3a200ff329e7f2e15bb0e42c1f9a9918"
     },
     {
@@ -610,16 +648,20 @@
     },
     {
       "path": "apps/web/src/features/library/podcast-profiles.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/library/PodcastProfileEditor.tsx"
+      ],
+      "reason": "Actual route/profile editor/library ownership/query cache/navigation cooperate through binding protection, retained drafts, ACK baselines and palette reopen; fake server only substitutes external IO.",
       "sha256": "00cd1adc25928542d4fe8a5bb4a809bdc8f6256c867cab3676f4ffa49ad3fbbc"
     },
     {
       "path": "apps/web/src/features/library/podcasts.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/library/PodcastsPage.tsx"
+      ],
+      "reason": "Real routed generation/context/profile/receipt/audio and setup-navigation workflows with fake transport. Page, store, controller and adapter collaborate; no actual audio playback.",
       "sha256": "a8fecbce255d42c6de2397b05f6eddf6573a600b52ee283d7b16080caab64aa6"
     },
     {
@@ -631,9 +673,12 @@
     },
     {
       "path": "apps/web/src/features/notebooks/workspace-observation.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/notebooks/NotebookPage.tsx",
+        "apps/web/src/features/chat/chat-admission.ts"
+      ],
+      "reason": "Actual upload owner, workspace query cadence, chat readiness and privacy retirement cooperate in mounted harness; fake transport, no live browser.",
       "sha256": "e2e4abd6a3d53f64971bfa42279b5499786b0ce100879a8c369f0a1d7941d94c"
     },
     {
@@ -664,37 +709,54 @@
     },
     {
       "path": "apps/web/src/features/reader/reader-integration.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/reader/use-notebook-reader.ts",
+        "apps/web/src/features/notebooks/NotebookPage.tsx"
+      ],
+      "reason": "Mounted citation reader, history navigation, selected-scope owner, reading writes and focus recovery cooperate through real app harness; transport fake only.",
       "sha256": "bef55b875a7a18cc8076ce739a2ee007ba6a167211520db7b59b87bfec135a1a"
     },
     {
       "path": "apps/web/src/features/reader/reader-recovery.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/reader/ReaderPane.tsx",
+        "apps/web/src/features/reader/use-notebook-reader.ts",
+        "apps/web/src/features/auth/session.ts"
+      ],
+      "reason": "Real reader owner/selection writes/controller recovery and late completion fences; PDF engine and network fake, independent application lifecycle remains real.",
       "sha256": "3e9d00a1fe47a034c6c8bd6fcf641d5af4104cd341e28ca865fac08bde6c7154"
     },
     {
       "path": "apps/web/src/features/reader/reader.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/features/reader/ReaderPane.tsx"
+      ],
+      "reason": "Direct navigation predicates and isolated ReaderPane with fake send/geometry are unit candidates. retires pending reads on session generation change and hides already-loaded protected content after session retirement integrate actual coordinator/context invalidation. Intent construction alone is not an integration reason.",
       "sha256": "8de36392c6ab56ac62a191403167d85596722812f37c67504ae453ae02c4d8bb"
     },
     {
       "path": "apps/web/src/features/settings/advanced.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/features/settings/advanced-store.ts",
+        "apps/web/src/features/settings/advanced-observer.ts",
+        "apps/web/src/data/advanced-contracts.ts",
+        "apps/web/src/data/settings-api.ts",
+        "apps/web/src/app/drafts.ts"
+      ],
+      "reason": "Direct store, fake-send adapter, parser and observer-with-callback-doubles units, except Advanced-participates-in-existing-resource-guard uses real registry/navigation collaboration. Separate that exact case.",
       "sha256": "1e86a7d59738c4bfcfa60675b0101911f6f9c7a192c3c73a0bdff983cc857709"
     },
     {
       "path": "apps/web/src/features/settings/configuration-contracts.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/features/settings/configuration-store.ts"
+      ],
+      "reason": "Direct store, parser, fake-send settings adapter and locale checks are unit candidates. B9c both navigation lookups intentionally couples navigation/resource registry/configuration store; keep it component integration.",
       "sha256": "60f83879facbaa5fcad142f5fb5647b74ad1f8d25d4cb01e6598e628a9515451"
     },
     {
@@ -706,16 +768,23 @@
     },
     {
       "path": "apps/web/src/features/settings/contracts.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/data/settings-api.ts",
+        "apps/web/src/data/provider-status.ts",
+        "apps/web/src/i18n/settings-messages.ts"
+      ],
+      "reason": "Pure parsers/receipt/actionability/locale values and adapter with fake send. Stable initial context only; no asynchronous epoch retirement or live observer.",
       "sha256": "56a2f05e34cc0f8ec2a52a53368065af139a8b5a9ba909cdfe3d60305f79e2a2"
     },
     {
       "path": "apps/web/src/features/settings/model-owner.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/features/settings/configuration-store.ts",
+        "apps/web/src/app/drafts.ts"
+      ],
+      "reason": "First single-current-models-owner case couples configuration owner and actual navigation controller; remaining metadata/fingerprint/handle transitions directly target configuration store. Split first collaboration.",
       "sha256": "dffd4f398cbb6a5043d46356d7e0087524c050b27915d45fb48b129363496b71"
     },
     {
@@ -727,9 +796,14 @@
     },
     {
       "path": "apps/web/src/features/settings/ownership.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/app/drafts.ts",
+        "apps/web/src/features/sources/source-operations.ts",
+        "apps/web/src/features/settings/settings-store.ts",
+        "apps/web/src/features/auth/cold-return.ts"
+      ],
+      "reason": "Direct callback/cold-return/source-reservation units plus actual settings-owner/navigation-guard collaboration and registry retirement propagation into settings. Split direct cases.",
       "sha256": "5f431b42b1d59921e4dd78a1822e58382a6e8358d8ec7e8ba2b7ff27f5e5a367"
     },
     {
@@ -741,9 +815,11 @@
     },
     {
       "path": "apps/web/src/features/settings/settings-controls.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/settings/ModelsPage.tsx"
+      ],
+      "reason": "Actual settings route, prerequisites, credential editor, configuration owner store and transport run provider success/error workflows; fake fetch does not isolate these cooperating components.",
       "sha256": "b49af2a098674990c51c4aa0724c654ae59cd19f3f35dc395cc6d8c7c4a52433"
     },
     {
@@ -755,9 +831,12 @@
     },
     {
       "path": "apps/web/src/features/settings/setup-journey.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/app/router.tsx",
+        "apps/web/src/features/settings/ModelsPage.tsx"
+      ],
+      "reason": "Real notebook/tools/models navigation, draft guard and credential form preserve question/scope through cancel/save/failure; fake transport only.",
       "sha256": "2c9969ff99b9f444ab870722d6eec8d452c7736efd19e21702cd053d0a9ed034"
     },
     {
@@ -771,9 +850,11 @@
     },
     {
       "path": "apps/web/src/features/settings/transformation-store.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/features/settings/transformation-store.ts"
+      ],
+      "reason": "Direct transformation store captures/revisions/deletes/metadata are units with synthetic context/model evidence. registers transformation dirty and unknown state in both navigation lookups integrates navigation/settings/registry retirement and stays separate.",
       "sha256": "57a7e9d647149112babdaef4d8faebb5db1516e98e21387ec5e78c468961e1d4"
     },
     {
@@ -785,9 +866,13 @@
     },
     {
       "path": "apps/web/src/features/sources/discovery-remote.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/sources/DiscoveryPanel.tsx",
+        "apps/web/src/features/sources/RemoteImportPanel.tsx",
+        "apps/web/src/features/auth/session.ts"
+      ],
+      "reason": "Mounted discovery/import confirmation and provider evidence retirement/reverification coordinate real controller, ownership and adapters; fake transport is the external boundary.",
       "sha256": "3102fc9b0fd7a8b61c5dd651c0db2584f7fd49bcc4ebf56ee1c3881e9aaa7bc9"
     },
     {
@@ -802,9 +887,12 @@
     },
     {
       "path": "apps/web/src/features/sources/picker-races.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/sources/AddSourceDialog.tsx",
+        "apps/web/src/features/sources/source-operations.ts"
+      ],
+      "reason": "Picker hashing settles into actual document-owned store and upload admission across remount/privacy retirement; held crypto promise is fake timing, not a fake store.",
       "sha256": "10e725ae05e50bfc762d17f85315fa0d458de7270f54fc22331d11a7090f1cb9"
     },
     {
@@ -837,9 +925,12 @@
     },
     {
       "path": "apps/web/src/features/sources/selection-refresh.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/features/sources/source-operations.ts",
+        "apps/web/src/features/sources/SourcesPanel.tsx"
+      ],
+      "reason": "Three direct store workspace-ticket/admission guards coexist with real mounted selection/controller/query settlement. Exact direct split titles listed in policy.",
       "sha256": "43c80ea06c492549e95bc25a334fa50ac35258e6f96fb667846fe03bbabd16f4"
     },
     {
@@ -854,9 +945,13 @@
     },
     {
       "path": "apps/web/src/features/sources/upload-recovery.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/features/sources/AddSourceDialog.tsx",
+        "apps/web/src/features/sources/source-operations.ts",
+        "apps/web/src/features/sources/UploadStatus.tsx"
+      ],
+      "reason": "Mounted upload recovery uses real controller/store/transport; continues-only-proven-unsent-captures is a direct source store transition with fixed contexts and in-memory File. Split that exact case.",
       "sha256": "c96994dd8769639a4631b0d67b1816edce9421ce1721665570fc6b67b20df45b"
     },
     {
@@ -902,9 +997,11 @@
     },
     {
       "path": "apps/web/src/features/studio/interactions.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/studio/use-studio.ts"
+      ],
+      "reason": "Every mounted studio/audio/portable/Save Answer case uses real owner controller, navigation/store and adapter receipts including restored audio and CAS conflicts. Only external bytes/HTTP are synthetic.",
       "sha256": "25ed2ea982002794c96e2236071f433865bf6e22b4c11cda084f2840407a687d"
     },
     {
@@ -919,40 +1016,50 @@
     },
     {
       "path": "apps/web/src/features/studio/note-deletion.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/features/studio/StudioPanel.tsx",
+        "apps/web/src/features/studio/studio-store.ts"
+      ],
+      "reason": "Mounted DELETE/retirement cases integrate UI/controller/adapter/store. Final does-not-begin-a-DELETE case is direct store guard with fixed context; split it.",
       "sha256": "7df96e0958acdb2500dd72af25ea350a1f3ccaac46a03e9cb7e8f57142f59417"
     },
     {
       "path": "apps/web/src/features/studio/note-recovery.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/studio/StudioPanel.tsx",
+        "apps/web/src/features/studio/use-studio.ts",
+        "apps/web/src/features/auth/session.ts"
+      ],
+      "reason": "Mounted editor/controller recovery and store/adapter save-comparison settlement with fake transport; independent lifecycle ownership is real.",
       "sha256": "901b96dd65850c77006f55ef4374cb2d327dfdef987e000185cea8d0292cde9f"
     },
     {
       "path": "apps/web/src/features/studio/notes.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/features/studio/studio-store.ts"
+      ],
+      "reason": "Direct store conflict/save/metadata and fake-send adapter cases are unit candidates. shows conflict and controlled draft consumes real settled store in NoteEditor; keeps %s strict despite optional-null equivalence crosses workspace projection, editor conversion and store compatibility. Keep these consumer contracts separate.",
       "sha256": "f73917a329e3ce293e511bfb0d3d2bb98b7c8eec1f30e472726ee9202827d4a7"
     },
     {
       "path": "apps/web/src/features/studio/store-boundaries.test.ts",
-      "layer": "unclassified",
+      "layer": "unit",
       "targets": [
-        "apps/web/src/features/studio/studio-store.ts",
-        "packages/domain/src/index.ts"
+        "apps/web/src/features/studio/studio-store.ts"
       ],
-      "reason": "Reviewed all cases: direct store operations invoke real domain reducers and read sessionCoordinator; no I/O. Need explicit unit-boundary decision whether reducers are store implementation or independent owned workflow. Real imports alone do not establish integration; do not approve or downgrade by count.",
+      "reason": "Direct single store capture/discard/admission/settlement/read/citation transitions with synthetic context, callbacks and in-memory File. Domain reducers and DTO validators are internal pure implementation, not an independently running observer/registry/transport.",
       "sha256": "c58055b3d7cd2adbf87faafaae0e3576930cbe67fcaae1710d1f77b902e8d413"
     },
     {
       "path": "apps/web/src/i18n/parity.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/i18n/index.tsx"
+      ],
+      "reason": "Pure imported locale-value key/interpolation/completeness assertions; no runtime translation service or source-text scanning.",
       "sha256": "4ec39fc7f2041d6c32752008bda543462787330ccbbbd5f30d9aa801da9cf59d"
     },
     {
@@ -1021,16 +1128,22 @@
     },
     {
       "path": "frontend/src/app/(dashboard)/advanced/components/RebuildEmbeddings.review.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/app/(dashboard)/advanced/components/RebuildEmbeddings.tsx",
+        "frontend/src/lib/utils/command-submission.ts"
+      ],
+      "reason": "Pending result/uncertainty crosses unmount/remount through actual document-owned command latch and observation. API fake does not remove ownership integration.",
       "sha256": "9f8bf16dde54d48719c64790e5564ea7c8515e51bdd13259b9baa526b8eb5719"
     },
     {
       "path": "frontend/src/app/(dashboard)/advanced/components/RebuildEmbeddings.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/app/(dashboard)/advanced/components/RebuildEmbeddings.tsx",
+        "frontend/src/lib/utils/command-submission.ts"
+      ],
+      "reason": "Real persistent command latch/status/remount interoperability plus isolated localized definite-validation presentation case. Split keeps-definite-validation-failure-localized case only after verifying latch isolation.",
       "sha256": "e16170678fe34c336882d727562aa31cad3d277ec51ac7b2329c0be1527ebcc0"
     },
     {
@@ -1053,23 +1166,31 @@
     },
     {
       "path": "frontend/src/app/(dashboard)/notebooks/components/ChatColumn.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/app/(dashboard)/notebooks/components/ChatColumn.tsx"
+      ],
+      "reason": "Single loading/render branches; data hooks and ChatPanel replaced.",
       "sha256": "f9ceca754ebcf5241b52a2dc491148198abb961cb814d7913b260e993fb9804e"
     },
     {
       "path": "frontend/src/app/(dashboard)/notebooks/components/NoteEditorDialog.inline-title.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/app/(dashboard)/notebooks/components/NoteEditorDialog.tsx",
+        "frontend/src/components/common/InlineEdit.tsx",
+        "frontend/src/components/auth/SessionRecovery.tsx"
+      ],
+      "reason": "Deliberately real buffered InlineEdit cooperates with parent save acknowledgment; later cases add real SessionRecovery/auth-store focus. APIs/editor-body fake, independent buffered-control/parent lifecycle is real.",
       "sha256": "41f9c1ba39446a75ba2363a69b865a72066263e27beeba5a78787c04df4f6b2b"
     },
     {
       "path": "frontend/src/app/(dashboard)/notebooks/components/NoteEditorDialog.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/app/(dashboard)/notebooks/components/NoteEditorDialog.tsx"
+      ],
+      "reason": "Direct editor detail/CAS/pending/error cases have API/editor-child doubles and are unit candidates. Last recoverable-note cases mount SessionRecovery and change shared auth store during retained editor lifecycle: component integration.",
       "sha256": "b20c03b22fed57aa5d1211e09b8ab7242e86496c8aba89bef07734eeb848b5d9"
     },
     {
@@ -1102,30 +1223,38 @@
     },
     {
       "path": "frontend/src/app/(dashboard)/notebooks/components/NotesColumn.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/app/(dashboard)/notebooks/components/NotesColumn.tsx"
+      ],
+      "reason": "Single note-list selected/create state; editor child, delete hook and column store replaced, no real editing/save workflow.",
       "sha256": "d715dd6b85a76db70fe1867ae897f879a3b9ae238f0b116fe0b5ead1bb314e85"
     },
     {
       "path": "frontend/src/app/(dashboard)/search/page.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/app/(dashboard)/search/page.tsx"
+      ],
+      "reason": "Single page maps matched insight to mocked modal callback; layout, route/data/model hooks and major child views replaced.",
       "sha256": "97e163450c99da576f404e4ea9236d40784d844a5adf4eccc31b303d9db01891"
     },
     {
       "path": "frontend/src/app/(dashboard)/settings/components/SettingsForm.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/app/(dashboard)/settings/components/SettingsForm.tsx"
+      ],
+      "reason": "Single controlled form/saved-baseline unit; settings/capability/mutation hooks and i18n/ResizeObserver doubled. Delayed ACK/ABA edits remain form-local, no provider workflow.",
       "sha256": "7902999945492ddaf6a40b824038761e15a86a6c8ff1ee6ed0aaa671a401c8a4"
     },
     {
       "path": "frontend/src/app/(dashboard)/settings/models/page.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/app/(dashboard)/settings/models/page.tsx"
+      ],
+      "reason": "Single provider section ordering/loading/error page; all data hooks, AppShell and settings children replaced.",
       "sha256": "10aaa561cdc3d73bea11a8c60d27da699906e15b5d46677d15ec85913dd49b60"
     },
     {
@@ -1139,9 +1268,11 @@
     },
     {
       "path": "frontend/src/app/(dashboard)/transformations/components/TransformationEditorDialog.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/app/(dashboard)/transformations/components/TransformationEditorDialog.tsx"
+      ],
+      "reason": "Single form submission projects empty description; transformation/model hooks and Markdown editor replaced.",
       "sha256": "818f564b50ae1f19d4a1dab13cff652e310671ed8dabdb68885a1eb377e6763d"
     },
     {
@@ -1155,44 +1286,60 @@
     },
     {
       "path": "frontend/src/app/api/[...path]/route.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/app/api/[...path]/route.ts",
+        "frontend/src/lib/api/session-proxy.ts"
+      ],
+      "reason": "Export metadata shape check plus actual route-wrapper to session-proxy policy/status interoperability with fake fetch; no Next server/socket.",
       "sha256": "2cdc9a27f99e359d91b4b5f4789111b4e4229e15c8b3a191f85b93d663fd207c"
     },
     {
       "path": "frontend/src/app/api/_sse-proxy.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/app/api/_sse-proxy.ts",
+        "frontend/src/lib/api/session-proxy.ts"
+      ],
+      "reason": "SSE helper and actual POST wrappers delegate to real shared proxy policy/auth/stream logic. Fake fetch and in-memory streams avoid network, but wrapper-to-proxy interoperability is exercised.",
       "sha256": "631ab37ccae05ebddb1a7d75b0d83782e30ec77bf9f94129117bd3854de32da3"
     },
     {
       "path": "frontend/src/app/api/personal/imports/portable/route.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/app/api/personal/imports/portable/route.ts",
+        "frontend/src/lib/api/session-proxy.ts"
+      ],
+      "reason": "Actual route export delegates to session-proxy auth/mode/policy/stream dispatch. Fetch fake, no server/socket; deliberate route-to-proxy contract integration.",
       "sha256": "d58dee0638713cf75d9c5e15e0235f5b7dc3d45bb043b277f3339b5829283022"
     },
     {
       "path": "frontend/src/app/config/route.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/app/config/route.ts"
+      ],
+      "reason": "Calls GET directly with synthetic NextRequest and controlled env. Local config/origin predicates are internal pure policy helpers; no Next HTTP server/socket/upstream or middleware stack.",
       "sha256": "5ce355b8c7907cc81ccb510653cb12e74f4c5488a073dcbf35212ac901af20c8"
     },
     {
       "path": "frontend/src/app/font-delivery.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/app/fonts.css",
+        "frontend/src/components/common/FontPreloads.tsx"
+      ],
+      "reason": "Source/CSS/license/hash asset guards plus actual FontPreloads SSR component output. Split emits-exactly-three-real-SSR-preloads parameterized case from source/artifact checks; no real browser font rendering.",
       "sha256": "732a9edd786a73a9381cb819904ca5ef3c8b720ba01137a29154f257c64dc5c4"
     },
     {
       "path": "frontend/src/components/auth/SessionRecovery.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/components/auth/SessionRecovery.tsx"
+      ],
+      "reason": "Direct recovery label/password/callback views with synthetic store values coexist with real DashboardLayout/auth-store transitions retaining exact editor/File and cross-dialog focus; split isolated views from shared recovery lifecycle.",
       "sha256": "8679839a310e9e5129ba59eba6c4f7a668df745608979484ac2612618724cc7d"
     },
     {
@@ -1276,58 +1423,78 @@
     },
     {
       "path": "frontend/src/components/layout/AppSidebar.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/layout/AppSidebar.tsx"
+      ],
+      "reason": "Single navigation presentation with pathname/sidebar/i18n hooks mocked in setup; links and local callback only, no real navigation/signout dispatched.",
       "sha256": "c6378e66302bc611e44cd5252ec191ba0f7a9bdc1f27b9fdcb7c4936851016cb"
     },
     {
       "path": "frontend/src/components/podcasts/EpisodeCard.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/podcasts/EpisodeCard.tsx"
+      ],
+      "reason": "Single episode display/audio-disposal unit with API client/asset resolver/objectURL doubles; synthetic DTO and held Blob promise, no playback/network/session workflow.",
       "sha256": "e31c2aa6c9830e1edeaa3256d5b10a16a4e97cc1ee22e73937f5dff1f05c6dbd"
     },
     {
       "path": "frontend/src/components/podcasts/GeneratePodcastDialog.uncertainty.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/components/podcasts/GeneratePodcastDialog.tsx",
+        "frontend/src/lib/hooks/use-podcasts.ts",
+        "frontend/src/lib/utils/command-submission.ts"
+      ],
+      "reason": "Real generation hook/shared uncertainty latch survives unmount and gates explicit successor; APIs/content-selector fake, but cross-mount command ownership real.",
       "sha256": "06a53ddceabf4f6f92db2d6f36dbaeaa8ee5c4dd0d3ee98e3165820855480dbd"
     },
     {
       "path": "frontend/src/components/providers/TurnOperationProvider.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/components/providers/TurnOperationProvider.tsx",
+        "frontend/src/lib/workbench/turn-operations.ts",
+        "frontend/src/lib/workbench/turn-context.ts"
+      ],
+      "reason": "Root-layout source nesting static contract plus real provider facade/registry/context/coordinator retirement and consumer remount. No actual network; static and component layers must remain separate.",
       "sha256": "29278a025180e388c3f4a4237dba96dd4cd61cc46cac7756b74d0ff3aa116603"
     },
     {
       "path": "frontend/src/components/search/NotebookScopeSelector.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/search/NotebookScopeSelector.tsx"
+      ],
+      "reason": "Controlled component props/callbacks with notebook hook and translation doubles; no actual query/navigation.",
       "sha256": "8e1a982cb299df6e674a7dd9da4273a0d9b4fef5b6d1ca844a02ef01e919635c"
     },
     {
       "path": "frontend/src/components/settings/CredentialFormDialog.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/components/settings/CredentialFormDialog.tsx"
+      ],
+      "reason": "Controlled form masking/target/reset/callback cases have mutation/provider-hook doubles and are unit candidates. visibility_action_is_localized and language_change_updates_the_visible_and_accessible_action intentionally validate real i18next/resources/react subscriptions; keep locale compatibility separate.",
       "sha256": "040d0db4629f83e4386968b5d9fed87964072a8d703477828269b57d554a95e9"
     },
     {
       "path": "frontend/src/components/settings/ProviderSection.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/settings/ProviderSection.tsx"
+      ],
+      "reason": "Single provider presentation with credential children/i18n replaced; no setup flow.",
       "sha256": "59517ca0afc77996faf3c1d4239ff91473eb31c02a8771c19f9dfad8a99b4857"
     },
     {
       "path": "frontend/src/components/sources/AddExistingSourceDialog.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/sources/AddExistingSourceDialog.tsx"
+      ],
+      "reason": "Single search-dedup view; search/list APIs, notebook association hooks and debounce replaced.",
       "sha256": "431edd6a95fc8335a378d723c260a68d2c8e330a2be193d4bcfa5eddc6ae7963"
     },
     {
@@ -1342,16 +1509,20 @@
     },
     {
       "path": "frontend/src/components/sources/AddSourceDialog.uncertainty.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/sources/AddSourceDialog.tsx"
+      ],
+      "reason": "Mutation/data hooks and wizard steps replaced; component local draft survives prop close/reopen and delayed rejected promise. Stub mutation never mutates shared latch, unlike real-hook review tests.",
       "sha256": "0153dd2e3edb066c78c32302af901631e19db5fa5737e4584cdcfa3be2f8704e"
     },
     {
       "path": "frontend/src/components/sources/ChatPanel.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/sources/ChatPanel.tsx"
+      ],
+      "reason": "Single composer props and onSendMessage callback under key/stream guards; modal hook and actions replaced, no real send/turn workflow.",
       "sha256": "64ccb2433ed10bce09e2733da8952d55390bd406b35ec218da12642d7aa4b659"
     },
     {
@@ -1363,23 +1534,29 @@
     },
     {
       "path": "frontend/src/components/sources/SourceInsightDialog.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/sources/SourceInsightDialog.tsx"
+      ],
+      "reason": "Single insight success/not-found/error view and close callback, insight/modal hooks replaced.",
       "sha256": "e390815e2a1bd5fbc65b3303cffdbadb394ebdc7be597ffdfe12331d71dbc7fd"
     },
     {
       "path": "frontend/src/components/sources/WebDiscoveryDialog.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/sources/WebDiscoveryDialog.tsx"
+      ],
+      "reason": "Single dialog selection/concurrency/error state, with status/search/import hooks entirely doubled. Close/reopen retains component state rather than backend/shared import workflow; no actual search/network.",
       "sha256": "52610f8884669c5e25b718d51f5e58f92232d3ffbe680d47178fdbf016ae4303"
     },
     {
       "path": "frontend/src/components/ui/markdown-editor.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/components/ui/markdown-editor.tsx"
+      ],
+      "reason": "Actual theme hydration to editor and MarkdownPreview/plugin/sanitization/KaTeX compatibility pipelines are component integration. Top-level marker case also reads project/vendor CSS for static/style checks. Dynamic editor is fake; not browser acceptance.",
       "sha256": "5eb70d9c0733db5f602ac93fa7e56013da2a6e42fb27dfebd1ddb43919213bb2"
     },
     {
@@ -1402,51 +1579,66 @@
     },
     {
       "path": "frontend/src/components/workbench/JobsPanel.audio.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/workbench/JobsPanel.tsx"
+      ],
+      "reason": "Single job/audio view with job/download/saveBlob APIs and object-URL methods replaced; local player lifecycle and props only, no actual audio playback or owned job observer.",
       "sha256": "b742d3d8e6e9b315db46c186b42e742bf29e71a2539562b2e14ff933d7128c3c"
     },
     {
       "path": "frontend/src/components/workbench/JobsPanel.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/workbench/JobsPanel.tsx"
+      ],
+      "reason": "Single job view/poll/cancel unit: API doubles, controlled job/fence props, synthetic QueryClient. Index context initialized but not retired during pending work. JobCard/activeJob helpers are internal; no separate registry workflow or playback.",
       "sha256": "ad18c381321a016d6061a170b5b5f9a2a5da32669668865ca6afdc19771afc4d"
     },
     {
       "path": "frontend/src/components/workbench/NotebookSettingsDialog.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/components/workbench/NotebookSettingsDialog.tsx",
+        "frontend/src/components/integrations/NotebookLMPanel.tsx"
+      ],
+      "reason": "Parent scope projection/unmount feeds real child NotebookLMPanel confirmation and deferred mutation admission. API/status hooks fake; classification is parent-to-child admission boundary, not QueryClient or presentation primitives.",
       "sha256": "3a4d0b3e5f306d8dc63e8bb12c96a80c7505ad54f00ba48e1d275e3e98e6d399"
     },
     {
       "path": "frontend/src/components/workbench/PortableControls.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/workbench/PortableControls.tsx"
+      ],
+      "reason": "Single portable control owns limits/confirmation/export progress/download feedback. Portable/job APIs/saveBlob doubled; thin limits query and pure activeJob are implementation; controlled cache fixture. No archive parsing/file download/cross-resource registry.",
       "sha256": "8b210e094065ef75a2b2d704606be3805bb7dd6555c912a5e86369ff896031f8"
     },
     {
       "path": "frontend/src/components/workbench/SemanticIndexPanel.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/components/workbench/SemanticIndexPanel.tsx"
+      ],
+      "reason": "Most single-panel preview/consent/cache/retry cases use API doubles and controlled props, unit candidates with pure disclosure/status helpers. fences a late submission receipt across privacy invalidation uses actual context subscription to retire pending state: component integration.",
       "sha256": "857a119c1c9b043eb945d0f46fdf56d532217d9fce7f0cfd1be3bf322980e537"
     },
     {
       "path": "frontend/src/components/workbench/SnapshotPromotionButton.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/workbench/SnapshotPromotionButton.tsx"
+      ],
+      "reason": "Single saved-material action owns per-origin state/request map. Create API doubled; real local digest/key and thin mutation invalidation are implementation. Remount recomputes a deterministic key, not shared durable workflow state; no remote generation.",
       "sha256": "589c6e1ea992a173a22f100460a89755cf60f9b8c09e6626f660297679e64d25"
     },
     {
       "path": "frontend/src/components/workbench/StudyWorkbench.reader-navigation.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/components/workbench/StudyWorkbench.tsx"
+      ],
+      "reason": "Real workbench/reader/query/selection collaboration, external APIs/PDF rasterizer doubled. Final long-citation case also applies source-CSS workbenchRules at synthetic widths: static plus component, not real layout/browser acceptance.",
       "sha256": "4b47ce5b87ba138ffd5b7e481c9a05e61118ec0a655fa085e62150202a792b98"
     },
     {
@@ -1467,9 +1659,13 @@
     },
     {
       "path": "frontend/src/components/workbench/TurnRecoveryPanel.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/components/workbench/TurnRecoveryPanel.tsx",
+        "frontend/src/lib/workbench/turn-operations.ts",
+        "frontend/src/lib/workbench/embedding-disclosure.ts"
+      ],
+      "reason": "Actual disclosure/registry admission and settlement produces trusted capture, then recovery consumer distinguishes issued capability from rehydrated/tampered capture. Producer-consumer trust interoperability, no real retry/network.",
       "sha256": "4d74e1ac2e257c1d12d19220387128175abc02dd30846f7fe9b26651c651d499"
     },
     {
@@ -1483,16 +1679,20 @@
     },
     {
       "path": "frontend/src/components/workbench/WorkbenchSearchResult.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/workbench/WorkbenchSearchResult.tsx"
+      ],
+      "reason": "Controlled evidence-row rendering, provenance presentation and click callbacks; no actual reader/retrieval. Internal presentation children do not add workflow integration.",
       "sha256": "c1aa8afdedb7bdbeb97a764530b990e0629ab4ef28180cc406ddeb8b73f5c92e"
     },
     {
       "path": "frontend/src/components/workbench/WorkbenchSourcesList.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/workbench/WorkbenchSourcesList.tsx"
+      ],
+      "reason": "Controlled list, date/identity disclosure, separate read/select callbacks; no real reader or shared owner.",
       "sha256": "a16032a3a3257bf4c0749d5b430ed527d2073e91cb1e6694b6ac4ee35d911ccc"
     },
     {
@@ -1514,9 +1714,11 @@
     },
     {
       "path": "frontend/src/lib/api/browser-transport.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/lib/api/browser-transport.ts"
+      ],
+      "reason": "Direct policy/path/error-branding/auth classification and token helpers are unit candidates with fake config/fetch. direct SSE sends one private POST crosses search adapter and shared transport; custom AbortSignal reason observes real coordinator subscription. Separate these cooperation cases.",
       "sha256": "6f2022ca84fea19f37196b186b4d581da2d53edcdf979eaa48f87d3ef47c2007"
     },
     {
@@ -1528,23 +1730,30 @@
     },
     {
       "path": "frontend/src/lib/api/evidence.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/lib/api/evidence.ts",
+        "frontend/src/lib/api/client.ts"
+      ],
+      "reason": "DTO/wire clauses use actual axios/browser adapter with fake native fetch; captured epoch/target retirement explicitly crosses real context and transport. Optional-context case also contains expectTypeOf static assertion. Split static/direct adapter checks from lifecycle collaboration.",
       "sha256": "ba5f0fbc3d985af9d35f7404050a608417e4c08f57f7277c2810010c25691e4a"
     },
     {
       "path": "frontend/src/lib/api/insights.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/api/insights.ts"
+      ],
+      "reason": "Single command polling/abort/error policy with apiClient.get replaced and synthetic timers; no actual transport or observer store.",
       "sha256": "1c578c14daa3d2b4c15eba0347a27c6f9721c8ec0f9d07ddd71a08b28f62c792"
     },
     {
       "path": "frontend/src/lib/api/personal-transport.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/lib/api/client.ts"
+      ],
+      "reason": "Explicit API-to-shared-Axios transport contract keeps real interceptors/auth policy/JSON and multipart transforms, replacing final adapter. Tests wire/security-layer compatibility across evidence/workbench/NotebookLM APIs; no actual network.",
       "sha256": "3724c61828c13688a0a68567df59e3f9daf28beea14ee542f4242ea92f278b29"
     },
     {
@@ -1567,9 +1776,11 @@
     },
     {
       "path": "frontend/src/lib/api/session-proxy-policy.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/lib/api/session-proxy-policy.ts"
+      ],
+      "reason": "Direct origin/header/environment/route-policy calls are unit candidates with literal inputs. The current apiClient operation coverage case walks production source and parses TypeScript AST, and route examples additionally assert checked-in OpenAPI membership: these are static architecture/contract checks, not pure behavioral unit coverage.",
       "sha256": "83df73d08384d0e61c1057d240a6f59ec8d84dec57d9cf216b05d06a7c8abdba"
     },
     {
@@ -1581,16 +1792,25 @@
     },
     {
       "path": "frontend/src/lib/api/session-races.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/lib/stores/auth-store.ts",
+        "frontend/src/lib/api/client.ts",
+        "frontend/src/lib/auth-token.ts",
+        "frontend/src/lib/api/portable.ts"
+      ],
+      "reason": "Actual auth-store/coordinator/client refresh/revoke races, plus direct auth-token storage-event and portable path rejection cases. Fake fetch/adapter does not isolate auth lifecycle.",
       "sha256": "4dc55a78a4b1592662a5886fd429468952528eae73caaa5ea873ffe3dc5ede36"
     },
     {
       "path": "frontend/src/lib/api/session-recovery-edges.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/lib/stores/auth-store.ts",
+        "frontend/src/lib/api/client.ts",
+        "frontend/src/lib/auth-token.ts"
+      ],
+      "reason": "Auth-store/client/coordinator lifecycle races coexist with direct legacy-token memory fallback, storage event and persistent baseline cases. Split exact token-only nodes listed in policy.",
       "sha256": "f7c85173ff0ab78e295395f3f59f84c0ec3ab11c0e70a12d91abdc5266bd4599"
     },
     {
@@ -1614,9 +1834,13 @@
     },
     {
       "path": "frontend/src/lib/api/workbench-contract.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/lib/api/workbench.ts",
+        "frontend/src/lib/api/client.ts",
+        "frontend/src/lib/workbench/turn-context.ts"
+      ],
+      "reason": "Basic fake-adapter wire projections coexist with static expectTypeOf assertions and actual context retirement during browser transport body preparation. Split direct DTO cases from lifecycle and type-only contracts.",
       "sha256": "d89f9e3b0612899b0d6aa65856e796adf1d6b0b783210099d52e4065108a9ef4"
     },
     {
@@ -1630,16 +1854,20 @@
     },
     {
       "path": "frontend/src/lib/config.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/lib/config.ts"
+      ],
+      "reason": "Fake-fetch configuration priority, parsing, ingress and failure cases are unit candidates; the turn target config-flight boundary asserts real shared turn-context epoch/readiness publication across reset, target changes and superseded asynchronous flights, so the file also contains component integration. Synthetic storage is not a real browser profile.",
       "sha256": "a5c74a6d53571e26f9f229d033ed5a0197c2addd143886031dd94b80d9e02726"
     },
     {
       "path": "frontend/src/lib/credential-update-payload.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/credential-update-payload.ts"
+      ],
+      "reason": "Pure update-payload projection, null versus omission and numeric override with synthetic DTO values.",
       "sha256": "ee76fab62b9c9e8135747d59852eb032b2b911e2148e841fe49c6154bae69786"
     },
     {
@@ -1656,23 +1884,36 @@
     },
     {
       "path": "frontend/src/lib/hooks/command-submission.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/lib/hooks/use-podcasts.ts",
+        "frontend/src/lib/hooks/use-sources.ts",
+        "frontend/src/lib/utils/command-submission.ts"
+      ],
+      "reason": "Real mutation hooks and shared uncertainty latch across remount/acknowledgment. API/toast replaced; independent document-owned latch drives integration, not QueryClient presence.",
       "sha256": "50c8d7d059f1fd294b3244061cbb384f7ba3896875eecdafb4da3ed08c1a753f"
     },
     {
       "path": "frontend/src/lib/hooks/mutation-error-translations.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/lib/hooks/use-credentials.ts",
+        "frontend/src/lib/hooks/use-models.ts",
+        "frontend/src/lib/hooks/use-podcasts.ts",
+        "frontend/src/lib/hooks/use-notes.ts",
+        "frontend/src/lib/hooks/use-notebooks.ts",
+        "frontend/src/lib/locales/index.ts"
+      ],
+      "reason": "Mutation callbacks and actual i18next resource resolution are asserted together for real translations in all locales; useMutation captured and APIs not called. Hook-to-resource/error-key interoperability, not network integration.",
       "sha256": "70c1d52a88bede714e99280b0bb2b8828ef845ad4ec72120646bf905fbbba8e6"
     },
     {
       "path": "frontend/src/lib/hooks/use-ask.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/hooks/use-ask.ts"
+      ],
+      "reason": "Single hook state/StrictMode/SSE interpretation with search API and toasts replaced; in-memory ReadableStream is not network.",
       "sha256": "a5973b130fde0488be2d11e54ce0a2ee4d44736f753a000b400538288141718b"
     },
     {
@@ -1686,9 +1927,11 @@
     },
     {
       "path": "frontend/src/lib/hooks/use-modal-manager.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/hooks/use-modal-manager.ts"
+      ],
+      "reason": "Single URL-state hook with router hooks/push replaced; no actual routing.",
       "sha256": "11953392a6f6ab956781d3f2ff6123330f7fd3c3a833af3529626afdc5e05cac"
     },
     {
@@ -1702,9 +1945,11 @@
     },
     {
       "path": "frontend/src/lib/hooks/use-notebook-chat.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/hooks/use-notebook-chat.ts"
+      ],
+      "reason": "Single hook owns generation/selection/optimistic history/cache reconciliation; every chat API/toast/i18n boundary doubled. Synthetic QueryClient and promises, no shared registry/auth handshake or actual context build; query implementation not separate business workflow.",
       "sha256": "43665a5bac7e4ece8cd0699d6029654111bbdd95e4141df53025c82ee08c6efb"
     },
     {
@@ -1751,37 +1996,47 @@
     },
     {
       "path": "frontend/src/lib/hooks/use-workbench-retrieval.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/hooks/use-workbench-retrieval.ts"
+      ],
+      "reason": "Single retrieval-consent hook, API stub and synthetic query cache data. Mode/profile/cache ABA tests its internal metadata subscriber; auth/context initialized but no independent auth transition. Internal semantic-status/identity helpers and QueryClient do not alone imply integration.",
       "sha256": "b0e3696a38e44fa1fa661dee50ea83eccb2bcd43d943399c809eb8bfcd15e4e1"
     },
     {
       "path": "frontend/src/lib/hooks/use-workbench-turn.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/lib/hooks/use-workbench-turn.ts"
+      ],
+      "reason": "Actual TurnOperationProvider registry, hook/reconciliation, coordinator/auth/context and polling cooperate through submit/check/retry/retirement. API fake does not replace document-owned admission state.",
       "sha256": "13437740047668ad7fa5e8515dd48eec17e748d687327d6cf8b2e60f6794a1c1"
     },
     {
       "path": "frontend/src/lib/hooks/use-workbench-uploads.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/hooks/use-workbench-uploads.ts"
+      ],
+      "reason": "Single hook owns in-memory upload/retry lifecycle; upload API/acceptance callbacks doubled, synthetic Files, real pure outcome/error classifiers. No disk/network or independent store lifecycle.",
       "sha256": "1f59274a2a372680ecf85318ed45dda1930f8e0754782c15523f294ecdcca396"
     },
     {
       "path": "frontend/src/lib/hooks/use-workbench.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/lib/hooks/use-workbench.ts"
+      ],
+      "reason": "Direct hook serial selection/error/polling with fake API are unit candidates; privacy/target/auth/readiness changes deliberately integrate real context/coordinator/auth-store with pending queue and retained callbacks. Classify those parameters separately.",
       "sha256": "66237eb7d39be34b36f83d383b96c5c60f8bc6bcfe8da2c2eac8e19520d73f5d"
     },
     {
       "path": "frontend/src/lib/locales/index.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/lib/locales/index.ts"
+      ],
+      "reason": "Imported key/placeholder-value checks are pure constant-contract unit candidates. all en-US leaf keys should be referenced in source files recursively reads source and asserts textual usage: static contract, not executable unit coverage.",
       "sha256": "fa99078cd06adeb079b8dfe01bf53614b337de397f130332989f7f2cbe6c0d47"
     },
     {
@@ -1804,9 +2059,11 @@
     },
     {
       "path": "frontend/src/lib/stores/auth-store.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/lib/stores/auth-store.ts"
+      ],
+      "reason": "Most tests execute auth API/browser protocol/coordinator/token retirement, including actual QueryObserver recovery. does not read/send passwords until config establishes an explicit legacy mode exits at fake config failure before auth API and is direct store-unit candidate; whole file is not unit.",
       "sha256": "849ddf0d327042595464211c754c462d9bafdbf56c4091e17165dbfc2dd1f1b0"
     },
     {
@@ -1871,9 +2128,11 @@
     },
     {
       "path": "frontend/src/lib/utils/source-context.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/utils/source-context.ts"
+      ],
+      "reason": "Direct pure source/note inclusion/bulk/default calculations with literal records; internal pure composition only.",
       "sha256": "0e5c4f28f40b80dfab74ddb5bcaefdb7bd72a294d82153c7d2d16800186db02c"
     },
     {
@@ -1896,9 +2155,11 @@
     },
     {
       "path": "frontend/src/lib/utils/workbench-read-model.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/utils/workbench-read-model.ts"
+      ],
+      "reason": "Pure selection/version projection and date/identity ordering with static fixtures.",
       "sha256": "d70b20a0d7af61288fac00cfef61a5892caaa3f6e85aa2ea3c04c078ce86a942"
     },
     {
@@ -1931,16 +2192,20 @@
     },
     {
       "path": "frontend/src/lib/workbench/turn-operations.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/workbench/turn-operations.ts"
+      ],
+      "reason": "Direct bounded registry admission/state/capture/latch/byte-budget logic. Local UUID optionally stubbed, pure context/disclosure helpers internal. No provider, observer, IO or real process.",
       "sha256": "603b07f8192c20ea1eaa72c0d0d5b8d7c8e520e5715c61715d445f08643422b4"
     },
     {
       "path": "frontend/src/lib/workbench/turn-reconciliation.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/lib/workbench/turn-reconciliation.ts"
+      ],
+      "reason": "Pure reconciliation and POST-outcome projections use in-memory records and internal pure helpers. One parameterized case feeds the reconciled result through real registry settlePost/beginCheck/settleCheck/beginRetry, testing an independent state-machine collaboration; expectTypeOf support metadata is a static type contract. Registry-built fixture values alone do not make all remaining projection cases integration.",
       "sha256": "f669a00c85db48d0165a347529dcdf9767a0046ea11df6100586f460f59923af"
     },
     {
@@ -2163,6 +2428,34 @@
       "sha256": "80641b52fb26359e6cbc340dcb8f5c2402937f90e06ea491ca49156bdf331097"
     },
     {
+      "path": "scripts/coverage-unit-plan.test.mjs",
+      "layer": "unit",
+      "targets": [
+        "scripts/coverage-unit-plan.mjs"
+      ],
+      "reason": "Pure explicit-file partition/config value tests with synthetic inputs; no Git/process/filesystem.",
+      "sha256": "f9515be1453adc82353d1feb7150168a7d635dd64ba115c7b46eee04dde8a96b"
+    },
+    {
+      "path": "scripts/coverage-unit-runner.test.mjs",
+      "layer": "tool-integration",
+      "targets": [
+        "scripts/coverage-workspaces.mjs",
+        "scripts/coverage-node-tests.mjs"
+      ],
+      "reason": "Real subprocess/filesystem/Git fixtures verify exact input and real empty-selection instrumenter behavior; separate reporter doubles only test dispatch, not coverage.",
+      "sha256": "60cf0f6888147840833be022446a9064bb0e3c54ce9cd850534c16928fb5f039"
+    },
+    {
+      "path": "scripts/coverage-unit-selection.test.mjs",
+      "layer": "tool-integration",
+      "targets": [
+        "scripts/coverage-unit-selection.mjs"
+      ],
+      "reason": "Real temporary Git repositories, filesystem mutation and Python child processes verify producer ownership and snapshot binding.",
+      "sha256": "007e364663e97ca277d252d7b92c478648e75352231d2fb20d47de3003b88848"
+    },
+    {
       "path": "scripts/tests/deployment/easypanel.test.ts",
       "layer": "unit",
       "targets": [
@@ -2256,9 +2549,14 @@
     },
     {
       "path": "tests/test_anthropic_compatible_provider.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "open_notebook/domain/credential.py",
+        "api/routers/credentials.py",
+        "open_notebook/ai/connection_tester.py",
+        "open_notebook/ai/models.py"
+      ],
+      "reason": "DB/DNS/HTTP/factory doubles in direct function cases; final test_langchain_bridge_forwards_base_url uses actual Esperanto to LangChain adapter interoperability, no real request. Split final SDK case.",
       "sha256": "642e301373bfd1ceb426236a326f8fb89a49baa29f41aea0ac2b039e9337a3c3"
     },
     {
@@ -2403,9 +2701,13 @@
     },
     {
       "path": "tests/test_command_uncertainty_boundaries.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/main.py",
+        "api/routers/commands.py",
+        "open_notebook/domain/notebook.py"
+      ],
+      "reason": "Actual ASGI envelopes and retained audio files, except direct test_automatic_note_embedding_still_preserves_saved_content with persistence/submit doubles. Split that exact Note.save unit.",
       "sha256": "bb562c68bcd5a108bf9117b29efa870b03914493667f1e4501d5bc935fe1f0ba"
     },
     {
@@ -2428,9 +2730,11 @@
     },
     {
       "path": "tests/test_connection_tester_offline_paths.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "open_notebook/ai/connection_tester.py"
+      ],
+      "reason": "HTTP/DNS/pinning/provider instances replaced in direct probe cases. test_audio_fallback_is_valid_silent_pcm checks real failed open; test_audio_reads_only_supplied_fixture creates/opens a file. Split the two audio boundary cases, not all provider cases.",
       "sha256": "626bd2e15e480948169b7c76b8715b1cc9dd001da435a8e3986916eaabd01a56"
     },
     {
@@ -2788,13 +3092,31 @@
       "sha256": "c19fcadcc66378c48ec614282828fb2ff8972544d560de16ee640e90e9e75325"
     },
     {
+      "path": "tests/test_linear_paragraphs_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_service.py"
+      ],
+      "reason": "Calls pure paragraph splitter with synthetic strings and exact offset/oracle assertions; no backend I/O.",
+      "sha256": "bdbca9d09ace1a314415719c7b6d3d7b3a206058cb4f6de4b23bfa3978a12f1b"
+    },
+    {
       "path": "tests/test_llm_timeout_default.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "open_notebook/config.py"
       ],
-      "reason": "Three direct configuration dict cases; final real AIFactory to Anthropic adapter to LangChain construction compatibility chain (no HTTP). Split SDK integration. Full-file independent review at f10d0f4; SHA256 verified after merge.",
-      "sha256": "cb1c0f63801c6633894e35d1b51836e582f178e8087094bb65c3b09a8085789d"
+      "reason": "Real Esperanto factory to Anthropic/LangChain constructor compatibility, no HTTP. Pure timeout configuration cases split unchanged.",
+      "sha256": "19550023cd0c0e21ec5a24f56464296e87f145295d7324b75c1b355ec606756a"
+    },
+    {
+      "path": "tests/test_llm_timeout_default_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/config.py"
+      ],
+      "reason": "Direct default mapping of synthetic environment dictionaries; preserves original three functions/four parameterized cases without SDK construction.",
+      "sha256": "96eed45590b7cf00120976b9b9850ddff117dc2abde3f52a377a3ebb00b01311"
     },
     {
       "path": "tests/test_max_body_size_middleware.py",
@@ -2805,9 +3127,11 @@
     },
     {
       "path": "tests/test_migration_integrity.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "open_notebook/database/async_migrate.py"
+      ],
+      "reason": "Ack/version/preflight cases execute exact production AST definitions with DB/query/logger doubles; not full-module import verification. Last test_evidence_vector_migration_is_registered_and_derived_only reads SQL and assembles real migration files; split that static/tool case.",
       "sha256": "e77b9b5e51ccd7124d523439c81722a1ff2a27ef57795d40fc98cbcd538a7f8e"
     },
     {
@@ -2877,10 +3201,30 @@
     },
     {
       "path": "tests/test_notebooklm_asset_file_lifecycle.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "tool-integration",
+      "targets": [
+        "open_notebook/integrations/notebooklm/sdk_adapter.py"
+      ],
+      "reason": "Actual file open/write/flush/commit/cleanup and threaded cancellation/draining with disk/handle assertions. HTTP MockTransport prevents network, not filesystem integration.",
       "sha256": "e93eaefbb668c9cb12044a904647adfdb634fc4b5458bdfae963b80e848d397c"
+    },
+    {
+      "path": "tests/test_notebooklm_service_failure_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/notebooklm_service.py"
+      ],
+      "reason": "Real write/poll/import/reference methods with memory-only store and explicit bridge/evidence/DB boundary doubles. No actual storage, SDK, socket or browser. Cancellation remains real control flow.",
+      "sha256": "f59c6b08d25c35aac1231126e038d2b98c6061bf1df66401474aa4e9cba9eae4"
+    },
+    {
+      "path": "tests/test_notebooklm_service_orchestration_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/notebooklm_service.py"
+      ],
+      "reason": "Actual service methods with explicit memory-only store/bridge/evidence I/O stubs cover paging, admission, cancellation, replay and scope. No PersonalStore, SDK client, filesystem or HTTP.",
+      "sha256": "7f45bb3fc976fdc9bcc705bedc200f792cfc26c09748304372bdb89184861007"
     },
     {
       "path": "tests/test_notes_api.py",
@@ -2924,9 +3268,12 @@
     },
     {
       "path": "tests/test_podcast_audio_containment.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "open_notebook/podcasts/audio_paths.py",
+        "api/routers/podcasts.py"
+      ],
+      "reason": "Real disk/symlink containment and TestClient serve/delete routes plus direct early guards. TestResolveContainedAudioPath.test_empty_and_none_are_rejected is a unit split candidate; not the whole class.",
       "sha256": "7f02073403c7a11d0bbaca4d3e4da80899f9002bb82896505c4bf2630b2f0169"
     },
     {
@@ -2951,9 +3298,12 @@
     },
     {
       "path": "tests/test_podcast_episode_model_resolution.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "api/routers/podcasts.py",
+        "open_notebook/ai/models.py"
+      ],
+      "reason": "Direct model batch and list/detail functions; repository/service/job-status/model lookup doubles. All audio_file values None return before disk checks. DTO/internal projection real, no TestClient.",
       "sha256": "23f93e7f9f23eb62374a69ae3b0e6cb57e1a7aaa0dc779070553dcb9eb5b8988"
     },
     {
@@ -3182,9 +3532,13 @@
     },
     {
       "path": "tests/test_safe_operation_entrypoints.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "Makefile",
+        "docker-compose.yml",
+        "scripts/offline_pytest.py"
+      ],
+      "reason": "Make/compose source guards plus real make subprocesses, executable doubles, cleanup and symlink fixtures. Static/tool, no live service or Docker.",
       "sha256": "e5a3e02f83f28749ccf5e7c1ffd10ea33a8960fa258658187c855acf3c35c616"
     },
     {
@@ -3427,9 +3781,11 @@
     },
     {
       "path": "tests/test_transformations_api.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "api-integration",
+      "targets": [
+        "api/routers/transformations.py"
+      ],
+      "reason": "All cases invoke actual TestClient CRUD/execution routes, even with DB/model/graph doubles.",
       "sha256": "699ab9cb5aceb0d1cdc54517313dd630c1ed62341c0acd99043a8dbabf8a4c0e"
     },
     {
@@ -3442,6 +3798,15 @@
       ],
       "reason": "All parameterized router failures and typed/untyped error regressions use real TestClient global exception mapping; domain calls are mocked. Targets identify common handler and representative routers, not a denominator exclusion. Full test file and relevant production/fixture boundaries reviewed at merged 588aaf5; no tests executed for classification.",
       "sha256": "366853c732d6319b3fc85aaae807d200cefc7169bde3d370631602413277b6f1"
+    },
+    {
+      "path": "tests/test_unit_selection_protocol.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/quality/test_layers.py"
+      ],
+      "reason": "Pure policy functions with synthetic inventories and hashes; no Git, filesystem mutation or child process.",
+      "sha256": "bbf40d0b31543b6cfbc8cdafb3c29cc2a466c50becd2ca6230c1eb0935d4fb60"
     },
     {
       "path": "tests/test_upload_toctou_race.py",
@@ -3478,6 +3843,15 @@
       "sha256": "a062118e1f7b776468a18a3bab17b387f20dfbba3ade8c2822c4db02fda1d6ff"
     },
     {
+      "path": "tests/test_ux_multipart_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/v1/ux_recovery_check.py"
+      ],
+      "reason": "Compiles actual nested production observer AST; injected in-memory closure and route mocks isolate payload extraction without HTTP or browser.",
+      "sha256": "cd3891edda619620c162e35c428d6ec4b33bb3496d3795ea77107e9014195dec"
+    },
+    {
       "path": "tests/test_v1_access_control.py",
       "layer": "api-integration",
       "targets": [
@@ -3504,10 +3878,21 @@
     },
     {
       "path": "tests/test_v1_artifact_jobs.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "4cd2264cfef194a8f64c996a820a3e8f415d56fcff1e933c71e914dfc79f7fcd"
+      "layer": "tool-integration",
+      "targets": [
+        "api/notebooklm_service.py"
+      ],
+      "reason": "Retained actual download asset writes and filesystem verification. Thirteen isolated service-state cases moved unchanged to test_v1_artifact_jobs_unit.py.",
+      "sha256": "fa310d21cb55efafc2e7db19226377e860c4e465a094155658a0a37ed28b64bc"
+    },
+    {
+      "path": "tests/test_v1_artifact_jobs_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/notebooklm_service.py"
+      ],
+      "reason": "Real service state/replay/cancellation/capability logic with injected in-memory store and bridge doubles; no actual PersonalStore, provider, files or HTTP. Every original body and assertion preserved.",
+      "sha256": "7b0d9998d2fc2cd63451fbf8431e15b096764c20d0b92be54f2491e1f664e89b"
     },
     {
       "path": "tests/test_v1_browser_context.py",
@@ -3578,9 +3963,11 @@
     },
     {
       "path": "tests/test_v1_evidence_ingest.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "tool-integration",
+      "targets": [
+        "api/evidence_service.py"
+      ],
+      "reason": "Real immutable publication, tamper/path custody, extraction subprocesses and concurrent workers with memory DB double; early guards share filesystem fixture.",
       "sha256": "4e602eb79a31988ef15343cfe55dcfa4203612f7bd253963bd7c14f1b10db15d"
     },
     {
@@ -3653,9 +4040,12 @@
     },
     {
       "path": "tests/test_v1_grounded_chat.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "tool-integration",
+      "targets": [
+        "open_notebook/graphs/grounded_chat.py",
+        "api/evidence_service.py"
+      ],
+      "reason": "Every setup publishes/extracts two sources including parser processes before grounded retrieval/citation workflows. Model and DB doubles do not remove file/process boundaries.",
       "sha256": "ff574f30518cae331bbc755827ce631889315dd4d1edeb020db8a7a1c9ba9697"
     },
     {
@@ -3672,9 +4062,13 @@
     },
     {
       "path": "tests/test_v1_launcher_environment.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "scripts/v1/local_check.py",
+        "scripts/v1/run_native.py",
+        "scripts/v1/runtime_lifecycle.py"
+      ],
+      "reason": "Direct synthetic environment/probe/socket-double cases plus actual config/log chmod/symlinks, dotenv compatibility and opt-in child-process lifecycle. Exact unit split candidates recorded in policy.",
       "sha256": "b0e7ee7b3db16c6acb15aa9ff362f5317efcaceab9148a9bf59248e78b60c0a6"
     },
     {
@@ -3744,9 +4138,12 @@
     },
     {
       "path": "tests/test_v1_notebooklm_chat.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/notebooklm_service.py",
+        "api/evidence_service.py"
+      ],
+      "reason": "Remote-only state/recovery/capability cases use MemoryStore/FakeBridge; local mapping cases ingest/extract actual evidence files. Exact remote-only split cases in policy.",
       "sha256": "50ad2f2254da758b9304034abba4bacd7d835e461c267cc1fcf3e53d495d7b53"
     },
     {
@@ -3786,9 +4183,11 @@
     },
     {
       "path": "tests/test_v1_notebooklm_sdk.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "open_notebook/integrations/notebooklm/sdk_adapter.py"
+      ],
+      "reason": "test_pinned_config_disables_hidden_mutation_retries directly assembles options with from_storage replaced; other cases create/rewrite/remove profile files and exercise adapter file checks with fake SDK. No real login/network.",
       "sha256": "850caffc1d89bb7a4a0b99701b9b8ab7bf764123af5352443dd2aebacb63fad3"
     },
     {
@@ -3803,16 +4202,25 @@
     },
     {
       "path": "tests/test_v1_personal_dispatch_receipt.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/personal_service.py",
+        "api/personal_contracts.py",
+        "api/main.py",
+        "api/portable_service.py"
+      ],
+      "reason": "ASGI/schema/portable interoperability plus direct test_receipt_persistence_error_is_not_a_durable_dispatch_receipt with storage/queue doubles; split that two-parameter unit.",
       "sha256": "bde6198abee3d2a020a87a5e1d7b6c1c542c4df11aee6800543af07164c7b9a8"
     },
     {
       "path": "tests/test_v1_personal_enqueue_reconciliation.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/personal_service.py",
+        "api/main.py",
+        "api/routers/evidence.py"
+      ],
+      "reason": "Direct state/locking reconciliation with MemoryStore/queue doubles except final test_unchanged_queued_ack_loss_reports_unknown_without_reenqueue (two parameters), which runs real ASGI. Fixture self-test is not production coverage.",
       "sha256": "8402bc77ab01624081c56ded387c972b2ca04e2879ee10ddd02f8bc93b16d59f"
     },
     {
@@ -3921,9 +4329,12 @@
     },
     {
       "path": "tests/test_v1_source_snapshot_repository.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "tool-integration",
+      "targets": [
+        "open_notebook/database/source_snapshot_repository.py",
+        "api/source_snapshot_service.py"
+      ],
+      "reason": "Real isolated DB transactions/concurrent commit/rollback/replay/deletion plus actual evidence files. Disposable DB opt-in skip does not turn database/tool integration into unit.",
       "sha256": "a867aac370f6f114e6822972f79bb1ec40f602e122854b18c0d73a1d5fe315c3"
     },
     {
@@ -3937,9 +4348,12 @@
     },
     {
       "path": "tests/test_v1_source_snapshots.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "tool-integration",
+      "targets": [
+        "api/source_snapshot_service.py",
+        "api/evidence_service.py"
+      ],
+      "reason": "Real publication, replay, concurrent publishers and parser/retrieval with fake repository; actual filesystem boundary remains.",
       "sha256": "3478801448e9e2806dcc5e8de90dee0e9295ad5edfa925f570803e82a50b0842"
     },
     {
@@ -3987,9 +4401,11 @@
     },
     {
       "path": "tests/test_web_discovery_provider.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "api/web_discovery_provider.py"
+      ],
+      "reason": "Complete file and adapter reviewed: literal URL validation and fixed-origin adapter exercise injected httpx.MockTransport (no ASGI server/socket/DNS), synthetic response bytes, explicit keys or cleared/forbidden secret lookup; real provider state/error/cancellation logic, no filesystem or SDK interoperability.",
       "sha256": "0de8e23a9055c982e47962a317da0efc26e5996653ff04673264d06bf14f0068"
     },
     {
@@ -4029,9 +4445,14 @@
     },
     {
       "path": "tests/test_workbench_hybrid_boundaries.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/evidence_indexing.py",
+        "api/personal_service.py",
+        "open_notebook/ai/evidence_embeddings.py",
+        "open_notebook/graphs/grounded_chat.py"
+      ],
+      "reason": "First admission case crosses actual indexing/repository/embedding-client contracts; remaining journey fixtures publish/extract files and combine grounded retrieval. Component/tool mixture, not units.",
       "sha256": "c2aa1d2537252483725ed03951ffd1dba3b360e4a4fd02143beb0f5eab175f93"
     },
     {

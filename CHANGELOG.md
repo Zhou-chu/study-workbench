@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Avoid repeated multipart delimiter rescans in the disposable UX recovery observer when an upload body lacks its closing delimiter.
+
 - Retire selected-source search results synchronously on workspace changes while deferring React cleanup outside parent render; prevent retired cleanup from affecting newer searches or unmounted components.
 
 - Return a safe unsuccessful credential probe when lookup/configuration fails before provider dispatch, instead of an unbound exception handler or a misleading successful model-not-found classification.
