@@ -162,6 +162,15 @@
       "sha256": "ab15c91558715c455f7f964a1b9e0ce1dc2ea6652dff51762d4d064694123a4e"
     },
     {
+      "path": "apps/web/scripts/contrast-parser.test.mjs",
+      "layer": "unit",
+      "targets": [
+        "apps/web/scripts/contrast-parser.mjs"
+      ],
+      "reason": "Pure lexical parser over synthetic strings with legacy-regex oracle, exhaustive bounded combinations and CPU-cost regressions; no CSS file, CLI, browser or network. Actual checker remains separate integration validation.",
+      "sha256": "f2b73dced20730c0ca49478b902bf86f18e6278478ea17dbc639068edb4bd153"
+    },
+    {
       "path": "apps/web/scripts/pdf-assets.test.mjs",
       "layer": "tool-integration",
       "targets": [
@@ -1222,6 +1231,15 @@
       "sha256": "a5ea63932426cb049802397ae4e224190077d662fbc3613c6ecda44bdbc6855f"
     },
     {
+      "path": "frontend/src/app/(dashboard)/notebooks/components/NotebookRow.test.tsx",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/app/(dashboard)/notebooks/components/NotebookRow.tsx"
+      ],
+      "reason": "Real React DOM and menu composition with Next routing and mutation I/O replaced; tests native anchor/focus/modifier click semantics and independent archive/delete. Component integration, not logical business unit or browser E2E.",
+      "sha256": "8179ec6a370073edabdfa30a7e0459473e58e074b659751905235f989560d686"
+    },
+    {
       "path": "frontend/src/app/(dashboard)/notebooks/components/NotesColumn.test.tsx",
       "layer": "unit",
       "targets": [
@@ -1419,7 +1437,7 @@
         "frontend/src/components/layout/AppShell.tsx"
       ],
       "reason": "Single shell presentation and local mobile-dialog state; Sidebar/SetupBanner and global navigation hooks are mocked, synthetic link prevents navigation. No actual route lifecycle. Full test file reviewed; classification only, no test or coverage run.",
-      "sha256": "3567ab449ea17a7882284421466b436cad7a9d634aaf78b33bebf12e55de6421"
+      "sha256": "f8f99de70fa00ae4359aa20f91d16dc7f61a69dba46a832ff8239a77a5e2211b"
     },
     {
       "path": "frontend/src/components/layout/AppSidebar.test.tsx",
@@ -1950,7 +1968,7 @@
         "frontend/src/lib/hooks/use-notebook-chat.ts"
       ],
       "reason": "Single hook owns generation/selection/optimistic history/cache reconciliation; every chat API/toast/i18n boundary doubled. Synthetic QueryClient and promises, no shared registry/auth handshake or actual context build; query implementation not separate business workflow.",
-      "sha256": "43665a5bac7e4ece8cd0699d6029654111bbdd95e4141df53025c82ee08c6efb"
+      "sha256": "f842e25f2827bf1024b1aa18d5234f0efdf21c5912a443ca6c3bf5013f9adb4b"
     },
     {
       "path": "frontend/src/lib/hooks/use-notes.test.tsx",
@@ -2406,6 +2424,15 @@
       "sha256": "b5347b3e640b4014f91da8a1aa11b8bafe74504e53d92518e60537b2189fe2f6"
     },
     {
+      "path": "scripts/coverage-executed-files.test.mjs",
+      "layer": "unit",
+      "targets": [
+        "scripts/coverage-executed-files.mjs"
+      ],
+      "reason": "Pure native-report policy over synthetic completed/skipped/failed states, counts and file identities. No actual subprocess or filesystem; real engine fixtures remain in unit-runner tool-integration suite.",
+      "sha256": "cff1f99f3f5144c93076e326851fa4fd8b9f0c1ff7547d639841935bf280d686"
+    },
+    {
       "path": "scripts/coverage-inventory-order.test.mjs",
       "layer": "tool-integration",
       "targets": [
@@ -2428,13 +2455,22 @@
       "sha256": "80641b52fb26359e6cbc340dcb8f5c2402937f90e06ea491ca49156bdf331097"
     },
     {
+      "path": "scripts/coverage-node-reporter.test.mjs",
+      "layer": "unit",
+      "targets": [
+        "scripts/coverage-node-reporter.mjs"
+      ],
+      "reason": "Actual async generator consumes synthetic native events in memory; verifies file-summary filtering, empty completion and propagated stream interruption with no completion document. No child process or report file.",
+      "sha256": "7e796475baa381446b1d87f187168aa6271ca66935f241fc994c37091537836a"
+    },
+    {
       "path": "scripts/coverage-unit-plan.test.mjs",
       "layer": "unit",
       "targets": [
         "scripts/coverage-unit-plan.mjs"
       ],
       "reason": "Pure explicit-file partition/config value tests with synthetic inputs; no Git/process/filesystem.",
-      "sha256": "f9515be1453adc82353d1feb7150168a7d635dd64ba115c7b46eee04dde8a96b"
+      "sha256": "9f5524948cf9060019cb515cef06930c8fc38d388356b2bfee9adde933b6e137"
     },
     {
       "path": "scripts/coverage-unit-runner.test.mjs",
@@ -2444,7 +2480,7 @@
         "scripts/coverage-node-tests.mjs"
       ],
       "reason": "Real subprocess/filesystem/Git fixtures verify exact input and real empty-selection instrumenter behavior; separate reporter doubles only test dispatch, not coverage.",
-      "sha256": "60cf0f6888147840833be022446a9064bb0e3c54ce9cd850534c16928fb5f039"
+      "sha256": "6647408edad69f12ca9a15f342566455b26187eab83452b10959bd550bc54881"
     },
     {
       "path": "scripts/coverage-unit-selection.test.mjs",
@@ -2579,9 +2615,11 @@
     },
     {
       "path": "tests/test_async_command_submission.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "open_notebook/utils/command_submission.py"
+      ],
+      "reason": "Direct bridge admission/cancellation/receipt/cleanup cases use fake AsyncSurreal and registry schema lookups, eligible units. test_exact_locked_sdk_json_wire_and_id_parity invokes the actual SDK compatibility path; test_real_sdk_retry_predicate_never_replays_unknown_create, test_real_sdk_does_not_replay_invalid_receipt_or_cancellation and test_external_cleanup_cancellation_does_not_replay_real_sdk_attempt execute real SDK retry behavior. test_note_commit_and_command_service_remain_responsive spans Note/CommandService and bridge integration. No real DB calls in this file.",
       "sha256": "21440cdc99d1341963ce34f2302bdbe5e75107b9a3f4114dec8960d5a93b8ccd"
     },
     {
@@ -2663,10 +2701,13 @@
     },
     {
       "path": "tests/test_chat_routers_characterization.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "d6736a832337f5c6c13b3295eae49194835313a2c8333b11ef4ee964650eaddb"
+      "layer": "api-integration",
+      "targets": [
+        "api/routers/chat.py",
+        "api/routers/source_chat.py"
+      ],
+      "reason": "All remaining cases traverse actual TestClient router behavior with persistence and graph doubles; the direct stream generator case was preserved in test_source_chat_stream_unit.py.",
+      "sha256": "93177a4bbc89b22e9ba3f0c2d5dd280d583b11102fda916b7e116d33d9d43d72"
     },
     {
       "path": "tests/test_chunking.py",
@@ -2826,9 +2867,15 @@
     },
     {
       "path": "tests/test_credentials_api.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/credentials_service.py",
+        "api/routers/credentials.py",
+        "open_notebook/domain/credential.py",
+        "open_notebook/ai/model_discovery.py",
+        "open_notebook/ai/key_provider.py"
+      ],
+      "reason": "TestCredentialCascadeDelete and TestCredentialUpdateClearsFields exercise actual TestClient API routing. Other discovery/config/env/provisioning/migration groups directly call logic with HTTP, pinning, persistence and save doubles, so those are unit candidates. Migration names do not imply real data migration, but the HTTP groups prevent whole-file unit approval.",
       "sha256": "bb9929f0e23e707e7a7a0ad0a8afecc17318bacfe8422b03fd7a90f9c47f6851"
     },
     {
@@ -2912,10 +2959,28 @@
     },
     {
       "path": "tests/test_domain.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "feb2287155a60811010f953b01b5fd82b3806e7522cf3d13bf646250d676b71f"
+      "layer": "mixed",
+      "targets": [
+        "open_notebook/domain/notebook.py",
+        "api/podcast_service.py"
+      ],
+      "reason": "Full 821-line original reviewed. Eight DTO/singleton/value classes moved unchanged to domain_values_unit. Retained notebook/source cases include actual temp file deletion and missing-path probe plus direct functions, while podcast content composes service/domain; further split needed.",
+      "sha256": "37c0c4241e3addd1bdf59c3f32272415fb85fb499d4172a740d7f13fe6409975"
+    },
+    {
+      "path": "tests/test_domain_values_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/domain/base.py",
+        "open_notebook/ai/models.py",
+        "open_notebook/domain/notebook.py",
+        "open_notebook/domain/content_settings.py",
+        "open_notebook/domain/transformation.py",
+        "open_notebook/domain/credential.py",
+        "open_notebook/podcasts/models.py"
+      ],
+      "reason": "Eight unchanged classes exercise singleton identity/cleanup, DTO validation/defaults and credential config value roundtrip. No actual persistence, tokenizer, SDK construction or filesystem operation.",
+      "sha256": "22bc95440cb94b2c242d391824ee93f1634e2284a92388307a6f3ec8322a05d1"
     },
     {
       "path": "tests/test_embed_source_partial_cleanup.py",
@@ -2947,9 +3012,11 @@
     },
     {
       "path": "tests/test_embedding_publication_integration.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "tool-integration",
+      "targets": [
+        "open_notebook/database/embedding_repository.py"
+      ],
+      "reason": "Every case uses the explicitly enabled disposable_database fixture: a real verified server child, actual database migrations/transactions and repository operations. Proxy connections still send SQL to that server, including commit races and lost acknowledgments. No pure unit cases; this is database/tool integration, not ordinary offline unit coverage.",
       "sha256": "4cc8b83348fd37d943ff688dfd72f4e1cb22101227a1bd8c29da3b2ed247e7d8"
     },
     {
@@ -3058,9 +3125,15 @@
     },
     {
       "path": "tests/test_graphs.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "open_notebook/graphs/source.py",
+        "open_notebook/graphs/transformation.py",
+        "open_notebook/graphs/prompt.py",
+        "open_notebook/graphs/tools.py",
+        "commands/source_commands.py"
+      ],
+      "reason": "Direct source/transformation nodes and model forwarding use external I/O doubles and are unit candidates. TestContentProcessDeleteSource uploaded_file_deleted_when_flag_set and uploaded_file_kept_when_flag_not_set actually write/delete temporary files, so are filesystem/tool integration. Prompt/transformation graph compilation and is_tool structure assertions are static contracts; unused tmp_path alone is not an integration boundary.",
       "sha256": "78c0ba2717f4db7be45539c449e4db7e6b9c9812b57210338bc07c415db13898"
     },
     {
@@ -3070,7 +3143,25 @@
         "scripts/historical_database_pytest.py"
       ],
       "reason": "Direct network_guard and mocked registered-process unwind cases are unit, selection list is static contract; main/custody tests actually allocate/chmod/link/remove scratch and fake executable files. DB/socket/process start boundaries are doubles, not a real database run.",
-      "sha256": "ddf0f7a489940d85cd9266039ddc08ca1e7bff12527e9a1a0b6df89163327a58"
+      "sha256": "3f9a7e5aaa79d359e580aa0d9234ccd8cfcbb296454819fb86c73de3b817f2ac"
+    },
+    {
+      "path": "tests/test_historical_device_credentials_wiring.py",
+      "layer": "tool-integration",
+      "targets": [
+        "scripts/historical_database_pytest.py"
+      ],
+      "reason": "Test-infrastructure wiring regression calls actual native test entrypoints with a fake SDK signin boundary. Reads test module and checks runner credential configuration, not production-unit behavior or real database execution. No added production coverage claim.",
+      "sha256": "26fbc93eedecbefb2434c470d605aa14ea0e3ce6f41b97b6cd3fbcdf4260438a"
+    },
+    {
+      "path": "tests/test_historical_temporary_parent_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/historical_database_pytest.py"
+      ],
+      "reason": "Pure descriptor custody policy with injected OS open/fstat/close boundaries; verifies owner, sticky mode, directory, cleanup and cancellation without real filesystem access.",
+      "sha256": "08275d45a58685c197e0dda004529c93904f8695a4bd86740678ee5eb125d785"
     },
     {
       "path": "tests/test_insight_timestamps.py",
@@ -3120,9 +3211,11 @@
     },
     {
       "path": "tests/test_max_body_size_middleware.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/middleware.py"
+      ],
+      "reason": "TestConfig and TestMiddlewareAsgiLevel use direct middleware with synthetic inner app/receive/send, so they are unit candidates, not automatically API integration. Real CORS/auth stack cooperation, FastAPI TestClient routes, multipart parser/spool lifecycle and app wiring are independent integration/static checks. Portable direct content-type rejection and config validation can also be split as units.",
       "sha256": "54a372817f3c4a75d08ba4ceba97fee0fdf4e366074bf3eb4d758232ad130dfa"
     },
     {
@@ -3257,6 +3350,15 @@
       "sha256": "6b6471e599c39436fb84dfa28aee65458bf799f8eb89b9fcf56d19341bda4aaf"
     },
     {
+      "path": "tests/test_personal_store_bulk_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/personal_store.py"
+      ],
+      "reason": "Direct PersonalStore.get_many with in-memory repo_query replacement: 0/1/128/129/257 batching, duplicate ordering, physical identity integrity, missing values and invalid kind/identity short circuit. No router, service composition, disk, DB or network. Both parametrized test bodies unchanged from reviewed evidence suite.",
+      "sha256": "97c48bd2438e819ba6c963cad7967d1c957f477521cd89a355aa4d6eedc6d5f8"
+    },
+    {
       "path": "tests/test_podcast_anthropic_compatible.py",
       "layer": "mixed",
       "targets": [
@@ -3360,9 +3462,12 @@
     },
     {
       "path": "tests/test_podcast_prompt_templates.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "prompts/podcast/transcript.jinja",
+        "prompts/podcast/outline.jinja"
+      ],
+      "reason": "Template rendering with fixed inputs is direct template behavior, but TestNoDriftFromBundledTemplates compares installed podcast_creator templates through Jinja AST and test_drift_check_sees_for_iterables writes a real fixture file and tests the test-side helper. Preserve those static/tool checks separately; do not count helper-only assertions as production unit coverage.",
       "sha256": "1ec58be2fd91a258e310c51ea4b2f71edf2c895b2c5ac0d5a3cf27c7e7d2c6bf"
     },
     {
@@ -3377,9 +3482,11 @@
     },
     {
       "path": "tests/test_podcast_speaker_profile.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "commands/podcast_commands.py"
+      ],
+      "reason": "Early resolution/schema, SpeakerProfile.resolve and direct PodcastService submission tests double all database/dispatch boundaries and are unit candidates. TestMigration20 is SQL/static registration coverage. The two full command configuration cases execute output_dir.mkdir despite fake create_podcast/build-output-dir and inspect external SpeakerConfig compatibility: tool/component integration, not units merely because audio generation is fake.",
       "sha256": "8479fedd762b9eb1c5353ac987153c722e9923e53047775f8cd6ccda50dccaa2"
     },
     {
@@ -3412,9 +3519,11 @@
     },
     {
       "path": "tests/test_prepare_canonical_publication.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "scripts/v1/prepare_canonical_publication.py"
+      ],
+      "reason": "Real Git repositories, commits, subprocess CLI, output files, symlinks and missing object scenarios are tool integration. test_unsafe_paths and test_malformed_git_tree_inventory_rejected directly exercise policy/parser with literal paths or a fake git callable and are unit candidates.",
       "sha256": "20a8aeaa9b69465b161097f0893b90259ab58c046d464048181dfbd93c403e5c"
     },
     {
@@ -3454,6 +3563,15 @@
       ],
       "reason": "All cases use actual TestClient GET routing/serialization; repo/domain doubles control timestamp rows and mutations, not the API layer. Full test file and relevant production/fixture boundaries reviewed at merged 588aaf5; no tests executed for classification.",
       "sha256": "d1709ddb78003f9c6de62b522cd3e00b4e38ca6b94d743126d8cb4c74c2ded51"
+    },
+    {
+      "path": "tests/test_record_update_fields_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/domain/base.py"
+      ],
+      "reason": "Direct RecordModel.update with repository async boundaries replaced; concrete inherited/class-variable/nullable payload, query identity, returned stored update and no instance-level Pydantic deprecation. No database, HTTP or filesystem behavior.",
+      "sha256": "254ae9048a7149e1b7dc97366d71b53a726af362df008ed3d25b2d5f0f80cb54"
     },
     {
       "path": "tests/test_recovered_browser_custody.py",
@@ -3543,16 +3661,34 @@
     },
     {
       "path": "tests/test_search_api.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "b1740214f16214c2d9b4499d21a43210663662f89c564b7a9484294e79aa05a4"
+      "layer": "mixed",
+      "targets": [
+        "api/routers/search.py",
+        "open_notebook/database/async_migrate.py"
+      ],
+      "reason": "After extracting direct domain/DTO nodes, remaining TestClient search/ask tests are API integration and TestMigration24 checks SQL source/manager registration as static contracts. No direct unit nodes remain approved here.",
+      "sha256": "3b9e9c9f7947672775bb679110085cc2998bc5b8b28e030dc81626a3441b9c48"
+    },
+    {
+      "path": "tests/test_search_domain_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/domain/notebook.py",
+        "api/models.py"
+      ],
+      "reason": "Unchanged direct search-domain fallback, ordering, scoped binding and request-DTO nodes extracted from test_search_api.py. Database and embedding/vector fallback dependencies are doubles; RecordID/schema pure helpers remain real. No HTTP, subprocess or filesystem writes.",
+      "sha256": "732f0677cd4f8435ff49667ff0b3e027b5245bff88f1f23f3a4ee069e135f5c7"
     },
     {
       "path": "tests/test_selected_provider_logs.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "api/routers/search.py",
+        "api/routers/source_chat.py",
+        "open_notebook/ai/models.py",
+        "open_notebook/utils/graph_utils.py"
+      ],
+      "reason": "Each case directly tests one stream/logging, model-selection or rollback logical operation with graph/provider/default lookup doubles. Real in-memory Loguru sink, DTO messages, error classification and rollback helpers are internal behavior, not HTTP/real graph execution. asyncio.to_thread invokes only fake graph methods; no network, DB, browser or subprocess.",
       "sha256": "4e8fa87ac1f08892b51fc795cb1efe57bbb44d7740463a59ed30669ad792cf2c"
     },
     {
@@ -3568,10 +3704,23 @@
     },
     {
       "path": "tests/test_source_attempt_repository_db.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "tool-integration",
+      "targets": [
+        "open_notebook/database/source_attempt_repository.py",
+        "open_notebook/database/async_migrate.py",
+        "open_notebook/domain/notebook.py"
+      ],
+      "reason": "All cases require the actual disposable server/database fixture, execute migrations and SQL transactions, and test concurrent claim, committed acknowledgment loss or read views. Some SDK status values or connection wrappers are doubles, but the real database remains. No existing complete node is approved as pure unit.",
       "sha256": "14275e78be06ae8ddafc0ceaa9326a7f6bc1a306aea65df59eb155dd9035402e"
+    },
+    {
+      "path": "tests/test_source_chat_stream_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/routers/source_chat.py"
+      ],
+      "reason": "Unchanged direct stream_source_chat_response generator case with fake graph state/invoke; verifies only the newest AI message and event sequence. Internal invoke helper and DTO messages remain real; no HTTP, actual graph, database or provider execution.",
+      "sha256": "c6d13ab72b76461329a5e0b78f2351bbe3668f7900af958ce5a19a0648d49ecb"
     },
     {
       "path": "tests/test_source_create_array_limits.py",
@@ -3862,9 +4011,11 @@
     },
     {
       "path": "tests/test_v1_api_contract.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "scripts/v1/export_contract.py"
+      ],
+      "reason": "Exporter tests execute real subprocesses and filesystem fixture assembly; schema membership/app discovery checks are static/component contracts. Direct error-handler, DTO dispatch, reference mapping and EvidenceService citation validation with only static fixtures/memory store are unit candidates. tmp_path on citation cases is not proof of actual file writes; constructor only resolves its root.",
       "sha256": "09284f5fe4a9611bc8064cfd5410db52a6c7c9e7dc3bf8bf000fd515cc9a97f4"
     },
     {
@@ -3920,17 +4071,21 @@
     },
     {
       "path": "tests/test_v1_device_session_http.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/device_session_service.py"
+      ],
+      "reason": "Real TestClient auth/router/middleware lifecycle and a real password-file outage are integration. test_auth_tables_are_not_personal_archive_kinds is a direct constant contract candidate; test_startup_runtime_is_fail_closed_and_new_epoch exercises runtime-to-service boot retirement with a memory store. test_unknown_modes_fail_closed combines a getter assertion and HTTP wiring, requiring an assertion-level split.",
       "sha256": "97c2ef9ef6f1c875794dd4d5b239a67a5d1709f4b7e4c507d0a10b8e14e7e1fb"
     },
     {
       "path": "tests/test_v1_device_session_repository.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "4c5707c50fbae9823b2dda74d5fd9e820cbc4abf00f29492d40938bd6448207d"
+      "layer": "mixed",
+      "targets": [
+        "api/device_session_repository.py"
+      ],
+      "reason": "test_unknown_ack_fails_without_retry, test_malformed_mutation_ack_is_not_success and test_malformed_read_ack_is_not_absence use fake connection query_raw and are direct repository unit candidates. Opt-in native transaction and corruption cases use actual SurrealDB/migration SQL, and corruption also traverses ASGI; never unit even when skipped.",
+      "sha256": "464faeba710c22d828339a847c22ed001cd6d651f5f9ea2867bc0d558a118b8b"
     },
     {
       "path": "tests/test_v1_download_contracts.py",
@@ -3956,9 +4111,11 @@
     },
     {
       "path": "tests/test_v1_evidence_failure_boundary.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/evidence_service.py"
+      ],
+      "reason": "All cases ingest real files and/or build archived extraction fixtures with actual bounded parsing; several also query real ASGI routes after maintenance. Fake persistence faults do not remove filesystem/parser/tool and API integration boundaries. No whole existing node is approved as pure unit.",
       "sha256": "1a4f49885fd0f9657613e1bf11e833bd5fb7b39122189395b2f356ec6c41e461"
     },
     {
@@ -3990,10 +4147,12 @@
     },
     {
       "path": "tests/test_v1_evidence_reads.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "f9d69091efff80917591a3646eaf8f0f7b1b636e2e1789bef2d3bc0df1462073"
+      "layer": "mixed",
+      "targets": [
+        "api/evidence_service.py"
+      ],
+      "reason": "Real route/EvidenceService/PersonalStore batch encoding, citation integrity and request cache behavior with SQL replaced. Direct PersonalStore-only cases moved unchanged into test_personal_store_bulk_unit.py; remaining cases retain component boundaries.",
+      "sha256": "1fec2bca2bb0d6b298d0ccc816f644a737aa2628c2e7086f0b1ab6ff4f073d51"
     },
     {
       "path": "tests/test_v1_evidence_revalidation.py",
@@ -4073,9 +4232,11 @@
     },
     {
       "path": "tests/test_v1_launcher_ports.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "scripts/v1/run_native.py"
+      ],
+      "reason": "apply_runtime_defaults URL/config policy and fake socket/listener parsing are direct unit candidates despite tmp_path values. mocked_launcher main cases assemble real runtime directories/log handles while Popen/signals/HTTP are doubles; these are filesystem/tool integration, not actual service starts. Preserve main log-close/custody assertions.",
       "sha256": "6985f667b1d86bbe5372a12f6c8597e75893b1ea23600e13039be537a92b65e0"
     },
     {
@@ -4166,9 +4327,11 @@
     },
     {
       "path": "tests/test_v1_notebooklm_link_identity.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/notebooklm_links.py"
+      ],
+      "reason": "The first case traverses ASGI route-to-physical-store-to-workspace wire. Other cases intentionally use actual PersonalStore encoding/batch reads plus link resolution/PersonalService and route relink operations, with only SQL transport and remote calls doubled: component protocol collaboration, not a real DB and not an isolated parser unit.",
       "sha256": "e2bb07c8a7aa0dc85f738f934d91fbe6b6e98be7f7cef7735345433f5a3c2cb9"
     },
     {
@@ -4237,9 +4400,11 @@
     },
     {
       "path": "tests/test_v1_personal_service.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/personal_service.py"
+      ],
+      "reason": "Selection, submission, canonical-turn, unknown-engine and workspace behavior use a memory store plus provider/queue/native-note doubles and are direct service unit candidates. test_note_cannot_forge_verified_citation instead deliberately retains real EvidenceService.validate_citation across note saving, asserting the independent evidence trust boundary. Keep that collaboration separate; EvidenceService construction resolves a path but creates no directory.",
       "sha256": "9bec01f388f202d3c996060dc881a10c3e720af291248952137b314a99971607"
     },
     {
@@ -4280,9 +4445,11 @@
     },
     {
       "path": "tests/test_v1_runtime_lifecycle.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "scripts/v1/runtime_lifecycle.py"
+      ],
+      "reason": "Direct lifecycle polling, identity checks, signal order, readiness and environment mapping use OS/network doubles and are unit candidates. Fixture symlink tests and local runner assembly write actual files; opt-in test_real_disposable_dummy_listeners_stop_a_leaves_b_and_foreign_zero_requests starts real child HTTP listeners. Keep those tool tests, not merely mark all skipped cases as unit.",
       "sha256": "07a804be72cb6f07ea12804b1cac1e8052bf1962f7ad4ced09025e94968cb012"
     },
     {
@@ -4431,9 +4598,11 @@
     },
     {
       "path": "tests/test_web_discovery_service.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/web_discovery_service.py"
+      ],
+      "reason": "Import/restart/dedupe cases exercise real filesystem checkpoints even with provider, queue and ingest doubles; symlink/write bounds and the real EvidenceService extract case are tool integration, the latter spawning the bounded parser. test_native_source_creation_uses_explicit_create_not_update is a direct helper unit with all database lookups/query/relate doubled.",
       "sha256": "2e80a615ed0cbf609e2e787d89efb2456612bc7e9f511b0fe6bfbe71fb407a4c"
     },
     {
@@ -4480,9 +4649,11 @@
     },
     {
       "path": "tests/test_workspace_view_v1.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/workspace_view_projection.py"
+      ],
+      "reason": "Most cases directly project static fixture records or validate response DTOs with internal schemas, eligible for unit splitting. test_routes_keep_old_wire_and_use_same_service_scope_check and test_client_capabilities_are_authenticated_read_only_real_limits traverse ASGI. test_upload_and_capabilities_share_actual_budget deliberately compares two route behaviors via shared limit policy and is component-contract coverage.",
       "sha256": "2aadb447300251a2b0ad8ccb2ed5991b5de7d76455ba35cfc6f4835fcb33ba32"
     }
   ]

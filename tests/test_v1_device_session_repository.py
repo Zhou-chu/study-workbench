@@ -20,6 +20,15 @@ from api.device_session_repository import (
 )
 
 
+def _required_synthetic_database_password():
+    password = os.environ.get("SURREAL_PASSWORD")
+    if password is None or not password.strip():
+        raise RuntimeError(
+            "SURREAL_PASSWORD is required for the synthetic database test"
+        )
+    return password
+
+
 def schema_ack():
     tables = {
         table: f"DEFINE TABLE {table} TYPE NORMAL SCHEMAFULL PERMISSIONS NONE"
@@ -74,6 +83,7 @@ async def test_unknown_ack_fails_without_retry(response):
     reason="synthetic local Surreal not requested",
 )
 async def test_native_surreal_transactions():
+    password = _required_synthetic_database_password()
     url = os.environ["AUTH_TEST_SURREAL_URL"]
     assert url.startswith("ws://127.0.0.1:")
     namespace = "auth_test_" + uuid4().hex
@@ -81,7 +91,7 @@ async def test_native_surreal_transactions():
     @asynccontextmanager
     async def connection():
         async with AsyncSurreal(url) as db:
-            await db.signin({"username": "synthetic", "password": "synthetic"})
+            await db.signin({"username": "synthetic", "password": password})
             await db.use(namespace, "test")
             yield db
 
@@ -369,6 +379,7 @@ async def test_corrupt_schema_fails_readiness_and_issuance(monkeypatch, corrupti
     from api.device_session_runtime import initialize_device_auth, install_auth_handlers
     from api.routers.auth import router
 
+    password = _required_synthetic_database_password()
     url = os.environ["AUTH_TEST_SURREAL_URL"]
     assert url.startswith("ws://127.0.0.1:")
     namespace = "auth_schema_" + uuid4().hex
@@ -376,7 +387,7 @@ async def test_corrupt_schema_fails_readiness_and_issuance(monkeypatch, corrupti
     @asynccontextmanager
     async def connection():
         async with AsyncSurreal(url) as db:
-            await db.signin({"username": "synthetic", "password": "synthetic"})
+            await db.signin({"username": "synthetic", "password": password})
             await db.use(namespace, "test")
             yield db
 

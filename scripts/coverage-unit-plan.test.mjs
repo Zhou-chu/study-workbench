@@ -35,3 +35,16 @@ test('Vitest exact include replacement keeps all production coverage settings ev
  assert.deepEqual(base.test.include,['**/*.test.ts']);
  assert.deepEqual(unitVitestConfig(base,['src/a.test.ts']).test.include,['src/a.test.ts']);
 });
+
+test('framework route parentheses and brackets remain literal test file paths',async()=>{
+ const {planUnitPartitions,unitVitestConfig}=await planner();
+ const file='frontend/src/app/(dashboard)/[id]/page.test.tsx';
+ assert.deepEqual(planUnitPartitions([file]).partitions['legacy-web'],[file]);
+ const base={test:{coverage:{include:['src/**/*.tsx']}}};
+ assert.deepEqual(unitVitestConfig(base,['src/(dashboard)/[id]/page.test.tsx']).test.include,
+  ['src/\\(dashboard\\)/\\[id\\]/page.test.tsx']);
+});
+test('root node:test is an explicit quality-tooling merge blocker, never omitted',async()=>{
+ const {planUnitPartitions}=await planner();
+ assert.throws(()=>planUnitPartitions(['scripts/example.test.mjs']),/quality-tooling.*merge/i);
+});

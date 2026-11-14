@@ -330,7 +330,7 @@ class RecordModel(BaseModel):
         # Get all non-ClassVar fields and their values
         data = {
             field_name: getattr(self, field_name)
-            for field_name, field_info in self.model_fields.items()
+            for field_name, field_info in type(self).model_fields.items()
             if not str(field_info.annotation).startswith("typing.ClassVar")
         }
 

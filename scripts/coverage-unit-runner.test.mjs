@@ -7,6 +7,7 @@ import {join,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
+import {auditExecutedFiles} from './coverage-executed-files.mjs';
 
 function invoke(root,args){
  const env={...process.env};delete env.NODE_TEST_CONTEXT;
@@ -44,13 +45,14 @@ test('real Vitest empty include still reports untouched production sources at ze
  symlinkSync(resolve(repo,'node_modules'),join(root,'node_modules'),'dir');
  writeFileSync(join(root,'src/logic.js'),'export function answer(x) { return x ? 1 : 2; }');
  const plan=new URL('./coverage-unit-plan.mjs',import.meta.url).href;
- writeFileSync(join(root,'coverage.config.mjs'),"import {unitVitestConfig} from "+JSON.stringify(plan)+"; export default unitVitestConfig({test:{coverage:{enabled:true,provider:'v8',include:['src/**/*.js'],exclude:[],reporter:['json-summary'],reportsDirectory:'coverage'}}},[]);");
+ writeFileSync(join(root,'coverage.config.mjs'),"import {unitVitestConfig} from "+JSON.stringify(plan)+"; export default unitVitestConfig({test:{reporters:['json'],outputFile:'executed.json',coverage:{enabled:true,provider:'v8',include:['src/**/*.js'],exclude:[],reporter:['json-summary'],reportsDirectory:'coverage'}}},[]);");
  const result=spawnSync(process.execPath,[resolve(repo,'node_modules/vitest/vitest.mjs'),'run','--config','coverage.config.mjs','--maxWorkers=1'],{cwd:root,encoding:'utf8',timeout:15000});
  assert.equal(result.status,0,result.stdout+result.stderr);
  const report=JSON.parse(readFileSync(join(root,'coverage/coverage-summary.json')));
  assert.ok(report[resolve(root,'src/logic.js')]);
  assert.ok(report.total.statements.total>0);
  for(const metric of ['statements','branches','functions','lines'])assert.equal(report.total[metric].covered,0);
+ assert.deepEqual(auditExecutedFiles(root,[],JSON.parse(readFileSync(join(root,'executed.json'),'utf8')),'vitest'),[]);
 });
 
 test('unit artifact mode rejects invalid evidence before pretest or directory discovery',t=>{
@@ -110,7 +112,7 @@ test('validated same-checkout artifact dispatches all eleven partitions and pres
  const {inventory}=await import(pathToFileURL(join(root,'scripts/coverage-inventory.mjs')).href);
  const {unitPartitions}=await import(pathToFileURL(join(root,'scripts/coverage-unit-plan.mjs')).href);
  const sources=Object.fromEntries(Object.entries(unitPartitions).map(([name,dir])=>[name,inventory(root,name,dir)]));
- const child="import{mkdirSync,writeFileSync,readFileSync}from'node:fs';import{resolve,basename}from'node:path';const root="+JSON.stringify(root)+",sources="+JSON.stringify(sources)+";const a=process.argv;const report=a.find(x=>x.startsWith('--reports-dir='));const config=a[a.indexOf('--config')+1];const name=report?report.split('/').at(-1):basename(config,'.mjs');const dir=resolve(root,'coverage/unit',name);mkdirSync(dir,{recursive:true});const metrics=Object.fromEntries(['statements','branches','functions','lines'].map(k=>[k,{total:1,covered:0,pct:0}]));writeFileSync(resolve(dir,'coverage-summary.json'),JSON.stringify({total:metrics,...Object.fromEntries(sources[name].map(f=>[f,metrics]))}));writeFileSync(resolve(dir,'dispatch.json'),JSON.stringify({args:a,config:report?null:readFileSync(config,'utf8')}));";
+ const child="import{mkdirSync,writeFileSync,readFileSync}from'node:fs';import{resolve,basename}from'node:path';const root="+JSON.stringify(root)+",sources="+JSON.stringify(sources)+";const a=process.argv;const report=a.find(x=>x.startsWith('--reports-dir='));const config=a[a.indexOf('--config')+1];const name=report?report.split('/').at(-1):basename(config,'.mjs');const dir=resolve(root,'coverage/unit',name);mkdirSync(dir,{recursive:true});const metrics=Object.fromEntries(['statements','branches','functions','lines'].map(k=>[k,{total:1,covered:0,pct:0}]));writeFileSync(resolve(dir,'coverage-summary.json'),JSON.stringify({total:metrics,...Object.fromEntries(sources[name].map(f=>[f,metrics]))}));writeFileSync(resolve(dir,'dispatch.json'),JSON.stringify({args:a,config:report?null:readFileSync(config,'utf8')}));const diagnostic=resolve(root,'coverage/unit/diagnostics',name+'-tests.json');mkdirSync(resolve(diagnostic,'..'),{recursive:true});writeFileSync(diagnostic,JSON.stringify(report?{version:1,engine:'node',complete:true,summaries:name==='node-tools'?[{file:resolve(root,'apps/web/scripts/selected.test.mjs'),success:true,counts:{tests:1,passed:1,failed:0,cancelled:0,skipped:0,todo:0,topLevel:1,suites:0}}]:[]}:{success:true,testResults:[]}));";
  put('node_modules/vitest/vitest.mjs',child);put('frontend/node_modules/vitest/vitest.mjs',child);
  put('node_modules/c8/bin/c8.js',child);put('node_modules/c8/package.json','{"type":"module"}');
  const git=(...args)=>{const r=spawnSync('/usr/bin/git',args,{cwd:root,encoding:'utf8'});assert.equal(r.status,0,r.stderr);};
@@ -128,6 +130,7 @@ test('validated same-checkout artifact dispatches all eleven partitions and pres
  assert.equal(rows.length,11);
  for(const row of rows){
   assert.equal(row.layer,'unit');assert.equal(row.selectionRevision,artifact.revision);
+  assert.deepEqual(row.executedTestFiles,row.selectedTestFiles);assert.equal(typeof row.executionReportHash,'string');
   assert.deepEqual(row.audit.missing,[]);assert.deepEqual(row.audit.unexpected,[]);
   assert.equal(row.emptyUnitPartition,row.partition!=='node-tools');
   const dispatch=JSON.parse(readFileSync(join(root,'coverage/unit',row.partition,'dispatch.json')));
@@ -135,6 +138,16 @@ test('validated same-checkout artifact dispatches all eleven partitions and pres
  }
  const dispatch=JSON.parse(readFileSync(join(root,'coverage/unit/node-tools/dispatch.json')));
  assert.ok(dispatch.args.includes('--files-json='+JSON.stringify([testFile])));
+ // Deliberately lie in the reporter double: the orchestration must reject it.
+ const mismatched=child+"if(name==='contracts')writeFileSync(diagnostic,JSON.stringify({success:true,testResults:[{name:resolve(root,'unexpected.test.ts'),status:'passed',assertionResults:[{status:'passed'}]}]}));";
+ put('node_modules/vitest/vitest.mjs',mismatched);
+ const mismatch=spawnSync(process.execPath,[join(root,'scripts/coverage-workspaces.mjs'),'--unit-selection='+join(root,'coverage/selection.json')],{cwd:root,env,encoding:'utf8',timeout:20000});
+ assert.equal(mismatch.status,1,mismatch.stdout+mismatch.stderr);
+ const rejected=JSON.parse(readFileSync(join(root,'coverage/unit/run-contracts.json'))).partitions[0];
+ assert.equal(rejected.testExitCode,1);
+ assert.match(rejected.blocked,/Execution file audit failed/);
+ assert.equal(Object.hasOwn(rejected,'executedTestFiles'),false);
+
 });
 
 test('malformed explicit Node option can never fall back to discovery',t=>{
@@ -143,4 +156,49 @@ test('malformed explicit Node option can never fall back to discovery',t=>{
   const result=invoke(root,args);
   assert.notEqual(result.status,0,'must reject '+JSON.stringify(args));
  }
+});
+
+test('Node explicit execution report comes from native completed file summaries',t=>{
+ const root=fixture(t),file='apps/web/scripts/selected.test.mjs';
+ writeFileSync(join(root,file),"import test from 'node:test';test('actual',()=>{});");
+ const output=join(root,'executed.json');
+ const result=invoke(root,['--files-json='+JSON.stringify([file]),'--execution-report='+output]);
+ assert.equal(result.status,0,result.stdout+result.stderr);
+ const report=JSON.parse(readFileSync(output,'utf8'));
+ assert.equal(report.complete,true);
+ assert.equal(report.summaries.length,1);
+ assert.equal(report.summaries[0].file,join(root,file));
+ assert.equal(report.summaries[0].counts.passed,1);
+ assert.deepEqual(auditExecutedFiles(root,[file],report,'node'),[file]);
+});
+test('Node empty explicit selection records complete empty execution without discovery',t=>{
+ const root=fixture(t),output=join(root,'executed.json');
+ writeFileSync(join(root,'apps/web/scripts/rejected.test.mjs'),"throw Error('MUST NOT RUN');");
+ const result=invoke(root,['--files-json=[]','--execution-report='+output]);
+ assert.equal(result.status,0,result.stdout+result.stderr);
+ assert.deepEqual(JSON.parse(readFileSync(output,'utf8')),{version:1,engine:'node',complete:true,summaries:[]});
+});
+test('real Vitest treats dashboard and parameter names literally and reports exact entrypoint',t=>{
+ const root=fixture(t);
+ symlinkSync(resolve(repo,'node_modules'),join(root,'node_modules'),'dir');
+ for(const dir of ['src/(dashboard)/[id]','src/dashboard/i'])mkdirSync(join(root,dir),{recursive:true});
+ writeFileSync(join(root,'src/(dashboard)/[id]/page.test.js'),"import {test,expect} from 'vitest';test('literal',()=>expect(1).toBe(1));test.skip('explicit skip',()=>{});test.todo('explicit todo');");
+ writeFileSync(join(root,'src/dashboard/i/page.test.js'),"throw Error('GLOB NEIGHBOUR MUST NOT RUN');");
+ writeFileSync(join(root,'src/logic.js'),'export const answer=1;');
+ const plan=new URL('./coverage-unit-plan.mjs',import.meta.url).href;
+ writeFileSync(join(root,'coverage.config.mjs'),"import {unitVitestConfig} from "+JSON.stringify(plan)+"; export default unitVitestConfig({test:{reporters:['json'],outputFile:'executed.json',coverage:{enabled:true,provider:'v8',include:['src/logic.js'],exclude:[],reporter:['json-summary'],reportsDirectory:'coverage'}}},['src/(dashboard)/[id]/page.test.js']);");
+ const result=spawnSync(process.execPath,[resolve(repo,'node_modules/vitest/vitest.mjs'),'run','--config','coverage.config.mjs','--maxWorkers=1'],{cwd:root,encoding:'utf8',timeout:15000});
+ assert.equal(result.status,0,result.stdout+result.stderr);
+ const report=JSON.parse(readFileSync(join(root,'executed.json'),'utf8'));
+ assert.deepEqual(report.testResults.map(row=>row.name),[join(root,'src/(dashboard)/[id]/page.test.js')]);
+ assert.deepEqual(auditExecutedFiles(root,['src/(dashboard)/[id]/page.test.js'],report,'vitest'),['src/(dashboard)/[id]/page.test.js']);
+});
+
+test('quality-config Node route reports actual file rather than requested file echo',t=>{
+ const root=fixture(t),file='scripts/tests/quality/config-node.test.mjs',output=join(root,'execution.json');
+ mkdirSync(resolve(root,file,'..'),{recursive:true});
+ writeFileSync(join(root,file),"import test from 'node:test';test('config',()=>{});test.skip('explicit skip',()=>{});test.todo('explicit todo');");
+ const result=invoke(root,['--quality-configs','--files-json='+JSON.stringify([file]),'--execution-report='+output]);
+ assert.equal(result.status,0,result.stdout+result.stderr);
+ assert.deepEqual(auditExecutedFiles(root,[file],JSON.parse(readFileSync(output,'utf8')),'node'),[file]);
 });

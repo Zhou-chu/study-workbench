@@ -69,9 +69,36 @@ def network_guard(port, event, args):
             raise OSError("Only owned synthetic database connections allowed")
 
 
-def validate_child_temporary():
-    """Reject direct child invocation into unowned/reused public scratch space.
+def open_temporary_parent():
+    """Return a checked directory descriptor; caller owns closing it.
 
+    Root may still replace /tmp; root/same-UID mutation is outside custody.
+    No permissions, symlinks or existing directory contents are changed.
+    """
+    descriptor = None
+    accepted = False
+    try:
+        descriptor = os.open("/tmp", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        info = os.fstat(descriptor)
+        if (
+            info.st_uid != 0
+            or not stat.S_ISDIR(info.st_mode)
+            or not info.st_mode & stat.S_ISVTX
+        ):
+            raise ValueError("Invalid historical temporary parent custody")
+        accepted = True
+        return descriptor
+    except OSError:
+        raise ValueError("Invalid historical temporary parent custody") from None
+    finally:
+        if descriptor is not None and not accepted:
+            os.close(descriptor)
+
+
+def validate_child_temporary():
+    """Reject child invocation without expected owned scratch custody.
+
+    These checks do not establish freshness or exclude same-UID reuse.
     Same-UID/root modification is outside the filesystem custody boundary.
     Never resolves symlinks, creates directories, or removes rejected paths.
     """
@@ -88,11 +115,8 @@ def validate_child_temporary():
     descriptors = []
     try:
         flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
-        parent = os.open("/tmp", flags)
+        parent = open_temporary_parent()
         descriptors.append(parent)
-        parent_info = os.fstat(parent)
-        if parent_info.st_uid != 0 or not parent_info.st_mode & stat.S_ISVTX:
-            raise ValueError("Invalid historical temporary parent custody")
         root = os.open(scratch.parent.name, flags, dir_fd=parent)
         descriptors.append(root)
         root_info = os.fstat(root)
@@ -191,6 +215,9 @@ def main():
         or hashlib.sha256(binary.read_bytes()).hexdigest() != SHA256
     ):
         parser.error("Requires executable official SurrealDB 2.3.10 with pinned digest")
+    # Fail closed before allocating scratch or starting any process, not only
+    # later when the test child validates its own scratch directory.
+    os.close(open_temporary_parent())
     with tempfile.TemporaryDirectory(prefix="historical-db-", dir="/tmp") as temporary:
         run = Path(temporary)
         with socket.socket() as reservation:

@@ -1,0 +1,414 @@
+{
+  "base": "5684591a160341cfd24926508ff0a194e0fec4d1",
+  "collection_before": 47,
+  "collection_after": 47,
+  "cases": [
+    {
+      "before": "tests/test_search_api.py::TestSearchLimitValidation::test_non_positive_limit_returns_422[0]",
+      "after": "tests/test_search_api.py::TestSearchLimitValidation::test_non_positive_limit_returns_422[0]"
+    },
+    {
+      "before": "tests/test_search_api.py::TestSearchLimitValidation::test_non_positive_limit_returns_422[-1]",
+      "after": "tests/test_search_api.py::TestSearchLimitValidation::test_non_positive_limit_returns_422[-1]"
+    },
+    {
+      "before": "tests/test_search_api.py::TestSearchLimitValidation::test_non_positive_limit_returns_422[-100]",
+      "after": "tests/test_search_api.py::TestSearchLimitValidation::test_non_positive_limit_returns_422[-100]"
+    },
+    {
+      "before": "tests/test_search_api.py::TestSearchLimitValidation::test_limit_above_max_returns_422",
+      "after": "tests/test_search_api.py::TestSearchLimitValidation::test_limit_above_max_returns_422"
+    },
+    {
+      "before": "tests/test_search_api.py::TestSearchLimitValidation::test_valid_limit_returns_200",
+      "after": "tests/test_search_api.py::TestSearchLimitValidation::test_valid_limit_returns_200"
+    },
+    {
+      "before": "tests/test_search_api.py::TestTextSearchHighlightOverflowFallback::test_position_overflow_falls_back_to_vector_search",
+      "after": "tests/test_search_domain_unit.py::TestTextSearchHighlightOverflowFallback::test_position_overflow_falls_back_to_vector_search"
+    },
+    {
+      "before": "tests/test_search_api.py::TestTextSearchHighlightOverflowFallback::test_position_overflow_raises_when_vector_also_fails",
+      "after": "tests/test_search_domain_unit.py::TestTextSearchHighlightOverflowFallback::test_position_overflow_raises_when_vector_also_fails"
+    },
+    {
+      "before": "tests/test_search_api.py::TestTextSearchHighlightOverflowFallback::test_other_runtime_errors_still_raise",
+      "after": "tests/test_search_domain_unit.py::TestTextSearchHighlightOverflowFallback::test_other_runtime_errors_still_raise"
+    },
+    {
+      "before": "tests/test_search_api.py::TestVectorSearchOrdering::test_reorders_results_by_descending_similarity",
+      "after": "tests/test_search_domain_unit.py::TestVectorSearchOrdering::test_reorders_results_by_descending_similarity"
+    },
+    {
+      "before": "tests/test_search_api.py::TestVectorSearchOrdering::test_tie_break_is_deterministic_by_id",
+      "after": "tests/test_search_domain_unit.py::TestVectorSearchOrdering::test_tie_break_is_deterministic_by_id"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_notebook_ids_are_forwarded_to_text_search",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_notebook_ids_are_forwarded_to_text_search"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_single_notebook_id_is_forwarded_to_vector_search",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_single_notebook_id_is_forwarded_to_vector_search"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_no_scope_means_global_search",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_no_scope_means_global_search"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_unknown_notebook_returns_404",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_unknown_notebook_returns_404"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_database_failure_during_scope_check_is_not_a_404",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_database_failure_during_scope_check_is_not_a_404"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_non_notebook_id_returns_400",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_non_notebook_id_returns_400"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_empty_notebook_id_is_rejected_not_widened",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_empty_notebook_id_is_rejected_not_widened"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_scope_is_bounded",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_scope_is_bounded"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_scope_merges_and_dedupes_single_and_list",
+      "after": "tests/test_search_domain_unit.py::TestNotebookScopedSearchApi::test_scope_merges_and_dedupes_single_and_list"
+    },
+    {
+      "before": "tests/test_search_api.py::TestAskScopeValidationOrder::test_unknown_scope_fails_before_model_lookup",
+      "after": "tests/test_search_api.py::TestAskScopeValidationOrder::test_unknown_scope_fails_before_model_lookup"
+    },
+    {
+      "before": "tests/test_search_api.py::TestMigration24::test_migration_files_exist",
+      "after": "tests/test_search_api.py::TestMigration24::test_migration_files_exist"
+    },
+    {
+      "before": "tests/test_search_api.py::TestMigration24::test_manager_registers_migration_24",
+      "after": "tests/test_search_api.py::TestMigration24::test_manager_registers_migration_24"
+    },
+    {
+      "before": "tests/test_search_api.py::TestMigration24::test_up_adds_optional_scope_to_both_functions",
+      "after": "tests/test_search_api.py::TestMigration24::test_up_adds_optional_scope_to_both_functions"
+    },
+    {
+      "before": "tests/test_search_api.py::TestMigration24::test_down_restores_unscoped_signatures",
+      "after": "tests/test_search_api.py::TestMigration24::test_down_restores_unscoped_signatures"
+    },
+    {
+      "before": "tests/test_search_api.py::TestResolveNotebookScope::test_malformed_ids_raise_invalid_input[]",
+      "after": "tests/test_search_domain_unit.py::TestResolveNotebookScope::test_malformed_ids_raise_invalid_input[]"
+    },
+    {
+      "before": "tests/test_search_api.py::TestResolveNotebookScope::test_malformed_ids_raise_invalid_input[notebook:]",
+      "after": "tests/test_search_domain_unit.py::TestResolveNotebookScope::test_malformed_ids_raise_invalid_input[notebook:]"
+    },
+    {
+      "before": "tests/test_search_api.py::TestResolveNotebookScope::test_malformed_ids_raise_invalid_input[source:abc]",
+      "after": "tests/test_search_domain_unit.py::TestResolveNotebookScope::test_malformed_ids_raise_invalid_input[source:abc]"
+    },
+    {
+      "before": "tests/test_search_api.py::TestResolveNotebookScope::test_malformed_ids_raise_invalid_input[abc]",
+      "after": "tests/test_search_domain_unit.py::TestResolveNotebookScope::test_malformed_ids_raise_invalid_input[abc]"
+    },
+    {
+      "before": "tests/test_search_api.py::TestResolveNotebookScope::test_empty_scope_skips_the_database",
+      "after": "tests/test_search_domain_unit.py::TestResolveNotebookScope::test_empty_scope_skips_the_database"
+    },
+    {
+      "before": "tests/test_search_api.py::TestResolveNotebookScope::test_missing_notebooks_raise_not_found_listing_them",
+      "after": "tests/test_search_domain_unit.py::TestResolveNotebookScope::test_missing_notebooks_raise_not_found_listing_them"
+    },
+    {
+      "before": "tests/test_search_api.py::TestResolveNotebookScope::test_record_id_rows_from_driver_match_request_strings",
+      "after": "tests/test_search_domain_unit.py::TestResolveNotebookScope::test_record_id_rows_from_driver_match_request_strings"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchDomain::test_text_search_binds_notebook_record_ids",
+      "after": "tests/test_search_domain_unit.py::TestNotebookScopedSearchDomain::test_text_search_binds_notebook_record_ids"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchDomain::test_empty_scope_binds_none_for_global_search",
+      "after": "tests/test_search_domain_unit.py::TestNotebookScopedSearchDomain::test_empty_scope_binds_none_for_global_search"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchDomain::test_vector_search_binds_notebook_record_ids",
+      "after": "tests/test_search_domain_unit.py::TestNotebookScopedSearchDomain::test_vector_search_binds_notebook_record_ids"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_get_chat_session_bare_id_gets_prefixed",
+      "after": "tests/test_chat_routers_characterization.py::test_get_chat_session_bare_id_gets_prefixed"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_get_chat_session_prefixed_id_kept_as_is",
+      "after": "tests/test_chat_routers_characterization.py::test_get_chat_session_prefixed_id_kept_as_is"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_delete_chat_session_missing_returns_404",
+      "after": "tests/test_chat_routers_characterization.py::test_delete_chat_session_missing_returns_404"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_get_chat_session_message_shapes",
+      "after": "tests/test_chat_routers_characterization.py::test_get_chat_session_message_shapes"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_get_chat_session_no_state_yields_empty_messages",
+      "after": "tests/test_chat_routers_characterization.py::test_get_chat_session_no_state_yields_empty_messages"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_create_source_chat_session_missing_source_returns_404",
+      "after": "tests/test_chat_routers_characterization.py::test_create_source_chat_session_missing_source_returns_404"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_list_source_chat_sessions_missing_source_returns_404",
+      "after": "tests/test_chat_routers_characterization.py::test_list_source_chat_sessions_missing_source_returns_404"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_get_source_chat_session_missing_session_returns_404",
+      "after": "tests/test_chat_routers_characterization.py::test_get_source_chat_session_missing_session_returns_404"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_get_source_chat_session_missing_relation_behavior",
+      "after": "tests/test_chat_routers_characterization.py::test_get_source_chat_session_missing_relation_behavior"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_delete_source_chat_session_missing_relation_behavior",
+      "after": "tests/test_chat_routers_characterization.py::test_delete_source_chat_session_missing_relation_behavior"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_send_message_missing_relation_returns_404",
+      "after": "tests/test_chat_routers_characterization.py::test_send_message_missing_relation_returns_404"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_get_source_chat_session_happy_path_shapes",
+      "after": "tests/test_chat_routers_characterization.py::test_get_source_chat_session_happy_path_shapes"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_stream_emits_only_the_new_ai_message",
+      "after": "tests/test_source_chat_stream_unit.py::test_stream_emits_only_the_new_ai_message"
+    }
+  ],
+  "ast_test_nodes": [
+    {
+      "before": "tests/test_search_api.py::TestSearchLimitValidation::test_non_positive_limit_returns_422",
+      "after": "tests/test_search_api.py::TestSearchLimitValidation::test_non_positive_limit_returns_422",
+      "ast_sha256": "d9de069d946ef71dec37331a3216d2ed4bbd3eac6bc9882802a5b88b08ff8ba5"
+    },
+    {
+      "before": "tests/test_search_api.py::TestSearchLimitValidation::test_limit_above_max_returns_422",
+      "after": "tests/test_search_api.py::TestSearchLimitValidation::test_limit_above_max_returns_422",
+      "ast_sha256": "5e89fd31a33d8e8eece7fbe229939e009d83794fe5250702ba395390cc11b57e"
+    },
+    {
+      "before": "tests/test_search_api.py::TestSearchLimitValidation::test_valid_limit_returns_200",
+      "after": "tests/test_search_api.py::TestSearchLimitValidation::test_valid_limit_returns_200",
+      "ast_sha256": "539a2e63a0b4059955f0df966a7d5124c25328db890c0f62aadabd16479cfe96"
+    },
+    {
+      "before": "tests/test_search_api.py::TestTextSearchHighlightOverflowFallback::test_position_overflow_falls_back_to_vector_search",
+      "after": "tests/test_search_domain_unit.py::TestTextSearchHighlightOverflowFallback::test_position_overflow_falls_back_to_vector_search",
+      "ast_sha256": "1d80323dec0de42d39455b3075448d5cd4e5e21166cb99a65ff281b5958270e1"
+    },
+    {
+      "before": "tests/test_search_api.py::TestTextSearchHighlightOverflowFallback::test_position_overflow_raises_when_vector_also_fails",
+      "after": "tests/test_search_domain_unit.py::TestTextSearchHighlightOverflowFallback::test_position_overflow_raises_when_vector_also_fails",
+      "ast_sha256": "250e39e36fd47e0a3cb1835949cdd8e8f347d95f77fc58a5f53c2dc62933467b"
+    },
+    {
+      "before": "tests/test_search_api.py::TestTextSearchHighlightOverflowFallback::test_other_runtime_errors_still_raise",
+      "after": "tests/test_search_domain_unit.py::TestTextSearchHighlightOverflowFallback::test_other_runtime_errors_still_raise",
+      "ast_sha256": "3cb757d9d36443a2652db43ae823a0518c91ee2c6c8d9e040a531299e1705344"
+    },
+    {
+      "before": "tests/test_search_api.py::TestVectorSearchOrdering::test_reorders_results_by_descending_similarity",
+      "after": "tests/test_search_domain_unit.py::TestVectorSearchOrdering::test_reorders_results_by_descending_similarity",
+      "ast_sha256": "f594fbcf98c57b4c4d5f50e28e5260b3eb3ff638769e5ee2b5c6d8712717d387"
+    },
+    {
+      "before": "tests/test_search_api.py::TestVectorSearchOrdering::test_tie_break_is_deterministic_by_id",
+      "after": "tests/test_search_domain_unit.py::TestVectorSearchOrdering::test_tie_break_is_deterministic_by_id",
+      "ast_sha256": "70a831047238aeb6ac73d6802fd4513b8bad12f5c2b203605d93f324e41a9946"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_notebook_ids_are_forwarded_to_text_search",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_notebook_ids_are_forwarded_to_text_search",
+      "ast_sha256": "7e7c427f1a6d4077d57968d518b4e191ba3bfeac67d8de311f0ed670de1836fa"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_single_notebook_id_is_forwarded_to_vector_search",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_single_notebook_id_is_forwarded_to_vector_search",
+      "ast_sha256": "50c7c6f5948f0c1ac3ef7e383a8d5e89c3c8a99736596d77d615021fde5e90b8"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_no_scope_means_global_search",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_no_scope_means_global_search",
+      "ast_sha256": "d02d95d2e3e5bf964974ef5d1350325a3681f9dc1196515eafe4ac02d9f39974"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_unknown_notebook_returns_404",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_unknown_notebook_returns_404",
+      "ast_sha256": "76dddae7208436a5698db60348e5b9440c64654e8c984e67d03647871785bbb8"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_database_failure_during_scope_check_is_not_a_404",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_database_failure_during_scope_check_is_not_a_404",
+      "ast_sha256": "379ff69612a82004659dffd1c2970aa9b0f8dfe003b314370f313a9979166845"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_non_notebook_id_returns_400",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_non_notebook_id_returns_400",
+      "ast_sha256": "87f290e04cddf4f61f3c20c1d63037dc8b500e7bc38d17e933924dd8ee049133"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_empty_notebook_id_is_rejected_not_widened",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_empty_notebook_id_is_rejected_not_widened",
+      "ast_sha256": "870f87daf93802d41aea289558c75bf633031c739a901792a703ed10570c1f80"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_scope_is_bounded",
+      "after": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_scope_is_bounded",
+      "ast_sha256": "20f8153d5f35d240c920d707e7f22db6cb3077993090b9548a67b6cc098c716f"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchApi::test_scope_merges_and_dedupes_single_and_list",
+      "after": "tests/test_search_domain_unit.py::TestNotebookScopedSearchApi::test_scope_merges_and_dedupes_single_and_list",
+      "ast_sha256": "cb8f1f7df6fd2337d05325362b949a800b85802aecdb6019498adfce98edba78"
+    },
+    {
+      "before": "tests/test_search_api.py::TestAskScopeValidationOrder::test_unknown_scope_fails_before_model_lookup",
+      "after": "tests/test_search_api.py::TestAskScopeValidationOrder::test_unknown_scope_fails_before_model_lookup",
+      "ast_sha256": "936475cc6c56e7e17e2a42e1ab92889c6a03e73a758ebc8f70e380dc3b373630"
+    },
+    {
+      "before": "tests/test_search_api.py::TestMigration24::test_migration_files_exist",
+      "after": "tests/test_search_api.py::TestMigration24::test_migration_files_exist",
+      "ast_sha256": "8f9732c5d16ee24515d24b6628f58fc738070c08a2758ba7589a65be1be4f247"
+    },
+    {
+      "before": "tests/test_search_api.py::TestMigration24::test_manager_registers_migration_24",
+      "after": "tests/test_search_api.py::TestMigration24::test_manager_registers_migration_24",
+      "ast_sha256": "95fc0188a1f871cb18aca3e7d73b89af520e539d32ac327854643ab0ba86d7b1"
+    },
+    {
+      "before": "tests/test_search_api.py::TestMigration24::test_up_adds_optional_scope_to_both_functions",
+      "after": "tests/test_search_api.py::TestMigration24::test_up_adds_optional_scope_to_both_functions",
+      "ast_sha256": "b272ef5aff226ed0a90581db7deab05c165db2dcf38254dbda72915f8602ef05"
+    },
+    {
+      "before": "tests/test_search_api.py::TestMigration24::test_down_restores_unscoped_signatures",
+      "after": "tests/test_search_api.py::TestMigration24::test_down_restores_unscoped_signatures",
+      "ast_sha256": "53c710d7d9e1516c6abdfa79a21e132f2c7d46225e3da6cf9410b7a3d50077ec"
+    },
+    {
+      "before": "tests/test_search_api.py::TestResolveNotebookScope::test_malformed_ids_raise_invalid_input",
+      "after": "tests/test_search_domain_unit.py::TestResolveNotebookScope::test_malformed_ids_raise_invalid_input",
+      "ast_sha256": "575eaafb17ab63e49a4be70ac8f847de4a96f2ae7827f600c07faf6b9695bd72"
+    },
+    {
+      "before": "tests/test_search_api.py::TestResolveNotebookScope::test_empty_scope_skips_the_database",
+      "after": "tests/test_search_domain_unit.py::TestResolveNotebookScope::test_empty_scope_skips_the_database",
+      "ast_sha256": "9834e38e1dc370114fb57944f2bbfb868c845c4eae82d87736206b71330a59cf"
+    },
+    {
+      "before": "tests/test_search_api.py::TestResolveNotebookScope::test_missing_notebooks_raise_not_found_listing_them",
+      "after": "tests/test_search_domain_unit.py::TestResolveNotebookScope::test_missing_notebooks_raise_not_found_listing_them",
+      "ast_sha256": "0616a386658db966d4074185d21807c7bcc4e34d015ef14c5f082c04a9531b8a"
+    },
+    {
+      "before": "tests/test_search_api.py::TestResolveNotebookScope::test_record_id_rows_from_driver_match_request_strings",
+      "after": "tests/test_search_domain_unit.py::TestResolveNotebookScope::test_record_id_rows_from_driver_match_request_strings",
+      "ast_sha256": "fedcc8c07c1b391dcf9c23abf71c7a2ecb33aa30c6f3ace4fb5c81913d78c3dd"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchDomain::test_text_search_binds_notebook_record_ids",
+      "after": "tests/test_search_domain_unit.py::TestNotebookScopedSearchDomain::test_text_search_binds_notebook_record_ids",
+      "ast_sha256": "deeca7e9959da4f8cfefb14a86288c78a7ff70d378356ba58fa8740932162e03"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchDomain::test_empty_scope_binds_none_for_global_search",
+      "after": "tests/test_search_domain_unit.py::TestNotebookScopedSearchDomain::test_empty_scope_binds_none_for_global_search",
+      "ast_sha256": "71d6a9fa6de34a023185a202d442cb8028f2270832cb67a3d0a3c65353ecd094"
+    },
+    {
+      "before": "tests/test_search_api.py::TestNotebookScopedSearchDomain::test_vector_search_binds_notebook_record_ids",
+      "after": "tests/test_search_domain_unit.py::TestNotebookScopedSearchDomain::test_vector_search_binds_notebook_record_ids",
+      "ast_sha256": "dd4e52ae2908e4bd8602f07dc0dc13b909e2ab867220553dd3ed3ab4a0aa0636"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_get_chat_session_bare_id_gets_prefixed",
+      "after": "tests/test_chat_routers_characterization.py::test_get_chat_session_bare_id_gets_prefixed",
+      "ast_sha256": "45387e45f5358b03506a5b8ee3657503c1521c7d2e3b71fb24cee2ca42402948"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_get_chat_session_prefixed_id_kept_as_is",
+      "after": "tests/test_chat_routers_characterization.py::test_get_chat_session_prefixed_id_kept_as_is",
+      "ast_sha256": "e9c4a91f09b379061fc30bb2e753316eb4438480ee129e15bf2e119628de3ae7"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_delete_chat_session_missing_returns_404",
+      "after": "tests/test_chat_routers_characterization.py::test_delete_chat_session_missing_returns_404",
+      "ast_sha256": "57bbb775e4f91e4442f59510ef20d52738966bd8dde4c9daa0296a4e448506fd"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_get_chat_session_message_shapes",
+      "after": "tests/test_chat_routers_characterization.py::test_get_chat_session_message_shapes",
+      "ast_sha256": "23e29bc9e185732a11e60499f7a64c33a9dbef602e9f8f46caa86fbc238c0ed1"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_get_chat_session_no_state_yields_empty_messages",
+      "after": "tests/test_chat_routers_characterization.py::test_get_chat_session_no_state_yields_empty_messages",
+      "ast_sha256": "56bdeaa23c1cdfa86678ca46313ade470476aa2484963daeebe168be948c354e"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_create_source_chat_session_missing_source_returns_404",
+      "after": "tests/test_chat_routers_characterization.py::test_create_source_chat_session_missing_source_returns_404",
+      "ast_sha256": "c6e05e0b7db28556679f937e26e4016c8c40f8c228cc43dee46d6ff29293e21f"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_list_source_chat_sessions_missing_source_returns_404",
+      "after": "tests/test_chat_routers_characterization.py::test_list_source_chat_sessions_missing_source_returns_404",
+      "ast_sha256": "ee0b67fa2dfab41f23ab93ca64be9c393d71bb83d2fc25012c4e34aa72eb7289"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_get_source_chat_session_missing_session_returns_404",
+      "after": "tests/test_chat_routers_characterization.py::test_get_source_chat_session_missing_session_returns_404",
+      "ast_sha256": "0c684820a581eba98e59f5eb1579d7f9544c99728613555185a02acab2884105"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_get_source_chat_session_missing_relation_behavior",
+      "after": "tests/test_chat_routers_characterization.py::test_get_source_chat_session_missing_relation_behavior",
+      "ast_sha256": "a00b851278b5f4e8d269b1c9f899481125dd478469b478c0567e8f3c1b71312b"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_delete_source_chat_session_missing_relation_behavior",
+      "after": "tests/test_chat_routers_characterization.py::test_delete_source_chat_session_missing_relation_behavior",
+      "ast_sha256": "90377972dcb52d6fffea0eb4054221e8e2eb374fa8a65a0851c9aa717b047ac1"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_send_message_missing_relation_returns_404",
+      "after": "tests/test_chat_routers_characterization.py::test_send_message_missing_relation_returns_404",
+      "ast_sha256": "7a917b40dca074092b8f304495387177a9fe9364416f5873e4536e42b72c6fb8"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_get_source_chat_session_happy_path_shapes",
+      "after": "tests/test_chat_routers_characterization.py::test_get_source_chat_session_happy_path_shapes",
+      "ast_sha256": "004397b050a982113ef92e70d8b9bde06b2576646488152b9cc21db9c7f71a20"
+    },
+    {
+      "before": "tests/test_chat_routers_characterization.py::test_stream_emits_only_the_new_ai_message",
+      "after": "tests/test_source_chat_stream_unit.py::test_stream_emits_only_the_new_ai_message",
+      "ast_sha256": "3ebfdd1ad68a3466644185fe88bb92d08c24a135113f57f9a1e2c82deeb7eab3"
+    }
+  ],
+  "regression": {
+    "passed": 47,
+    "warnings": 2,
+    "exit": 0,
+    "seconds": 3.37
+  },
+  "production_changes": false
+}

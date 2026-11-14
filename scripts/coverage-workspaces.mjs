@@ -1,3 +1,4 @@
+import { auditExecutedFiles } from './coverage-executed-files.mjs';
 import { validateCurrentUnitSelection } from './coverage-unit-selection.mjs';
 import { planUnitPartitions, unitPartitions } from './coverage-unit-plan.mjs';
 import { createHash } from 'node:crypto';
@@ -52,12 +53,14 @@ for(const [name,directory] of Object.entries(partitions)){
  save(name,{partition:name,phase:'pending',testExitCode:null,inputDigest:inputs});
  const summary=resolve(root,outputBase,name,'coverage-summary.json');
  rmSync(summary,{force:true}); // Never accept a previous run's report after startup failure.
- let status,blocked;
+ const executionReport=resolve(root,outputBase,'diagnostics',name+'-tests.json');
+ if(plan)rmSync(executionReport,{force:true});
+ let status,blocked,executedTestFiles,executionReportHash;
  if(name==='legacy-web'&&!existsSync(resolve(root,'frontend/node_modules/next/package.json'))){
   status=1;blocked='Legacy dependencies missing; no automatic installation.';
  }else if(name==='quality-configs'){
   const flags=['--all','--extension=.ts','--extension=.cjs','--src=apps/web','--src=frontend','--src=scripts','--include=apps/web/vite.config.ts','--include=frontend/vitest.config.ts','--include=scripts/coverage-quality.config.ts','--include=coverage/quality-config-runtime/*.cjs','--include=frontend/coverage/quality-config-runtime/*.cjs','--exclude-after-remap'];
-  status=run(process.execPath,[resolve(root,'node_modules/c8/bin/c8.js'),...flags,'--reporter=text','--reporter=json','--reporter=json-summary','--reporter=lcov','--reports-dir='+outputBase+'/'+name,process.execPath,'--enable-source-maps',...(plan&&!unitFiles.length?['--eval','']:['--test','--test-concurrency=1',...(unitFiles||['scripts/tests/quality/config-node.test.mjs'])])],root,name);
+  status=run(process.execPath,[resolve(root,'node_modules/c8/bin/c8.js'),...flags,'--reporter=text','--reporter=json','--reporter=json-summary','--reporter=lcov','--reports-dir='+outputBase+'/'+name,process.execPath,'--enable-source-maps',...(plan?['scripts/coverage-node-tests.mjs','--quality-configs','--files-json='+JSON.stringify(unitFiles),'--execution-report='+executionReport]:['--test','--test-concurrency=1','scripts/tests/quality/config-node.test.mjs'])],root,name);
  }else if(directory){
   const binary=name==='legacy-web'?'frontend/node_modules/vitest/vitest.mjs':'node_modules/vitest/vitest.mjs';
   let config=name==='quality-tooling'?'scripts/coverage-quality.config.ts':name==='deployment-config'?'scripts/coverage-deployment.config.ts':'coverage.config.ts';
@@ -69,17 +72,23 @@ for(const [name,directory] of Object.entries(partitions)){
    const exact=unitFiles.map(file=>relative(resolve(root,directory),resolve(root,file)).replaceAll('\\','/'));
    const reports=resolve(root,outputBase,name);
    const diagnostic=resolve(root,outputBase,'diagnostics',name+'-tests.json');
-   writeFileSync(generated,'import base from '+JSON.stringify(configUrl)+'; import {unitVitestConfig} from '+JSON.stringify(helperUrl)+'; const c=unitVitestConfig(base,'+JSON.stringify(exact)+'); export default {...c,test:{...c.test,outputFile:{json:'+JSON.stringify(diagnostic)+'},coverage:{...c.test.coverage,reportsDirectory:'+JSON.stringify(reports)+'}}};');
+   writeFileSync(generated,'import base from '+JSON.stringify(configUrl)+'; import {unitVitestConfig} from '+JSON.stringify(helperUrl)+'; const c=unitVitestConfig(base,'+JSON.stringify(exact)+'); export default {...c,test:{...c.test,reporters:["default","json"],outputFile:{json:'+JSON.stringify(diagnostic)+'},coverage:{...c.test.coverage,reportsDirectory:'+JSON.stringify(reports)+'}}};');
    config=generated;
   }
   status=run(process.execPath,[resolve(root,binary),'run','--config',config,'--maxWorkers=1'],resolve(root,directory),name);
  }else{
   const legacy=name==='legacy-node-tools';
   const inputs=legacy?['--src=frontend','--include=frontend/scripts/**/*.{js,mjs}','--include=frontend/start-server.js']:['--src=apps/bff/scripts','--src=apps/web/scripts','--src=scripts/v1','--src=apps/web/public','--include=apps/web/public/theme-bootstrap.js','--include=apps/bff/scripts/**/*.{js,mjs}','--include=apps/web/scripts/**/*.{js,mjs}','--include=scripts/v1/**/*.{js,mjs}'];
-  status=run(process.execPath,[resolve(root,'node_modules/c8/bin/c8.js'),'--all','--extension=.mjs','--extension=.js',...inputs,'--exclude=**/*.test.mjs','--reporter=text','--reporter=json','--reporter=json-summary','--reporter=lcov','--reports-dir='+outputBase+'/'+name,process.execPath,'scripts/coverage-node-tests.mjs',...(legacy?['--legacy']:[]),...(plan?['--files-json='+JSON.stringify(unitFiles)]:[])],root,name);
+  status=run(process.execPath,[resolve(root,'node_modules/c8/bin/c8.js'),'--all','--extension=.mjs','--extension=.js',...inputs,'--exclude=**/*.test.mjs','--reporter=text','--reporter=json','--reporter=json-summary','--reporter=lcov','--reports-dir='+outputBase+'/'+name,process.execPath,'scripts/coverage-node-tests.mjs',...(legacy?['--legacy']:[]),...(plan?['--files-json='+JSON.stringify(unitFiles),'--execution-report='+executionReport]:[])],root,name);
+ }
+ if(plan){
+  try{
+   executedTestFiles=auditExecutedFiles(root,unitFiles,JSON.parse(readFileSync(executionReport,'utf8')),directory?'vitest':'node');
+   executionReportHash=fileDigest(executionReport);
+  }catch(error){if(status===0)status=1;blocked='Execution file audit failed: '+String(error);}
  }
  verifySelection();
- const row={...evidence,...(plan?{selectedTestFiles:unitFiles,emptyUnitPartition:unitFiles.length===0}:{}),partition:name,phase:'complete',inputDigest:inputs,inputChangedDuringRun:inputs!==inputDigest(root),testExitCode:status,...(blocked?{blocked}:{}),sourceDigest:before,sourceChangedDuringRun:before!==sourceDigest(root,name,directory),audit:{expectedSourceFiles:inventory(root,name,directory).length,reportedSourceFiles:0,missing:inventory(root,name,directory).map(file=>relative(root,file)),unexpected:[]}};
+ const row={...evidence,...(plan?{selectedTestFiles:unitFiles,emptyUnitPartition:unitFiles.length===0,...(executedTestFiles?{executedTestFiles,executionReportHash}:{})}:{}),partition:name,phase:'complete',inputDigest:inputs,inputChangedDuringRun:inputs!==inputDigest(root),testExitCode:status,...(blocked?{blocked}:{}),sourceDigest:before,sourceChangedDuringRun:before!==sourceDigest(root,name,directory),audit:{expectedSourceFiles:inventory(root,name,directory).length,reportedSourceFiles:0,missing:inventory(root,name,directory).map(file=>relative(root,file)),unexpected:[]}};
  if(existsSync(summary)){try{row.audit=auditReport(root,name,directory,outputBase);row.reportHash=fileDigest(summary);row.coverage=JSON.parse(readFileSync(summary,'utf8')).total;}catch(error){row.phase='failed';row.testExitCode=1;row.blocked='Invalid coverage summary: '+String(error);}}
  else {row.missingReport=true;row.audit=auditReport(root,name,directory,outputBase);}
  results.push(row);

@@ -259,4 +259,29 @@ describe('notebook chat ownership', () => {
     await waitFor(() => expect(result.current.messages).toEqual(fresh.messages))
   })
 
+  it('owns rejected background context counts without changing counts or sending', async () => {
+    const failure = new Error('synthetic context failure')
+    vi.mocked(chatApi.buildContext).mockRejectedValue(failure)
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      const { result } = setup()
+      await waitFor(() => expect(log).toHaveBeenCalledWith('Error updating context counts:', failure))
+      expect(result.current.tokenCount).toBe(0)
+      expect(result.current.charCount).toBe(0)
+      expect(chatApi.sendMessage).not.toHaveBeenCalled()
+    } finally { log.mockRestore() }
+  })
+  it('does not publish a background context failure after unmount', async () => {
+    const pending = deferred<Awaited<ReturnType<typeof chatApi.buildContext>>>()
+    vi.mocked(chatApi.buildContext).mockReturnValue(pending.promise)
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      const { unmount } = setup()
+      await waitFor(() => expect(chatApi.buildContext).toHaveBeenCalled())
+      unmount()
+      await act(async () => { pending.reject(new Error('late synthetic failure')); await Promise.resolve() })
+      expect(log).not.toHaveBeenCalled()
+    } finally { log.mockRestore() }
+  })
+
 })

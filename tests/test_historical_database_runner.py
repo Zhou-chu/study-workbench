@@ -356,3 +356,78 @@ def test_real_allocator_and_normal_child_environment_under_permissive_umask(
     finally:
         os.umask(old)
     assert not root.exists()
+
+
+def test_main_rejects_untrusted_parent_before_scratch_or_process(monkeypatch, tmp_path):
+    import hashlib
+    from unittest.mock import Mock
+
+    import pytest
+
+    binary = tmp_path / "synthetic-binary"
+    binary.write_bytes(b"synthetic fixture only")
+    binary.chmod(0o700)
+    monkeypatch.setattr(
+        runner, "SHA256", hashlib.sha256(binary.read_bytes()).hexdigest()
+    )
+    monkeypatch.setattr(
+        runner.sys,
+        "argv",
+        ["runner", "--surreal-binary", str(binary), "--tiktoken-cache", str(tmp_path)],
+    )
+    monkeypatch.setattr(
+        runner,
+        "open_temporary_parent",
+        Mock(side_effect=ValueError("Invalid historical temporary parent custody")),
+        raising=False,
+    )
+    allocate = Mock(
+        side_effect=AssertionError("Scratch allocation must not precede custody")
+    )
+    start = Mock()
+    monkeypatch.setattr(runner.tempfile, "TemporaryDirectory", allocate)
+    monkeypatch.setattr(runner.lifecycle, "start_owned", start)
+    with pytest.raises(ValueError, match="parent custody"):
+        runner.main()
+    allocate.assert_not_called()
+    start.assert_not_called()
+
+
+def test_main_closes_checked_parent_before_allocating_scratch(monkeypatch, tmp_path):
+    import hashlib
+    from unittest.mock import Mock
+
+    import pytest
+
+    binary = tmp_path / "synthetic-binary"
+    binary.write_bytes(b"synthetic fixture only")
+    binary.chmod(0o700)
+    monkeypatch.setattr(
+        runner, "SHA256", hashlib.sha256(binary.read_bytes()).hexdigest()
+    )
+    monkeypatch.setattr(
+        runner.sys,
+        "argv",
+        ["runner", "--surreal-binary", str(binary), "--tiktoken-cache", str(tmp_path)],
+    )
+    events = []
+    monkeypatch.setattr(
+        runner,
+        "open_temporary_parent",
+        Mock(side_effect=lambda: events.append("checked") or 42),
+    )
+    monkeypatch.setattr(
+        runner.os, "close", Mock(side_effect=lambda fd: events.append(("close", fd)))
+    )
+
+    def stop_at_allocation(**kwargs):
+        events.append("allocate")
+        raise RuntimeError("synthetic stop before allocation")
+
+    monkeypatch.setattr(runner.tempfile, "TemporaryDirectory", stop_at_allocation)
+    start = Mock()
+    monkeypatch.setattr(runner.lifecycle, "start_owned", start)
+    with pytest.raises(RuntimeError, match="synthetic stop"):
+        runner.main()
+    assert events == ["checked", ("close", 42), "allocate"]
+    start.assert_not_called()

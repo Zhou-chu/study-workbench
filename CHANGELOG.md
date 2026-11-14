@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Use a native notebook link for row content and metadata so browser link actions remain available, with archive/delete controls outside the link.
+
+- Bound theme-token parsing in the contrast checker without changing its historical extraction rules, theme colors, or 24 contrast thresholds.
+
 - Avoid repeated multipart delimiter rescans in the disposable UX recovery observer when an upload body lacks its closing delimiter.
 
 - Retire selected-source search results synchronously on workspace changes while deferring React cleanup outside parent render; prevent retired cleanup from affecting newer searches or unmounted components.

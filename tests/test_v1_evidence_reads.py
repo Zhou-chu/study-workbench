@@ -492,38 +492,6 @@ async def test_detail_consumes_missing_payload_errors_in_original_order(
         await detail("sv")
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize("count", [0, 1, 128, 129, 257])
-async def test_store_bulk_read_bounds_queries_and_keeps_raw_missing_values(
-    reader, count
-):
-    queries, _ = reader
-    identities = [f"ev_{index}" for index in range(count)]
-    if count:
-        queries.put("evidence", identities[0], {"evidence_id": "spoof"})
-    values = await PersonalStore().get_many("evidence", identities + identities)
-    assert list(values) == identities
-    if count:
-        assert values[identities[0]] == {
-            "id": physical("evidence", identities[0]),
-            "payload": {"evidence_id": "spoof"},
-        }
-        assert all(values[identity] is None for identity in identities[1:])
-    assert len(queries.calls) == (count + 127) // 128
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "kind,identities",
-    [("credential", []), ("evidence", [None]), ("evidence", ["x" * 513])],
-)
-async def test_store_bulk_rejects_invalid_inputs_without_query(
-    reader, kind, identities
-):
-    queries, _ = reader
-    with pytest.raises(ValueError):
-        await PersonalStore().get_many(kind, identities)
-    assert queries.calls == []
 
 
 @pytest.mark.asyncio

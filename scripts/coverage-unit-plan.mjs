@@ -5,7 +5,7 @@ export const unitPartitions = Object.freeze({
  'legacy-node-tools':null,'deployment-config':'.','quality-tooling':'.','quality-configs':null,
 });
 function safeFile(path) {
- return typeof path==='string' && path && !path.startsWith('/') && !/[\\*?{}()[\]!]/.test(path)
+ return typeof path==='string' && path && !path.startsWith('/') && !/[\\\x00-\x1f]/.test(path)
   && path.split('/').every(part=>part && part!=='.' && part!=='..');
 }
 export function planUnitPartitions(files) {
@@ -25,6 +25,7 @@ export function planUnitPartitions(files) {
   if(/^scripts\/tests\/deployment\/[^/]+\.test\.ts$/.test(file))name='deployment-config';
   if(/^scripts\/tests\/quality\/[^/]+\.test\.ts$/.test(file))name='quality-tooling';
   if(file==='scripts/tests/quality/config-node.test.mjs')name='quality-configs';
+  if(/^scripts\/[^/]+\.test\.mjs$/.test(file))throw Error('quality-tooling raw Node/Vitest coverage merge is not implemented: '+file);
   if(!name)throw Error('Unsupported explicit unit runner file: '+file);
   partitions[name].push(file);
  }
@@ -33,5 +34,5 @@ export function planUnitPartitions(files) {
 export function unitVitestConfig(base, files) {
  if(!base || typeof base!=='object' || Array.isArray(base) || !base.test?.coverage
   || !Array.isArray(files) || files.some(file=>!safeFile(file)))throw Error('Invalid explicit Vitest unit configuration');
- return {...base,test:{...base.test,include:[...files],passWithNoTests:true}};
+ return {...base,test:{...base.test,include:files.map(file=>file.replace(/[()[\]{}*?!+@]/g,'\\$&')),passWithNoTests:true}};
 }

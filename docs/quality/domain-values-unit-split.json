@@ -1,0 +1,16 @@
+{
+  "base": "bb6785c",
+  "classBodiesUnchanged": true,
+  "movedClasses": [
+    "TestContentSettings",
+    "TestCredentialConfigBag",
+    "TestEpisodeProfile",
+    "TestModelManager",
+    "TestNoteDomain",
+    "TestPodcastDomain",
+    "TestRecordModelSingleton",
+    "TestTransformationDomain"
+  ],
+  "old": "tests/test_domain.py",
+  "new": "tests/test_domain_values_unit.py"
+}

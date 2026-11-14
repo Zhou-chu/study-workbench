@@ -32,4 +32,17 @@ describe('AppShell responsive navigation', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'sidebar' })).toBeInTheDocument()
   })
+  it('closes delegated mobile navigation for keyboard-generated link activation', () => {
+    render(<AppShell><p>Workbench content</p></AppShell>)
+    const trigger = screen.getByRole('button', { name: 'workbench.navigation' })
+    fireEvent.click(trigger)
+    const link = within(screen.getByRole('dialog')).getByRole('link', { name: 'Notebooks' })
+    link.focus()
+    expect(link).toHaveFocus()
+    // Native keyboard link activation emits click with detail=0.
+    fireEvent.click(link, { detail: 0 })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  })
+
 })

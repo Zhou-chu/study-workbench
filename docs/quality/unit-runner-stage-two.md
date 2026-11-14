@@ -28,16 +28,17 @@ empty Node command. No summary counters are synthesized by production code.
 Each partition retains source inventory audit, source/input hashes, exit status,
 report freshness/hash checks and before/after selection validation. Unit rows
 also record artifact digest, revision, classification digest, selectedTestFiles,
-and emptyUnitPartition. selectedTestFiles is the requested explicit input, NOT
-an independently observed executed-file list.
+and emptyUnitPartition. selectedTestFiles is the requested explicit input.
+The subsequent literal/execution-audit stage also records executedTestFiles and
+executionReportHash from native completed-entrypoint evidence; see
+unit-executed-files.md.
 
 ## Evidence separation and remaining work
 
 Unit reports, diagnostics, configs and manifests live under coverage/unit/.
 Existing mixed artifacts under coverage/ remain unchanged. Existing gate
 consumption is intentionally not repointed: it does not yet accept these unit
-reports. A later stage must verify actual executed-test identities, support
-remaining runner families, join the separate Python result, bind the policy and
+reports. A later stage must support remaining runner families, join the separate Python result, bind the policy and
 report versions, and enforce strict raw per-language coverage thresholds.
 Successful orchestration does not imply coverage >90, complete unit
 classification, full-project tests, or Sonar Quality Gate success.
