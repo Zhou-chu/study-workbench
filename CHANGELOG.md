@@ -257,6 +257,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Bound podcast download filename suffix stripping to linear work while preserving Windows filename handling and the existing truncation order.
+
 - Keep advisory source preflight failures free of file paths and exception prose in logs; retain unsupported-file rejection and include defensive failure handling in coverage.
 
 - Redact unexpected model-route exceptions from HTTP responses and logs, retaining allowlisted operation names and exception types rather than credential/provider values or traceback locals.

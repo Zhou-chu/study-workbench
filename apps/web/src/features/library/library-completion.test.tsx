@@ -134,7 +134,9 @@ it('notebook sources paginate in their original parent and distinguish global de
     expect(await within(panel).findByRole('link', { name: 'Later source' })).toBeVisible();
     const paged = requests.find(r => r.url.includes('offset=30'))!;
     expect(new URL(paged.url).searchParams.get('notebook_id')).toBe('n');
-    fireEvent.click(within(panel).getAllByRole('button', { name: 'Delete Source' })[0]!);
+    // Identify the original source before querying its action, rather than naming every row's buttons.
+    const originalSource = within(panel).getByRole('link', { name: 'Paper 0' });
+    fireEvent.click(within(originalSource.closest('li')!).getByRole('button', { name: 'Delete Source' }));
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Confirm' }));
     await waitFor(() => expect(requests.filter(r => r.method === 'DELETE')).toHaveLength(1));
     expect(requests.find(r => r.method === 'DELETE')!.url).toContain('/api/sources/source%3A0');

@@ -732,3 +732,27 @@ Only completed read-only reports were accepted after resumption; exact test hash
 Next split candidates: preserve TestCredentialCascadeDelete/TestCredentialUpdateClearsFields as API tests while extracting direct service groups; extract TestSaveSourceTitlePreservation and TestTransformationModelIdForwarding as direct units, leaving the two actual upload-file deletion cases and graph structure checks in their respective integration/static layers. No source-attempt real-DB case is a pure-unit extraction candidate.
 
 All test bytes and inventory paths remain unchanged. Remaining unknown files: 34. Validator: 224 expected unresolved/missing-target blockers, zero new/unexpected errors. No tests or coverage ran.
+
+
+## Six completed SPA reviews: boundary verification
+
+Complete test-body reports were matched to exact SHA256 values. Follow-up inspection confirmed actual AppRoutes/WorkbenchSession wiring, production page targets and the complete PdfView implementation. No tests or production files changed.
+
+- `library/library-completion.test.tsx`: **component-integration**. Real routed library import, deletion/navigation, operation ownership and session retirement. renderLibrary installs actual WorkbenchSession and AppRoutes; fake fetch isolates the external endpoint, not the independent workflows.
+- `library/library-safety.test.tsx`: **component-integration**. All cases exercise routed import receipts, command observers, retained unknown writes across remount, ownership/navigation or source-search association. No isolated whole predicate node identified.
+- `reader/pdf.test.tsx`: **unit**. Direct single PdfView sizing/page/document generation and cancellation lifecycle. pdfjs getDocument/render/worker boundaries, canvas geometry, RAF and resize observations are synthetic. Production uses local pure sizing helper and presentation Button/i18n; no real PDF worker, network or browser.
+- `notebooks/notebooks.test.tsx`: **mixed**. Collection-only loading/filtering/archive/sorting behavior may be isolated as units, but creation-to-navigation, workspace, actual controller/session epoch and back/forward cases exercise independent components. Routing wrapper presence alone is not the classification reason.
+- `settings/configuration.test.tsx`: **component-integration**. Actual metadata owner/admission/attempt protocol and private form lifecycle across route navigation, refresh ABA, uncertain writes, retired callbacks and model registration/defaults. Not merely a single props-driven editor.
+- `settings/transformations.test.tsx`: **component-integration**. Real transformation/configuration ownership, model readiness, navigation, captured tokens and uncertain writes/retirement. Even final store assertions depend on the mounted page owner; no independent whole direct-store test identified.
+
+Notebook collection split candidates, pending unchanged-node extraction: `loads literal-ID cards, searches only names, expands archived and changes tile/list view without disk caches`; `uses server recent notebook/source identities and supports collapse without rewriting timestamps`; `preserves last good active/archive/recent data after explicit refresh failure`; `shows an empty state only after a successful empty list, with creation still available`; `does not represent an initial list failure as a successful empty list or a retained last-good list`; `offers local updated/name sorting without mutating source data or issuing writes`. Keep creation/navigation/session and workspace tests as integration.
+
+Audit: six reviewed unknown entries become 1 unit, 1 mixed and 4 component-integration; unknown remaining 28. Full-inventory validator has 213 expected unresolved/missing-target blockers and zero new unexpected errors. Test bytes/production denominator unchanged; no test or coverage execution.
+
+## Revalidated PDF and podcast boundaries
+
+The previously completed full-file reviews were rebound to unchanged test bytes: legacy PdfCanvas `8180f76d…85f6` is a single-component state machine with fake PDF/render/resize/RAF boundaries, hence unit; podcast lifecycle `e7abbadc…d178` mounts real routes/session/query/draft components and remains component integration. The latter passed in the complete 5acfcc2 SPA mixed run; no new legacy PdfCanvas runtime run is claimed for this classification-only change. Neither case shrinks the production source inventory.
+
+## Utility suite review
+
+`tests/test_utils.py` was fully read, including the truncated-output middle section through a second bounded read. It remains mixed: text cleaning/version predicates and fake-encoding algorithms can be split, while installed-package version probes perform actual importlib metadata discovery and some context/token-budget cases exercise real tokenizer/source formatting behavior. Its original “Unit tests” docstring is not evidence of whole-file strict-unit eligibility. No assertions or production files changed.

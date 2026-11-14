@@ -26,7 +26,7 @@ function search(term: string) {
   fireEvent.change(screen.getByLabelText('Search selected local sources'), { target: { value: term } });
   fireEvent.click(screen.getByRole('button', { name: 'Search extracted text' }));
 }
-function updateWarnings(spy: ReturnType<typeof vi.spyOn>) {
+function updateWarnings(spy: { mock: { calls: readonly (readonly unknown[])[] } }) {
   return spy.mock.calls.filter(args => args.some(value => typeof value === 'string' && value.includes('Cannot update a component')));
 }
 it('retires results when a parent render creates a workspace query without updating a child during render', async () => {

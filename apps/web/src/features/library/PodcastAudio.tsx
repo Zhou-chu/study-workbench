@@ -5,6 +5,7 @@ import { podcastAudioPath, type PodcastEpisode } from '../../data/podcast-contra
 import { useI18n } from '../../i18n';
 import { Button } from '../../ui/Button';
 import { downloadName } from './SourceAsset';
+import { podcastDownloadName } from './podcast-download-name';
 export function PodcastAudio({ episode }: {
     episode: PodcastEpisode;
 }) {
@@ -31,10 +32,7 @@ export function PodcastAudio({ episode }: {
                 try {
                     const a = document.createElement('a');
                     a.href = object;
-                    let filename = downloadName(value.disposition, episode.name + '.mp3').replace(/[<>:"|?*]/g, '_').replace(/[. ]+$/g, '').slice(0, 180) || 'podcast.mp3';
-                    if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(filename))
-                        filename = '_' + filename;
-                    a.download = filename;
+                    a.download = podcastDownloadName(downloadName(value.disposition, episode.name + '.mp3'));
                     a.click();
                 }
                 finally {

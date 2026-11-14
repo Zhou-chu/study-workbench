@@ -1,105 +1,446 @@
-import { auditExecutedFiles } from './coverage-executed-files.mjs';
-import { validateCurrentUnitSelection } from './coverage-unit-selection.mjs';
-import { planUnitPartitions, unitPartitions } from './coverage-unit-plan.mjs';
-import { createHash } from 'node:crypto';
-import { beginRun, saveManifest, inputDigest, fileDigest } from './coverage-integrity.mjs';
-import { coverageEnvironment } from './coverage-environment.mjs';
-import { tmpdir } from 'node:os';
-import { recordedRun } from './coverage-process.mjs';
-import { readFileSync, existsSync, mkdirSync, writeFileSync, rmSync, mkdtempSync } from 'node:fs';
-import { pathToFileURL, fileURLToPath } from 'node:url';
-import { resolve,relative } from 'node:path';
-import { auditReport, sourceDigest, inventory } from './coverage-inventory.mjs';
-export function runCoverage(root=fileURLToPath(new URL('../',import.meta.url)),args=process.argv.slice(2)) {
-const partitions=unitPartitions;
-const onlyArg=args.find(arg=>arg.startsWith('--only='));
-const only=onlyArg?.slice(7);
-if(onlyArg&&!Object.hasOwn(partitions,only))throw new Error('Unknown/empty coverage partition: '+only);
-const unitArgs=args.filter(arg=>arg.startsWith('--unit-selection='));
-if(unitArgs.length>1 || args.some(arg=>arg.startsWith('--unit')&&!arg.startsWith('--unit-selection=')))throw Error('Invalid unit selection argument');
-if(unitArgs.length && onlyArg)throw Error('Unit selection requires all production partitions');
-const artifact=unitArgs.length?JSON.parse(readFileSync(resolve(unitArgs[0].slice('--unit-selection='.length)),'utf8')):null;
-const plan=artifact?planUnitPartitions(validateCurrentUnitSelection(root,artifact)):null;
-if(unitArgs.length && !plan)throw Error('Invalid unit selection artifact');
-const outputBase=plan?'coverage/unit':'coverage';
-const selectionSha256=plan?createHash('sha256').update(JSON.stringify(artifact)).digest('hex'):null;
-const evidence=plan?{layer:'unit',selectionSha256,selectionRevision:artifact.revision,classificationSha256:artifact.classificationSha256}: {layer:'mixed'};
-const save=(name,row)=>saveManifest(root,name,{...evidence,...row},outputBase);
-const verifySelection=()=>{if(plan)validateCurrentUnitSelection(root,artifact);};
+import { captureNativeSources } from "./coverage-native-collector.mjs";
+import { auditExecutedFiles } from "./coverage-executed-files.mjs";
+import { validateCurrentUnitSelection } from "./coverage-unit-selection.mjs";
+import { planUnitPartitions, unitPartitions } from "./coverage-unit-plan.mjs";
+import { createHash } from "node:crypto";
+import {
+  beginRun,
+  saveManifest,
+  inputDigest,
+  fileDigest,
+} from "./coverage-integrity.mjs";
+import { coverageEnvironment } from "./coverage-environment.mjs";
+import { tmpdir } from "node:os";
+import { recordedRun } from "./coverage-process.mjs";
+import {
+  readFileSync,
+  existsSync,
+  mkdirSync,
+  writeFileSync,
+  rmSync,
+  mkdtempSync,
+} from "node:fs";
+import { pathToFileURL, fileURLToPath } from "node:url";
+import { resolve, relative } from "node:path";
+import { auditReport, sourceDigest, inventory } from "./coverage-inventory.mjs";
+export function runCoverage(
+  root = fileURLToPath(new URL("../", import.meta.url)),
+  args = process.argv.slice(2),
+) {
+  const partitions = unitPartitions;
+  const onlyArg = args.find((arg) => arg.startsWith("--only="));
+  const only = onlyArg?.slice(7);
+  if (onlyArg && !Object.hasOwn(partitions, only))
+    throw new Error("Unknown/empty coverage partition: " + only);
+  const unitArgs = args.filter((arg) => arg.startsWith("--unit-selection="));
+  if (
+    unitArgs.length > 1 ||
+    args.some(
+      (arg) => arg.startsWith("--unit") && !arg.startsWith("--unit-selection="),
+    )
+  )
+    throw Error("Invalid unit selection argument");
+  if (unitArgs.length && onlyArg)
+    throw Error("Unit selection requires all production partitions");
+  const artifact = unitArgs.length
+    ? JSON.parse(
+        readFileSync(
+          resolve(unitArgs[0].slice("--unit-selection=".length)),
+          "utf8",
+        ),
+      )
+    : null;
+  const plan = artifact
+    ? planUnitPartitions(validateCurrentUnitSelection(root, artifact))
+    : null;
+  if (unitArgs.length && !plan) throw Error("Invalid unit selection artifact");
+  const outputBase = plan ? "coverage/unit" : "coverage";
+  const selectionSha256 = plan
+    ? createHash("sha256").update(JSON.stringify(artifact)).digest("hex")
+    : null;
+  const evidence = plan
+    ? {
+        layer: "unit",
+        selectionSha256,
+        selectionRevision: artifact.revision,
+        classificationSha256: artifact.classificationSha256,
+      }
+    : { layer: "mixed" };
+  const save = (name, row) =>
+    saveManifest(root, name, { ...evidence, ...row }, outputBase);
+  const verifySelection = () => {
+    if (plan) validateCurrentUnitSelection(root, artifact);
+  };
 
-const temporary=mkdtempSync(resolve(tmpdir(),'notebook-coverage-'));
-const environment=coverageEnvironment(temporary,process.env);
-const cleanup=()=>rmSync(temporary,{recursive:true,force:true});
-process.on('exit',cleanup);
-try {
-const run=(command,args,cwd=root,label='pretest')=>{
- const logPath=resolve(root,outputBase,'diagnostics',label+'.log');
- const status=recordedRun(command,args,{cwd,env:environment,logPath});
- console.log(label+': exit '+status+'; log '+logPath);return status;
-};
-const npm=process.platform==='win32'?'npm.cmd':'npm';
-const names=Object.keys(partitions).filter(name=>!only||name===only);
-const initialDigest=inputDigest(root);
-beginRun(root,names,initialDigest,outputBase);
-if(run(npm,['run','pretest'])!==0){for(const name of names)save(name,{partition:name,phase:'failed',testExitCode:1,inputDigest:initialDigest,blocked:'pretest failed'});return 1;}
-verifySelection();
-const results=[];
-for(const [name,directory] of Object.entries(partitions)){
- if(only&&name!==only)continue;
- verifySelection();
- const unitFiles=plan?.partitions[name];
- const before=sourceDigest(root,name,directory);
- const inputs=inputDigest(root);
- save(name,{partition:name,phase:'pending',testExitCode:null,inputDigest:inputs});
- const summary=resolve(root,outputBase,name,'coverage-summary.json');
- rmSync(summary,{force:true}); // Never accept a previous run's report after startup failure.
- const executionReport=resolve(root,outputBase,'diagnostics',name+'-tests.json');
- if(plan)rmSync(executionReport,{force:true});
- let status,blocked,executedTestFiles,executionReportHash;
- if(name==='legacy-web'&&!existsSync(resolve(root,'frontend/node_modules/next/package.json'))){
-  status=1;blocked='Legacy dependencies missing; no automatic installation.';
- }else if(name==='quality-configs'){
-  const flags=['--all','--extension=.ts','--extension=.cjs','--src=apps/web','--src=frontend','--src=scripts','--include=apps/web/vite.config.ts','--include=frontend/vitest.config.ts','--include=scripts/coverage-quality.config.ts','--include=coverage/quality-config-runtime/*.cjs','--include=frontend/coverage/quality-config-runtime/*.cjs','--exclude-after-remap'];
-  status=run(process.execPath,[resolve(root,'node_modules/c8/bin/c8.js'),...flags,'--reporter=text','--reporter=json','--reporter=json-summary','--reporter=lcov','--reports-dir='+outputBase+'/'+name,process.execPath,'--enable-source-maps',...(plan?['scripts/coverage-node-tests.mjs','--quality-configs','--files-json='+JSON.stringify(unitFiles),'--execution-report='+executionReport]:['--test','--test-concurrency=1','scripts/tests/quality/config-node.test.mjs'])],root,name);
- }else if(directory){
-  const binary=name==='legacy-web'?'frontend/node_modules/vitest/vitest.mjs':'node_modules/vitest/vitest.mjs';
-  let config=name==='quality-tooling'?'scripts/coverage-quality.config.ts':name==='deployment-config'?'scripts/coverage-deployment.config.ts':'coverage.config.ts';
-  if(plan){
-   const generated=resolve(root,outputBase,'configs',name+'.mjs');
-   mkdirSync(resolve(generated,'..'),{recursive:true});
-   const configUrl=pathToFileURL(resolve(root,directory,config)).href;
-   const helperUrl=pathToFileURL(resolve(root,'scripts/coverage-unit-plan.mjs')).href;
-   const exact=unitFiles.map(file=>relative(resolve(root,directory),resolve(root,file)).replaceAll('\\','/'));
-   const reports=resolve(root,outputBase,name);
-   const diagnostic=resolve(root,outputBase,'diagnostics',name+'-tests.json');
-   writeFileSync(generated,'import base from '+JSON.stringify(configUrl)+'; import {unitVitestConfig} from '+JSON.stringify(helperUrl)+'; const c=unitVitestConfig(base,'+JSON.stringify(exact)+'); export default {...c,test:{...c.test,reporters:["default","json"],outputFile:{json:'+JSON.stringify(diagnostic)+'},coverage:{...c.test.coverage,reportsDirectory:'+JSON.stringify(reports)+'}}};');
-   config=generated;
+  const temporary = mkdtempSync(resolve(tmpdir(), "notebook-coverage-"));
+  const environment = coverageEnvironment(temporary, process.env);
+  const cleanup = () => rmSync(temporary, { recursive: true, force: true });
+  process.on("exit", cleanup);
+  try {
+    const run = (command, args, cwd = root, label = "pretest") => {
+      const logPath = resolve(root, outputBase, "diagnostics", label + ".log");
+      const status = recordedRun(command, args, {
+        cwd,
+        env: environment,
+        logPath,
+      });
+      console.log(label + ": exit " + status + "; log " + logPath);
+      return status;
+    };
+    const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+    const names = Object.keys(partitions).filter(
+      (name) => !only || name === only,
+    );
+    const initialDigest = inputDigest(root);
+    beginRun(root, names, initialDigest, outputBase);
+    if (run(npm, ["run", "pretest"]) !== 0) {
+      for (const name of names)
+        save(name, {
+          partition: name,
+          phase: "failed",
+          testExitCode: 1,
+          inputDigest: initialDigest,
+          blocked: "pretest failed",
+        });
+      return 1;
+    }
+    verifySelection();
+    const results = [];
+    for (const [name, directory] of Object.entries(partitions)) {
+      if (only && name !== only) continue;
+      verifySelection();
+      const unitFiles = plan?.partitions[name];
+      const nativeFiles =
+        name === "quality-tooling" && plan
+          ? unitFiles.filter((f) => /^scripts\/[^/]+\.test\.mjs$/.test(f))
+          : [];
+      const vitestFiles = nativeFiles.length
+        ? unitFiles.filter((f) => !nativeFiles.includes(f))
+        : unitFiles;
+      const nativeSnapshot = nativeFiles.length
+        ? captureNativeSources(root, inventory(root, name, directory))
+        : null;
+      const before = sourceDigest(root, name, directory);
+      const inputs = inputDigest(root);
+      save(name, {
+        partition: name,
+        phase: "pending",
+        testExitCode: null,
+        inputDigest: inputs,
+      });
+      const summary = resolve(root, outputBase, name, "coverage-summary.json");
+      rmSync(summary, { force: true }); // Never accept a previous run's report after startup failure.
+      const executionReport = resolve(
+        root,
+        outputBase,
+        "diagnostics",
+        name + "-tests.json",
+      );
+      if (plan) rmSync(executionReport, { force: true });
+      let status,
+        blocked,
+        executedTestFiles,
+        executionReportHash,
+        nativeEvidence;
+      if (
+        name === "legacy-web" &&
+        !existsSync(resolve(root, "frontend/node_modules/next/package.json"))
+      ) {
+        status = 1;
+        blocked = "Legacy dependencies missing; no automatic installation.";
+      } else if (name === "quality-configs") {
+        const flags = [
+          "--all",
+          "--extension=.ts",
+          "--extension=.cjs",
+          "--src=apps/web",
+          "--src=frontend",
+          "--src=scripts",
+          "--include=apps/web/vite.config.ts",
+          "--include=frontend/vitest.config.ts",
+          "--include=scripts/coverage-quality.config.ts",
+          "--include=coverage/quality-config-runtime/*.cjs",
+          "--include=frontend/coverage/quality-config-runtime/*.cjs",
+          "--exclude-after-remap",
+        ];
+        status = run(
+          process.execPath,
+          [
+            resolve(root, "node_modules/c8/bin/c8.js"),
+            ...flags,
+            "--reporter=text",
+            "--reporter=json",
+            "--reporter=json-summary",
+            "--reporter=lcov",
+            "--reports-dir=" + outputBase + "/" + name,
+            process.execPath,
+            "--enable-source-maps",
+            ...(plan
+              ? [
+                  "scripts/coverage-node-tests.mjs",
+                  "--quality-configs",
+                  "--files-json=" + JSON.stringify(unitFiles),
+                  "--execution-report=" + executionReport,
+                ]
+              : [
+                  "--test",
+                  "--test-concurrency=1",
+                  "scripts/tests/quality/config-node.test.mjs",
+                ]),
+          ],
+          root,
+          name,
+        );
+      } else if (directory) {
+        const binary =
+          name === "legacy-web"
+            ? "frontend/node_modules/vitest/vitest.mjs"
+            : "node_modules/vitest/vitest.mjs";
+        let config =
+          name === "quality-tooling"
+            ? "scripts/coverage-quality.config.ts"
+            : name === "deployment-config"
+              ? "scripts/coverage-deployment.config.ts"
+              : "coverage.config.ts";
+        if (plan) {
+          const generated = resolve(root, outputBase, "configs", name + ".mjs");
+          mkdirSync(resolve(generated, ".."), { recursive: true });
+          const configUrl = pathToFileURL(
+            resolve(root, directory, config),
+          ).href;
+          const helperUrl = pathToFileURL(
+            resolve(root, "scripts/coverage-unit-plan.mjs"),
+          ).href;
+          const exact = vitestFiles.map((file) =>
+            relative(resolve(root, directory), resolve(root, file)).replaceAll(
+              "\\",
+              "/",
+            ),
+          );
+          const reports = resolve(root, outputBase, name);
+          const diagnostic = resolve(
+            root,
+            outputBase,
+            "diagnostics",
+            name + "-tests.json",
+          );
+          writeFileSync(
+            generated,
+            "import base from " +
+              JSON.stringify(configUrl) +
+              "; import {unitVitestConfig} from " +
+              JSON.stringify(helperUrl) +
+              "; const c=unitVitestConfig(base," +
+              JSON.stringify(exact) +
+              '); export default {...c,test:{...c.test,reporters:["default","json"],outputFile:{json:' +
+              JSON.stringify(diagnostic) +
+              "},coverage:{...c.test.coverage,reportsDirectory:" +
+              JSON.stringify(reports) +
+              "}}};",
+          );
+          config = generated;
+        }
+        status = run(
+          process.execPath,
+          [resolve(root, binary), "run", "--config", config, "--maxWorkers=1"],
+          resolve(root, directory),
+          name,
+        );
+      } else {
+        const legacy = name === "legacy-node-tools";
+        const inputs = legacy
+          ? [
+              "--src=frontend",
+              "--include=frontend/scripts/**/*.{js,mjs}",
+              "--include=frontend/start-server.js",
+            ]
+          : [
+              "--src=apps/bff/scripts",
+              "--src=apps/web/scripts",
+              "--src=scripts/v1",
+              "--src=apps/web/public",
+              "--include=apps/web/public/theme-bootstrap.js",
+              "--include=apps/bff/scripts/**/*.{js,mjs}",
+              "--include=apps/web/scripts/**/*.{js,mjs}",
+              "--include=scripts/v1/**/*.{js,mjs}",
+            ];
+        status = run(
+          process.execPath,
+          [
+            resolve(root, "node_modules/c8/bin/c8.js"),
+            "--all",
+            "--extension=.mjs",
+            "--extension=.js",
+            ...inputs,
+            "--exclude=**/*.test.mjs",
+            "--reporter=text",
+            "--reporter=json",
+            "--reporter=json-summary",
+            "--reporter=lcov",
+            "--reports-dir=" + outputBase + "/" + name,
+            process.execPath,
+            "scripts/coverage-node-tests.mjs",
+            ...(legacy ? ["--legacy"] : []),
+            ...(plan
+              ? [
+                  "--files-json=" + JSON.stringify(unitFiles),
+                  "--execution-report=" + executionReport,
+                ]
+              : []),
+          ],
+          root,
+          name,
+        );
+      }
+      if (nativeFiles.length && status === 0) {
+        try {
+          const request = resolve(
+            root,
+            outputBase,
+            "diagnostics",
+            "native-union-request.json",
+          );
+          writeFileSync(
+            request,
+            JSON.stringify({
+              root,
+              sourcePaths: inventory(root, name, directory),
+              snapshot: nativeSnapshot,
+              vitestFiles,
+              nodeFiles: nativeFiles,
+              vitestReport: executionReport,
+              baseReport: resolve(
+                root,
+                outputBase,
+                name,
+                "coverage-final.json",
+              ),
+              output: resolve(root, outputBase, name),
+            }),
+          );
+          status = run(
+            process.execPath,
+            ["scripts/coverage-native-collector.mjs", request],
+            root,
+            name + "-native",
+          );
+          if (status === 0)
+            nativeEvidence = JSON.parse(
+              readFileSync(
+                resolve(root, outputBase, name, "native-union-evidence.json"),
+                "utf8",
+              ),
+            );
+        } catch (error) {
+          status = 1;
+          blocked = "Native union failed: " + String(error);
+        }
+      }
+      if (plan) {
+        try {
+          executedTestFiles = auditExecutedFiles(
+            root,
+            vitestFiles,
+            JSON.parse(readFileSync(executionReport, "utf8")),
+            directory ? "vitest" : "node",
+          );
+          executionReportHash = fileDigest(executionReport);
+          if (nativeFiles.length) {
+            if (!nativeEvidence) throw Error("Missing native union evidence");
+            executedTestFiles = [
+              ...executedTestFiles,
+              ...nativeEvidence.executedNodeFiles,
+            ].sort();
+            if (
+              JSON.stringify(executedTestFiles) !==
+              JSON.stringify([...unitFiles].sort())
+            )
+              throw Error("Combined execution mismatch");
+          }
+        } catch (error) {
+          if (status === 0) status = 1;
+          blocked = "Execution file audit failed: " + String(error);
+        }
+      }
+      verifySelection();
+      const row = {
+        ...evidence,
+        ...(plan
+          ? {
+              selectedTestFiles: unitFiles,
+              ...(nativeEvidence
+                ? { nativeUnionEvidence: nativeEvidence }
+                : {}),
+              emptyUnitPartition: unitFiles.length === 0,
+              ...(executedTestFiles
+                ? { executedTestFiles, executionReportHash }
+                : {}),
+            }
+          : {}),
+        partition: name,
+        phase: "complete",
+        inputDigest: inputs,
+        inputChangedDuringRun: inputs !== inputDigest(root),
+        testExitCode: status,
+        ...(blocked ? { blocked } : {}),
+        sourceDigest: before,
+        sourceChangedDuringRun: before !== sourceDigest(root, name, directory),
+        audit: {
+          expectedSourceFiles: inventory(root, name, directory).length,
+          reportedSourceFiles: 0,
+          missing: inventory(root, name, directory).map((file) =>
+            relative(root, file),
+          ),
+          unexpected: [],
+        },
+      };
+      if (existsSync(summary)) {
+        try {
+          row.audit = auditReport(root, name, directory, outputBase);
+          row.reportHash = fileDigest(summary);
+          row.coverage = JSON.parse(readFileSync(summary, "utf8")).total;
+        } catch (error) {
+          row.phase = "failed";
+          row.testExitCode = 1;
+          row.blocked = "Invalid coverage summary: " + String(error);
+        }
+      } else {
+        row.missingReport = true;
+        row.audit = auditReport(root, name, directory, outputBase);
+      }
+      results.push(row);
+      // Save each completed partition immediately, even if a later long run is interrupted.
+      mkdirSync(resolve(root, outputBase), { recursive: true });
+      save(name, row);
+    }
+    if (!only)
+      writeFileSync(
+        resolve(root, outputBase, "run-all.json"),
+        JSON.stringify(
+          { generatedAt: new Date().toISOString(), partitions: results },
+          null,
+          2,
+        ) + "\n",
+      );
+    console.log(JSON.stringify(results, null, 2));
+    return results.some(
+      (row) =>
+        row.testExitCode !== 0 ||
+        row.missingReport ||
+        row.sourceChangedDuringRun ||
+        row.inputChangedDuringRun ||
+        row.audit.missing.length ||
+        row.audit.unexpected.length,
+    )
+      ? 1
+      : 0;
+  } finally {
+    process.removeListener("exit", cleanup);
+    cleanup();
   }
-  status=run(process.execPath,[resolve(root,binary),'run','--config',config,'--maxWorkers=1'],resolve(root,directory),name);
- }else{
-  const legacy=name==='legacy-node-tools';
-  const inputs=legacy?['--src=frontend','--include=frontend/scripts/**/*.{js,mjs}','--include=frontend/start-server.js']:['--src=apps/bff/scripts','--src=apps/web/scripts','--src=scripts/v1','--src=apps/web/public','--include=apps/web/public/theme-bootstrap.js','--include=apps/bff/scripts/**/*.{js,mjs}','--include=apps/web/scripts/**/*.{js,mjs}','--include=scripts/v1/**/*.{js,mjs}'];
-  status=run(process.execPath,[resolve(root,'node_modules/c8/bin/c8.js'),'--all','--extension=.mjs','--extension=.js',...inputs,'--exclude=**/*.test.mjs','--reporter=text','--reporter=json','--reporter=json-summary','--reporter=lcov','--reports-dir='+outputBase+'/'+name,process.execPath,'scripts/coverage-node-tests.mjs',...(legacy?['--legacy']:[]),...(plan?['--files-json='+JSON.stringify(unitFiles),'--execution-report='+executionReport]:[])],root,name);
- }
- if(plan){
-  try{
-   executedTestFiles=auditExecutedFiles(root,unitFiles,JSON.parse(readFileSync(executionReport,'utf8')),directory?'vitest':'node');
-   executionReportHash=fileDigest(executionReport);
-  }catch(error){if(status===0)status=1;blocked='Execution file audit failed: '+String(error);}
- }
- verifySelection();
- const row={...evidence,...(plan?{selectedTestFiles:unitFiles,emptyUnitPartition:unitFiles.length===0,...(executedTestFiles?{executedTestFiles,executionReportHash}:{})}:{}),partition:name,phase:'complete',inputDigest:inputs,inputChangedDuringRun:inputs!==inputDigest(root),testExitCode:status,...(blocked?{blocked}:{}),sourceDigest:before,sourceChangedDuringRun:before!==sourceDigest(root,name,directory),audit:{expectedSourceFiles:inventory(root,name,directory).length,reportedSourceFiles:0,missing:inventory(root,name,directory).map(file=>relative(root,file)),unexpected:[]}};
- if(existsSync(summary)){try{row.audit=auditReport(root,name,directory,outputBase);row.reportHash=fileDigest(summary);row.coverage=JSON.parse(readFileSync(summary,'utf8')).total;}catch(error){row.phase='failed';row.testExitCode=1;row.blocked='Invalid coverage summary: '+String(error);}}
- else {row.missingReport=true;row.audit=auditReport(root,name,directory,outputBase);}
- results.push(row);
- // Save each completed partition immediately, even if a later long run is interrupted.
- mkdirSync(resolve(root,outputBase),{recursive:true});
- save(name,row);
 }
-if(!only)writeFileSync(resolve(root,outputBase,'run-all.json'),JSON.stringify({generatedAt:new Date().toISOString(),partitions:results},null,2)+'\n');
-console.log(JSON.stringify(results,null,2));
-return results.some(row=>row.testExitCode!==0||row.missingReport||row.sourceChangedDuringRun||row.inputChangedDuringRun||row.audit.missing.length||row.audit.unexpected.length)?1:0;
-
-} finally {process.removeListener('exit',cleanup);cleanup();}
-}
-if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))process.exitCode=runCoverage();
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+)
+  process.exitCode = runCoverage();

@@ -123,9 +123,9 @@ it.each(['https://evil.invalid/audio.mp3', '/api/podcasts/episodes/episode:other
     expect(d().getByRole('button', { name: 'Download File' })).toBeDisabled();
     expect(req.some(r => r.url.includes('/audio'))).toBe(false);
 });
-it('explicit audio download uses a safe filename, separate transient object URL and no HEAD', async () => {
-    const create = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:download'), revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => { }), click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { expect(this.download).toBe('safe.mp3'); });
-    const req = podcastServer(r => r.url.endsWith('/audio') ? new Response(new Blob(['audio']), { headers: { 'content-disposition': 'attachment; filename="../../safe.mp3"' } }) : undefined);
+it.each([['../../safe.mp3', 'safe.mp3'], ['CON.mp3.. ', '_CON.mp3'], ['bad?.mp3', 'bad_.mp3']])('explicit audio download sanitizes %s, owns its transient URL and uses no HEAD', async (filename, expected) => {
+    const create = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:download'), revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => { }), click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { expect(this.download).toBe(expected); });
+    const req = podcastServer(r => r.url.endsWith('/audio') ? new Response(new Blob(['audio']), { headers: { 'content-disposition': 'attachment; filename="' + filename + '"' } }) : undefined);
     await renderLibrary('/podcasts');
     fireEvent.click(await screen.findByRole('button', { name: 'Details' }));
     fireEvent.click(d().getByRole('button', { name: 'Download File' }));

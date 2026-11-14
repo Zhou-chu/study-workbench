@@ -559,10 +559,13 @@
     },
     {
       "path": "apps/web/src/features/library/library-completion.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "d46f768b87430ac37fdd8da999f08f5fc030644beea14f39e86c8261d5f55ba8"
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/library/LibraryPage.tsx",
+        "apps/web/src/features/library/SourcePage.tsx"
+      ],
+      "reason": "Real routed library import, deletion/navigation, operation ownership and session retirement. renderLibrary installs actual WorkbenchSession and AppRoutes; fake fetch isolates the external endpoint, not the independent workflows.",
+      "sha256": "8f79f30edc9a7da8ce192d2f9e40dc59149e15962f8777651197917f31707ab0"
     },
     {
       "path": "apps/web/src/features/library/library-races.test.tsx",
@@ -577,9 +580,12 @@
     },
     {
       "path": "apps/web/src/features/library/library-safety.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/library/SourceImportDialog.tsx",
+        "apps/web/src/features/library/LibraryCommandObservers.tsx"
+      ],
+      "reason": "All cases exercise routed import receipts, command observers, retained unknown writes across remount, ownership/navigation or source-search association. No isolated whole predicate node identified.",
       "sha256": "3b896f16ef08c9b1697ef86611e7eca34e67fa60e62aa1fdb1a0eb3758929b1f"
     },
     {
@@ -649,11 +655,24 @@
       "sha256": "0d0fbb2ec789ab34bd1cb6086b8e315496a445caf22945eb4d705e335a0a10cb"
     },
     {
+      "path": "apps/web/src/features/library/podcast-download-name.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/library/podcast-download-name.ts"
+      ],
+      "reason": "Pure filename string function; exact legacy policy order, reserved Windows names, UTF16 boundary, exhaustive bounded historical oracle and long input. No React, filesystem, HTTP or fixture service.",
+      "sha256": "96294329ce1428befda2f2f00eaf917ddb2eebbb8a607467cbfdb7a5f780b546"
+    },
+    {
       "path": "apps/web/src/features/library/podcast-lifecycle.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "1b5493897a67c2667cb48010e1ad0f6c7c115cf234283bd8c9dc0139dc3b0835"
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/library/PodcastsPage.tsx",
+        "apps/web/src/features/library/PodcastGenerationDialog.tsx",
+        "apps/web/src/features/library/PodcastAudio.tsx"
+      ],
+      "reason": "All cases mount real routed library with WorkbenchSession, AppRoutes, query/transport and draft ownership, then verify context/generation/audio lifecycle across independent components. Fake fetch/audio URL isolates external effects, not app integration. Filename pure units are separately classified; these 32 cases remain component integration.",
+      "sha256": "e7abbadc093083368486196fa731317c007cffd516eb43bbb02f753ce3b8d178"
     },
     {
       "path": "apps/web/src/features/library/podcast-profiles.test.tsx",
@@ -675,9 +694,12 @@
     },
     {
       "path": "apps/web/src/features/notebooks/notebooks.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "apps/web/src/features/notebooks/NotebookHome.tsx",
+        "apps/web/src/features/notebooks/NotebookPage.tsx"
+      ],
+      "reason": "Collection-only loading/filtering/archive/sorting behavior may be isolated as units, but creation-to-navigation, workspace, actual controller/session epoch and back/forward cases exercise independent components. Routing wrapper presence alone is not the classification reason.",
       "sha256": "eea7592de3513d16b1f4d1d78e28d2be6f06afe8f66d03bf5537deb1851a002a"
     },
     {
@@ -711,9 +733,11 @@
     },
     {
       "path": "apps/web/src/features/reader/pdf.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/reader/PdfView.tsx"
+      ],
+      "reason": "Direct single PdfView sizing/page/document generation and cancellation lifecycle. pdfjs getDocument/render/worker boundaries, canvas geometry, RAF and resize observations are synthetic. Production uses local pure sizing helper and presentation Button/i18n; no real PDF worker, network or browser.",
       "sha256": "a63661be4ae33f0f02177ec182293c97b3c94ee71d43d811f7bc5bd5a2e69e82"
     },
     {
@@ -770,9 +794,12 @@
     },
     {
       "path": "apps/web/src/features/settings/configuration.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/settings/ModelsPage.tsx",
+        "apps/web/src/features/settings/CredentialEditor.tsx"
+      ],
+      "reason": "Actual metadata owner/admission/attempt protocol and private form lifecycle across route navigation, refresh ABA, uncertain writes, retired callbacks and model registration/defaults. Not merely a single props-driven editor.",
       "sha256": "4d2d955847afd63249941a651702546eb0287f1f82d8070f72c6a349c64076c1"
     },
     {
@@ -868,9 +895,12 @@
     },
     {
       "path": "apps/web/src/features/settings/transformations.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/settings/TransformationsPage.tsx",
+        "apps/web/src/features/settings/transformation-store.ts"
+      ],
+      "reason": "Real transformation/configuration ownership, model readiness, navigation, captured tokens and uncertain writes/retirement. Even final store assertions depend on the mounted page owner; no independent whole direct-store test identified.",
       "sha256": "47ebc92b0d11893a7f7c98d3621c6ea1d6c73a589337180a43230bd2521d09c8"
     },
     {
@@ -921,7 +951,7 @@
         "apps/web/src/features/sources/SelectedSourceSearch.tsx"
       ],
       "reason": "Real React parent useQuery and QueryClient cache notifications cooperate with SelectedSourceSearch, providers and controlled transport; exercises render ordering and cross-component ownership, not isolated unit coverage.",
-      "sha256": "5df1d5ce25985448eff2df1c9dd190eac09abce1022da5fe9714c0b98dbb1495"
+      "sha256": "1e6bffe562583ca81f61a4e54680db5d051b1be70fcb0bea9096d8d62fe354cd"
     },
     {
       "path": "apps/web/src/features/sources/selected-search.test.tsx",
@@ -1398,9 +1428,12 @@
     },
     {
       "path": "frontend/src/components/evidence/PdfCanvas.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/evidence/PdfCanvas.tsx",
+        "frontend/src/components/evidence/pdf-render-sizing.ts"
+      ],
+      "reason": "Single PdfCanvas lifecycle with synthetic PDF.js getDocument/getPage/render/cancel/destroy, Blob bytes, geometry, RAF and ResizeObserver; Harness only owns zoom props. No real PDF worker, route/session/API, network or filesystem boundary. Full file was reviewed, then exact bytes revalidated.",
       "sha256": "8180f76d1e99936416a86e52fabd3568b07efcf577f4a2a9f36b7d6540cb85f6"
     },
     {
@@ -2352,7 +2385,7 @@
         "packages/web-transport/src/index.ts"
       ],
       "reason": "TypeScript compile/no-platform-global diagnostics and source/package export architecture checks; not runtime behavior coverage.",
-      "sha256": "4f85482102945b88bb36e7f4dcf60edb0fc2b4b91cdcc5671a77a5032602af3e"
+      "sha256": "0fcdf61a1182329b0a860398f2c1c465044db112ee8762f2e2ce53278e95e712"
     },
     {
       "path": "packages/web-transport/src/client.test.ts",
@@ -2455,6 +2488,25 @@
       "sha256": "80641b52fb26359e6cbc340dcb8f5c2402937f90e06ea491ca49156bdf331097"
     },
     {
+      "path": "scripts/coverage-native-collector.test.mjs",
+      "layer": "tool-integration",
+      "targets": [
+        "scripts/coverage-native-collector.mjs",
+        "scripts/coverage-native-union.mjs"
+      ],
+      "reason": "Real temporary repositories/files, native Node and Vitest execution, persisted coverage maps and import/byte-change guards; tool integration, not strict unit coverage.",
+      "sha256": "35e996037e0ee54d4c45634787923dbd0b9b529785c4eafdab24fd75c1c565d7"
+    },
+    {
+      "path": "scripts/coverage-native-union.test.mjs",
+      "layer": "unit",
+      "targets": [
+        "scripts/coverage-native-union.mjs"
+      ],
+      "reason": "Pure native/Vitest counter merge guard over literal maps, source hashes and receipts; no filesystem, subprocess or runner invocation. Does not authenticate caller-provided evidence.",
+      "sha256": "87401b33ec33a7f590ecb0353fb83901fec7558dc4d13dfa7a55d237dc4cb348"
+    },
+    {
       "path": "scripts/coverage-node-reporter.test.mjs",
       "layer": "unit",
       "targets": [
@@ -2470,7 +2522,7 @@
         "scripts/coverage-unit-plan.mjs"
       ],
       "reason": "Pure explicit-file partition/config value tests with synthetic inputs; no Git/process/filesystem.",
-      "sha256": "9f5524948cf9060019cb515cef06930c8fc38d388356b2bfee9adde933b6e137"
+      "sha256": "fb04f6140096f067e8971333620d28dad8640e3ec97b2deaee0626ef3fd0d0fc"
     },
     {
       "path": "scripts/coverage-unit-runner.test.mjs",
@@ -3215,8 +3267,17 @@
       "targets": [
         "api/middleware.py"
       ],
-      "reason": "TestConfig and TestMiddlewareAsgiLevel use direct middleware with synthetic inner app/receive/send, so they are unit candidates, not automatically API integration. Real CORS/auth stack cooperation, FastAPI TestClient routes, multipart parser/spool lifecycle and app wiring are independent integration/static checks. Portable direct content-type rejection and config validation can also be split as units.",
-      "sha256": "54a372817f3c4a75d08ba4ceba97fee0fdf4e366074bf3eb4d758232ad130dfa"
+      "reason": "Retained real FastAPI/TestClient, CORS/auth composition and multipart spool lifecycle cases. Pure direct middleware/config cases split into test_max_body_size_middleware_unit.py; remaining file stays mixed.",
+      "sha256": "3c4ea4473a43f0f4c84e06d0bd9815e06d521a6b4e6626750014ddcb353de287"
+    },
+    {
+      "path": "tests/test_max_body_size_middleware_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/middleware.py"
+      ],
+      "reason": "Direct config function and one middleware under synthetic in-memory ASGI scope/receive/send/inner app. No framework pipeline, HTTP client, network, database, subprocess or spool/filesystem operations. 18 cases moved losslessly; see docs/quality/body-size-unit-split.md.",
+      "sha256": "e170c5f4b56da02b2d500553beb998a0871459f45139e0221de027cb77f6cb39"
     },
     {
       "path": "tests/test_migration_integrity.py",
@@ -3986,9 +4047,15 @@
     },
     {
       "path": "tests/test_utils.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "open_notebook/utils/text_utils.py",
+        "open_notebook/utils/token_utils.py",
+        "open_notebook/utils/version_utils.py",
+        "open_notebook/utils/context_builder.py",
+        "open_notebook/graphs/source_chat.py"
+      ],
+      "reason": "Full file reviewed: direct string/version predicates and fake tokenizer tests are unit candidates, but two installed-version tests use real importlib package metadata, several budgeting cases use real tokenizer data, and real Source.get_context feeds graph formatting. These distinct dependencies require splitting; the file is not all unit despite its docstring.",
       "sha256": "a062118e1f7b776468a18a3bab17b387f20dfbba3ade8c2822c4db02fda1d6ff"
     },
     {

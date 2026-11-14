@@ -1,9 +1,8 @@
 """
 Tests for api.middleware.MaxBodySizeMiddleware.
 
-Covers the raw-ASGI unit behavior (Content-Length pre-check, streaming
-enforcement for chunked/no-Content-Length requests, CORS interaction) plus
-integration through a real FastAPI app and the actual registered app.
+Mixed CORS/authentication/FastAPI/multipart integration and residual config
+checks. Pure middleware/config cases live in test_max_body_size_middleware_unit.py.
 """
 
 import pytest
@@ -12,9 +11,7 @@ from fastapi.testclient import TestClient
 from starlette.middleware.cors import CORSMiddleware
 
 from api.middleware import (
-    DEFAULT_MAX_UPLOAD_SIZE_MB,
     MaxBodySizeMiddleware,
-    get_max_upload_size_bytes,
 )
 
 
@@ -90,107 +87,6 @@ class CollectingSend:
         return None
 
 
-class TestConfig:
-    def test_default_is_100mb(self, monkeypatch):
-        monkeypatch.delenv("OPEN_NOTEBOOK_MAX_UPLOAD_SIZE_MB", raising=False)
-        assert DEFAULT_MAX_UPLOAD_SIZE_MB == 100
-        assert get_max_upload_size_bytes() == 100 * 1024 * 1024
-
-    def test_reads_env_override(self, monkeypatch):
-        monkeypatch.setenv("OPEN_NOTEBOOK_MAX_UPLOAD_SIZE_MB", "5")
-        assert get_max_upload_size_bytes() == 5 * 1024 * 1024
-
-    def test_malformed_env_falls_back_to_default(self, monkeypatch):
-        monkeypatch.setenv("OPEN_NOTEBOOK_MAX_UPLOAD_SIZE_MB", "not-a-number")
-        assert get_max_upload_size_bytes() == 100 * 1024 * 1024
-
-    def test_non_positive_env_falls_back_to_default(self, monkeypatch):
-        # A zero/negative limit would 413 every request that has a body.
-        monkeypatch.setenv("OPEN_NOTEBOOK_MAX_UPLOAD_SIZE_MB", "0")
-        assert get_max_upload_size_bytes() == 100 * 1024 * 1024
-        monkeypatch.setenv("OPEN_NOTEBOOK_MAX_UPLOAD_SIZE_MB", "-5")
-        assert get_max_upload_size_bytes() == 100 * 1024 * 1024
-
-
-class TestMiddlewareAsgiLevel:
-    @pytest.mark.asyncio
-    async def test_content_length_precheck_rejects_before_app_runs(self):
-        app_called = False
-
-        async def inner_app(scope, receive, send):
-            nonlocal app_called
-            app_called = True
-            await _echo_body_app(scope, receive, send)
-
-        middleware = MaxBodySizeMiddleware(inner_app, max_body_size=10)
-        scope = make_scope(headers={"content-length": "1000"})
-        send = CollectingSend()
-        await middleware(scope, FakeReceiveStream([b"x" * 1000]), send)
-
-        assert not app_called, (
-            "inner app must not run when Content-Length exceeds the limit"
-        )
-        assert send.status == 413
-
-    @pytest.mark.asyncio
-    async def test_small_body_passes_through(self):
-        middleware = MaxBodySizeMiddleware(_echo_body_app, max_body_size=1000)
-        scope = make_scope(headers={"content-length": "5"})
-        send = CollectingSend()
-        await middleware(scope, FakeReceiveStream([b"hello"]), send)
-
-        assert send.status == 200
-        assert send.body == b"received 5 bytes"
-
-    @pytest.mark.asyncio
-    async def test_streaming_body_without_content_length_is_still_enforced(self):
-        """A client can omit Content-Length (chunked transfer-encoding) - the
-        middleware must still catch an oversized body as it streams in."""
-        middleware = MaxBodySizeMiddleware(_echo_body_app, max_body_size=10)
-        scope = make_scope(headers={})  # no content-length
-        send = CollectingSend()
-        chunks = [b"a" * 5, b"b" * 5, b"c" * 5]  # totals 15 > 10
-        await middleware(scope, FakeReceiveStream(chunks), send)
-
-        assert send.status == 413
-
-    @pytest.mark.asyncio
-    async def test_malformed_content_length_falls_back_to_streaming_check(self):
-        middleware = MaxBodySizeMiddleware(_echo_body_app, max_body_size=10)
-        scope = make_scope(headers={"content-length": "not-a-number"})
-        send = CollectingSend()
-        await middleware(scope, FakeReceiveStream([b"x" * 1000]), send)
-
-        assert send.status == 413  # caught by streaming enforcement instead
-
-    @pytest.mark.asyncio
-    async def test_non_http_scope_passes_through_untouched(self):
-        calls = []
-
-        async def inner_app(scope, receive, send):
-            calls.append(scope["type"])
-
-        middleware = MaxBodySizeMiddleware(inner_app, max_body_size=10)
-        await middleware({"type": "lifespan"}, FakeReceiveStream([]), CollectingSend())
-        assert calls == ["lifespan"]
-
-    @pytest.mark.asyncio
-    async def test_exactly_at_limit_passes(self):
-        middleware = MaxBodySizeMiddleware(_echo_body_app, max_body_size=10)
-        scope = make_scope(headers={"content-length": "10"})
-        send = CollectingSend()
-        await middleware(scope, FakeReceiveStream([b"x" * 10]), send)
-        assert send.status == 200
-
-    @pytest.mark.asyncio
-    async def test_one_byte_over_limit_rejected(self):
-        middleware = MaxBodySizeMiddleware(_echo_body_app, max_body_size=10)
-        scope = make_scope(headers={"content-length": "11"})
-        send = CollectingSend()
-        await middleware(scope, FakeReceiveStream([b"x" * 11]), send)
-        assert send.status == 413
-
-
 class TestCorsInteraction:
     @pytest.mark.asyncio
     async def test_cors_headers_present_on_413_when_wrapped_by_cors_middleware(self):
@@ -256,44 +152,6 @@ class TestRealAppWiring:
         # __name__, but every registered middleware here is a plain class.
         classes = [getattr(m.cls, "__name__", "") for m in app.user_middleware]
         assert classes.index("CORSMiddleware") < classes.index("MaxBodySizeMiddleware")
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "headers", [{}, {"content-length": "21"}, {"content-length": "1"}]
-)
-async def test_portable_route_budget_stream_and_header(headers):
-    middleware = MaxBodySizeMiddleware(
-        _echo_body_app, max_body_size=10, portable_body_size=20
-    )
-    send = CollectingSend()
-    await middleware(
-        make_scope(headers=headers, path="/api/personal/imports/portable"),
-        FakeReceiveStream([b"a" * 10, b"b" * 11]),
-        send,
-    )
-    assert send.status == 413
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "path,method,status",
-    [
-        ("/api/personal/imports/portable", "POST", 200),
-        ("/api/personal/imports/portable/", "POST", 413),
-        ("/api/personal/imports/portable", "PUT", 413),
-        ("/api/sources", "POST", 413),
-    ],
-)
-async def test_portable_override_is_exact_route_only(path, method, status):
-    middleware = MaxBodySizeMiddleware(
-        _echo_body_app, max_body_size=10, portable_body_size=20
-    )
-    send = CollectingSend()
-    await middleware(
-        make_scope(path=path, method=method), FakeReceiveStream([b"x" * 20]), send
-    )
-    assert send.status == status
 
 
 @pytest.mark.asyncio
