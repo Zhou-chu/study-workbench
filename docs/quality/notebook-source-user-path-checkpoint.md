@@ -119,3 +119,38 @@ static; all hashes validated before the run. Raw logs/coverage/receipts remain
 outside the checkout. No main merge, deployment, real-data mutation or migration.
 Workspace lint/typecheck and legacy frontend lint/tsc also pass for this frozen
 source; seven legacy lint warnings remain. No browser acceptance was executed.
+
+## Follow-on: grounded answering and source lifecycle (frozen 15f1197)
+
+Adds 26 grounded-turn and 28 source-lifecycle units. Real turn construction,
+message budgeting, injected-model generation handling and response decisions
+remain. External evidence/retrieval services, storage and project locks are
+replaced. Cases exercise scope/receipt reuse, follow-up clarification, empty
+retrieval, bounded outlines, invalid citations and cancellation/failure results.
+They do not prove actual retrieval quality, LLM accuracy or durable transactions.
+The final scope-check error is deliberately reconstructed by production; tests
+assert domain rejection there, not false exception-identity preservation.
+
+Source cases retain real retry/status/model logic, replacing persistence,
+attempt ownership protocol, queue, status methods and file-support checks. They
+verify original input reuse, unresolved/active task refusal, uncertain submission
+identity and cancellation; no actual file, queue or worker-termination acceptance.
+No production behavior changed or new reproducible defect was demonstrated.
+Focused related suites passed 74 and 108 cases; exact-file mypy/Ruff/format pass.
+
+Aggregate evidence: full offline Python 5862 passed, 128 skipped, two warnings,
+the same seven historical temporary-parent custody failures, 149.93s. Reviewed
+subset: 135 files, 2904 passed, one warning, 133.65s; 2904 collected cases and
+8712 native phases, no deselection or collection failures. Whole strict
+classification remains unfinished and no integration cases were relabeled.
+
+Unchanged 181-source denominator: 24,027 statements/7,036 branches, 56 existing
+excluded lines, matching source hashes before/after. Lines 13,303/24,027 =
+55.3669%; branches 3,259/7,036 = 46.3189%; native combined 53.3175%; unchanged
+90.01 threshold exits 1. Actual union gains 149 lines/61 arcs over the prior
+source/import subset. Full Ruff/format pass; mypy remains 201 errors in 36 files,
+486 checked. Manifest 572 entries: 257 unit, 154 mixed, 69 component, 56 tool,
+28 API and eight static; all hashes checked. Original reports are external.
+No main merge, desktop access attempt, deployment, real-data change or migration.
+The frozen workspace lint/typecheck and legacy frontend lint/tsc also exit 0;
+legacy lint retains seven warnings. No browser or live application was started.
