@@ -825,9 +825,17 @@
     },
     {
       "path": "apps/web/src/features/settings/model-setup-journey.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/settings/ModelsPage.tsx",
+        "apps/web/src/features/settings/ModelSetupGuide.tsx",
+        "apps/web/src/features/settings/use-configuration.ts",
+        "apps/web/src/features/settings/configuration-store.ts",
+        "apps/web/src/features/settings/SetupWarning.tsx",
+        "apps/web/src/app/WorkbenchSession.tsx",
+        "apps/web/src/data/settings-api.ts"
+      ],
+      "reason": "Every ready/renderLibrary case mounts actual routes/session/configuration owners and metadata loading. Fetch replacements isolate HTTP only; no whole test function is an isolated logical-unit case.",
       "sha256": "03323be2e979f4ce843b893fd8503d7b0b036c5afd635d0d394376b4000312cc"
     },
     {
@@ -844,9 +852,19 @@
     },
     {
       "path": "apps/web/src/features/settings/retrieval.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/settings/RetrievalPanel.tsx",
+        "apps/web/src/features/settings/MaintenanceControls.tsx",
+        "apps/web/src/features/settings/use-retrieval.ts",
+        "apps/web/src/features/settings/retrieval-state.ts",
+        "apps/web/src/features/settings/use-settings.ts",
+        "apps/web/src/features/settings/settings-store.ts",
+        "apps/web/src/features/sources/use-source-selection.ts",
+        "apps/web/src/data/settings-api.ts",
+        "apps/web/src/app/WorkbenchSession.tsx"
+      ],
+      "reason": "Actual retrieval/settings/source selection and job authority cooperate. ConversationPanel wrapper retains the real component and registry/capture invalidation; HTTP mocks do not make these unit.",
       "sha256": "c06b0c7d558e0fbec299aa02fef9ff6ed03dc3705c85ec8bfede598ba82f2202"
     },
     {
@@ -860,9 +878,21 @@
     },
     {
       "path": "apps/web/src/features/settings/settings.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/settings/NotebookSettings.tsx",
+        "apps/web/src/features/settings/use-settings.ts",
+        "apps/web/src/features/settings/settings-store.ts",
+        "apps/web/src/features/settings/ApplicationSettings.tsx",
+        "apps/web/src/features/settings/ModelsPage.tsx",
+        "apps/web/src/features/settings/AdvancedPage.tsx",
+        "apps/web/src/features/settings/TransformationsPage.tsx",
+        "apps/web/src/features/settings/use-configuration.ts",
+        "apps/web/src/features/settings/use-transformations.ts",
+        "apps/web/src/data/settings-api.ts",
+        "apps/web/src/app/WorkbenchSession.tsx"
+      ],
+      "reason": "Real routes/navigation, source writer reservations, provider retirement and retained jobs exercise independently owned controllers/hooks/stores; no independent pure function case.",
       "sha256": "3e4a97c7444e7bb973bf5505a54af69da91cb799d2cddf24cba28a7db395675c"
     },
     {
@@ -1421,10 +1451,26 @@
     },
     {
       "path": "frontend/src/components/evidence/EvidenceReader.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "0af2c887f9345f3fdeebff5b619520a0d2f7a94fc0829cb4ae3db506728b43c1"
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/components/evidence/EvidenceReader.tsx",
+        "frontend/src/components/evidence/EvidenceMaintenance.tsx",
+        "frontend/src/components/evidence/SourceProvenance.tsx",
+        "frontend/src/lib/utils/evidence.ts",
+        "frontend/src/app/globals.css"
+      ],
+      "reason": "After 20 complete isolated reader nodes split out, retains authored CSS contracts and maintenance/reader revision/refetch collaboration plus other not-yet-separated cases; whole file remains mixed.",
+      "sha256": "00dc0ae4fc65786724d7a6692308da39560e02c322c26947d53bb7d505af06a6"
+    },
+    {
+      "path": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/evidence/EvidenceReader.tsx",
+        "frontend/src/lib/utils/evidence.ts"
+      ],
+      "reason": "20 unchanged single-reader nodes/22 cases with API/PdfCanvas/translation doubles; navigation/filter/late result/abort/quote codepoint logic. Shared render fixture lives in existing src/test domain; real maintenance flows/CSS contracts remain original mixed file.",
+      "sha256": "16289b22fe03f5a25972b806763c6596c38b4a4a032b6221526583697ae26988"
     },
     {
       "path": "frontend/src/components/evidence/PdfCanvas.test.tsx",
@@ -1578,9 +1624,13 @@
     },
     {
       "path": "frontend/src/components/sources/SourceDetailContent.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/components/sources/SourceDetailContent.tsx",
+        "frontend/src/lib/hooks/use-sources.ts",
+        "frontend/src/lib/utils/command-submission.ts"
+      ],
+      "reason": "All cases mount actual source detail with real useSource/query data ownership; endpoint APIs, presentation selectors/tabs and leaf dialogs are doubled. Unknown-submission tests deliberately retain the real shared inFlight/uncertain registry across unmount/remount and verify retry confirmation. Clipboard controls are synthetic but reached through that real component/data-hook composition; no whole standalone predicate node exists.",
       "sha256": "b166f444d3ca5f25e2f680dc0b05e0c8833d044a2eacb6ad223842f853336b6a"
     },
     {
@@ -1694,9 +1744,20 @@
     },
     {
       "path": "frontend/src/components/workbench/StudyWorkbench.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/components/workbench/StudyWorkbench.tsx",
+        "frontend/src/components/providers/TurnOperationProvider.tsx",
+        "frontend/src/lib/hooks/use-workbench.ts",
+        "frontend/src/lib/hooks/use-workbench-turn.ts",
+        "frontend/src/lib/hooks/use-workbench-retrieval.ts",
+        "frontend/src/lib/hooks/use-workbench-evidence-search.ts",
+        "frontend/src/lib/hooks/use-workbench-uploads.ts",
+        "frontend/src/lib/workbench/turn-operations.ts",
+        "frontend/src/app/(dashboard)/layout.tsx",
+        "frontend/src/app/globals.css"
+      ],
+      "reason": "Actual workspace cache/selection writer/turn admission and settlement, dashboard authentication recovery and note conflict UI collaborate; also CSS source-rule checks. No full-file unit classification or pixel-validation claim.",
       "sha256": "2a3527a79358095df5b93ece34132a9ba79b2a9aedd96f6e099d4d5f91ac3430"
     },
     {
@@ -1758,9 +1819,11 @@
     },
     {
       "path": "frontend/src/lib/api/bff-session-store.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/api/bff-session-store.ts"
+      ],
+      "reason": "One in-memory store state machine: all NativeCalls replaced, fake clock and deferred promises; real crypto only computes in-memory digests/randomness. Capacity, concurrent owner/follower and module-reset process registry are store-internal contracts; no HTTP/DB/FS/process.",
       "sha256": "d8b24d4cffe4f8f733f82eba204e1bb4f749ccebb02a9f58d2ca997834bb5b66"
     },
     {
@@ -1774,9 +1837,15 @@
     },
     {
       "path": "frontend/src/lib/api/client.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/lib/api/client.ts",
+        "frontend/src/lib/api/browser-transport.ts",
+        "frontend/src/lib/api/query-client.ts",
+        "frontend/src/lib/auth/session-coordinator.ts",
+        "frontend/src/lib/workbench/turn-context.ts"
+      ],
+      "reason": "Fake Axios-adapter dispatch cases coexist with installed fetch-adapter redirect/multipart/blob/timeout compatibility and real turn-context/session epoch coordination. Neither all unit nor actual browser/network acceptance.",
       "sha256": "2bf347f2e16919897f27c83a373b727f34fb089da2a62224b380fb1b35af7b5c"
     },
     {
@@ -1835,11 +1904,25 @@
       "sha256": "83df73d08384d0e61c1057d240a6f59ec8d84dec57d9cf216b05d06a7c8abdba"
     },
     {
+      "path": "frontend/src/lib/api/session-proxy.guards.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/api/session-proxy.ts"
+      ],
+      "reason": "Early Request/Response cookie/origin/body and route validation never enters real BffSessionStore protocol. Default store construction is inert. Native fetch boundary is fake; no listener or network.",
+      "sha256": "c4d698cf219ee7a01ce2754d04b5f7ebbda1312cdf83eda4f29a4fae45645e66"
+    },
+    {
       "path": "frontend/src/lib/api/session-proxy.test.ts",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "92a67b60d09b8d042183cd936371a17562aad586ae370b35e1354ecbd318491d"
+      "layer": "mixed",
+      "targets": [
+        "frontend/src/lib/api/session-proxy.ts",
+        "frontend/src/lib/api/session-proxy-policy.ts",
+        "frontend/src/lib/api/bff-session-store.ts",
+        "frontend/next.config.ts"
+      ],
+      "reason": "Early guard units split unchanged; retained real session store/proxy lifecycle collaboration and static config checks remain mixed.",
+      "sha256": "ce7ad1a9a166c54eab91c4bd9b69457f916d814f662ba8334dba788a0fe682a2"
     },
     {
       "path": "frontend/src/lib/api/session-races.test.ts",
@@ -2014,9 +2097,11 @@
     },
     {
       "path": "frontend/src/lib/hooks/use-source-chat.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/hooks/use-source-chat.ts"
+      ],
+      "reason": "Complete single-hook generation/selection/optimistic state and cache reconciliation suite. Every source-chat API, toast and i18n boundary is doubled; streams/promises are synthetic in-memory inputs. QueryClient executes framework caching with copied production freshness options, not a separate product/auth/routing workflow. Matches existing use-notebook-chat unit boundary; no real network or persistence.",
       "sha256": "aeba6baad7e4c611d920d306734bc5788c98a0f67ddac6eb03fe88048b87745b"
     },
     {
@@ -2030,9 +2115,15 @@
     },
     {
       "path": "frontend/src/lib/hooks/use-workbench-evidence-search.test.tsx",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/lib/hooks/use-workbench-evidence-search.ts",
+        "frontend/src/lib/hooks/use-workbench.ts",
+        "frontend/src/lib/workbench/turn-context.ts",
+        "frontend/src/lib/auth/session-coordinator.ts",
+        "frontend/src/lib/api/browser-transport.ts"
+      ],
+      "reason": "Real turn-context publication/subscriptions and auth/session coordinator transitions cooperate with search ownership; showCached also mounts real useWorkbench and observes authoritative QueryClient cache ABA. APIs are fake but independently owned lifecycle components remain real.",
       "sha256": "15f633a1064fee05b2a0bff3cf3cdce249a2da661d14b6c194f2e562854a9caf"
     },
     {
@@ -2488,6 +2579,15 @@
       "sha256": "80641b52fb26359e6cbc340dcb8f5c2402937f90e06ea491ca49156bdf331097"
     },
     {
+      "path": "scripts/coverage-manifest-custody.test.mjs",
+      "layer": "tool-integration",
+      "targets": [
+        "scripts/coverage-integrity.mjs"
+      ],
+      "reason": "Real temporary filesystem files, symlinks, descriptor ownership and rename failures validate manifest write custody; six native filesystem cases, not pure unit.",
+      "sha256": "ce8034aed00496cfd9f0898e2f31e3b2e2b131c66a517c236319b8b7b7f28eae"
+    },
+    {
       "path": "scripts/coverage-native-collector.test.mjs",
       "layer": "tool-integration",
       "targets": [
@@ -2516,6 +2616,44 @@
       "sha256": "7e796475baa381446b1d87f187168aa6271ca66935f241fc994c37091537836a"
     },
     {
+      "path": "scripts/coverage-python-protocol.test.mjs",
+      "layer": "unit",
+      "targets": [
+        "scripts/coverage-python-protocol.mjs"
+      ],
+      "reason": "16 direct pure tests of production inventory and native pytest evidence protocol; synthetic JSON only, no subprocess or filesystem fixture.",
+      "sha256": "f5c48079df8fee219a481f8cd40f177b46d270332306cc81a476ba24bb247f1b"
+    },
+    {
+      "path": "scripts/coverage-python-unit.test.mjs",
+      "layer": "tool-integration",
+      "targets": [
+        "scripts/coverage-python-unit.mjs",
+        "scripts/quality/unit_pytest_evidence.py"
+      ],
+      "reason": "Five tool integration tests use real Git, filesystem, pytest, coverage.py and subprocesses. Includes old complete→failed selection/argument/input and foreign-root regressions; not strict unit despite mocks at higher boundaries.",
+      "sha256": "d0c5bb24f13f536ea0a4f3038ce955ad1c8e3f4d9511d9f5118197d633da4091"
+    },
+    {
+      "path": "scripts/coverage-unit-all.test.mjs",
+      "layer": "tool-integration",
+      "targets": [
+        "scripts/coverage-unit-all.mjs",
+        "scripts/coverage-unit-output.mjs"
+      ],
+      "reason": "Actual CLI child startup with malformed options/module loading invalidates prior successful results; filesystem/subprocess test, not unit.",
+      "sha256": "a48a3f20298c91c851d5562c3b09e3d325ce56b731124f37eaba631ed29a1a62"
+    },
+    {
+      "path": "scripts/coverage-unit-output.test.mjs",
+      "layer": "tool-integration",
+      "targets": [
+        "scripts/coverage-unit-output.mjs"
+      ],
+      "reason": "Actual files, output-directory symlinks and atomic publication validate owned receipt custody.",
+      "sha256": "603786424a231af3344eecf2272eff9c33037b3a0b62ed30fb51995b021a4b1c"
+    },
+    {
       "path": "scripts/coverage-unit-plan.test.mjs",
       "layer": "unit",
       "targets": [
@@ -2525,6 +2663,15 @@
       "sha256": "fb04f6140096f067e8971333620d28dad8640e3ec97b2deaee0626ef3fd0d0fc"
     },
     {
+      "path": "scripts/coverage-unit-policy.test.mjs",
+      "layer": "unit",
+      "targets": [
+        "scripts/coverage-unit-policy.mjs"
+      ],
+      "reason": "Pure receipt identity, source-bounded raw counter reconstruction and exact integer ratio validation over synthetic records; installed native summarizer is pure library oracle, no process/filesystem fixture.",
+      "sha256": "c9e31f2baae7c9d8fea8d7f65774b7f4176b6066cc37006b10408386f625874d"
+    },
+    {
       "path": "scripts/coverage-unit-runner.test.mjs",
       "layer": "tool-integration",
       "targets": [
@@ -2532,7 +2679,7 @@
         "scripts/coverage-node-tests.mjs"
       ],
       "reason": "Real subprocess/filesystem/Git fixtures verify exact input and real empty-selection instrumenter behavior; separate reporter doubles only test dispatch, not coverage.",
-      "sha256": "6647408edad69f12ca9a15f342566455b26187eab83452b10959bd550bc54881"
+      "sha256": "0c08d63a9bc8c544605d86b88f4e66c153a3b194a49c74a26697a96267c09c80"
     },
     {
       "path": "scripts/coverage-unit-selection.test.mjs",
@@ -2542,6 +2689,16 @@
       ],
       "reason": "Real temporary Git repositories, filesystem mutation and Python child processes verify producer ownership and snapshot binding.",
       "sha256": "007e364663e97ca277d252d7b92c478648e75352231d2fb20d47de3003b88848"
+    },
+    {
+      "path": "scripts/coverage-unit-verify.test.mjs",
+      "layer": "tool-integration",
+      "targets": [
+        "scripts/coverage-unit-verify.mjs",
+        "scripts/coverage-unit-policy.mjs"
+      ],
+      "reason": "Actual raw/summary/execution files and production auditors with explicit inventory/Git adapter substitutes; validates evidence assembly, not a full repository measurement.",
+      "sha256": "ad25af45eaefcc2dd97c1a4ef8bea762e988483cfe768379652ae299fee64a89"
     },
     {
       "path": "scripts/tests/deployment/easypanel.test.ts",
@@ -2822,13 +2979,22 @@
       "sha256": "456f43dd1a61d042ce05a372867f5a7272e08f969f3b8a9bdcb7ab988db74c1a"
     },
     {
-      "path": "tests/test_connection_tester_offline_paths.py",
-      "layer": "mixed",
+      "path": "tests/test_connection_tester_audio_files.py",
+      "layer": "tool-integration",
       "targets": [
         "open_notebook/ai/connection_tester.py"
       ],
-      "reason": "HTTP/DNS/pinning/provider instances replaced in direct probe cases. test_audio_fallback_is_valid_silent_pcm checks real failed open; test_audio_reads_only_supplied_fixture creates/opens a file. Split the two audio boundary cases, not all provider cases.",
-      "sha256": "626bd2e15e480948169b7c76b8715b1cc9dd001da435a8e3986916eaabd01a56"
+      "reason": "Actual missing-file open and synthetic audio fixture write/read exercise filesystem boundary; not strict unit.",
+      "sha256": "b424efdb8ae0411290937e338e93460fcbf7541cfa9e7bb9bf7a8bf0c5dc21c3"
+    },
+    {
+      "path": "tests/test_connection_tester_offline_paths.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/ai/connection_tester.py"
+      ],
+      "reason": "Direct connection/model probes with fake pinned HTTP, provider instances and audio boundary. Actual probe logic retained; no socket, DNS, file access, provider credentials or model call. Two real audio file cases moved to separate tool-integration file.",
+      "sha256": "57f85e32c719764b222c30660e1699594e9432628c2e0e311615a287d4b1be6b"
     },
     {
       "path": "tests/test_content_core_errors.py",
@@ -2867,6 +3033,16 @@
       ],
       "reason": "Direct classification/stop_on checks coexist with actual surreal_commands build_async_retry_instance and tenacity retry compatibility execution. Split retry integration. Full-file independent review at f10d0f4; SHA256 verified after merge.",
       "sha256": "ae4f49701082a6faa5bd95a8d246da04c35dab84ad7f1aaac6cf615736b11a1c"
+    },
+    {
+      "path": "tests/test_context_policy_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/utils/context_builder.py",
+        "open_notebook/domain/notebook.py"
+      ],
+      "reason": "Actual formatting, fallback budget search and source projection with storage getters replaced; tokenizer availability forced to error exercises real fallback. No tokenizer files, graph, DB or provider.",
+      "sha256": "747ced14045447c124fb80eee68e97ac824af1ac6393047b57590324bf795edd"
     },
     {
       "path": "tests/test_cors_credentials.py",
@@ -3001,6 +3177,15 @@
       "sha256": "f9d15393a8791891055d63ff61bc7bc095cdfcd5e44d5243ab4e6cc718ade250"
     },
     {
+      "path": "tests/test_device_session_rejection_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/device_session_service.py"
+      ],
+      "reason": "Direct authentication rejection logic with only in-memory storage/credential doubles, injected clock/entropy and original non-collected fixture. Canonical token, owner/digest mismatch, usage revocation, old epoch recovery and rate-limit deadlines asserted; no actual filesystem/DB/network.",
+      "sha256": "8d9d27781eb9d892f35cca2922aaea077e07140ba14d3cb4d4bc4ca86939190f"
+    },
+    {
       "path": "tests/test_disposable_database.py",
       "layer": "tool-integration",
       "targets": [
@@ -3124,34 +3309,76 @@
     },
     {
       "path": "tests/test_evidence_embedding_calls.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "3d31f26773859c17b452f6ee921c64f1e06d6c1d2076bf7368583bbbc1fb7e74"
+      "layer": "component-integration",
+      "targets": [
+        "open_notebook/ai/evidence_embeddings.py"
+      ],
+      "reason": "Real DeploymentModelResolver, installed provider SDKs and HTTP client serialization through MockTransport exercise adapter interoperability, not logical unit.",
+      "sha256": "d01b283ec1cfea145d8ca5bff7fc1827511c39e6ff7661f2801a1e05e89b5787"
     },
     {
-      "path": "tests/test_evidence_embedding_profiles.py",
-      "layer": "mixed",
+      "path": "tests/test_evidence_embedding_client_unit.py",
       "targets": [
         "open_notebook/ai/evidence_embeddings.py",
         "open_notebook/domain/evidence_retrieval.py"
       ],
-      "reason": "Fingerprint/immutable DTO/scope/disclosure/endpoint normalization are direct units. load_profiles cases write/rewrite configuration files and read them through production filesystem loader; no provider probing. Full test file and relevant production/fixture boundaries reviewed at merged 588aaf5; no tests executed for classification.",
-      "sha256": "e670e0bc97ad2bc27febae8c92a25abaeae698030608b682013fb3e5429057be"
+      "layer": "unit",
+      "reason": "Real embedding client vector validation, disclosure rotation, batching and admission ContextVar/cancellation; FakeResolver/backend replace external model and provider boundaries. No installed adapter, network or filesystem flow.",
+      "sha256": "52381eb9c4a16ab9955d14411ba76e41e761df6180b2f68eec9309251ef9a4d9"
+    },
+    {
+      "path": "tests/test_evidence_embedding_profile_files.py",
+      "targets": [
+        "open_notebook/ai/evidence_embeddings.py",
+        "open_notebook/domain/evidence_retrieval.py"
+      ],
+      "layer": "tool-integration",
+      "reason": "Actual synthetic profile file write/rewrite/read invokes production configuration loader; not strict unit.",
+      "sha256": "5a81c7e1f142a838436a319d4020db026508d1e60b73450a7ab988cf62dff570"
+    },
+    {
+      "path": "tests/test_evidence_embedding_profiles.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/ai/evidence_embeddings.py",
+        "open_notebook/domain/evidence_retrieval.py"
+      ],
+      "reason": "Literal profile fingerprint, immutable DTO/scope/disclosure and endpoint value validation. Actual configuration file loader cases moved unchanged to separate tool file.",
+      "sha256": "2fbac44d1a356f2d7edc476ee7f2d5d03690499d8b6109ad365e0a47a8e8a136"
     },
     {
       "path": "tests/test_evidence_embedding_repository.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "open_notebook/database/evidence_embedding_repository.py",
+        "open_notebook/database/project_locks.py",
+        "open_notebook/domain/notebook.py",
+        "api/personal_store.py",
+        "api/routers/notebooks.py",
+        "api/evidence_service.py"
+      ],
+      "reason": "Fake SQL fixture does not replace project_lock: capture_scope/status/write_batch/publish use real lock files and flock. Parser/deletion cases also use real filesystem/process boundaries. Selected direct locked/delegation cases with explicit fake lock can be split, not the whole suite.",
       "sha256": "9ff10b49cfc6de993fea501a5a12be9518b31e5d1a90f4ad76423cf9d74fa72a"
     },
     {
       "path": "tests/test_evidence_indexing_jobs.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "tool-integration",
+      "targets": [
+        "api/evidence_indexing.py",
+        "open_notebook/database/evidence_embedding_repository.py",
+        "open_notebook/database/project_locks.py"
+      ],
+      "reason": "All 49 test functions reviewed: MemoryStore/SQL/provider/enqueue doubles retain real service/repository admission, commit, receipt and publication collaboration plus actual project/ownership locks. Even preview reaches real flock; no safe whole-node unit promotion identified.",
       "sha256": "221ff8d59ebaa19888cbcecb9c217eb3e769a54f57d9a22289fc49a69d4d38ba"
+    },
+    {
+      "path": "tests/test_evidence_indexing_pipeline_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_indexing.py"
+      ],
+      "reason": "Real indexing pipeline including preview/input/16+1 batches/admission/write/publish; external repository, transaction, provider, memory store and project lock replaced. No target methods mocked.",
+      "sha256": "498081f7192da1368fa6c18ece6a78afc96dd574909655ab930134f27d46696c"
     },
     {
       "path": "tests/test_evidence_indexing_routes.py",
@@ -3164,6 +3391,15 @@
       ],
       "reason": "Actual ASGI authentication and indexing routes with real indexing/repository collaboration coexist with direct IndexRequest validation and lazy-bridge construction-property unit cases. Shared indexing fixture uses repository logic with synthetic DB/provider. Full test file and relevant production/fixture boundaries reviewed at merged 588aaf5; no tests executed for classification.",
       "sha256": "b5fbf6220ecfa8296cbb5c76030783f269d7113e2cbad112039c97670a9b1404"
+    },
+    {
+      "path": "tests/test_evidence_indexing_state_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_indexing.py"
+      ],
+      "reason": "32 direct service state-machine cases replace storage/transaction/project-lock/repository/provider/queue boundaries only. Real target methods execute; cancellation/ownership/same-attempt reconciliation and snapshot/profile binding asserted, no real flock/DB/files.",
+      "sha256": "63e896996b9d3202d5e98bf9f8c132bd3b0c31be240a8811a99d9a1a6a2c723c"
     },
     {
       "path": "tests/test_explicit_credential_routing.py",
@@ -3187,6 +3423,15 @@
       ],
       "reason": "Direct source/transformation nodes and model forwarding use external I/O doubles and are unit candidates. TestContentProcessDeleteSource uploaded_file_deleted_when_flag_set and uploaded_file_kept_when_flag_not_set actually write/delete temporary files, so are filesystem/tool integration. Prompt/transformation graph compilation and is_tool structure assertions are static contracts; unused tmp_path alone is not an integration boundary.",
       "sha256": "78c0ba2717f4db7be45539c449e4db7e6b9c9812b57210338bc07c415db13898"
+    },
+    {
+      "path": "tests/test_grounded_generation_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/graphs/grounded_chat.py"
+      ],
+      "reason": "Real prompt/response budgeting and model dispatch with only provider/default I/O boundaries replaced; inert repository dependencies prevent accidental collaboration. No graph runner, ingest, DB or HTTP.",
+      "sha256": "7a3233c70238c55e3f3259e22e8a5004a0f43b93ca2b039ecde3072a1a8a666b"
     },
     {
       "path": "tests/test_historical_database_runner.py",
@@ -3411,6 +3656,16 @@
       "sha256": "6b6471e599c39436fb84dfa28aee65458bf799f8eb89b9fcf56d19341bda4aaf"
     },
     {
+      "path": "tests/test_personal_service_citation_contract.py",
+      "layer": "component-integration",
+      "targets": [
+        "api/personal_service.py",
+        "api/evidence_service.py"
+      ],
+      "reason": "Retains actual independent EvidenceService.validate_citation during PersonalService.save_note, checking forged verified citation rejection. Persistence is synthetic; still cross-service trust contract, not unit.",
+      "sha256": "ab06a7ceaad14a6386e83684692ce21aecc77407e8e3bebacd4acc284ee253f3"
+    },
+    {
       "path": "tests/test_personal_store_bulk_unit.py",
       "layer": "unit",
       "targets": [
@@ -3559,6 +3814,24 @@
       ],
       "reason": "Checks project override templates through real podcast_creator prompter discovery/render interface and current SDK variable conventions, including override-vs-bundled and solo branches. Template-loader/SDK compatibility, no model call or output files.",
       "sha256": "8deedbd873c32ac514a23277816adf2539d3a481d71c1d01d421e169db4f5cda"
+    },
+    {
+      "path": "tests/test_portable_project_validation_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/portable_service.py"
+      ],
+      "reason": "Direct pure entity-closure/identity/sanitizer/path/revision/citation validation on synthetic in-memory records. No PortableService instance, ZIP, files, stores, HTTP or database; exact rule errors and Unicode codepoint locator behavior asserted.",
+      "sha256": "dc2a13507eb2992f37cd40eb37606d1d0f507ece5f76b22de2f74f14e16142ac"
+    },
+    {
+      "path": "tests/test_portable_restore_queue_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/portable_service.py"
+      ],
+      "reason": "Real archive identity remap and export queue orchestration with memory persistence/locks and submission boundary doubles. Constructor root resolution omitted via object.__new__; no archive, stage, real file, database or worker execution.",
+      "sha256": "42bb718669acfaa3dfef9f21a5ec02269e25764775e03f7610b174768f6e33cc"
     },
     {
       "path": "tests/test_portable_zip.py",
@@ -3889,9 +4162,12 @@
     },
     {
       "path": "tests/test_spa_acceptance_ownership.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "scripts/v1/spa_acceptance.py",
+        "apps/web/src/app/route-coverage.ts"
+      ],
+      "reason": "Mixes pure minimal-environment logic, static catalog/source contracts and real directories/manifests/permissions/inode/FIFO/atomic publication checks. Synthetic inputs do not remove actual filesystem tool integration.",
       "sha256": "188ae4b4769916123096abcd2efa98c59f8c3d590309224ae037dc4eec4ed796"
     },
     {
@@ -3910,17 +4186,45 @@
     },
     {
       "path": "tests/test_spa_cutover_plan.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "82aa78f142a7eb76383abe33771ce7159ae0474a73b6aef6960c8aaef222225a"
+      "layer": "tool-integration",
+      "targets": [
+        "scripts/v1/spa_cutover_plan.py",
+        "scripts/v1/spa_cutover_schema.py",
+        "scripts/v1/spa_cutover_evidence.py"
+      ],
+      "reason": "After AST-preserving split, remaining 18 functions/28 cases exercise real reader/filesystem or CLI/import subprocess boundaries; no deployment occurs.",
+      "sha256": "db0e897bc8c887092347cdb07cbaca82721b3efa81cb139c59e80938745583b5"
+    },
+    {
+      "path": "tests/test_spa_cutover_plan_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/v1/spa_cutover_plan.py",
+        "scripts/v1/spa_cutover_schema.py",
+        "scripts/v1/spa_cutover_evidence.py"
+      ],
+      "reason": "47 original pure planning functions/128 parameterized cases over synthetic declarations; internal schema/evidence helpers form one logical planner. Static catalog fixture allowed; explicit loaders are replaced and no cutover or process runs. Original function ASTs unchanged.",
+      "sha256": "186bd69a0f0d79c3219afec1b9a3c81b9a337cb9df3c87f741897b4d1d4a67a3"
     },
     {
       "path": "tests/test_spa_native_runtime.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "c3fdab40555c886cab4c14b651d6eb1443315597eef34ba8082e9174ed97189c"
+      "layer": "mixed",
+      "targets": [
+        "scripts/v1/spa_native_runtime.py",
+        "scripts/v1/spa_acceptance.py",
+        "scripts/v1/runtime_lifecycle.py"
+      ],
+      "reason": "After pure transaction/config split, retains private-directory/log/receipt lifecycle tool cases and static import checks. No whole-file unit claim.",
+      "sha256": "298cd93fb0a01ec8e5d5cc0701efdc48d3447ec44b7919e3eb4ec5c5112363b8"
+    },
+    {
+      "path": "tests/test_spa_native_runtime_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/v1/spa_native_runtime.py"
+      ],
+      "reason": "13 original functions/31 cases isolate transaction state/configuration using MockTransport, fake clock/guard and substituted port/source/run boundaries. No lifecycle directories, threads or runtime services; all original ASTs preserved.",
+      "sha256": "96b91ac144a0ff37b3fb3a90221bde60ef32a6ecdb68cc0420e776a9e7cb3704"
     },
     {
       "path": "tests/test_ssl_config.py",
@@ -4055,8 +4359,19 @@
         "open_notebook/utils/context_builder.py",
         "open_notebook/graphs/source_chat.py"
       ],
-      "reason": "Full file reviewed: direct string/version predicates and fake tokenizer tests are unit candidates, but two installed-version tests use real importlib package metadata, several budgeting cases use real tokenizer data, and real Source.get_context feeds graph formatting. These distinct dependencies require splitting; the file is not all unit despite its docstring.",
-      "sha256": "a062118e1f7b776468a18a3bab17b387f20dfbba3ade8c2822c4db02fda1d6ff"
+      "reason": "After lossless split, retained 23 context/source/tokenizer and installed-package metadata cases remain mixed. Pure direct text/fallback/version predicates moved into test_utils_unit.py; original assertions and parameter values retained.",
+      "sha256": "e9af527db5f5efa19bb2d96357f6d74bd5c99ae86d69bea235ba56e967c822ad"
+    },
+    {
+      "path": "tests/test_utils_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/utils/text_utils.py",
+        "open_notebook/utils/token_utils.py",
+        "open_notebook/utils/version_utils.py"
+      ],
+      "reason": "19 existing direct text/version predicates and injected tokenizer-failure cases moved unchanged; no real metadata lookup, network, database or token cache use.",
+      "sha256": "49ebb22d82371ad94b3e7b0320f60c159f97a1985d37ef3e707927cc0e90e261"
     },
     {
       "path": "tests/test_ux_multipart_unit.py",
@@ -4124,17 +4439,28 @@
     },
     {
       "path": "tests/test_v1_container_contract.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "scripts/v1/container_check.py",
+        "deploy/v1/entrypoint.py",
+        "api/device_session_credentials.py",
+        "api/auth.py",
+        "api/personal_security.py",
+        "deploy/v1/compose.yaml"
+      ],
+      "reason": "Real CLI subprocess, private secret filesystem preparation and FastAPI middleware/TestClient cases are mixed with source/build contract assertions. No complete independently reviewed pure unit function.",
       "sha256": "b2c78215874ff609bab4cd101d1e7ca20f374445d2ebc4c047fe51c1d0207ead"
     },
     {
       "path": "tests/test_v1_device_session_core.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "4fd853f7b830c9907c0dc0225c0108c9b1bdad5190ca716e97eb0398af76af26"
+      "layer": "tool-integration",
+      "targets": [
+        "api/device_session_service.py",
+        "api/device_session_models.py",
+        "api/device_session_credentials.py"
+      ],
+      "reason": "After split retains four real password-file and background-thread safety functions/seven cases; original AST unchanged.",
+      "sha256": "6a1fe8bb6100135834ebc345245a807662d62e4c97d4cc7863bbe74c2c1787e6"
     },
     {
       "path": "tests/test_v1_device_session_http.py",
@@ -4153,6 +4479,17 @@
       ],
       "reason": "test_unknown_ack_fails_without_retry, test_malformed_mutation_ack_is_not_success and test_malformed_read_ack_is_not_absence use fake connection query_raw and are direct repository unit candidates. Opt-in native transaction and corruption cases use actual SurrealDB/migration SQL, and corruption also traverses ASGI; never unit even when skipped.",
       "sha256": "464faeba710c22d828339a847c22ed001cd6d651f5f9ea2867bc0d558a118b8b"
+    },
+    {
+      "path": "tests/test_v1_device_session_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/device_session_service.py",
+        "api/device_session_models.py",
+        "api/device_session_credentials.py"
+      ],
+      "reason": "19 functions/21 parameterized cases use in-memory storage, deterministic clock/randomness and async event gates; credential memory branch never dispatches file threads. All original AST preserved; real DB semantics not claimed.",
+      "sha256": "a07c69e705af5adb0aa96ba5db37d357cc49927938b661076f547929d80f85d4"
     },
     {
       "path": "tests/test_v1_download_contracts.py",
@@ -4232,9 +4569,15 @@
     },
     {
       "path": "tests/test_v1_evidence_routes.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "api-integration",
+      "targets": [
+        "api/routers/evidence.py",
+        "api/evidence_service.py",
+        "api/personal_service.py",
+        "api/evidence_maintenance.py",
+        "api/main.py"
+      ],
+      "reason": "Real ASGI application/handlers/routes/services, with original files and parser paths; only persistence/submission replaced. No complete standalone logical-unit case.",
       "sha256": "2fc9ef915eee670f363fa98222a10ef6c9e280fbf552556e1882f0beee2cd9a0"
     },
     {
@@ -4348,10 +4691,29 @@
     },
     {
       "path": "tests/test_v1_note_repository.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "30da22e8a8e33ce248d5b261d928ff106e1a88931661e3aa77dda4c311d951a3"
+      "layer": "tool-integration",
+      "targets": [
+        "open_notebook/database/note_repository.py",
+        "open_notebook/database/project_locks.py",
+        "open_notebook/database/async_migrate.py",
+        "open_notebook/domain/notebook.py",
+        "api/personal_service.py",
+        "api/routers/notes.py",
+        "api/routers/evidence.py",
+        "api/routers/embedding.py",
+        "api/routers/insights.py"
+      ],
+      "reason": "After acknowledgement split, all remaining tests require opt-in synthetic Surreal transactions/migrations and sometimes real file locks/HTTP collaboration; skips do not establish success.",
+      "sha256": "60ef16156d318bc1401992575ff5dbffbc842a64a57e2acf3e3f8ba75ecc1915"
+    },
+    {
+      "path": "tests/test_v1_note_transaction_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/database/note_repository.py"
+      ],
+      "reason": "Direct transaction acknowledgement validation with substituted db_connection/query_raw boundary; two parameterized cases, no project lock or actual database, original AST unchanged.",
+      "sha256": "c5eedd9651338aa5585bd98317f7f7af02f33f74118583110618fbec7a062822"
     },
     {
       "path": "tests/test_v1_notebooklm_auth.py",
@@ -4467,12 +4829,12 @@
     },
     {
       "path": "tests/test_v1_personal_service.py",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "api/personal_service.py"
       ],
-      "reason": "Selection, submission, canonical-turn, unknown-engine and workspace behavior use a memory store plus provider/queue/native-note doubles and are direct service unit candidates. test_note_cannot_forge_verified_citation instead deliberately retains real EvidenceService.validate_citation across note saving, asserting the independent evidence trust boundary. Keep that collaboration separate; EvidenceService construction resolves a path but creates no directory.",
-      "sha256": "9bec01f388f202d3c996060dc881a10c3e720af291248952137b314a99971607"
+      "reason": "Direct personal-service selection, idempotency, queue reconciliation, remote turn and note projection. Persistence/queue/NotebookLM/note repository boundaries replaced; remote_unmapped branch never invokes EvidenceService validation. Existing module/config import initialization and constructor Path.resolve remain under offline-runner isolation, not filesystem behavior under test.",
+      "sha256": "d0f2dc9fe0b97c4b3abb37e4e5f69fcf82ac56eafae03dcafcde71d5b001ed91"
     },
     {
       "path": "tests/test_v1_personal_store.py",
@@ -4496,9 +4858,15 @@
     },
     {
       "path": "tests/test_v1_portable_roundtrip.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/portable_service.py",
+        "api/portable_zip.py",
+        "api/portable_limits.py",
+        "api/notebooklm_links.py",
+        "api/evidence_service.py"
+      ],
+      "reason": "Pure note revision normalization and constructor/pre-ZipFile BytesIO rejection coexist with actual ZIP/staging/filesystem and some database/checkpoint lifecycle. Whole-file coverage cannot be called unit.",
       "sha256": "8717bdb72fe3c8e35b2806d420e2a344890516f9c0fd51703af52d6ec45ebc65"
     },
     {
@@ -4624,6 +4992,15 @@
       "sha256": "cfe617dd61004259722343012c392a3d854c0d5ee87ceffc9d0032cd16d7890e"
     },
     {
+      "path": "tests/test_version_utils_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/utils/version_utils.py"
+      ],
+      "reason": "26 direct utility cases use injected HTTP response/client and package metadata lookup. Real pure TOML/version parsing remains local; no network, filesystem metadata discovery, SDK pipeline or subprocess. Covers success/precedence/errors/timeout argument/no retry.",
+      "sha256": "5c7edb51be73a1d797ae01ff17ab88a7830a6a82fae7fcb46c4e946145bd5e33"
+    },
+    {
       "path": "tests/test_vertex_credentials_file_oracle.py",
       "layer": "mixed",
       "targets": [
@@ -4674,9 +5051,17 @@
     },
     {
       "path": "tests/test_workbench_hybrid_acceptance.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "tool-integration",
+      "targets": [
+        "api/evidence_indexing.py",
+        "api/evidence_retrieval.py",
+        "api/evidence_service.py",
+        "api/routers/notebooks.py",
+        "open_notebook/database/evidence_embedding_repository.py",
+        "open_notebook/database/project_locks.py",
+        "open_notebook/graphs/grounded_chat.py"
+      ],
+      "reason": "Both journey cases execute real ingest/extract multiprocessing spawn, filesystem and flock plus indexing/retrieval/grounded collaboration. Fake RPC/provider/enqueue do not remove tool boundaries; no complete unit function.",
       "sha256": "b1e90c73955a78dcc3f5cd392de91faf5a026caa3d5270aea405a5bf5379338e"
     },
     {
@@ -4693,17 +5078,42 @@
     },
     {
       "path": "tests/test_workbench_hybrid_contracts.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
+      "layer": "mixed",
+      "targets": [
+        "api/routers/evidence.py",
+        "api/routers/notebooklm.py",
+        "api/personal_service.py",
+        "api/personal_contracts.py",
+        "api/evidence_retrieval.py",
+        "api/evidence_service.py",
+        "open_notebook/graphs/grounded_chat.py",
+        "open_notebook/database/evidence_embedding_repository.py",
+        "open_notebook/database/project_locks.py"
+      ],
+      "reason": "Every h fixture constructs collaborating services then adds/indexes using real capture_scope file locks. Includes actual HTTP route/job/events cases and direct collaboration; simple negative assertions still inherit integration setup.",
       "sha256": "ad746d741f15d91c3cdc83bf9648e54281f6e923f34fd7554bd47795c212d5b0"
     },
     {
       "path": "tests/test_workbench_hybrid_retrieval.py",
-      "layer": "unclassified",
-      "targets": [],
-      "reason": "Pending full-file and dependency-boundary review; no unit eligibility inferred from name or runner.",
-      "sha256": "c59e5eb785ed9dabfe24cdd7ba4eb1d40a217fdf7958c7d432cf0c0093b87caf"
+      "layer": "mixed",
+      "targets": [
+        "api/evidence_retrieval.py",
+        "api/evidence_service.py",
+        "open_notebook/database/evidence_embedding_repository.py",
+        "open_notebook/database/project_locks.py",
+        "open_notebook/ai/evidence_embeddings.py"
+      ],
+      "reason": "RRF pure function split out; remaining cases mix pre-I/O rejection with actual capture_scope locks and retrieval/repository/evidence collaboration. Whole remaining file is not unit.",
+      "sha256": "4192c425e1793356ade0790f8329761b2309490817edf37ea9c34e45dd4c2ab9"
+    },
+    {
+      "path": "tests/test_workbench_hybrid_rrf_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_retrieval.py"
+      ],
+      "reason": "Original RRF function AST and assertions preserved: pure one-based reciprocal-rank fusion/deduplication/stable limit logic, no filesystem/network/service fixture.",
+      "sha256": "bca3a6c796d6826845706887a6e6a918f4e34b14c5bfb6a2a88a6b3cf69f5ae9"
     },
     {
       "path": "tests/test_workbench_hybrid_wire.py",

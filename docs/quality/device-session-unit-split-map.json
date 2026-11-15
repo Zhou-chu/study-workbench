@@ -1,0 +1,179 @@
+{
+  "base": "b9606ff",
+  "originalFunctions": 23,
+  "unitFunctions": [
+    "test_issue_digest_only_and_rotation_overlap_duplicate",
+    "test_expiry_exact_boundary_and_absolute_rotation",
+    "test_revoke_one_all_and_boot_epoch",
+    "test_limits_are_serialized_and_expire",
+    "test_global_limits_bounded_buckets",
+    "test_store_unknown_commit_no_retry_or_secret_error",
+    "test_validation_and_secret_repr",
+    "test_refresh_revoke_race_never_resurrects_and_create_orders_after_all",
+    "test_cas_zero_does_not_return_tokens_or_insert_access",
+    "test_pruning_retains_live_overlap_but_may_forget_expired_tokens",
+    "test_unknown_create_commit_and_restart_preserved_clock",
+    "test_failed_login_retry_after_and_unicode_constant_time_password",
+    "test_resource_access_advances_last_used_at_most_once_per_minute",
+    "test_invalid_unicode_device_name_is_sanitized_validation_error",
+    "test_credential_io_holds_lock_before_second_observation",
+    "test_suspended_store_serializes_rotate_and_revoke_both_orders",
+    "test_suspended_store_orders_create_and_revoke_all_both_orders",
+    "test_epoch_barrier_blocks_concurrent_login_until_revoke_acknowledged",
+    "test_persisted_fields_contain_exact_digests_and_no_raw_credentials"
+  ],
+  "toolFunctions": [
+    "test_file_invalid_never_falls_back",
+    "test_file_read_off_event_loop_and_environment_snapshot",
+    "test_same_mtime_content_change_invalidates_and_failed_barrier_retries",
+    "test_strict_file_change_failure_recovery_barrier"
+  ],
+  "unchangedAST": {
+    "MemoryStore": "a79f964c508f3bf51812ab042d6343ddf83f75ddbeecd88f3c33d97303c69951",
+    "Clock": "2b41136cb89e5901fccc32eeb589a445188702e71c95e618200715cc6f12da68",
+    "Random": "29526570e8993b16fc2fc0180ba552df6af5bbb289891535c7bfe96fe035b168",
+    "setup": "b04b2caa2b08a126a9cd8801e7a7bdfcec1d9865d884a87fecfa72c42419db90",
+    "error": "16c2dfeb720c94c575e4fa8a28d844f7f973577ff522856f79307d68e0c7f601",
+    "OperationGate": "61649dee30caeaa9fdd1dcd968f9c7d8488a76b038211de748817705f76c7b1f",
+    "ObservedCredentials": "137df2d2481e3a807cc048c25bd66f66bce0932144432050fc6477e15b06a33e",
+    "SuspendedStore": "41acd8df6709f710a344d2109f82ac8d675814d86db8a3605fe269ebd4cdb39a",
+    "contend": "0df2276ea107d3e7caf6922e509d2b0a102aaf969d53f0229520f31a4f02061d",
+    "test_issue_digest_only_and_rotation_overlap_duplicate": "cfcadbf7ff9d53f7022bede36fd25a30904a5c18e8f0e704d4ecea501c70e725",
+    "test_expiry_exact_boundary_and_absolute_rotation": "1190c3badd8cf39167ee4af45e0b26098e15a337f856760582466259b6006633",
+    "test_revoke_one_all_and_boot_epoch": "e82098beaaa298579cddd1cfae0c9fdcbe1b2de77273ff678ec6b5e46e62fb91",
+    "test_strict_file_change_failure_recovery_barrier": "b8366c4779d816f989cd1e863124c0841b8a6b0f016324dc4afd6f2754297363",
+    "test_file_invalid_never_falls_back": "4ed7ed24f750d045573876aeef89cee71b63c2b9e7f418d39d9704655926eb57",
+    "test_limits_are_serialized_and_expire": "3f9f10ff861d3b56075b1337cfd121937ad9bbe249c97a8b8dcd5fc380991898",
+    "test_global_limits_bounded_buckets": "51bb1615d706e1daa135f1572356abbabca0bd3972b974daf4b2703a4e49b96a",
+    "test_store_unknown_commit_no_retry_or_secret_error": "5610a6c215df7ecba31d2ae78367f13b984bf801951beb9d30b80f79cbf35943",
+    "test_validation_and_secret_repr": "60dec4d26e44188f67285f65ed51d95dbc87ff2f856cf8149588769c3b1c2bcc",
+    "test_file_read_off_event_loop_and_environment_snapshot": "eae4f9dcbdb0c96f9d7aa73cb875f5e4eeb287b97f6ca0336adaf655500a5b35",
+    "test_same_mtime_content_change_invalidates_and_failed_barrier_retries": "162c9b83d34d829fd00cb46a7802a55d16340212d543217803db0aaba28503ef",
+    "test_refresh_revoke_race_never_resurrects_and_create_orders_after_all": "03be51776f5db43c980c32b3e09e9bb774fd4109e7693fc307aba7f1d1e46229",
+    "test_cas_zero_does_not_return_tokens_or_insert_access": "9156d6ec84015f28575d6fece506d3004362a0e37079051618e81b5f11131cc6",
+    "test_pruning_retains_live_overlap_but_may_forget_expired_tokens": "f11b27cfda3b4bccd7799663185589a6862f3729a0b2d577f5559350067d7261",
+    "test_unknown_create_commit_and_restart_preserved_clock": "854ef2befd04a24197cc0f5de072e8a9a7d7bc6b15c66de853e7b9722f568537",
+    "test_failed_login_retry_after_and_unicode_constant_time_password": "acdaaa93d6b0c2148e3bfe74a2b7f0e854f57b0b5adccb5798ea85c86473f22d",
+    "test_resource_access_advances_last_used_at_most_once_per_minute": "e47173b24323583bebb617c79f9fadbe8e6e5ead8eb73bdcafb322852f83d8a2",
+    "test_invalid_unicode_device_name_is_sanitized_validation_error": "7de01e6c12683138771475880c79ca18f8b9ac196cdf73b29fe00a9b108cec29",
+    "test_credential_io_holds_lock_before_second_observation": "1bacf8a8ba53eea93be4d24daadddbb4f794f4f77f06a4f16c301a0fd14e246d",
+    "test_suspended_store_serializes_rotate_and_revoke_both_orders": "f52f7d712bac5baf5bf07c18bcc7d165eb1d6ddb96de9f4a0ff70dc1fef1943b",
+    "test_suspended_store_orders_create_and_revoke_all_both_orders": "4a4a2909cdc9f319a10e3154eda27943bad5a3bc3938ee22ce4a4b3191948ad8",
+    "test_epoch_barrier_blocks_concurrent_login_until_revoke_acknowledged": "a5e2a7d7ac20a096e86bcc64b8261836e10a88b6a6d1227463addaa66ce56248",
+    "test_persisted_fields_contain_exact_digests_and_no_raw_credentials": "59ac6cf76de4b9563b1b999b5b222ab1c9b85996ee05d6c604421b3473906a06"
+  },
+  "nodeMap": [
+    {
+      "before": "tests/test_v1_device_session_core.py::test_issue_digest_only_and_rotation_overlap_duplicate",
+      "after": "tests/test_v1_device_session_unit.py::test_issue_digest_only_and_rotation_overlap_duplicate"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_expiry_exact_boundary_and_absolute_rotation",
+      "after": "tests/test_v1_device_session_unit.py::test_expiry_exact_boundary_and_absolute_rotation"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_revoke_one_all_and_boot_epoch",
+      "after": "tests/test_v1_device_session_unit.py::test_revoke_one_all_and_boot_epoch"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_strict_file_change_failure_recovery_barrier",
+      "after": "tests/test_v1_device_session_core.py::test_strict_file_change_failure_recovery_barrier"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_file_invalid_never_falls_back[]",
+      "after": "tests/test_v1_device_session_core.py::test_file_invalid_never_falls_back[]"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_file_invalid_never_falls_back[ \\n]",
+      "after": "tests/test_v1_device_session_core.py::test_file_invalid_never_falls_back[ \\n]"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_file_invalid_never_falls_back[\\xff]",
+      "after": "tests/test_v1_device_session_core.py::test_file_invalid_never_falls_back[\\xff]"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_file_invalid_never_falls_back[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]",
+      "after": "tests/test_v1_device_session_core.py::test_file_invalid_never_falls_back[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_limits_are_serialized_and_expire",
+      "after": "tests/test_v1_device_session_unit.py::test_limits_are_serialized_and_expire"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_global_limits_bounded_buckets",
+      "after": "tests/test_v1_device_session_unit.py::test_global_limits_bounded_buckets"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_store_unknown_commit_no_retry_or_secret_error",
+      "after": "tests/test_v1_device_session_unit.py::test_store_unknown_commit_no_retry_or_secret_error"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_validation_and_secret_repr",
+      "after": "tests/test_v1_device_session_unit.py::test_validation_and_secret_repr"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_file_read_off_event_loop_and_environment_snapshot",
+      "after": "tests/test_v1_device_session_core.py::test_file_read_off_event_loop_and_environment_snapshot"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_same_mtime_content_change_invalidates_and_failed_barrier_retries",
+      "after": "tests/test_v1_device_session_core.py::test_same_mtime_content_change_invalidates_and_failed_barrier_retries"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_refresh_revoke_race_never_resurrects_and_create_orders_after_all",
+      "after": "tests/test_v1_device_session_unit.py::test_refresh_revoke_race_never_resurrects_and_create_orders_after_all"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_cas_zero_does_not_return_tokens_or_insert_access",
+      "after": "tests/test_v1_device_session_unit.py::test_cas_zero_does_not_return_tokens_or_insert_access"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_pruning_retains_live_overlap_but_may_forget_expired_tokens",
+      "after": "tests/test_v1_device_session_unit.py::test_pruning_retains_live_overlap_but_may_forget_expired_tokens"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_unknown_create_commit_and_restart_preserved_clock",
+      "after": "tests/test_v1_device_session_unit.py::test_unknown_create_commit_and_restart_preserved_clock"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_failed_login_retry_after_and_unicode_constant_time_password",
+      "after": "tests/test_v1_device_session_unit.py::test_failed_login_retry_after_and_unicode_constant_time_password"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_resource_access_advances_last_used_at_most_once_per_minute",
+      "after": "tests/test_v1_device_session_unit.py::test_resource_access_advances_last_used_at_most_once_per_minute"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_invalid_unicode_device_name_is_sanitized_validation_error",
+      "after": "tests/test_v1_device_session_unit.py::test_invalid_unicode_device_name_is_sanitized_validation_error"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_credential_io_holds_lock_before_second_observation",
+      "after": "tests/test_v1_device_session_unit.py::test_credential_io_holds_lock_before_second_observation"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_suspended_store_serializes_rotate_and_revoke_both_orders[rotate]",
+      "after": "tests/test_v1_device_session_unit.py::test_suspended_store_serializes_rotate_and_revoke_both_orders[rotate]"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_suspended_store_serializes_rotate_and_revoke_both_orders[revoke]",
+      "after": "tests/test_v1_device_session_unit.py::test_suspended_store_serializes_rotate_and_revoke_both_orders[revoke]"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_suspended_store_orders_create_and_revoke_all_both_orders[create]",
+      "after": "tests/test_v1_device_session_unit.py::test_suspended_store_orders_create_and_revoke_all_both_orders[create]"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_suspended_store_orders_create_and_revoke_all_both_orders[revoke_all]",
+      "after": "tests/test_v1_device_session_unit.py::test_suspended_store_orders_create_and_revoke_all_both_orders[revoke_all]"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_epoch_barrier_blocks_concurrent_login_until_revoke_acknowledged",
+      "after": "tests/test_v1_device_session_unit.py::test_epoch_barrier_blocks_concurrent_login_until_revoke_acknowledged"
+    },
+    {
+      "before": "tests/test_v1_device_session_core.py::test_persisted_fields_contain_exact_digests_and_no_raw_credentials",
+      "after": "tests/test_v1_device_session_unit.py::test_persisted_fields_contain_exact_digests_and_no_raw_credentials"
+    }
+  ]
+}

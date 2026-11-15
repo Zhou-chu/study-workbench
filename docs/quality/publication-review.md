@@ -36,3 +36,48 @@ Coverage terminology correction: existing Python and eleven Node partition repor
 Focused checks do not establish the full quality gate: the latest formal SPA run had three setup-journey timeouts, and the previous Sonar analysis still failed its gate. No main merge, deployment, credential migration, or live-data change is authorized by this checkpoint.
 
 Focused verification of this incremental candidate: 30 source-error pure unit tests passed separately; 132 credential/model route tests passed as a mixed boundary suite; 39 SPA tests (mixed layers) and 10 reader-navigation integration tests passed. Ruff, changed-file ESLint and both frontend TypeScript checks passed. Type checks used preserveSymlinks for the shared prepared dependency installation; no type exclusions were changed. The first SPA attempt could not find candidate dependencies and ran no tests; only the corrected run is counted. A new formal full SPA run remains pending.
+
+
+## Accumulated strict-unit tooling and coverage draft update
+
+Public parent: `d3a3dce8670ca561ccbaf37688e82aed3ec7a21d`. Content increment
+from private source baseline `9e49c4347a8d063cc74aae1e2f8ebff05059fb84` through
+`a0f39adbc91f4680f1921e69659b46929fa501be`, applied as a diff rather than merging
+private ancestors. The increment contains 93 files before this review update.
+Eight new evidence documents replace local personal paths with prepared-interpreter,
+cache and external-evidence placeholders. Original bytes and logs remain private.
+No failure text, test assertion, test AST or coverage result was changed to sanitize
+this increment. Existing public SourceRow test hash remains public-specific in the
+classification manifest; all current manifest hashes were checked against bytes.
+Historical split-map/source commit hashes describe the original measured stage,
+not this new public commit. Since all changed test/helper bytes equal the source
+increment, path-only document cleanup does not invalidate those AST mappings.
+
+### Verified on this public candidate
+
+- Coverage runner/protocol/custody tools: 98 passed (8 files), 21.77 seconds.
+- Directed new/split Python test batch: 648 passed, one dependency warning,
+  11.65 seconds.
+- Retained hybrid retrieval and installed SDK/file-loader consumers: 150 passed,
+  4.45 seconds. These are deliberately not relabelled strict unit.
+- Reader 56 plus session-proxy 159: 215 passed, 3.97 seconds, single worker.
+- No tests failed in these candidate batches. They are not a full-project run.
+
+The latest full 180-source reviewed Python subset result belongs to private
+`a56ade8`: 1,834 passed, lines 47.43%, branches 35.41%, combined 44.71%, native
+threshold exit 1. It has NOT been rerun as complete coverage on this candidate.
+The classification still has 166 mixed files, so complete strict unit selection
+must fail closed. All-language >90 and current Sonar acceptance remain unmet.
+This is a backup/draft review branch, not ready to merge into main.
+
+### Increment privacy audit boundaries
+
+The new content has no binary/data/runtime artifacts. Pattern review found no
+private-key blocks, recognized long API-token patterns, opaque live notebook IDs,
+or remaining personal home paths. Timestamp matches are fixed synthetic test
+clock values, including existing cutover fixtures and explicitly patched indexing
+clocks. Addresses in Git fixtures are example.invalid; authorization literals are
+explicit synthetic secrets. These checks reduce known disclosure risks, not a
+claim that arbitrary secrets are mathematically absent. Already-public ancestor
+history is preserved, not rewritten. No push, PR edit or deployment is performed
+by candidate preparation.

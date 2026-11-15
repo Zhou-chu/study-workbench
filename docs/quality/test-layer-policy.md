@@ -756,3 +756,17 @@ The previously completed full-file reviews were rebound to unchanged test bytes:
 ## Utility suite review
 
 `tests/test_utils.py` was fully read, including the truncated-output middle section through a second bounded read. It remains mixed: text cleaning/version predicates and fake-encoding algorithms can be split, while installed-package version probes perform actual importlib metadata discovery and some context/token-budget cases exercise real tokenizer/source formatting behavior. Its original “Unit tests” docstring is not evidence of whole-file strict-unit eligibility. No assertions or production files changed.
+
+## Embedding and indexing independent review
+
+Full-file and production-boundary review found hidden real filesystem locks under fake SQL fixtures. Embedding calls remain mixed because deployment tests exercise installed provider SDK/httpx collaboration. Repository tests remain mixed because ordinary capture/write/publish uses actual lock files/flock; only explicit fake-lock or early-preflight nodes are unit split candidates. The indexing suite remains tool integration, including its direct flock ownership-probe check. No test was run or rewritten for this classification-only review, and no production denominator changed.
+
+## Source-chat hook boundary
+
+All 386 lines of use-source-chat.test.tsx were read, including late cancellation/creation, UTF-8/SSE chunks, stale hydration and production-cache-freshness cases. The hook is the single behavioral unit; source-chat API, translation and toast boundaries are replaced. A synthetic QueryClient uses copied real freshness options but no independent product route/auth/store workflow participates. This follows the existing use-notebook-chat classification rather than counting framework provider imports as integration. No new execution result is claimed for this classification-only change.
+
+Follow-up execution at 423fb8a: all 24 source-chat hook tests passed in a single worker (2.26 seconds total), including the cache-freshness and cancellation cases. This confirms that file's execution, not whole-frontend coverage or the aggregate unit gate.
+
+## Source detail component review
+
+The full 420-line SourceDetailContent suite was reviewed with its production imports and shared command-submission implementation. API stubs do not replace useSource or the shared uncertain/inFlight registry. The remount test intentionally checks cross-instance retry gating, and all cases mount the actual data-hook/component composition. It remains component integration; future isolated clipboard logic units must preserve these existing integration assertions. No new runtime result is claimed by this classification change.

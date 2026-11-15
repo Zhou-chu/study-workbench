@@ -1,7 +1,6 @@
 """Provider probes use fake pinned HTTP and fake model instances, never providers."""
 
 import io
-import wave
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
@@ -140,29 +139,6 @@ async def test_compatible_without_key_does_not_add_authorization(transport):
     transport[0].get.return_value = httpx.Response(200, json={})
     assert (await ct._test_openai_compatible_connection("https://fake.invalid"))[0]
     assert "Authorization" not in transport[0].get.await_args.kwargs["headers"]
-
-
-def test_audio_fallback_is_valid_silent_pcm(monkeypatch, tmp_path):
-    monkeypatch.setattr(ct, "_TEST_SPEECH_PATH", str(tmp_path / "absent.mp3"))
-    audio = ct._get_test_audio()
-    assert audio.name == "test.wav" and audio.tell() == 0
-    with wave.open(audio) as wav:
-        assert (
-            wav.getnchannels(),
-            wav.getsampwidth(),
-            wav.getframerate(),
-            wav.getnframes(),
-        ) == (1, 2, 16000, 8000)
-        assert wav.readframes(8000) == bytes(16000)
-
-
-def test_audio_reads_only_supplied_fixture(monkeypatch, tmp_path):
-    fixture = tmp_path / "speech.mp3"
-    fixture.write_bytes(b"synthetic-audio")
-    monkeypatch.setattr(ct, "_TEST_SPEECH_PATH", str(fixture))
-    audio = ct._get_test_audio()
-    assert audio.name == "test_speech.mp3" and audio.tell() == 0
-    assert audio.read() == b"synthetic-audio"
 
 
 @pytest.fixture

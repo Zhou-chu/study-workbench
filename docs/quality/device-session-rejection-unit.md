@@ -1,0 +1,5 @@
+# Additional session rejection units
+
+18 new pure in-memory cases cover naive/offset clocks, canonical UUID and Base64 validation, incorrect entropy length, authoritative readiness failure, contradictory owner/digest, usage-update authorization loss, unavailable credential epoch retirement and maximum blocking rate-limit deadline. Targets are real service methods; only external store/credential/time/random boundaries are replaced.
+
+Independent review confirmed the boundary and suggested strengthening error redaction. The readiness case now explicitly rejects the injected sensitive storage detail from the public error and requires suppressed exception context. Combined with the original 21 memory-only cases, 39 passed (0.12s initial; review-fixed log retained), no skips. Production code unchanged; no artificial RED or OS entropy/database/concurrent-process guarantee claimed. Private logs: python/device-rejection-unit/. Whole-project coverage and CI are not established by this short regression.

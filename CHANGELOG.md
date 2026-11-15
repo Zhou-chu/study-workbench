@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Separate 31 native-runtime transaction/configuration unit cases from filesystem/process-lifecycle checks without changing test nodes, production behavior or coverage scope.
+
+- Add a fail-closed strict-unit aggregate candidate with fresh invocation binding, serial JavaScript/Python children, native counter recounting and explicit unsupported-language failure; retain mixed reports and do not claim the full-repository coverage gate has passed.
+
 - Rebuild Notebook typography with self-hosted licensed Chinese and Latin fonts, accessible light/dark palettes, a shared reading/UI scale, open searchable/sortable collection rows, and a responsive source/reader/discussion workspace with reading and answer focus modes. Keep source opening separate from question selection and expose a scope-adjustment shortcut; retain technical retrieval details in diagnostics. Provider execution and deployment acceptance remain separately verified.
 
 - Rebuild the Notebook frontend around a monochrome editorial workspace with persistent Sources, Conversation and Results navigation, contextual reading, quieter note management, and responsive light/dark layouts. Keep operation controllers and data contracts intact while replacing machine identifiers and raw job listings with meaningful content and localized status. This is an isolated source/UI change, not a deployment or live-service acceptance.
@@ -256,6 +260,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.env.example` names the chunking variables Open Notebook actually reads (`OPEN_NOTEBOOK_CHUNK_SIZE` / `OPEN_NOTEBOOK_CHUNK_OVERLAP`)
 
 ### Security
+
+- Create coverage manifest temporary files exclusively so pre-existing symlinks or files cannot be overwritten; preserve atomic publication and fail closed on collisions.
 
 - Bound podcast download filename suffix stripping to linear work while preserving Windows filename handling and the existing truncation order.
 

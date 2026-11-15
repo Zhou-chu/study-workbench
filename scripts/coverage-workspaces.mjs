@@ -2,7 +2,7 @@ import { captureNativeSources } from "./coverage-native-collector.mjs";
 import { auditExecutedFiles } from "./coverage-executed-files.mjs";
 import { validateCurrentUnitSelection } from "./coverage-unit-selection.mjs";
 import { planUnitPartitions, unitPartitions } from "./coverage-unit-plan.mjs";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import {
   beginRun,
   saveManifest,
@@ -28,6 +28,17 @@ export function runCoverage(
   args = process.argv.slice(2),
 ) {
   const partitions = unitPartitions;
+  const attempts = args.filter((arg) => arg.startsWith("--unit-attempt="));
+  if (attempts.length > 1) throw Error("Duplicate unit attempt");
+  const unitRunId = attempts.length
+    ? attempts[0].slice("--unit-attempt=".length)
+    : randomUUID();
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
+      unitRunId,
+    )
+  )
+    throw Error("Invalid unit attempt");
   const onlyArg = args.find((arg) => arg.startsWith("--only="));
   const only = onlyArg?.slice(7);
   if (onlyArg && !Object.hasOwn(partitions, only))
@@ -36,10 +47,15 @@ export function runCoverage(
   if (
     unitArgs.length > 1 ||
     args.some(
-      (arg) => arg.startsWith("--unit") && !arg.startsWith("--unit-selection="),
+      (arg) =>
+        arg.startsWith("--unit") &&
+        !arg.startsWith("--unit-selection=") &&
+        !arg.startsWith("--unit-attempt="),
     )
   )
     throw Error("Invalid unit selection argument");
+  if (attempts.length && !unitArgs.length)
+    throw Error("Attempt binding requires unit selection");
   if (unitArgs.length && onlyArg)
     throw Error("Unit selection requires all production partitions");
   const artifact = unitArgs.length
@@ -61,6 +77,7 @@ export function runCoverage(
   const evidence = plan
     ? {
         layer: "unit",
+        unitRunId,
         selectionSha256,
         selectionRevision: artifact.revision,
         classificationSha256: artifact.classificationSha256,
@@ -398,6 +415,14 @@ export function runCoverage(
         try {
           row.audit = auditReport(root, name, directory, outputBase);
           row.reportHash = fileDigest(summary);
+          const rawReport = resolve(
+            root,
+            outputBase,
+            name,
+            "coverage-final.json",
+          );
+          if (plan && existsSync(rawReport))
+            row.rawReportHash = fileDigest(rawReport);
           row.coverage = JSON.parse(readFileSync(summary, "utf8")).total;
         } catch (error) {
           row.phase = "failed";

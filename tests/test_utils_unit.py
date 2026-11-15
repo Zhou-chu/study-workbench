@@ -1,0 +1,216 @@
+"""Pure text, injected-tokenizer fallback, and version preflight units."""
+
+import pytest
+
+from open_notebook.utils import (
+    clean_thinking_content,
+    compare_versions,
+    parse_thinking_content,
+    remove_non_ascii,
+    remove_non_printable,
+    token_count,
+)
+
+
+class TestTextUtilities:
+    """Test suite for text utility functions."""
+
+    def test_remove_non_ascii(self):
+        """Test removal of non-ASCII characters."""
+        # Text with various non-ASCII characters
+        text_with_unicode = "Hello 世界 café naïve émoji 🎉"
+        result = remove_non_ascii(text_with_unicode)
+
+        # Should only contain ASCII characters
+        assert result == "Hello  caf nave moji "
+        # All characters should be in ASCII range
+        assert all(ord(char) < 128 for char in result)
+
+    def test_remove_non_ascii_pure_ascii(self):
+        """Test that pure ASCII text is unchanged."""
+        text = "Hello World 123 !@#"
+        result = remove_non_ascii(text)
+        assert result == text
+
+    def test_remove_non_printable(self):
+        """Test removal of non-printable characters."""
+        # Text with various Unicode whitespace and control chars
+        text = "Hello\u2000World\u200b\u202fTest"
+        result = remove_non_printable(text)
+
+        # Should have regular spaces and printable chars only
+        assert "Hello" in result
+        assert "World" in result
+        assert "Test" in result
+
+    def test_remove_non_printable_preserves_newlines(self):
+        """Test that newlines and tabs are preserved."""
+        text = "Line1\nLine2\tTabbed"
+        result = remove_non_printable(text)
+        assert "\n" in result
+        assert "\t" in result
+
+    def test_parse_thinking_content_basic(self):
+        """Test parsing single thinking block."""
+        content = "<think>This is my thinking</think>Here is my answer"
+        thinking, cleaned = parse_thinking_content(content)
+
+        assert thinking == "This is my thinking"
+        assert cleaned == "Here is my answer"
+
+    def test_parse_thinking_content_multiple_tags(self):
+        """Test parsing multiple thinking blocks."""
+        content = "<think>First thought</think>Answer<think>Second thought</think>More"
+        thinking, cleaned = parse_thinking_content(content)
+
+        assert "First thought" in thinking
+        assert "Second thought" in thinking
+        assert "<think>" not in cleaned
+        assert "Answer" in cleaned
+        assert "More" in cleaned
+
+    def test_parse_thinking_content_no_tags(self):
+        """Test parsing content without thinking tags."""
+        content = "Just regular content"
+        thinking, cleaned = parse_thinking_content(content)
+
+        assert thinking == ""
+        assert cleaned == "Just regular content"
+
+    def test_parse_thinking_content_malformed_no_open_tag(self):
+        """Test parsing malformed output where opening <think> tag is missing."""
+        content = "Some thinking content</think>Here is my answer"
+        thinking, cleaned = parse_thinking_content(content)
+
+        assert thinking == "Some thinking content"
+        assert cleaned == "Here is my answer"
+
+    def test_parse_thinking_content_truncated_no_close_tag(self):
+        """Output cut off inside <think> is all reasoning, never an answer."""
+        content = "<think>Let me reason about this at length and then"
+        thinking, cleaned = parse_thinking_content(content)
+        assert thinking == "Let me reason about this at length and then"
+        assert cleaned == ""
+        assert clean_thinking_content("  <think>partial") == ""
+
+    def test_parse_thinking_content_invalid_input(self):
+        """Test parsing with invalid input types."""
+        # Non-string input (intentionally violates the signature to test the
+        # runtime guard)
+        thinking, cleaned = parse_thinking_content(None)  # type: ignore[arg-type]
+        assert thinking == ""
+        assert cleaned == ""
+
+        # Integer input (same intentional violation)
+        thinking, cleaned = parse_thinking_content(123)  # type: ignore[arg-type]
+        assert thinking == ""
+        assert cleaned == "123"
+
+    def test_parse_thinking_content_large_content(self):
+        """Test that very large content is not processed."""
+        large_content = "x" * 200000  # > 100KB limit
+        thinking, cleaned = parse_thinking_content(large_content)
+
+        # Should return unchanged due to size limit
+        assert thinking == ""
+        assert cleaned == large_content
+
+    def test_clean_thinking_content(self):
+        """Test convenience function for cleaning thinking content."""
+        content = "<think>Internal thoughts</think>Public response"
+        result = clean_thinking_content(content)
+
+        assert "<think>" not in result
+        assert "Public response" in result
+        assert "Internal thoughts" not in result
+
+
+class TestTokenUtilities:
+    """Test suite for token counting fallback behavior."""
+
+    def test_token_count_fallback(self):
+        """Test fallback when tiktoken raises an error."""
+        from unittest.mock import patch
+
+        # Make tiktoken raise an ImportError to trigger fallback
+        with patch(
+            "tiktoken.get_encoding", side_effect=ImportError("tiktoken not available")
+        ):
+            text = "one two three four five"
+            count = token_count(text)
+
+            # Fallback uses word count * 1.3
+            # 5 words * 1.3 = 6.5 -> 6
+            assert isinstance(count, int)
+            assert count > 0
+
+    def test_token_count_network_error_fallback(self):
+        """Test fallback when tiktoken raises a network error (issue #264).
+
+        In offline environments tiktoken.get_encoding() tries to download the
+        encoding file and raises a URLError/OSError, not an ImportError.
+        The except clause must catch Exception (not only ImportError) so that
+        these network failures also fall through to the word-count estimate.
+        """
+        import urllib.error
+        from unittest.mock import patch
+
+        with patch(
+            "tiktoken.get_encoding",
+            side_effect=urllib.error.URLError("No network (simulated offline)"),
+        ):
+            text = "one two three four five"
+            count = token_count(text)
+
+            # Must not raise; must return a positive int via the fallback
+            assert isinstance(count, int)
+            assert count > 0
+
+
+class TestVersionUtilities:
+    """Pure comparison and URL-rejection branches; installed metadata stays mixed."""
+
+    def test_compare_versions_equal(self):
+        """Test comparing equal versions."""
+        result = compare_versions("1.0.0", "1.0.0")
+        assert result == 0
+
+    def test_compare_versions_less_than(self):
+        """Test comparing when first version is less."""
+        result = compare_versions("1.0.0", "2.0.0")
+        assert result == -1
+
+        result = compare_versions("1.0.0", "1.1.0")
+        assert result == -1
+
+        result = compare_versions("1.0.0", "1.0.1")
+        assert result == -1
+
+    def test_compare_versions_greater_than(self):
+        """Test comparing when first version is greater."""
+        result = compare_versions("2.0.0", "1.0.0")
+        assert result == 1
+
+        result = compare_versions("1.1.0", "1.0.0")
+        assert result == 1
+
+        result = compare_versions("1.0.1", "1.0.0")
+        assert result == 1
+
+    def test_compare_versions_prerelease(self):
+        """Test comparing versions with pre-release tags."""
+        result = compare_versions("1.0.0", "1.0.0-alpha")
+        assert result == 1  # Release > pre-release
+
+        result = compare_versions("1.0.0-beta", "1.0.0-alpha")
+        assert result == 1  # beta > alpha
+
+    def test_get_version_from_github_invalid_url(self):
+        """Test GitHub version fetch with invalid URL."""
+        from open_notebook.utils.version_utils import get_version_from_github
+
+        with pytest.raises(ValueError, match="Not a GitHub URL"):
+            get_version_from_github("https://example.com/repo")
+
+        with pytest.raises(ValueError, match="Invalid GitHub repository URL"):
+            get_version_from_github("https://github.com/")

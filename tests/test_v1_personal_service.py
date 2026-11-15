@@ -1,41 +1,7 @@
-from contextlib import asynccontextmanager
-from copy import deepcopy
 from unittest.mock import AsyncMock
 
 import pytest
-
-
-class MemoryStore:
-    def __init__(self):
-        self.data = {}
-
-    async def get(self, k, i):
-        return deepcopy(self.data.get((k, i)))
-
-    async def get_many(self, kind, identities):
-        return {
-            identity: {"payload": deepcopy(self.data[(kind, identity)])}
-            if (kind, identity) in self.data
-            else None
-            for identity in identities
-        }
-
-    async def put(self, k, i, v, create_only=False):
-        self.data[k, i] = deepcopy(v)
-        return v
-
-    async def list(self, k, notebook_id=None, **kw):
-        if notebook_id is not None:
-            kw["notebook_id"] = notebook_id
-        return [
-            deepcopy(v)
-            for (kind, _), v in self.data.items()
-            if kind == k and all(v.get(a) == b for a, b in kw.items())
-        ]
-
-    @asynccontextmanager
-    async def project_lock(self, i):
-        yield
+from personal_service_fixture import MemoryStore
 
 
 @pytest.mark.asyncio
@@ -149,46 +115,6 @@ async def test_notebooklm_answer_saved_as_canonical_turn(monkeypatch):
     assert len(turns) == 1
     assert turns[0]["answer"] == "public fixture answer"
     assert turns[0]["scope_snapshot"]["source_version_ids"] == ["sv"]
-
-
-@pytest.mark.asyncio
-async def test_note_cannot_forge_verified_citation(monkeypatch):
-    from api.personal_service import PersonalService
-
-    store = MemoryStore()
-    from open_notebook.database import note_repository
-
-    async def create_note(**kwargs):
-        return note_repository.NoteWriteResult(
-            native={
-                "id": "note:test",
-                "content": kwargs["fields"]["content"],
-                "revision": 1,
-            },
-            snapshot={**kwargs["snapshot"], "id": "note:test", "revision": 1},
-        )
-
-    monkeypatch.setattr(note_repository, "create_note", create_note)
-    monkeypatch.setattr(
-        "open_notebook.domain.notebook.Note.submit_embedding",
-        AsyncMock(return_value=None),
-    )
-    note = await PersonalService(store).save_note(
-        "nb",
-        {
-            "content": "claim",
-            "citations": [
-                {
-                    "citation_id": "c1",
-                    "evidence_id": "ev_missing",
-                    "quote": "invented",
-                    "reference_validity": "verified",
-                }
-            ],
-            "scope_snapshot": {"source_version_ids": []},
-        },
-    )
-    assert note["citations"][0]["reference_validity"] != "verified"
 
 
 @pytest.mark.asyncio

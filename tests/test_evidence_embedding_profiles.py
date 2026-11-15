@@ -1,18 +1,9 @@
 """Metadata-only contracts: deployment configuration never probes a provider."""
 
-import json
-
 import pytest
 from pydantic import ValidationError
 
-from open_notebook.ai.evidence_embeddings import (
-    EmbeddingUnavailable,
-    EvidenceEmbeddingClient,
-    hybrid_enabled,
-    load_profiles,
-)
 from open_notebook.domain.evidence_retrieval import (
-    EmbeddingProfile,
     IndexPreview,
     IndexReceipt,
     QueryEmbeddingDisclosure,
@@ -20,31 +11,8 @@ from open_notebook.domain.evidence_retrieval import (
     ScopeEntry,
     ScopeSnapshot,
 )
-
-
-def profile_data(**changes):
-    return {
-        "profile_id": "chosen",
-        "model_id": "model:pinned",
-        "provider": "ollama",
-        "model_name": "operator-selected-model",
-        "revision": "operator-pinned-revision",
-        "endpoint": "http://127.0.0.1:11434",
-        "credential_binding_id": "credential:pinned",
-        "dimension": 2,
-        "document_prefix": "passage: ",
-        "query_prefix": "query: ",
-        "preprocessing_revision": "evidence-identity-v1",
-        "max_input_bytes": 1000,
-        "cosine_min_score": 0.4,
-        "destination_descriptor_version": "disclosure-v1",
-        "destination_kind": "unknown",
-        **changes,
-    }
-
-
-def make_profile(**changes):
-    return EmbeddingProfile(**profile_data(**changes))
+from tests.evidence_embedding_profile_fixture import make_profile
+from tests.evidence_embedding_profile_fixture import profile_data as profile_data
 
 
 @pytest.mark.parametrize(
@@ -84,22 +52,6 @@ def test_public_profile_never_retains_url_secrets():
 
 
 @pytest.mark.parametrize(
-    "missing", ["dimension", "revision", "max_input_bytes", "cosine_min_score"]
-)
-def test_profile_missing_dimension_or_revision_is_unavailable_without_probe(
-    tmp_path, monkeypatch, missing
-):
-    data = profile_data()
-    del data[missing]
-    path = tmp_path / "profiles.json"
-    path.write_text(json.dumps([data]))
-    monkeypatch.setenv("STUDY_WORKBENCH_EMBEDDING_PROFILES", str(path))
-    with pytest.raises(EmbeddingUnavailable, match="PROFILE_UNAVAILABLE") as error:
-        load_profiles()
-    assert error.value.__cause__ is None
-
-
-@pytest.mark.parametrize(
     "change",
     [
         {"dimension": 0},
@@ -119,26 +71,6 @@ def test_profile_missing_dimension_or_revision_is_unavailable_without_probe(
 def test_profile_rejects_incomplete_or_out_of_range_configuration(change):
     with pytest.raises(ValidationError):
         make_profile(**change)
-
-
-def test_load_profiles_is_explicit_strict_and_metadata_only(tmp_path, monkeypatch):
-    monkeypatch.delenv("STUDY_WORKBENCH_EMBEDDING_PROFILES", raising=False)
-    monkeypatch.delenv("STUDY_WORKBENCH_HYBRID_ENABLED", raising=False)
-    assert load_profiles() == {}
-    assert hybrid_enabled() is False
-    path = tmp_path / "profiles.json"
-    path.write_text(json.dumps([profile_data()]))
-    monkeypatch.setenv("STUDY_WORKBENCH_EMBEDDING_PROFILES", str(path))
-    profiles = load_profiles()
-    assert EvidenceEmbeddingClient().resolve_profile("chosen") == profiles["chosen"]
-    with pytest.raises(EmbeddingUnavailable):
-        EvidenceEmbeddingClient().resolve_profile("not-selected")
-    path.write_text(json.dumps([profile_data(), profile_data()]))
-    with pytest.raises(EmbeddingUnavailable):
-        load_profiles()
-    path.write_text('{"chosen":{},"chosen":{}}')
-    with pytest.raises(EmbeddingUnavailable):
-        load_profiles()
 
 
 def test_profiles_and_scope_are_frozen_and_sorted():
