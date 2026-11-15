@@ -64,7 +64,7 @@ def test_public_values_are_complete_detached_and_configuration_is_not_cached(
     detached["max_entries"] = 1
     assert original.max_entries == 10000
     with pytest.raises(FrozenInstanceError):
-        original.max_entries = 1
+        setattr(original, "max_entries", 1)
     for key, value in zip(KEYS, [7, 8, 9]):
         monkeypatch.setenv(key, str(value))
     new = get_portable_limits()
@@ -83,6 +83,8 @@ def verifier(monkeypatch):
     spec = importlib.util.spec_from_file_location(
         "portable_budget_review", root / "scripts/v1/portable_limits_check.py"
     )
+    assert spec is not None
+    assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -111,19 +113,17 @@ def archive_case(mode="valid", compression=zipfile.ZIP_STORED):
         "artifacts/synthetic.bin": payload,
         "artifacts.json": json.dumps(artifacts).encode(),
     }
-    manifest = {
-        "format_version": 1,
-        "files": {
-            name: {"sha256": hashlib.sha256(value).hexdigest(), "byte_size": len(value)}
-            for name, value in members.items()
-        },
+    member_specs = {
+        name: {"sha256": hashlib.sha256(value).hexdigest(), "byte_size": len(value)}
+        for name, value in members.items()
     }
+    manifest = {"format_version": 1, "files": member_specs}
     if mode == "version":
         manifest["format_version"] = 2
     if mode == "member_hash":
-        manifest["files"]["artifacts/synthetic.bin"]["sha256"] = "incorrect"
+        member_specs["artifacts/synthetic.bin"]["sha256"] = "incorrect"
     if mode == "member_size":
-        manifest["files"]["artifacts/synthetic.bin"]["byte_size"] = 4
+        member_specs["artifacts/synthetic.bin"]["byte_size"] = 4
     if mode == "unlisted":
         members["unlisted.txt"] = b"not declared"
     if mode == "missing":

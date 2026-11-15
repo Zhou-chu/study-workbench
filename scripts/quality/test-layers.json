@@ -3519,6 +3519,15 @@
       "sha256": "abfee8fc7f88e888a6d9d211b4cc95ad1a479dd56db9cadc56a5398245887213"
     },
     {
+      "path": "tests/test_evidence_revalidation_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_service.py"
+      ],
+      "reason": "Real revalidation and canonical evidence helpers with only store/lock and original-file extraction boundaries doubled; verifies exact match counts, corruption refusal, latest locked record preservation and cancellation identity, without files/network/database.",
+      "sha256": "daae40b05e882bef49175761b1a85f2418b3bf097a5f73be51b3da3b8f385ae7"
+    },
+    {
       "path": "tests/test_explicit_credential_routing.py",
       "layer": "unit",
       "targets": [
@@ -3980,7 +3989,7 @@
         "scripts/v1/portable_limits_check.py"
       ],
       "reason": "Real budget parsing and archive verifier with independently constructed synthetic in-memory ZIP and known hashes; physical stat/hash boundaries replaced, no runtime/browser/DB/physical-file acceptance.",
-      "sha256": "6fdb3fe8f19cb2486eaa5593bb735378f1f7bb55111d01301b2a7adb3285a7c4"
+      "sha256": "b0bd33bf37ae19174b791f030742aec9e5de8dab55fcadfb859dcbd373b231f6"
     },
     {
       "path": "tests/test_portable_export_worker_unit.py",
