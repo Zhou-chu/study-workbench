@@ -3983,6 +3983,15 @@
       "sha256": "6fdb3fe8f19cb2486eaa5593bb735378f1f7bb55111d01301b2a7adb3285a7c4"
     },
     {
+      "path": "tests/test_portable_export_worker_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/portable_service.py"
+      ],
+      "reason": "Real export-job transition and download integrity decisions; storage/lock/archive/hash/path-stat/executor boundaries are explicit doubles, with no real filesystem, database, thread or network. Does not prove real lock atomicity or archive roundtrip.",
+      "sha256": "fa4c2fd42418aa4b175383c289d0e828588b19da33d59f54bdad7712abfa3818"
+    },
+    {
       "path": "tests/test_portable_project_validation_unit.py",
       "layer": "unit",
       "targets": [
