@@ -24,7 +24,7 @@ async def test_shutdown_preserves_parent_cancellation(monkeypatch, cancel_parent
     monkeypatch.setattr(notebooklm_service, "dispatch_due_jobs", dispatch)
 
     async def run():
-        async with main.lifespan(None):
+        async with main.lifespan(main.app):
             await started.wait()
 
     task = asyncio.create_task(run())
@@ -63,7 +63,7 @@ async def test_cancellation_inside_lifespan_body_is_preserved(monkeypatch):
     monkeypatch.setattr(notebooklm_service, "dispatch_due_jobs", dispatch)
 
     async def run():
-        async with main.lifespan(None):
+        async with main.lifespan(main.app):
             await asyncio.Event().wait()
 
     task = asyncio.create_task(run())

@@ -3616,7 +3616,7 @@
         "api/main.py"
       ],
       "reason": "Direct lifespan context owner under asyncio cancellation with migration/device initialization/dispatcher doubles; no app server, DB or independent service workflow. Requires normal offline harness stripped secret-file environment.",
-      "sha256": "c19fcadcc66378c48ec614282828fb2ff8972544d560de16ee640e90e9e75325"
+      "sha256": "bc0a7d22f840b1ea1e909ef09b02d7e96afc90f22ec39325fc69573c8386b201"
     },
     {
       "path": "tests/test_linear_paragraphs_unit.py",
@@ -3820,6 +3820,15 @@
       ],
       "reason": "Real submit_turn policy with memory store, async lock/event and queue doubles; no DB/files/HTTP.",
       "sha256": "1de96c57114c1c039f181836ff28492fdacce730570e4dcdbba28e63ce4ebbd5"
+    },
+    {
+      "path": "tests/test_personal_security_dispatch_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/personal_security.py"
+      ],
+      "reason": "Direct real middleware dispatch with in-memory Request/Response; only credential loading and downstream callback are doubled. No ASGI server/client, filesystem or network. Does not prove complete authentication middleware ordering.",
+      "sha256": "c39fc05195749cdd00b1176498149b0d2e50c978e43018c720c92984252538b6"
     },
     {
       "path": "tests/test_personal_service_citation_contract.py",
@@ -4101,6 +4110,15 @@
       ],
       "reason": "Synthetic environment normalization and URL host parsing, with Linux urllib proxy_bypass environment matcher; no proxy connection/DNS. Standard-library matcher is implementation/runtime compatibility, not independent application workflow; non-Linux registry/system proxy behavior needs re-review.",
       "sha256": "8b9c7fe0c8e09ee655c5b37263aa3b2a5d194848aca42eb9381ea4b8fa9499a3"
+    },
+    {
+      "path": "tests/test_reader_download_policy_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/routers/evidence.py"
+      ],
+      "reason": "Direct download MIME policy rejects an unsafe original before FileResponse; EvidenceService/version are external boundary doubles.",
+      "sha256": "3d3e300bb041cc63f8ab4b2921186d110001d397979abcc28da4574cc20f2b64"
     },
     {
       "path": "tests/test_recently_viewed_api.py",
@@ -4519,12 +4537,21 @@
     },
     {
       "path": "tests/test_ssl_config.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "open_notebook/utils/ssl_config.py"
       ],
-      "reason": "Environment option mapping cases are units; CA bundle precedence creates a real tempfile and production Path.is_file checks actual filesystem, while missing bundle probes actual path. Split/fake file boundary for pure unit.",
-      "sha256": "4b3c71fc5f2fa33e0264ad51370b3b485625ed2babe5f4b7c9ab06d20ea3409d"
+      "reason": "CA bundle precedence creates a real file; both cases exercise production os.path.isfile against the filesystem.",
+      "sha256": "9fc6d00e093a8b5429d372bd515254f50cea762662a1024c4bc196bfc044d892"
+    },
+    {
+      "path": "tests/test_ssl_config_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/utils/ssl_config.py"
+      ],
+      "reason": "Pure environment option mapping with monkeypatch environment isolation; no CA path or filesystem probe.",
+      "sha256": "b19b53c0276e76bf4ca5b865f73b02b3e8cdd86bce5a5d72eb498904c73c076a"
     },
     {
       "path": "tests/test_startup_migration_retry.py",
@@ -5189,12 +5216,12 @@
     },
     {
       "path": "tests/test_v1_reader_history.py",
-      "layer": "mixed",
+      "layer": "api-integration",
       "targets": [
         "api/routers/evidence.py"
       ],
-      "reason": "reader_returns_citation_historical_extraction is TestClient API; download_rejects_active_imported_mime direct function with EvidenceService/version doubles is unit. Full-file independent review at f10d0f4; SHA256 verified after merge.",
-      "sha256": "fb877821e8f879534799c418c8139daf6ed6fc75175f78a056814e17d13ccb6a"
+      "reason": "Real FastAPI routing and TestClient response serialization with evidence storage replaced.",
+      "sha256": "1cb3d26ddc532ce84066aea513296753074cda950d33b55361156e34bdf5c971"
     },
     {
       "path": "tests/test_v1_runtime_lifecycle.py",
