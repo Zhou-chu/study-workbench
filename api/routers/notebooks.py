@@ -99,7 +99,7 @@ async def get_notebooks(
 
         # Filter by archived status if specified
         if archived is not None:
-            result = [nb for nb in result if nb.get("archived") == archived]
+            result = [nb for nb in result if nb.get("archived", False) == archived]
 
         return [
             NotebookResponse(

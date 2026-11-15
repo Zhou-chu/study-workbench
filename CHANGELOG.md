@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Keep notebooks without a stored archive flag in the unarchived collection, matching the default shown when no filter is applied.
+
 - Fail closed when a native empty-unit coverage reporter returns no exit status, while retaining native failure codes and diagnostic records; explicitly type execution evidence without weakening its validation.
 
 - Validate the synthetic settings-review fallback before starting its preview, and type its optional failure mode without suppressing type checks. This QA-only fix does not establish browser or deployment acceptance.

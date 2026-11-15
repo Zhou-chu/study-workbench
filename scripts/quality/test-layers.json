@@ -2955,13 +2955,22 @@
     },
     {
       "path": "tests/test_chunking.py",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "open_notebook/utils/chunking.py",
         "open_notebook/utils/token_utils.py"
       ],
-      "reason": "Extension and heuristic detection cases use direct literal inputs. Chunk cases compose real chunkers/token_count and tokenizer resource loading; split direct detection from tokenization integration.",
-      "sha256": "0a99b2238ab7c96f1f3f07ef1a75d67a659a7fea02771b03db8ef700d7cb1bf8"
+      "reason": "Remaining 13 cases exercise real tokenizer resource loading and LangChain splitter collaboration. Literal-only detection classes moved unchanged to unit companion; no real provider or application server.",
+      "sha256": "442fda37bb5e1a2e52a90abecd1bec957390e49c5c3c082dc7df18d67f893e48"
+    },
+    {
+      "path": "tests/test_chunking_detection_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/utils/chunking.py"
+      ],
+      "reason": "Three preserved literal-input extension/heuristic/combined detection classes, 21 cases; no tokenizer calls, file access or splitter construction.",
+      "sha256": "9dfcc941026c3bdcb2c580d3168ad3c920d9f5ae0bac8797b586d4ff94ba666e"
     },
     {
       "path": "tests/test_clear_description.py",
@@ -3776,6 +3785,15 @@
       "sha256": "52e871d7ff5bf6c6d0be2ad8624480c14f67bf570a15564bee8c6f900f7d1d14"
     },
     {
+      "path": "tests/test_notebook_collection_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/routers/notebooks.py"
+      ],
+      "reason": "Direct notebook list/recent/detail/update decision functions and real models/order validator; repo_query and domain get/save replaced. No ASGI/HTTP, database or persistent view stamp.",
+      "sha256": "718beb24673c6ad15171bd2ee9ea275ca5bff65458cbe41d741d4d27cf6678e2"
+    },
+    {
       "path": "tests/test_notebooklm_asset_file_lifecycle.py",
       "layer": "tool-integration",
       "targets": [
@@ -4423,6 +4441,15 @@
       ],
       "reason": "Direct form parsing and content-state policy with real DTO validation; URL, resolved filesystem observation and header detector replaced. No ASGI, real DNS or disk containment proof.",
       "sha256": "afcb6971acf0ab2311376671e9be11c648a4978575b2bafe8397cae43446889a"
+    },
+    {
+      "path": "tests/test_source_insight_decisions_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/routers/sources.py"
+      ],
+      "reason": "Direct insight generation/read/delete decision functions with real request/response models and replaced Source/Transformation persistence and enqueue boundaries; no ASGI, provider, actual deletion or database.",
+      "sha256": "5d2a4837ab0476a3034223877143aae686aecc5a1bae50e20ec182681a71c88d"
     },
     {
       "path": "tests/test_source_metadata_update.py",
