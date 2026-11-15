@@ -4445,6 +4445,15 @@
       "sha256": "2c7f03f3f2d84664677d696892decb50b0f943f7fc34dc775d4370766aaf1b50"
     },
     {
+      "path": "tests/test_source_snapshot_decisions_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/source_snapshot_service.py"
+      ],
+      "reason": "Real snapshot create/replay/provenance and pure record construction; repository/store/lock and thread/file publication are doubles. No actual file, thread, database or atomicity proof.",
+      "sha256": "5f7d2246e12f7469e78d2257386323fa6ae84a69430d21b15c82aa045df27299"
+    },
+    {
       "path": "tests/test_source_submission_uncertainty.py",
       "layer": "mixed",
       "targets": [
@@ -5374,6 +5383,15 @@
       ],
       "reason": "Real google service-account loader reads missing/malformed/wrong-shape files for compatibility and oracle checks. Direct synthetic unrelated/network exceptions and non-Vertex mocked failure paths can be units; do not count all as units. Full test file and relevant production/fixture boundaries reviewed at merged 588aaf5; no tests executed for classification.",
       "sha256": "1cb80ae31fbafb2195e7b282e4ceab1c468d72a71dfd9eb751c49616a17ed230"
+    },
+    {
+      "path": "tests/test_visual_review_response_contract.py",
+      "layer": "tool-integration",
+      "targets": [
+        "apps/web/scripts/visual-review.py"
+      ],
+      "reason": "Reads and compiles only the real route fixture AST to check object/array response serialization; does not run the top-level browser harness. Not strict unit coverage.",
+      "sha256": "49fb3524e276550684dbb0136dbd50f637d46b1f73fc64be9b291c97cdc196f7"
     },
     {
       "path": "tests/test_web_discovery_provider.py",

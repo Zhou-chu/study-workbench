@@ -3,6 +3,7 @@
 import json
 import os
 import re
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -128,7 +129,7 @@ requests = []
 def api(route):
     p = urlparse(route.request.url).path
     requests.append({"path": p, "method": route.request.method})
-    value = {}
+    value: Mapping[str, object] | Sequence[object] = {}
     if p.endswith("spa-artifact-manifest.json"):
         value = {
             "schema_version": "spa-artifact-v1",
