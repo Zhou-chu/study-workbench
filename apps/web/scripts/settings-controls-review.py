@@ -21,14 +21,19 @@ FONTS = (
     / "study-workbench-worktrees-20261108/notebook-editorial-20261110/.superpowers/sdd/notebook-spa-redesign/fonts"
 )
 # Reuse only fixture declarations/handler, never the older script's browser runner.
-fixture = {"__file__": str(ROOT / "apps/web/scripts/visual-review.py")}
+fixture: dict[str, object] = {
+    "__file__": str(ROOT / "apps/web/scripts/visual-review.py")
+}
 exec(
     (ROOT / "apps/web/scripts/visual-review.py")
     .read_text()
     .split("with sync_playwright() as p:")[0],
     fixture,
 )
-fallback = fixture["api"]
+fallback_candidate = fixture["api"]
+if not callable(fallback_candidate):
+    raise RuntimeError("Synthetic fixture API handler is not callable")
+fallback = fallback_candidate
 env = dict(
     os.environ, PATH=str(TOOLS / "tools/node-v24.19.0-linux-x64/bin") + ":/usr/bin:/bin"
 )
@@ -73,7 +78,7 @@ try:
         browser = p.firefox.launch(headless=True)
         for width, height in [(1440, 1000), (390, 844)]:
             for theme in ["light", "dark"]:
-                mode = {"failure": None}
+                mode: dict[str, str | None] = {"failure": None}
                 stored = []
                 context = browser.new_context(
                     viewport={"width": width, "height": height},

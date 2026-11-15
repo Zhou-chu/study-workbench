@@ -4249,6 +4249,15 @@
       "sha256": "03e83fb72eda9c52bafc08a49eedc57cd615948e6221d1de0f8e349ff0bbf2c0"
     },
     {
+      "path": "tests/test_settings_review_fixture_contract.py",
+      "layer": "tool-integration",
+      "targets": [
+        "apps/web/scripts/settings-controls-review.py"
+      ],
+      "reason": "AST-isolated QA harness contract: reads script and executes only fallback extraction/validation, never its fixture exec, browser or service. Does not establish full harness execution or production line coverage.",
+      "sha256": "86d30571ba8e53ff649dc15ee198fb58d4e56e5eb5868c6662c3ff0a40d1dd24"
+    },
+    {
       "path": "tests/test_source_attempt_ownership.py",
       "layer": "component-integration",
       "targets": [
