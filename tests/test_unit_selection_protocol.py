@@ -10,6 +10,7 @@ spec = importlib.util.spec_from_file_location(
     "unit_selection_policy",
     Path(__file__).parents[1] / "scripts/quality/test_layers.py",
 )
+assert spec is not None and spec.loader is not None, "Local policy loader unavailable"
 policy = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(policy)
 

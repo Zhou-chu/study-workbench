@@ -7,6 +7,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
+from typing import NotRequired, TypedDict
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -23,11 +24,33 @@ def pytest_configure(config):
         )
 
 
+class CollectedItem(TypedDict):
+    nodeid: str
+    file: str
+
+
+class TestReport(TypedDict):
+    nodeid: str
+    when: str
+    outcome: str
+    wasxfail: bool
+
+
+class ExecutionRecord(TypedDict):
+    version: int
+    complete: bool
+    collected: list[CollectedItem]
+    reports: list[TestReport]
+    deselected: list[str]
+    collectionFailures: list[str]
+    sessionExitCode: NotRequired[int]
+
+
 class ExecutionEvidence:
     def __init__(self, output: Path):
         self.output = output
         self.root = Path.cwd().resolve()
-        self.value = {
+        self.value: ExecutionRecord = {
             "version": 1,
             "complete": False,
             "collected": [],
@@ -63,11 +86,18 @@ class ExecutionEvidence:
         )
 
     def pytest_sessionfinish(self, session, exitstatus):
-        self.value.update(complete=True, sessionExitCode=int(exitstatus))
+        self.value.update({"complete": True, "sessionExitCode": int(exitstatus)})
         self.output.parent.mkdir(parents=True, exist_ok=True)
         self.output.write_text(
             json.dumps(self.value, indent=2) + "\n", encoding="utf-8"
         )
+
+
+def coverage_exit_status(json_exit: int | None, xml_exit: int | None) -> int:
+    """Missing native status cannot certify success; retain stronger failure codes."""
+    return max(
+        1 if json_exit is None else json_exit, 1 if xml_exit is None else xml_exit
+    )
 
 
 def empty_partition(request_path: str) -> int:
@@ -114,7 +144,7 @@ def empty_partition(request_path: str) -> int:
         (output / "execution.json").write_text(
             json.dumps(evidence, indent=2) + "\n", encoding="utf-8"
         )
-        return max(json_exit, xml_exit)
+        return coverage_exit_status(json_exit, xml_exit)
 
 
 if __name__ == "__main__":

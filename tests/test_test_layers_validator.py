@@ -8,6 +8,7 @@ import pytest
 spec = importlib.util.spec_from_file_location(
     "test_layers", Path(__file__).parents[1] / "scripts/quality/test_layers.py"
 )
+assert spec is not None and spec.loader is not None, "Local policy loader unavailable"
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 
@@ -107,16 +108,18 @@ def test_unknown_schema_is_rejected():
 
 
 def test_malformed_document_is_rejected():
-    for value in [None, [], {"version": 1}, {"version": 1, "entries": [None]}]:
+    values: list[object] = [None, [], {"version": 1}, {"version": 1, "entries": [None]}]
+    for value in values:
         assert module.validate_manifest(value, [], {})
 
 
 def test_selection_never_returns_partial_unit_list():
-    document = {"version": 1, "entries": [entry()]}
+    entries = [entry()]
+    document = {"version": 1, "entries": entries}
     assert module.select_unit_paths(
         document, ["tests/test_a.py", "api/a.py"], {"tests/test_a.py": "a" * 64}
     ) == ["tests/test_a.py"]
-    document["entries"].append(entry("tests/test_b.py", "unclassified"))
+    entries.append(entry("tests/test_b.py", "unclassified"))
     with pytest.raises(ValueError, match="unresolved"):
         module.select_unit_paths(
             document,

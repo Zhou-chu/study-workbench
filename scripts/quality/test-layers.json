@@ -4524,7 +4524,7 @@
         "scripts/quality/test_layers.py"
       ],
       "reason": "Pure validation and selection functions with in-memory manifests, inventories and digests; import-time source loading only. No CLI execution.",
-      "sha256": "40187052d8d4d77d384252ebd2d268156ba39688b1a366d35b2666c072de71ed"
+      "sha256": "eafa1e96727914bcfe84ca5b7300c3e6022b9828477a0625383d02bd01183fe7"
     },
     {
       "path": "tests/test_text_search_parent.py",
@@ -4578,13 +4578,22 @@
       "sha256": "366853c732d6319b3fc85aaae807d200cefc7169bde3d370631602413277b6f1"
     },
     {
+      "path": "tests/test_unit_pytest_evidence_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/quality/unit_pytest_evidence.py"
+      ],
+      "reason": "Direct native exit-code policy and real execution-record callbacks/JSON serialization with filesystem output stubbed; no pytest subprocess, coverage engine, environment mutation or live service.",
+      "sha256": "0ee37d697c36d167d27cc4c6f035be460725a840d0b16cbffde2fde47cf1f6a6"
+    },
+    {
       "path": "tests/test_unit_selection_protocol.py",
       "layer": "unit",
       "targets": [
         "scripts/quality/test_layers.py"
       ],
       "reason": "Pure policy functions with synthetic inventories and hashes; no Git, filesystem mutation or child process.",
-      "sha256": "bbf40d0b31543b6cfbc8cdafb3c29cc2a466c50becd2ca6230c1eb0935d4fb60"
+      "sha256": "7310e00deb8c82dae541e4fce609ca07d8aa4009a3cbd9f9e5ba909ba99e834c"
     },
     {
       "path": "tests/test_upload_toctou_race.py",
