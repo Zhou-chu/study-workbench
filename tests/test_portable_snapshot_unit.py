@@ -4,6 +4,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from copy import deepcopy
 from types import SimpleNamespace
+from typing import NotRequired, TypedDict
 
 import pytest
 
@@ -11,18 +12,30 @@ from api import portable_service as target
 from open_notebook.exceptions import InvalidInputError
 
 
+class SnapshotProject(TypedDict):
+    notebook: dict[str, object]
+    sources: list[dict[str, object]]
+    notes: list[dict[str, object]]
+    chat_sessions: list[dict[str, object]]
+    source_insights: list[dict[str, object]]
+    note_snapshot: NotRequired[list[dict[str, object]]]
+    legacy_chat: NotRequired[list[dict[str, object]]]
+
+
 @pytest.fixture
 def harness(monkeypatch):
     events = []
     state = SimpleNamespace(locked=False, reads=0, fail=None, changed=False)
-    project = {
+    project: SnapshotProject = {
         "notebook": {"id": "notebook:synthetic", "name": "Synthetic"},
         "sources": [],
         "notes": [],
         "chat_sessions": [],
         "source_insights": [],
     }
-    personal = {kind: [] for kind in target.PERSONAL_KINDS}
+    personal: dict[str, list[dict[str, object]]] = {
+        kind: [] for kind in target.PERSONAL_KINDS
+    }
 
     @asynccontextmanager
     async def lock(identity):

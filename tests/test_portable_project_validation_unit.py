@@ -11,7 +11,9 @@ from open_notebook.exceptions import InvalidInputError
 
 
 def project():
-    value = {kind: [] for kind in subject.FILES}
+    value: dict[str, dict[str, object] | list[dict[str, object]]] = {
+        kind: [] for kind in subject.FILES
+    }
     value["notebook"] = {"id": "notebook:one", "name": "Synthetic"}
     value["sources"] = [{"id": "source:one"}]
     value["notes"] = [{"id": "note:one", "content": "Saved"}]
@@ -188,8 +190,14 @@ def test_revision_snapshot_requires_exact_native_identity_and_revision(snapshot)
 
 
 def test_legacy_and_large_positive_revisions_are_preserved_exactly():
-    notes = [{"id": "note:one"}, {"id": "note:two", "revision": 2**60}]
-    snapshots = [{"note_id": "note:one"}, {"note_id": "note:two", "revision": 2**60}]
+    notes: list[dict[str, object]] = [
+        {"id": "note:one"},
+        {"id": "note:two", "revision": 2**60},
+    ]
+    snapshots: list[dict[str, object]] = [
+        {"note_id": "note:one"},
+        {"note_id": "note:two", "revision": 2**60},
+    ]
     subject.normalize_note_revisions(notes, snapshots)
     assert [row["revision"] for row in notes] == [1, 2**60]
     assert [row["revision"] for row in snapshots] == [1, 2**60]

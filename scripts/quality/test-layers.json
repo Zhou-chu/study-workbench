@@ -2954,6 +2954,16 @@
       "sha256": "93177a4bbc89b22e9ba3f0c2d5dd280d583b11102fda916b7e116d33d9d43d72"
     },
     {
+      "path": "tests/test_chat_session_decisions_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/routers/chat.py",
+        "api/routers/_chat_shared.py"
+      ],
+      "reason": "Real notebook session routes, DTOs and message projection loaded under an isolated module alias with graph import substituted and restored. Persistence/thread/context/graph boundaries replaced; no SQLite, checkpoint durability or actual answer generation.",
+      "sha256": "5ffc02046b84dafec2112605c252e26dfaac1e9318b5684975148754e7a1d1fd"
+    },
+    {
       "path": "tests/test_chunking.py",
       "layer": "component-integration",
       "targets": [
@@ -3297,6 +3307,15 @@
       "sha256": "317df805a091a120092ba0914e96a0a83a002069e6e3d7e15e064e9b170fb0e7"
     },
     {
+      "path": "tests/test_domain_source_records_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/domain/notebook.py"
+      ],
+      "reason": "Real source count, embedding-source lookup, relationships and command progress projection with query/relate/notebook lookup/command-status I/O replaced. Tests returned values, bound identities and cancellation, not real SQL or worker behavior.",
+      "sha256": "6c869e0c35f52149f1ba4a65178e40464f5a4d16a1b4d5f7518ffb19c42691cf"
+    },
+    {
       "path": "tests/test_domain_values_unit.py",
       "layer": "unit",
       "targets": [
@@ -3521,6 +3540,15 @@
       "sha256": "f9db25b40dde13ceffd44d5aec1f25b3d2a6e71852175e4c38a26ad01a508c40"
     },
     {
+      "path": "tests/test_evidence_ingest_replay_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_service.py"
+      ],
+      "reason": "Real original ingest identity/hash/MIME and replay decisions; constructor bypassed, store/resolve-file/lock/thread-publication replaced. Module-local asyncio substitute, no actual file publication, durability or lock mutual exclusion.",
+      "sha256": "329145f0e82ddb7392560c7d27bd31de39f9da2c7f33c5b03d6db927ba945d27"
+    },
+    {
       "path": "tests/test_evidence_maintenance_decisions_unit.py",
       "layer": "unit",
       "targets": [
@@ -3546,6 +3574,15 @@
       ],
       "reason": "Real request-local get/prefetch and record validation with only scalar/bulk persistence doubles; copy isolation, negative caching, valid-prefix ordering and failure/cancellation retry. No real I/O or atomic snapshot claim.",
       "sha256": "a181d51866aa700a2179d0806f25f50ede4bb3f2007a348ec4856c394c52eecb"
+    },
+    {
+      "path": "tests/test_evidence_reader_route_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/routers/evidence.py"
+      ],
+      "reason": "Real exact reader selector, cross-identity and citation-result projection with EvidenceService and EvidenceReadContext boundary doubles. FileResponse only constructed, not sent. No real citation engine, filesystem integrity or browser acceptance.",
+      "sha256": "ecba0f9331dc1f8f47ec58b50032834186aa01fe75d59b7c72d89f1419f77b0a"
     },
     {
       "path": "tests/test_evidence_repository_receipts_unit.py",
@@ -3654,6 +3691,15 @@
       ],
       "reason": "Pure descriptor custody policy with injected OS open/fstat/close boundaries; verifies owner, sticky mode, directory, cleanup and cancellation without real filesystem access.",
       "sha256": "08275d45a58685c197e0dda004529c93904f8695a4bd86740678ee5eb125d785"
+    },
+    {
+      "path": "tests/test_index_status_retry_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_indexing.py"
+      ],
+      "reason": "Real indexing status, historical group reconciliation and explicit retry policy with storage/repository/profile metadata doubles. Queue/model and owner-lock probes are rejection sentinels; no real dispatch, concurrent ownership or external processing.",
+      "sha256": "6dead5bbfe374ce266ecd418d97dce40368dfca2407b33b85b5da3d31af26b70"
     },
     {
       "path": "tests/test_insight_timestamps.py",
@@ -3802,6 +3848,15 @@
       "sha256": "6caefe6aea6d2609ab4cd472e52fe83f57f999856d40903d8a6d8c4041ea4ab8"
     },
     {
+      "path": "tests/test_note_router_decisions_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/routers/notes.py"
+      ],
+      "reason": "Direct note-route decisions use real request/response and domain values with persistence, repository, title-model and embedding queue boundaries replaced. Cold dynamic config/prompt imports use synthetic modules. Checks visible note/revision results and typed failures, not actual HTTP, database commits or live model behavior; existing module-import initialization remains.",
+      "sha256": "7e702b1d2752f75cf154c0d1bd67350a9b5bc8260fa74fa75bc71dccadbd3ae4"
+    },
+    {
       "path": "tests/test_note_save_embed_resilience.py",
       "layer": "api-integration",
       "targets": [
@@ -3828,6 +3883,24 @@
       ],
       "reason": "Direct notebook list/recent/detail/update decision functions and real models/order validator; repo_query and domain get/save replaced. No ASGI/HTTP, database or persistent view stamp.",
       "sha256": "718beb24673c6ad15171bd2ee9ea275ca5bff65458cbe41d741d4d27cf6678e2"
+    },
+    {
+      "path": "tests/test_notebook_context_scope_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/utils/context_builder.py"
+      ],
+      "reason": "Real context selection, ordering and cancellation with domain retrieval/context boundaries replaced. Preserves explicit empty selection and full selected payload assembly; does not prove actual file reading, reader state isolation or unreadable-source reporting.",
+      "sha256": "754e1a935690751bcc23f7dc7c0dc56c5786e8c48cf02684a402ffee1e56b62b"
+    },
+    {
+      "path": "tests/test_notebook_navigation_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/routers/notebooks.py"
+      ],
+      "reason": "Real create/edit/navigation decisions with domain DTOs and persistence/query replacements. Verifies save acknowledgment, refreshed projection, failures and cancellation. Offline import configuration remains; no actual database, ASGI or source deletion.",
+      "sha256": "9869d596bcdac03e6ae2a4137276b11c3d360eae54131b3894807136cfaa85c9"
     },
     {
       "path": "tests/test_notebooklm_asset_file_lifecycle.py",
@@ -4135,7 +4208,7 @@
         "api/portable_service.py"
       ],
       "reason": "Direct pure entity-closure/identity/sanitizer/path/revision/citation validation on synthetic in-memory records. No PortableService instance, ZIP, files, stores, HTTP or database; exact rule errors and Unicode codepoint locator behavior asserted.",
-      "sha256": "dc2a13507eb2992f37cd40eb37606d1d0f507ece5f76b22de2f74f14e16142ac"
+      "sha256": "157cf6f80d371cdce8f67fa50a7eab2e34ba7adb0e4b152d2c0701145c2975c4"
     },
     {
       "path": "tests/test_portable_restore_queue_unit.py",
@@ -4144,7 +4217,7 @@
         "api/portable_service.py"
       ],
       "reason": "Real archive identity remap and export queue orchestration with memory persistence/locks and submission boundary doubles. Constructor root resolution omitted via object.__new__; no archive, stage, real file, database or worker execution.",
-      "sha256": "42bb718669acfaa3dfef9f21a5ec02269e25764775e03f7610b174768f6e33cc"
+      "sha256": "2c874b1e0a94dde0037632df78b2e07ee4e72c5a6744c6af7ab29b294909000f"
     },
     {
       "path": "tests/test_portable_snapshot_unit.py",
@@ -4153,7 +4226,7 @@
         "api/portable_service.py"
       ],
       "reason": "Real snapshot/clean/validation policy with memory read/list/lock and staging boundary replaced; thread calls only synthetic staging, no archive or file lifetime tested.",
-      "sha256": "7d2f160a4b5b67289700c35a84b28fa91bd53d35d2dfdd51e68d1236768dc43d"
+      "sha256": "4acb422bf4791f8b9b670f13e3654cd87726d589c53ba6d4463b747f832bb2e4"
     },
     {
       "path": "tests/test_portable_staged_originals_unit.py",
@@ -4171,7 +4244,7 @@
         "api/portable_service.py"
       ],
       "reason": "Real restore transaction construction and ACK policy with only db connection/query_raw replaced; no real SQL commit, files, or automatic retry.",
-      "sha256": "68bf7c3d320bfbb4dbca79ab4ad4865207b83f9c4ddc320efcecb928ac068967"
+      "sha256": "f40d8ff5a19092be5999eccedecc706fa20b6697faab3cad5a07636c2119c459"
     },
     {
       "path": "tests/test_portable_visible_history_unit.py",
@@ -4494,6 +4567,16 @@
       "sha256": "14275e78be06ae8ddafc0ceaa9326a7f6bc1a306aea65df59eb155dd9035402e"
     },
     {
+      "path": "tests/test_source_chat_session_decisions_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/routers/source_chat.py",
+        "api/routers/_chat_shared.py"
+      ],
+      "reason": "Real linked-source session routing, history/message projection and scope checks under isolated graph-module import. Storage/thread/generation stream replaced and response iterator synthetic. No actual SQLite, SSE network, retrieval or model execution.",
+      "sha256": "2351c450021f4e90107ea136d35349404ce9a77dd25dc6efe62155b896631eab"
+    },
+    {
       "path": "tests/test_source_chat_stream_unit.py",
       "layer": "unit",
       "targets": [
@@ -4588,6 +4671,15 @@
       ],
       "reason": "Explicit disposable-DB opt-in starts real memory SurrealDB with migrations/query/create/update/delete. Direct route invocation does not make database concurrency checks unit; never enable in pure unit runner.",
       "sha256": "9ba208e098769eff72bc6047d529dfeaa9309e1fc77d1faa4dafb24798bc58b2"
+    },
+    {
+      "path": "tests/test_source_open_decisions_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/routers/sources.py"
+      ],
+      "reason": "Real source-open and download metadata decisions with domain storage/status/queue and filesystem checks replaced. FileResponse is constructed only. Offline import initializes isolated configuration and commands; not zero import effects or real HTTP/file streaming.",
+      "sha256": "801910e9a2dbbf705db17873900efabfdcc042c757f483cfc05d95653568d183"
     },
     {
       "path": "tests/test_source_path_containment.py",
@@ -4802,6 +4894,15 @@
       ],
       "reason": "Direct output/command error cases; worker_retry_policy executes actual SDK/tenacity loop. Split retry compatibility. Full-file independent review at f10d0f4; SHA256 verified after merge.",
       "sha256": "bb00030c7c701e607683f91067e39e2a04508fcaf6e0aae02944f7a5114de25e"
+    },
+    {
+      "path": "tests/test_transformation_router_decisions_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/routers/transformations.py"
+      ],
+      "reason": "Direct transformation configuration and execution decisions use real DTO/domain values and response projection, with persistence, model lookup and graph invocation replaced. Covers editing, model selection, output and typed cancellation decisions; graph construction during module import remains, not ASGI, actual graph execution or durability acceptance.",
+      "sha256": "cd9c44960f42714d041027b183b1b659f2bb13847bb7197c1f5ea056b6f3bcee"
     },
     {
       "path": "tests/test_transformations_api.py",
@@ -5612,6 +5713,15 @@
       ],
       "reason": "Real finish/cache policies with copy-on-read memory store, source/evidence/submission boundaries replaced; no filesystem checkpoints, provider or worker.",
       "sha256": "18b0a3f6cfd81d0d08537c4020feb26d58f1317a269700b6a9bfc38723ec1319"
+    },
+    {
+      "path": "tests/test_web_import_decisions_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/web_discovery_service.py"
+      ],
+      "reason": "Real selected web-import receipt, cache and completion orchestration with provider, storage, checkpoint, thread, source/evidence and queue boundaries replaced; constructor bypassed. Checks returned values, idempotency and recovery decisions in memory, not real remote calls, durable receipts, restart recovery or lock concurrency.",
+      "sha256": "74768b3bcde128d5de6d4fbd070ba924be3d8cd7cdbeb28d51fa00eff13e615f"
     },
     {
       "path": "tests/test_workbench_hybrid_acceptance.py",

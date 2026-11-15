@@ -21,7 +21,9 @@ from open_notebook.utils import command_submission
 
 
 def project():
-    data = {kind: [] for kind in mod.FILES}
+    data: dict[str, dict[str, object] | list[dict[str, object]]] = {
+        kind: [] for kind in mod.FILES
+    }
     data.update(
         notebook={"id": "notebook:old", "name": "source:old"},
         sources=[{"id": "source:old", "notebook_id": "notebook:old"}],

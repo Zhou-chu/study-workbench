@@ -63,7 +63,7 @@ def transaction(monkeypatch):
     records = [("job", "job_new", {"job_id": "job_new", "state": "cancelled_local"})]
     events = []
     query = AsyncMock(return_value={"result": [{"status": "OK"}]})
-    faults = {}
+    faults: dict[str, BaseException] = {}
 
     @asynccontextmanager
     async def connection():
