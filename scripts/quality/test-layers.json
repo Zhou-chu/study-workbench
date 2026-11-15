@@ -2865,13 +2865,24 @@
       "sha256": "10f1530772611fb9411173effddfa4ddaee59166e392f80be133b0910a57862e"
     },
     {
-      "path": "tests/test_background_retry_visibility.py",
-      "layer": "mixed",
+      "path": "tests/test_background_retry_policy_unit.py",
+      "layer": "unit",
       "targets": [
-        "commands/source_commands.py"
+        "commands/source_commands.py",
+        "commands/embedding_commands.py"
       ],
-      "reason": "Read-only registered retry policy assertions coexist with actual surreal_commands/tenacity retry execution and Loguru callback compatibility. Split policy inspection from SDK retry integration; no provider request occurs.",
-      "sha256": "bd3d2af38123430233fb6256c907129d2ab53e469a8e73c24f33ec00078e74a2"
+      "reason": "Read-only registered retry configuration values for five production commands; does not invoke SDK retry, provider, database or worker execution.",
+      "sha256": "a4d16cefa961f9365b4ce5982d0fde057fa4d66fbb213fa796d972afffe22335"
+    },
+    {
+      "path": "tests/test_background_retry_visibility.py",
+      "layer": "component-integration",
+      "targets": [
+        "commands/source_commands.py",
+        "commands/embedding_commands.py"
+      ],
+      "reason": "Real surreal_commands/Tenacity retry execution and Loguru warning sink compatibility; no provider request, but not a pure unit.",
+      "sha256": "bf1853e46178f47e7fcfc5b2971afc97281669e320073172ddd1d505448e2aa8"
     },
     {
       "path": "tests/test_boundary_logging.py",
@@ -3508,6 +3519,15 @@
       ],
       "reason": "Real metadata DTO/member projection over memory store; no database/file/provider execution.",
       "sha256": "63aae2aff571ed788371782af06db5e2fbe172110fc0b567d8bce318399486bb"
+    },
+    {
+      "path": "tests/test_evidence_read_context_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_reads.py"
+      ],
+      "reason": "Real request-local get/prefetch and record validation with only scalar/bulk persistence doubles; copy isolation, negative caching, valid-prefix ordering and failure/cancellation retry. No real I/O or atomic snapshot claim.",
+      "sha256": "a181d51866aa700a2179d0806f25f50ede4bb3f2007a348ec4856c394c52eecb"
     },
     {
       "path": "tests/test_evidence_repository_receipts_unit.py",
