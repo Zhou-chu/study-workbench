@@ -20,6 +20,8 @@ def audio(monkeypatch):
     spec = importlib.util.spec_from_file_location(
         "audio_review", root / "scripts/v1/audio_playback_check.py"
     )
+    assert spec is not None
+    assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     # Python 3.11 accepts no delete= keyword. Exercise that API contract even
@@ -52,7 +54,7 @@ def test_owned_context_available(audio):
 )
 def test_owned_lifecycle_order_and_disk_cleanup(audio, tmp_path, monkeypatch, failure):
     events = []
-    profiles = []
+    profiles: list[Path] = []
 
     def event(name):
         events.append(name)

@@ -19,15 +19,19 @@ pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture(autouse=True)
-def boundaries(monkeypatch):
-    monkeypatch.setattr(r, "require_encryption_key", Mock())
-    monkeypatch.setattr(r, "validate_url", AsyncMock())
+def boundaries(monkeypatch: pytest.MonkeyPatch) -> tuple[Mock, AsyncMock]:
+    key_check = Mock()
+    url_check = AsyncMock()
+    monkeypatch.setattr(r, "require_encryption_key", key_check)
+    monkeypatch.setattr(r, "validate_url", url_check)
     # Projection is a separate service unit. Preserve observable fields in this stub.
     monkeypatch.setattr(
         r,
         "credential_to_response",
         lambda c, n: {"id": c.id, "name": c.name, "model_count": n},
     )
+
+    return key_check, url_check
 
 
 def credential(**changes):
@@ -118,6 +122,7 @@ async def test_error_mapping(monkeypatch, name, args, owner, target, status, kin
     ) as caught:
         await getattr(r, name)(*args)
     if kind == "unexpected":
+        assert isinstance(caught.value, HTTPException)
         assert caught.value.status_code == status
         assert "synthetic failure" not in caught.value.detail
     else:
@@ -174,7 +179,10 @@ async def test_read_credential_metadata(monkeypatch, mode):
 
 
 @pytest.mark.parametrize("has_key", [False, True])
-async def test_create_real_domain_values(monkeypatch, has_key):
+async def test_create_real_domain_values(
+    monkeypatch, has_key, boundaries: tuple[Mock, AsyncMock]
+):
+    _, url_check = boundaries
     saved = []
 
     async def save(c):
@@ -203,23 +211,26 @@ async def test_create_real_domain_values(monkeypatch, has_key):
         "synthetic" if has_key else None
     )
     assert c.project == "p" and c.location == "l" and c.credentials_path == "not-read"
-    assert r.validate_url.await_count == 6
+    assert url_check.await_count == 6
     for k, v in values.items():
         assert getattr(c, k) == v
-        r.validate_url.assert_any_await(v, "openai")
+        url_check.assert_any_await(v, "openai")
 
 
 @pytest.mark.parametrize("operation", ["create", "update"])
 @pytest.mark.parametrize("boundary", ["key", "url"])
-async def test_preflight_refuses_before_persistence(monkeypatch, operation, boundary):
+async def test_preflight_refuses_before_persistence(
+    monkeypatch, operation, boundary, boundaries: tuple[Mock, AsyncMock]
+):
+    key_check, url_check = boundaries
     lookup = AsyncMock()
     save = AsyncMock()
     monkeypatch.setattr(r.Credential, "get", lookup)
     monkeypatch.setattr(r.Credential, "save", save)
     if boundary == "key":
-        r.require_encryption_key.side_effect = ValueError("missing setup")
+        key_check.side_effect = ValueError("missing setup")
     else:
-        r.validate_url.side_effect = ValueError("invalid URL")
+        url_check.side_effect = ValueError("invalid URL")
     request = (
         CreateCredentialRequest(
             name="X", provider="openai", base_url="https://synthetic.example"
@@ -229,8 +240,10 @@ async def test_preflight_refuses_before_persistence(monkeypatch, operation, boun
     )
     with pytest.raises(HTTPException) as caught:
         if operation == "create":
+            assert isinstance(request, CreateCredentialRequest)
             await r.create_credential(request)
         else:
+            assert isinstance(request, UpdateCredentialRequest)
             await r.update_credential("credential:x", request)
     assert caught.value.status_code == 400
     lookup.assert_not_awaited()
@@ -238,12 +251,15 @@ async def test_preflight_refuses_before_persistence(monkeypatch, operation, boun
 
 
 @pytest.mark.parametrize("mode", ["absent", "set", "null", "empty"])
-async def test_update_field_presence(monkeypatch, mode):
+async def test_update_field_presence(
+    monkeypatch, mode, boundaries: tuple[Mock, AsyncMock]
+):
+    _, url_check = boundaries
     c = credential()
     monkeypatch.setattr(r.Credential, "get", AsyncMock(return_value=c))
     check = Mock()
     monkeypatch.setattr(r, "ensure_provider_required_fields", check)
-    data = {}
+    data: dict[str, str | int | list[str] | None] = {}
     if mode != "absent":
         data = {
             k: (
@@ -273,8 +289,8 @@ async def test_update_field_presence(monkeypatch, mode):
             c.modalities == ["embedding"]
             and c.api_key.get_secret_value() == "replacement-synthetic"
         )
-        assert r.validate_url.await_count == 6
-        r.validate_url.assert_any_await("https://synthetic.example", "update")
+        assert url_check.await_count == 6
+        url_check.assert_any_await("https://synthetic.example", "update")
     check.assert_called_once_with(c)
     c.save.assert_awaited_once_with()
     assert response["model_count"] == 0
@@ -297,13 +313,12 @@ async def test_required_update_and_missing_records(monkeypatch):
     monkeypatch.setattr(
         r.Credential, "get", AsyncMock(side_effect=NotFoundError("absent"))
     )
-    for fn, args in [
-        (r.update_credential, ["credential:x", UpdateCredentialRequest()]),
-        (r.delete_credential, ["credential:x", None]),
-    ]:
-        with pytest.raises(HTTPException) as missing:
-            await fn(*args)
-        assert missing.value.status_code == 404
+    with pytest.raises(HTTPException) as missing_update:
+        await r.update_credential("credential:x", UpdateCredentialRequest())
+    assert missing_update.value.status_code == 404
+    with pytest.raises(HTTPException) as missing_delete:
+        await r.delete_credential("credential:x", None)
+    assert missing_delete.value.status_code == 404
 
 
 @pytest.mark.parametrize("mode", ["empty", "cascade", "migrate"])

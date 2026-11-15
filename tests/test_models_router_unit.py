@@ -90,6 +90,7 @@ async def test_error_contract_and_safe_log(
     finally:
         logger.remove(sink)
     if kind == "unexpected":
+        assert isinstance(caught.value, HTTPException)
         assert caught.value.status_code == 500
         assert "synthetic-secret" not in str(caught.value.detail) + "".join(logs)
         assert "exception_type=RuntimeError" in "".join(logs)
@@ -129,6 +130,7 @@ async def test_create_validates_duplicate_and_persists_normalized_lookup(monkeyp
     )
     result = await r.create_model(data)
     assert result.id == "model:new" and saved[0].credential == "credential:x"
+    assert query.await_args is not None
     assert query.await_args.args[1] == {
         "provider": "openai",
         "name": "gpt",
@@ -182,6 +184,7 @@ async def test_probe_lookup_never_dispatches(monkeypatch, error):
     if isinstance(error, (HTTPException, ConfigurationError)):
         assert caught.value is error
     else:
+        assert isinstance(caught.value, HTTPException)
         assert caught.value.status_code == 404
     probe.assert_not_awaited()
 
@@ -236,9 +239,10 @@ async def test_discovery_sync_count_and_provider_records(monkeypatch):
         ),
     )
     assert (await r.discover_models("p"))[0].description == "D"
-    monkeypatch.setattr(r, "sync_provider_models", AsyncMock(return_value=(3, 2, 1)))
+    sync = AsyncMock(return_value=(3, 2, 1))
+    monkeypatch.setattr(r, "sync_provider_models", sync)
     assert (await r.sync_models("p")).new == 2
-    r.sync_provider_models.assert_awaited_once_with("p", auto_register=True)
+    sync.assert_awaited_once_with("p", auto_register=True)
     monkeypatch.setattr(
         r,
         "sync_all_providers",

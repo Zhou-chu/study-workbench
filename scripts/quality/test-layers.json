@@ -2853,7 +2853,7 @@
         "scripts/v1/audio_playback_check.py"
       ],
       "reason": "Callable export check is static contract; lifecycle cases use driver/browser doubles but real owned temp profiles, modes, symlinks, inode replacement and cleanup. Filesystem integration, not real browser acceptance or whole-file unit.",
-      "sha256": "7176c2d887ab1e8648494ce0468f53f05f8550085d0024bc96c06d45fc48ca03"
+      "sha256": "76132535374f2d0c0ce0ebf759a130ab369f741f94a44fccdeff0a4707352091"
     },
     {
       "path": "tests/test_auth.py",
@@ -3187,7 +3187,7 @@
         "api/routers/credentials.py"
       ],
       "reason": "Direct route logical units with repository, SDK, credential projection and migration-service boundaries replaced; actual DTO/domain value validation retained. No HTTP, database, provider or migration I/O.",
-      "sha256": "3d69e4b9b9c6141fc49863aa61ef9158821b1b2539c760e1a27128c01fbc1d67"
+      "sha256": "c64d77bd46b91c265c4b64ac1030f01fadfb11519bd47763d31c156a687ad5e8"
     },
     {
       "path": "tests/test_credentials_service_branches.py",
@@ -3644,7 +3644,7 @@
         "scripts/historical_database_pytest.py"
       ],
       "reason": "Test-infrastructure wiring regression calls actual native test entrypoints with a fake SDK signin boundary. Reads test module and checks runner credential configuration, not production-unit behavior or real database execution. No added production coverage claim.",
-      "sha256": "26fbc93eedecbefb2434c470d605aa14ea0e3ce6f41b97b6cd3fbcdf4260438a"
+      "sha256": "f7706c444d4aaae0f016bf096378c471a0b97e08c44e069a92d6814bd0089820"
     },
     {
       "path": "tests/test_historical_temporary_parent_unit.py",
@@ -3770,8 +3770,8 @@
       "targets": [
         "apps/web/scripts/model-setup-journey-review.py"
       ],
-      "reason": "Real mkdir/chmod/symlink/cleanup/umask boundaries, with Popen/killpg replaced (not real browser/process execution). preview_stop and synthetic_state_fixture_shapes can be isolated units; remaining filesystem contracts integration. Independent full-file review at 71fbefb; test bytes verified identical to this 3e72ce0 base.",
-      "sha256": "4d8bde302218e1c723fa7f2c0c756f10e49aaf78baa9d75ac15c46e40c0b7e1a"
+      "reason": "Real mkdir/chmod/symlink/cleanup/umask boundaries, with Popen/killpg replaced (not real browser/process execution). preview_stop and synthetic_state_fixture_shapes can be isolated units; remaining filesystem contracts integration. Current revision adds explicit loader and scratch-lifetime type checks while preserving the original runtime assertions; it is not byte-identical to the earlier review baseline.",
+      "sha256": "f57c86c3c9918bf15d4bb64cb876630d46e448399859ebb1cf69f8df8d69d58f"
     },
     {
       "path": "tests/test_models_api.py",
@@ -3799,7 +3799,7 @@
         "api/routers/models.py"
       ],
       "reason": "Direct route and configuration/selection function calls; real request/response DTO validation; persistence, SDK and provider I/O replaced. No HTTP/ASGI stack, real database, network or subprocess.",
-      "sha256": "f15289cfbc7e135769204c3c3b6a8031aecbf76a93a01e5422399bf162818a27"
+      "sha256": "6caefe6aea6d2609ab4cd472e52fe83f57f999856d40903d8a6d8c4041ea4ab8"
     },
     {
       "path": "tests/test_note_save_embed_resilience.py",
@@ -4083,6 +4083,15 @@
       "sha256": "8deedbd873c32ac514a23277816adf2539d3a481d71c1d01d421e169db4f5cda"
     },
     {
+      "path": "tests/test_portable_archive_reader_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/portable_service.py"
+      ],
+      "reason": "Real portable restore JSON/JSONL decoding, hash checks, entity projection and legacy note normalization with in-memory archive, path and physical-ZIP-preflight boundaries. Checks restored values and ordinary error decisions; not real ZIP, filesystem, concurrency or complete security acceptance.",
+      "sha256": "53decf86e5c482a0918df998f313c665fe61b78c2e0c1bfa1a43c6d3a5f9cfc4"
+    },
+    {
       "path": "tests/test_portable_archive_writer_unit.py",
       "layer": "unit",
       "targets": [
@@ -4298,13 +4307,23 @@
     },
     {
       "path": "tests/test_regex_linear_boundaries.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "open_notebook/graphs/grounded_chat.py",
         "open_notebook/utils/chunking.py"
       ],
-      "reason": "Direct parser/heuristic compatibility cases coexist with multiprocessing.Process/Pipe adversarial deadline cases. Computation in a real subprocess stays tool-integration. Split deadline cases.",
-      "sha256": "2b2b890d1f1a2c65041c3e56fa02189144301d2f9d7942d16ab1a5f222b19aa0"
+      "reason": "Six unchanged multiprocessing deadline checks exercise real child-process execution. Pure response-fence and Markdown semantics moved unchanged to the separate unit file; these retained process checks are not strict unit.",
+      "sha256": "2c7c880cdc9f7168f808a33273d4bb8b344c3e350e280eb81e892fb37799a0b4"
+    },
+    {
+      "path": "tests/test_regex_semantics_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/graphs/grounded_chat.py",
+        "open_notebook/utils/chunking.py"
+      ],
+      "reason": "Fifty unchanged in-memory response-fence and Markdown compatibility cases call real parsing/counting functions. No child process or external I/O is executed; this is semantic compatibility, not a performance proof.",
+      "sha256": "27b228651b082d2127ce32fd1079e9bbd905c3e18635b6eb26bb728f26a6ac02"
     },
     {
       "path": "tests/test_repository_config.py",

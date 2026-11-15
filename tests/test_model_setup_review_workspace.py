@@ -16,6 +16,8 @@ def review():
         isinstance(node, ast.FunctionDef) and node.name == "main" for node in tree.body
     ), "QA script must be import-safe before exercising it"
     spec = importlib.util.spec_from_file_location("model_setup_review", SCRIPT)
+    assert spec is not None
+    assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -122,12 +124,14 @@ def test_main_waits_for_child_before_scratch_cleanup(
     monkeypatch.setenv("QA_RUN", "owned-child")
     original_env = dict(os.environ)
     launches = []
+    scratch: Path | None = None
 
     class Child:
         done = False
         terminated = False
 
         def wait(self):
+            assert scratch is not None
             assert scratch.exists()
             if failure and not self.terminated:
                 raise KeyboardInterrupt()
@@ -152,7 +156,6 @@ def test_main_waits_for_child_before_scratch_cleanup(
         launches.append(out)
         return child
 
-    scratch = None
     monkeypatch.setattr(review.subprocess, "Popen", launch)
     if failure:
         with pytest.raises(KeyboardInterrupt):
@@ -160,6 +163,7 @@ def test_main_waits_for_child_before_scratch_cleanup(
         assert child.terminated
     else:
         assert review.main() == 7
+    assert scratch is not None
     assert child.done and not scratch.exists()
     assert (launches[0] / "report.json").read_text() == "evidence"
     assert dict(os.environ) == original_env
@@ -252,6 +256,8 @@ def test_import_does_not_mutate_environment_or_start_processes(tmp_path, monkeyp
     monkeypatch.setattr(subprocess, "Popen", launch)
     before = dict(os.environ)
     spec = importlib.util.spec_from_file_location("import_safe_review", SCRIPT)
+    assert spec is not None
+    assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     assert dict(os.environ) == before
