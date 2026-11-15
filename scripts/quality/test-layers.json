@@ -3566,6 +3566,15 @@
       "sha256": "daae40b05e882bef49175761b1a85f2418b3bf097a5f73be51b3da3b8f385ae7"
     },
     {
+      "path": "tests/test_evidence_search_decisions_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_service.py"
+      ],
+      "reason": "Real lexical retrieval/ranking/citation decision chain with synthetic copied store records. Original-file checks use path and to_thread doubles; constructor bypassed, no actual file probes/reads, parser, thread or database. Not filesystem or consistency acceptance.",
+      "sha256": "361021b3e342eaecba3cb31998a2b9affaa94a48ed273b6f25805c3290df1ee7"
+    },
+    {
       "path": "tests/test_explicit_credential_routing.py",
       "layer": "unit",
       "targets": [
@@ -4307,6 +4316,15 @@
       ],
       "reason": "Real save_note and Note model decisions with only store/repository/embedding I/O doubled; covers answer scope, title, create/update/revision parameters, citation downgrade and failure ordering without files/network/database.",
       "sha256": "4fa71d4fbd129a98de3e9571f8174a74efcd3da89ea4be690fb135918e69f9aa"
+    },
+    {
+      "path": "tests/test_saved_insight_note_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/domain/notebook.py"
+      ],
+      "reason": "Real insight-to-note, note revision/save/attach/delete and notebook context decisions with real models; query, note repository CRUD and queue boundaries replaced. No actual persistence, graph, HTTP or model execution.",
+      "sha256": "71317f366406f9ccc814de0126e0a3d1bc2d25ac536eef754fececd938400903"
     },
     {
       "path": "tests/test_search_api.py",
