@@ -168,3 +168,25 @@ def test_coverage_dependency_import_group_ignores_generated_reports(
         check=False,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_frontend_static_requires_dependencies_but_not_python_success():
+    document = yaml.load(
+        (ROOT / ".github/workflows/pr-quality.yml").read_text(), Loader=yaml.BaseLoader
+    )
+    steps = document["jobs"]["static"]["steps"]
+    dependency = next(step for step in steps if step.get("id") == "dependencies")
+    python = next(step for step in steps if step.get("name") == "Python static checks")
+    frontend = next(
+        step
+        for step in steps
+        if step.get("name") == "Workspace and legacy frontend checks"
+    )
+    assert steps.index(dependency) < steps.index(python) < steps.index(frontend)
+    assert frontend.get("if") == (
+        "${{ !cancelled() && steps.dependencies.outcome == 'success' }}"
+    )
+    assert "continue-on-error" not in python
+    assert "continue-on-error" not in frontend
+    assert "|| true" not in python["run"]
+    assert "|| true" not in frontend["run"]

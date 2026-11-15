@@ -1,4 +1,4 @@
-# Candidate only: remote execution has not been verified.
+# Non-deploying checks; complete strict quality acceptance remains pending.
 name: PR quality candidate
 'on':
   pull_request:
@@ -48,6 +48,7 @@ jobs:
         .venv/bin/ruff format --check .
         .venv/bin/python -m mypy .
     - name: Workspace and legacy frontend checks
+      if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
       run: |-
         npm run lint
         npm run typecheck

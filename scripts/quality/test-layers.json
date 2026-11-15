@@ -4063,7 +4063,7 @@
         "pyproject.toml"
       ],
       "reason": "Workflow static contract checks plus real synthetic tar and filesystem custody/extraction tests. No hosted dependency install, official-source build or complete remote CI is exercised; not wholly pure unit. Actual Ruff subprocess checks preserve external coverage import grouping with/without generated report directories.",
-      "sha256": "cc00a97eebf17bd17ff3b281c536bc5ccc16c6cdb1309225b9f6b35b6968f640"
+      "sha256": "7c028a2c6a97e5a20e2d094409e27fc1c74717ca04d091a260e7d9f136dcc999"
     },
     {
       "path": "tests/test_prepare_canonical_publication.py",
@@ -4224,6 +4224,15 @@
       ],
       "reason": "Make/compose source guards plus real make subprocesses, executable doubles, cleanup and symlink fixtures. Static/tool, no live service or Docker.",
       "sha256": "e5a3e02f83f28749ccf5e7c1ffd10ea33a8960fa258658187c855acf3c35c616"
+    },
+    {
+      "path": "tests/test_save_answer_note_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/personal_service.py"
+      ],
+      "reason": "Real save_note and Note model decisions with only store/repository/embedding I/O doubled; covers answer scope, title, create/update/revision parameters, citation downgrade and failure ordering without files/network/database.",
+      "sha256": "4fa71d4fbd129a98de3e9571f8174a74efcd3da89ea4be690fb135918e69f9aa"
     },
     {
       "path": "tests/test_search_api.py",
