@@ -1,3 +1,34 @@
+# Current draft increment: reproducible Python static checks
+
+Private endpoint: `820b5f46f7cea3d9677cf69f61ce535c26facde1`. Content base: `6b72f5c19346e4efed456b57718fd80566f830f9`.
+
+This content-only increment follows public parent `8cb99cdf08edf30e658ca29d01818da7789aac28`.
+Private ancestors are not merged. Publication is authorized to the existing draft
+branch only; this candidate awaits independent review. **Not ready to merge.**
+
+The archived browser review script is maintained by formatting and one import alias
+sort, without executing it. Existing public path sanitization is preserved. Four
+tests receive AST-identical formatting; their public regression is 107 passed,
+one dependency warning, 1.80 seconds. Two previously sanitized review scripts
+receive AST-identical formatting, retaining account-home resolution semantics.
+They no longer have identical bytes to the preceding public parent, but remain
+explicit inherited sanitization exceptions relative to private source.
+
+Actual full-scope public Ruff check and format-check now both exit 0 (462 files already formatted). Explicit third-party classification for Coverage.py prevents generated report directories from changing import sorting; the actual CI contract suite passed 12 tests in 0.22 seconds. Original failed checks remain in external evidence.
+
+Actual full-scope public mypy remains **235 errors in 43 files (462 checked), exit 1**.
+This is not a green static job. No ignores, exclusions, coverage denominator,
+assertions, deployment or Sonar status are relaxed. Historical complete Python
+coverage remains reviewed-unit lines 52.30% / branches 42.22%, mixed lines 76.21%
+/ branches 72.39%; neither meets the target. The 158 mixed classifications remain
+an independent strict-selection blocker. No complete coverage rerun is claimed
+for this format-only increment.
+
+The following prior publication records are historical snapshots, not current
+candidate identity, authorization or verification claims.
+
+---
+
 # Current PR draft candidate: unit progress, CI and selection accessibility
 
 Source endpoint: private `6b72f5c19346e4efed456b57718fd80566f830f9`; content-only

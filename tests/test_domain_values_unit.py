@@ -5,7 +5,6 @@ This test suite focuses on validation logic, business rules, and data structures
 that can be tested without database mocking.
 """
 
-
 import pytest
 from pydantic import ValidationError
 

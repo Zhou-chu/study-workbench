@@ -315,7 +315,10 @@ async def test_dead_owner_reconciles_without_queue_or_provider(boundary, state, 
     assert result["error"]["code"] == code
     boundary.repository.status.assert_awaited_once()
     snapshot, profile = boundary.repository.status.await_args.args
-    assert snapshot.model_dump(mode="json") == boundary.rows["job_child"]["version_snapshot"]
+    assert (
+        snapshot.model_dump(mode="json")
+        == boundary.rows["job_child"]["version_snapshot"]
+    )
     assert (
         profile.model_dump(exclude={"fingerprint", "endpoint_fingerprint"})
         == boundary.rows["job_child"]["profile"]

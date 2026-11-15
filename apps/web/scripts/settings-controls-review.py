@@ -15,8 +15,11 @@ ROOT = Path(__file__).resolve().parents[3]
 BASE = "http://127.0.0.1:18864"
 OUT = ROOT / ".superpowers/sdd/notebook-spa-redesign/settings-controls-review"
 OUT.mkdir(parents=True, exist_ok=True)
-TOOLS = (Path(pwd.getpwuid(os.getuid()).pw_dir) / "study-workbench-deploy-20261107")
-FONTS = (Path(pwd.getpwuid(os.getuid()).pw_dir) / "study-workbench-worktrees-20261108/notebook-editorial-20261110/.superpowers/sdd/notebook-spa-redesign/fonts")
+TOOLS = Path(pwd.getpwuid(os.getuid()).pw_dir) / "study-workbench-deploy-20261107"
+FONTS = (
+    Path(pwd.getpwuid(os.getuid()).pw_dir)
+    / "study-workbench-worktrees-20261108/notebook-editorial-20261110/.superpowers/sdd/notebook-spa-redesign/fonts"
+)
 # Reuse only fixture declarations/handler, never the older script's browser runner.
 fixture = {"__file__": str(ROOT / "apps/web/scripts/visual-review.py")}
 exec(

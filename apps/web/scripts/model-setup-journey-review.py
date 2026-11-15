@@ -24,8 +24,11 @@ SOURCE = ROOT
 APP = ROOT / "apps/web"
 PORT = int(os.environ.get("QA_PORT", "18864"))
 BASE = f"http://127.0.0.1:{PORT}"
-TOOLS = (Path(pwd.getpwuid(os.getuid()).pw_dir) / "study-workbench-deploy-20261107")
-FONTS = (Path(pwd.getpwuid(os.getuid()).pw_dir) / "study-workbench-worktrees-20261108/notebook-editorial-20261110/.superpowers/sdd/notebook-spa-redesign/fonts")
+TOOLS = Path(pwd.getpwuid(os.getuid()).pw_dir) / "study-workbench-deploy-20261107"
+FONTS = (
+    Path(pwd.getpwuid(os.getuid()).pw_dir)
+    / "study-workbench-worktrees-20261108/notebook-editorial-20261110/.superpowers/sdd/notebook-spa-redesign/fonts"
+)
 IDENTITY = {
     "schema_version": "spa-artifact-v1",
     "source_commit": "a" * 40,

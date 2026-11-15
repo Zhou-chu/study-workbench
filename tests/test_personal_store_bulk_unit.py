@@ -59,7 +59,6 @@ class PhysicalQueries:
         ]
 
 
-
 @pytest.fixture
 def reader(monkeypatch):
     import api.personal_store as store_module

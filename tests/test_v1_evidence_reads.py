@@ -492,8 +492,6 @@ async def test_detail_consumes_missing_payload_errors_in_original_order(
         await detail("sv")
 
 
-
-
 @pytest.mark.asyncio
 async def test_non_detail_service_calls_remain_sequential(reader, tmp_path):
     queries, _ = reader

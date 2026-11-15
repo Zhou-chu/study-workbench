@@ -3289,7 +3289,7 @@
         "open_notebook/podcasts/models.py"
       ],
       "reason": "Eight unchanged classes exercise singleton identity/cleanup, DTO validation/defaults and credential config value roundtrip. No actual persistence, tokenizer, SDK construction or filesystem operation.",
-      "sha256": "22bc95440cb94b2c242d391824ee93f1634e2284a92388307a6f3ec8322a05d1"
+      "sha256": "8d19e319cc1cb6cccbfa31ccbea3b401bf985a37aa72854dd7bd850233dee8b4"
     },
     {
       "path": "tests/test_embed_source_partial_cleanup.py",
@@ -3498,7 +3498,7 @@
         "api/evidence_indexing.py"
       ],
       "reason": "32 direct service state-machine cases replace storage/transaction/project-lock/repository/provider/queue boundaries only. Real target methods execute; cancellation/ownership/same-attempt reconciliation and snapshot/profile binding asserted, no real flock/DB/files.",
-      "sha256": "63e896996b9d3202d5e98bf9f8c132bd3b0c31be240a8811a99d9a1a6a2c723c"
+      "sha256": "f9db25b40dde13ceffd44d5aec1f25b3d2a6e71852175e4c38a26ad01a508c40"
     },
     {
       "path": "tests/test_evidence_metadata_reads_unit.py",
@@ -3829,7 +3829,7 @@
         "api/personal_store.py"
       ],
       "reason": "Direct PersonalStore.get_many with in-memory repo_query replacement: 0/1/128/129/257 batching, duplicate ordering, physical identity integrity, missing values and invalid kind/identity short circuit. No router, service composition, disk, DB or network. Both parametrized test bodies unchanged from reviewed evidence suite.",
-      "sha256": "97c48bd2438e819ba6c963cad7967d1c957f477521cd89a355aa4d6eedc6d5f8"
+      "sha256": "c1c5cc40f3a3c892635f74e7d625385548f2e1a5c6a20dc4ef24330ed36046d4"
     },
     {
       "path": "tests/test_podcast_anthropic_compatible.py",
@@ -4041,10 +4041,11 @@
       "layer": "tool-integration",
       "targets": [
         "scripts/ci/prepare_tools.py",
-        ".github/workflows/pr-quality.yml"
+        ".github/workflows/pr-quality.yml",
+        "pyproject.toml"
       ],
-      "reason": "Workflow static contract checks plus real synthetic tar and filesystem custody/extraction tests. No hosted dependency install, official-source build or complete remote CI is exercised; not wholly pure unit.",
-      "sha256": "e7218df38c37430a84f28eea05ef53a47fff1aff06f262901dc6ee25704c53d4"
+      "reason": "Workflow static contract checks plus real synthetic tar and filesystem custody/extraction tests. No hosted dependency install, official-source build or complete remote CI is exercised; not wholly pure unit. Actual Ruff subprocess checks preserve external coverage import grouping with/without generated report directories.",
+      "sha256": "cc00a97eebf17bd17ff3b281c536bc5ccc16c6cdb1309225b9f6b35b6968f640"
     },
     {
       "path": "tests/test_prepare_canonical_publication.py",
@@ -4828,7 +4829,7 @@
         "api/evidence_service.py"
       ],
       "reason": "Real route/EvidenceService/PersonalStore batch encoding, citation integrity and request cache behavior with SQL replaced. Direct PersonalStore-only cases moved unchanged into test_personal_store_bulk_unit.py; remaining cases retain component boundaries.",
-      "sha256": "1fec2bca2bb0d6b298d0ccc816f644a737aa2628c2e7086f0b1ab6ff4f073d51"
+      "sha256": "1a6900e62f752be135d22a43778b986d2ed29149ed705fc072b7dcd4880ab005"
     },
     {
       "path": "tests/test_v1_evidence_revalidation.py",

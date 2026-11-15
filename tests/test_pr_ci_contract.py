@@ -3,6 +3,8 @@
 import hashlib
 import importlib.util
 import io
+import subprocess
+import sys
 import tarfile
 from pathlib import Path
 
@@ -143,3 +145,26 @@ def test_mixed_measurement_requires_preparation_but_not_python_success():
     assert "steps.dependencies.outcome == 'success'" in condition
     assert "steps.prepare.outcome == 'success'" in condition
     assert "python" not in condition
+
+
+@pytest.mark.parametrize("has_report_directory", [False, True])
+def test_coverage_dependency_import_group_ignores_generated_reports(
+    tmp_path, has_report_directory
+):
+    (tmp_path / "pyproject.toml").write_bytes((ROOT / "pyproject.toml").read_bytes())
+    script = tmp_path / "scripts/quality/unit_pytest_evidence.py"
+    script.parent.mkdir(parents=True)
+    script.write_bytes((ROOT / "scripts/quality/unit_pytest_evidence.py").read_bytes())
+    if has_report_directory:
+        report = tmp_path / "coverage/web/report.json"
+        report.parent.mkdir(parents=True)
+        report.write_text("{}")
+    result = subprocess.run(
+        [sys.executable, "-m", "ruff", "check", "--select", "I", str(script)],
+        cwd=tmp_path,
+        text=True,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
