@@ -1,0 +1,9 @@
+# Notebook study-entry accessible contract
+
+The legacy CI failure was an outdated shared accessible-name expectation, not a missing workbench entry. NotebookRow uses a native Link named by the notebook title; its visible workbench hint is inside that same link. NotebookCard retains a separately named workbench link, whose click must not bubble into its router wrapper.
+
+The untouched test reproduced one failure (row) and one pass (card). The repaired component-integration test keeps the exact encoded study href, native anchor/tabIndex/focus, and both pointer and zero-detail activation-event guards against duplicate wrapper navigation. It additionally checks a notebook identity containing slash/query/fragment characters remains one encoded path segment with no URL query/fragment, and verifies row actions remain outside the title link. No production component or route changed; no assertion or test was removed.
+
+Validation: legacy notebooks subtree 9 files / 49 tests passed (16.00 seconds); modern notebook collection 28 tests passed (9.34 seconds). The initial modern command referenced a nonexistent vitest.config.ts and failed before tests; rerunning from apps/web with its actual vite.config.ts passed. These are component/integration checks, not strict unit coverage. JSDOM focus and zero-detail click checks do not demonstrate real browser Enter synthesis, Tab order, CSS hit testing, or accessibility acceptance.
+
+Reproduce with the prepared Node executable: from frontend, `vitest run 'src/app/(dashboard)/notebooks/' --maxWorkers=1`; from apps/web, `vitest run src/features/notebooks/notebooks.test.tsx --maxWorkers=1`. Red/green command receipts and logs are retained outside the repository under notebook-entry-contract. No services, real notebook data, database or deployment were used. Full legacy CI and full coverage were not rerun.

@@ -1,3 +1,36 @@
+# Current draft increment: two observed mixed-CI test failures
+
+Private content endpoint: `1afd78ad42755c6e4a0c44dcb26093afa149b81a`, since
+`820b5f46f7cea3d9677cf69f61ce535c26facde1`. Single public parent:
+`ec923527489cd67cb9df3607d79bfbb9c96eabfa`. Private ancestors are not merged.
+Publication to the existing draft branch is authorized, pending independent
+candidate review. **Not ready to merge; no new remote CI pass is claimed.**
+
+This test-only increment removes the PDF fixture's dependency on an absent
+historical directory using exclusively owned temporary roots and cleanup. It
+also corrects the row study-link accessible-name expectation while strengthening
+encoded notebook-ID, focus, activation-event and sibling-action assertions.
+Production code and coverage scopes are unchanged. The real earlier CI failures
+are retained, not reclassified as passes.
+
+Actual public candidate directed verification, each run once:
+- PDF asset tool integration: 5 passed, 0 failed/skipped, 0.31 seconds.
+- Legacy notebooks subtree: 9 files / 49 passed, 18.39 seconds.
+- Modern notebook collection: 28 passed, 10.30 seconds.
+
+These checks are not strict-unit or full-project verification, nor real browser
+keyboard/IME acceptance. All 548 manifest hashes match. All 181 Python production
+files have identical bytes to the public parent; the two previously sanitized
+and formatted QA-script exceptions relative to private source remain intact.
+The prior candidate's mypy result remains 235 errors in 43 files; it was not
+rerun for this JavaScript-test-only increment. Historical strict coverage remains
+52.30% lines / 42.22% branches, with 158 mixed classifications blocking formal
+selection. No Sonar success, deployment or >90% coverage is claimed.
+
+Below are historical publication records, not the current candidate's status.
+
+---
+
 # Current draft increment: reproducible Python static checks
 
 Private endpoint: `820b5f46f7cea3d9677cf69f61ce535c26facde1`. Content base: `6b72f5c19346e4efed456b57718fd80566f830f9`.

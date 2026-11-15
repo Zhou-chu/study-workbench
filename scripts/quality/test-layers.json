@@ -177,7 +177,7 @@
         "apps/web/scripts/prepare-pdf-assets.mjs"
       ],
       "reason": "Creates actual resource trees, copies bytes/licenses, mutates files and exercises source/destination symlink and oversized/private/unowned guards. Real filesystem, no browser.",
-      "sha256": "6ca295f19c9ebbf3a838126087f81d1731d449c45a4f7d0c0523bbaf3dab6aee"
+      "sha256": "5183e1eb6d350a1a5ecdd4110d7996ac438e625b9e633f9a629bdc7876d57d23"
     },
     {
       "path": "apps/web/scripts/soft-overlays.test.mjs",
@@ -1279,7 +1279,7 @@
         "frontend/src/app/(dashboard)/notebooks/components/NotebookRow.tsx"
       ],
       "reason": "One entry component per case, native link focus/href/propagation. Router/update/delete dependencies doubled; actual navigation prevented.",
-      "sha256": "f4cae64a14617b1cde58de4e4af076c746011f01ccab48f54a6d867fa323f32b"
+      "sha256": "f1d5d85c0fa3bbc1c6d14c858cfd50595ca487480c2a21e141b310465ea0147b"
     },
     {
       "path": "frontend/src/app/(dashboard)/notebooks/components/NotebookHeader.test.tsx",
