@@ -3512,6 +3512,15 @@
       "sha256": "f9db25b40dde13ceffd44d5aec1f25b3d2a6e71852175e4c38a26ad01a508c40"
     },
     {
+      "path": "tests/test_evidence_maintenance_decisions_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_maintenance.py"
+      ],
+      "reason": "Real run/dispatch recovery, timing and processability decisions with copy-on-read store, lock, queue and extraction boundaries doubled. No real parser, worker or persistence.",
+      "sha256": "8594daa54c26f667b531021d80fc7da721073ba6a6f25ec57b994cd9a50ad289"
+    },
+    {
       "path": "tests/test_evidence_metadata_reads_unit.py",
       "layer": "unit",
       "targets": [
@@ -4064,6 +4073,15 @@
       ],
       "reason": "Real restore transaction construction and ACK policy with only db connection/query_raw replaced; no real SQL commit, files, or automatic retry.",
       "sha256": "68bf7c3d320bfbb4dbca79ab4ad4865207b83f9c4ddc320efcecb928ac068967"
+    },
+    {
+      "path": "tests/test_portable_visible_history_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/portable_service.py"
+      ],
+      "reason": "Real visible-history policy and message projection; config module, existence, graph modules and thread boundary doubled. Cold config mkdir is explicitly prevented; no SQLite/graph get_state/thread execution.",
+      "sha256": "230e7da56e470e92bb3711d2c0683ebba0506c2a1debafab527b98ee23547e99"
     },
     {
       "path": "tests/test_portable_zip.py",
@@ -4659,6 +4677,15 @@
       ],
       "reason": "All parameterized router failures and typed/untyped error regressions use real TestClient global exception mapping; domain calls are mocked. Targets identify common handler and representative routers, not a denominator exclusion. Full test file and relevant production/fixture boundaries reviewed at merged 588aaf5; no tests executed for classification.",
       "sha256": "366853c732d6319b3fc85aaae807d200cefc7169bde3d370631602413277b6f1"
+    },
+    {
+      "path": "tests/test_ui_design_document_contract.py",
+      "layer": "tool-integration",
+      "targets": [
+        "UIdesign.md"
+      ],
+      "reason": "Reads complete design files and navigation documents to prevent shared-byte drift and false acceptance links; filesystem documentation contract, not visual or strict-unit acceptance.",
+      "sha256": "dde18bf7a0f29e8c67d379e52b6c69465f6e2ad518b9e043377b7b363001ccda"
     },
     {
       "path": "tests/test_unit_pytest_evidence_unit.py",
