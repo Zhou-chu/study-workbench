@@ -141,7 +141,6 @@ export function NotesColumn({
                   <div
                     key={note.id}
                     className="p-3 border rounded-md bg-card shadow-none card-hover group relative cursor-pointer"
-                    onClick={() => handleOpenEditor(note)}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -165,7 +164,7 @@ export function NotesColumn({
 
                         {/* Context toggle - only show if handler provided */}
                         {onContextModeChange && contextSelections?.[note.id] && (
-                          <div onClick={(event) => event.stopPropagation()}>
+                          <div className="relative z-10">
                             <ContextToggle
                               mode={contextSelections[note.id]}
                               hasInsights={false}
@@ -180,8 +179,8 @@ export function NotesColumn({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={(e) => e.stopPropagation()}
+                              className="relative z-10 h-8 w-8 p-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity"
+                              aria-label={t('notebooks.deleteNote')}
                             >
                               <MoreVertical className="h-4 w-4" />
                             </Button>
@@ -202,9 +201,15 @@ export function NotesColumn({
                       </div>
                     </div>
 
-                    {note.title && (
-                      <h4 className="text-sm font-medium mb-2 break-all">{note.title}</h4>
-                    )}
+                    <h4 className="text-sm font-medium mb-2 break-all">
+                      <button
+                        type="button"
+                        className="text-left after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+                        onClick={() => handleOpenEditor(note)}
+                      >
+                        {note.title || t('sources.untitledNote')}
+                      </button>
+                    </h4>
 
                     {note.content && (
                       <p className="text-sm text-muted-foreground line-clamp-3 break-all">

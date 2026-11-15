@@ -1,0 +1,3 @@
+# Default model fallback unit split
+
+Moved the complete TestGetDefaultModelFallback class unchanged: three parameterized optional text slot cases and one audio non-fallback case. Real manager selection policy runs with get_defaults/get_model doubles; this does not verify database loading, provider invocation or API serialization. The original models API file retains 19 TestClient cases. Class AST is identical and no downstream imports target the original module. Baseline 23 passed, combined 23 passed, isolated 4 passed. Two existing dependency warnings occur in API runs. No production files changed.

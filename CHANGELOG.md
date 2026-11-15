@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Restore native focusable selection controls for legacy notebook notes and source chat sessions, keeping edit, context and delete actions separate and preserving IME composition during session title entry.
+
 - Treat malformed portable-restore transaction acknowledgments as unknown outcomes, retaining immutable restored files instead of claiming success or deleting potentially committed bytes.
 
 - Use a native notebook link for row content and metadata so browser link actions remain available, with archive/delete controls outside the link.

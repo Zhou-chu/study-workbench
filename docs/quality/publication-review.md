@@ -1,3 +1,61 @@
+# Current PR draft candidate: unit progress, CI and selection accessibility
+
+Source endpoint: private `6b72f5c19346e4efed456b57718fd80566f830f9`; content-only
+increment since `6a2550d837d7ca1653b497ec6cfd300391329bc1`. Single public parent:
+`92d08ef8a04ccaa6a79b514a13fdaa8f82a8af93`. Private ancestors are not merged.
+Publication to the existing draft branch is authorized; this candidate is prepared
+for independent review and has not yet been pushed. **Not ready to merge.**
+
+## Current verification and remaining gates
+
+- Actual public candidate directed regression: 370 Python tests passed, two
+  dependency warnings, 5.14 seconds across 22 changed/new collected files.
+  This includes retained integration consumers, not exclusively strict units.
+- Actual public candidate accessibility components: 14 passed, 6.91 seconds.
+  Synthetic DOM keyboard tests are not real browser/IME/CSS-hit-test acceptance.
+- Historical private frozen 5436676: 114 reviewed-unit files, 2498 passed;
+  full **181-source** denominator, lines 52.2998%, branches 42.2235%, combined
+  50.0161%, native coverage exit 1. Full mixed: 5478 passed, 128 skipped,
+  lines 76.2061%, branches 72.3912%, combined 75.3415%, coverage exit 1.
+  These complete measurements were NOT repeated on this public candidate.
+- 158 mixed classifications remain. The PR-only CI workflow is a candidate,
+  not a verified remote run; strict gates are expected to remain red. No new
+  Sonar pass, >90 coverage, merge, deployment or runtime acceptance is claimed.
+
+## Publication audit
+
+The source increment contains 55 files plus this review update. Seven new/changed
+evidence documents generalize personal interpreter/cache/evidence paths. The
+trusted-Git documentation retains its earlier public /home/USER substitution;
+its exact changed CI-status sentence was applied separately after a nonmutating
+patch check identified that inherited context difference. Private logs remain
+external; no raw reports or data are copied. Test outcomes and failure history
+are preserved rather than sanitized into passing claims.
+
+All 181 Python production paths remain in scope. 179 have byte-identical hashes
+to the private endpoint. Two historical, unchanged public review scripts
+(model-setup-journey-review.py and settings-controls-review.py) retain their
+already-approved pwd.getpwuid account-home substitutions instead of reintroducing
+private hardcoded home paths. These differences predate this increment and are
+not excluded from coverage. New production code, including CI preparation and
+the note/session accessibility changes, matches the private source bytes.
+The existing public study-interactions.test.tsx fixture hash is retained in the
+manifest; all current manifest entries are verified against actual bytes.
+
+Split-map evidence remains tied to its original measurement stage. Current test
+functions preserve original ASTs across the split destinations; class containers
+in graphs and URL validation are intentionally smaller after their methods move,
+not altered test assertions. The public candidate tests those retained consumers.
+Known token/private-key, personal-path and opaque-live-ID pattern checks plus
+fixture review are bounded disclosure checks, not proof of absence of every
+possible secret. Fixed test timestamps remain synthetic. No private ancestor
+history is made reachable.
+
+**Historical record follows. Earlier candidate statuses, authorizations, hashes
+and measurements below describe their own stages, not this current candidate.**
+
+---
+
 # Current draft candidate status
 
 This candidate incorporates private source `6a2550d837d7ca1653b497ec6cfd300391329bc1`
@@ -151,3 +209,5 @@ still describe their original measurement stage; identical test bytes and the
 independent AST check preserve their meaning. Existing public history is not
 rewritten. Pattern checks are bounded evidence, not proof that every possible
 secret is absent. Candidate preparation does not push or deploy.
+
+The first candidate preserved a private extra EOF blank line in the fallback test. Final private endpoint 6b72f5c and this candidate normalize that whitespace and bind the new test hash; function AST and production bytes are unchanged. The 370-case result precedes this whitespace-only correction; four fallback tests were rerun afterward. Final diff check passes.

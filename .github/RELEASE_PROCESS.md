@@ -7,7 +7,7 @@
 > Inherited Docker/build/push/tag/release Make targets fail closed; there is **no
 > supported replacement publish command**. Root Compose has no services and the
 > explicit Docker candidate is **not runtime-accepted**. This private source
-> delivery has no active checked-in CI; the workflows, registries, default
+> delivery now has a PR-only quality workflow candidate, not remotely verified; the historical workflows, registries, default
 > credentials and image claims below describe the historical upstream process.
 > Do not invoke old helpers directly to bypass disabled targets. Any publication
 > needs its own authorized destination, reviewed tooling and acceptance evidence.

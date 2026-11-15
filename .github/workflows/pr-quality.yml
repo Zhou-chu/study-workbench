@@ -1,0 +1,132 @@
+# Candidate only: remote execution has not been verified.
+name: PR quality candidate
+'on':
+  pull_request:
+    branches:
+    - main
+  workflow_dispatch: {}
+permissions:
+  contents: read
+concurrency:
+  group: pr-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
+env:
+  PYTHON_DOTENV_DISABLED: '1'
+  NEXT_TELEMETRY_DISABLED: '1'
+  NPM_CONFIG_AUDIT: 'false'
+  NPM_CONFIG_FUND: 'false'
+jobs:
+  static:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: '24'
+    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      with:
+        version: 0.9.10
+        enable-cache: false
+    - name: Install locked dependencies
+      run: |-
+        uv sync --locked --dev --python 3.12
+        npm ci
+        npm ci --prefix frontend
+      id: dependencies
+    - name: Python static checks
+      run: |-
+        .venv/bin/ruff check .
+        .venv/bin/ruff format --check .
+        .venv/bin/python -m mypy .
+    - name: Workspace and legacy frontend checks
+      run: |-
+        npm run lint
+        npm run typecheck
+        npm --prefix frontend run lint
+        (cd frontend && node_modules/.bin/tsc --noEmit)
+  mixed:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: '24'
+    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      with:
+        version: 0.9.10
+        enable-cache: false
+    - name: Install locked dependencies
+      run: |-
+        uv sync --locked --dev --python 3.12
+        npm ci
+        npm ci --prefix frontend
+      id: dependencies
+    - name: Prepare authenticated Git and tokenizer (no system install)
+      run: .venv/bin/python scripts/ci/prepare_tools.py --node "$(node -p process.execPath)"
+      id: prepare
+    - name: Mixed Python regression (not pure-unit coverage)
+      run: .venv/bin/python scripts/offline_pytest.py --tiktoken-cache "$NOTEBOOK_TOKEN_CACHE" -- tests/ -ra --junitxml="$RUNNER_TEMP/mixed-python.xml"
+    - name: Mixed JavaScript regression and measurement
+      if: ${{ !cancelled() && steps.dependencies.outcome == 'success' && steps.prepare.outcome == 'success' }}
+      run: npm run coverage
+    - name: Preserve mixed diagnostics
+      if: ${{ always() }}
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: mixed-diagnostics
+        path: |-
+          ${{ runner.temp }}/mixed-python.xml
+          coverage/
+        if-no-files-found: warn
+        retention-days: 7
+  strict-unit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: '24'
+    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      with:
+        version: 0.9.10
+        enable-cache: false
+    - name: Install locked dependencies
+      run: |-
+        uv sync --locked --dev --python 3.12
+        npm ci
+        npm ci --prefix frontend
+      id: dependencies
+    - name: Prepare authenticated Git and tokenizer (no system install)
+      run: .venv/bin/python scripts/ci/prepare_tools.py --node "$(node -p process.execPath)"
+      id: prepare
+    - name: Strict complete unit gate (currently expected to fail closed)
+      run: node scripts/coverage-unit-all.mjs --python="$GITHUB_WORKSPACE/.venv/bin/python" --tiktoken-cache="$NOTEBOOK_TOKEN_CACHE"
+    - name: Preserve strict gate diagnostics
+      if: ${{ always() }}
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: strict-unit-diagnostics
+        path: coverage/unit/
+        if-no-files-found: warn
+        retention-days: 7

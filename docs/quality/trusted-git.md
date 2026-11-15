@@ -24,7 +24,7 @@ Arguments are passed directly, so quote paths with spaces according to the shell
 
 On this workstation the explicitly approved existing installation is `/home/USER/study-workbench-deploy-20261107/tools/git` (prepared Git2.56). Its binary checksum was read and supplied explicitly before first registration. No system Git replacement was performed.
 
-For reproducible Linux CI, provision in a trusted image/bootstrap step under the same OS account that runs the checks. Supply the canonical installation path and expected hash from the approved toolchain/image manifest, not from pull-request code or ambient PATH. Then run the normal coverage/artifact commands. Missing provisioning is an actionable failure. This repository currently has no active `.github/workflows` directory; no CI job was silently switched or claimed passing.
+For reproducible Linux CI, provision in a trusted image/bootstrap step under the same OS account that runs the checks. Supply the canonical installation path and expected hash from the approved toolchain/image manifest, not from pull-request code or ambient PATH. Then run the normal coverage/artifact commands. Missing provisioning is an actionable failure. A PR-only workflow candidate now uses a fixed-source Git bootstrap; remote execution has not been verified and no CI success is claimed. See `pr-ci-candidate.md`.
 
 ## Platform limits
 
