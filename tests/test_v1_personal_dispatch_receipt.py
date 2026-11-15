@@ -9,8 +9,8 @@ from typing import Any
 import httpx
 import pytest
 from fastapi import FastAPI
+from personal_enqueue_fixtures import MemoryStore as SnapshotStore
 from test_v1_evidence_ingest import MemoryStore
-from test_v1_personal_enqueue_reconciliation import MemoryStore as SnapshotStore
 
 from api.personal_service import PersonalService
 from api.routers import evidence

@@ -719,6 +719,15 @@ class SurrealProjectRepository:
             raise CommitOutcomeUnknown(
                 "Restore transaction returned no acknowledgement; files retained for recovery"
             )
+        # Validate the entire acknowledgment before interpreting any ERR as a
+        # confirmed rollback. An ambiguous sibling must retain restored files.
+        if not isinstance(results, list) or any(
+            not isinstance(row, dict) or row.get("status") not in ("OK", "ERR")
+            for row in results
+        ):
+            raise CommitOutcomeUnknown(
+                "Restore transaction returned an invalid acknowledgement; files retained for recovery"
+            )
         if any(row.get("status") == "ERR" for row in results):
             raise DatabaseOperationError(
                 "Portable restore transaction was rejected and rolled back"

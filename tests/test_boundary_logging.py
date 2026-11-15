@@ -175,7 +175,16 @@ async def test_save_validation_logs_do_not_render_model_input(logs):
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "operation",
-    ["sources", "notes", "insights", "source_insights", "status", "progress"],
+    [
+        "sources",
+        "notes",
+        "chat_sessions",
+        "delete_preview",
+        "insights",
+        "source_insights",
+        "status",
+        "progress",
+    ],
 )
 async def test_notebook_boundary_logs_exclude_exception_payload(
     monkeypatch, logs, operation
@@ -195,6 +204,8 @@ async def test_notebook_boundary_logs_exclude_exception_payload(
     actions: dict[str, Callable[[], Awaitable[Any]]] = {
         "sources": workspace.get_sources,
         "notes": workspace.get_notes,
+        "chat_sessions": workspace.get_chat_sessions,
+        "delete_preview": workspace.get_delete_preview,
         "insights": lambda: notebook.SourceInsight.get_for_sources([source_id]),
         "source_insights": source.get_insights,
         "status": source.get_status,
@@ -211,13 +222,14 @@ async def test_notebook_boundary_logs_exclude_exception_payload(
     else:
         with pytest.raises(DatabaseOperationError) as caught:
             await actions[operation]()
-        assert caught.value.__cause__ is error
     assert_metadata_only(
         logs,
         "notebook_" + operation,
         "OSError",
         "WARNING" if operation in {"status", "progress"} else "ERROR",
     )
+    if operation not in {"status", "progress"}:
+        assert caught.value.__cause__ is error
 
 
 @pytest.mark.parametrize(

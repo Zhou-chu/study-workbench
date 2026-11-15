@@ -1,3 +1,28 @@
+# Current draft candidate status
+
+This candidate incorporates private source `6a2550d837d7ca1653b497ec6cfd300391329bc1`
+as a content-only increment, with the single public parent
+`565b97d279daeec30b1ff555d51b2f34aaac481b`. Private ancestors are not merged.
+The user has authorized publication to the existing independent draft branch;
+this prepared candidate has not yet been pushed. It is **not ready to merge**.
+
+- Verification on this public candidate: 555 passed, 1 skipped, 2 warnings in a
+  directed 24-file regression batch. This is not complete strict-unit coverage.
+- Latest historical private reviewed-unit measurement: 2,200 passed; full
+  180-source denominator, lines 50.22%, branches 39.37%, below the required gate.
+- Latest historical private mixed measurement: 5,275 passed, 128 skipped.
+  Mixed results are not strict-unit results or public candidate measurements.
+- 164 mixed classifications remain. No new Sonar analysis or CI result is claimed.
+  Coverage and complete strict-unit acceptance remain unmet.
+
+**Historical record below:** earlier plans, candidate hashes, quality numbers,
+“No push is authorized” language and “uncommitted snapshot” descriptions record
+past stages only. They do not describe current authorization or candidate state.
+The current summary above supersedes those status statements without erasing
+the original evidence or failure history.
+
+---
+
 # Public candidate plan and review boundary
 
 > DRAFT, NOT READY TO MERGE: source baseline c74 Sonar Gate ERROR, maintainability/security/reliability A/D/D, coverage 75.8%. Python 4151 passed/128 skipped but combined coverage 71.66%; full Node web partition 1359 passed/3 timeouts. The 178 focused candidate tests only verify sanitized fixture consumers, not a full-repository rerun or >90% acceptance. This new publication commit has not been scanned by Sonar.
@@ -81,3 +106,48 @@ explicit synthetic secrets. These checks reduce known disclosure risks, not a
 claim that arbitrary secrets are mathematically absent. Already-public ancestor
 history is preserved, not rewritten. No push, PR edit or deployment is performed
 by candidate preparation.
+
+## Increment from private 6a2550d (public parent 565b97d)
+
+This draft-only update applies the content difference from private a0f39ad to
+6a2550d837d7ca1653b497ec6cfd300391329bc1 onto the existing public branch. It does
+not merge private ancestors. The increment is 48 files, plus this review update.
+Four evidence documents replace personal interpreter/cache/evidence paths with
+placeholders; original bytes and raw logs remain private. No raw reports are
+published. Production code and tests are unchanged by sanitization; the existing
+public-specific SourceRow hash is retained. All 532 manifest entries match actual
+file bytes. The four provider/note/enqueue/projection source modules retain all
+38 original named function/class ASTs across their split destinations.
+
+### Candidate verification and limits
+
+The public candidate's 24 changed/new collected Python files completed together:
+555 passed, 1 skipped, 2 dependency warnings, 7.15 seconds (process 8.33 seconds).
+This includes portable ACK units and actual temporary-file roundtrips, canonical
+cache, both split groups and retained/downstream consumers, domain/logging,
+metadata/extraction, citations, repository receipts, semantic retrieval, snapshot
+and web-finish tests. It is a directed mixed regression batch, not all-project
+strict unit coverage. The skipped test is not passing evidence. No full coverage
+measurement or Sonar analysis was performed on this public candidate.
+
+Historical private measurements remain stage-specific: a04a6a5's 95 reviewed-unit
+files passed 2058 tests with the full 180-source denominator, lines 49.4142%,
+branches 37.9788%, combined 46.8248%; coverage exit 1. Its initial mixed collection
+error and the repaired 416a8c7 rerun (5216 passed, 128 skipped, combined 74.91261%,
+coverage exit 1) remain disclosed in their original stage document. These are not
+public candidate measurements. The current manifest still contains 164 mixed
+files; strict selection remains blocked. No >90 coverage, current Sonar success,
+or readiness to merge into main is claimed.
+
+### Privacy and provenance
+
+New reachable text is reviewed for personal paths, known credential formats and
+opaque live Notebook IDs. Four document path substitutions are the only new
+sanitization differences from private source, besides the already-public fixture
+hash in the manifest. Fixed timestamps are synthetic fixture provenance values
+or the Anthropic protocol version, not live notebook exports. No data, runtime,
+binary or raw report files are added. Historical split maps and their hashes
+still describe their original measurement stage; identical test bytes and the
+independent AST check preserve their meaning. Existing public history is not
+rewritten. Pattern checks are bounded evidence, not proof that every possible
+secret is absent. Candidate preparation does not push or deploy.

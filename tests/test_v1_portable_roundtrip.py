@@ -1401,3 +1401,44 @@ async def test_unknown_export_can_finish_same_durable_job(
     assert completed["attempts"] == 1
     assert completed["result"]
     submit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "acknowledgment",
+    [
+        {"result": [{"status": "ERR"}, {}]},
+        {"result": {"status": "OK"}},
+    ],
+)
+async def test_malformed_real_commit_ack_keeps_imported_originals(
+    populated, tmp_path, monkeypatch, acknowledgment
+):
+    from contextlib import asynccontextmanager
+    from types import SimpleNamespace
+
+    from api.portable_service import CommitOutcomeUnknown, SurrealProjectRepository
+    from open_notebook.database import repository
+
+    service, _, _, _ = populated
+    exported = await service.export_project("notebook:original")
+    query = AsyncMock(return_value=acknowledgment)
+
+    @asynccontextmanager
+    async def synthetic_connection():
+        yield SimpleNamespace(query_raw=query)
+
+    monkeypatch.setattr(repository, "db_connection", synthetic_connection)
+    store = MemoryStore()
+    root = tmp_path / "malformed-ack-restore"
+    importer = PortableService(
+        store=store,
+        project_repository=SurrealProjectRepository(store),
+        data_root=root,
+    )
+    with pytest.raises(CommitOutcomeUnknown):
+        await importer.import_archive(exported["path"])
+    assert query.await_count == 1
+    originals = list(root.glob("restored/*/originals/*"))
+    assert originals
+    assert all(path.is_file() and path.stat().st_size > 0 for path in originals)

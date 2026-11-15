@@ -1,9 +1,9 @@
 """Synthetic HTTP boundary tests; no production credentials or ingress claim."""
 
 import pytest
+from device_session_core_fixtures import MemoryStore
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from test_v1_device_session_core import MemoryStore
 
 from api.auth import PasswordAuthMiddleware
 from api.device_session_credentials import StrictPasswordProvider

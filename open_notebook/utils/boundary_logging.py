@@ -49,6 +49,8 @@ _OPERATIONS = frozenset(
         "object_relate",
         "notebook_sources",
         "notebook_notes",
+        "notebook_chat_sessions",
+        "notebook_delete_preview",
         "notebook_insights",
         "notebook_source_insights",
         "notebook_status",

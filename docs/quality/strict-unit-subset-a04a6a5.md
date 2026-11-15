@@ -1,0 +1,11 @@
+# Reviewed Python unit subset at a04a6a5
+
+The frozen 95-file reviewed unit subset passed 2058 tests (one existing dependency warning, 80.08 seconds). All 180 tracked production Python files were included; no extra/missing source. Lines: 11810/23900 = 49.4142%; branches: 2657/6996 = 37.9788%; combined: 14467/30896 = 46.8248%. Native exit 1 preserves the unmet 90.01 threshold. Compared with 913c480, covered lines increased by 223 and branch arcs by 81; total statements decreased by two due to the minimal metadata-only log change. This is not a complete all-project strict gate: 164 mixed files remain unresolved.
+
+The subsequent full Python mixed run failed during collection, exit 2, because test_v1_device_session_http.py still imported MemoryStore from the old split test module. No coverage report was produced; that is unmeasured, not zero coverage or a passing suite. The consumer now imports the same unchanged class from device_session_core_fixtures. An AST import audit found no other consumer of the old module. All 68 related HTTP, file, logical core and rejection tests then passed, with one existing dependency warning. Assertions, fixtures, production code and unit selection were not changed by this repair. Full mixed rerun is recorded separately.
+
+Evidence is retained privately under python/frozen-a04a6a5 and python/device-http-fixture-repair. No deployment, database migration or public push was performed. Independent review accepted the logging fix and new extraction/web units, with explicit limits on filesystem/SQL/concurrency claims.
+
+## Completed mixed rerun at 416a8c7
+
+The repaired full Python mixed suite completed once: 5216 passed, 128 skipped, no failing tests, two existing dependency warnings, 188.29 seconds. Opt-in database/runtime cases were not enabled; skipped tests are not passing evidence. All 180 production sources remained in the denominator, 56 pre-existing excluded lines unchanged. Lines: 18115/23900 = 75.79498%; branches: 5030/6996 = 71.89823%; combined: 23145/30896 = 74.91261%. Native exit 1 is the unmet 90.01 coverage gate, not a test assertion failure. HEAD and all tracked input hashes remained stable. Evidence: python/frozen-416a8c7. This mixed result must not be substituted for the 49.41% line / 37.98% branch reviewed-unit result above. No current Sonar or CI pass is claimed.

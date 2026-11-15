@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Treat malformed portable-restore transaction acknowledgments as unknown outcomes, retaining immutable restored files instead of claiming success or deleting potentially committed bytes.
+
 - Use a native notebook link for row content and metadata so browser link actions remain available, with archive/delete controls outside the link.
 
 - Bound theme-token parsing in the contrast checker without changing its historical extraction rules, theme colors, or 24 contrast thresholds.
@@ -260,6 +262,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.env.example` names the chunking variables Open Notebook actually reads (`OPEN_NOTEBOOK_CHUNK_SIZE` / `OPEN_NOTEBOOK_CHUNK_OVERLAP`)
 
 ### Security
+
+- Keep notebook chat-session and deletion-preview read failures metadata-only in logs; preserve typed database errors without logging source details or tracebacks.
 
 - Create coverage manifest temporary files exclusively so pre-existing symlinks or files cannot be overwritten; preserve atomic publication and fail closed on collisions.
 

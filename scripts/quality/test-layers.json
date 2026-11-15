@@ -2794,15 +2794,21 @@
     },
     {
       "path": "tests/test_anthropic_compatible_provider.py",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
-        "open_notebook/domain/credential.py",
-        "api/routers/credentials.py",
-        "open_notebook/ai/connection_tester.py",
         "open_notebook/ai/models.py"
       ],
-      "reason": "DB/DNS/HTTP/factory doubles in direct function cases; final test_langchain_bridge_forwards_base_url uses actual Esperanto to LangChain adapter interoperability, no real request. Split final SDK case.",
-      "sha256": "642e301373bfd1ceb426236a326f8fb89a49baa29f41aea0ac2b039e9337a3c3"
+      "reason": "Retained real Esperanto to LangChain provider interoperability; isolated configuration cases moved unchanged to unit companion.",
+      "sha256": "c9396d4a3553ff2ae4250731b8fab452ec0e226b9c44b6d105dd1c2cdc173670"
+    },
+    {
+      "path": "tests/test_anthropic_compatible_provider_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/ai/models.py"
+      ],
+      "reason": "Fourteen provider configuration cases, external model/repository boundaries replaced; no real SDK interoperability. Lossless split mapping retained.",
+      "sha256": "f51d3d13760cb29579692f791387162ea6889dc09549be8077d2be7de6df0cea"
     },
     {
       "path": "tests/test_ask_graph.py",
@@ -2869,7 +2875,7 @@
         "open_notebook/utils/error_classifier.py"
       ],
       "reason": "Independent wrapper/helper error contracts per case: fake AsyncSurreal, repo/SDK state doubles and in-memory Loguru observer. Real inheritance/redaction helper is internal wrapper implementation, not independent service orchestration. Independent full-file review at 71fbefb; test bytes verified identical to this 3e72ce0 base.",
-      "sha256": "ab9591d50a20cbf51505b5c31b6667580f5de10b65fc43b714f2c668c2430b99"
+      "sha256": "f99fee615440a4e00c75da6deac36bc5cd5a97a26f9807b5e7fb15c0b0a35d4b"
     },
     {
       "path": "tests/test_browser_check_assertions.py",
@@ -2897,6 +2903,15 @@
       ],
       "reason": "TypedUnsafeBudget ledger/classifier/route callbacks over synthetic request/route/guard doubles; no Playwright page, network, file read/write or real upload. Pure request-budget behavior, not browser acceptance.",
       "sha256": "2b7c49fb456ecfac30fc2aaef1a59395eff1f18920febf4378e61af543df4d54"
+    },
+    {
+      "path": "tests/test_canonical_retrieval_reads_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_retrieval.py"
+      ],
+      "reason": "Real physical-ID canonical cache with only get_many persistence replaced; batch/identity/cache/error/cancel logic, no DB or files.",
+      "sha256": "207cedeb87023c036a1b7ab1633a38a25b9ba05978c3d547ff7b386dbc812413"
     },
     {
       "path": "tests/test_capabilities_api.py",
@@ -3201,8 +3216,26 @@
         "open_notebook/domain/notebook.py",
         "api/podcast_service.py"
       ],
-      "reason": "Full 821-line original reviewed. Eight DTO/singleton/value classes moved unchanged to domain_values_unit. Retained notebook/source cases include actual temp file deletion and missing-path probe plus direct functions, while podcast content composes service/domain; further split needed.",
-      "sha256": "37c0c4241e3addd1bdf59c3f32272415fb85fb499d4172a740d7f13fe6409975"
+      "reason": "Five retained cases exercise actual notebook/source mutation barriers, temporary or missing file operations and real podcast/domain collaboration. Notebook deletion still takes real locks despite query doubles. Eleven in-memory domain logical units moved losslessly.",
+      "sha256": "2b4b99bc8fe03ba4a260ab6a0904838bc35d75fd11686da94a1ba69b5ed76d85"
+    },
+    {
+      "path": "tests/test_domain_logical_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/domain/notebook.py"
+      ],
+      "reason": "Eleven unchanged methods retain real domain validation, context projection and vectorize; storage getters and command submit replaced. Empty insight list returns before repository I/O. No mutation locks or real file handling.",
+      "sha256": "561305f1265ebe3290b016b726ec006e212adb5bedb56a3d470321b75429de2e"
+    },
+    {
+      "path": "tests/test_domain_read_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/domain/notebook.py"
+      ],
+      "reason": "Real domain query projection, batch deduplication, empty results, read-only delete preview and error/cancellation behavior with repo_query replaced. SQL shape assertions do not prove database semantics.",
+      "sha256": "317df805a091a120092ba0914e96a0a83a002069e6e3d7e15e064e9b170fb0e7"
     },
     {
       "path": "tests/test_domain_values_unit.py",
@@ -3308,6 +3341,15 @@
       "sha256": "5df82436c6177edf07b78a2846fb8b7ad67748088617aac848dea2f7be924034"
     },
     {
+      "path": "tests/test_evidence_citation_verdict_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_service.py"
+      ],
+      "reason": "Real citation verdict, DTO, hash/offset/source binding and fresh extraction matching with copy-on-read persistence double. Constructor bypass prevents root resolution; no files, extractor, DB or provider. Matcher-only malformed offset cases are explicitly distinguished from full verdict calls.",
+      "sha256": "b25acc8400cde1ef74e4e321d4d7de952b241204bfe876413e00aaf276cb5685"
+    },
+    {
       "path": "tests/test_evidence_embedding_calls.py",
       "layer": "component-integration",
       "targets": [
@@ -3361,6 +3403,15 @@
       "sha256": "9ff10b49cfc6de993fea501a5a12be9518b31e5d1a90f4ad76423cf9d74fa72a"
     },
     {
+      "path": "tests/test_evidence_extraction_state_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_service.py"
+      ],
+      "reason": "Real extraction state and evidence publication; store/file/parser/dispatch/resource boundaries replaced, no file parser or persistence workflow.",
+      "sha256": "8d2f0c754e549281f7294177497a5c22ca9c01c7785ebba3951055379947c21e"
+    },
+    {
       "path": "tests/test_evidence_indexing_jobs.py",
       "layer": "tool-integration",
       "targets": [
@@ -3400,6 +3451,24 @@
       ],
       "reason": "32 direct service state-machine cases replace storage/transaction/project-lock/repository/provider/queue boundaries only. Real target methods execute; cancellation/ownership/same-attempt reconciliation and snapshot/profile binding asserted, no real flock/DB/files.",
       "sha256": "63e896996b9d3202d5e98bf9f8c132bd3b0c31be240a8811a99d9a1a6a2c723c"
+    },
+    {
+      "path": "tests/test_evidence_metadata_reads_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_service.py"
+      ],
+      "reason": "Real metadata DTO/member projection over memory store; no database/file/provider execution.",
+      "sha256": "63aae2aff571ed788371782af06db5e2fbe172110fc0b567d8bce318399486bb"
+    },
+    {
+      "path": "tests/test_evidence_repository_receipts_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/database/evidence_embedding_repository.py"
+      ],
+      "reason": "Real receipt/abort/query sanitization, invalidation acknowledgment and lock-order orchestration; db_connection/query_raw/query and project_lock replaced. No real DB transaction/CAS/lock behavior is claimed.",
+      "sha256": "abfee8fc7f88e888a6d9d211b4cc95ad1a479dd56db9cadc56a5398245887213"
     },
     {
       "path": "tests/test_explicit_credential_routing.py",
@@ -3590,13 +3659,22 @@
     },
     {
       "path": "tests/test_note_save_embed_resilience.py",
-      "layer": "mixed",
+      "layer": "api-integration",
       "targets": [
         "open_notebook/domain/notebook.py",
-        "api/routers/embedding.py"
+        "api/routers/notes.py"
       ],
-      "reason": "Direct Note.save with update/submit doubles plus TestEmbeddingEndpointNoteBranch HTTP integration. Full-file independent review at f10d0f4; SHA256 verified after merge.",
-      "sha256": "731c79447785d0b65366edd277fa70b55bcd4fcc6df920e55bdf02dfdfa175c5"
+      "reason": "Retained actual TestClient route and domain collaboration; direct model save and field validation moved unchanged to unit companion.",
+      "sha256": "caea0bf346d52a9809d847ca113dacec2a24eee952d03bc6ba44fba472401987"
+    },
+    {
+      "path": "tests/test_note_save_embed_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/domain/notebook.py"
+      ],
+      "reason": "Six direct Note validation/save submission cases with persistence and command boundaries replaced; no HTTP router.",
+      "sha256": "52e871d7ff5bf6c6d0be2ad8624480c14f67bf570a15564bee8c6f900f7d1d14"
     },
     {
       "path": "tests/test_notebooklm_asset_file_lifecycle.py",
@@ -3654,6 +3732,15 @@
       ],
       "reason": "Direct order-clause parser units plus Credential inherited parser collaboration and real FastAPI TestClient router cases. Split rather than count API routing as unit.",
       "sha256": "6b6471e599c39436fb84dfa28aee65458bf799f8eb89b9fcf56d19341bda4aaf"
+    },
+    {
+      "path": "tests/test_personal_enqueue_reconciliation_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/personal_service.py"
+      ],
+      "reason": "Real submit_turn policy with memory store, async lock/event and queue doubles; no DB/files/HTTP.",
+      "sha256": "1de96c57114c1c039f181836ff28492fdacce730570e4dcdbba28e63ce4ebbd5"
     },
     {
       "path": "tests/test_personal_service_citation_contract.py",
@@ -3832,6 +3919,24 @@
       ],
       "reason": "Real archive identity remap and export queue orchestration with memory persistence/locks and submission boundary doubles. Constructor root resolution omitted via object.__new__; no archive, stage, real file, database or worker execution.",
       "sha256": "42bb718669acfaa3dfef9f21a5ec02269e25764775e03f7610b174768f6e33cc"
+    },
+    {
+      "path": "tests/test_portable_snapshot_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/portable_service.py"
+      ],
+      "reason": "Real snapshot/clean/validation policy with memory read/list/lock and staging boundary replaced; thread calls only synthetic staging, no archive or file lifetime tested.",
+      "sha256": "7d2f160a4b5b67289700c35a84b28fa91bd53d35d2dfdd51e68d1236768dc43d"
+    },
+    {
+      "path": "tests/test_portable_transaction_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/portable_service.py"
+      ],
+      "reason": "Real restore transaction construction and ACK policy with only db connection/query_raw replaced; no real SQL commit, files, or automatic retry.",
+      "sha256": "68bf7c3d320bfbb4dbca79ab4ad4865207b83f9c4ddc320efcecb928ac068967"
     },
     {
       "path": "tests/test_portable_zip.py",
@@ -4024,6 +4129,15 @@
       ],
       "reason": "Each case directly tests one stream/logging, model-selection or rollback logical operation with graph/provider/default lookup doubles. Real in-memory Loguru sink, DTO messages, error classification and rollback helpers are internal behavior, not HTTP/real graph execution. asyncio.to_thread invokes only fake graph methods; no network, DB, browser or subprocess.",
       "sha256": "4e8fa87ac1f08892b51fc795cb1efe57bbb44d7740463a59ed30669ad792cf2c"
+    },
+    {
+      "path": "tests/test_semantic_retrieval_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_retrieval.py"
+      ],
+      "reason": "Real scoped vector binding, disclosure, normalization, NumPy ranking/filter/tie/limit and typed fallback. Repository/provider are explicit boundaries; no independent EvidenceService collaboration or actual I/O.",
+      "sha256": "03e83fb72eda9c52bafc08a49eedc57cd615948e6221d1de0f8e349ff0bbf2c0"
     },
     {
       "path": "tests/test_source_attempt_ownership.py",
@@ -4469,7 +4583,7 @@
         "api/device_session_service.py"
       ],
       "reason": "Real TestClient auth/router/middleware lifecycle and a real password-file outage are integration. test_auth_tables_are_not_personal_archive_kinds is a direct constant contract candidate; test_startup_runtime_is_fail_closed_and_new_epoch exercises runtime-to-service boot retirement with a memory store. test_unknown_modes_fail_closed combines a getter assertion and HTTP wiring, requiring an assertion-level split.",
-      "sha256": "97c2ef9ef6f1c875794dd4d5b239a67a5d1709f4b7e4c507d0a10b8e14e7e1fb"
+      "sha256": "2bfbcded8f1c8d82418b5a72686eadee8fea80ee43ce9547633131ed15e668aa"
     },
     {
       "path": "tests/test_v1_device_session_repository.py",
@@ -4802,7 +4916,7 @@
         "api/portable_service.py"
       ],
       "reason": "ASGI/schema/portable interoperability plus direct test_receipt_persistence_error_is_not_a_durable_dispatch_receipt with storage/queue doubles; split that two-parameter unit.",
-      "sha256": "bde6198abee3d2a020a87a5e1d7b6c1c542c4df11aee6800543af07164c7b9a8"
+      "sha256": "17c706f67963a3a7cae6c1affeb341665ddedbfb22f46aca787c14afb3ab5061"
     },
     {
       "path": "tests/test_v1_personal_enqueue_reconciliation.py",
@@ -4812,8 +4926,8 @@
         "api/main.py",
         "api/routers/evidence.py"
       ],
-      "reason": "Direct state/locking reconciliation with MemoryStore/queue doubles except final test_unchanged_queued_ack_loss_reports_unknown_without_reenqueue (two parameters), which runs real ASGI. Fixture self-test is not production coverage.",
-      "sha256": "8402bc77ab01624081c56ded387c972b2ca04e2879ee10ddd02f8bc93b16d59f"
+      "reason": "Retained actual ASGI reconciliation and fixture self-test; direct production submit_turn policy cases moved unchanged to unit companion.",
+      "sha256": "f8675ea1695ae2a0d62e4d8945cada9a950497d646cdddb6ad0c507d5ae3018c"
     },
     {
       "path": "tests/test_v1_personal_response_contracts.py",
@@ -4867,7 +4981,7 @@
         "api/evidence_service.py"
       ],
       "reason": "Pure note revision normalization and constructor/pre-ZipFile BytesIO rejection coexist with actual ZIP/staging/filesystem and some database/checkpoint lifecycle. Whole-file coverage cannot be called unit.",
-      "sha256": "8717bdb72fe3c8e35b2806d420e2a344890516f9c0fd51703af52d6ec45ebc65"
+      "sha256": "cfb3a0879b88e6632a069f0cac411a72f82b800791131a678cc3f4dab9c66e7e"
     },
     {
       "path": "tests/test_v1_reader_history.py",
@@ -5050,6 +5164,15 @@
       "sha256": "2e80a615ed0cbf609e2e787d89efb2456612bc7e9f511b0fe6bfbe71fb407a4c"
     },
     {
+      "path": "tests/test_web_finish_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/web_discovery_service.py"
+      ],
+      "reason": "Real finish/cache policies with copy-on-read memory store, source/evidence/submission boundaries replaced; no filesystem checkpoints, provider or worker.",
+      "sha256": "18b0a3f6cfd81d0d08537c4020feb26d58f1317a269700b6a9bfc38723ec1319"
+    },
+    {
       "path": "tests/test_workbench_hybrid_acceptance.py",
       "layer": "tool-integration",
       "targets": [
@@ -5125,13 +5248,23 @@
       "sha256": "febbc4df57491ebb2d5436d7c2a5f79008f87bdc1b90c2214743862d98627294"
     },
     {
+      "path": "tests/test_workspace_view_projection_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/workspace_view_projection.py",
+        "api/workspace_view_contracts.py"
+      ],
+      "reason": "Pure projection and internal DTO schemas over immutable static fixture inputs; no routes/persistence/provider execution.",
+      "sha256": "4312cf85fc7ae9350275133ff10471eb5083548fa32d9206aca1c9aa7b281c06"
+    },
+    {
       "path": "tests/test_workspace_view_v1.py",
       "layer": "mixed",
       "targets": [
         "api/workspace_view_projection.py"
       ],
-      "reason": "Most cases directly project static fixture records or validate response DTOs with internal schemas, eligible for unit splitting. test_routes_keep_old_wire_and_use_same_service_scope_check and test_client_capabilities_are_authenticated_read_only_real_limits traverse ASGI. test_upload_and_capabilities_share_actual_budget deliberately compares two route behaviors via shared limit policy and is component-contract coverage.",
-      "sha256": "2aadb447300251a2b0ad8ccb2ed5991b5de7d76455ba35cfc6f4835fcb33ba32"
+      "reason": "Retained actual ASGI workspace reads and cross-entry upload/capability budget collaboration; pure projection/DTO cases moved unchanged to unit companion.",
+      "sha256": "7eb6de0e957b10cf6673e1294ef93f2a9fe139ada878c331dab17a272ef2e494"
     }
   ]
 }

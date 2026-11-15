@@ -162,11 +162,8 @@ class Notebook(ObjectModel):
                 [ChatSession(**src["chat_session"][0]) for src in srcs] if srcs else []
             )
         except Exception as e:
-            logger.error(
-                f"Error fetching chat sessions for notebook {self.id}: {str(e)}"
-            )
-            logger.exception(e)
-            raise DatabaseOperationError(e)
+            log_boundary_failure("notebook_chat_sessions", e)
+            raise DatabaseOperationError(e) from e
 
     async def get_delete_preview(self) -> Dict[str, Any]:
         """
@@ -214,9 +211,8 @@ class Notebook(ObjectModel):
                 "shared_source_count": shared_count,
             }
         except Exception as e:
-            logger.error(f"Error getting delete preview for notebook {self.id}: {e}")
-            logger.exception(e)
-            raise DatabaseOperationError(e)
+            log_boundary_failure("notebook_delete_preview", e)
+            raise DatabaseOperationError(e) from e
 
     async def delete(self, delete_exclusive_sources: bool = False) -> Dict[str, int]:
         from open_notebook.database.note_repository import notebook_mutation_locks
