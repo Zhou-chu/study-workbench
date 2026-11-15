@@ -85,3 +85,37 @@ quality gate. No main merge, deployment, real data or encryption migration.
 
 The follow-on workspace lint/typecheck and legacy frontend lint/tsc also exit 0;
 legacy lint still has seven warnings. No browser or product service was started.
+
+## Follow-on: source creation and archive import (frozen 4de0458)
+
+Adds 25 source-creation helper units and 25 portable import/project-read units.
+Real Source/Asset/command request/response models, remapping and record assembly
+remain. Persistence, queue binding, thread execution and virtual file/staging
+boundaries are replaced. The source tests establish intent and sequencing, not
+actual durability. Command-module bootstrap performs existing registration and
+environment setup; isolated helper calls do not prove arbitrary cold-import
+side-effect freedom. Portable cases distinguish confirmed failure cleanup from
+unknown commit retention without claiming real disk or transaction acceptance.
+No production behavior changed and no new business defect was demonstrated.
+
+Before integration, related regressions passed 71 and 273 cases (the latter has
+one existing skip). Exact portable-test mypy passed; source-test mypy retained
+only four existing imported SDK errors. Ruff and format passed for both.
+
+Frozen aggregate results: full offline Python 5808 passed, 128 skipped, two
+warnings and the exact same seven historical temporary-parent custody failures,
+170.62s. Reviewed unit subset: 133 files, 2850 passed, one dependency warning,
+149.01s. Native receipt has 2850 cases/8550 phases, zero deselection or collection
+failures. The complete strict-classification gate remains unfinished.
+
+All 181 production files remain included: 24,027 statements, 7,036 branches,
+56 unchanged existing excluded lines, stable before/after source hashes.
+Lines 13,154/24,027 = 54.7467%; branches 3,198/7,036 = 45.4520%; native combined
+52.6414%; original 90.01 gate exits 1. The measured union gains 81 lines/20 arcs
+against the preceding retrieval/saved-result subset, not summed module coverage.
+Full Ruff/format pass; mypy remains 201 errors in 36 files, 484 checked.
+Manifest 570 entries: 255 unit, 154 mixed, 69 component, 56 tool, 28 API, eight
+static; all hashes validated before the run. Raw logs/coverage/receipts remain
+outside the checkout. No main merge, deployment, real-data mutation or migration.
+Workspace lint/typecheck and legacy frontend lint/tsc also pass for this frozen
+source; seven legacy lint warnings remain. No browser acceptance was executed.

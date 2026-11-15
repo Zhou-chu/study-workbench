@@ -4066,6 +4066,15 @@
       "sha256": "fa4c2fd42418aa4b175383c289d0e828588b19da33d59f54bdad7712abfa3818"
     },
     {
+      "path": "tests/test_portable_import_coordination_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/portable_service.py"
+      ],
+      "reason": "18 import orchestration units replace archive reader, virtual paths/temp context/thread/commit while retaining real remap and record assembly; 7 project-read units replace persistence, locks and graph reads. No real ZIP/filesystem/thread cancellation or transaction durability acceptance.",
+      "sha256": "945dbe49e730df58bf9ab112f116865d7e42e74c85ddc4c71d1c866f247c7343"
+    },
+    {
       "path": "tests/test_portable_project_validation_unit.py",
       "layer": "unit",
       "targets": [
@@ -4429,6 +4438,15 @@
       ],
       "reason": "TestNotebooksMaxLength/TestTransformationsMaxLength are direct SourceCreate schema units; TestFormParsingReturns422 uses API. Split. Independent full-file review at 71fbefb; test bytes verified identical to this 3e72ce0 base.",
       "sha256": "5cb46e8df0bec4a0b6042b3909bab2e8612de343a9b863ceb22f4bc0a5f577c0"
+    },
+    {
+      "path": "tests/test_source_create_paths_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/routers/sources.py"
+      ],
+      "reason": "Direct async/sync source creation helper decisions with real Source/Asset/command DTO/response models; save/association/submit/bind/read/status/chunks and thread execution replaced. Tests source intent, not durability. Command-module bootstrap registration is not claimed side-effect-free; no actual processing call.",
+      "sha256": "95b707a5abad5ac9a23d2dcb1cbb8ca57a7d6b7774650bd3577722257a0048d4"
     },
     {
       "path": "tests/test_source_deleted_before_processing.py",
