@@ -17,7 +17,77 @@ from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import TYPE_CHECKING, NotRequired, TypedDict
 from urllib.parse import unquote, urlparse
+
+if TYPE_CHECKING:
+    from playwright.sync_api import expect
+    from playwright.sync_api import sync_playwright as sync_playwright
+
+
+class ReviewFailure(TypedDict):
+    case: str
+    detail: str
+
+
+class ReviewError(TypedDict):
+    case: str
+    error: str
+
+
+class NetworkRecord(TypedDict):
+    case: str
+    url: str
+    method: str
+    explicit_action: str | None
+    decision: NotRequired[str]
+
+
+class WebSocketRecord(TypedDict):
+    case: str
+    url: str
+    local: bool
+
+
+class SourceFileRecord(TypedDict):
+    sha256: str
+    mtime_utc: str
+
+
+class ScreenshotRecord(TypedDict):
+    path: str
+    sha256: str
+
+
+class ReviewReport(TypedDict):
+    baseline: bool
+    source_root: str
+    boundary: str
+    started_utc: str
+    base: str
+    source_files: dict[str, SourceFileRecord]
+    results: list[dict[str, object]]
+    network: list[NetworkRecord]
+    websockets: list[WebSocketRecord]
+    page_errors: list[ReviewError]
+    console_errors: list[ReviewError]
+    failures: list[ReviewFailure]
+    not_run: list[str]
+    review_script_sha256: NotRequired[str]
+    head: NotRequired[str]
+    browser: NotRequired[str]
+    preview_pid: NotRequired[int]
+    preview_stopped: NotRequired[bool]
+    finished_utc: NotRequired[str]
+    screenshots: NotRequired[list[ScreenshotRecord]]
+    source_unchanged: NotRequired[bool]
+    counts: NotRequired[dict[str, int]]
+
+
+# run_review assigns these only in the admitted child workflow. Annotations
+# must not create a report, output path or Playwright driver during import.
+OUT: Path
+report: ReviewReport
 
 ROOT = Path(__file__).resolve().parents[3]
 BASELINE = os.environ.get("QA_BASELINE") == "1"
@@ -217,7 +287,7 @@ def capture(page, tag, scenario, width, theme, text_scale=1):
         theme:document.documentElement.dataset.theme,language:document.documentElement.lang,
         skipLink:(()=>{const e=document.querySelector('.skip-link'),r=e.getBoundingClientRect();return {focused:e===document.activeElement,top:r.y,bottom:r.bottom,styleTop:getComputedStyle(e).top}})(),
         outliers:[...document.querySelectorAll('header button,header a,main button,main select,main input,main .model-setup-guide')].filter(e=>{const r=e.getBoundingClientRect();return r.width&& (r.x < -1 || r.right>innerWidth+1)}).map(e=>({tag:e.tagName,text:(e.getAttribute('aria-label')||e.textContent).slice(0,90),width:e.getBoundingClientRect().width}))})""")
-    row = {
+    row: dict[str, object] = {
         "tag": tag,
         "scenario": scenario,
         "width": width,
@@ -581,7 +651,7 @@ def run_review(out, scratch):
                     def intercept(route):
                         req = route.request
                         u = urlparse(req.url)
-                        entry = {
+                        entry: NetworkRecord = {
                             "case": current["tag"],
                             "url": req.url,
                             "method": req.method,

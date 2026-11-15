@@ -3747,6 +3747,15 @@
       "sha256": "ef84a94f1f98d1ff2fcb3af820432fa13c0b3e92e89ab397a555fa4e0f474a50"
     },
     {
+      "path": "tests/test_model_setup_report_contract.py",
+      "layer": "tool-integration",
+      "targets": [
+        "apps/web/scripts/model-setup-journey-review.py"
+      ],
+      "reason": "Loads the actual QA module and evaluates its report literal and capture/failure functions with browser and process boundaries replaced. Verifies report lifecycle and JSON output; not browser acceptance or pure unit.",
+      "sha256": "30c544a92d059544dab89fe39ddd66f4a6cdf24433e31b97196ee6d0afba0f67"
+    },
+    {
       "path": "tests/test_model_setup_review_archive_contract.py",
       "layer": "tool-integration",
       "targets": [
@@ -3876,6 +3885,15 @@
       "sha256": "27b40136b2e9ba59dd0cdb572977737282cc1083c4e542e5efba2122f1268631"
     },
     {
+      "path": "tests/test_order_by_parser_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/domain/base.py"
+      ],
+      "reason": "Direct order-clause parsing and normalization with unchanged parameterized input/output and rejection assertions; no database, HTTP or filesystem execution.",
+      "sha256": "9ac4d5adbf6b03a605f512fb66ef99a4e39f113589a17abb8bf9789ae0a5d3b0"
+    },
+    {
       "path": "tests/test_order_by_validation.py",
       "layer": "mixed",
       "targets": [
@@ -3883,8 +3901,8 @@
         "open_notebook/domain/credential.py",
         "api/routers/notebooks.py"
       ],
-      "reason": "Direct order-clause parser units plus Credential inherited parser collaboration and real FastAPI TestClient router cases. Split rather than count API routing as unit.",
-      "sha256": "6b6471e599c39436fb84dfa28aee65458bf799f8eb89b9fcf56d19341bda4aaf"
+      "reason": "Retains Credential inherited parser collaboration and real FastAPI TestClient router cases after the ten direct parser cases moved unchanged to their unit file. These fourteen retained cases are not counted as strict unit.",
+      "sha256": "33a98926f6a471c107aa2365790b43c47cf5e25811c7e4cf7df230e0b4407017"
     },
     {
       "path": "tests/test_personal_enqueue_reconciliation_unit.py",
@@ -4065,6 +4083,15 @@
       "sha256": "8deedbd873c32ac514a23277816adf2539d3a481d71c1d01d421e169db4f5cda"
     },
     {
+      "path": "tests/test_portable_archive_writer_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/portable_service.py"
+      ],
+      "reason": "Real archive metadata and note/citation serialization with in-memory path and packaging boundaries. Checks output bytes, limits and publication decisions, not real ZIP encoding or disk atomicity.",
+      "sha256": "8de6037f79491d8b214ceb0efe63481268d9a3166551b53668e76e2601bb0d90"
+    },
+    {
       "path": "tests/test_portable_budget_unit.py",
       "layer": "unit",
       "targets": [
@@ -4118,6 +4145,15 @@
       ],
       "reason": "Real snapshot/clean/validation policy with memory read/list/lock and staging boundary replaced; thread calls only synthetic staging, no archive or file lifetime tested.",
       "sha256": "7d2f160a4b5b67289700c35a84b28fa91bd53d35d2dfdd51e68d1236768dc43d"
+    },
+    {
+      "path": "tests/test_portable_staged_originals_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/portable_service.py"
+      ],
+      "reason": "Real staged-original metadata, hashes, duplicate handling and reference projection with in-memory paths and streams. Checks output and rejection decisions, not real filesystem confinement or concurrency.",
+      "sha256": "744045c22634ee1d42e70cba385049f51b7a1f2552de16d4bad1df06326379ed"
     },
     {
       "path": "tests/test_portable_transaction_unit.py",
