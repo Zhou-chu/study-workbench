@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -393,6 +394,49 @@ def stop_preview(server):
             server.wait()
 
 
+def _extract_baseline_archive(root: Path, destination: Path) -> None:
+    archive = subprocess.Popen(
+        [
+            "git",
+            "archive",
+            "9ee810",
+            "apps/web",
+            "packages",
+            "frontend/src/lib/locales",
+            "package.json",
+            "package-lock.json",
+            "tsconfig.base.json",
+        ],
+        cwd=root,
+        stdout=subprocess.PIPE,
+    )
+    try:
+        stream = archive.stdout
+        if stream is None:
+            raise RuntimeError("git archive did not provide its stdout pipe")
+        with stream:
+            subprocess.run(
+                ["tar", "-xf", "-", "-C", str(destination)], stdin=stream, check=True
+            )
+        status = archive.wait()
+    except BaseException as failure:
+        # Stop only the owned producer, without replacing the consumer's
+        # original failure if cleanup cannot be confirmed.
+        try:
+            try:
+                if archive.poll() is None:
+                    archive.kill()
+            finally:
+                archive.wait(timeout=15)
+        except BaseException:
+            failure.add_note(
+                "Could not fully confirm baseline archive producer cleanup."
+            )
+        raise
+    if status:
+        raise RuntimeError(f"git archive failed with exit status {status}")
+
+
 def run_review(out, scratch):
     global OUT, SOURCE, APP, report, expect, sync_playwright
     from playwright.sync_api import expect, sync_playwright
@@ -402,26 +446,7 @@ def run_review(out, scratch):
         SOURCE = scratch / "baseline-source"
         SOURCE.mkdir(parents=True, exist_ok=True)
         if not (SOURCE / "apps/web/src/features/settings/ModelsPage.tsx").exists():
-            archive = subprocess.Popen(
-                [
-                    "git",
-                    "archive",
-                    "9ee810",
-                    "apps/web",
-                    "packages",
-                    "frontend/src/lib/locales",
-                    "package.json",
-                    "package-lock.json",
-                    "tsconfig.base.json",
-                ],
-                cwd=ROOT,
-                stdout=subprocess.PIPE,
-            )
-            subprocess.run(
-                ["tar", "-xf", "-", "-C", str(SOURCE)], stdin=archive.stdout, check=True
-            )
-            archive.stdout.close()
-            assert archive.wait() == 0
+            _extract_baseline_archive(ROOT, SOURCE)
         if not (SOURCE / "tsconfig.base.json").exists():
             (SOURCE / "tsconfig.base.json").write_bytes(
                 subprocess.check_output(
@@ -589,6 +614,7 @@ def run_review(out, scratch):
                                 content_type="font/ttf",
                             )
                             return
+                        value: Mapping[str, object] | Sequence[object]
                         if path.endswith("/spa-artifact-manifest.json"):
                             value = IDENTITY
                         elif path == "/config":

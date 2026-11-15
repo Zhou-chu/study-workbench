@@ -154,3 +154,55 @@ source/import subset. Full Ruff/format pass; mypy remains 201 errors in 36 files
 No main merge, desktop access attempt, deployment, real-data change or migration.
 The frozen workspace lint/typecheck and legacy frontend lint/tsc also exit 0;
 legacy lint retains seven warnings. No browser or live application was started.
+
+## Follow-on: actual reader contracts and QA failure handling (frozen f7d598f)
+
+Three new API/file/parser integration scenarios cover a revised source with exact
+historical Unicode citation/reader output, and a missing or same-length-corrupted
+original. Downloads reject unavailable originals; retained extracted text is
+still independently readable. Restoring original bytes and extracting again
+preserves the older citation. These run real ingest/extract/HTTP logic with
+synthetic temporary files and memory persistence. They are not strict units or
+browser/PDF-rendering acceptance. Two initial test failures reflected an incorrect
+expectation that extract swallowed its error; corrected tests assert the actual
+exception and retained failed-extraction record, not a manufactured product fix.
+The whole evidence-route file passes 52 cases.
+
+The model-setup QA helper had a real owned-process cleanup contract gap: tar
+failure/interruption bypassed archive pipe closure/reaping. Four original red
+cases became green after extracting an owned-handle helper, checking the pipe
+and replacing an assert-only exit check with a runtime error. Independent review
+then found that cleanup failures could mask the original error. Six additional
+poll/kill/wait failure cases were red before the correction and green after it.
+Only the owned Popen is stopped; exception cleanup waits at most 15 seconds and
+preserves the original exception with a fixed, non-sensitive note when cleanup
+cannot be confirmed. Normal tar execution and successful-producer wait still
+have no new timeout; this is not universal hang recovery. No real subprocess or
+browser is launched by these tests. Seventeen AST/file-based tool-integration
+cases exercise exact helper/response definitions; related regression passes 58.
+The synthetic response-body Mapping/Sequence annotation leaves its executable
+AST unchanged. No Any/ignore or quality-gate relaxation was introduced.
+
+Final full offline Python: 5882 passed, 128 skipped, two warnings, the same seven
+historical temporary-parent custody failures, 162.95s. Reviewed pure-unit subset
+is deliberately unchanged at 135 files and 2904 passed, one warning, 168.20s.
+Native receipt: 2904 collected cases/8712 phases, no deselection or collection
+failure. None of the 20 new integration cases contribute to this strict subset.
+
+Full production scope remains 181 files. Actual helper growth increases the
+denominator to 24,045 statements and 7,042 branches; 56 existing exclusions are
+unchanged and before/after source hashes match. Lines 13,303/24,045 = 55.3254%;
+branches 3,259/7,042 = 46.2795%; native combined 53.2763%, original 90.01 gate
+exits 1. Coverage percentages decrease slightly because new integration-tested
+helper code remains in the strict denominator. No scope was removed to hide it.
+
+Full Ruff/format pass; full mypy improves from 201 to 199 errors in 36 files,
+487 checked. The QA tool itself improves from 75 to 73; unrelated global-name
+and historical issues remain visible. SDK optional-handle diagnostics are
+unchanged because that work overlaps protected private progress. Manifest 573
+entries: 257 unit, 154 mixed, 69 component, 57 tool, 28 API, eight static; all
+hashes validated. Initial and corrected full-run evidence are both preserved
+externally. No main merge, deployment, real-data mutation or desktop attach.
+The final workspace lint/typecheck and legacy frontend lint/tsc also exit 0;
+seven existing legacy lint warnings remain. Shared UI specification bytes are
+unchanged. Live application/browser acceptance was not executed in this batch.

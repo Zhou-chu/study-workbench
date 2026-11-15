@@ -3747,6 +3747,15 @@
       "sha256": "ef84a94f1f98d1ff2fcb3af820432fa13c0b3e92e89ab397a555fa4e0f474a50"
     },
     {
+      "path": "tests/test_model_setup_review_archive_contract.py",
+      "layer": "tool-integration",
+      "targets": [
+        "apps/web/scripts/model-setup-journey-review.py"
+      ],
+      "reason": "Reads/parses/compiles exact QA script AST, drives owned-archive helper and synthetic response contracts with Popen/tar/routes replaced. Red/green proves cleanup decisions and nonzero handling, not actual process lifecycle/browser execution. No live subprocess or network. Includes poll/kill/wait cleanup-failure red/green cases preserving original exception with an explicit unconfirmed-cleanup note.",
+      "sha256": "e9a32b7dedcab39ca8e6242499f0779be49e6a6a68090f6964656ba4204463b8"
+    },
+    {
       "path": "tests/test_model_setup_review_workspace.py",
       "layer": "mixed",
       "targets": [
@@ -5059,8 +5068,8 @@
         "api/evidence_maintenance.py",
         "api/main.py"
       ],
-      "reason": "Real ASGI application/handlers/routes/services, with original files and parser paths; only persistence/submission replaced. No complete standalone logical-unit case.",
-      "sha256": "2fc9ef915eee670f363fa98222a10ef6c9e280fbf552556e1882f0beee2cd9a0"
+      "reason": "Real ASGI application/handlers/routes/services, with original files and parser paths; only persistence/submission replaced. No complete standalone logical-unit case. Includes genuine source-revision and missing/corrupted-original recovery with real parsing and citation/reader HTTP contracts; not browser or strict unit acceptance.",
+      "sha256": "5bf29c52adfe5d9d0c3ec8c510dd1b5077be4ba61fb7f5447c6b07f93afdc241"
     },
     {
       "path": "tests/test_v1_frontend_http.py",

@@ -670,3 +670,151 @@ async def test_reparse_and_revalidation_http_contracts_are_durable(routes):
             json={"idempotency_key": "x", "extraction_id": "wrong"},
         )
     ).status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_reader_citation_stays_bound_to_old_bytes_after_real_source_revision(
+    routes: SimpleNamespace,
+) -> None:
+    old_bytes = "🌞 第一版：能量守恒。e\u0301\r\n\r\n旧版结论。\r\n".encode()
+    new_bytes = "🌙 第二版：补充边界条件。\n\n新版结论。\n".encode()
+    old_upload = await upload(routes, content=old_bytes, key="revision-old")
+    assert old_upload.status_code == 200
+    old_version = old_upload.json()["source_version_id"]
+    old_extraction = await routes.evidence.extract(old_version)
+    assert old_extraction["status"] == "ready"
+    old_evidence_id = old_extraction["evidence_ids"][0]
+    original_citation = await routes.client.get(
+        f"/api/personal/evidence/{old_evidence_id}"
+    )
+    assert original_citation.status_code == 200
+    original_record = original_citation.json()
+    assert original_record["reference_validity"] == "verified"
+
+    revised_upload = await upload(routes, content=new_bytes, key="revision-new")
+    assert revised_upload.status_code == 200
+    revised_version = revised_upload.json()["source_version_id"]
+    assert revised_version != old_version
+    revised_extraction = await routes.evidence.extract(revised_version)
+    assert revised_extraction["status"] == "ready"
+    assert not set(old_extraction["evidence_ids"]) & set(
+        revised_extraction["evidence_ids"]
+    )
+    versions = await routes.client.get("/api/personal/sources/source:a/versions")
+    assert versions.status_code == 200
+    assert {v["source_version_id"] for v in versions.json()} == {
+        old_version,
+        revised_version,
+    }
+
+    old_reader = await routes.client.get(
+        f"/api/personal/source-versions/{old_version}",
+        params={"evidence_id": old_evidence_id},
+    )
+    assert old_reader.status_code == 200
+    body = old_reader.json()
+    assert body["extraction"]["extraction_id"] == old_extraction["extraction_id"]
+    retained = next(
+        item for item in body["evidence"] if item["evidence_id"] == old_evidence_id
+    )
+    assert retained == original_record
+    locator = retained["locator"]
+    block = next(
+        b for b in body["extraction"]["blocks"] if b["block_id"] == locator["block_id"]
+    )
+    assert (
+        block["text"][locator["start_offset"] : locator["end_offset"]]
+        == retained["quote"]
+    )
+    assert "第一版" in retained["quote"] and "第二版" not in retained["quote"]
+    assert "e\u0301" in retained["quote"]
+    wrong_reader = await routes.client.get(
+        f"/api/personal/source-versions/{revised_version}",
+        params={"evidence_id": old_evidence_id},
+    )
+    assert wrong_reader.status_code == 400
+    assert wrong_reader.json()["detail"] == "EVIDENCE_VERSION_MISMATCH"
+    for version_id, expected in (
+        (old_version, old_bytes),
+        (revised_version, new_bytes),
+    ):
+        download = await routes.client.get(
+            f"/api/personal/source-versions/{version_id}/download"
+        )
+        assert download.status_code == 200
+        assert download.content == expected
+        assert download.headers["cache-control"] == "no-store"
+    assert len(routes.queue) == 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("unavailable", ["missing", "changed"])
+async def test_retained_reader_and_recovery_do_not_silently_replace_original_bytes(
+    routes: SimpleNamespace, unavailable: str
+) -> None:
+    original = "🌞 可恢复的原始证据。\r\n".encode()
+    response = await upload(routes, content=original, key="recover-original")
+    assert response.status_code == 200
+    version_id = response.json()["source_version_id"]
+    first = await routes.evidence.extract(version_id)
+    assert first["status"] == "ready"
+    evidence_id = first["evidence_ids"][0]
+    before = await routes.client.get(f"/api/personal/evidence/{evidence_id}")
+    assert before.status_code == 200
+    path = await routes.evidence.resolve_file(version_id)
+    if unavailable == "missing":
+        path.unlink()
+    else:
+        # Same byte length exercises digest verification, not only a size check.
+        path.write_bytes(b"x" * len(original))
+    download = await routes.client.get(
+        f"/api/personal/source-versions/{version_id}/download"
+    )
+    assert download.status_code == (404 if unavailable == "missing" else 400)
+    assert download.json()["detail"] == (
+        "Original file is missing"
+        if unavailable == "missing"
+        else "Original file integrity verification failed"
+    )
+    expected_error = NotFoundError if unavailable == "missing" else InvalidInputError
+    with pytest.raises(expected_error, match="missing|integrity verification failed"):
+        await routes.evidence.extract(version_id, force=True)
+    failures = [
+        row
+        for row in await routes.store.list("extraction")
+        if row["status"] == "failed"
+    ]
+    assert len(failures) == 1
+    failed = failures[0]
+    assert failed["error"] == "Source extraction could not be completed."
+    assert failed["extraction_id"] != first["extraction_id"]
+    historical = await routes.client.get(
+        f"/api/personal/source-versions/{version_id}",
+        params={"evidence_id": evidence_id},
+    )
+    assert historical.status_code == 200
+    assert historical.json()["extraction"]["extraction_id"] == first["extraction_id"]
+    assert historical.json()["evidence"][0] == before.json()
+    # Retained citation validity concerns stored extraction text, not disk presence.
+    assert historical.json()["evidence"][0]["reference_validity"] == "verified"
+    assert len(routes.queue) == 1
+
+    path.write_bytes(original)
+    recovered = await routes.evidence.extract(version_id, force=True)
+    assert recovered["status"] == "ready"
+    assert recovered["extraction_id"] not in {
+        first["extraction_id"],
+        failed["extraction_id"],
+    }
+    current = await routes.client.get(f"/api/personal/source-versions/{version_id}")
+    assert current.status_code == 200
+    assert current.json()["extraction"]["extraction_id"] == recovered["extraction_id"]
+    assert current.json()["evidence"][0]["quote"] == before.json()["quote"]
+    old_again = await routes.client.get(f"/api/personal/evidence/{evidence_id}")
+    assert old_again.status_code == 200 and old_again.json() == before.json()
+    download = await routes.client.get(
+        f"/api/personal/source-versions/{version_id}/download"
+    )
+    assert download.status_code == 200 and download.content == original
+    assert len(await routes.store.list("version")) == 1
+    assert len(routes.queue) == 1
