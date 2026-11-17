@@ -210,8 +210,6 @@ jobs:
       PR_SHA: ${{ github.event.pull_request.head.sha }}
       PR_BRANCH: ${{ github.event.pull_request.head.ref }}
       PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-      SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
-      PROJECT_REGION: ${{ vars.SONAR_REGION }}
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       with:
@@ -219,7 +217,6 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
     - name: Require this run's coverage producer and exact PR checkout
-      id: preflight
       env:
         COVERAGE_RESULT: ${{ needs.sonar-coverage.result }}
       run: |
@@ -230,16 +227,7 @@ jobs:
         test "$(git rev-parse HEAD)" = "$PR_SHA"
         git cat-file -e "$PR_BASE_SHA^{commit}"
         git merge-base HEAD "$PR_BASE_SHA" >/dev/null
-        if [[ ! "$SONAR_PROJECT_KEY" =~ ^[[:alnum:]_.:-]+$ ]]; then
-          echo '::error::Set SONAR_PROJECT_KEY to the key of the bound study-workbench project.'
-          exit 1
-        fi
-        if [[ "$PROJECT_REGION" != eu && "$PROJECT_REGION" != us ]]; then
-          echo '::error::Set SONAR_REGION to the confirmed project region (eu or us).'
-          exit 1
-        fi
         [[ "$PR_BRANCH" =~ ^[[:alnum:]_./-]+$ ]]
-        printf 'region=%s\n' "${PROJECT_REGION#eu}" >> "$GITHUB_OUTPUT"
     - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
       with:
         name: notebook-sonar-${{ github.run_attempt }}-${{ github.event.pull_request.head.sha }}
@@ -262,10 +250,8 @@ jobs:
       uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        SONAR_REGION: ${{ steps.preflight.outputs.region }}
       with:
         args: >-
-          -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
           -Dsonar.scm.revision=${{ env.PR_SHA }}
           -Dsonar.pullrequest.key=1
           -Dsonar.pullrequest.branch=${{ env.PR_BRANCH }}
