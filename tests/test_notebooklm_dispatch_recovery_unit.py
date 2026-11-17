@@ -4,6 +4,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from copy import deepcopy
 from types import SimpleNamespace as NS
+from typing import Literal
 from unittest.mock import AsyncMock
 
 import pytest
@@ -17,7 +18,13 @@ FUTURE = "2026-01-01T00:01:00+00:00"
 
 @pytest.fixture
 def harness(monkeypatch):
-    rows, events, held = {}, [], []
+    rows: dict[tuple[str, str], dict[str, object]] = {}
+    events: list[
+        tuple[Literal["lock", "unlock"], str]
+        | tuple[Literal["save"], dict[str, object]]
+        | tuple[Literal["enqueue"], str, bool]
+    ] = []
+    held: list[str] = []
 
     @asynccontextmanager
     async def lock(key):

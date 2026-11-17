@@ -3918,7 +3918,7 @@
         "api/notebooklm_service.py"
       ],
       "reason": "Real durable dispatch/expired worker recovery policy with store/lock/queue/time boundaries replaced; no SDK/remote transport or actual queue atomicity.",
-      "sha256": "bbffde816318d23e856adc4890b3033c123d363b70780e19f469102a6866781f"
+      "sha256": "c97f530788e52a33c723aacd102865c7bf97bf982721912663baec673034b88f"
     },
     {
       "path": "tests/test_notebooklm_service_failure_unit.py",
@@ -3927,7 +3927,7 @@
         "api/notebooklm_service.py"
       ],
       "reason": "Real write/poll/import/reference methods with memory-only store and explicit bridge/evidence/DB boundary doubles. No actual storage, SDK, socket or browser. Cancellation remains real control flow.",
-      "sha256": "f59c6b08d25c35aac1231126e038d2b98c6061bf1df66401474aa4e9cba9eae4"
+      "sha256": "b35464fc25d5e720e38551a002f57451e83f0da2c93ef63e101d42d1480c207a"
     },
     {
       "path": "tests/test_notebooklm_service_orchestration_unit.py",
@@ -3936,7 +3936,7 @@
         "api/notebooklm_service.py"
       ],
       "reason": "Actual service methods with explicit memory-only store/bridge/evidence I/O stubs cover paging, admission, cancellation, replay and scope. No PersonalStore, SDK client, filesystem or HTTP.",
-      "sha256": "7f45bb3fc976fdc9bcc705bedc200f792cfc26c09748304372bdb89184861007"
+      "sha256": "c78b7f905b38425da0d1f4659767747dbe7a96db70b2fdcd97ffa498e7c5c683"
     },
     {
       "path": "tests/test_notes_api.py",

@@ -16,7 +16,7 @@ pytestmark = pytest.mark.asyncio
 
 @pytest.fixture
 def service(monkeypatch):
-    rows = {}
+    rows: dict[tuple[str, str], dict[str, object]] = {}
     locks = []
 
     @asynccontextmanager
