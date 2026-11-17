@@ -5422,22 +5422,40 @@
     },
     {
       "path": "tests/test_v1_notebooklm_sdk.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "open_notebook/integrations/notebooklm/sdk_adapter.py"
       ],
-      "reason": "test_pinned_config_disables_hidden_mutation_retries directly assembles options with from_storage replaced; other cases create/rewrite/remove profile files and exercise adapter file checks with fake SDK. No real login/network.",
-      "sha256": "850caffc1d89bb7a4a0b99701b9b8ab7bf764123af5352443dd2aebacb63fad3"
+      "reason": "Remaining cases create, inspect, replace, or remove real synthetic profile files while using an explicit SDK client double. No Google login, credentials or external network.",
+      "sha256": "67c9a2072c873d1c794402d2cefccaf63e332b2e044039471d0c60153701de0d"
+    },
+    {
+      "path": "tests/test_v1_notebooklm_sdk_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/integrations/notebooklm/sdk_adapter.py"
+      ],
+      "reason": "Directly assembles pinned client options and checks hidden retries with from_storage replaced by an in-process context double. Inert Path value only; no profile file, transport or network.",
+      "sha256": "f91ea78c29e5521bf6e6dbe6907fc96aa07e8f43a92be3d61ef270a4ae7f01cb"
     },
     {
       "path": "tests/test_v1_notebooklm_sources.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "api/notebooklm_service.py",
         "api/evidence_service.py"
       ],
-      "reason": "Import/sync/association cases execute actual evidence file ingest and bounded parser spawn with fake bridge/store. Direct ensure_native_source uses query/lookup doubles, and refresh_source_links uses fake bridge/memory store without evidence, giving separable unit candidates. Full test file and relevant production/fixture boundaries reviewed at merged 588aaf5; no tests executed for classification.",
-      "sha256": "50a84cae9d99249d09555a79cf90e6a026264fdfcda9e8b1734a1f7c8f469526"
+      "reason": "Remaining import, sync, cross-project and association cases exercise actual EvidenceService storage or parser on temporary synthetic files with fake bridge and memory-backed store.",
+      "sha256": "a53ce7042a7d25e02f37e972398b2f607cbd9f806d560ca6b6088db5712e212b"
+    },
+    {
+      "path": "tests/test_v1_notebooklm_sources_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/notebooklm_service.py"
+      ],
+      "reason": "Direct NotebookLM metadata-only import, missing-native-source creation and link refresh decisions. Real service policy and DTOs with memory-only store, bridge/lookup/SQL doubles; no evidence ingest, actual files, SDK or network.",
+      "sha256": "c8a3bcf359d95ea8b30d7a2369eceb20e3ee1ddadd009fba0321f8d19fc6bc07"
     },
     {
       "path": "tests/test_v1_personal_dispatch_receipt.py",
