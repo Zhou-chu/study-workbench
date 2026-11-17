@@ -4925,6 +4925,15 @@
       "sha256": "366853c732d6319b3fc85aaae807d200cefc7169bde3d370631602413277b6f1"
     },
     {
+      "path": "tests/test_sonar_reports_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/ci/sonar_reports.py"
+      ],
+      "reason": "Pure report validation on synthetic byte strings and tracked path sets; no Git subprocess, filesystem writes, or service calls.",
+      "sha256": "7188fe32aa65337465a55b369caf4d22ac4ad5df8600ffb7e81421539ce51a84"
+    },
+    {
       "path": "tests/test_ui_design_document_contract.py",
       "layer": "tool-integration",
       "targets": [
