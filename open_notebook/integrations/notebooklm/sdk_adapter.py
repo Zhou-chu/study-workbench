@@ -10,7 +10,7 @@ import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 from uuid import uuid4
 
 from .contracts import (
@@ -528,21 +528,28 @@ async def _asset_file_operation(operation, *args):
 class _AssetFile:
     """One download owns its handle; methods run serially in worker threads."""
 
-    def __init__(self, path):
+    def __init__(self, path: Path) -> None:
         self.path = path
-        self.handle = None
+        self.handle: BinaryIO | None = None
 
-    def open(self):
+    def open(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.handle = self.path.open("xb")
 
-    def write(self, chunk):
-        self.handle.write(chunk)
+    def _open_handle(self) -> BinaryIO:
+        handle = self.handle
+        if handle is None:
+            raise RuntimeError("The asset file is not open.")
+        return handle
 
-    def finish(self):
-        self.handle.flush()
-        os.fsync(self.handle.fileno())
-        self.handle.close()
+    def write(self, chunk: bytes) -> None:
+        self._open_handle().write(chunk)
+
+    def finish(self) -> None:
+        handle = self._open_handle()
+        handle.flush()
+        os.fsync(handle.fileno())
+        handle.close()
         self.handle = None
 
     def commit(self, target, expected_sha):
