@@ -81,9 +81,13 @@ def test_workflow_permissions_and_independent_gates():
     assert set(workflow["on"]) == {"pull_request", "workflow_dispatch"}
     assert workflow["on"]["pull_request"]["branches"] == ["main"]
     assert workflow["permissions"] == {"contents": "read"}
-    assert set(workflow["jobs"]) == {"static", "mixed", "strict-unit"}
-    for job in workflow["jobs"].values():
-        assert "needs" not in job
+    jobs = workflow["jobs"]
+    assert set(jobs) == {"static", "mixed", "strict-unit", "sonar-coverage", "sonar"}
+    assert {name: job["needs"] for name, job in jobs.items() if "needs" in job} == {
+        "sonar": "sonar-coverage"
+    }
+    for job in jobs.values():
+        assert "permissions" not in job
         assert job["runs-on"] == "ubuntu-24.04"
         for step in job["steps"]:
             assert "continue-on-error" not in step
@@ -92,7 +96,26 @@ def test_workflow_permissions_and_independent_gates():
                 assert len(sha) == 40 and all(c in "0123456789abcdef" for c in sha)
                 if step["uses"].startswith("actions/checkout@"):
                     assert step["with"]["persist-credentials"] == "false"
-    assert "secrets." not in text and "pull_request_target" not in text
+    assert "pull_request_target" not in text
+    pr_scope = (
+        "github.event_name == 'pull_request' && "
+        "github.repository == 'Zhou-chu/study-workbench' && "
+        "github.event.pull_request.head.repo.full_name == github.repository && "
+        "github.event.pull_request.base.ref == 'main' && "
+        "github.event.pull_request.number == 1"
+    )
+    assert jobs["sonar-coverage"]["if"] == pr_scope
+    assert jobs["sonar"]["if"] == "${{ !cancelled() && " + pr_scope + " }}"
+    for name in ("sonar-coverage", "sonar"):
+        assert jobs[name]["steps"][0]["with"]["ref"] == (
+            "${{ github.event.pull_request.head.sha }}"
+        )
+    assert jobs["sonar"]["steps"][0]["with"]["fetch-depth"] == "0"
+    scan = jobs["sonar"]["steps"][-1]
+    assert scan["uses"].startswith("SonarSource/sonarqube-scan-action@")
+    assert scan["env"] == {"SONAR_TOKEN": "${{ secrets.SONAR_TOKEN }}"}
+    assert text.count("secrets.") == 1 and text.count("SONAR_TOKEN:") == 1
+    assert "-Dsonar.qualitygate.wait=true" in scan["with"]["args"]
     strict = "\n".join(
         x.get("run", "") for x in workflow["jobs"]["strict-unit"]["steps"]
     )

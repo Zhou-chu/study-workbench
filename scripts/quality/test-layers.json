@@ -4282,7 +4282,7 @@
         "pyproject.toml"
       ],
       "reason": "Workflow static contract checks plus real synthetic tar and filesystem custody/extraction tests. No hosted dependency install, official-source build or complete remote CI is exercised; not wholly pure unit. Actual Ruff subprocess checks preserve external coverage import grouping with/without generated report directories.",
-      "sha256": "7c028a2c6a97e5a20e2d094409e27fc1c74717ca04d091a260e7d9f136dcc999"
+      "sha256": "835db33883505c85eec56766320d052530e8df83152d86fd8f4a50db4ec5e674"
     },
     {
       "path": "tests/test_prepare_canonical_publication.py",
