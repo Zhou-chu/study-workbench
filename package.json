@@ -21,7 +21,7 @@
     "coverage:gate": "node scripts/coverage-gate.mjs",
     "coverage:scope": "node scripts/coverage-scope-check.mjs",
     "coverage:test": "node --test scripts/coverage-inventory.test.mjs",
-    "architecture:ts": "depcruise --config scripts/architecture/dependency-cruiser.cjs --ignore-known scripts/architecture/ts-known-violations.json --output-type err --no-progress apps/bff/src apps/web/src packages/contracts/src packages/domain/src packages/web-transport/src frontend/src"
+    "architecture:ts": "depcruise --config scripts/architecture/dependency-cruiser.json --ignore-known scripts/architecture/ts-known-violations.json --output-type err --no-progress apps/bff/src apps/web/src packages/contracts/src packages/domain/src packages/web-transport/src frontend/src"
   },
   "devDependencies": {
     "@types/node": "20.19.9",
