@@ -1,9 +1,8 @@
 import {fireEvent, render, screen} from '@testing-library/react';
 import {createMemoryRouter, RouterProvider, Outlet} from 'react-router';
 import {expect, it, vi} from 'vitest';
-import {SetupLink, SetupReturnLink, safeSetupReturn} from './SetupLink';
+import {SetupLink, SetupReturnLink} from './SetupLink';
 vi.mock('../../i18n',()=>({useI18n:()=>({t:{common:{back:'Back'}}})}));
-it.each(['https://evil.example','//evil.example','/\\evil.example','/%2f%2fevil.example','/settings/models','/login','/notebooks\n'])('rejects unsafe or irrelevant return target %s', value=>expect(safeSetupReturn(value)).toBeNull());
 it('keeps the working route across settings steps and returns without history dependence', async()=>{
  const router=createMemoryRouter([{element:<><SetupReturnLink/><Outlet/></>,children:[
  {path:'/notebooks/:id',element:<SetupLink to="/settings">Configure</SetupLink>},

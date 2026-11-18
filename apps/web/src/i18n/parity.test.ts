@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+import { createHash } from 'node:crypto';
 import { resources as canonicalResources, languages as canonicalLanguages } from '../../../../frontend/src/lib/locales';
 import { resources, languages, shellMessages, sessionMessages, notebookMessages, sourceMessages, chatMessages } from './index';
 const codes = ['zh-CN', 'en-US', 'zh-TW', 'pt-BR', 'ja-JP', 'it-IT', 'fr-FR', 'ru-RU', 'bn-IN', 'ca-ES', 'es-ES', 'de-DE', 'pl-PL', 'tr-TR'];
@@ -38,6 +39,19 @@ it('provides translated shell messages and matching interpolation without fallba
 it('provides every authentication/navigation label in all fourteen languages explicitly',()=>{
  const reference=Object.keys(sessionMessages['en-US']).sort();
  for(const code of codes){const messages=sessionMessages[code as keyof typeof sessionMessages];expect(Object.keys(messages).sort()).toEqual(reference);for(const value of Object.values(messages))expect(value.trim()).not.toBe('');}
+});
+
+
+// Freeze the complete locale-to-message mapping during the storage refactor, not only key parity.
+it('preserves the reviewed shell/session copy and the shared workspace notice in all languages', () => {
+    const sorted = <V>(record: Record<string, V>) =>
+        Object.fromEntries(Object.entries(record).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
+    const normalize = (catalog: Record<string, Record<string, string>>) =>
+        sorted(Object.fromEntries(Object.entries(catalog).map(([locale, messages]) => [locale, sorted(messages)])));
+    const digest = createHash('sha256').update(JSON.stringify([normalize(sessionMessages), normalize(shellMessages)])).digest('hex');
+    expect(digest).toBe('ad2d30a43a1dfe24fa7f7a0f152541213429e3a91409a0249eb398d776e68e83');
+    for (const code of Object.keys(sessionMessages) as (keyof typeof sessionMessages)[])
+        expect(sessionMessages[code].studyNotice).toBe(shellMessages[code].previewNotice);
 });
 
 it('provides every notebook integration label explicitly in all fourteen languages',()=>{const keys=Object.keys(notebookMessages['en-US']).sort();for(const code of codes){const messages=notebookMessages[code as keyof typeof notebookMessages];expect(Object.keys(messages).sort()).toEqual(keys);for(const value of Object.values(messages))expect(value.trim()).not.toBe('');}});

@@ -44,19 +44,3 @@ it('rejects malformed list, HTTP failure, malformed workspace and mismatched not
         await expect(api.workspace('notebook:alpha', readTurnContext()!)).rejects.toThrow();
     }
 });
-it('rejects stale dispatch and late JSON settlement after an epoch retirement', async () => {
-    const old = readTurnContext()!;
-    let finish!: (value: unknown) => void;
-    const response = json([]);
-    response.json = () => new Promise(resolve => { finish = resolve; });
-    const { api, requests } = harness(() => response);
-    const pending = api.list(old);
-    void pending.catch(() => { });
-    await Promise.resolve();
-    invalidateTurnContext();
-    if (finish)
-        finish(notebookRows);
-    await expect(pending).rejects.toThrow();
-    await expect(api.list(old)).rejects.toThrow();
-    expect(requests).toHaveLength(1);
-});

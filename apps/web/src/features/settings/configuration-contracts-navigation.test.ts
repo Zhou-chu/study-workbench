@@ -1,0 +1,22 @@
+import { beforeEach, expect, it } from 'vitest';
+import { createDraftRegistry, createNavigationController } from '../../app/drafts';
+import { sourceContext } from '../../test/source-fixtures';
+import { readTurnContext, sessionCoordinator } from '@study/web-transport';
+beforeEach(sourceContext);
+it('B9c both navigation lookups recognize selected configuration resources and stale retained confirmation', () => {
+    const registry = createDraftRegistry(), s = registry.configuration, c = readTurnContext()!, id = s.open('application', c)!;
+    s.edit(id, 'docling_ocr', false);
+    expect(registry.hasUnsaved()).toBe(true);
+    const nav = createNavigationController(registry);
+    nav.activateResource(id);
+    const release = nav.holdResource(id);
+    expect(nav.requestNavigation({ destination: '/advanced' })).toBe('confirm');
+    s.edit(id, 'docling_ocr', true);
+    expect(nav.confirm()).toBeNull();
+    const token = s.capture(id, { kind: 'content', changes: { docling_ocr: true } }, c, sessionCoordinator.current(), 0)!;
+    s.begin(token, c, sessionCoordinator.current(), 0);
+    expect(nav.requestNavigation({ destination: '/advanced' })).toBe('retain');
+    registry.retireContext(c.epoch);
+    expect(s.get(id)?.attempt?.phase).toBe('unknown');
+    release();
+});

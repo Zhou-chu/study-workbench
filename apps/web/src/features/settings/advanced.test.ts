@@ -1,7 +1,6 @@
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {createAdvancedStore} from './advanced-store';
 import {observeAdvanced} from './advanced-observer';
-import {createDraftRegistry,createNavigationController} from '../../app/drafts';
 import {createSettingsApi,RebuildSubmissionUnknown,SettingsRequestError} from '../../data/settings-api';
 import {commandId,parseRebuildReceipt,parseRebuildStatus,parseApiVersion} from '../../data/advanced-contracts';
 import {sourceContext} from '../../test/source-fixtures';
@@ -37,13 +36,6 @@ it('retired selected records reopen frozen, explicit fresh is blank and old unce
  expect(s.open({...c,epoch:c.epoch+1})).toBe(id);const next=s.fresh(id,{...c,epoch:c.epoch+1})!;expect(next).not.toBe(id);
  expect(s.get(next)?.fields.mode).toBe('existing');expect(s.get(id)?.attempt?.unknown).toBe(true);expect(s.getSnapshot()).toHaveLength(2);expect(s.select(id)).toBe(true);expect(s.open(c)).toBe(id);
  expect(s.begin(token,c,g,4)).toBe(false);
-});
-it('Advanced participates in the existing resource guard without changing notebook SettingsDraft',()=>{
- const r=createDraftRegistry(),nav=createNavigationController(r),c=readTurnContext()!,id=r.advanced.open(c)!;
- r.advanced.edit(id,{mode:'all'});nav.activateResource(id);expect(nav.requestNavigation({destination:'/settings'})).toBe('confirm');
- const token=r.advanced.capture(id,c,sessionCoordinator.current(),2)!;r.advanced.begin(token,c,sessionCoordinator.current(),2);
- expect(nav.requestNavigation({destination:'/settings'})).toBe('retain');r.retireContext(c.epoch);
- expect(r.advanced.get(id)?.retired).toBe(true);expect(r.settings.getSnapshot()).toEqual([]);
 });
 it('uses exactly the three allowed Advanced paths and never transports an invented payload field',async()=>{
  const c=readTurnContext()!,requests:{path:string;method:string;body?:BodyInit|null}[]=[];

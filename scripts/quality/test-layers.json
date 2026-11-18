@@ -302,21 +302,39 @@
     },
     {
       "path": "apps/web/src/data/library-api.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "apps/web/src/data/library-api.ts"
       ],
-      "reason": "DTO/multipart/narrow PUT/error identity with fake send are adapter units. fences a delayed JSON body across session generation changes invokes actual coordinator.confirmed to retire request: independent lifecycle integration. Independent full-file SPA review; SHA256 matched f10d0f4, eb2db51 and 0a446cb, rechecked after merge.",
-      "sha256": "c280efde17f5d921f3dac3aea8f3e87d179d503f770382446cd46f36a2a79bcd"
+      "reason": "Direct library DTO, multipart and error identity checks use a fake send and fresh context fixtures; no session lifecycle transition is exercised.",
+      "sha256": "d2323308878b2cb1243c55ecd8254fa0d321ea07919ccb248375581d99aed2b9"
+    },
+    {
+      "path": "apps/web/src/data/library-api-session.test.ts",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/data/library-api.ts"
+      ],
+      "reason": "The actual session generation advances while a synthetic JSON response is pending, coupling the library adapter and coordinator without a live network.",
+      "sha256": "ef4abfb5a6276d644e52a7c186d85f6cbe3d750ed8eff560979dcb806b4b88fc"
     },
     {
       "path": "apps/web/src/data/notebook-api.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "apps/web/src/data/notebook-api.ts"
       ],
-      "reason": "DTO/URL/projection/recordOpen direct fake-transport units; final stale dispatch/late JSON case invokes real invalidateTurnContext across asynchronous adapter settlement. Independent full-file SPA review; SHA256 matched f10d0f4, eb2db51 and 0a446cb, rechecked after merge.",
-      "sha256": "e102b6a313d155051e92ab2003af0e592d9ae0237bd7193dcc4bcfab6275c8c8"
+      "reason": "Notebook DTO, HTTP-status and URL mapping use synthetic send; coordinator initialization only resets the fixture before each test.",
+      "sha256": "8cdffede5e96dd64e6e5cc13b592a49eaa26be65e277f885ff1ac9c9b6e48425"
+    },
+    {
+      "path": "apps/web/src/data/notebook-api-session.test.ts",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/data/notebook-api.ts"
+      ],
+      "reason": "An actual context invalidation occurs during adapter settlement; fake send does not remove the lifecycle collaboration.",
+      "sha256": "2eecee8d0b6d447cf5ea8e1464f4c72f31e1c5b5622516aa22029603dcb11bd0"
     },
     {
       "path": "apps/web/src/data/retrieval-contracts.test.ts",
@@ -368,12 +386,21 @@
     },
     {
       "path": "apps/web/src/data/turn-api.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "apps/web/src/data/turn-api.ts"
       ],
-      "reason": "Fake-send DTO/receipt/history projection units; final late read after generation changes composes adapter with real coordinator.begin. Independent full-file SPA review; SHA256 matched f10d0f4, eb2db51 and 0a446cb, rechecked after merge.",
-      "sha256": "29d581af62f32723dfa9b452bbd6fcad8c0b843e663903edcad2cca75d67403b"
+      "reason": "Direct request/receipt/history projection checks use synthetic send and a fresh context; no active generation transition.",
+      "sha256": "405c37931e395cb13d9c6335b1822d2f42cc8e452b7145da99ccda2cf66c75f5"
+    },
+    {
+      "path": "apps/web/src/data/turn-api-session.test.ts",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/data/turn-api.ts"
+      ],
+      "reason": "Exercises actual generation change while the turn adapter has a pending read, with transport I/O replaced.",
+      "sha256": "3f8bfb0c805b16a2e590192bf52179684a4d1d59feb8b1d4a17ba62d5f737872"
     },
     {
       "path": "apps/web/src/features/auth/auth.test.tsx",
@@ -834,25 +861,44 @@
     },
     {
       "path": "apps/web/src/features/settings/advanced.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "apps/web/src/features/settings/advanced-store.ts",
         "apps/web/src/features/settings/advanced-observer.ts",
         "apps/web/src/data/advanced-contracts.ts",
-        "apps/web/src/data/settings-api.ts",
+        "apps/web/src/data/settings-api.ts"
+      ],
+      "reason": "Direct advanced-store, parser, synthetic-send adapter, translation values and observer callback/timer-double checks.",
+      "sha256": "922a1594f5ae1c1755930b54c0221e36e438aaa3ad055de64aa817c018ced559"
+    },
+    {
+      "path": "apps/web/src/features/settings/advanced-navigation.test.ts",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/settings/advanced-store.ts",
         "apps/web/src/app/drafts.ts"
       ],
-      "reason": "Direct store, fake-send adapter, parser and observer-with-callback-doubles units, except Advanced-participates-in-existing-resource-guard uses real registry/navigation collaboration. Separate that exact case.",
-      "sha256": "1e86a7d59738c4bfcfa60675b0101911f6f9c7a192c3c73a0bdff983cc857709"
+      "reason": "Actual Advanced owner and navigation guard collaborate through registry retirement; no network or real browser.",
+      "sha256": "29509a75ae150e7f09b5b64238cf455a0d5d400dfdf565596c1d92abc3c08ed6"
     },
     {
       "path": "apps/web/src/features/settings/configuration-contracts.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "apps/web/src/features/settings/configuration-store.ts"
       ],
-      "reason": "Direct store, parser, fake-send settings adapter and locale checks are unit candidates. B9c both navigation lookups intentionally couples navigation/resource registry/configuration store; keep it component integration.",
-      "sha256": "60f83879facbaa5fcad142f5fb5647b74ad1f8d25d4cb01e6598e628a9515451"
+      "reason": "Direct configuration-store and projection assertions, synthetic-send adapter and locale-key checks; no navigation controller.",
+      "sha256": "ec1715134339c34e446bb4ed351754bea9f7662d5046ae01e6b26e3fa264cda2"
+    },
+    {
+      "path": "apps/web/src/features/settings/configuration-contracts-navigation.test.ts",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/settings/configuration-store.ts",
+        "apps/web/src/app/drafts.ts"
+      ],
+      "reason": "Actual navigation/resource registry and configuration owner coordinate an edit, attempt, and context retirement.",
+      "sha256": "e4e81ce5333f0198ccf26125ae07e512e679fe071f5e0d61bd99261140deb275"
     },
     {
       "path": "apps/web/src/features/settings/configuration.test.tsx",
@@ -877,13 +923,23 @@
     },
     {
       "path": "apps/web/src/features/settings/model-owner.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "apps/web/src/features/settings/configuration-store.ts",
         "apps/web/src/app/drafts.ts"
       ],
-      "reason": "First single-current-models-owner case couples configuration owner and actual navigation controller; remaining metadata/fingerprint/handle transitions directly target configuration store. Split first collaboration.",
-      "sha256": "dffd4f398cbb6a5043d46356d7e0087524c050b27915d45fb48b129363496b71"
+      "reason": "Registry factory creates the configuration store; only that store and its model handle are exercised with synthetic values.",
+      "sha256": "81bd2520bd7fd4357650116ea0114e8191a20540f59d18543f72b47a10fc4838"
+    },
+    {
+      "path": "apps/web/src/features/settings/model-owner-navigation.test.ts",
+      "layer": "component-integration",
+      "targets": [
+        "apps/web/src/features/settings/configuration-store.ts",
+        "apps/web/src/app/drafts.ts"
+      ],
+      "reason": "Exercises current configuration owner and actual navigation guard together; fixture model data are synthetic.",
+      "sha256": "ecd5c4fba5e85a200276bd72f44b14e570bcc5601ec55713484424738ee1ec21"
     },
     {
       "path": "apps/web/src/features/settings/model-setup-journey.test.tsx",
@@ -969,12 +1025,21 @@
     },
     {
       "path": "apps/web/src/features/settings/setup-navigation.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/settings/SetupLink.tsx"
       ],
-      "reason": "safeSetupReturn direct predicate units coexist with actual MemoryRouter multi-step navigation across SetupLink and SetupReturnLink. Router is exercised, not only an ambient provider. Full test file reviewed; classification only, no test or coverage run.",
-      "sha256": "8fc0a760499a97dd02650c7f1a0644b7ff36172a7b84101f8a24874fe3463edd"
+      "reason": "Real MemoryRouter navigates across settings links with the i18n hook replaced; proves route transitions, not browser navigation.",
+      "sha256": "2d16e04bf1dae5c851423d2851406fb9e059b4cfe9b3bfc096e264bc1c5d5198"
+    },
+    {
+      "path": "apps/web/src/features/settings/setup-navigation-return.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/settings/SetupLink.tsx"
+      ],
+      "reason": "Direct safeSetupReturn predicate with literal inputs; does not mount or invoke a router.",
+      "sha256": "aad2171a6bd2f45fd118f16b06ef7f35a066ccd29bbe96de552e6c956d2d8938"
     },
     {
       "path": "apps/web/src/features/settings/transformation-store.test.ts",
@@ -1190,10 +1255,13 @@
       "targets": [
         "apps/web/src/i18n/index.tsx",
         "apps/web/src/i18n/locales/index.ts",
+        "apps/web/src/i18n/message-catalog.ts",
+        "apps/web/src/i18n/session-messages.ts",
+        "apps/web/src/i18n/shell-messages.ts",
         "frontend/src/lib/locales/index.ts"
       ],
-      "reason": "Pure imported locale-value key/interpolation/completeness assertions; no runtime translation service or source-text scanning.",
-      "sha256": "21ae1912a9dff1874cbd2d771de1ad762dbd2e8b5e5f17946bc3cc12cbfb42bb"
+      "reason": "Pure imported locale-value key/interpolation/completeness and exact translation mapping assertions; no runtime translation service or source-text scanning.",
+      "sha256": "c0f713c03e3d47f8acd91a5a85200fb81bf6589fd2cb33582d07a90194737ce1"
     },
     {
       "path": "apps/web/src/theme/contrast.test.ts",
