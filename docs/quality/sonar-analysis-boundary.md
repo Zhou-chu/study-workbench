@@ -27,3 +27,18 @@ Use a pinned official image, private database network/no published PostgreSQL po
 Community Build can analyze Python and JS/TS and use custom gates, but lacks commercial advanced SAST/SCA and PR/multi-branch capabilities. Passing its security rules is not a complete security certification. Import Python XML and all declared JS/TS LCOV partitions; explicitly audit unsupported files and unmeasured entries. CI retains the strict full-source >90% checks independently of Sonar's aggregated coverage.
 
 https://docs.sonarsource.com/sonarqube-community-build/feature-comparison-table
+
+## Draft PR aggregate feedback pilot
+
+The same-repository draft PR #1 scan continues to use the existing quality gate;
+the readback does not replace that result. After the scanner writes a checkout-local
+run receipt outside the repository, the collector confirms its project and PR,
+resolves the compute task to that specific analysis, and reads only that analysis'
+aggregate gate conditions from SonarCloud. It writes the same allowlisted status and
+numeric metrics to the Actions summary and job log, even when the gate is red.
+Unrecognized or unavailable values are identified without printing their raw contents.
+
+This pilot has no issue or file-level queries, plaintext findings, or encrypted
+artifact. Do not infer it supplies rule or line-level feedback. An eventual private
+diagnostic channel can retain this aggregate view; it must not publish exact issue
+locations to these public outputs.

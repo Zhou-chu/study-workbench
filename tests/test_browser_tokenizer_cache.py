@@ -53,20 +53,6 @@ def test_prepared_cache_rejects_unsafe(tmp_path, unsafe):
         validate(source)
 
 
-def test_browser_requires_explicit_cache_before_artifact_or_services(monkeypatch):
-    monkeypatch.setattr(
-        "sys.argv", ["local_check.py", "--browser", "--artifact", "/missing"]
-    )
-    monkeypatch.setattr(
-        local_check,
-        "verify_artifact",
-        lambda *_: pytest.fail("verification must not precede missing-cache rejection"),
-    )
-    with pytest.raises(SystemExit) as error:
-        local_check.main()
-    assert error.value.code == 2
-
-
 def test_destination_symlink_and_changed_payload_rejected(tmp_path, monkeypatch):
     monkeypatch.setattr(
         local_check, "TOKENIZER_SHA256", hashlib.sha256(b"fixture").hexdigest()

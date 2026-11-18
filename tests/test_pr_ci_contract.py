@@ -111,10 +111,23 @@ def test_workflow_permissions_and_independent_gates():
             "${{ github.event.pull_request.head.sha }}"
         )
     assert jobs["sonar"]["steps"][0]["with"]["fetch-depth"] == "0"
-    scan = jobs["sonar"]["steps"][-1]
+    scan, summary = jobs["sonar"]["steps"][-2:]
     assert scan["uses"].startswith("SonarSource/sonarqube-scan-action@")
     assert scan["env"] == {"SONAR_TOKEN": "${{ secrets.SONAR_TOKEN }}"}
-    assert text.count("secrets.") == 1 and text.count("SONAR_TOKEN:") == 1
+    assert scan["id"] == "sonar_scan"
+    assert [
+        step
+        for job in jobs.values()
+        for step in job["steps"]
+        if "SONAR_TOKEN" in step.get("env", {})
+    ] == [scan, summary]
+    assert summary["env"]["SONAR_TOKEN"] == scan["env"]["SONAR_TOKEN"]
+    assert summary["env"]["SONAR_RECEIPT"] in scan["with"]["args"]
+    assert "-Dsonar.scanner.metadataFilePath=" in scan["with"]["args"]
+    assert "steps.sonar_scan.outcome == 'failure'" in summary["if"]
+    assert "!cancelled()" in summary["if"]
+    assert "scripts/ci/sonar_gate.py" in summary["run"]
+    assert text.count("secrets.") == 2 and text.count("SONAR_TOKEN:") == 2
     assert "-Dsonar.qualitygate.wait=true" in scan["with"]["args"]
     strict = "\n".join(
         x.get("run", "") for x in workflow["jobs"]["strict-unit"]["steps"]

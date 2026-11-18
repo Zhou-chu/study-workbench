@@ -2908,12 +2908,21 @@
     },
     {
       "path": "tests/test_browser_tokenizer_cache.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "scripts/v1/local_check.py"
       ],
-      "reason": "Missing-cache CLI argument guard with verifier double is isolated unit; other cases actually mkdir/write/copy/stat/link tokenizer cache files. No tokenizer network download or browser, but filesystem integration requires split.",
-      "sha256": "7216b841b7165bce7a2d0acbaac76fede55fa2cf63b3bf7a5d2d183bf0377edd"
+      "reason": "Exercises actual cache preparation and copy with filesystem directories, bytes, inode/link metadata and rejected mutations; no browser or network download.",
+      "sha256": "1cb058366d63be85c01cc05279a58828af70d869792b07829b26b8e181e648d0"
+    },
+    {
+      "path": "tests/test_browser_tokenizer_cache_guard_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/v1/local_check.py"
+      ],
+      "reason": "Direct CLI missing-input check with a synthetic argv and artifact verifier double; rejects before artifact or tokenizer file and service operations.",
+      "sha256": "27b01c7966a02011b8d074f8078ff6f7ce9a3bf7217c290e4f1e546e74eccaa6"
     },
     {
       "path": "tests/test_browser_upload_fixture.py",
@@ -3711,14 +3720,35 @@
       "sha256": "6dead5bbfe374ce266ecd418d97dce40368dfca2407b33b85b5da3d31af26b70"
     },
     {
-      "path": "tests/test_insight_timestamps.py",
-      "layer": "mixed",
+      "path": "tests/test_insight_timestamp_migration_contract.py",
+      "layer": "static-contract",
       "targets": [
-        "open_notebook/domain/notebook.py",
-        "open_notebook/database/async_migrate.py"
+        "open_notebook/database/migrations/19.surrealql",
+        "open_notebook/database/migrations/19_down.surrealql"
       ],
-      "reason": "Timestamp serialization TestClient API plus static migration SQL/manager inspection. No migration execution; split API and static contracts. Full-file independent review at f10d0f4; SHA256 verified after merge.",
-      "sha256": "89e4323e59a5f0ae2be57efaf2dc3c2ad141f05a3c9ef07518c9a715f9c8ae26"
+      "reason": "Reads migration source and checks timestamp default/write and down-removal declarations; no migration manager or database execution.",
+      "sha256": "1d252bbd4c322a07e87078fad48931bd94b741cd43c18190bd8a83094d98159f"
+    },
+    {
+      "path": "tests/test_insight_timestamp_migration_integration.py",
+      "layer": "tool-integration",
+      "targets": [
+        "open_notebook/database/async_migrate.py",
+        "open_notebook/database/migrations/19.surrealql"
+      ],
+      "reason": "Constructs the actual migration manager, which loads real migration files, and checks up/down registration. No migration executes.",
+      "sha256": "17e68fe663ffbdcbe31b7e2ab7288dab2cfdfe7e87424d009009ed715180d98d"
+    },
+    {
+      "path": "tests/test_insight_timestamps.py",
+      "layer": "api-integration",
+      "targets": [
+        "api/routers/insights.py",
+        "api/routers/sources.py",
+        "open_notebook/domain/notebook.py"
+      ],
+      "reason": "Drives actual TestClient insight and source routes with model data-fetch doubles and checks missing and present timestamp serialization.",
+      "sha256": "44d571578008edee1fb1444a776ca26a7e6411a7d0ba720047af8e7fb2f95e0b"
     },
     {
       "path": "tests/test_lifespan_cancellation.py",
@@ -4291,7 +4321,7 @@
         "pyproject.toml"
       ],
       "reason": "Workflow static contract checks plus real synthetic tar and filesystem custody/extraction tests. No hosted dependency install, official-source build or complete remote CI is exercised; not wholly pure unit. Actual Ruff subprocess checks preserve external coverage import grouping with/without generated report directories.",
-      "sha256": "835db33883505c85eec56766320d052530e8df83152d86fd8f4a50db4ec5e674"
+      "sha256": "c7eb635121c3bdce7734f99b4703653840c3a15dd87114ecf55cf20d2d740c8f"
     },
     {
       "path": "tests/test_prepare_canonical_publication.py",
@@ -4932,6 +4962,15 @@
       ],
       "reason": "All parameterized router failures and typed/untyped error regressions use real TestClient global exception mapping; domain calls are mocked. Targets identify common handler and representative routers, not a denominator exclusion. Full test file and relevant production/fixture boundaries reviewed at merged 588aaf5; no tests executed for classification.",
       "sha256": "366853c732d6319b3fc85aaae807d200cefc7169bde3d370631602413277b6f1"
+    },
+    {
+      "path": "tests/test_sonar_gate_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/ci/sonar_gate.py"
+      ],
+      "reason": "Synthetic responses exercise precise receipt/API binding and public aggregate formatting; no file access, subprocess or networking.",
+      "sha256": "496e585a1c4ee07b8610df3f62af9a63b175d0daf16eb37f9d71627300b0f7fc"
     },
     {
       "path": "tests/test_sonar_reports_unit.py",
