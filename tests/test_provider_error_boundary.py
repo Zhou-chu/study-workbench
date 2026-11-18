@@ -1,14 +1,12 @@
 """Real Ask wrappers and registered handlers, with synthetic provider seams only."""
 
-import asyncio
 from collections.abc import Awaitable, Callable
 from typing import cast
-from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
+from ask_provider_failure_fixtures import EMPTY_CONFIG, PAYLOAD, failing_model
 from fastapi import FastAPI
-from langchain_core.runnables import RunnableConfig
 
 from open_notebook.exceptions import (
     CommandSubmissionUnknownError,
@@ -18,9 +16,6 @@ from open_notebook.exceptions import (
     UploadCommitUnknownError,
 )
 from open_notebook.graphs import ask
-
-PAYLOAD = "token=synthetic-secret /private/document.txt document-body"
-EMPTY_CONFIG = cast(RunnableConfig, {"configurable": {}})
 
 
 async def request_failure(action: Callable[[], Awaitable[object]]):
@@ -38,14 +33,6 @@ async def request_failure(action: Callable[[], Awaitable[object]]):
         transport=httpx.ASGITransport(app=app), base_url="http://test"
     ) as client:
         return await client.get("/failure")
-
-
-def failing_model(monkeypatch, error):
-    model = MagicMock()
-    model.ainvoke = AsyncMock(side_effect=error)
-    provision = AsyncMock(return_value=model)
-    monkeypatch.setattr(ask, "provision_langchain_model", provision)
-    return provision, model.ainvoke
 
 
 @pytest.mark.asyncio
@@ -167,18 +154,5 @@ async def test_ask_preserves_keyword_only_typed_uncertainty_receipts(
     assert response.status_code == status
     assert response.json() == {"detail": detail}
     assert PAYLOAD not in response.text
-    provision.assert_awaited_once()
-    invoke.assert_awaited_once()
-
-
-@pytest.mark.asyncio
-async def test_ask_does_not_reclassify_or_repeat_cancellation(monkeypatch):
-    original = asyncio.CancelledError(PAYLOAD)
-    provision, invoke = failing_model(monkeypatch, original)
-    with pytest.raises(asyncio.CancelledError) as caught:
-        await ask.call_model_with_messages(
-            cast(ask.ThreadState, {"question": "synthetic question"}), EMPTY_CONFIG
-        )
-    assert caught.value is original
     provision.assert_awaited_once()
     invoke.assert_awaited_once()

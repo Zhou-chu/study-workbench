@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { createHash } from 'node:crypto';
 import { configurationMessages } from './configuration-messages';
+import { transformationMessages } from './transformation-messages';
 import { resources as canonicalResources, languages as canonicalLanguages } from '../../../../frontend/src/lib/locales';
 import { resources, languages, shellMessages, sessionMessages, notebookMessages, sourceMessages, chatMessages } from './index';
 const codes = ['zh-CN', 'en-US', 'zh-TW', 'pt-BR', 'ja-JP', 'it-IT', 'fr-FR', 'ru-RU', 'bn-IN', 'ca-ES', 'es-ES', 'de-DE', 'pl-PL', 'tr-TR'];
@@ -70,7 +71,6 @@ it('provides explicit Studio uncertainty, compatibility and download labels in a
 import {retrievalMessages} from './retrieval-messages';
 it('provides B9d safety copy in all fourteen languages without fallback',()=>{expect(Object.keys(retrievalMessages).sort()).toEqual([...codes].sort());for(const values of Object.values(retrievalMessages)){expect(Object.keys(values).sort()).toEqual(Object.keys(retrievalMessages['en-US']).sort());for(const text of Object.values(values))expect(text.trim()).not.toBe('');}});
 
-import {transformationMessages} from './transformation-messages';
 it('provides B9e transformation controls and destination limitations explicitly in all fourteen languages',()=>{
  expect(Object.keys(transformationMessages).sort()).toEqual([...codes].sort());
  for(const [code,values] of Object.entries(transformationMessages)){
@@ -85,4 +85,9 @@ it('provides B9e transformation controls and destination limitations explicitly 
 it('preserves the exact reviewed configuration messages and count labels', () => {
     const digest = createHash('sha256').update(JSON.stringify(configurationMessages)).digest('hex');
     expect(digest).toBe('11c803f10397944d14782ceac410705097e7bf4192f9eaf8b09dcfd3f69866a5');
+});
+
+it('preserves all reviewed transformation messages in their original key and locale order', () => {
+    const digest = createHash('sha256').update(JSON.stringify(transformationMessages)).digest('hex');
+    expect(digest).toBe('6ba823047a48e38e9e0bfd48849320e371521951dd83eb4d48e43c2baa31c90f');
 });

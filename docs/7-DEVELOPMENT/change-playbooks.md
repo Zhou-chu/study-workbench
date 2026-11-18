@@ -148,6 +148,8 @@ Providers that need several config fields (like `azure`, `vertex`, `openai_compa
 
 The shared language registry and baseline messages live in `frontend/src/lib/locales/`. The Vite workbench re-exports them and keeps its SPA-specific feature messages under `apps/web/src/i18n/`. Update shared translations once; do not copy them into the SPA. For SPA shell, session, and configuration copy, define one row per message with a named entry for every locale. Shell and session use the same workspace notice row. Configuration count labels have their own rows and are exposed as the existing nested counts object. For an intentional translation change, review the changed copy and update the corresponding parity digest to match.
 
+The shared learning workspace copy lives in `frontend/src/lib/locales/learning-workspace.ts`. English defines the section shape; Simplified Chinese retains the same existing order. For the other locales, add each label to its section as a named row and supply all translations in that row. After intentionally changing the copy, update the ordered digest in `learning-workspace.test.ts`.
+
 | Step | File(s) | What to do |
 |------|---------|------------|
 | 1 | `frontend/src/lib/locales/en-US/index.ts` | Add the English strings. en-US is the reference shape. |

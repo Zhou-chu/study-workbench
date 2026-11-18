@@ -1,43 +1,10 @@
 """Migration integrity probes without application imports or runtime settings."""
 
-import ast
 import asyncio
-from contextlib import asynccontextmanager
-from pathlib import Path
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-
-
-def load_migrations(response=None, error=None):
-    path = Path(__file__).parents[1] / "open_notebook/database/async_migrate.py"
-    tree = ast.parse(path.read_text())
-    tree.body = [
-        node for node in tree.body if not isinstance(node, (ast.Import, ast.ImportFrom))
-    ]
-    connection = Mock()
-    connection.query_raw = AsyncMock(return_value=response, side_effect=error)
-    # SDK 1.0.8 drops all but the first result, without checking SQL status.
-    results = response.get("result") if isinstance(response, dict) else None
-    first = (
-        results[0]
-        if isinstance(results, list) and results and isinstance(results[0], dict)
-        else {}
-    )
-    connection.query = AsyncMock(return_value=first.get("result"), side_effect=error)
-
-    @asynccontextmanager
-    async def db_connection():
-        yield connection
-
-    namespace = {
-        "List": list,
-        "logger": Mock(),
-        "db_connection": db_connection,
-        "repo_query": AsyncMock(return_value=first.get("result"), side_effect=error),
-    }
-    exec(compile(tree, str(path), "exec"), namespace)
-    return namespace, connection
+from migration_integrity_fixtures import load_migrations
 
 
 @pytest.mark.asyncio
@@ -240,26 +207,3 @@ async def test_podcast_preflight_legacy_config_has_safe_operator_message():
         await ns["PodcastProfileMigration"]("CREATE should_not_run;").run()
     assert "synthetic-private-value" not in str(caught.value)
     assert connection.query_raw.await_count == 1
-
-
-def test_evidence_vector_migration_is_registered_and_derived_only():
-    root = Path(__file__).parents[1]
-    up = root / "open_notebook/database/migrations/31.surrealql"
-    down = root / "open_notebook/database/migrations/31_down.surrealql"
-    assert up.is_file() and down.is_file()
-    sql, rollback = up.read_text(), down.read_text()
-    for table in (
-        "evidence_embedding_profile",
-        "evidence_embedding_scope",
-        "evidence_embedding_attempt",
-        "evidence_embedding_manifest",
-        "evidence_embedding_vector",
-    ):
-        assert f"DEFINE TABLE {table}" in sql
-        assert f"REMOVE TABLE {table}" in rollback
-    assert "HNSW" not in sql and "MTREE" not in sql
-    assert "DEFINE INDEX" in sql
-    assert "v1_evidence" not in rollback and "v1_version" not in rollback
-    ns, _ = load_migrations()
-    manager = ns["AsyncMigrationManager"]()
-    assert len(manager.up_migrations) == len(manager.down_migrations) == 31

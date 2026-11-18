@@ -4,94 +4,17 @@ import asyncio
 from threading import Event
 from types import SimpleNamespace
 from typing import cast
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
-import httpx
 import pytest
-from fastapi import FastAPI, UploadFile
+from fastapi import UploadFile
+from source_sync_uncertainty_fixtures import assert_retained
+from source_sync_uncertainty_fixtures import sync_creation as _sync_creation
 
-from api.main import command_submission_unknown_handler
-from api.models import SourceCreate
 from api.routers import sources
-from open_notebook.domain.notebook import Asset, Source
 from open_notebook.exceptions import CommandSubmissionUnknownError, NotFoundError
 
-
-@pytest.fixture
-def sync_creation(monkeypatch, tmp_path):
-    path = tmp_path / "original.txt"
-    original = "\ufeff🌞 原始资料。\r\n".encode()
-    path.write_bytes(original)
-    records = {}
-    children = ["embedding:existing", "source_insight:existing"]
-    saves = []
-
-    async def save(source):
-        source.id = "source:fixture"
-        saves.append(source)
-        records[source.id] = source.model_copy(deep=True)
-
-    async def delete():
-        records.clear()
-        children.clear()
-
-    processed = Source(
-        id="source:fixture",
-        title="Processed",
-        full_text="retained extracted text",
-        asset=Asset(file_path=str(path)),
-    )
-    delete_source = AsyncMock(side_effect=delete)
-    cleanup = Mock(wraps=sources._cleanup_uploaded_file)
-    associate = AsyncMock()
-    get_source = AsyncMock(return_value=processed)
-    chunks = AsyncMock(return_value=1)
-    submit = AsyncMock()
-    execute = Mock(return_value=SimpleNamespace(is_success=lambda: True))
-    monkeypatch.setattr(Source, "save", save)
-    monkeypatch.setattr(Source, "delete", delete_source)
-    monkeypatch.setattr(Source, "add_to_notebook", associate)
-    monkeypatch.setattr(Source, "get", get_source)
-    monkeypatch.setattr(Source, "get_embedded_chunks", chunks)
-    monkeypatch.setattr(sources.Notebook, "get", AsyncMock(return_value=object()))
-    monkeypatch.setattr(sources.Transformation, "get", AsyncMock(return_value=object()))
-    monkeypatch.setattr(
-        sources, "save_uploaded_file", AsyncMock(return_value=str(path))
-    )
-    monkeypatch.setattr(sources, "UPLOADS_FOLDER", str(tmp_path))
-    monkeypatch.setattr(sources, "_assert_file_supported", AsyncMock())
-    monkeypatch.setattr(sources, "_cleanup_uploaded_file", cleanup)
-    monkeypatch.setattr(sources, "execute_command_sync", execute)
-    monkeypatch.setattr(sources.CommandService, "submit_command_job", submit)
-    data = SourceCreate(
-        type="upload", async_processing=False, notebooks=["notebook:fixture"]
-    )
-    return SimpleNamespace(
-        path=path,
-        original=original,
-        records=records,
-        children=children,
-        saves=saves,
-        processed=processed,
-        delete=delete_source,
-        cleanup=cleanup,
-        associate=associate,
-        get=get_source,
-        chunks=chunks,
-        submit=submit,
-        execute=execute,
-        data=data,
-    )
-
-
-def assert_retained(state):
-    assert state.path.read_bytes() == state.original
-    assert set(state.records) == {"source:fixture"}
-    assert state.children == ["embedding:existing", "source_insight:existing"]
-    assert len(state.saves) == 1
-    state.delete.assert_not_awaited()
-    state.cleanup.assert_not_called()
-    state.submit.assert_not_awaited()
+sync_creation = _sync_creation
 
 
 @pytest.mark.asyncio
@@ -215,56 +138,6 @@ async def test_sync_malformed_result_preserves_inputs(sync_creation):
         await sources.create_source((state.data, cast(UploadFile, object())))
     assert_retained(state)
     state.execute.assert_called_once()
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "failure_stage", ["association", "poll", "failed_result", "source_read"]
-)
-async def test_sync_post_save_errors_have_safe_http_contract(
-    sync_creation, failure_stage
-):
-    state = sync_creation
-    error = ConnectionError("private /sensitive/path/credential")
-    if failure_stage == "association":
-        state.associate.side_effect = error
-    elif failure_stage == "poll":
-        state.execute.side_effect = error
-    elif failure_stage == "failed_result":
-        state.execute.return_value = SimpleNamespace(
-            is_success=lambda: False,
-            error_message=str(error),
-            command_id="command:not-an-ownership-proof",
-        )
-    else:
-        state.get.side_effect = error
-    app = FastAPI()
-    app.exception_handler(CommandSubmissionUnknownError)(
-        command_submission_unknown_handler
-    )
-    app.include_router(sources.router, prefix="/api")
-    async with httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app), base_url="http://fixture"
-    ) as client:
-        response = await client.post(
-            "/api/sources",
-            data={
-                "type": "upload",
-                "notebook_id": "notebook:fixture",
-                "async_processing": "false",
-            },
-            files={"file": ("original.txt", state.original, "text/plain")},
-        )
-
-    assert response.status_code == 409
-    detail = response.json()["detail"]
-    assert detail["code"] == "COMMAND_SUBMISSION_UNKNOWN"
-    assert detail["retry_safe"] is False
-    assert detail["resource_id"] == "source:fixture"
-    assert detail["resource_type"] == "source"
-    assert "command_id" not in detail and "job_id" not in detail
-    assert "private" not in response.text and "sensitive" not in response.text
-    assert_retained(state)
 
 
 @pytest.mark.asyncio

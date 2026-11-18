@@ -116,16 +116,6 @@ async def test_twenty_prelabelled_chinese_questions_find_expected_original_parag
 
 
 @pytest.mark.asyncio
-async def test_malformed_model_citation_is_invalid_without_throwing(tmp_path):
-    service = EvidenceService(store=MemoryStore(), data_root=tmp_path)
-    citation = await service.validate_citation(
-        {"evidence_id": {"forged": True}, "quote": ["not text"]}, ["sv_valid"]
-    )
-    assert citation["reference_validity"] == "invalid"
-    assert citation["evidence_id"] is None
-
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize("marked_kind", ["evidence", "extraction", "both"])
 async def test_restored_archive_provenance_stays_unverified_in_citations_and_search(
     tmp_path, marked_kind

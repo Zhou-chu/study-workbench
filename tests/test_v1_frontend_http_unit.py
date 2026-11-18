@@ -48,3 +48,27 @@ def test_coupled_restart_order_and_fail_closed(monkeypatch, failure):
             "new-frontend",
         )
         assert calls == order
+
+
+def test_http_rejects_stale_artifact_before_ports(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "sys.argv", ["local_check", "--frontend-http", "--artifact", str(tmp_path)]
+    )
+    monkeypatch.setattr(
+        local_check, "verify_artifact", Mock(side_effect=RuntimeError("stale"))
+    )
+    ports = Mock()
+    monkeypatch.setattr(local_check, "select_unused_ports", ports)
+    with pytest.raises(RuntimeError, match="stale"):
+        local_check.main()
+    ports.assert_not_called()
+
+
+def test_frontend_environment_excludes_backend_credentials(tmp_path):
+    backend = local_check.build_fixture_environment(tmp_path, {"PATH": "/bin"})
+    env = local_check.build_frontend_environment(backend, 12345)
+    assert env["PORT"] == "12345"
+    assert env["HOSTNAME"] == "127.0.0.1"
+    assert env["INTERNAL_API_URL"] == backend["INTERNAL_API_URL"]
+    assert env["API_URL"] == backend["API_URL"]
+    assert not any("PASSWORD" in k or "SURREAL" in k or "ENCRYPTION" in k for k in env)

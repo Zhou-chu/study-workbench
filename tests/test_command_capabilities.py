@@ -5,60 +5,16 @@ from unittest.mock import AsyncMock, Mock
 
 import httpx
 import pytest
+from command_capabilities_fixtures import CASES
+from command_capabilities_fixtures import backend as _backend
 from fastapi import FastAPI
 
 from api import command_service
 from api.auth import PasswordAuthMiddleware
 from api.command_service import CommandService
 from api.routers import commands
-from open_notebook.exceptions import OpenNotebookError
 
-CASES = [
-    (
-        "list_command_jobs",
-        (),
-        "GET",
-        "/api/commands/jobs",
-        "GENERIC_COMMAND_LISTING_UNSUPPORTED",
-    ),
-    (
-        "cancel_command_job",
-        ("command:fixture",),
-        "DELETE",
-        "/api/commands/jobs/command:fixture",
-        "GENERIC_COMMAND_CANCELLATION_UNSUPPORTED",
-    ),
-]
-
-
-@pytest.fixture
-def backend(monkeypatch):
-    submit = Mock(side_effect=AssertionError("unexpected submission"))
-    status = AsyncMock(side_effect=AssertionError("unexpected status lookup"))
-    monkeypatch.setattr(command_service, "submit_command", submit)
-    monkeypatch.setattr(command_service, "get_command_status", status)
-    return submit, status
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("name,args,method,path,code", CASES)
-async def test_unsupported_service_raises_typed_capability_error(
-    backend, name, args, method, path, code
-):
-    with pytest.raises(OpenNotebookError, match=f"^{code}$") as raised:
-        await getattr(CommandService, name)(*args)
-    assert type(raised.value).__name__ == "UnsupportedCapabilityError"
-    for dependency in backend:
-        dependency.assert_not_called()
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("name,args,method,path,code", CASES)
-async def test_router_propagates_capability_error(
-    backend, name, args, method, path, code
-):
-    with pytest.raises(OpenNotebookError, match=f"^{code}$"):
-        await getattr(commands, name)(*args)
+backend = _backend
 
 
 def app_for(monkeypatch):

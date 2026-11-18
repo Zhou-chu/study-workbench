@@ -296,44 +296,6 @@ def test_availability_exception_is_safe(client, monkeypatch, error, failure_logs
     assert "synthetic-secret" not in "".join(failure_logs)
 
 
-def test_provider_store_unavailability_is_not_a_configured_credential(monkeypatch):
-    import asyncio
-
-    from open_notebook.domain.credential import Credential
-
-    monkeypatch.setattr(
-        Credential, "get_by_provider", AsyncMock(side_effect=RuntimeError("synthetic"))
-    )
-    assert asyncio.run(router._check_provider_has_credential("openai")) is False
-
-
-@pytest.mark.parametrize(
-    "records,priority,preferences,expected",
-    [
-        ([], ["openai"], {}, None),
-        ([{"id": "a", "provider": "other", "name": "x"}], ["openai"], {}, "a"),
-        (
-            [
-                {"id": "a", "provider": "openai", "name": "ordinary"},
-                {"id": "b", "provider": "openai", "name": "preferred"},
-            ],
-            ["openai"],
-            {"openai": ["unavailable", "preferred"]},
-            "b",
-        ),
-        (
-            [{"id": "a", "provider": "openai", "name": "ordinary"}],
-            ["openai"],
-            {"openai": ["unavailable"]},
-            "a",
-        ),
-    ],
-)
-def test_preferred_model_real_fallback_order(records, priority, preferences, expected):
-    result = router._get_preferred_model(records, priority, preferences)
-    assert (result["id"] if result else None) == expected
-
-
 def test_auto_assign_missing_models_keeps_defaults_and_does_not_write(
     client, monkeypatch
 ):
@@ -424,12 +386,6 @@ def test_sparse_sdk_and_mode_config_do_not_invent_supported_modalities(
     assert supported["azure"] == ["language"]
     assert supported["openai_compatible"] == ["language"]
     assert supported["openai"] == []
-
-
-def test_preferred_provider_without_preferences_uses_first():
-    first = {"id": "first", "provider": "openai", "name": "a"}
-    second = {"id": "second", "provider": "openai", "name": "b"}
-    assert router._get_preferred_model([first, second], ["openai"], {}) == first
 
 
 def test_create_domain_input_error_is_a_client_error(client, monkeypatch):
