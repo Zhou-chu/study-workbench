@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { readFileSync, readdirSync } from 'node:fs'
-import path from 'node:path'
-import ts from 'typescript'
-import schema from '../../../../contracts/v1/openapi.json'
+import { sessionProxyRouteExamples as examples } from '../../test/fixtures/session-proxy-route-examples'
 import { getWebSessionConfig, isAllowedWebRead, matchApiRoute } from './session-proxy-policy'
 
 const WEB_ORIGIN = 'https://workbench.example'
@@ -136,133 +133,10 @@ describe('getWebSessionConfig', () => {
 
 // Deliberately checked-in review fixture, not permission generated from OpenAPI.
 // Every addition requires review of both actual schema and current browser use.
-const browserRoutes: Array<[string, string, string?]> = [
-  ['GET', '/api/config', 'public'], ['GET', '/api/auth/status', 'public'],
-  ['GET POST DELETE', '/api/auth/sessions', 'auth'],
-  ['POST', '/api/auth/sessions/refresh', 'auth'], ['DELETE', '/api/auth/sessions/{session_id}', 'auth'],
-  ['POST', '/api/auth/web-signout-local', 'auth'],
-  ['GET', '/api/capabilities'], ['GET', '/api/providers'], ['GET', '/api/recently-viewed'],
-  ['GET POST', '/api/notebooks'], ['GET PUT DELETE', '/api/notebooks/{notebook_id}'],
-  ['GET', '/api/notebooks/{notebook_id}/delete-preview'],
-  ['POST DELETE', '/api/notebooks/{notebook_id}/sources/{source_id}'],
-  ['GET POST', '/api/notes'], ['GET PUT DELETE', '/api/notes/{note_id}'],
-  ['GET', '/api/sources'], ['POST', '/api/sources', 'multipart'], ['GET PUT DELETE', '/api/sources/{source_id}'],
-  ['GET', '/api/sources/{source_id}/status'], ['POST', '/api/sources/{source_id}/retry'],
-  ['GET HEAD', '/api/sources/{source_id}/download', 'download'],
-  ['GET POST', '/api/sources/{source_id}/insights'], ['GET DELETE', '/api/insights/{insight_id}'],
-  ['GET', '/api/commands/jobs/{job_id}'],
-  ['GET POST', '/api/chat/sessions'], ['GET PUT DELETE', '/api/chat/sessions/{session_id}'],
-  ['POST', '/api/chat/context'], ['POST', '/api/chat/execute'],
-  ['GET POST', '/api/sources/{source_id}/chat/sessions'],
-  ['GET PUT DELETE', '/api/sources/{source_id}/chat/sessions/{session_id}'],
-  ['POST', '/api/sources/{source_id}/chat/sessions/{session_id}/messages', 'sse'],
-  ['POST', '/api/search'], ['POST', '/api/search/ask', 'sse'],
-  ['GET PUT', '/api/settings'], ['GET POST', '/api/transformations'],
-  ['GET PUT', '/api/transformations/default-prompt'], ['POST', '/api/transformations/execute'],
-  ['GET PUT DELETE', '/api/transformations/{transformation_id}'],
-  ['POST', '/api/embed'], ['POST', '/api/embeddings/rebuild'],
-  ['GET', '/api/embeddings/rebuild/{command_id}/status'],
-  ['GET POST', '/api/models'], ['GET PUT', '/api/models/defaults'], ['GET', '/api/models/providers'],
-  ['GET', '/api/models/discover/{provider}'], ['POST', '/api/models/sync/{provider}'],
-  ['POST', '/api/models/sync'], ['GET', '/api/models/count/{provider}'],
-  ['GET', '/api/models/by-provider/{provider}'], ['POST', '/api/models/auto-assign'],
-  ['DELETE', '/api/models/{model_id}'], ['POST', '/api/models/{model_id}/test'],
-  ['GET', '/api/credentials/status'], ['GET', '/api/credentials/env-status'],
-  ['GET POST', '/api/credentials'], ['GET', '/api/credentials/by-provider/{provider}'],
-  ['GET PUT DELETE', '/api/credentials/{credential_id}'], ['POST', '/api/credentials/{credential_id}/test'],
-  ['POST', '/api/credentials/{credential_id}/discover'], ['POST', '/api/credentials/{credential_id}/register-models'],
-  ['POST', '/api/credentials/migrate-from-provider-config'], ['POST', '/api/credentials/migrate-from-env'],
-  ['GET', '/api/podcasts/episodes'], ['DELETE', '/api/podcasts/episodes/{episode_id}'],
-  ['POST', '/api/podcasts/episodes/{episode_id}/retry'], ['GET', '/api/podcasts/episodes/{episode_id}/audio', 'download'],
-  ['POST', '/api/podcasts/generate'], ['GET', '/api/languages'],
-  ['GET POST', '/api/episode-profiles'], ['PUT DELETE', '/api/episode-profiles/{profile_id}'],
-  ['POST', '/api/episode-profiles/{profile_id}/duplicate'],
-  ['GET POST', '/api/speaker-profiles'], ['PUT DELETE', '/api/speaker-profiles/{profile_id}'],
-  ['POST', '/api/speaker-profiles/{profile_id}/duplicate'],
-  ['GET', '/api/personal/notebooks/{notebook_id}/workspace'],
-  ['GET POST', '/api/personal/notebooks/{notebook_id}/semantic-index'],
-  ['POST', '/api/personal/notebooks/{notebook_id}/semantic-index/preview'],
-  ['PATCH', '/api/personal/notebooks/{notebook_id}/selection'],
-  ['POST', '/api/personal/notebooks/{notebook_id}/sources/upload', 'multipart'],
-  ['GET', '/api/personal/web-search/status'], ['POST', '/api/personal/web-search'],
-  ['POST', '/api/personal/notebooks/{notebook_id}/sources/web-import'],
-  ['POST', '/api/personal/notebooks/{notebook_id}/source-snapshots'],
-  ['GET POST', '/api/personal/chats/{chat_session_id}/turns'],
-  ['GET', '/api/personal/turns/{turn_id}/events', 'sse'],
-  ['POST', '/api/personal/notebooks/{notebook_id}/notes'],
-  ['PATCH', '/api/personal/notebooks/{notebook_id}/notes/{note_id}'],
-  ['GET', '/api/personal/jobs/{job_id}'], ['POST', '/api/personal/jobs/{job_id}/cancel'],
-  ['POST', '/api/personal/source-versions/{source_version_id}/revalidate'],
-  ['POST', '/api/personal/source-versions/{source_version_id}/reparse'], ['POST', '/api/personal/search'],
-  ['GET', '/api/personal/sources/{source_id}/versions'], ['GET', '/api/personal/source-versions/{source_version_id}'],
-  ['GET', '/api/personal/evidence/{evidence_id}'],
-  ['GET', '/api/personal/source-versions/{source_version_id}/download', 'download'],
-  ['GET', '/api/personal/portable/limits'], ['POST', '/api/personal/notebooks/{notebook_id}/exports'],
-  ['POST', '/api/personal/imports/portable', 'multipart'],
-  ['GET', '/api/personal/exports/{export_id}/download', 'download'],
-  ['GET', '/api/personal/artifacts/{artifact_id}/download', 'download'],
-  ['GET DELETE', '/api/personal/connections/notebooklm'],
-  ['POST', '/api/personal/connections/notebooklm/connect'], ['POST', '/api/personal/connections/notebooklm/reconnect'],
-  ['GET', '/api/personal/connections/notebooklm/connect/{flow_id}'],
-  ['GET', '/api/personal/notebooklm/capabilities'], ['GET POST', '/api/personal/notebooklm/notebooks'],
-  ['GET', '/api/personal/notebooklm/notebooks/{remote_notebook_id}/sources'],
-  ['GET', '/api/personal/notebooklm/notebooks/{remote_notebook_id}/artifacts'],
-  ['POST', '/api/personal/notebooks/{notebook_id}/notebooklm-link'],
-  ['POST', '/api/personal/notebooks/{notebook_id}/notebooklm-source-link'],
-  ['POST', '/api/personal/notebooks/{notebook_id}/sync/notebooklm'],
-  ['POST', '/api/personal/notebooks/{notebook_id}/imports/notebooklm'],
-  ['POST', '/api/personal/notebooks/{notebook_id}/artifacts/audio'],
-  ['POST', '/api/personal/notebooklm/artifacts/{remote_artifact_id}/download'],
-]
-
-const examples = browserRoutes.flatMap(([methods, template, kind = 'json']) =>
-  methods.split(' ').map(method => ({ method, template, kind, url: template.replace(/\{[^}]+\}/g, 'record:%E8%B5%84%E6%96%99') })))
-
 describe('matchApiRoute', () => {
   it.each(examples)('allows reviewed $method $template as $kind', ({ method, template, kind, url }) => {
     expect(matchApiRoute(method, `${url}?scope=selected&name=a%2Fb%3Fc%23d&name=two+words`))
       .toEqual({ method, template, kind, headerClass: kind })
-    if (template !== '/api/auth/web-signout-local') {
-      expect(schema.paths[template as keyof typeof schema.paths]).toHaveProperty(method.toLowerCase())
-    }
-  })
-
-  it('covers every static current apiClient operation without widening unsupported model GET', () => {
-    const directory = path.join(process.cwd(), 'src/lib/api')
-    const calls: Array<[string, string]> = []
-    function example(node: ts.Expression): string[] {
-      if (ts.isStringLiteralLike(node)) return [node.text]
-      if (ts.isConditionalExpression(node)) return [...example(node.whenTrue), ...example(node.whenFalse)]
-      if (ts.isTemplateExpression(node)) {
-        return node.templateSpans.reduce((values, span) => values.flatMap(value =>
-          example(span.expression).map(part => value + part + span.literal.text)), [node.head.text])
-      }
-      return ['record:%E8%B5%84%E6%96%99']
-    }
-    for (const filename of readdirSync(directory).filter(name => name.endsWith('.ts') && !name.endsWith('.test.ts'))) {
-      const source = ts.createSourceFile(filename, readFileSync(path.join(directory, filename), 'utf8'), ts.ScriptTarget.Latest, true)
-      const visit = (node: ts.Node) => {
-        if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)
-          && node.expression.expression.getText(source) === 'apiClient'
-          && /^(get|post|put|patch|delete|head|options)$/.test(node.expression.name.text)) {
-          const argument = node.arguments[0]
-          // Returned download URLs are covered by the exact download fixtures above.
-          if (argument && (ts.isStringLiteralLike(argument) || ts.isTemplateExpression(argument))) {
-            for (const url of example(argument)) calls.push([node.expression.name.text.toUpperCase(), `/api${url}`])
-          }
-        }
-        ts.forEachChild(node, visit)
-      }
-      visit(source)
-    }
-    expect(calls.length).toBeGreaterThan(100)
-    for (const [method, url] of calls) {
-      if (method === 'GET' && url === '/api/models/record:%E8%B5%84%E6%96%99') {
-        expect(matchApiRoute(method, url)).toBeNull() // No corresponding backend operation.
-      } else {
-        expect(matchApiRoute(method, url), `${method} ${url}`).not.toBeNull()
-      }
-    }
   })
 
   it.each([

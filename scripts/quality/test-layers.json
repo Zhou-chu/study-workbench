@@ -2230,13 +2230,23 @@
       "sha256": "9cc58fbca3844d9988aa549eb7ade64779364e8af7658e964897273eecfeac40"
     },
     {
+      "path": "frontend/src/lib/api/session-proxy-policy.contract.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "frontend/src/lib/api/session-proxy-policy.ts",
+        "contracts/v1/openapi.json"
+      ],
+      "reason": "Checks reviewed operations against the checked-in OpenAPI contract and parses production API call sites via TypeScript AST to check existing policy parity; no HTTP dispatch.",
+      "sha256": "a48d484cc8ef88bbcddd4c1fd0551063d913e400dfb9269c7c26bd8e08700350"
+    },
+    {
       "path": "frontend/src/lib/api/session-proxy-policy.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "frontend/src/lib/api/session-proxy-policy.ts"
       ],
-      "reason": "Direct origin/header/environment/route-policy calls are unit candidates with literal inputs. The current apiClient operation coverage case walks production source and parses TypeScript AST, and route examples additionally assert checked-in OpenAPI membership: these are static architecture/contract checks, not pure behavioral unit coverage.",
-      "sha256": "83df73d08384d0e61c1057d240a6f59ec8d84dec57d9cf216b05d06a7c8abdba"
+      "reason": "Direct origin/header/environment/route-policy calls with literal inputs and a reviewed in-memory fixture. Does not inspect source or assert OpenAPI membership.",
+      "sha256": "d84f097fe8b9d064611bc558c63777f8609480fc349ae4f60d330d2dd56d3b39"
     },
     {
       "path": "frontend/src/lib/api/session-proxy.guards.unit.test.ts",
@@ -2583,6 +2593,15 @@
       ],
       "reason": "Pure ordered translation and export identity assertions over in-memory values; no file or app runtime.",
       "sha256": "440fc6498dce8f0e888b1ff2bcce236346025e3577ec11256329d5a64529bedb"
+    },
+    {
+      "path": "frontend/src/lib/locales/workbench.test.ts",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/locales/workbench.ts"
+      ],
+      "reason": "Pure in-memory digest of both ordered localized dictionaries; no file, UI, service or application setup.",
+      "sha256": "283bcd4a02bf00a2d6a58ae8d6cbedacabcdffed22050bb28594742621781cf6"
     },
     {
       "path": "frontend/src/lib/providers.test.tsx",
