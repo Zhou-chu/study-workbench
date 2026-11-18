@@ -53,7 +53,7 @@ export function cleanSource(){if(git('status','--porcelain','--untracked-files=a
 export function authoredPaths(kind){
  if(!['web','bff'].includes(kind))throw Error('artifact kind');
  const roots=['package.json','package-lock.json','tsconfig.base.json','contracts/v1/openapi.json','packages/contracts','deploy/v1','scripts/v1/spa-artifact-common.mjs','scripts/coverage-trusted-git.mjs','scripts/coverage-git-provision.mjs','scripts/v1/check_spa_artifacts.py','scripts/v1/container_check.py','.dockerignore','apps/'+kind];
- if(kind==='web')roots.push('packages/domain','packages/web-transport');
+ if(kind==='web')roots.push('packages/domain','packages/web-transport','frontend/src/lib/locales');
  return git('ls-files','-z','--',...roots).split('\0').filter(Boolean).filter(p=>!p.includes('/dist/')).sort();
 }
 export async function authoredInventory(kind){

@@ -146,6 +146,8 @@ Providers that need several config fields (like `azure`, `vertex`, `openai_compa
 
 ## Playbook: i18n / Translation Update
 
+The shared language registry and baseline messages live in `frontend/src/lib/locales/`. The Vite workbench re-exports them and keeps its SPA-specific feature messages under `apps/web/src/i18n/`. Update shared translations once; do not copy them into the SPA.
+
 | Step | File(s) | What to do |
 |------|---------|------------|
 | 1 | `frontend/src/lib/locales/en-US/index.ts` | Add the English strings. en-US is the reference shape. |

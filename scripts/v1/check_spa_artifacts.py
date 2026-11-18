@@ -148,7 +148,11 @@ def source_inventory(kind):
         "apps/" + kind,
     ]
     if kind == "web":
-        paths += ["packages/domain", "packages/web-transport"]
+        paths += [
+            "packages/domain",
+            "packages/web-transport",
+            "frontend/src/lib/locales",
+        ]
     rows: list[dict[str, Any]] = []
     for name in sorted(filter(None, git("ls-files", "-z", "--", *paths).split("\0"))):
         if "/dist/" in name:

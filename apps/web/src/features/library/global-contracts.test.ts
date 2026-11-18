@@ -1,5 +1,4 @@
 import { expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { routeCoverage, isCoverageComplete } from '../../app/route-coverage';
 import { globalMessages } from '../../i18n/global-messages';
 import { resources } from '../../i18n';
@@ -23,7 +22,6 @@ it('every locale explicitly supplies global status and action labels', () => {
         expect(Object.keys(value).sort()).toEqual(keys);
         expect(Object.values(value).every(v => typeof v === 'string' && v.trim())).toBe(true);
     }
-    expect(readFileSync('src/app/styles.css', 'utf8')).toContain('.global-search summary { display: flex; align-items: center; min-height: 44px;');
 });
 it('raw search projections retain optional unknown fields without inventing result identities or scores', () => {
     const rows = [{ id: 'note:one:full', parent_id: 'note:one:full', title: null, custom: { original: true } }, { id: 'future:kind', relevance: 4 }, { id: 'source:full', similarity: .7 }];

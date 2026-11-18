@@ -110,14 +110,31 @@
     },
     {
       "path": "apps/bff/test/proxy-parity.test.ts",
-      "layer": "mixed",
+      "layer": "api-integration",
       "targets": [
         "apps/bff/src/proxy.ts",
         "apps/bff/src/session-store.ts",
         "apps/bff/src/policy.ts"
       ],
-      "reason": "Real Request dispatch/auth route and session-store admission/confirmation/rotation/revocation flows use fake upstream but exercise actual HTTP routing contracts. One source/package dependency architecture case is static-contract; no real sockets, still not pure unit.",
-      "sha256": "e3b8902e0ef0fce551454ade3f028809d08e0182be5e761e87303008870b353a"
+      "reason": "Real Request dispatch and session-store/auth/resource interoperability with controlled upstream doubles. No real listener; exercises the actual API boundary, not pure units.",
+      "sha256": "7643a12b666b46966aef7eb79238d0d92e3e8ed5f3dc27e175ba12ddb173e7f9"
+    },
+    {
+      "path": "apps/bff/test/package-source-contract.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "apps/bff/package.json",
+        "apps/bff/src/cli.ts",
+        "apps/bff/src/config.ts",
+        "apps/bff/src/http-adapter.ts",
+        "apps/bff/src/policy.ts",
+        "apps/bff/src/proxy.ts",
+        "apps/bff/src/public-config.ts",
+        "apps/bff/src/server.ts",
+        "apps/bff/src/session-store.ts"
+      ],
+      "reason": "Reads the BFF package dependency list and source files to enforce independent imports; does not execute request behavior.",
+      "sha256": "d594c68b79f7ec22fbcd3937cfc82e28c8f780bd72cb6d429bb7a5cc3ab97790"
     },
     {
       "path": "apps/bff/test/route-dispatch.test.ts",
@@ -168,7 +185,7 @@
         "scripts/v1/spa-artifact-common.mjs"
       ],
       "reason": "Direct canonical digest unit/export-shape check plus real package/gateway fixture creation, symlinks, retention/collision and byte inventory verification. Filesystem integration remains separate from pure canonicalization.",
-      "sha256": "c4adaf78d15a0d6d88e70bde2b2e6df15cc77478c7d546cc4ef9a46a43ef48e3"
+      "sha256": "2879ffd65040cc9bcd286c3794201a479e4edf6eac8e7965be619d76afdafafe"
     },
     {
       "path": "apps/web/scripts/canonical-order.test.mjs",
@@ -372,12 +389,21 @@
     },
     {
       "path": "apps/web/src/features/auth/cold-return.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "apps/web/src/features/auth/cold-return.ts"
       ],
-      "reason": "Nine direct safeReturnPath cases are unit; final deadline/performance case launches real Node child process and is tool-integration. Split required before unit selection.",
-      "sha256": "e6294dfbe14d843b5cabb45529f31915677e94bcc00e01a25e366e263c5368f5"
+      "reason": "Direct return-path normalization and login-loop predicates with literal inputs.",
+      "sha256": "12fd3fcfaff1ec1a2bae3c2dcd770c3fd41524281e47e56c49dc877f894fe9ef"
+    },
+    {
+      "path": "apps/web/src/features/auth/cold-return-deadline.test.ts",
+      "layer": "tool-integration",
+      "targets": [
+        "apps/web/src/features/auth/cold-return.ts"
+      ],
+      "reason": "Runs the production function in a real Node subprocess to enforce an isolated processing deadline.",
+      "sha256": "ed46591a1dbb987becfa0858fe41911d71d5276176333c320015a01f1dca16aa"
     },
     {
       "path": "apps/web/src/features/auth/legacy-login.test.tsx",
@@ -526,15 +552,24 @@
     },
     {
       "path": "apps/web/src/features/library/global-contracts.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "apps/web/src/app/route-coverage.ts",
         "apps/web/src/data/global-search.ts",
         "apps/web/src/i18n/global-messages.ts",
+        "apps/web/src/i18n/locales/index.ts"
+      ],
+      "reason": "Direct route-registry values, locale tables and global search projection/scope/score assertions without file reads or component mounting.",
+      "sha256": "09cf53e9e57bad6b3c18a07eeded85cbb0df25ac866ee968ef76e2e9054538d3"
+    },
+    {
+      "path": "apps/web/src/features/library/global-styles-contract.test.ts",
+      "layer": "static-contract",
+      "targets": [
         "apps/web/src/app/styles.css"
       ],
-      "reason": "Direct search projection/scope/score and registry/locale constants coexist with literal CSS source assertion. Split static-contract clause before whole-file unit selection. Full test file reviewed; classification only, no test or coverage run.",
-      "sha256": "d15b64f8dc9752fe31fc41425b4a5a3fb097d6b21fe132249ea1e377f0522869"
+      "reason": "Reads one authored CSS rule for a minimum search-summary control size; no browser geometry claim.",
+      "sha256": "0512e793a1864c8efc21a43d4f418a09d8dda43a2ee36fa758e3138dee0c58e2"
     },
     {
       "path": "apps/web/src/features/library/global-lifecycle.test.tsx",
@@ -567,14 +602,22 @@
     },
     {
       "path": "apps/web/src/features/library/library-accessibility.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "apps/web/src/i18n/locales/index.ts",
-        "apps/web/src/i18n/library-messages.ts",
+        "apps/web/src/i18n/library-messages.ts"
+      ],
+      "reason": "Direct locale labels and placeholders from in-memory source constants; no mounting or filesystem inspection.",
+      "sha256": "adeb351a4dc55ff651ecd5a92bb1cdc77beaf06f925bf88a5620c1ad4805d62f"
+    },
+    {
+      "path": "apps/web/src/features/library/library-styles-contract.test.ts",
+      "layer": "static-contract",
+      "targets": [
         "apps/web/src/app/styles.css"
       ],
-      "reason": "Direct locale value/key/interpolation assertions coexist with production CSS source regex static contracts. Split source check; no actual browser rendering.",
-      "sha256": "2b4f96cbcb73afe4ec774df7aab0f4cac4eb573f2399f732488bd1fbf4879bd5"
+      "reason": "Checks authored CSS for minimum dimensions, focus and media treatment; no browser geometry claim.",
+      "sha256": "28b6a4a2fc1318f3779c4fc0d52324693d7070e5d47a0e87dd7fccfc794caff5"
     },
     {
       "path": "apps/web/src/features/library/library-completion.test.tsx",
@@ -1145,10 +1188,12 @@
       "path": "apps/web/src/i18n/parity.test.ts",
       "layer": "unit",
       "targets": [
-        "apps/web/src/i18n/index.tsx"
+        "apps/web/src/i18n/index.tsx",
+        "apps/web/src/i18n/locales/index.ts",
+        "frontend/src/lib/locales/index.ts"
       ],
       "reason": "Pure imported locale-value key/interpolation/completeness assertions; no runtime translation service or source-text scanning.",
-      "sha256": "4ec39fc7f2041d6c32752008bda543462787330ccbbbd5f30d9aa801da9cf59d"
+      "sha256": "21ae1912a9dff1874cbd2d771de1ad762dbd2e8b5e5f17946bc3cc12cbfb42bb"
     },
     {
       "path": "apps/web/src/theme/contrast.test.ts",
@@ -2779,16 +2824,30 @@
     },
     {
       "path": "scripts/tests/quality/configs.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "scripts/coverage-config.ts",
         "scripts/coverage-deployment.config.ts",
-        "scripts/coverage-quality.config.ts",
         "apps/web/vite.config.ts",
-        "frontend/postcss.config.mjs"
+        "frontend/postcss.config.mjs",
+        "apps/web/coverage.config.ts",
+        "apps/bff/coverage.config.ts",
+        "packages/contracts/coverage.config.ts",
+        "packages/domain/coverage.config.ts",
+        "packages/web-transport/coverage.config.ts"
       ],
-      "reason": "Pure config/env-return assertions coexist with loading coverage-quality.config which actually scans scripts via qualityToolingFiles. Split filesystem-derived configuration assembly from direct configuration units; no server starts.",
-      "sha256": "491c90d392bf87e1206c535234c49805e1a29628c6e54030dc5684b93f39380e"
+      "reason": "Direct configuration object and environment-dependent value checks with stubbed environment values; no tooling inventory scan.",
+      "sha256": "bbcf0cbb2a20afdd27d44636d26bafeaa138298e49debe665621d63ec10b8bd3"
+    },
+    {
+      "path": "scripts/tests/quality/configs-tooling-scan.test.ts",
+      "layer": "tool-integration",
+      "targets": [
+        "scripts/coverage-quality.config.ts",
+        "scripts/coverage-inventory.mjs"
+      ],
+      "reason": "Imports the tooling configuration which discovers production source files via real filesystem inventory; checks that covered paths are retained.",
+      "sha256": "85385ccd5197cb113553667d3ecea52710ea86026171a7d623cf5d49d0ab6114"
     },
     {
       "path": "scripts/tests/quality/helpers.test.ts",
@@ -4884,7 +4943,7 @@
         "deploy/v1/Dockerfile.bff"
       ],
       "reason": "Direct canonical/safe-path unit, deployment/source-text static contracts and real artifact mutations/FIFO/symlinks with verifier/parser process integration coexist. No nginx/image/browser run; pure file gates docstring is not pure-unit evidence.",
-      "sha256": "4905fa02f42f9b036943b37de16d81f0aa411034d783b1df1d198544fa5fb2bb"
+      "sha256": "5d2365487edcb44cc4d05b30d0b2856fa192c2a8897c6ae7743d99a9f7bc7c6e"
     },
     {
       "path": "tests/test_spa_cutover_plan.py",

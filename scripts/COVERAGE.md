@@ -12,7 +12,7 @@ Run from repository root with the installed Node 24 toolchain:
 
 Five modern runtime partitions explicitly include **all** first-party `src/**/*.{ts,tsx,js,jsx,mjs,cjs}`, including unimported files, browser entrypoints, BFF CLI, locale tables and error handling. Cross-workspace imports currently use package dist exports: package reports are conservative measurements from their own suites, not duplicated dist coverage attributed to the web UI.
 
-Legacy frontend uses its original React/Next aliases and test setup, with the same all-src rule, independently of the SPA. Missing legacy dependencies produce a blocked partition, never a claimed 0%/100% test pass. No large legacy dependency installation is automatic.
+Legacy frontend uses its original React/Next aliases and test setup, with the same all-src rule, independently of the SPA. Shared locale data lives in the legacy frontend tree and is included once, in `legacy-web`; the SPA locale entry point and SPA-specific messages remain in `web`. Missing legacy dependencies produce a blocked partition, never a claimed 0%/100% test pass. No large legacy dependency installation is automatic.
 
 Node build/asset/check scripts are measured separately with c8 --all, including subprocess coverage through NODE_V8_COVERAGE. Modern tools: apps/{bff,web}/scripts and scripts/v1. Legacy tools: frontend/scripts plus frontend/start-server.js. Unexecuted scripts remain in the denominator. BFF cli.ts remains in the BFF source denominator even if its child-process execution is not observed by Vitest; this is a limitation, not an exclusion.
 

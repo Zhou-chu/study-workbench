@@ -101,6 +101,35 @@ import os
 import pytest
 
 
+def test_web_source_verifier_binds_shared_locale_only(tmp_path, monkeypatch):
+    check = checker()
+    source = "frontend/src/lib/locales/en-US/index.ts"
+    wrapper = "apps/web/src/i18n/locales/index.ts"
+    files = (source, wrapper, "frontend/src/app/unrelated.ts", "apps/bff/src/cli.ts")
+    for name in files:
+        path = tmp_path / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("// fixture source")
+
+    def catalog(*args):
+        assert args[:3] == ("ls-files", "-z", "--")
+        return "\0".join(
+            name
+            for name in files
+            if any(name == root or name.startswith(root + "/") for root in args[3:])
+        )
+
+    monkeypatch.setattr(check, "ROOT", tmp_path)
+    monkeypatch.setattr(check, "git", catalog)
+    web = check.source_inventory("web")
+    bff = check.source_inventory("bff")
+    assert [row["path"] for row in web] == [wrapper, source]
+    assert [row["path"] for row in bff] == ["apps/bff/src/cli.ts"]
+    (tmp_path / source).write_text("// changed canonical locale")
+    assert check.digest(check.source_inventory("web")) != check.digest(web)
+    assert check.source_inventory("bff") == bff
+
+
 def synthetic(tmp_path, kind):
     check = checker()
     root = tmp_path / kind

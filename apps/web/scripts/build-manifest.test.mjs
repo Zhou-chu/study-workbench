@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,writeFile,readFile,mkdir,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
+import {pathToFileURL} from 'node:url';
 import path from 'node:path';
 const artifact = await import('./build-manifest.mjs').catch(()=>({}));
 const common = await import('../../../scripts/v1/spa-artifact-common.mjs').catch(()=>({}));
@@ -27,6 +28,38 @@ test('canonical inventory digest measures sizes, modes, bytes and sorted paths',
  assert.equal(typeof common.digest,'function');
  assert.equal(common.digest({b:2,a:1}),common.digest({a:1,b:2}));
  assert.notEqual(common.digest([{path:'a',size:1,mode:'0644',sha256:'a'}]),common.digest([{path:'a',size:1,mode:'0755',sha256:'a'}]));
+});
+
+test('SPA authored digest binds canonical locale bytes without broadening BFF inputs',async t=>{
+ const root=await mkdtemp(path.join(tmpdir(),'c1-locale-source-'));
+ t.after(()=>rm(root,{recursive:true,force:true}));
+ const source='frontend/src/lib/locales/en-US/index.ts',wrapper='apps/web/src/i18n/locales/index.ts';
+ const unrelated='frontend/src/app/unrelated.ts';
+ const files=[source,wrapper,unrelated,'apps/bff/src/cli.ts'];
+ for(const name of files){
+  const target=path.join(root,name);
+  await mkdir(path.dirname(target),{recursive:true});
+  await writeFile(target,'// fixture source');
+ }
+ const commonPath=path.join(root,'scripts/v1/spa-artifact-common.mjs');
+ await mkdir(path.dirname(commonPath),{recursive:true});
+ await writeFile(commonPath,await readFile(new URL('../../../scripts/v1/spa-artifact-common.mjs',import.meta.url)));
+ // Synthetic catalog tests the producer's actual root selection and file hashing,
+ // without provisioning or substituting the production trusted-Git registration.
+ await writeFile(path.join(root,'scripts/coverage-trusted-git.mjs'),`
+  const files=${JSON.stringify(files)};
+  export function trustedGit([command, nul, end, ...roots]){
+   if(command!=='ls-files'||nul!=='-z'||end!=='--')throw Error('unexpected fixture query');
+   return files.filter(name=>roots.some(root=>name===root||name.startsWith(root+'/'))).join('\\0')+'\\0';
+  }
+ `);
+ const fixture=await import(pathToFileURL(commonPath).href);
+ const web=await fixture.authoredInventory('web'),bff=await fixture.authoredInventory('bff');
+ assert.deepEqual(web.map(row=>row.path),[wrapper,source]);
+ assert.deepEqual(bff.map(row=>row.path),['apps/bff/src/cli.ts']);
+ await writeFile(path.join(root,source),'// changed canonical locale');
+ assert.notEqual(fixture.digest(await fixture.authoredInventory('web')),fixture.digest(web));
+ assert.deepEqual(await fixture.authoredInventory('bff'),bff);
 });
 
 async function fixtureWeb(base,slot,suffix='a',pdf='pdf',version='6.4.299'){

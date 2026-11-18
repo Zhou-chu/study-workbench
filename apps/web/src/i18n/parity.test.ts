@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+import { resources as canonicalResources, languages as canonicalLanguages } from '../../../../frontend/src/lib/locales';
 import { resources, languages, shellMessages, sessionMessages, notebookMessages, sourceMessages, chatMessages } from './index';
 const codes = ['zh-CN', 'en-US', 'zh-TW', 'pt-BR', 'ja-JP', 'it-IT', 'fr-FR', 'ru-RU', 'bn-IN', 'ca-ES', 'es-ES', 'de-DE', 'pl-PL', 'tr-TR'];
 function leaves(value: unknown, prefix = ''): Record<string, string> { const out: Record<string, string> = {}; if (value && typeof value === 'object')
@@ -9,6 +10,10 @@ function leaves(value: unknown, prefix = ''): Record<string, string> { const out
         else
             Object.assign(out, leaves(child, name + '.'));
     } ; return out; }
+it('uses the canonical resources and language registry without a SPA copy', () => {
+    expect(resources).toBe(canonicalResources);
+    expect(languages).toBe(canonicalLanguages);
+});
 it('migrates all registry languages and complete legacy keysets', () => {
     expect(Object.keys(resources).sort()).toEqual([...codes].sort());
     expect(languages).toHaveLength(14);

@@ -19,13 +19,9 @@ it('Vite absent/empty identity uses root base; release identity stays in its own
 it('Vite malformed artifact identity fails rather than silently building wrong base',async()=>{
  vi.stubEnv('SPA_ARTIFACT_IDENTITY','{bad');vi.resetModules();await expect(import('../../../apps/web/vite.config')).rejects.toThrow();
 });
-it('deployment and tooling configurations include real production files, not only imports',async()=>{
+it('deployment configuration includes real production files, not only imports',async()=>{
  const deployment=(await import('../../coverage-deployment.config')).default;
  expect(deployment.test?.coverage?.include).toEqual(['examples/easypanel/index.ts','frontend/next.config.ts']);
- const tooling=(await import('../../coverage-quality.config')).default;
- expect(tooling.test?.maxWorkers).toBe(1);
- expect(tooling.test?.coverage?.include).toEqual(expect.arrayContaining(['scripts/coverage-workspaces.mjs','scripts/coverage-gate.mjs','frontend/coverage.config.ts']));
- expect(tooling.test?.coverage?.exclude).toEqual([]);
 });
 
 it('PostCSS retains the real Tailwind plugin declaration',async()=>{

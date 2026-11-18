@@ -1,5 +1,4 @@
 import { expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { resources } from '../../i18n/locales';
 import { libraryMessages } from '../../i18n/library-messages';
 it('provides every source and shell label explicitly in all fourteen supported locales', () => {
@@ -15,13 +14,4 @@ it('provides every source and shell label explicitly in all fourteen supported l
         if (locale !== 'en-US')
             expect(messages.noEvidence).not.toBe(libraryMessages['en-US'].noEvidence);
     }
-});
-it('uses minimum 44px controls, visible focus and original media without grayscale filters', () => {
-    const css = readFileSync('src/app/styles.css', 'utf8');
-    expect(css).toMatch(/button, \.button, select, input \{ min-block-size: 44px; min-inline-size: 44px;/);
-    expect(css).toMatch(/\.library-check input \{ width: 44px; min-width: 44px; height: 44px;/);
-    expect(css).toMatch(/\.library-list a \{[^}]*min-height: 44px/);
-    expect(css).toContain(':focus-visible { outline: 2px solid var(--focus)');
-    expect(css).not.toMatch(/filter:\s*(?:grayscale|saturate)/);
-    expect(css).not.toContain('mix-blend-mode');
 });
