@@ -42,7 +42,16 @@ jobs:
         npm ci
         npm ci --prefix frontend
       id: dependencies
+    - name: TypeScript dependency architecture
+      run: npm run architecture:ts
+    - name: Python import architecture
+      if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+      run: |-
+        uv venv --python 3.12 "$RUNNER_TEMP/notebook-architecture-venv"
+        uv pip sync --python "$RUNNER_TEMP/notebook-architecture-venv/bin/python" --require-hashes scripts/architecture/python-requirements.txt
+        PYTHONPATH=. "$RUNNER_TEMP/notebook-architecture-venv/bin/lint-imports" .importlinter --no-cache --no-logo
     - name: Python static checks
+      if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
       run: |-
         .venv/bin/ruff check .
         .venv/bin/ruff format --check .

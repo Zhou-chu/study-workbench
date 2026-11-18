@@ -20,7 +20,8 @@
     "coverage": "node scripts/coverage-workspaces.mjs",
     "coverage:gate": "node scripts/coverage-gate.mjs",
     "coverage:scope": "node scripts/coverage-scope-check.mjs",
-    "coverage:test": "node --test scripts/coverage-inventory.test.mjs"
+    "coverage:test": "node --test scripts/coverage-inventory.test.mjs",
+    "architecture:ts": "depcruise --config scripts/architecture/dependency-cruiser.cjs --ignore-known scripts/architecture/ts-known-violations.json --output-type err --no-progress apps/bff/src apps/web/src packages/contracts/src packages/domain/src packages/web-transport/src frontend/src"
   },
   "devDependencies": {
     "@types/node": "20.19.9",
@@ -36,7 +37,8 @@
     "@bcoe/v8-coverage": "1.0.2",
     "istanbul-lib-coverage": "3.2.2",
     "istanbul-lib-report": "3.0.1",
-    "istanbul-reports": "3.2.0"
+    "istanbul-reports": "3.2.0",
+    "dependency-cruiser": "18.8.0"
   },
   "overrides": {
     "ws": "8.21.0",
