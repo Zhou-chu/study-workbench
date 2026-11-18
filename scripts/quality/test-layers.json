@@ -3177,14 +3177,37 @@
       "sha256": "b0822b43566c52446f4e1be1e0c5c3e4a64a84ab6bad0aa6d765a544021f53d9"
     },
     {
-      "path": "tests/test_credential_provider_validation.py",
-      "layer": "mixed",
+      "path": "tests/test_credential_provider_http_integration.py",
+      "layer": "api-integration",
       "targets": [
-        "api/models.py",
-        "api/routers/credentials.py"
+        "api/routers/credentials.py",
+        "api/models.py"
       ],
-      "reason": "Direct registry/Pydantic cases are units; TestProvidersEndpoint and TestCreateCredentialEndpointRejectsBadProvider use TestClient. Split those classes. Independent full-file review at 71fbefb; test bytes verified identical to this 3e72ce0 base.",
-      "sha256": "c20ddd388308911e924b3be2696251ebaa89e52aa3dce7fb62956d6bfef2fdc7"
+      "reason": "Actual FastAPI TestClient for provider listing and request validation. The credential creation preflight is forced to reject before writes; no external access.",
+      "sha256": "45d26acbe5eca4b5272ae50a62e92137428b95c4d25235d44c010ba4c47d3cd8"
+    },
+    {
+      "path": "tests/test_credential_provider_registry_contract.py",
+      "layer": "static-contract",
+      "targets": [
+        "open_notebook/ai/provider_registry.py",
+        "open_notebook/ai/model_discovery.py",
+        "open_notebook/ai/connection_tester.py",
+        "api/credentials_service.py",
+        "api/models.py"
+      ],
+      "reason": "Reads fixed provider registry and compatibility declarations across layers and matches their declared keys and URLs. No provider calls.",
+      "sha256": "91798e2a412872a44f7d8540df36ecac1f475e6386d7944fc1eaa8248f39f775"
+    },
+    {
+      "path": "tests/test_credential_provider_validation.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/ai/provider_registry.py",
+        "api/models.py"
+      ],
+      "reason": "Direct provider registry construction and Pydantic payload validation of synthetic inputs; no route, provider, credentials storage or filesystem.",
+      "sha256": "4487339ec64daf605f5850a2d93d32e99142ac472173e7d834739ba5583fedd9"
     },
     {
       "path": "tests/test_credentials_api.py",
@@ -4926,13 +4949,22 @@
     },
     {
       "path": "tests/test_transformation_output.py",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "open_notebook/graphs/transformation.py",
         "commands/source_commands.py"
       ],
-      "reason": "Direct output/command error cases; worker_retry_policy executes actual SDK/tenacity loop. Split retry compatibility. Full-file independent review at f10d0f4; SHA256 verified after merge.",
-      "sha256": "bb00030c7c701e607683f91067e39e2a04508fcaf6e0aae02944f7a5114de25e"
+      "reason": "Direct transformation node and command-function logic with model, graph, repository, persistence and worker boundaries doubled. No compiled graph, queue, real retry loop or external provider.",
+      "sha256": "73a553ae1a2217def3689eea23a761e667d822b8879d5f1a0d15ee9814aa2714"
+    },
+    {
+      "path": "tests/test_transformation_output_retry_integration.py",
+      "layer": "tool-integration",
+      "targets": [
+        "commands/source_commands.py"
+      ],
+      "reason": "Actual worker registration and surreal_commands retry policy coupled to tenacity, isolating permanent vs transient outcomes without real delay or worker dispatch.",
+      "sha256": "952c564b84be9619cd31521f13783089961be456e9c66aa658af5fe664ff5318"
     },
     {
       "path": "tests/test_transformation_router_decisions_unit.py",
