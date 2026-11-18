@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-const sortedKeys = (value) => Object.keys(value).sort();
+import { compareCoverageKeys } from "./coverage-inventory.mjs";
+const sortedKeys = (value) => Object.keys(value).sort(compareCoverageKeys);
 function equal(a, b) {
   assert.deepStrictEqual(a, b);
 }
@@ -32,7 +33,7 @@ function receipt(value, sources) {
     assert.ok(files.every((f) => typeof f === "string" && f.length > 0));
     assert.equal(new Set(files).size, files.length);
   }
-  equal([...value.selected].sort(), [...value.executed].sort());
+  equal([...value.selected].sort(compareCoverageKeys), [...value.executed].sort(compareCoverageKeys));
 }
 /** Pure arithmetic guard, not a trust boundary. The collector must verify receipts,
  * source bytes, native-ESM provenance, mapper versions and execution reports. */

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { compareCoverageKeys } from "./coverage-inventory.mjs";
 const roots = new Set([
   "api",
   "open_notebook",
@@ -23,7 +24,7 @@ export function pythonSources(inventory) {
     result.push(file);
   }
   assert.ok(result.length > 0, "No Python production inventory");
-  return result.sort();
+  return result.sort(compareCoverageKeys);
 }
 export function auditPythonExecution(selected, evidence) {
   assert.ok(
@@ -65,8 +66,8 @@ export function auditPythonExecution(selected, evidence) {
     nodes.set(row.nodeid, { file: row.file, phases: new Map() });
   }
   assert.deepEqual(
-    [...new Set([...nodes.values()].map((row) => row.file))].sort(),
-    [...selected].sort(),
+    [...new Set([...nodes.values()].map((row) => row.file))].sort(compareCoverageKeys),
+    [...selected].sort(compareCoverageKeys),
     "Collected files differ",
   );
   for (const row of evidence.reports) {
@@ -105,9 +106,9 @@ export function auditPythonExecution(selected, evidence) {
     if (setup.outcome === "skipped" || call?.outcome === "skipped") skipped++;
   }
   assert.deepEqual(
-    [...executed].sort(),
-    [...selected].sort(),
+    [...executed].sort(compareCoverageKeys),
+    [...selected].sort(compareCoverageKeys),
     "Selected file has no passing executed test",
   );
-  return { executedFiles: [...executed].sort(), passed, skipped };
+  return { executedFiles: [...executed].sort(compareCoverageKeys), passed, skipped };
 }

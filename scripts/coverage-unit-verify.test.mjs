@@ -43,7 +43,7 @@ async function fixture(fn) {
     );
     put(
       "scripts/coverage-inventory.mjs",
-      `import {resolve} from 'node:path';export const inventory=(r,n)=>[resolve(r,'src/'+n+'.js')];export const sourceDigest=()=> 'sources';`,
+      `import {resolve} from 'node:path';export {compareCoverageKeys} from ${JSON.stringify(pathToFileURL(resolve(repo, 'scripts/coverage-inventory.mjs')).href)};export const inventory=(r,n)=>[resolve(r,'src/'+n+'.js')];export const sourceDigest=()=> 'sources';`,
     );
     put(
       "scripts/coverage-integrity.mjs",

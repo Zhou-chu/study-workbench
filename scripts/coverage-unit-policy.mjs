@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { compareCoverageKeys } from "./coverage-inventory.mjs";
 export function assertUnitIdentity(row, expected) {
   assert.match(
     expected.runId,
@@ -79,8 +80,8 @@ export function pythonRawCounts(report, limits) {
     num_branches: 0,
   };
   assert.deepEqual(
-    Object.keys(limits).sort(),
-    Object.keys(report.files).sort(),
+    Object.keys(limits).sort(compareCoverageKeys),
+    Object.keys(report.files).sort(compareCoverageKeys),
   );
   for (const [path, file] of Object.entries(report.files)) {
     const done = unique(file.executed_lines, false, limits[path]),
@@ -131,7 +132,7 @@ function counter(value) {
   return value > 0;
 }
 export function istanbulRawCounts(report, limits) {
-  assert.deepEqual(Object.keys(report).sort(), Object.keys(limits).sort());
+  assert.deepEqual(Object.keys(report).sort(compareCoverageKeys), Object.keys(limits).sort(compareCoverageKeys));
   const result = Object.fromEntries(
     ["lines", "statements", "functions", "branches"].map((k) => [
       k,
@@ -152,8 +153,8 @@ export function istanbulRawCounts(report, limits) {
       ["branchMap", "b"],
     ])
       assert.deepEqual(
-        Object.keys(file[map]).sort(),
-        Object.keys(file[key]).sort(),
+        Object.keys(file[map]).sort(compareCoverageKeys),
+        Object.keys(file[key]).sort(compareCoverageKeys),
       );
     const lines = new Map();
     for (const [id, loc] of Object.entries(file.statementMap)) {

@@ -13,7 +13,7 @@ import {
 import { resolve, relative, dirname, isAbsolute } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
-import { qualityToolingFiles } from "./coverage-inventory.mjs";
+import { compareCoverageKeys, qualityToolingFiles } from "./coverage-inventory.mjs";
 import { auditExecutedFiles } from "./coverage-executed-files.mjs";
 import { mergeNativeCoverage } from "./coverage-native-union.mjs";
 import { coverageEnvironment } from "./coverage-environment.mjs";
@@ -47,7 +47,7 @@ export function captureNativeSources(root, files) {
       new Set(files).size === files.length,
   );
   return Object.fromEntries(
-    [...files].sort().map((path) => {
+    [...files].sort(compareCoverageKeys).map((path) => {
       const file = local(root, path);
       return [file, hash(readFileSync(file))];
     }),
@@ -167,7 +167,7 @@ export async function collectNativeUnion({
   const testHashes = captureNativeSources(root, nodeFiles);
   const expectedSources = qualityToolingFiles(root);
   assert.deepStrictEqual(
-    sourcePaths.map((f) => resolve(root, f)).sort(),
+    sourcePaths.map((f) => resolve(root, f)).sort(compareCoverageKeys),
     expectedSources,
     "Native production inventory mismatch",
   );
@@ -182,8 +182,8 @@ export async function collectNativeUnion({
   const baseBytes = readFileSync(baseReport);
   const base = JSON.parse(baseBytes);
   assert.deepStrictEqual(
-    Object.keys(base).sort(),
-    Object.keys(before).sort(),
+    Object.keys(base).sort(compareCoverageKeys),
+    Object.keys(before).sort(compareCoverageKeys),
     "Incomplete Vitest denominator",
   );
   mkdirSync(output, { recursive: true });
@@ -262,7 +262,7 @@ export async function collectNativeUnion({
   const rawHashes = {},
     records = [],
     coveredEntrypoints = new Set();
-  for (const filename of readdirSync(raw).sort()) {
+  for (const filename of readdirSync(raw).sort(compareCoverageKeys)) {
     assert.ok(
       filename.endsWith(".json"),
       "Unexpected native coverage artifact",
@@ -351,8 +351,8 @@ export async function collectNativeUnion({
   }
   assert.ok(records.length > 0, "Missing native raw coverage");
   assert.deepStrictEqual(
-    [...coveredEntrypoints].sort(),
-    [...nodeFiles].sort(),
+    [...coveredEntrypoints].sort(compareCoverageKeys),
+    [...nodeFiles].sort(compareCoverageKeys),
     "Missing test-worker raw evidence",
   );
   const addition = {};

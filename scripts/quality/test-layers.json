@@ -2970,7 +2970,7 @@
         "scripts/coverage-inventory.mjs"
       ],
       "reason": "Writes a real directory/source fixture and invokes filesystem inventory ordering, then removes it. UTF-16 policy assertions do not make real filesystem assembly a unit.",
-      "sha256": "54bed12b0d6d4941fbf1426ddbdf59dcb76b856541d94c35de700b8f27e7477d"
+      "sha256": "422f39f7a95ce7ba2bd9a913a1ac0a783371146eee1fb5209ad718fb7111f3cb"
     },
     {
       "path": "scripts/coverage-inventory.test.mjs",
@@ -3105,7 +3105,7 @@
         "scripts/coverage-unit-policy.mjs"
       ],
       "reason": "Actual raw/summary/execution files and production auditors with explicit inventory/Git adapter substitutes; validates evidence assembly, not a full repository measurement.",
-      "sha256": "ad25af45eaefcc2dd97c1a4ef8bea762e988483cfe768379652ae299fee64a89"
+      "sha256": "f44d986f1b76344679697206ba13fc3a8e13b4ebf5ad769dc954c30f3a32d1c4"
     },
     {
       "path": "scripts/tests/deployment/easypanel.test.ts",

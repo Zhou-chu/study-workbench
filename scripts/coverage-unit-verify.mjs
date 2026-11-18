@@ -8,7 +8,7 @@ import {
   istanbulRawCounts,
 } from "./coverage-unit-policy.mjs";
 import { planUnitPartitions, unitPartitions } from "./coverage-unit-plan.mjs";
-import { inventory, sourceDigest } from "./coverage-inventory.mjs";
+import { compareCoverageKeys, inventory, sourceDigest } from "./coverage-inventory.mjs";
 import { fileDigest, inputDigest } from "./coverage-integrity.mjs";
 import { auditRepositoryScope } from "./coverage-scope.mjs";
 import { auditExecutedFiles } from "./coverage-executed-files.mjs";
@@ -94,8 +94,8 @@ export function verifyUnitReports(root, context) {
     all = read(root, resolve(root, "coverage/unit/run-all.json"));
   assert.ok(Array.isArray(all.partitions));
   assert.deepEqual(
-    all.partitions.map((r) => r.partition).sort(),
-    Object.keys(unitPartitions).sort(),
+    all.partitions.map((r) => r.partition).sort(compareCoverageKeys),
+    Object.keys(unitPartitions).sort(compareCoverageKeys),
     "Missing/extra/duplicate partition",
   );
   const seen = new Set();
@@ -143,8 +143,8 @@ export function verifyUnitReports(root, context) {
       summary = read(root, summaryPath);
     digest(root, summaryPath, row.reportHash);
     assert.deepEqual(
-      Object.keys(summary).sort(),
-      ["total", ...files].sort(),
+      Object.keys(summary).sort(compareCoverageKeys),
+      ["total", ...files].sort(compareCoverageKeys),
       "Summary denominator mismatch",
     );
     countsEqual(summary.total, metrics);
@@ -195,8 +195,8 @@ export function verifyUnitReports(root, context) {
         "istanbul-reports": "3.2.0",
       });
       assert.deepEqual(
-        Object.keys(e.rawHashes).sort(),
-        readdirSync(resolve(run, "raw")).sort(),
+        Object.keys(e.rawHashes).sort(compareCoverageKeys),
+        readdirSync(resolve(run, "raw")).sort(compareCoverageKeys),
       );
       assert.ok(Object.keys(e.rawHashes).length > 0);
       assert.deepEqual(
@@ -221,9 +221,9 @@ export function verifyUnitReports(root, context) {
       executed = [
         ...executed,
         ...auditExecutedFiles(root, nativeFiles, read(root, execution), "node"),
-      ].sort();
+      ].sort(compareCoverageKeys);
     }
-    assert.deepEqual(executed, [...expectedFiles].sort());
+    assert.deepEqual(executed, [...expectedFiles].sort(compareCoverageKeys));
     assert.deepEqual(row.executedTestFiles, executed);
     let passed = true,
       error;
