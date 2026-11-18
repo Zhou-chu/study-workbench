@@ -3,6 +3,7 @@ import { request as httpRequest, createServer } from 'node:http'
 import { gzipSync } from 'node:zlib'
 import { createHttpAdapter } from '../src/http-adapter.js'
 import { config } from './fixtures.js'
+import { streamingUploadBytes } from './fixtures/streaming-upload.js'
 import { closeFixtures, collect, deferred, listen, sendJson, sha256, startUpstream } from './fixtures/upstream.js'
 
 
@@ -58,7 +59,7 @@ describe.each(['legacy_password', 'device_sessions'] as const)('incremental nati
   })
 
   it('forwards a chunked binary multipart body before EOF with the original boundary and file hash', async () => {
-    const file = Buffer.from(Array.from({ length: 1_048_593 }, (_, i) => i % 256))
+    const file = streamingUploadBytes()
     const boundary = 'synthetic-boundary-20261108'
     const head = Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="synthetic.zip"\r\nContent-Type: application/zip\r\n\r\n`)
     const tail = Buffer.from(`\r\n--${boundary}--\r\n`), body = Buffer.concat([head, file, tail])
@@ -172,17 +173,6 @@ it('does not pull a second response chunk while the native response is waiting f
   expect(writes).toBe(1); expect(pulls).toBe(1)
   controller.abort(); await canceled.promise; release.resolve(); await response.body?.cancel().catch(() => {})
 })
-
-it('exact binary equality rejects changed bytes and lengths without reducing the upload fixture', () => {
-  const original = Buffer.from(Array.from({ length: 1_048_593 }, (_, i) => i % 256));
-  expect(Buffer.from(original).equals(original)).toBe(true);
-  for (const index of [0, Math.floor(original.length / 2), original.length - 1]) {
-    const changed = Buffer.from(original); changed[index] = changed[index]! ^ 1;
-    expect(changed.equals(original)).toBe(false);
-  }
-  expect(original.subarray(0, -1).equals(original)).toBe(false);
-  expect(Buffer.concat([original, Buffer.from([0])]).equals(original)).toBe(false);
-});
 
 it('propagates a before-EOF assertion failure to the owning upload instead of hanging', async () => {
   const first = deferred();

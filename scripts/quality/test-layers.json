@@ -166,15 +166,24 @@
     },
     {
       "path": "apps/bff/test/streaming-http.test.ts",
-      "layer": "mixed",
+      "layer": "api-integration",
       "targets": [
         "apps/bff/src/server.ts",
         "apps/bff/src/proxy.ts",
         "apps/bff/src/http-adapter.ts",
         "apps/bff/src/session-store.ts"
       ],
-      "reason": "Real HTTP streaming/BFF/upstream integration plus a pure Buffer equality negative-control test; helper rejection propagation also uses a real loopback server. Split before strict unit selection.",
-      "sha256": "d02cf216393cfb444500a98e9b1ffa5d683b84c11cb90c848c63d5792d6b4554"
+      "reason": "Native BFF streaming, upload, and backpressure run real loopback HTTP requests and upstream responses; the before-EOF fixture rejection control also runs through a real request.",
+      "sha256": "4ec0c85c4dbb5e8aa25ea57b89a3dee61572ddd8e92027f2933a19b20823c7b9"
+    },
+    {
+      "path": "apps/bff/test/streaming-upload-fixture-contract.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "apps/bff/test/fixtures/streaming-upload.ts"
+      ],
+      "reason": "Verifies the fixed byte sequence of the shared upload fixture and the strength of its exact Buffer equality check against ordinary byte and length differences; no production behavior or HTTP request.",
+      "sha256": "a45912e7eef73f9b749466833d758da0eea713341262d84b05935be763236087"
     },
     {
       "path": "apps/web/scripts/build-manifest.test.mjs",
@@ -2130,13 +2139,26 @@
       "sha256": "d8b24d4cffe4f8f733f82eba204e1bb4f749ccebb02a9f58d2ca997834bb5b66"
     },
     {
-      "path": "frontend/src/lib/api/browser-transport.test.ts",
-      "layer": "mixed",
+      "path": "frontend/src/lib/api/browser-transport.integration.test.ts",
+      "layer": "component-integration",
       "targets": [
-        "frontend/src/lib/api/browser-transport.ts"
+        "frontend/src/lib/api/browser-transport.ts",
+        "frontend/src/lib/api/search.ts",
+        "frontend/src/lib/auth/session-coordinator.ts"
       ],
-      "reason": "Direct policy/path/error-branding/auth classification and token helpers are unit candidates with fake config/fetch. direct SSE sends one private POST crosses search adapter and shared transport; custom AbortSignal reason observes real coordinator subscription. Separate these cooperation cases.",
-      "sha256": "6f2022ca84fea19f37196b186b4d581da2d53edcdf979eaa48f87d3ef47c2007"
+      "reason": "Real search-adapter/transport cooperation and abort/session-coordinator behavior with controlled synthetic fetch responses; verifies device and legacy streaming behavior without a live server.",
+      "sha256": "b78189dbccb148c784e44f37975a90e2558f2a932d2773f546ea382392cb5a1a"
+    },
+    {
+      "path": "frontend/src/lib/api/browser-transport.test.ts",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/api/browser-transport.ts",
+        "frontend/src/lib/api/podcasts.ts",
+        "frontend/src/lib/auth-token.ts"
+      ],
+      "reason": "Direct request-policy, path, error-branding, auth classification and token functions with fake runtime config and synthetic inputs. No live transport, mounted component or shared coordinator collaboration.",
+      "sha256": "b20be3463c35039a9634b330e7b55da2b4da61366d191ad31cbe0b87b052538b"
     },
     {
       "path": "frontend/src/lib/api/client.test.ts",

@@ -50,21 +50,6 @@ describe('bounded auth classification without changing the resource error', () =
   })
 })
 
-it('direct SSE sends one private POST with signal, cookie/CSRF and redirect rejection', async () => {
-  const { searchApi } = await import('./search')
-  const signal = new AbortController().signal
-  const body = new ReadableStream<Uint8Array>({ start(controller) { controller.enqueue(new TextEncoder().encode('data: fixture\n\n')); controller.close() } })
-  const fetcher = vi.fn<typeof fetch>(async () => new Response(body, { headers: { 'content-type': 'text/event-stream' } }))
-  vi.stubGlobal('fetch', fetcher)
-  const stream = await searchApi.askKnowledgeBase({ question: 'fixture question' } as never, signal)
-  expect(stream).toBe(body)
-  const options = fetcher.mock.calls[0][1] as RequestInit
-  expect(options).toMatchObject({ method: 'POST', signal, redirect: 'error', credentials: 'same-origin' })
-  expect(new Headers(options.headers).get('X-StudyWorkbench-CSRF')).toBe('1')
-  expect(new Headers(options.headers).get('Authorization')).toBeNull()
-  expect(fetcher).toHaveBeenCalledTimes(1)
-  vi.unstubAllGlobals()
-})
 it('explicit legacy mode remains separate and is the only path that may read old credentials', async () => {
   metadata.authMode = 'legacy_password'; metadata.apiUrl = 'http://127.0.0.1:5055'
   localStorage.setItem('auth-storage', JSON.stringify({ state: { token: 'synthetic-legacy-only' } }))
@@ -100,16 +85,6 @@ it('legacy corruption cannot reuse a previously loaded password', async () => {
   expect(getAuthToken('legacy_password')).toBeNull()
 })
 
-it('a custom AbortSignal reason stays cancellation, not an auth or service outage', async () => {
-  const { browserFetch } = await import('./browser-transport')
-  const { sessionCoordinator } = await import('@/lib/auth/session-coordinator')
-  const onRecovery = vi.fn(); const unsubscribe = sessionCoordinator.subscribe(onRecovery)
-  const controller = new AbortController(); const reason = new Error('user stopped this operation')
-  vi.stubGlobal('fetch', vi.fn(async () => { controller.abort(reason); throw reason }))
-  try { await expect(browserFetch('/search/ask', { method: 'POST', signal: controller.signal })).rejects.toBe(reason); expect(onRecovery).not.toHaveBeenCalled() }
-  finally { unsubscribe(); vi.unstubAllGlobals() }
-})
-
 it('recognizes only locally branded not-dispatched errors through own cause chains', () => {
   const local = new RequestNotDispatchedError('superseded')
   expect(asRequestNotDispatchedError(new Error('wrapper', { cause: local }))).toBe(local)
@@ -134,21 +109,5 @@ describe('legacy private-ingress cookie boundary', () => {
   it.each(['https://outside.example', 'https://localhost', 'http://localhost:9999'])('omits cookies for different origin %s', async apiUrl => {
     metadata.authMode = 'legacy_password'; metadata.apiUrl = apiUrl
     expect((await prepareBrowserRequest('GET', '/api/auth/status')).credentials).toBe('omit')
-  })
-  it('preserves legacy SSE body, signal and stream with same-origin cookies', async () => {
-    const { browserFetch } = await import('./browser-transport')
-    const { sessionCoordinator } = await import('@/lib/auth/session-coordinator')
-    sessionCoordinator.setPhase('authenticated')
-    metadata.authMode = 'legacy_password'; metadata.apiUrl = window.location.origin
-    const body = new ReadableStream<Uint8Array>({ start(c) { c.enqueue(new TextEncoder().encode('data: synthetic\n\n')); c.close() } })
-    const fetcher = vi.fn<typeof fetch>(async () => new Response(body))
-    vi.stubGlobal('fetch', fetcher)
-    const signal = new AbortController().signal
-    try {
-      const response = await browserFetch('/search/ask', { method: 'POST', body: 'synthetic', signal })
-      expect(response.body).toBe(body)
-      expect(fetcher).toHaveBeenCalledTimes(1)
-      expect(fetcher.mock.calls[0][1]).toMatchObject({ body: 'synthetic', signal, credentials: 'same-origin', redirect: 'error' })
-    } finally { vi.unstubAllGlobals() }
   })
 })
