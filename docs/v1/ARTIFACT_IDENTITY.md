@@ -109,7 +109,7 @@ investigation, never a weaker gate. Runtime local probes ignore ambient proxies.
 ## Offline gate tests
 
 ```sh
-node --test frontend/scripts/artifact-identity.test.mjs
+npm --prefix frontend run test:artifact
 PYTHON_DOTENV_DISABLED=1 python -m pytest -q \
   tests/test_v1_artifact_identity.py tests/test_v1_browser_context.py \
   tests/test_v1_frontend_http.py

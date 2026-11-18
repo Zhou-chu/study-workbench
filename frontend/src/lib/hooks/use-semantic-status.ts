@@ -1,4 +1,5 @@
 'use client'
+import { compareUtf16 } from '@/lib/utils/compare-utf16'
 import { useSyncExternalStore } from 'react'
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { evidenceApi } from '@/lib/api/evidence'
@@ -12,7 +13,7 @@ export function semanticStatusKey(notebookId: string, ids: readonly string[]) { 
 export function currentSemanticStatus(client: QueryClient, notebookId: string, ids: readonly string[]) {
   const query = client.getQueryState<SemanticStatus>(semanticStatusKey(notebookId, ids))
   const data = query?.status === 'success' ? query.data : undefined
-  if (!data || data.notebook_id !== notebookId || JSON.stringify(data.snapshot?.entries.map(entry => entry.version_id).sort()) !== JSON.stringify([...ids].sort())) return undefined
+  if (!data || data.notebook_id !== notebookId || JSON.stringify(data.snapshot?.entries.map(entry => entry.version_id).sort(compareUtf16)) !== JSON.stringify([...ids].sort(compareUtf16))) return undefined
   return data
 }
 export function semanticOptionsAllowed(client: QueryClient, notebookId: string, ids: readonly string[], options?: RetrievalOptions): boolean {

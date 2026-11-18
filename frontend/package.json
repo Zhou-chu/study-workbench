@@ -13,7 +13,7 @@
     "test:coverage": "npm run test:artifact && vitest run --coverage",
     "predev": "node scripts/prepare-pdf-assets.mjs",
     "test:unit": "vitest run",
-    "test:artifact": "node --test scripts/artifact-identity.test.mjs"
+    "test:artifact": "node --test scripts/artifact-identity.test.mjs scripts/artifact-identity-env.unit.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

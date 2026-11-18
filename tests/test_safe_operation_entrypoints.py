@@ -1,6 +1,5 @@
 """Offline regression gates; never execute the historical lifecycle recipes."""
 
-import json
 import re
 import shutil
 import subprocess
@@ -20,23 +19,6 @@ BLOCKED = (
 
 
 class SafeOperationEntrypoints(unittest.TestCase):
-    def test_no_global_process_matching_or_upstream_publish_defaults(self):
-        source = (ROOT / "Makefile").read_text()
-        self.assertNotRegex(source, r"\b(?:pkill|pgrep)\b")
-        self.assertNotIn("lfnovo/", source)
-        self.assertNotIn("git push", source)
-
-    def test_root_compose_has_no_runnable_services(self):
-        # JSON is valid Compose YAML; no YAML library or Docker interpolation needed.
-        source = (ROOT / "docker-compose.yml").read_text()
-        manifest = json.loads(source)
-        self.assertEqual(manifest["services"], {})
-        self.assertEqual(set(manifest), {"services", "x-studyworkbench-notice"})
-        self.assertIn(
-            "docs/v1/DOCKER_MIGRATION.md", manifest["x-studyworkbench-notice"]
-        )
-        self.assertIn("NOT runtime-accepted", manifest["x-studyworkbench-notice"])
-
     def test_blocked_targets_are_literal_failures_without_prerequisites(self):
         source = (ROOT / "Makefile").read_text()
         # Check before execution: even a regression must not run historical recipes.
@@ -93,10 +75,6 @@ class SafeOperationEntrypoints(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("docs/v1/ENTRYPOINTS.md", result.stdout)
             self.assertFalse((work / "unexpected-tool").exists())
-
-    def test_default_is_help_not_a_service(self):
-        source = (ROOT / "Makefile").read_text()
-        self.assertIn(".DEFAULT_GOAL := help", source)
 
 
 def _copied_makefile(tmp_path: Path, *, child_status: int = 0):

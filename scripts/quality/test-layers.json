@@ -1320,13 +1320,13 @@
     },
     {
       "path": "frontend/scripts/artifact-identity.test.mjs",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "frontend/scripts/artifact-identity.mjs",
         "frontend/next.config.ts"
       ],
-      "reason": "Pure buildEnvironment allowlist case coexists with real source/artifact writes, locks/symlinks/FIFO and Node/mkfifo children, plus real Next configuration loader. Fake compile callback does not remove actual filesystem/tool assembly.",
-      "sha256": "a46b9b15e3ccb2803423235478a842a22475d3c599bb1676a4c8eb526ca06095"
+      "reason": "Actual artifact assembly, source and artifact filesystem operations, configuration loading and OS resources, never individual pure units.",
+      "sha256": "e534937b69f5ea92e5bcaaf79ddb8c0d26f6d2ab9077a71340c6d1e800eacd51"
     },
     {
       "path": "frontend/src/app/(dashboard)/advanced/components/RebuildEmbeddings.review-validation.test.tsx",
@@ -2767,8 +2767,8 @@
         "frontend/vitest.config.ts",
         "frontend/package.json"
       ],
-      "reason": "Reads configuration source and checks textual runner/coverage declarations; does not execute those runners.",
-      "sha256": "fbdcac9f53227294755beca876cb95c49518f2d28c959c51d4f64221c8f57a5d"
+      "reason": "Static runner wiring expectations read the checked-in frontend test script and config, verifying both explicit Node test files run only through Node.",
+      "sha256": "16ce492a6719f2190b8a463314a15b3005856a5b37ae236f84e1d11684fd32c8"
     },
     {
       "path": "frontend/src/test/workbench-css.test.ts",
@@ -3038,7 +3038,7 @@
         "scripts/coverage-python-unit.mjs",
         "scripts/quality/unit_pytest_evidence.py"
       ],
-      "reason": "Five tool integration tests use real Git, filesystem, pytest, coverage.py and subprocesses. Includes old complete\u2192failed selection/argument/input and foreign-root regressions; not strict unit despite mocks at higher boundaries.",
+      "reason": "Five tool integration tests use real Git, filesystem, pytest, coverage.py and subprocesses. Includes old complete→failed selection/argument/input and foreign-root regressions; not strict unit despite mocks at higher boundaries.",
       "sha256": "d0c5bb24f13f536ea0a4f3038ce955ad1c8e3f4d9511d9f5118197d633da4091"
     },
     {
@@ -4939,14 +4939,12 @@
     },
     {
       "path": "tests/test_safe_operation_entrypoints.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
-        "Makefile",
-        "docker-compose.yml",
-        "scripts/offline_pytest.py"
+        "Makefile"
       ],
-      "reason": "Make/compose source guards plus real make subprocesses, executable doubles, cleanup and symlink fixtures. Static/tool, no live service or Docker.",
-      "sha256": "e5a3e02f83f28749ccf5e7c1ffd10ea33a8960fa258658187c855acf3c35c616"
+      "reason": "Runs make against copied files in a temporary directory with recording stubs. Source assertions directly guard tool execution; no real lifecycle or publication is invoked.",
+      "sha256": "927136851deb8c838cbf13524a9305499804260dc334863aa7a453d21ec611e8"
     },
     {
       "path": "tests/test_save_answer_note_unit.py",
@@ -7404,6 +7402,34 @@
       ],
       "reason": "Isolated shared transport classification directly consumes fixture response records with a stubbed fetch; Studio and actual network are not involved.",
       "sha256": "50cb34717bd079d3bb3eeae907d2883376e4cd4d5acf7ac434c861c79cf25897"
+    },
+    {
+      "path": "tests/test_safe_operation_entrypoints_static.py",
+      "layer": "static-contract",
+      "targets": [
+        "Makefile",
+        "docker-compose.yml"
+      ],
+      "reason": "Reads tracked Makefile and deprecated Compose source constraints without invoking tools or services.",
+      "sha256": "0c147656199490ba28bc899f5ecd8a31e8bd66f48d7401f4fee3de6d41f83997"
+    },
+    {
+      "path": "frontend/scripts/artifact-identity-env.unit.test.mjs",
+      "layer": "unit",
+      "targets": [
+        "frontend/scripts/artifact-identity.mjs"
+      ],
+      "reason": "Direct pure child-environment allowlist from object and home string literals. No build, filesystem, Git, network or child process.",
+      "sha256": "aeedf7f188377822017155a0e785c428102046b266226264cf71ce2d3cf4df9f"
+    },
+    {
+      "path": "frontend/src/lib/utils/compare-utf16.test.ts",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/utils/compare-utf16.ts"
+      ],
+      "reason": "Direct comparator tests using synthetic strings and numeric/null JSON fixtures; no app component, session, filesystem or network.",
+      "sha256": "5e060355a59d5cb286d8487b315906b60c5184cf5550df08ba90e063d5fb3f4d"
     }
   ]
 }

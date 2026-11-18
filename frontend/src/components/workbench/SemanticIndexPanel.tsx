@@ -1,4 +1,5 @@
 'use client'
+import { compareUtf16 } from '@/lib/utils/compare-utf16'
 import { EmbeddingIdentity } from './EmbeddingIdentity'
 import { OriginalEmbeddingDisclosure } from './OriginalEmbeddingDisclosure'
 import { captureEmbeddingDisclosure, matchesEmbeddingDisclosure, type EmbeddingDisclosure } from '@/lib/workbench/embedding-disclosure'
@@ -109,7 +110,7 @@ export function SemanticIndexPanel({ notebookId, sourceVersionIds, profileId, on
       assertTurnDispatch(context); assertResourceDispatch()
       const result = await evidenceApi.previewSemanticIndex(notebookId, versions, profile!.profile_id, context)
       if (!mounted.current || sync() !== capturedGeneration) return
-      if (result.profile.fingerprint !== profile!.fingerprint || result.profile.destination_descriptor_version !== profile!.destination_descriptor_version || result.snapshot.notebook_id !== notebookId || JSON.stringify(result.snapshot.entries.map(entry => entry.version_id).sort()) !== JSON.stringify([...versions].sort())) { setProblem(true); return }
+      if (result.profile.fingerprint !== profile!.fingerprint || result.profile.destination_descriptor_version !== profile!.destination_descriptor_version || result.snapshot.notebook_id !== notebookId || JSON.stringify(result.snapshot.entries.map(entry => entry.version_id).sort(compareUtf16)) !== JSON.stringify([...versions].sort(compareUtf16))) { setProblem(true); return }
       const capturedPreview = Object.freeze({ ...result, profile: Object.freeze({ ...result.profile }), snapshot: Object.freeze({ ...result.snapshot, entries: Object.freeze(result.snapshot.entries.map(entry => Object.freeze({ ...entry }))) }), warnings: Object.freeze([...result.warnings]) }) as unknown as IndexPreview
       setPreview(Object.freeze({ generation: capturedGeneration, preview: capturedPreview, versions, retryOf: job?.job_id, context }))
     } catch { if (mounted.current && sync() === capturedGeneration) setProblem(true) }
@@ -122,9 +123,9 @@ export function SemanticIndexPanel({ notebookId, sourceVersionIds, profileId, on
     try {
       const receipt = await evidenceApi.buildSemanticIndex(value.notebookId, value.request, value.context)
       if (!mounted.current || submission.current !== value || readTurnContext()?.epoch !== value.context.epoch) return
-      const versions = [...value.request.source_version_ids].sort()
-      const jobIds = receipt.jobs?.map(job => job.job_id).sort()
-      if (!receipt.group_id || receipt.notebook_id !== value.notebookId || receipt.profile_id !== value.request.profile_id || receipt.preview_hash !== value.request.preview_hash || receipt.profile_fingerprint !== value.profileFingerprint || receipt.retry_safe !== false || receipt.remote_cancel_confirmed !== false || !Array.isArray(receipt.jobs) || JSON.stringify(receipt.jobs.map(job => job.source_version_id).sort()) !== JSON.stringify(versions) || !Array.isArray(receipt.job_ids) || new Set(jobIds).size !== versions.length || JSON.stringify([...receipt.job_ids].sort()) !== JSON.stringify(jobIds) || receipt.jobs.some(job => !job.job_id || job.job_id === receipt.group_id || job.retry_safe !== false || job.remote_cancel_confirmed !== false)) throw new Error('receipt mismatch')
+      const versions = [...value.request.source_version_ids].sort(compareUtf16)
+      const jobIds = receipt.jobs?.map(job => job.job_id).sort(compareUtf16)
+      if (!receipt.group_id || receipt.notebook_id !== value.notebookId || receipt.profile_id !== value.request.profile_id || receipt.preview_hash !== value.request.preview_hash || receipt.profile_fingerprint !== value.profileFingerprint || receipt.retry_safe !== false || receipt.remote_cancel_confirmed !== false || !Array.isArray(receipt.jobs) || JSON.stringify(receipt.jobs.map(job => job.source_version_id).sort(compareUtf16)) !== JSON.stringify(versions) || !Array.isArray(receipt.job_ids) || new Set(jobIds).size !== versions.length || JSON.stringify([...receipt.job_ids].sort(compareUtf16)) !== JSON.stringify(jobIds) || receipt.jobs.some(job => !job.job_id || job.job_id === receipt.group_id || job.retry_safe !== false || job.remote_cancel_confirmed !== false)) throw new Error('receipt mismatch')
       value.receipt = Object.freeze({ ...receipt, jobs: Object.freeze(receipt.jobs.map(job => Object.freeze({ ...job, ...(job.error ? { error: Object.freeze({ ...job.error }) } : {}) }))), job_ids: Object.freeze([...receipt.job_ids]) }) as IndexReceipt
       void client.invalidateQueries({ queryKey: ['personal', 'semantic-index', value.notebookId] })
     } catch { /* Unknown is retained, never automatically replayed or replaced. */ }
