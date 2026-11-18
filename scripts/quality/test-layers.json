@@ -1089,7 +1089,7 @@
         "apps/web/src/features/sources/source-operations.ts"
       ],
       "reason": "Picker hashing settles into actual document-owned store and upload admission across remount/privacy retirement; held crypto promise is fake timing, not a fake store.",
-      "sha256": "10e725ae05e50bfc762d17f85315fa0d458de7270f54fc22331d11a7090f1cb9"
+      "sha256": "138055aba941b4a7973ef37864ceb0c356ebebccfd07759f9bb6c7ed276dea63"
     },
     {
       "path": "apps/web/src/features/sources/retention.test.tsx",

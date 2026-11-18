@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Keep readable files available for explicit upload when another file in the same Notebook picker selection cannot be read. Clear the previous picker warning when opening a fresh dialog.
+
 - Keep notebooks without a stored archive flag in the unarchived collection, matching the default shown when no filter is applied.
 
 - Fail closed when a native empty-unit coverage reporter returns no exit status, while retaining native failure codes and diagnostic records; explicitly type execution evidence without weakening its validation.

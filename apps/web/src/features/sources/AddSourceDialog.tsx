@@ -26,6 +26,7 @@ export function AddSourceDialog({ notebookId, sourceId, open, onClose, onChanged
         revision.current++;
         setChoice(null);
         setHashing(false);
+        setError(false);
         return () => { picker.current = null; revision.current++; };
     }, [open, notebookId, sourceId, operations.context, generation]);
     const valid = (token: PickerToken) => mounted.current && picker.current === token && latest.current.open && latest.current.notebookId === token.notebookId && latest.current.sourceId === token.sourceId && canDispatch(token.context, readTurnContext()) && token.generation === sessionCoordinator.current();
@@ -46,14 +47,13 @@ export function AddSourceDialog({ notebookId, sourceId, open, onClose, onChanged
         setError(filesWithinLimits.length !== files.length);
         if (!filesWithinLimits.length) return;
         setHashing(true);
-        try {
-            const ids = await Promise.all(filesWithinLimits.map(file => operations.store.captureUpload(token.notebookId, file, token.context, token.generation, token.sourceId)));
-            if (valid(token)) setChoice({ token, ids });
-        } catch {
-            if (valid(token)) setError(true);
-        } finally {
-            if (valid(token)) setHashing(false);
-        }
+        // A failed local read must not hide the other prepared files in this batch.
+        const results = await Promise.allSettled(filesWithinLimits.map(file => operations.store.captureUpload(token.notebookId, file, token.context, token.generation, token.sourceId)));
+        if (!valid(token)) return;
+        const ids = results.flatMap(result => result.status === 'fulfilled' ? [result.value] : []);
+        setChoice({ token, ids });
+        setError(filesWithinLimits.length !== files.length || results.some(result => result.status === 'rejected'));
+        setHashing(false);
     };
     const submit = () => {
         if (!choice || hashing || !valid(choice.token)) return;

@@ -104,3 +104,41 @@ it('does not populate a remounted picker from a previous mount hashing result', 
     expect(upload()).toBeDisabled();
     expect(h.workbench.drafts.sources.getSnapshot()[0]?.file).toBe(file);
 });
+
+it('offers the readable files when another selected file cannot be read', async () => {
+    const digest = crypto.subtle.digest.bind(crypto.subtle);
+    vi.spyOn(crypto.subtle, 'digest').mockImplementation((algorithm, data) => {
+        if (data instanceof Uint8Array && data[0] === 120)
+            return Promise.reject(new Error('file disappeared'));
+        return digest(algorithm, data);
+    });
+    const requests = sourceServer(() => json(receipt));
+    const h = await renderSourceFeature(panel);
+    const readable = new File(['y'], 'readable.txt');
+    choose(new File(['x'], 'unavailable.txt'), readable);
+    expect(await dialog().findByRole('alert')).toBeVisible();
+    expect(await dialog().findByText('readable.txt')).toBeVisible();
+    expect(dialog().queryByText('unavailable.txt')).not.toBeInTheDocument();
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(0);
+    fireEvent.click(upload());
+    await waitFor(() => expect(requests.filter(r => r.method === 'POST')).toHaveLength(1));
+    const submitted = requests.find(r => r.method === 'POST')!;
+    expect(new URL(submitted.url).pathname).toBe('/api/personal/notebooks/n/sources/upload');
+    expect(submitted.headers.get('content-type')).toMatch(/^multipart\/form-data; boundary=/);
+    expect(h.workbench.drafts.sources.getSnapshot()[0]?.file).toBe(readable);
+});
+
+it('does not carry a rejected file warning into the next upload dialog opening', async () => {
+    sourceServer(() => json(receipt));
+    function Reopen() {
+        const [open, setOpen] = useState(true);
+        return <><button onClick={() => setOpen(true)}>Reopen source dialog</button><AddSourceDialog notebookId="n" open={open} onClose={() => setOpen(false)} onChanged={() => { }}/></>;
+    }
+    await renderSourceFeature(<Reopen />);
+    choose(new File(['not supported'], 'unsupported.zip'));
+    expect(await dialog().findByRole('alert')).toBeVisible();
+    fireEvent.click(dialog().getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reopen source dialog' }));
+    expect(dialog().queryByRole('alert')).not.toBeInTheDocument();
+    expect(upload()).toBeDisabled();
+});
