@@ -3391,13 +3391,23 @@
     },
     {
       "path": "tests/test_embedding_publication.py",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "open_notebook/database/embedding_repository.py",
         "commands/embedding_commands.py"
       ],
-      "reason": "Direct publication/command cases with DB/provider doubles coexist with actual SDK RetryConfig/_build_retry_condition interaction. Split retry compatibility, not real database. Full-file independent review at f10d0f4; SHA256 verified after merge.",
-      "sha256": "193a97b311777aea849479764e88935d2cbf947c0155bfc386d5b3a50988bf90"
+      "reason": "Direct publication acknowledgement, budget and command failure behavior with DB and provider boundaries doubled. No real database, provider, or retry SDK execution.",
+      "sha256": "a7dc958dcdbbc14dca9e8068e5bf5cf40e10d40fbb9e22e1c252cd80d65133f8"
+    },
+    {
+      "path": "tests/test_embedding_publication_retry_integration.py",
+      "layer": "tool-integration",
+      "targets": [
+        "commands/embedding_commands.py",
+        "open_notebook/database/embedding_repository.py"
+      ],
+      "reason": "Exercises real surreal_commands RetryConfig and retry predicate with Tenacity RetryCallState. Repository connections are doubles when checking failure classification interplay.",
+      "sha256": "a8c8f0f9d5bc540a0db8c4c288780332f4e2dc0cc60a41862f4d3b16a3b2e1d7"
     },
     {
       "path": "tests/test_embedding_publication_integration.py",
@@ -4012,12 +4022,22 @@
     },
     {
       "path": "tests/test_offline_test_runner.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
+      "targets": [
+        "scripts/offline_pytest.py",
+        "api/main.py"
+      ],
+      "reason": "Actual temporary directories, cache files, environmental isolation, and Python/pytest child-process tests; network operations themselves are not performed.",
+      "sha256": "250b88f3017c83d2dd193ab3ba37f6ac2a3017a2b6214fd3a2e81b1a474f1d9d"
+    },
+    {
+      "path": "tests/test_offline_test_runner_guard_unit.py",
+      "layer": "unit",
       "targets": [
         "scripts/offline_pytest.py"
       ],
-      "reason": "Direct audit-event network_guard predicate is unit; other cases copy conftest/dotenv/cache files and run actual isolated Python/pytest child processes including application import. Network denied does not turn CLI/filesystem integration into unit.",
-      "sha256": "27b40136b2e9ba59dd0cdb572977737282cc1083c4e542e5efba2122f1268631"
+      "reason": "Direct calls to the audit-event predicate using synthetic event names and socket-family doubles. No real sockets, files, child process or audit hooks.",
+      "sha256": "cbd47f9737510bc9705df0dd6993a4c976d18221122a3bb081e382b038eb7c0e"
     },
     {
       "path": "tests/test_order_by_parser_unit.py",
