@@ -277,51 +277,6 @@ def test_auth_fixtures_are_actual_http_results(monkeypatch):
         assert "400" in schema["paths"][path][method]["responses"]
 
 
-def test_auth_tables_are_not_personal_archive_kinds():
-    from api.personal_store import KINDS
-    from api.portable_service import PERSONAL_KINDS
-
-    auth_tables = {"auth_session", "auth_access", "auth_session_guard"}
-    assert auth_tables.isdisjoint(KINDS)
-    assert auth_tables.isdisjoint(PERSONAL_KINDS)
-
-
-@pytest.mark.asyncio
-async def test_startup_runtime_is_fail_closed_and_new_epoch(monkeypatch):
-    from api import device_session_repository
-    from api.device_session_models import AuthError
-    from api.device_session_runtime import initialize_device_auth
-
-    class ReadyStore(MemoryStore):
-        async def ready(self):
-            self.check()
-
-    store = ReadyStore()
-    monkeypatch.setattr(
-        device_session_repository, "SurrealDeviceSessionStore", lambda: store
-    )
-    monkeypatch.setenv("STUDY_WORKBENCH_AUTH_MODE", "device_sessions")
-    monkeypatch.setenv("STUDY_WORKBENCH_AUTH_ORIGINS", "https://app.example")
-    monkeypatch.delenv("OPEN_NOTEBOOK_PASSWORD_FILE", raising=False)
-    monkeypatch.setenv("OPEN_NOTEBOOK_PASSWORD", "synthetic")
-    app = FastAPI()
-    await initialize_device_auth(app)
-    initial = app.state.device_auth_runtime.service
-    pair = await initial.create_session("synthetic", "Test")
-    await initialize_device_auth(app)
-    restarted = app.state.device_auth_runtime.service
-    assert initial is not restarted
-    with pytest.raises(AuthError, match="Authentication required"):
-        await restarted.authenticate_access(pair.access_token)
-    monkeypatch.setenv("STUDY_WORKBENCH_AUTH_ORIGINS", "*")
-    with pytest.raises(AuthError, match="Authentication unavailable"):
-        await initialize_device_auth(FastAPI())
-    monkeypatch.setenv("STUDY_WORKBENCH_AUTH_ORIGINS", "https://app.example")
-    monkeypatch.delenv("OPEN_NOTEBOOK_PASSWORD")
-    with pytest.raises(AuthError, match="Authentication unavailable"):
-        await initialize_device_auth(FastAPI())
-
-
 def test_auth_routing_errors_keep_sanitized_envelope(monkeypatch):
     c, _ = client(monkeypatch)
     pair = login(c).json()

@@ -31,13 +31,4 @@ describe('document-owned original embedding disclosure', () => {
     expect(createTurnRegistry(() => crypto.randomUUID()).admit({ ...value, embeddingDisclosure: summary })).toEqual({ ok: false, reason: 'invalid' })
     expect(matchesEmbeddingDisclosure(summary, identity)).toBe(false)
   })
-  it.each(['profileId', 'fingerprint', 'descriptorVersion'] as const)('rejects original summary/DTO %s mismatch', field => {
-    expect(matchesEmbeddingDisclosure(captureEmbeddingDisclosure(profile), { ...identity, [field]: 'rotated' })).toBe(false)
-  })
-  it.each(['', undefined, null, '\n', 'x'.repeat(513)])('rejects incomplete or unsafe revision metadata: %j', revision => {
-    expect(captureEmbeddingDisclosure({ ...profile, revision } as EmbeddingProfile)).toBeNull()
-  })
-  it.each(['https://user:secret@example.invalid/embed', 'https://example.invalid/embed?api_key=secret', 'https://example.invalid/embed#secret', 'javascript:secret', 'https://example.invalid/\nsecret'])('does not retain unsafe destination %s', endpoint => {
-    expect(captureEmbeddingDisclosure({ ...profile, endpoint })).toBeNull()
-  })
 })

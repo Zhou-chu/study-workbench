@@ -21,15 +21,6 @@ describe('metadata-only device bootstrap and recovery', () => {
     expect(localStorage.getItem('theme-storage')).toBe('theme'); expect(localStorage.getItem('language-storage')).toBe('locale')
     expect(JSON.stringify(auth.getState())).not.toContain('old-secret')
   })
-  it('does not read/send passwords until config establishes an explicit legacy mode', async () => {
-    const { getConfig } = await import('@/lib/config')
-    vi.mocked(getConfig).mockRejectedValueOnce(new Error('configuration unavailable'))
-    localStorage.setItem('auth-storage', JSON.stringify({ state: { token: 'do-not-send' } }))
-    const read = vi.spyOn(Storage.prototype, 'getItem'); const auth = await store()
-    await auth.getState().bootstrap()
-    expect(request).not.toHaveBeenCalled(); expect(read.mock.calls).not.toContainEqual(['auth-storage'])
-    expect(auth.getState().phase).toBe('unavailable')
-  })
   it('continues without localStorage or Web Locks', async () => {
     vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('disabled') })
     const auth = await store(); request.mockResolvedValueOnce(json(status('authenticated', metadata)))

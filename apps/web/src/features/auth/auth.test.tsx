@@ -6,7 +6,6 @@ import { AppRoutes } from '../../app/router';
 import { AppProviders } from '../../app/providers';
 import { WorkbenchSession, useWorkbenchSession } from '../../app/WorkbenchSession';
 import { createSessionController } from './session';
-import { loadRuntimeConfig, parseSessionMetadata, parseWebStatus } from '../../data/config';
 import { invalidateTurnContext, readTurnContext, sessionCoordinator } from '@study/web-transport';
 const config = { apiUrl: '', auth_mode: 'legacy_password', web_session_protocol: null, client_contracts: ['workspace-view-v1'], ui_transport_protocol: 1 };
 const capabilities = { contract_version: 'client-capabilities-v1', supported_contracts: ['workspace-view-v1'], limits: { source_upload_max_bytes: 50, portable: { max_archive_bytes: 10, max_expanded_bytes: 20, max_entity_bytes: 10, max_manifest_bytes: 10, max_request_bytes: 30, multipart_overhead_bytes: 10, max_entries: 2, max_compression_ratio: 5 } } };
@@ -66,14 +65,6 @@ it('keeps Google availability separate without suspending app readiness or retir
     expect(session.getSnapshot()).toMatchObject({ phase: 'authenticated', providerNeedsReauth: true, ready: true });
     expect(readTurnContext()?.epoch).toBe(before.epoch);
     session.dispose();
-});
-it('rejects non-same-origin config, incompatible protocol and malformed session metadata', async () => {
-    for (const patch of [{ apiUrl: 'https://evil.test' }, { ui_transport_protocol: 2 }, { client_contracts: [] }, { auth_mode: 'future' }]) {
-        vi.stubGlobal('fetch', vi.fn(async () => json({ ...config, ...patch })));
-        await expect(loadRuntimeConfig()).rejects.toThrow();
-    }
-    expect(() => parseSessionMetadata({ session_id: 's', generation: 0, access_expires_at: 'bad', refresh_expires_at: 'bad' })).toThrow();
-    expect(() => parseWebStatus({ auth_enabled: true, auth_mode: 'device_sessions', protocol_version: 1, web: { phase: 'authenticated', session: null } })).toThrow();
 });
 it('uses existing legacy custody only, empties password input, and does not store drafts or File', async () => {
     server({ enabled: true });

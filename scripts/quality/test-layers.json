@@ -34,14 +34,13 @@
     },
     {
       "path": "apps/bff/test/handler.test.ts",
-      "layer": "mixed",
+      "layer": "api-integration",
       "targets": [
         "apps/bff/src/server.ts",
-        "apps/bff/src/proxy.ts",
-        "apps/bff/src/config.ts"
+        "apps/bff/src/proxy.ts"
       ],
-      "reason": "Real Request-to-BFF handler routing/proxy safe-read/legacy dispatch stack with fake upstream is API integration; direct getWebSessionConfig missing-origin and constructor config rejection are isolated config units. No real socket here, but not a wholly unit file.",
-      "sha256": "28fd5c2bbb53e19d301c3e26a62fd1d0332e61a2d6c63d267f829ee950bdd158"
+      "reason": "Actual BFF Request routing and proxy collaborate against in-memory upstream; no browser or external network.",
+      "sha256": "b69959a403be851a36ab124dbf8d5925fa32802d2747275995d53fe514827be5"
     },
     {
       "path": "apps/bff/test/http-adapter.test.ts",
@@ -179,13 +178,13 @@
     },
     {
       "path": "apps/web/scripts/build-manifest.test.mjs",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "apps/web/scripts/build-manifest.mjs",
         "scripts/v1/spa-artifact-common.mjs"
       ],
-      "reason": "Direct canonical digest unit/export-shape check plus real package/gateway fixture creation, symlinks, retention/collision and byte inventory verification. Filesystem integration remains separate from pure canonicalization.",
-      "sha256": "2879ffd65040cc9bcd286c3794201a479e4edf6eac8e7965be619d76afdafafe"
+      "reason": "Creates and verifies real temporary package/gateway inventories and retained release bytes, including symlinks and collision fixtures.",
+      "sha256": "27bee935f78533ceee3ceb982af3d1682e3c3a10d7c79d612116299d6ff2d91f"
     },
     {
       "path": "apps/web/scripts/canonical-order.test.mjs",
@@ -293,12 +292,12 @@
     },
     {
       "path": "apps/web/src/data/evidence-api.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/data/evidence-api.ts"
       ],
-      "reason": "Reader/provenance/Markdown, blob/MIME/hash and in-memory cancellation direct cases are units. sends encoded exact identity selectors and rechecks after deferred JSON / rejects a stale download after hashing evolve actual sessionCoordinator across adapter settlement: split coordination integration. Independent full-file SPA review; SHA256 matched f10d0f4, eb2db51 and 0a446cb, rechecked after merge.",
-      "sha256": "e3ca1802241a8baa99aadb9b72467b618438627dd772d00a8d04481df9118e53"
+      "reason": "Actual coordinator advances while the adapter awaits identity response or protected-byte digest.",
+      "sha256": "02c0287c883fb33b097c9f50912a90378a3b07c6781c93554b757af99471affe"
     },
     {
       "path": "apps/web/src/data/library-api.test.ts",
@@ -348,22 +347,22 @@
     },
     {
       "path": "apps/web/src/data/source-api.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/data/source-api.ts"
       ],
-      "reason": "Fake transport upload/form/selection/wire units coexist with actual coordinator.begin and invalidateTurnContext. Some individual cases mix direct receipt checks with cross-epoch settlement; split within those cases. Independent full-file SPA review; SHA256 matched f10d0f4, eb2db51 and 0a446cb, rechecked after merge.",
-      "sha256": "2f621084c948afb60d1ea9bbe5d3d82dea123fbba0bb75c7b996e3014f263d7a"
+      "reason": "Combines the real coordinator or retirement with adapter admission/settlement; accompanying receipt and error checks preserve the full original cases.",
+      "sha256": "4678bcc90c0346c750f6d5d887116aa3a81944a0ca6cc36ae8fd1fd6b53c326c"
     },
     {
       "path": "apps/web/src/data/studio-api.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/data/studio-api.ts",
         "packages/contracts/src/workspace-view.ts"
       ],
-      "reason": "Most schema/note conversion/fake create-update adapter cases are units. note-only sentinel compile-time case is static-contract. ACK-null/workspace omission cases explicitly verify producer projection to consumer compatibility; retain mixed until separated. Independent full-file SPA review; SHA256 matched f10d0f4, eb2db51 and 0a446cb, rechecked after merge.",
-      "sha256": "12a1ddaab9218f7be76b64f1d584e4058c38479a2a4eb39273e0f2c2d97b905c"
+      "reason": "Real workspace projection composes with note read/write adapters to check consumer compatibility for nullable and omitted properties.",
+      "sha256": "63e56e4779e95066c6ee8de344a3067537787a009abf7b27489a62e1044cc66d"
     },
     {
       "path": "apps/web/src/data/studio-boundaries.test.ts",
@@ -404,15 +403,15 @@
     },
     {
       "path": "apps/web/src/features/auth/auth.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/auth/session.ts",
         "apps/web/src/data/config.ts",
         "apps/web/src/app/WorkbenchSession.tsx",
         "apps/web/src/app/router.tsx"
       ],
-      "reason": "Invalid configuration/metadata direct nodes are units. Controller/session-client/transport/admission handshake plus refresh/loss and rendered router/provider/query/draft ownership cases are independent component collaboration; fake fetch does not isolate them. Independent full-file SPA review; SHA256 matched f10d0f4, eb2db51 and 0a446cb, rechecked after merge.",
-      "sha256": "670a6c7e2d63925d7bf024ea8350fad093726458a390d954fe4b0ca80b17c4c5"
+      "reason": "Real session controller, transport, registry and mounted application coordinate authentication, readiness and lifecycle using fixture responses.",
+      "sha256": "538c57432864d3b1fe6bd09e29f9fa86399a974cab59653f1fa572405a83bc1c"
     },
     {
       "path": "apps/web/src/features/auth/cold-return.test.ts",
@@ -471,14 +470,14 @@
     },
     {
       "path": "apps/web/src/features/chat/chat.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/chat/ConversationPanel.tsx",
         "apps/web/src/app/drafts.ts",
         "apps/web/src/features/chat/turn-runtime.ts"
       ],
-      "reason": "Exact captured revision draft-registry case is direct unit. Other renderSourceFeature cases combine WorkbenchSession/router/conversation/runtime/query/registry and SSE-to-canonical recovery, remount/scope/citations. Split registry predicate from feature integration. Independent full-file SPA review; SHA256 matched f10d0f4, eb2db51 and 0a446cb, rechecked after merge.",
-      "sha256": "57505aeb2f8f697db19b98deb7e312b7ecfaddb61d1f13d7cb5ce2e0d46fe694"
+      "reason": "Mounted conversation, workbench provider, router, runtime and transport exercise deferred recovery, history and scoped turns.",
+      "sha256": "52ff9b569eef5a40146566464be955ecf0b8fad1851a6c2ecdf228514fcb278d"
     },
     {
       "path": "apps/web/src/features/chat/study-interactions.test.tsx",
@@ -538,14 +537,13 @@
     },
     {
       "path": "apps/web/src/features/library/classic-reference.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/library/RecordReference.tsx",
-        "apps/web/src/features/library/library-store.ts",
-        "apps/web/src/app/styles.css"
+        "apps/web/src/features/library/library-store.ts"
       ],
-      "reason": "Mounted classic reference/history/save/source-grant workflow plus direct recordReferences/locale-value case and CSS source check. Split explicit-translated-labels/full-identity case to unit; final controls case itself needs static/DOM separation.",
-      "sha256": "0de1325d5d15099ad698c950151d3fb5d2750bc6cfd1391e49897b6d96bdbd07"
+      "reason": "Mounted classic history and reference flows through the library app, including accessibility names and actual controls.",
+      "sha256": "581f71d552e7cbc494279b5118b134de18c15c3f3cf2de5501fd4bdec13b5bb6"
     },
     {
       "path": "apps/web/src/features/library/command-observer.test.ts",
@@ -783,12 +781,12 @@
     },
     {
       "path": "apps/web/src/features/notebooks/notebooks.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/notebooks/NotebookHome.tsx",
         "apps/web/src/features/notebooks/NotebookPage.tsx"
       ],
-      "reason": "Collection-only loading/filtering/archive/sorting behavior may be isolated as units, but creation-to-navigation, workspace, actual controller/session epoch and back/forward cases exercise independent components. Routing wrapper presence alone is not the classification reason.",
+      "reason": "Every case mounts a real RouterProvider, AppRoutes and AppProviders (tests additionally cover WorkbenchSession); even collection-only search, archive, refresh and sort consume app route/query collaboration rather than isolated component state. All test bytes remain unchanged.",
       "sha256": "eea7592de3513d16b1f4d1d78e28d2be6f06afe8f66d03bf5537deb1851a002a"
     },
     {
@@ -1152,24 +1150,24 @@
     },
     {
       "path": "apps/web/src/features/sources/uploads.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/sources/source-operations.ts",
         "apps/web/src/app/drafts.ts"
       ],
-      "reason": "Direct source capture/dedup/reconciliation cases coexist with navigation-controller collaboration and actual sessionCoordinator begin/confirmed retirement across pending operations. File/FileReader are in-memory DOM fixtures, not disk. Full test file reviewed; classification only, no test or coverage run.",
-      "sha256": "c0b4f5da4808a493053c9a8410a3b872b5044c58fbac697bd654594b835254a9"
+      "reason": "Actual registry/navigation/epoch lifecycle runs alongside source operations; keeps retired, pending and reconciliation cases intact.",
+      "sha256": "40124c630c3a0c7e9564d56a3e33b0930f291699ea90c6eb2d1db511825ec0c1"
     },
     {
       "path": "apps/web/src/features/studio/artifacts.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/data/studio-api.ts",
         "apps/web/src/features/studio/studio-store.ts",
         "apps/web/src/features/studio/StudioPanel.tsx"
       ],
-      "reason": "Direct parser, fake-transport adapter, presentation and store-state units coexist with actual sessionCoordinator retirement during download/digest. Split those independent async-session collaboration cases; do not blanket downgrade internal pure reducer helpers. Full test file reviewed; classification only, no test or coverage run.",
-      "sha256": "f9a9e0bb63c527cf3042df20db6501079b572517f3f3c0b3cfd4ddce7322579a"
+      "reason": "Mounted Studio, adapter with actual session generation transitions, and real parser receipts consumed by Studio store are integration coverage.",
+      "sha256": "c0c24b06d8fd5d27c7066d2b108e49c3718fa40d183786be0e9b704fcbb51c17"
     },
     {
       "path": "apps/web/src/features/studio/editorial.test.tsx",
@@ -1183,13 +1181,13 @@
     },
     {
       "path": "apps/web/src/features/studio/html-attachment.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/data/studio-api.ts",
         "packages/web-transport/src/client.ts"
       ],
-      "reason": "Direct shared transport invalid-ingress cases coexist with actual Studio adapter plus shared ingress transport and digest collaboration for opaque HTML artifacts. Fake fetch and FileReader bytes avoid network/disk, but the cross-boundary compatibility path remains integrated. Full test file reviewed; classification only, no test or coverage run.",
-      "sha256": "80561be68603ff86531eaa4eb423a3b9d545b698f77d01a03b187a0ded6cd952"
+      "reason": "Actual Studio protected-byte consumer runs with the real shared transport and digest across boundaries; no browser or external network.",
+      "sha256": "f48c3b4a53151da9fd391edc09bdf0ed01258dfc51c24cb1b1b3ede09ad65e9c"
     },
     {
       "path": "apps/web/src/features/studio/interactions.test.tsx",
@@ -1233,12 +1231,12 @@
     },
     {
       "path": "apps/web/src/features/studio/notes.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/studio/studio-store.ts"
       ],
-      "reason": "Direct store conflict/save/metadata and fake-send adapter cases are unit candidates. shows conflict and controlled draft consumes real settled store in NoteEditor; keeps %s strict despite optional-null equivalence crosses workspace projection, editor conversion and store compatibility. Keep these consumer contracts separate.",
-      "sha256": "f73917a329e3ce293e511bfb0d3d2bb98b7c8eec1f30e472726ee9202827d4a7"
+      "reason": "Real NoteEditor consumes store settlement; classic adapters and typed workspace projection are also exercised across parser/store compatibility boundaries.",
+      "sha256": "ca19c526d6f6a3b1e6753b0c375652870fb546bcc1d97a5a2bf1d50787aa0e54"
     },
     {
       "path": "apps/web/src/features/studio/store-boundaries.test.ts",
@@ -1254,17 +1252,19 @@
       "layer": "unit",
       "targets": [
         "apps/web/src/i18n/configuration-messages.ts",
+        "apps/web/src/i18n/global-messages.ts",
         "apps/web/src/i18n/index.tsx",
         "apps/web/src/i18n/library-messages.ts",
         "apps/web/src/i18n/locales/index.ts",
         "apps/web/src/i18n/message-catalog.ts",
+        "apps/web/src/i18n/native-messages.ts",
         "apps/web/src/i18n/session-messages.ts",
         "apps/web/src/i18n/shell-messages.ts",
         "apps/web/src/i18n/transformation-messages.ts",
         "frontend/src/lib/locales/index.ts"
       ],
       "reason": "Pure imported locale-value key/interpolation/completeness and exact translation mapping assertions; no runtime translation service or source-text scanning.",
-      "sha256": "7545807a0eda2bab804ab30dd4942bc969cd6d3023da1dcd8a87084afaa06c1d"
+      "sha256": "08617d058a130c770fd5d892fbd531f44dfcc9a3ccfdfd0eaa20f46157ea5b71"
     },
     {
       "path": "apps/web/src/theme/contrast.test.ts",
@@ -1597,12 +1597,25 @@
     },
     {
       "path": "frontend/src/components/auth/SessionRecovery.test.tsx",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
-        "frontend/src/components/auth/SessionRecovery.tsx"
+        "frontend/src/components/auth/SessionRecovery.tsx",
+        "frontend/src/components/auth/LoginForm.tsx"
       ],
-      "reason": "Direct recovery label/password/callback views with synthetic store values coexist with real DashboardLayout/auth-store transitions retaining exact editor/File and cross-dialog focus; split isolated views from shared recovery lifecycle.",
-      "sha256": "8679839a310e9e5129ba59eba6c4f7a668df745608979484ac2612618724cc7d"
+      "reason": "Direct recovery and login component views with synthetic auth state and callback mocks; no DashboardLayout or external modal composition.",
+      "sha256": "544e5a06f44bd2526336d3ddc599782f6ac0a1db45b3c6d4e8e399cc9a83b19d"
+    },
+    {
+      "path": "frontend/src/components/auth/SessionRecovery.lifecycle.test.tsx",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/components/auth/SessionRecovery.tsx",
+        "frontend/src/components/ui/dialog.tsx",
+        "frontend/src/app/(dashboard)/layout.tsx",
+        "frontend/src/lib/stores/auth-store.ts"
+      ],
+      "reason": "Real DashboardLayout and editor/modal focus retain draft and file identity across auth-store state transitions.",
+      "sha256": "42df7af533fee210e2e3e5536f6356491eb99cc1f8a4e1b0602adc1815f90a5e"
     },
     {
       "path": "frontend/src/components/common/ConfirmDialog.test.tsx",
@@ -1644,16 +1657,34 @@
     },
     {
       "path": "frontend/src/components/evidence/EvidenceReader.test.tsx",
-      "layer": "mixed",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/evidence/EvidenceReader.tsx",
+        "frontend/src/components/evidence/SourceProvenance.tsx"
+      ],
+      "reason": "Direct settled evidence reader labels, provenance, disclosure and missing-original UI with synthetic evidence, fake API and fake PDF child.",
+      "sha256": "82f7e6d256f7085782a1350a92526b9c3bf66eee90fbf2e61baa93074bc485f4"
+    },
+    {
+      "path": "frontend/src/components/evidence/EvidenceReader.lifecycle.test.tsx",
+      "layer": "component-integration",
       "targets": [
         "frontend/src/components/evidence/EvidenceReader.tsx",
         "frontend/src/components/evidence/EvidenceMaintenance.tsx",
-        "frontend/src/components/evidence/SourceProvenance.tsx",
-        "frontend/src/lib/utils/evidence.ts",
-        "frontend/src/app/globals.css"
+        "frontend/src/lib/utils/evidence.ts"
       ],
-      "reason": "After 20 complete isolated reader nodes split out, retains authored CSS contracts and maintenance/reader revision/refetch collaboration plus other not-yet-separated cases; whole file remains mixed.",
-      "sha256": "00dc0ae4fc65786724d7a6692308da39560e02c322c26947d53bb7d505af06a6"
+      "reason": "Coordinates reader, maintenance job/polling/refetch and retrieval/download lifecycles with explicit API doubles and a fake PDF renderer; exercises composition, not isolated pure coverage.",
+      "sha256": "d03060af85fd1e4608524f39471b69ab610fb64a084e6411e1b712b99c101180"
+    },
+    {
+      "path": "frontend/src/components/evidence/EvidenceReader.layout.test.tsx",
+      "layer": "static-contract",
+      "targets": [
+        "frontend/src/app/globals.css",
+        "frontend/src/components/evidence/EvidenceReader.tsx"
+      ],
+      "reason": "Asserts actual authored CSS constraints against mocked-reader DOM fixture with preserved content, provenance and filter, not computed browser geometry.",
+      "sha256": "c86f0e6b0022d39e44a926e0ff651c30a0a7ae602939738fdd37c660de0b7015"
     },
     {
       "path": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx",
@@ -1874,12 +1905,22 @@
     },
     {
       "path": "frontend/src/components/ui/markdown-editor.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "frontend/src/components/ui/markdown-editor.tsx"
       ],
-      "reason": "Actual theme hydration to editor and MarkdownPreview/plugin/sanitization/KaTeX compatibility pipelines are component integration. Top-level marker case also reads project/vendor CSS for static/style checks. Dynamic editor is fake; not browser acceptance.",
-      "sha256": "5eb70d9c0733db5f602ac93fa7e56013da2a6e42fb27dfebd1ddb43919213bb2"
+      "reason": "Actual theme hydration and MarkdownPreview/plugin processing with the dynamic editor mocked; does not read CSS sources or count as isolated unit coverage.",
+      "sha256": "77333775f20225ec3cfc93aa80d2fa243f132ce070a818b4e3a828100d9510e4"
+    },
+    {
+      "path": "frontend/src/components/ui/markdown-editor.layout.test.tsx",
+      "layer": "static-contract",
+      "targets": [
+        "frontend/src/app/globals.css",
+        "frontend/src/components/ui/markdown-editor.tsx"
+      ],
+      "reason": "Checks authored application and vendor CSS list-marker rules against a neutral rendered Markdown fixture, not a real browser-layout run.",
+      "sha256": "537c0c88a19020e7d4c10a79471b2bf5ff68d022dec6cdfb39abbcfb6604d641"
     },
     {
       "path": "frontend/src/components/ui/markdown-renderer.test.tsx",
@@ -1967,16 +2008,28 @@
     },
     {
       "path": "frontend/src/components/workbench/StudyWorkbench.reader-navigation.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
-        "frontend/src/components/workbench/StudyWorkbench.tsx"
+        "frontend/src/components/workbench/StudyWorkbench.tsx",
+        "frontend/src/components/evidence/EvidenceReader.tsx"
       ],
-      "reason": "Real workbench/reader/query/selection collaboration, external APIs/PDF rasterizer doubled. Final long-citation case also applies source-CSS workbenchRules at synthetic widths: static plus component, not real layout/browser acceptance.",
-      "sha256": "4b47ce5b87ba138ffd5b7e481c9a05e61118ec0a655fa085e62150202a792b98"
+      "reason": "Actual workbench, reader, query and selection owner cooperate across late citation intents and route unmount; external APIs and PDF rasterizer are doubled.",
+      "sha256": "e22988eaa49611ba07d18547a0c8eb9f620fe16ad38cb281220828a8b79c255d"
+    },
+    {
+      "path": "frontend/src/components/workbench/StudyWorkbench.reader-navigation.layout.test.tsx",
+      "layer": "static-contract",
+      "targets": [
+        "frontend/src/components/workbench/StudyWorkbench.tsx",
+        "frontend/src/components/evidence/EvidenceReader.tsx",
+        "frontend/src/app/globals.css"
+      ],
+      "reason": "Checks authored CSS wrapping against a DOM fixture populated by a real workbench-to-reader navigation; no computed browser geometry or unit coverage.",
+      "sha256": "5baada941ced0e0deaf1209f3fc6141ff9681bc9a448df221844b78a9e4ee1ce"
     },
     {
       "path": "frontend/src/components/workbench/StudyWorkbench.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "frontend/src/components/workbench/StudyWorkbench.tsx",
         "frontend/src/components/providers/TurnOperationProvider.tsx",
@@ -1986,11 +2039,20 @@
         "frontend/src/lib/hooks/use-workbench-evidence-search.ts",
         "frontend/src/lib/hooks/use-workbench-uploads.ts",
         "frontend/src/lib/workbench/turn-operations.ts",
-        "frontend/src/app/(dashboard)/layout.tsx",
+        "frontend/src/app/(dashboard)/layout.tsx"
+      ],
+      "reason": "Coordinates real workspace cache, selection and turn state, dashboard recovery and retained draft/conflict lifecycle with simulated APIs. Source CSS checks are separate.",
+      "sha256": "1e864094059575baf165db100926751b50eabde5a99f939ff33c0ed4998becf6"
+    },
+    {
+      "path": "frontend/src/components/workbench/StudyWorkbench.layout.test.tsx",
+      "layer": "static-contract",
+      "targets": [
+        "frontend/src/components/workbench/StudyWorkbench.tsx",
         "frontend/src/app/globals.css"
       ],
-      "reason": "Actual workspace cache/selection writer/turn admission and settlement, dashboard authentication recovery and note conflict UI collaborate; also CSS source-rule checks. No full-file unit classification or pixel-validation claim.",
-      "sha256": "2a3527a79358095df5b93ece34132a9ba79b2a9aedd96f6e099d4d5f91ac3430"
+      "reason": "Uses synthetic DOM and authored stylesheet rules for width, wrapping and touch targets, with benign workbench fixtures; no pixel or real browser-geometry assertion.",
+      "sha256": "165acb98cab7286a898087a95e534f412e26c4a762ac9be0d9163d482dec89b1"
     },
     {
       "path": "frontend/src/components/workbench/TurnCoverage.test.tsx",
@@ -2091,13 +2153,23 @@
     },
     {
       "path": "frontend/src/lib/api/evidence.test.ts",
-      "layer": "mixed",
+      "layer": "api-integration",
       "targets": [
         "frontend/src/lib/api/evidence.ts",
         "frontend/src/lib/api/client.ts"
       ],
-      "reason": "DTO/wire clauses use actual axios/browser adapter with fake native fetch; captured epoch/target retirement explicitly crosses real context and transport. Optional-context case also contains expectTypeOf static assertion. Split static/direct adapter checks from lifecycle collaboration.",
-      "sha256": "ba5f0fbc3d985af9d35f7404050a608417e4c08f57f7277c2810010c25691e4a"
+      "reason": "Actual Axios/browser fetch adapter serializes wire DTOs and coordinates pre-dispatch context retirement, using fake native fetch and no network.",
+      "sha256": "ca80f14a33c95d0e8027cc99b768f04ab97144904be51fe86003631b677ab5f3"
+    },
+    {
+      "path": "frontend/src/lib/api/evidence.contract.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "frontend/src/lib/api/evidence.ts",
+        "frontend/src/lib/workbench/turn-context.ts"
+      ],
+      "reason": "Compile-time assertion preserves the optional captured context in the evidence search signature.",
+      "sha256": "3983b5d0eabf3e5cf48c8e23941a65a8b856aaf2cf494b4cac33078d57b779de"
     },
     {
       "path": "frontend/src/lib/api/insights.test.ts",
@@ -2209,14 +2281,34 @@
     },
     {
       "path": "frontend/src/lib/api/workbench-contract.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/api/workbench.ts"
+      ],
+      "reason": "Direct DTO identity/preservation through an injected fake Axios adapter, without native dispatch or context-retirement checks.",
+      "sha256": "b501b28525bd422aa05791481179577d2998789194d31bf7875f11efe3cf2142"
+    },
+    {
+      "path": "frontend/src/lib/api/workbench-contract.transport.test.ts",
+      "layer": "api-integration",
       "targets": [
         "frontend/src/lib/api/workbench.ts",
         "frontend/src/lib/api/client.ts",
         "frontend/src/lib/workbench/turn-context.ts"
       ],
-      "reason": "Basic fake-adapter wire projections coexist with static expectTypeOf assertions and actual context retirement during browser transport body preparation. Split direct DTO cases from lifecycle and type-only contracts.",
-      "sha256": "d89f9e3b0612899b0d6aa65856e796adf1d6b0b783210099d52e4065108a9ef4"
+      "reason": "Actual browser Axios adapter and turn-context owner cooperate on wire DTOs and stale-context retirement; native fetch is fake.",
+      "sha256": "e675314315f1cb84b54f9f087b9ea539ddc74f93d92df957aeaeb5a24d05a286"
+    },
+    {
+      "path": "frontend/src/lib/api/workbench-contract.types.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "frontend/src/lib/api/workbench.ts",
+        "frontend/src/lib/types/personal.ts",
+        "frontend/src/lib/workbench/turn-context.ts"
+      ],
+      "reason": "Checks turn acknowledgement and opaque receipts, optional context, and separation of read position from the write DTO at the type boundary.",
+      "sha256": "66a1f1a80ef122a6b12ac029b07a3ccd25c2c30cfc681c94db155d59cc01ed60"
     },
     {
       "path": "frontend/src/lib/auth/session-coordinator.test.ts",
@@ -2416,12 +2508,23 @@
     },
     {
       "path": "frontend/src/lib/hooks/use-workbench.test.tsx",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "frontend/src/lib/hooks/use-workbench.ts"
       ],
-      "reason": "Direct hook serial selection/error/polling with fake API are unit candidates; privacy/target/auth/readiness changes deliberately integrate real context/coordinator/auth-store with pending queue and retained callbacks. Classify those parameters separately.",
-      "sha256": "66237eb7d39be34b36f83d383b96c5c60f8bc6bcfe8da2c2eac8e19520d73f5d"
+      "reason": "Direct hook queue feedback, errors, explicit retry and polling with fake workbench API; does not trigger an auth or readiness transition.",
+      "sha256": "a4fa4509cdcab01c17b34e8781f41fd1bac015e0014cd84aefee894da3738eb4"
+    },
+    {
+      "path": "frontend/src/lib/hooks/use-workbench.lifecycle.test.tsx",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/lib/hooks/use-workbench.ts",
+        "frontend/src/lib/workbench/turn-context.ts",
+        "frontend/src/lib/stores/auth-store.ts"
+      ],
+      "reason": "Actual turn context, auth-store and coordinator transitions retire queued/retained callbacks, plus Query online manager connectivity effects.",
+      "sha256": "e1d8ab2856b585e22d1e9620c74e236afbe310cf259a50ae4df3d5671d8fdc0a"
     },
     {
       "path": "frontend/src/lib/locales/index.test.ts",
@@ -2470,12 +2573,21 @@
     },
     {
       "path": "frontend/src/lib/stores/auth-store.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "frontend/src/lib/stores/auth-store.ts"
       ],
-      "reason": "Most tests execute auth API/browser protocol/coordinator/token retirement, including actual QueryObserver recovery. does not read/send passwords until config establishes an explicit legacy mode exits at fake config failure before auth API and is direct store-unit candidate; whole file is not unit.",
-      "sha256": "849ddf0d327042595464211c754c462d9bafdbf56c4091e17165dbfc2dd1f1b0"
+      "reason": "Real app store and protocol/session coordination, including observer retention and retirement through mocked API and package boundaries; not a live network.",
+      "sha256": "8e0fc29d8c906f897e0b88d70a5aac1b9e07d53fcbdf2a821ccb65dee9337e1d"
+    },
+    {
+      "path": "frontend/src/lib/stores/auth-store.config.test.ts",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/stores/auth-store.ts"
+      ],
+      "reason": "Injected local configuration failure exits before any credential-storage read or request, using only isolated store state and fetch spy.",
+      "sha256": "7067932c81cd0b9ddd3e0eb1269da0e845d5757e76397eec7091070ab7041458"
     },
     {
       "path": "frontend/src/lib/utils/command-submission.test.ts",
@@ -2716,13 +2828,13 @@
     },
     {
       "path": "packages/domain/src/embedding-disclosure.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "packages/domain/src/embedding-disclosure.ts",
         "packages/domain/src/turn-operations.ts"
       ],
-      "reason": "Direct disclosure rejection/matching cases are units. First ownership/capture/replay cases assemble disclosure object with real registry and canReplayCapturedTurn. Split direct validation from registry interoperability.",
-      "sha256": "b9caa64dffd7357c59479875870b243b4cd8fd8603b138a9681335009344cf2f"
+      "reason": "Original disclosure capture combines with independent registry admission and replay ownership.",
+      "sha256": "fdd3f1cd7bf111a5ba53d9cf90556a63d2a7385dd3172794f3280a64ab33546e"
     },
     {
       "path": "packages/domain/src/operation.test.ts",
@@ -2757,15 +2869,12 @@
     },
     {
       "path": "packages/domain/src/turn-reconciliation.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
-        "packages/domain/src/turn-reconciliation.ts",
-        "packages/domain/src/turn-operations.ts",
-        "packages/contracts/src/operation.ts",
-        "packages/contracts/src/workspace-view.ts"
+        "packages/domain/src/turn-reconciliation.ts"
       ],
-      "reason": "Fixture admits into real registry; completion cases compose reconciliation plus registry settlement/release and receipt parser. Also contains standalone type assertion and POST projections. Split registry collaboration, direct reconcilers with literal captures and static contract; do not relabel whole file unit.",
-      "sha256": "d36314db41ad1a99ae6af94a38f8777df24410df76e313eb023416becdd6ba11"
+      "reason": "Reconcile a captured request and canonical response literals without registry admission, settlement, external I/O, or service calls.",
+      "sha256": "d94382a9b6af0fd0b1c723fe0d53d7176771bf0eda37f4f0f4660b948a5c8359"
     },
     {
       "path": "packages/web-transport/src/boundaries.test.ts",
@@ -2865,16 +2974,16 @@
     },
     {
       "path": "scripts/coverage-inventory.test.mjs",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
-        "scripts/coverage-policy.mjs",
         "scripts/coverage-inventory.mjs",
         "scripts/coverage-integrity.mjs",
         "scripts/coverage-environment.mjs",
-        "scripts/coverage-process.mjs"
+        "scripts/coverage-process.mjs",
+        "scripts/coverage-policy.mjs"
       ],
-      "reason": "Direct raw-count assessCoverage policy unit coexists with actual file inventories/manifests, Git init and Node/c8 child execution. Split pure policy from tool integration; generated synthetic c8 evidence is only runner testing, not project coverage.",
-      "sha256": "80641b52fb26359e6cbc340dcb8f5c2402937f90e06ea491ca49156bdf331097"
+      "reason": "Real filesystem inventories and manifests, initialized Git fixtures, or child process c8/logging; never strict units.",
+      "sha256": "a736ac8bf4a3e2b30e4d29edf6ba3c8d29bb02cb370b75f3d4b3d840036c5e75"
     },
     {
       "path": "scripts/coverage-manifest-custody.test.mjs",
@@ -2929,7 +3038,7 @@
         "scripts/coverage-python-unit.mjs",
         "scripts/quality/unit_pytest_evidence.py"
       ],
-      "reason": "Five tool integration tests use real Git, filesystem, pytest, coverage.py and subprocesses. Includes old complete→failed selection/argument/input and foreign-root regressions; not strict unit despite mocks at higher boundaries.",
+      "reason": "Five tool integration tests use real Git, filesystem, pytest, coverage.py and subprocesses. Includes old complete\u2192failed selection/argument/input and foreign-root regressions; not strict unit despite mocks at higher boundaries.",
       "sha256": "d0c5bb24f13f536ea0a4f3038ce955ad1c8e3f4d9511d9f5118197d633da4091"
     },
     {
@@ -3068,17 +3177,16 @@
     },
     {
       "path": "scripts/tests/quality/helpers.test.ts",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
-        "scripts/coverage-policy.mjs",
         "scripts/coverage-environment.mjs",
         "scripts/coverage-process.mjs",
         "scripts/coverage-integrity.mjs",
         "scripts/coverage-inventory.mjs",
         "scripts/coverage-scope.mjs"
       ],
-      "reason": "Direct assessCoverage raw-ratio/error policy units coexist with actual temp directory/env creation, file/report mutations, Git init and child process stdout/exit tests. Name helpers does not imply whole-file unit.",
-      "sha256": "df0f5012fb93e12cfef78bbadc31f069a8a905efca58b2a2eff6322806ab97df"
+      "reason": "Exercises actual file inventories and temporary environments, Git fixture directories and child processes.",
+      "sha256": "624d22aba0dfd54698cb2ad1d3ff65a6963a503c8aab3a6e262de732ea58223a"
     },
     {
       "path": "scripts/tests/quality/trusted-git.test.ts",
@@ -5142,17 +5250,12 @@
     },
     {
       "path": "tests/test_spa_artifacts.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
-        "scripts/v1/check_spa_artifacts.py",
-        "deploy/v1/compose.yaml",
-        "deploy/v1/web-gateway.conf",
-        "deploy/v1/bff-proxy.conf",
-        "deploy/v1/Dockerfile.web",
-        "deploy/v1/Dockerfile.bff"
+        "scripts/v1/check_spa_artifacts.py"
       ],
-      "reason": "Direct canonical/safe-path unit, deployment/source-text static contracts and real artifact mutations/FIFO/symlinks with verifier/parser process integration coexist. No nginx/image/browser run; pure file gates docstring is not pure-unit evidence.",
-      "sha256": "5d2365487edcb44cc4d05b30d0b2856fa192c2a8897c6ae7743d99a9f7bc7c6e"
+      "reason": "Tests real synthetic artifact filesystem assembly, inventories and file verification; no actual image build, browser, or network.",
+      "sha256": "ba83b439d7f35a9584a4b71eb90f8805a0b739461e24ba900b2c85186c7ada51"
     },
     {
       "path": "tests/test_spa_cutover_plan.py",
@@ -5513,12 +5616,15 @@
     },
     {
       "path": "tests/test_v1_device_session_http.py",
-      "layer": "mixed",
+      "layer": "api-integration",
       "targets": [
+        "api/routers/auth.py",
+        "api/auth.py",
+        "api/personal_security.py",
         "api/device_session_service.py"
       ],
-      "reason": "Real TestClient auth/router/middleware lifecycle and a real password-file outage are integration. test_auth_tables_are_not_personal_archive_kinds is a direct constant contract candidate; test_startup_runtime_is_fail_closed_and_new_epoch exercises runtime-to-service boot retirement with a memory store. test_unknown_modes_fail_closed combines a getter assertion and HTTP wiring, requiring an assertion-level split.",
-      "sha256": "2bfbcded8f1c8d82418b5a72686eadee8fea80ee43ce9547633131ed15e668aa"
+      "reason": "Actual ASGI route, auth and personal security middleware request composition with in-memory persistence.",
+      "sha256": "d2e59ddc52aa0687b98ad5c1dc356aa6ba61247dd71de00ca0d9fd1afffb70a4"
     },
     {
       "path": "tests/test_v1_device_session_repository.py",
@@ -5928,16 +6034,14 @@
     },
     {
       "path": "tests/test_v1_portable_roundtrip.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "api/portable_service.py",
-        "api/portable_zip.py",
-        "api/portable_limits.py",
         "api/notebooklm_links.py",
-        "api/evidence_service.py"
+        "api/personal_store.py"
       ],
-      "reason": "Pure note revision normalization and constructor/pre-ZipFile BytesIO rejection coexist with actual ZIP/staging/filesystem and some database/checkpoint lifecycle. Whole-file coverage cannot be called unit.",
-      "sha256": "cfb3a0879b88e6632a069f0cac411a72f82b800791131a678cc3f4dab9c66e7e"
+      "reason": "Exercises actual portable archive bytes, expansion, disposable filesystem and SQLite boundaries or the existing opt-in native roundtrip. No live service used by default.",
+      "sha256": "5535544528b3c125dbe3ea0e2d5690d17434b1ea565034b68f23c16064057aa1"
     },
     {
       "path": "tests/test_v1_reader_history.py",
@@ -7047,6 +7151,259 @@
       ],
       "reason": "Direct repository acknowledgement parsing and error decisions with literal schema acknowledgements and a synthetic connection context; no SQL service.",
       "sha256": "a78ffe517d2fdc526091d60019d9b172328b4613a25d5dfcc90a612d8db83caf"
+    },
+    {
+      "path": "apps/bff/test/handler-config.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/bff/src/server.ts",
+        "apps/bff/src/config.ts"
+      ],
+      "reason": "Direct trusted-origin config and constructor rejection before readiness or any HTTP handler invocation; scoped environment doubles.",
+      "sha256": "897fd0565c821d67be620ccbe37c82f569295a76e7af88a1626523cc52736fdf"
+    },
+    {
+      "path": "packages/domain/src/embedding-disclosure.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "packages/domain/src/embedding-disclosure.ts"
+      ],
+      "reason": "Direct capture and identity matching against literal profiles; no registry, side effects or I/O.",
+      "sha256": "e25c7c1c3395a1a2242b786d412454382938b635ea5f00ef360039a45bdaf08d"
+    },
+    {
+      "path": "packages/domain/src/turn-reconciliation-registry.test.ts",
+      "layer": "component-integration",
+      "targets": [
+        "packages/domain/src/turn-reconciliation.ts",
+        "packages/domain/src/turn-operations.ts"
+      ],
+      "reason": "Real turn registry admits, settles, retries or releases based on reconciliation of synthetic snapshots.",
+      "sha256": "b16b8e00542b21c856fca2db29d998a6fa5b882a7c539696d875f641e75e1381"
+    },
+    {
+      "path": "packages/domain/src/turn-reconciliation-types.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "packages/contracts/src/workspace-view.ts"
+      ],
+      "reason": "Type-only assumption about nullable support metadata; no runtime business behavior.",
+      "sha256": "901b1a4e4031a4c141539632393ea521c3f6d5419e1cf54022a2db883d587f3e"
+    },
+    {
+      "path": "packages/domain/src/turn-post-outcome.test.ts",
+      "layer": "unit",
+      "targets": [
+        "packages/contracts/src/operation.ts"
+      ],
+      "reason": "Direct pure readTurnPostOutcome projection through domain re-export on literal supplied HTTP status and body; no HTTP requests.",
+      "sha256": "53149a23fad8e4c6f5ff980780050b028b508f192bf10d04a30b6b9e7aef414f"
+    },
+    {
+      "path": "scripts/coverage-policy.unit.test.mjs",
+      "layer": "unit",
+      "targets": [
+        "scripts/coverage-policy.mjs"
+      ],
+      "reason": "Pure assessCoverage decisions on literal run receipts, hashes and raw ratios; no files or subprocess.",
+      "sha256": "d4f942909910ae9e6e67b17240549da605f4d47487a0198f06122b16f16bc8bf"
+    },
+    {
+      "path": "scripts/tests/quality/coverage-policy.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "scripts/coverage-policy.mjs"
+      ],
+      "reason": "Pure assessCoverage decisions on literal run receipts, hashes and raw ratios; no files or subprocess.",
+      "sha256": "5f09ab28871cb6e9daf85942b90e865be76de0fa4d563e1cfe14dc897814a10b"
+    },
+    {
+      "path": "tests/test_v1_device_session_http_archive_contract.py",
+      "layer": "static-contract",
+      "targets": [
+        "api/personal_store.py",
+        "api/portable_service.py"
+      ],
+      "reason": "Only checks that declared archive categories exclude auth persistence tables.",
+      "sha256": "736a41a6480ab4701de7d88a563700f7d13c70fe355d187a03e8b196941693dc"
+    },
+    {
+      "path": "tests/test_v1_device_session_http_startup.py",
+      "layer": "component-integration",
+      "targets": [
+        "api/device_session_runtime.py",
+        "api/device_session_service.py",
+        "api/device_session_credentials.py"
+      ],
+      "reason": "Composes real startup, credential configuration and session service, using a memory store and no HTTP request.",
+      "sha256": "ad1c5228e12bff21c4223ea9d8fb9fc7c2c0e447c0bb6221c1cbd12b356167a9"
+    },
+    {
+      "path": "tests/test_v1_portable_roundtrip_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/portable_service.py"
+      ],
+      "reason": "Direct note revision normalization and configured root resolution; path is a disposable value, no archive, persistent storage or service is used.",
+      "sha256": "0ba13f477487ffcfde9ce32244b941b76db4cec1a07eceff1157d8308a6137cf"
+    },
+    {
+      "path": "tests/test_spa_artifacts_static.py",
+      "layer": "static-contract",
+      "targets": [
+        "deploy/v1/compose.yaml",
+        "deploy/v1/web-gateway.conf",
+        "deploy/v1/bff-proxy.conf",
+        "deploy/v1/Dockerfile.web",
+        "deploy/v1/Dockerfile.bff",
+        "apps/web/scripts/build-manifest.mjs",
+        "apps/bff/scripts/build-manifest.mjs"
+      ],
+      "reason": "Read-only Compose, gateway, image and build CLI source contracts; no runtime or subprocess.",
+      "sha256": "4a52d107d1abea546f0009051ddf689a5fbdb24753f712204159c6961814a296"
+    },
+    {
+      "path": "tests/test_spa_artifacts_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/v1/check_spa_artifacts.py"
+      ],
+      "reason": "Direct canonical digest and path validation on literals. The tracked verifier module is loaded but no artifact or external tool runs.",
+      "sha256": "f026611e52e5788cec0fef9207b1b92609df13f5ade4ac034703ba7fe18e0dfa"
+    },
+    {
+      "path": "apps/web/scripts/build-manifest.unit.test.mjs",
+      "layer": "unit",
+      "targets": [
+        "scripts/v1/spa-artifact-common.mjs"
+      ],
+      "reason": "Direct canonical inventory digest on deterministic object, mode and byte-size inputs without artifact writes.",
+      "sha256": "08a0b203125e2c24f7a37b947171b46cb93d48c445f02d2580c18f45ac2903d4"
+    },
+    {
+      "path": "apps/web/scripts/build-manifest.static.test.mjs",
+      "layer": "static-contract",
+      "targets": [
+        "apps/web/scripts/build-manifest.mjs",
+        "scripts/v1/spa-artifact-common.mjs"
+      ],
+      "reason": "Export-shape contract for producer and verifier without invoking either or mutating files.",
+      "sha256": "b904a376d177da63bae3d7ff60eddf34565be24e22650ea6ebbb1ba1e35bd8fc"
+    },
+    {
+      "path": "apps/web/src/data/evidence-api.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/data/evidence-api.ts"
+      ],
+      "reason": "Direct evidence shape and projection, exact digest/MIME checks and in-memory stream cancellation with a fixed context and fake transport.",
+      "sha256": "c29910941c58acb0f7af3b58a90074c837a4a784e780e80c35ea4f3fef238a29"
+    },
+    {
+      "path": "apps/web/src/data/source-api.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/data/source-api.ts"
+      ],
+      "reason": "Exact multipart and wire payload checks and direct response projection against fake transport, with no session transition.",
+      "sha256": "4975d41e33ea1b510e4fb1acaa9a98689ab76fedc78a7741c9694a9e1ee2d250"
+    },
+    {
+      "path": "apps/web/src/data/studio-api.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/data/studio-api.ts",
+        "packages/contracts/src/workspace-view.ts"
+      ],
+      "reason": "Direct Studio schemas, note adapters and fake-send receipt/payload cases using fixed producer fixtures and context.",
+      "sha256": "a03b70c4f4ec7b968f763aaa69ecf845158f621997398f802b7fd788b5dca5be"
+    },
+    {
+      "path": "apps/web/src/data/studio-api.static.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "apps/web/src/data/studio-api.ts",
+        "packages/contracts/src/workspace-view.ts"
+      ],
+      "reason": "Compile-time boundary between the legacy note-only empty sentinel and strict turn scope; the runtime assertion preserves the original fixture.",
+      "sha256": "d65062732187786004f1ddd4637684ed3122ad4471af84afefc2dd39c71afb48"
+    },
+    {
+      "path": "apps/web/src/features/chat/chat.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/app/drafts.ts"
+      ],
+      "reason": "Direct draft registry question revision guard with fixed identity and no rendered conversation or transport.",
+      "sha256": "8ddee1f860cc5a9e76f6c0c887044983cdc578a2474f78a0b941d3a73746ff32"
+    },
+    {
+      "path": "apps/web/src/features/sources/uploads.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/sources/source-operations.ts",
+        "apps/web/src/app/drafts.ts"
+      ],
+      "reason": "Direct source operation capture, deduplication or settlement with fixed context, synthetic receipts and in-memory Files; registry is a store factory.",
+      "sha256": "767da07dac5614303e93365da78a132178d2d00e0d7d424376696b3927634880"
+    },
+    {
+      "path": "apps/web/src/features/studio/notes.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/studio/studio-store.ts"
+      ],
+      "reason": "Direct Studio store, note parser and fake-send CAS/wire checks against fixed states and synthetic metadata not passed through live app flows.",
+      "sha256": "0af90df1a6edd88f53dbcad49bf9231933dea2a334f5eef715c91ceeb6bbc3db"
+    },
+    {
+      "path": "apps/web/src/features/auth/auth.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/data/config.ts"
+      ],
+      "reason": "Direct runtime config and session metadata validation with a stubbed fetch and no mounted router, controller or live session.",
+      "sha256": "1e6e45472c34d7992c5b80cb1a4bb2d42ec9d93043ff9ece37cbb7bffc7cb99b"
+    },
+    {
+      "path": "apps/web/src/features/library/classic-reference.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/library/RecordReference.tsx"
+      ],
+      "reason": "Direct record-reference parse with verbatim opaque identity and fixed message data; no application or transport.",
+      "sha256": "8ce007311f5580b89bf09099a01e8df833f472ec556bb10449f243723a6047b9"
+    },
+    {
+      "path": "apps/web/src/features/library/classic-reference.static.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "apps/web/src/app/styles.css",
+        "apps/web/src/i18n/native-messages.ts"
+      ],
+      "reason": "Checks only the exported message table and source stylesheet declarations, never mounted controls or behavioral coverage.",
+      "sha256": "cc73ca8d5902a426e5e28cc71375e4f625283289657c455f5c91653a1709cd58"
+    },
+    {
+      "path": "apps/web/src/features/studio/artifacts.unit.test.tsx",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/data/studio-api.ts",
+        "apps/web/src/features/studio/studio-store.ts",
+        "apps/web/src/features/studio/AudioArtifact.tsx",
+        "apps/web/src/features/studio/ArtifactCard.tsx"
+      ],
+      "reason": "Direct parsers, fixed-context store and fake-transport adapter checks; isolated audio/card presentation consumes locale context only.",
+      "sha256": "08f87a6de1d2d45356448743998479df7acf2ff36fd337296701676545141a4e"
+    },
+    {
+      "path": "apps/web/src/features/studio/html-attachment.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "packages/web-transport/src/client.ts"
+      ],
+      "reason": "Isolated shared transport classification directly consumes fixture response records with a stubbed fetch; Studio and actual network are not involved.",
+      "sha256": "50cb34717bd079d3bb3eeae907d2883376e4cd4d5acf7ac434c861c79cf25897"
     }
   ]
 }

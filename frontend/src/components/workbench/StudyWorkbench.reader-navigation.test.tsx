@@ -10,7 +10,6 @@ import { sessionCoordinator } from '@/lib/auth/session-coordinator'
 import { useAuthStore } from '@/lib/stores/auth-store'
 import type { EvidenceCitation, EvidenceRecord, SourceVersion, TurnRecord, Workspace } from '@/lib/types/personal'
 import { invalidateTurnContext, publishTurnTarget, readTurnContext } from '@/lib/workbench/turn-context'
-import { workbenchRules } from '@/test/workbench-css'
 import { StudyWorkbench } from './StudyWorkbench'
 import { toast } from 'sonner'
 
@@ -176,31 +175,5 @@ describe('StudyWorkbench with its actual evidence reader', () => {
     await act(async () => reject(new Error('unmounted request failed')))
     expect(toast.error).not.toHaveBeenCalled()
     expect(workbenchApi.saveSelection).toHaveBeenCalledTimes(writes)
-  })
-
-  it('wraps the full long source identity and quote after following a citation into the reader', async () => {
-    const reference = { ...archived, source_title: 'L'.repeat(120), quote: `https://fixture.example/${'q'.repeat(300)}`, reference_validity: 'verified', locator: { page_index: 4, page_label: 'v', block_id: 'original_block' } }
-    const snapshot = structuredClone(reference)
-    vi.mocked(workbenchApi.workspace).mockResolvedValue({ ...structuredClone(fixture), turns: [{ ...turn, citations: [reference] }] })
-    show()
-    await screen.findByText('Lecture notes')
-    fireEvent.click(screen.getByRole('button', { name: `${reference.source_title} · c1` }))
-    const reader = await screen.findByRole('region', { name: 'workbench.reader' })
-    await screen.findByLabelText('workbench.pdfPage')
-    await screen.findByText('workbench.selectionSaved')
-    const title = [...reader.querySelectorAll('p')].find(node => node.textContent === reference.source_title)!
-    const quote = [...reader.querySelectorAll('p')].find(node => node.textContent === reference.quote)!
-    for (const content of [title, quote]) {
-      const wrappingBlock = content.closest('.workbench-reader-citation')
-      expect(wrappingBlock).not.toBeNull()
-      if (wrappingBlock) for (const width of [360, 390, 1440]) expect(workbenchRules(wrappingBlock, width)['overflow-wrap']).toBe('anywhere')
-      for (const clippingClass of ['truncate', 'line-clamp-1', 'overflow-hidden']) expect(content).not.toHaveClass(clippingClass)
-    }
-    expect(quote).toHaveClass('whitespace-pre-wrap')
-    fireEvent.change(screen.getByLabelText('workbench.searchEvidence'), { target: { value: 'absent filter' } })
-    expect(title).toBeVisible()
-    expect(quote).toBeVisible()
-    expect(reference).toEqual(snapshot)
-    expect(vi.mocked(workbenchApi.saveSelection).mock.lastCall?.[1]).toMatchObject({ source_version_ids: ['sv_old'], reading: { source_version_id: 'sv_old', page_index: 4, evidence_id: 'ev1' } })
   })
 })

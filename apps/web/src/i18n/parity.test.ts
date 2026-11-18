@@ -1,7 +1,9 @@
 import { expect, it } from 'vitest';
 import { createHash } from 'node:crypto';
 import { configurationMessages } from './configuration-messages';
+import { globalMessages } from './global-messages';
 import { libraryMessages } from './library-messages';
+import { nativeMessages } from './native-messages';
 import { transformationMessages } from './transformation-messages';
 import { resources as canonicalResources, languages as canonicalLanguages } from '../../../../frontend/src/lib/locales';
 import { resources, languages, shellMessages, sessionMessages, notebookMessages, sourceMessages, chatMessages } from './index';
@@ -96,4 +98,14 @@ it('preserves all reviewed transformation messages in their original key and loc
 it('preserves all reviewed library messages in their original key and locale order', () => {
     const digest = createHash('sha256').update(JSON.stringify(libraryMessages)).digest('hex');
     expect(digest).toBe('00091873ba1cd55462ae1dfb865ee94b00a2a2bd56c64a81715685eed7faafdb');
+});
+
+it('preserves all reviewed native messages in their original key and locale order', () => {
+    const digest = createHash('sha256').update(JSON.stringify(nativeMessages)).digest('hex');
+    expect(digest).toBe('6083f072d861657d9f4ec9a91e2d43846fa5920acd7dd131e8abf48074bc6aa4');
+});
+
+it('preserves all reviewed global messages in their original key and locale order', () => {
+    const digest = createHash('sha256').update(JSON.stringify(globalMessages)).digest('hex');
+    expect(digest).toBe('a8595f043dcee5ca05456be5ca0e4ce94ee5f0bc42e3ce32e1f73c2170d12e42');
 });

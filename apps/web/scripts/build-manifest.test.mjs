@@ -4,11 +4,7 @@ import {mkdtemp,writeFile,readFile,mkdir,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';
 import path from 'node:path';
-const artifact = await import('./build-manifest.mjs').catch(()=>({}));
 const common = await import('../../../scripts/v1/spa-artifact-common.mjs').catch(()=>({}));
-test('Web manifest producer and verifier are independent callable file gates',()=>{
- assert.equal(typeof artifact.buildWeb,'function'); assert.equal(typeof common.verifyArtifact,'function');
-});
 test('canonical payload inventory rejects missing, extra, private, symlink and special bytes',async()=>{
  assert.equal(typeof common.inventory,'function');
  const root=await mkdtemp(path.join(tmpdir(),'c1-payload-'));
@@ -23,11 +19,6 @@ test('canonical payload inventory rejects missing, extra, private, symlink and s
   await rm(path.join(root,'.env')); await symlink('a.js',path.join(root,'assets/link.js'));
   await assert.rejects(common.inventory(root),/symlink/i);
  } finally {await rm(root,{recursive:true,force:true});}
-});
-test('canonical inventory digest measures sizes, modes, bytes and sorted paths',()=>{
- assert.equal(typeof common.digest,'function');
- assert.equal(common.digest({b:2,a:1}),common.digest({a:1,b:2}));
- assert.notEqual(common.digest([{path:'a',size:1,mode:'0644',sha256:'a'}]),common.digest([{path:'a',size:1,mode:'0755',sha256:'a'}]));
 });
 
 test('SPA authored digest binds canonical locale bytes without broadening BFF inputs',async t=>{

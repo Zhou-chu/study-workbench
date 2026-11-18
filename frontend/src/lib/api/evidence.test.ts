@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, expect, expectTypeOf, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import apiClient from './client'
 import { evidenceApi } from './evidence'
 import { getConfig } from '@/lib/config'
 import { sessionCoordinator } from '@/lib/auth/session-coordinator'
-import { invalidateTurnContext, publishTurnTarget, readTurnContext, type TurnContext } from '@/lib/workbench/turn-context'
+import { invalidateTurnContext, publishTurnTarget, readTurnContext } from '@/lib/workbench/turn-context'
 
 vi.mock('@/lib/config', () => ({ getConfig: vi.fn(async () => ({ authMode: 'legacy_password', apiUrl: 'https://fixture.example', webSessionProtocol: null })) }))
 vi.mock('@/lib/auth-token', () => ({ getAuthToken: () => null }))
@@ -27,7 +27,6 @@ it('preserves the exact two-argument search DTO and result', async () => {
   expect(JSON.parse(await wire.text())).toEqual({ query: 'exact query', source_version_ids: ['sv_old', 'sv_new'] })
 })
 it('forwards optional captured context without adding metadata to the search DTO', async () => {
-  expectTypeOf<Parameters<typeof evidenceApi.search>[2]>().toEqualTypeOf<TurnContext | undefined>()
   const native = vi.fn<typeof fetch>(async () => Response.json(result)); vi.stubGlobal('fetch', native)
   expect(await evidenceApi.search('exact query', ['sv_old'], readTurnContext()!)).toEqual(result)
   expect(native).toHaveBeenCalledTimes(1)

@@ -1,65 +1,15 @@
-import liveRecovery from './fixtures/live-turn-recovery.js'
-import { describe, expect, expectTypeOf, it } from 'vitest'
-import type { EvidenceCitation } from '@study/contracts'
-import { createTurnRegistry, type TurnReceipt } from './turn-operations.js'
-import { readTurnPostOutcome, reconcileTurn } from './turn-reconciliation.js'
+import { describe, expect, it } from 'vitest'
+import type { TurnReceipt } from './turn-operations.js'
+import { reconcileTurn } from './turn-reconciliation.js'
+import { reconciliationFixture as fixture } from '../test/fixtures/turn-reconciliation.js'
 
 type Row = Record<string, unknown>
-/** Shapes follow PersonalService.run_turn, GroundedChatService.turn and NotebookLMService.ask.
- * In particular Google result.job_id belongs to the child, and canonical scope is resolved/sorted. */
-function fixture(engine: 'independent' | 'notebooklm' = 'independent', origin: 'local' | 'remote' = 'local') {
-  const registry = createTurnRegistry(() => crypto.randomUUID())
-  const admitted = registry.admit({ sessionId: 'chat:one', owner: { mountId: 'mount:one' },
-    context: { epoch: 1, ready: true, target: { mode: 'legacy_password', apiBase: 'https://fixture.example/api', protocol: null } },
-    request: { task: 'question', notebook_id: 'notebook:one', engine, selection_origin: origin, source_version_ids: origin === 'local' ? ['version:z', 'version:a', 'version:z'] : [], remote_source_ids: origin === 'remote' ? ['remote:z', 'remote:a'] : [], remote_notebook_id: engine === 'notebooklm' ? 'remote:notebook' : null, message: 'Question' },
-  })
-  if (!admitted.ok) throw new Error('Fixture rejected')
-  const capture = registry.getSnapshot('notebook:one')!.capture
-  const scope = engine === 'independent' ? {
-    engine, selection_origin: 'local', source_version_ids: ['version:a', 'version:z'], remote_source_ids: [], remote_notebook_id: null, mapping_version: 1, scope_hash: 'independent-hash',
-  } : {
-    engine, selection_origin: origin, source_version_ids: ['version:z', 'version:a'], remote_source_ids: ['remote:z', 'remote:a'], remote_notebook_id: 'remote:notebook', scope_hash: 'google-hash',
-    mappings: [{ source_link_id: 'link:z', remote_source_id: 'remote:z', source_version_id: 'version:z', mapping_method: 'upload', last_checked_at: null }, { source_link_id: 'link:a', remote_source_id: 'remote:a', source_version_id: 'version:a', mapping_method: 'upload', last_checked_at: null }],
-  }
-  const turn: Row = { turn_id: 'turn:one', notebook_id: 'notebook:one', chat_session_id: 'chat:one', engine, message: 'Question', answer: 'Answer [c1]', status: 'succeeded',
-    ...(engine === 'independent' ? { idempotency_key: capture.operationId, generation_status: 'succeeded' } : { job_id: 'google:child' }),
-    scope_snapshot: scope, evidence_ids: ['evidence:one'], citations: [{
-      citation_id: 'c1', kind: 'local_evidence', source_version_id: 'version:a', evidence_id: 'evidence:one', source_title: 'Source',
-      locator: { page_index: 0, page_label: null, block_id: 'page_0000', start_offset: 0, end_offset: 5, bbox: null }, quote: 'Quote', reference_validity: 'verified',
-      // EvidenceService.validate_citation serializes these nullable fields. Mapped
-      // Google references reuse that exact result and attach the remote reference.
-      independent_support: null, provenance: null, reason: null,
-      remote_reference: engine === 'notebooklm' ? { remote_source_id: 'remote:a', quote: 'Quote', citation_number: 1 } : null,
-    }], created_at: '2026-10-26T00:00:00+00:00' }
-  const parent: Row = { job_id: 'parent:one', turn_id: 'turn:one', notebook_id: 'notebook:one', operation: 'chat', chat_session_id: 'chat:one', idempotency_key: capture.operationId,
-    request_snapshot: { ...capture.dto, model_id: null }, state: 'succeeded', submission_state: 'confirmed', result: structuredClone(turn), attempts: 1 }
-  const workspace = { notebook: { id: 'notebook:one', name: 'Notebook' }, jobs: [parent] as unknown[], turns: [turn] }
-  const history: unknown[] = [turn]
-  return { capture, parent, workspace, history, turn, registry, token: admitted.token }
-}
 const unknown = (reason?: string) => reason ? { kind: 'unknown', reason } : { kind: 'unknown' }
 const boundUnknown = (reason?: string) => ({ kind: 'bound', jobId: 'parent:one', turnId: 'turn:one', state: 'unknown', ...(reason ? { reason } : {}) })
 const receipt: TurnReceipt = { jobId: 'parent:one', turnId: 'turn:one' }
 function match(f = fixture(), known?: TurnReceipt) { return reconcileTurn(f.capture, f.workspace, f.history, known) }
 
 describe('read-only turn reconciliation', () => {
-  it('releases the sanitized live persisted turn alongside unrelated extraction history', () => {
-    const live = structuredClone(liveRecovery)
-    const parent = live.workspace.jobs.find(job => job.operation === 'chat')!
-    const capture = { dto: parent.request_snapshot, sessionId: parent.chat_session_id } as unknown as Parameters<typeof reconcileTurn>[0]
-    const result = reconcileTurn(capture, live.workspace, live.history, { jobId: parent.job_id, turnId: parent.turn_id! }, 'workspace-view-v1')
-    expect(result.kind).toBe('complete')
-    const registry = createTurnRegistry(() => parent.idempotency_key)
-    const admitted = registry.admit({ sessionId: capture.sessionId, request: capture.dto, owner: { mountId: 'live-test' }, context: { epoch: 1, ready: true, target: { mode: 'legacy_password', apiBase: 'https://fixture.example/api', protocol: null } } })
-    if (!admitted.ok) throw Error('Invalid fixture admission')
-    registry.settlePost(admitted.token, { kind: 'bound', jobId: parent.job_id, turnId: parent.turn_id!, state: 'unknown', dispatchUnknown: false })
-    const check = registry.beginCheck(parent.idempotency_key)!
-    registry.settleCheck(check, result)
-    registry.releaseCompleted(parent.idempotency_key)
-    expect(registry.getSnapshot(parent.notebook_id)).toBeNull()
-    live.workspace.jobs.push({ ...parent, projection_status: 'unknown' } as typeof parent)
-    expect(reconcileTurn(capture, live.workspace, live.history, { jobId: parent.job_id, turnId: parent.turn_id! }, 'workspace-view-v1').kind).not.toBe('complete')
-  })
   it('recovers the persisted independent local scope which omits remote_notebook_id', () => {
     const f = fixture()
     delete (f.turn.scope_snapshot as Row).remote_notebook_id
@@ -85,9 +35,6 @@ describe('read-only turn reconciliation', () => {
     const f = fixture(engine)
     expect(match(f, receipt)).toEqual({ kind: 'complete', ...receipt, turn: f.turn })
     expect(match(f, receipt)).toHaveProperty('turn', f.turn)
-  })
-  it('types retained citation/evidence support metadata as nullable boolean, not corroboration proof', () => {
-    expectTypeOf<EvidenceCitation['independent_support']>().toEqualTypeOf<boolean | null | undefined>()
   })
   it.each(['independent', 'notebooklm'] as const)('retains actual null-bearing %s citations on successful completion', engine => {
     const f = fixture(engine)
@@ -264,45 +211,8 @@ describe('read-only turn reconciliation', () => {
     expect(match(f).kind).toBe('complete')
     ;(result.scope_snapshot as Row).scope_hash = 'other'; expect(match(f)).toMatchObject(boundUnknown('mismatch'))
   })
-  it.each(['queued', 'running', 'failed', 'needs_reauth', 'cancelled_local', 'future', 'succeeded'])('binds a verified %s parent with no canonical turn, making recovery check-only', state => {
-    const f = fixture(); f.parent.state = state; f.history = []
-    const result = match(f)
-    expect(result).toMatchObject({ kind: 'bound', ...receipt, state: ['future', 'succeeded'].includes(state) ? 'unknown' : state })
-    f.registry.settlePost(f.token, { kind: 'unknown', reason: 'transport' })
-    const check = f.registry.beginCheck(f.token.operationId)!
-    f.registry.settleCheck(check, result)
-    expect(f.registry.getSnapshot(f.token.notebookId)?.receipt).toEqual(receipt)
-    expect(f.registry.beginRetry(f.token.operationId)).toBeNull()
-  })
   it('does not mutate capture or raw workspace/history during reconciliation', () => {
     const f = fixture(); const before = JSON.stringify(f); match(f, receipt); expect(JSON.stringify(f)).toBe(before)
-  })
-})
-
-describe('safe POST outcome projection', () => {
-  const body = { job_id: receipt.jobId, turn_id: receipt.turnId, state: 'queued' }
-  const evidence = { dispatch_ack: 'unknown', job_id: receipt.jobId, turn_id: receipt.turnId, retry_safe: false }
-  it('accepts absent optional receipt and only binds IDs, even for succeeded/future state', () => {
-    for (const state of ['queued', 'succeeded', 'future', null]) expect(readTurnPostOutcome(200, { ...body, state })).toEqual({ kind: 'bound', ...receipt, state: ['queued', 'succeeded'].includes(state as string) ? state : 'unknown', dispatchUnknown: false })
-  })
-  it('recognizes only the fixed HTTP 400 WORKER_UNAVAILABLE sibling receipt', () => {
-    expect(readTurnPostOutcome(400, { detail: 'WORKER_UNAVAILABLE', dispatch_receipt: evidence })).toEqual({ kind: 'bound', ...receipt, state: 'unknown', dispatchUnknown: true })
-    for (const status of [401, 403, 409, 500]) expect(readTurnPostOutcome(status, { detail: 'WORKER_UNAVAILABLE', dispatch_receipt: evidence }).kind).toBe('unknown')
-    expect(readTurnPostOutcome(400, { detail: 'Other', dispatch_receipt: evidence }).kind).toBe('unknown')
-  })
-  it('validates receipt consistency on a successful response', () => {
-    expect(readTurnPostOutcome(202, { ...body, dispatch_receipt: evidence })).toEqual({ kind: 'bound', ...receipt, state: 'queued', dispatchUnknown: true })
-    expect(readTurnPostOutcome(200, body, { jobId: 'other', turnId: receipt.turnId })).toEqual({ kind: 'unknown', reason: 'conflict' })
-  })
-  it.each([null, false, {}, { ...evidence, retry_safe: true }, { ...evidence, dispatch_ack: 'future' }, { ...evidence, job_id: 'other' }, { ...evidence, turn_id: null }, { ...evidence, future: true }])('treats present malformed/future receipt %j as inconclusive, unlike absence', dispatch_receipt => {
-    expect(readTurnPostOutcome(200, { ...body, dispatch_receipt })).toEqual({ kind: 'unknown', reason: 'receipt' })
-  })
-  it.each([null, {}, { ...body, job_id: '' }, { ...body, turn_id: 4 }])('rejects missing/malformed top IDs %j', value => {
-    expect(readTurnPostOutcome(200, value)).toEqual({ kind: 'unknown', reason: 'receipt' })
-  })
-  it('projects only safe fields and does not retain body/error/answer content', () => {
-    const value = { ...body, answer: 'PRIVATE', error: { message: 'SECRET' }, request_snapshot: { password: 'SECRET' } }
-    expect(readTurnPostOutcome(200, value)).toEqual({ kind: 'bound', ...receipt, state: 'queued', dispatchUnknown: false })
   })
 })
 

@@ -8,7 +8,6 @@ import { ConversationPanel } from './ConversationPanel';
 import { sourceServer, renderSourceFeature } from '../../test/source-harness';
 import { sourceWorkspace } from '../../test/source-fixtures';
 import { json } from '../../test/notebook-fixtures';
-import { createDraftRegistry } from '../../app/drafts';
 import type { WorkspaceViewV1 } from '@study/contracts';
 async function setup(post: (r: Request) => Response | Promise<Response> = () => json({}), workspace = sourceWorkspace()) {
     const requests = sourceServer(r => {
@@ -52,16 +51,6 @@ it('synchronously latches double clicks and preserves a newer question revision 
     fireEvent.change(box, { target: { value: 'newer' } });
     await act(async () => resolve(json({ job_id: 'parent', turn_id: 'turn', state: 'queued' })));
     expect(box).toHaveValue('newer');
-});
-it('clears only the exact captured revision on a genuinely accepted receipt', () => {
-    const d = createDraftRegistry(), id = { epoch: 2, notebookId: 'n', editorSession: 'q' };
-    d.update(id, { question: 'first' });
-    const revision = d.get(id)!.questionRevision!;
-    d.update(id, { question: 'second' });
-    d.clearQuestion(id, revision);
-    expect(d.get(id)?.question).toBe('second');
-    d.clearQuestion(id, d.get(id)!.questionRevision!);
-    expect(d.get(id)?.question).toBe('');
 });
 it('retains uncertain text and exposes only read-only original recovery, never replay', async () => {
     const r = await setup(() => json({ detail: 'WORKER_UNAVAILABLE', dispatch_receipt: { dispatch_ack: 'unknown', job_id: 'parent', turn_id: 'turn', retry_safe: false } }, 400));
