@@ -1253,6 +1253,7 @@
       "path": "apps/web/src/i18n/parity.test.ts",
       "layer": "unit",
       "targets": [
+        "apps/web/src/i18n/configuration-messages.ts",
         "apps/web/src/i18n/index.tsx",
         "apps/web/src/i18n/locales/index.ts",
         "apps/web/src/i18n/message-catalog.ts",
@@ -1261,7 +1262,7 @@
         "frontend/src/lib/locales/index.ts"
       ],
       "reason": "Pure imported locale-value key/interpolation/completeness and exact translation mapping assertions; no runtime translation service or source-text scanning.",
-      "sha256": "c0f713c03e3d47f8acd91a5a85200fb81bf6589fd2cb33582d07a90194737ce1"
+      "sha256": "2fe1bbf0b1d27515d893d6ec5be9987b2e1f309d1c67ecdf1abd816767dea2b9"
     },
     {
       "path": "apps/web/src/theme/contrast.test.ts",

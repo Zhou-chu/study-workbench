@@ -146,7 +146,7 @@ Providers that need several config fields (like `azure`, `vertex`, `openai_compa
 
 ## Playbook: i18n / Translation Update
 
-The shared language registry and baseline messages live in `frontend/src/lib/locales/`. The Vite workbench re-exports them and keeps its SPA-specific feature messages under `apps/web/src/i18n/`. Update shared translations once; do not copy them into the SPA. For SPA shell and session copy, define one row per message with a named entry for every locale. Both catalogs use the same workspace notice row. For an intentional translation change, review the changed copy and update the shell/session parity digest to match.
+The shared language registry and baseline messages live in `frontend/src/lib/locales/`. The Vite workbench re-exports them and keeps its SPA-specific feature messages under `apps/web/src/i18n/`. Update shared translations once; do not copy them into the SPA. For SPA shell, session, and configuration copy, define one row per message with a named entry for every locale. Shell and session use the same workspace notice row. Configuration count labels have their own rows and are exposed as the existing nested counts object. For an intentional translation change, review the changed copy and update the corresponding parity digest to match.
 
 | Step | File(s) | What to do |
 |------|---------|------------|

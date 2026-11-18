@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
 import { createHash } from 'node:crypto';
+import { configurationMessages } from './configuration-messages';
 import { resources as canonicalResources, languages as canonicalLanguages } from '../../../../frontend/src/lib/locales';
 import { resources, languages, shellMessages, sessionMessages, notebookMessages, sourceMessages, chatMessages } from './index';
 const codes = ['zh-CN', 'en-US', 'zh-TW', 'pt-BR', 'ja-JP', 'it-IT', 'fr-FR', 'ru-RU', 'bn-IN', 'ca-ES', 'es-ES', 'de-DE', 'pl-PL', 'tr-TR'];
@@ -78,4 +79,10 @@ it('provides B9e transformation controls and destination limitations explicitly 
   expect(values.executionWarning).toContain('105000');
   if(code!=='en-US')expect(values.executionWarning).not.toBe(transformationMessages['en-US'].executionWarning);
  }
+});
+
+// Protect every locale value and the nested counts shape during catalog migration.
+it('preserves the exact reviewed configuration messages and count labels', () => {
+    const digest = createHash('sha256').update(JSON.stringify(configurationMessages)).digest('hex');
+    expect(digest).toBe('11c803f10397944d14782ceac410705097e7bf4192f9eaf8b09dcfd3f69866a5');
 });
