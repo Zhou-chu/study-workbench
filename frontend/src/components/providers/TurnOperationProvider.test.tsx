@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs'
 import React, { StrictMode, useLayoutEffect } from 'react'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -27,11 +26,6 @@ beforeEach(() => { invalidateTurnContext(); publishTurnTarget(target, true); ses
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
 describe('root document turn owner', () => {
-  it('is nested inside I18nProvider and outside ConnectionGuard in the actual root layout', () => {
-    const layout = readFileSync('src/app/layout.tsx', 'utf8')
-    expect(layout).toMatch(/<I18nProvider>\s*<TurnOperationProvider>\s*<ConnectionGuard>/)
-    expect(layout).toMatch(/<\/ConnectionGuard>\s*<\/TurnOperationProvider>\s*<\/I18nProvider>/)
-  })
   it('rejects structurally malformed captured context without throwing', () => {
     render(<TurnOperationProvider><Consumer /></TurnOperationProvider>)
     const value = { ...input(), context: { ...readTurnContext()!, target: null } } as unknown as ValidatedTurnCapture

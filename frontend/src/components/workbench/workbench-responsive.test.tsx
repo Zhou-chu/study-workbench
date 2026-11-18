@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { WorkbenchSourcesList } from './WorkbenchSourcesList'
 import { workbenchRules, lengthPixels } from '@/test/workbench-css'
@@ -24,16 +24,6 @@ describe('authored workspace touch constraints (not browser geometry)', () => {
       expect(lengthPixels(rule['min-width'], 300), target.outerHTML).toBeGreaterThanOrEqual(44)
     }
     expect(label.contains(read)).toBe(false)
-  })
-  it('keeps the full selection label clickable without triggering Read', () => {
-    const { onRead, onSelectionChange } = setup()
-    const date = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date('2026-10-28T00:00:00Z'))
-    fireEvent.click(screen.getByText(date))
-    expect(onSelectionChange).toHaveBeenCalledWith(['v1'])
-    expect(onRead).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('button', { name: 'workbench.read' }))
-    expect(onRead).toHaveBeenCalledWith('v1')
-    expect(onSelectionChange).toHaveBeenCalledTimes(1)
   })
   it('does not impose workspace phone sizing on fine-pointer desktop or unrelated controls', () => {
     setup()

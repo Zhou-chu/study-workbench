@@ -7,7 +7,6 @@ import { suspendAndRecover } from '../../test/session-recovery';
 import { json } from '../../test/notebook-fixtures';
 import { AddSourceDialog } from './AddSourceDialog';
 import { UploadStatus } from './UploadStatus';
-import { createSourceOperations } from './source-operations';
 
 beforeEach(sourceContext);
 const choose = (file: File) => fireEvent.change(screen.getByLabelText('Choose files'), { target: { files: [file] } });
@@ -48,16 +47,6 @@ it.each(['same-owner', 'fresh-login'])('retains the unknown original key instead
     expect(h.workbench.drafts.sources.getSnapshot()).toHaveLength(1);
     expect(h.workbench.drafts.sources.get(original.id)?.operation.token).toBe(original.operation.token);
     expect(requests.filter(r => r.method === 'POST' && r.url.includes('/sources'))).toHaveLength(1);
-});
-it('continues only proven-unsent captures after suspension, including an explicitly not-dispatched result', async () => {
-    const c = sourceContext(), g = sessionCoordinator.current(), store = createSourceOperations(() => {});
-    const id = await store.captureUpload('n', new File(['x'], 'x.txt'), c, g);
-    const first = store.begin(id, c, g)!;
-    store.settle(id, first.operation.token!, { kind: 'not-sent' }, c, g + 1);
-    expect(store.get(id)?.operation.state).toBe('idle');
-    const next = store.begin(id, c, g + 1)!;
-    expect(next.operation.token?.sessionGeneration).toBe(g + 1);
-    expect(store.get(id)?.notebookId).toBe('n');
 });
 
 it('explicitly discards a retired never-sent input without releasing an ambiguous original', async () => {

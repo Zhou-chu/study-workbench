@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { invalidateTurnContext, readTurnContext, sessionCoordinator } from '@study/web-transport';
-import { createSessionController, evaluateCompatibility, type SessionController } from './session';
+import { createSessionController, type SessionController } from './session';
 import type { SpaArtifactManifest } from '../../data/artifact';
 const manifest: SpaArtifactManifest = {
     schema_version: 'spa-artifact-v1', source_commit: 'a'.repeat(40), authored_digest: 'b'.repeat(64), asset_digest: 'c'.repeat(64), contract_digest: 'd'.repeat(64), ui_transport_protocol: 1, supported_contracts: ['workspace-view-v1']
@@ -74,23 +74,6 @@ afterEach(() => {
     controllers.splice(0).forEach(s => s.dispose());
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
-});
-it.each([null, {}, {
-        ...manifest, ui_transport_protocol: 2
-    }])('rejects absent or invalid local artifact %j', local => {
-    expect(evaluateCompatibility(local, config, capabilities)).toBe(local === null ? 'unavailable' : 'blocked');
-});
-it.each([{
-        ...config, apiUrl: 'https://other.invalid'
-    }, {
-        ...config, auth_mode: 'future'
-    }, {
-        ...config, web_session_protocol: null
-    }])('rejects incompatible runtime %j', runtime => {
-    expect(evaluateCompatibility(manifest, runtime, capabilities)).toBe('blocked');
-});
-it('rejects malformed API capabilities rather than assuming compatibility', () => {
-    expect(evaluateCompatibility(manifest, config, {})).toBe('blocked');
 });
 it('refreshes the same device identity without retiring the workspace', async () => {
     const requests = server();

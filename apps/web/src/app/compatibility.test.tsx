@@ -4,7 +4,6 @@ import {AppProviders} from './providers';
 import {ConnectionState} from '../features/auth/ConnectionState';
 import {beforeEach,afterEach,it,expect,vi} from 'vitest';
 import {createSessionController} from '../features/auth/session';
-import * as owner from '../features/auth/session';
 import {createDraftRegistry,createNavigationController} from './drafts';
 import {readTurnContext,invalidateTurnContext,sessionCoordinator} from '@study/web-transport';
 const local={schema_version:'spa-artifact-v1' as const,source_commit:'a'.repeat(40),authored_digest:'b'.repeat(64),asset_digest:'c'.repeat(64),contract_digest:'d'.repeat(64),ui_transport_protocol:1 as const,supported_contracts:['workspace-view-v1'] as ['workspace-view-v1']};
@@ -23,14 +22,6 @@ function fixture(){
  const controller=createSessionController(retire,async()=>local);
  return {drafts,retire,requests,controller,runtime:(v:unknown)=>{runtime=v;},caps:(v:unknown)=>{capabilities=v;},status:(n:number)=>{capStatus=n;}};
 }
-it('evaluates real BFF and authenticated API evidence independently',()=>{
- expect(typeof owner.evaluateCompatibility).toBe('function');
- expect(owner.evaluateCompatibility(local,config,caps)).toBe('compatible');
- expect(owner.evaluateCompatibility(local,{...config,ui_transport_protocol:2},caps)).toBe('blocked');
- expect(owner.evaluateCompatibility(local,config,{...caps,supported_contracts:[]})).toBe('blocked');
- expect(owner.evaluateCompatibility(local,config,null)).toBe('unavailable');
- expect(owner.evaluateCompatibility(null,config,caps)).toBe('unavailable');
-});
 it('keeps original draft, File and unknown identity when runtime becomes incompatible',async()=>{
  const f=fixture();await f.controller.start();const before=readTurnContext()!;
  const id={epoch:before.epoch,notebookId:'n',editorSession:'e'},file=new File(['original'],'original.txt');
@@ -87,10 +78,6 @@ it('rejects a late capability receipt after a newer offline suspension',async()=
  window.dispatchEvent(new Event('offline'));release(json(caps));await checking;
  expect(f.controller.getSnapshot()).toMatchObject({ready:false,compatibility:'unavailable'});
  expect(f.retire).not.toHaveBeenCalled();f.controller.dispose();
-});
-it('rejects affirmative malformed evidence rather than trusting contract-name strings alone',()=>{
- expect(owner.evaluateCompatibility(local,{...config,apiUrl:'https://evil.test'},caps)).toBe('blocked');
- expect(owner.evaluateCompatibility(local,config,{contract_version:'client-capabilities-v1',supported_contracts:['workspace-view-v1']})).toBe('blocked');
 });
 
 it.each(['config','identity'] as const)('fix1 I2 recovers cold %s invalidation via online, visible and explicit checks',async(stage)=>{

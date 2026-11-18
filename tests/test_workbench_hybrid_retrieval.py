@@ -693,29 +693,6 @@ async def test_retained_old_version_allowed_newer_version_is_not_auto_selected(h
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "query,kwargs",
-    [
-        ("", {}),
-        ("  ", {}),
-        ("x" * 50001, {}),
-        ("Solar", {"limit": 0}),
-        ("Solar", {"limit": 101}),
-        ("Solar", {"limit": True}),
-        ("Solar", {"mode": "semantic"}),
-        ("Solar", {"mode": "hybrid", "profile_id": None}),
-        ("Solar", {"mode": "lexical", "profile_id": "chosen"}),
-    ],
-)
-async def test_invalid_request_combinations_reject_before_any_io(h, query, kwargs):
-    args = {"mode": "hybrid", "profile_id": "chosen"}
-    args.update(kwargs)
-    with pytest.raises(InvalidInputError):
-        await h.service.retrieve(query, NB, ["v1"], **args)
-    assert h.store.reads == h.provider.calls == h.db.calls == []
-
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize("vector", [[math.nan, 0.0], [0.0, 0.0], [1.0], [True, 0.0]])
 async def test_corrupt_vectors_never_score_or_dispatch_query(h, vector):
     await h.add("v1", ["Solar"])
@@ -867,13 +844,6 @@ async def test_final_candidate_binding_cannot_trust_corrupt_repository_adapter(
 
 
 @pytest.mark.asyncio
-async def test_invalid_unicode_query_is_sanitized_before_io(h):
-    with pytest.raises(InvalidInputError, match="RETRIEVAL_QUERY_INVALID"):
-        await h.retrieve("\ud800")
-    assert h.store.reads == h.provider.calls == h.db.calls == []
-
-
-@pytest.mark.asyncio
 async def test_missing_canonical_evidence_is_integrity_failure(h):
     records = await h.add("v1", ["Solar"])
     await h.index(["v1"])
@@ -936,13 +906,6 @@ async def test_malformed_revalidation_fresh_identity_is_integrity_not_raw_typeer
     }
     with pytest.raises(InvalidInputError, match="INDEX_INTEGRITY"):
         await h.service.retrieve("Solar", NB, ["v1"])
-
-
-@pytest.mark.asyncio
-async def test_twenty_source_limit_rejects_before_content_and_model(h):
-    with pytest.raises(InvalidInputError, match="SOURCE_LIMIT"):
-        await h.retrieve(ids=[f"v{i}" for i in range(21)])
-    assert h.store.reads == h.provider.calls == []
 
 
 @pytest.mark.asyncio

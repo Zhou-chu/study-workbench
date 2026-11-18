@@ -218,3 +218,33 @@ async def test_portable_override_is_exact_route_only(path, method, status):
         make_scope(path=path, method=method), FakeReceiveStream([b"x" * 20]), send
     )
     assert send.status == status
+
+
+@pytest.mark.parametrize("value", ["0", "-1", "bad", str(2**53)])
+def test_portable_budget_rejects_invalid_or_unsafe_config(monkeypatch, value):
+    from api.portable_limits import get_portable_limits
+
+    monkeypatch.setenv("STUDY_WORKBENCH_PORTABLE_MAX_BYTES", value)
+    with pytest.raises(ValueError):
+        get_portable_limits()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "content_type",
+    ["application/x-www-form-urlencoded", "application/json", "", "multipart/mixed"],
+)
+async def test_portable_rejects_nonmultipart_without_reading(content_type):
+    from fastapi import Request
+
+    from api.routers.portable import import_portable
+    from open_notebook.exceptions import InvalidInputError
+
+    async def forbidden_receive():
+        raise AssertionError("Unsupported content type must not read body")
+
+    request = Request(
+        make_scope(headers={"content-type": content_type}), forbidden_receive
+    )
+    with pytest.raises(InvalidInputError, match="requires multipart/form-data"):
+        await import_portable(request)

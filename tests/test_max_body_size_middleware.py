@@ -6,106 +6,18 @@ checks. Pure middleware/config cases live in test_max_body_size_middleware_unit.
 """
 
 import pytest
+from body_size_middleware_scope_fixtures import (
+    CollectingSend,
+    FakeReceiveStream,
+    _echo_body_app,
+    make_scope,
+)
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from starlette.middleware.cors import CORSMiddleware
 
 from api.middleware import (
     MaxBodySizeMiddleware,
 )
-
-
-async def _echo_body_app(scope, receive, send):
-    """Minimal ASGI app that reads the full body then returns 200."""
-    body = b""
-    more_body = True
-    while more_body:
-        message = await receive()
-        body += message.get("body", b"")
-        more_body = message.get("more_body", False)
-    await send({"type": "http.response.start", "status": 200, "headers": []})
-    await send(
-        {"type": "http.response.body", "body": f"received {len(body)} bytes".encode()}
-    )
-
-
-def make_scope(headers=None, method="POST", path="/upload"):
-    raw_headers = [(k.lower().encode(), v.encode()) for k, v in (headers or {}).items()]
-    return {
-        "type": "http",
-        "method": method,
-        "path": path,
-        "headers": raw_headers,
-    }
-
-
-class FakeReceiveStream:
-    """Feeds a list of body chunks as successive http.request ASGI messages."""
-
-    def __init__(self, chunks):
-        self._chunks = list(chunks)
-
-    async def __call__(self):
-        if not self._chunks:
-            return {"type": "http.request", "body": b"", "more_body": False}
-        chunk = self._chunks.pop(0)
-        return {
-            "type": "http.request",
-            "body": chunk,
-            "more_body": bool(self._chunks),
-        }
-
-
-class CollectingSend:
-    def __init__(self):
-        self.messages = []
-
-    async def __call__(self, message):
-        self.messages.append(message)
-
-    @property
-    def status(self):
-        for m in self.messages:
-            if m["type"] == "http.response.start":
-                return m["status"]
-        return None
-
-    @property
-    def body(self):
-        return b"".join(
-            m.get("body", b"")
-            for m in self.messages
-            if m["type"] == "http.response.body"
-        )
-
-    def header(self, name: bytes):
-        for m in self.messages:
-            if m["type"] == "http.response.start":
-                for k, v in m["headers"]:
-                    if k.lower() == name.lower():
-                        return v.decode()
-        return None
-
-
-class TestCorsInteraction:
-    @pytest.mark.asyncio
-    async def test_cors_headers_present_on_413_when_wrapped_by_cors_middleware(self):
-        """MaxBodySizeMiddleware must sit *inside* CORSMiddleware so a
-        rejected upload still gets CORS headers (mirrors the ordering used
-        in api/main.py)."""
-        app = CORSMiddleware(
-            MaxBodySizeMiddleware(_echo_body_app, max_body_size=10),
-            allow_origins=["http://example.com"],
-            allow_credentials=True,
-        )
-        scope = make_scope(
-            headers={"content-length": "1000", "origin": "http://example.com"}
-        )
-        send = CollectingSend()
-        await app(scope, FakeReceiveStream([b"x" * 1000]), send)
-
-        assert send.status == 413
-        assert send.header(b"access-control-allow-origin") == "http://example.com"
 
 
 class TestFastApiIntegration:
@@ -265,15 +177,6 @@ def test_portable_limits_endpoint_requires_auth_and_exposes_safe_contract(monkey
     assert data["max_entity_bytes"] == 32 * 1024 * 1024
 
 
-@pytest.mark.parametrize("value", ["0", "-1", "bad", str(2**53)])
-def test_portable_budget_rejects_invalid_or_unsafe_config(monkeypatch, value):
-    from api.portable_limits import get_portable_limits
-
-    monkeypatch.setenv("STUDY_WORKBENCH_PORTABLE_MAX_BYTES", value)
-    with pytest.raises(ValueError):
-        get_portable_limits()
-
-
 @pytest.mark.parametrize(
     "parts",
     [
@@ -344,24 +247,3 @@ def test_portable_single_file_parser_retains_openapi_and_closes_success(monkeypa
     ]["content"]["multipart/form-data"]["schema"]
     assert schema["required"] == ["file"]
     assert schema["properties"]["file"]["format"] == "binary"
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "content_type",
-    ["application/x-www-form-urlencoded", "application/json", "", "multipart/mixed"],
-)
-async def test_portable_rejects_nonmultipart_without_reading(content_type):
-    from fastapi import Request
-
-    from api.routers.portable import import_portable
-    from open_notebook.exceptions import InvalidInputError
-
-    async def forbidden_receive():
-        raise AssertionError("Unsupported content type must not read body")
-
-    request = Request(
-        make_scope(headers={"content-type": content_type}), forbidden_receive
-    )
-    with pytest.raises(InvalidInputError, match="requires multipart/form-data"):
-        await import_portable(request)

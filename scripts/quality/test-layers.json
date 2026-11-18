@@ -236,32 +236,32 @@
     },
     {
       "path": "apps/web/src/app/compatibility.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/auth/session.ts"
       ],
-      "reason": "Direct evaluateCompatibility predicates are unit candidates; controller handshakes, admission, registry retention/navigation and real recovery UI on online/visibility/signout are component integration.",
-      "sha256": "48fb510d8e2fb7bcbdaeff6cc5df00285296a39b560d3e6ffd0e957db7cc4c0a"
+      "reason": "Real compatibility/session controller, registry or recovery UI coordinate across lifecycle and admission boundaries.",
+      "sha256": "d3cd3b25bb126980fcd6c6a0235f0a02a64fd4accbe02ab93dcb587bfdea350b"
     },
     {
       "path": "apps/web/src/app/layout.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/app/WorkspaceLayout.tsx",
         "apps/web/src/app/styles.css",
         "apps/web/src/app/router.tsx"
       ],
-      "reason": "Controlled synthetic-slot layout/focus cases are unit; CSS source check is static; renderApp router/provider cases are component integration. Split per case, not whole file.",
-      "sha256": "4bede002bb05224a1a03571d960267ce799efe2997a743310e13428ac4c5be7b"
+      "reason": "Full App router/provider rendering verifies heading, appearance, and focus without dispatching transport.",
+      "sha256": "7355c06a1fce5bf8d9b748a86c5862b2da08c229315878d32e83d3a249cf0b2c"
     },
     {
       "path": "apps/web/src/app/navigation.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/app/drafts.ts"
       ],
-      "reason": "Direct registry retention/retired-context cases are unit candidates. Other cases coordinate independent navigation controller/registry and actual Router Back/Forward dialogs. Pure editor reducer fixture construction alone is not an integration boundary.",
-      "sha256": "98f52e590cc3e8b3c10a41a3f2b59d391a071349a9423ae66c9cf7bfa5492de0"
+      "reason": "Navigation controller coordinates with the registry, guards and router history; synthetic editor inputs do not remove those boundaries.",
+      "sha256": "0efdf75649a1347a6d315c8f98a48aac69216a1817e771658532c65050b123c7"
     },
     {
       "path": "apps/web/src/app/providers.test.tsx",
@@ -274,12 +274,12 @@
     },
     {
       "path": "apps/web/src/app/route-coverage.test.ts",
-      "layer": "mixed",
+      "layer": "static-contract",
       "targets": [
         "apps/web/src/app/route-coverage.ts"
       ],
-      "reason": "Pure isCoverageComplete/route inventory values plus source documentation/table/hash conformance. Static evidence cannot count as behavioral coverage; separate source-read cases.",
-      "sha256": "4e0b3851f0f60e655f5a6bf210fdf76141256898c3123e228fa9757c604bb209"
+      "reason": "Route coverage table, ownership and documentation conformance assertions without application execution.",
+      "sha256": "17fcb638e51d341477de931292255c546d8eba75da479c2312c0f6198a1aa0ad"
     },
     {
       "path": "apps/web/src/data/artifact.test.ts",
@@ -444,12 +444,12 @@
     },
     {
       "path": "apps/web/src/features/auth/session-transitions.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/auth/session.ts"
       ],
-      "reason": "First evaluateCompatibility groups directly compute compatibility; remaining controller/session client/transport/coordinator handshake, refresh, retire and signout are collaboration. Split direct predicates. Independent full-file SPA review; SHA256 matched f10d0f4, eb2db51 and 0a446cb, rechecked after merge.",
-      "sha256": "80189630c5e690ad611c97e6c47135da75aa47a85067c849df6c925abf92f26d"
+      "reason": "Real session controller and transport/coordinator lifecycle, refresh and retirement; fetch responses are fixture doubles.",
+      "sha256": "df0b5eee52e4cd0448f9178cc618b5b059b4df8874319c081616cbdc28d2ff94"
     },
     {
       "path": "apps/web/src/features/chat/chat-admission-status.test.ts",
@@ -679,12 +679,12 @@
     },
     {
       "path": "apps/web/src/features/library/library-state.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/library/library-store.ts"
       ],
-      "reason": "Direct receipt/immutability/fresh-intent store cases are unit candidates even through registry factory. Other cases couple registry retirement/navigation leases or real coordinator readiness to resource ownership; factory/import count alone does not make integration.",
-      "sha256": "62c8d2434ca7c64ae3d33162af68d31a72292cf825d280fee9321009ff4c94bd"
+      "reason": "Actual registry retirement, readiness coordinator or navigation leases combine independent resource boundaries.",
+      "sha256": "b9d52d6ff4a7b3bb92248f5e0c6aee9bb7219b4b367e443d75c8bfd211b1f473"
     },
     {
       "path": "apps/web/src/features/library/library.test.tsx",
@@ -852,12 +852,12 @@
     },
     {
       "path": "apps/web/src/features/reader/reader.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/reader/ReaderPane.tsx"
       ],
-      "reason": "Direct navigation predicates and isolated ReaderPane with fake send/geometry are unit candidates. retires pending reads on session generation change and hides already-loaded protected content after session retirement integrate actual coordinator/context invalidation. Intent construction alone is not an integration reason.",
-      "sha256": "8de36392c6ab56ac62a191403167d85596722812f37c67504ae453ae02c4d8bb"
+      "reason": "Mounted ReaderPane consumes live navigation, context, application providers and adapter responses; coordinator retirement is exercised outside unit scope.",
+      "sha256": "203520e044989d0d6ef19acf950d345eb112c75e63c431ec9b3dc1307741c8c0"
     },
     {
       "path": "apps/web/src/features/settings/advanced.test.ts",
@@ -958,15 +958,15 @@
     },
     {
       "path": "apps/web/src/features/settings/ownership.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/app/drafts.ts",
         "apps/web/src/features/sources/source-operations.ts",
         "apps/web/src/features/settings/settings-store.ts",
         "apps/web/src/features/auth/cold-return.ts"
       ],
-      "reason": "Direct callback/cold-return/source-reservation units plus actual settings-owner/navigation-guard collaboration and registry retirement propagation into settings. Split direct cases.",
-      "sha256": "5f431b42b1d59921e4dd78a1822e58382a6e8358d8ec7e8ba2b7ff27f5e5a367"
+      "reason": "Settings store ownership is checked through the real navigation controller or registry retirement, not discounted as isolated.",
+      "sha256": "68f69bbb11026ed99be78c2f7fba6a97b397c908bd0870e164dc4641a555054e"
     },
     {
       "path": "apps/web/src/features/settings/retrieval.test.tsx",
@@ -1043,12 +1043,12 @@
     },
     {
       "path": "apps/web/src/features/settings/transformation-store.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/settings/transformation-store.ts"
       ],
-      "reason": "Direct transformation store captures/revisions/deletes/metadata are units with synthetic context/model evidence. registers transformation dirty and unknown state in both navigation lookups integrates navigation/settings/registry retirement and stays separate.",
-      "sha256": "57a7e9d647149112babdaef4d8faebb5db1516e98e21387ec5e78c468961e1d4"
+      "reason": "Navigation controller plus transformation and settings stores share live resource and retirement state.",
+      "sha256": "cac5d508930beb16aef6f2c5b2f2be67704424eec58273448296ed7d50341dd0"
     },
     {
       "path": "apps/web/src/features/settings/transformations.test.tsx",
@@ -1121,34 +1121,34 @@
     },
     {
       "path": "apps/web/src/features/sources/selection-refresh.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/sources/source-operations.ts",
         "apps/web/src/features/sources/SourcesPanel.tsx"
       ],
-      "reason": "Three direct store workspace-ticket/admission guards coexist with real mounted selection/controller/query settlement. Exact direct split titles listed in policy.",
-      "sha256": "43c80ea06c492549e95bc25a334fa50ac35258e6f96fb667846fe03bbabd16f4"
+      "reason": "Mounted source selection controls with actual app providers, transport and query settlement.",
+      "sha256": "cebfa90167ce8ebdc0ca64d235e75b2f2f38d5a25dc1c51f064805c5e9d16bbe"
     },
     {
       "path": "apps/web/src/features/sources/sources.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/sources/SourcesPanel.tsx",
         "apps/web/src/features/sources/source-selection.ts"
       ],
-      "reason": "Includes pure includeImported/selection parsing plus full AppProviders/WorkbenchSession upload and read-selection UI flows; split before strict units.",
-      "sha256": "c518e10eaf2b99e1d224f0dcad537e1120a91b2d82809b572c946000b385a8b5"
+      "reason": "Mounted AppProviders, WorkbenchSession and SourcesPanel coordinate reads/selection and upload state.",
+      "sha256": "c8508ae7bcbf9362339f2da1f3670008d4ff3143673cf8d10f4b3cce808217fc"
     },
     {
       "path": "apps/web/src/features/sources/upload-recovery.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/sources/AddSourceDialog.tsx",
         "apps/web/src/features/sources/source-operations.ts",
         "apps/web/src/features/sources/UploadStatus.tsx"
       ],
-      "reason": "Mounted upload recovery uses real controller/store/transport; continues-only-proven-unsent-captures is a direct source store transition with fixed contexts and in-memory File. Split that exact case.",
-      "sha256": "c96994dd8769639a4631b0d67b1816edce9421ce1721665570fc6b67b20df45b"
+      "reason": "Mounted upload controls combine real controller, source store and transport with fixture responses.",
+      "sha256": "bf6cd08251f047cd824b9718265d6e456a2420547157b8255ce8f8a06384a21d"
     },
     {
       "path": "apps/web/src/features/sources/uploads.test.tsx",
@@ -1212,13 +1212,13 @@
     },
     {
       "path": "apps/web/src/features/studio/note-deletion.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "apps/web/src/features/studio/StudioPanel.tsx",
         "apps/web/src/features/studio/studio-store.ts"
       ],
-      "reason": "Mounted DELETE/retirement cases integrate UI/controller/adapter/store. Final does-not-begin-a-DELETE case is direct store guard with fixed context; split it.",
-      "sha256": "7df96e0958acdb2500dd72af25ea350a1f3ccaac46a03e9cb7e8f57142f59417"
+      "reason": "Real mounted Studio UI, auth controller, transport and store observe DELETE receipts and uncertainty.",
+      "sha256": "6d19a55c6803ea6070c6d8bd77e671ffa6569bac48929675b44c2ce3db777ec8"
     },
     {
       "path": "apps/web/src/features/studio/note-recovery.test.tsx",
@@ -1255,6 +1255,7 @@
       "targets": [
         "apps/web/src/i18n/configuration-messages.ts",
         "apps/web/src/i18n/index.tsx",
+        "apps/web/src/i18n/library-messages.ts",
         "apps/web/src/i18n/locales/index.ts",
         "apps/web/src/i18n/message-catalog.ts",
         "apps/web/src/i18n/session-messages.ts",
@@ -1263,7 +1264,7 @@
         "frontend/src/lib/locales/index.ts"
       ],
       "reason": "Pure imported locale-value key/interpolation/completeness and exact translation mapping assertions; no runtime translation service or source-text scanning.",
-      "sha256": "59b8f2040c1d176da46c0d3e9707489a07836c71d7b246704d9c652f5eaceceb"
+      "sha256": "7545807a0eda2bab804ab30dd4942bc969cd6d3023da1dcd8a87084afaa06c1d"
     },
     {
       "path": "apps/web/src/theme/contrast.test.ts",
@@ -1349,13 +1350,22 @@
     },
     {
       "path": "frontend/src/app/(dashboard)/advanced/components/RebuildEmbeddings.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "frontend/src/app/(dashboard)/advanced/components/RebuildEmbeddings.tsx",
         "frontend/src/lib/utils/command-submission.ts"
       ],
-      "reason": "Real persistent command latch/status/remount interoperability plus isolated localized definite-validation presentation case. Split keeps-definite-validation-failure-localized case only after verifying latch isolation.",
-      "sha256": "e16170678fe34c336882d727562aa31cad3d277ec51ac7b2329c0be1527ebcc0"
+      "reason": "Persistent command admission/status lifecycle across a real query provider and remounted embedding rebuild controls; endpoint calls are doubled.",
+      "sha256": "e864e24027a132b4575ca93b123cb29c2ee7ce2c221fa9f792f821ef39577e18"
+    },
+    {
+      "path": "frontend/src/app/(dashboard)/advanced/components/RebuildEmbeddings.unit.test.tsx",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/app/(dashboard)/advanced/components/RebuildEmbeddings.tsx"
+      ],
+      "reason": "Direct component presentation of a definite validation failure with a stubbed endpoint, localized labels, and no retained command lifecycle.",
+      "sha256": "fb20bdbe8ab496f3373562a8398dc01b0abcb4a3e5ceb0d5d3e8529fcaf08f7e"
     },
     {
       "path": "frontend/src/app/(dashboard)/advanced/components/SystemInfo.test.tsx",
@@ -1397,12 +1407,23 @@
     },
     {
       "path": "frontend/src/app/(dashboard)/notebooks/components/NoteEditorDialog.test.tsx",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "frontend/src/app/(dashboard)/notebooks/components/NoteEditorDialog.tsx"
       ],
-      "reason": "Direct editor detail/CAS/pending/error cases have API/editor-child doubles and are unit candidates. Last recoverable-note cases mount SessionRecovery and change shared auth store during retained editor lifecycle: component integration.",
-      "sha256": "b20c03b22fed57aa5d1211e09b8ab7242e86496c8aba89bef07734eeb848b5d9"
+      "reason": "Direct editor draft, revision, acknowledgement, and explicit candidate inspection with notes API and editor children doubled. Local query client supplies component context without a real auth recovery or service.",
+      "sha256": "7ac63b0784e5dcb8887eb7c2056b08d38633702d432dab4b8ddafdd3e255e9ff"
+    },
+    {
+      "path": "frontend/src/app/(dashboard)/notebooks/components/NoteEditorDialog.recovery.test.tsx",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/app/(dashboard)/notebooks/components/NoteEditorDialog.tsx",
+        "frontend/src/components/auth/SessionRecovery.tsx",
+        "frontend/src/lib/stores/auth-store.ts"
+      ],
+      "reason": "Actual SessionRecovery and auth-store transitions coexist with a retained editor draft and doubled note write, checking that no mutation is replayed.",
+      "sha256": "f69849fc369345009d0d2aa489d7a277b02ca4be863892aac07761aa6248171b"
     },
     {
       "path": "frontend/src/app/(dashboard)/notebooks/components/NotebookDeleteDialog.test.tsx",
@@ -1506,13 +1527,25 @@
     },
     {
       "path": "frontend/src/app/api/[...path]/route.test.ts",
-      "layer": "mixed",
+      "layer": "api-integration",
       "targets": [
         "frontend/src/app/api/[...path]/route.ts",
         "frontend/src/lib/api/session-proxy.ts"
       ],
-      "reason": "Export metadata shape check plus actual route-wrapper to session-proxy policy/status interoperability with fake fetch; no Next server/socket.",
-      "sha256": "2cdc9a27f99e359d91b4b5f4789111b4e4229e15c8b3a191f85b93d663fd207c"
+      "reason": "Actual Node route-wrapper and session proxy collaborate on responses with outbound fetch doubled, with no Next server or sockets.",
+      "sha256": "d6ffa0bdada79c1c6e49107322959aa26e5535a9482a40beb43d658d006b49ac"
+    },
+    {
+      "path": "frontend/src/app/api/[...path]/route.contract.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "frontend/src/app/api/[...path]/route.ts",
+        "frontend/src/app/api/auth/[...path]/route.ts",
+        "frontend/src/app/api/search/ask/route.ts",
+        "frontend/src/app/api/personal/imports/portable/route.ts"
+      ],
+      "reason": "Inspects declared exports of the route modules for runtime, dynamic mode and explicit HTTP method coverage.",
+      "sha256": "e594420ff2b95881f2fb1bbc663287198fcbc9b895edd48063137e38e6dcbdf7"
     },
     {
       "path": "frontend/src/app/api/_sse-proxy.test.ts",
@@ -1545,13 +1578,22 @@
     },
     {
       "path": "frontend/src/app/font-delivery.test.tsx",
-      "layer": "mixed",
+      "layer": "static-contract",
       "targets": [
-        "frontend/src/app/fonts.css",
+        "frontend/src/app/layout.tsx",
+        "frontend/src/app/fonts.css"
+      ],
+      "reason": "Reads authored layout, CSS, font bytes and licenses to verify checked-in asset and source contracts; does not render.",
+      "sha256": "66f03d850f2c13d8a4ad741c173f347ba74aab4b3a89c106c23af40a2bccb790"
+    },
+    {
+      "path": "frontend/src/app/font-delivery.ssr.test.tsx",
+      "layer": "component-integration",
+      "targets": [
         "frontend/src/components/common/FontPreloads.tsx"
       ],
-      "reason": "Source/CSS/license/hash asset guards plus actual FontPreloads SSR component output. Split emits-exactly-three-real-SSR-preloads parameterized case from source/artifact checks; no real browser font rendering.",
-      "sha256": "732a9edd786a73a9381cb819904ca5ef3c8b720ba01137a29154f257c64dc5c4"
+      "reason": "Runs actual React SSR of FontPreloads inside a document with repeated components and equivalent pre-existing hints; no browser rendering claim.",
+      "sha256": "0fed84e72666b49834d5ff58f235e3f710c5c32dc6e27f61df26af3f98c3f303"
     },
     {
       "path": "frontend/src/components/auth/SessionRecovery.test.tsx",
@@ -1573,14 +1615,23 @@
     },
     {
       "path": "frontend/src/components/common/ConnectionGuard.test.tsx",
-      "layer": "mixed",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/common/ConnectionGuard.tsx"
+      ],
+      "reason": "Direct guard reaction to fake configuration and browser events with a synthetic child and overlay; no cross-dialog/store collaboration.",
+      "sha256": "c99be2ff2dd0bcdcba1c4ca013b2b87afe517d6f8f033ac79b94a6cd300d1d3d"
+    },
+    {
+      "path": "frontend/src/components/common/ConnectionGuard.lifecycle.test.tsx",
+      "layer": "component-integration",
       "targets": [
         "frontend/src/components/common/ConnectionGuard.tsx",
         "frontend/src/components/auth/SessionRecovery.tsx",
         "frontend/src/lib/stores/auth-store.ts"
       ],
-      "reason": "Parent full-file review at 006831f, SHA verified: first two getConfig-double/synthetic-child guard units; third real SessionRecovery and auth-store collaboration is component integration. Split before unit selection.",
-      "sha256": "ed4dcbef9a019c3184dddd69ca4c8103d83e4d8b2bd2718d1d2038c4beb91f14"
+      "reason": "Real modal and recovery/auth-store composition retains mounted editor work, File reference and modal focus through outages.",
+      "sha256": "72620f0ca0924026ca1ad8daa6e694657717b9ae7bcba4e74aa96805d041475a"
     },
     {
       "path": "frontend/src/components/common/InlineEdit.test.tsx",
@@ -1691,14 +1742,23 @@
     },
     {
       "path": "frontend/src/components/providers/TurnOperationProvider.test.tsx",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "frontend/src/components/providers/TurnOperationProvider.tsx",
         "frontend/src/lib/workbench/turn-operations.ts",
         "frontend/src/lib/workbench/turn-context.ts"
       ],
-      "reason": "Root-layout source nesting static contract plus real provider facade/registry/context/coordinator retirement and consumer remount. No actual network; static and component layers must remain separate.",
-      "sha256": "29278a025180e388c3f4a4237dba96dd4cd61cc46cac7756b74d0ff3aa116603"
+      "reason": "Actual provider facade, turn registry/context, auth coordinator, consumer remount and subscription lifecycle; no live fetch.",
+      "sha256": "e9b835df0b1fe12fa4b05e3dcf3780de30a137b791ef7e81a7adea486c0008c9"
+    },
+    {
+      "path": "frontend/src/components/providers/TurnOperationProvider.contract.test.tsx",
+      "layer": "static-contract",
+      "targets": [
+        "frontend/src/app/layout.tsx"
+      ],
+      "reason": "Reads the authored root layout to verify the nesting of the I18n, TurnOperation and connection providers.",
+      "sha256": "b5838e742ec832c9b25eef7af6a9f993823c30e89e0809169134ca696211d197"
     },
     {
       "path": "frontend/src/components/search/NotebookScopeSelector.test.tsx",
@@ -1711,12 +1771,22 @@
     },
     {
       "path": "frontend/src/components/settings/CredentialFormDialog.test.tsx",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "frontend/src/components/settings/CredentialFormDialog.tsx"
       ],
-      "reason": "Controlled form masking/target/reset/callback cases have mutation/provider-hook doubles and are unit candidates. visibility_action_is_localized and language_change_updates_the_visible_and_accessible_action intentionally validate real i18next/resources/react subscriptions; keep locale compatibility separate.",
-      "sha256": "040d0db4629f83e4386968b5d9fed87964072a8d703477828269b57d554a95e9"
+      "reason": "Direct controlled form labels, masking, target reset and mutation callback assertions with synthetic provider and mutation hooks; no translation change is exercised.",
+      "sha256": "6a72f6271e9a59d4fc6520a8aedcaf415db7d3fd35411906e95f1b7134f8d67e"
+    },
+    {
+      "path": "frontend/src/components/settings/CredentialFormDialog.localization.test.tsx",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/components/settings/CredentialFormDialog.tsx",
+        "frontend/src/lib/locales/index.ts"
+      ],
+      "reason": "Actual i18next resources and react subscriptions drive localized visibility labels, including a live language change.",
+      "sha256": "9d567f71335b82d5c3f3537d2c9ae1b88811b992761984e5891963f2824975c6"
     },
     {
       "path": "frontend/src/components/settings/ProviderSection.test.tsx",
@@ -1868,12 +1938,23 @@
     },
     {
       "path": "frontend/src/components/workbench/SemanticIndexPanel.test.tsx",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "frontend/src/components/workbench/SemanticIndexPanel.tsx"
       ],
-      "reason": "Most single-panel preview/consent/cache/retry cases use API doubles and controlled props, unit candidates with pure disclosure/status helpers. fences a late submission receipt across privacy invalidation uses actual context subscription to retire pending state: component integration.",
-      "sha256": "857a119c1c9b043eb945d0f46fdf56d532217d9fce7f0cfd1be3bf322980e537"
+      "reason": "Direct panel presentation and mocked API intent/consent/receipt decisions in a controlled mounted panel; no external cache or epoch transitions are asserted.",
+      "sha256": "ccd94ce615a88eb385afe50285f06cdcddae691d8ff7d1bb60a4d51a639a9213"
+    },
+    {
+      "path": "frontend/src/components/workbench/SemanticIndexPanel.lifecycle.test.tsx",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/components/workbench/SemanticIndexPanel.tsx",
+        "frontend/src/lib/workbench/turn-context.ts",
+        "frontend/src/lib/api/query-client.ts"
+      ],
+      "reason": "Actual query observation/cache updates, turn-context invalidation, retained consent/request ownership and asynchronous panel prop transitions with fake API endpoints.",
+      "sha256": "073bf37454d666c1b9533c94ae21fb884592359a0c3a5b0e111faa0a3f1c8ae9"
     },
     {
       "path": "frontend/src/components/workbench/SnapshotPromotionButton.test.tsx",
@@ -1960,13 +2041,22 @@
     },
     {
       "path": "frontend/src/components/workbench/workbench-responsive.test.tsx",
-      "layer": "mixed",
+      "layer": "static-contract",
       "targets": [
         "frontend/src/components/workbench/WorkbenchSourcesList.tsx",
         "frontend/src/app/globals.css"
       ],
-      "reason": "Direct component callback/read-vs-selection behavior coexists with authored CSS evaluator source-rule assertions at synthetic viewport sizes, explicitly not browser geometry. Full test file reviewed; classification only, no test or coverage run.",
-      "sha256": "e4f8d55c0fc80649648249599cc37869fa433ba8f1e4ed62cd021c2881e68ce0"
+      "reason": "Authored CSS rules evaluated at synthetic widths against rendered DOM selectors; no computed browser geometry.",
+      "sha256": "e9f7486c6c02f60ec3f1a1587ce3e7eae1833f5148aa0b3274fcc39ffa840dcf"
+    },
+    {
+      "path": "frontend/src/components/workbench/workbench-responsive.unit.test.tsx",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/components/workbench/WorkbenchSourcesList.tsx"
+      ],
+      "reason": "Isolated WorkbenchSourcesList selection and Read callback routing with synthetic source and spy handlers; neither reads CSS nor calls services.",
+      "sha256": "fc6a2cdb1198e1d9057f05330d6b2400d511ca66a7ff7a2f7802976e870fc044"
     },
     {
       "path": "frontend/src/lib/api/bff-session-store.test.ts",
@@ -2139,12 +2229,22 @@
     },
     {
       "path": "frontend/src/lib/config.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "frontend/src/lib/config.ts"
       ],
-      "reason": "Fake-fetch configuration priority, parsing, ingress and failure cases are unit candidates; the turn target config-flight boundary asserts real shared turn-context epoch/readiness publication across reset, target changes and superseded asynchronous flights, so the file also contains component integration. Synthetic storage is not a real browser profile.",
-      "sha256": "a5c74a6d53571e26f9f229d033ed5a0197c2addd143886031dd94b80d9e02726"
+      "reason": "Configuration priority, parsing, failure and ingress decisions from synthetic fetch responses and environment; no live network or observed cross-module lifecycle.",
+      "sha256": "02a5c1a6acf23dea5720c731c282b3256aa7faeaff81980121c7ff22f92cf08d"
+    },
+    {
+      "path": "frontend/src/lib/config.lifecycle.test.ts",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/lib/config.ts",
+        "frontend/src/lib/workbench/turn-context.ts"
+      ],
+      "reason": "Real turn-context epoch and readiness publication observed throughout configuration resets, target changes and superseded async flights; fetch is doubled.",
+      "sha256": "08d1919b559ec660a8defa5177bbbcd7003420c272fd0fb9bebc401d465adf48"
     },
     {
       "path": "frontend/src/lib/credential-update-payload.test.ts",
@@ -2325,12 +2425,21 @@
     },
     {
       "path": "frontend/src/lib/locales/index.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "frontend/src/lib/locales/index.ts"
       ],
-      "reason": "Imported key/placeholder-value checks are pure constant-contract unit candidates. all en-US leaf keys should be referenced in source files recursively reads source and asserts textual usage: static contract, not executable unit coverage.",
-      "sha256": "fa99078cd06adeb079b8dfe01bf53614b337de397f130332989f7f2cbe6c0d47"
+      "reason": "Imports locale constants only to compare keys and placeholder names; no authored source scanning in these cases.",
+      "sha256": "e3177ced698d4e14e924643d5a74417c32d22ab72a48be70a9048bd57134f87f"
+    },
+    {
+      "path": "frontend/src/lib/locales/index.usage.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "frontend/src/lib/locales/en-US/index.ts"
+      ],
+      "reason": "Recursively reads authored source files for actual references to en-US leaf keys.",
+      "sha256": "25b875fbdab5a5a1d0dbedec063f564cdf7e18ff01caf83959777b95dbeb84b2"
     },
     {
       "path": "frontend/src/lib/locales/interpolation.test.ts",
@@ -2389,7 +2498,17 @@
     },
     {
       "path": "frontend/src/lib/utils/design-contrast.test.tsx",
-      "layer": "mixed",
+      "layer": "static-contract",
+      "targets": [
+        "frontend/src/app/globals.css",
+        "frontend/src/components/ui/button.tsx"
+      ],
+      "reason": "Evaluates actual authored CSS color tokens and button variant declarations, without rendering controls or claiming computed browser contrast.",
+      "sha256": "5baee44a68ff51f6c87cdd144e325aeae3f06a80a7ef372720fe6e0b264073d8"
+    },
+    {
+      "path": "frontend/src/lib/utils/design-contrast.component.test.tsx",
+      "layer": "component-integration",
       "targets": [
         "frontend/src/app/globals.css",
         "frontend/src/components/ui/button.tsx",
@@ -2398,8 +2517,8 @@
         "frontend/src/components/sources/steps/SourceTypeStep.tsx",
         "frontend/src/components/ui/wizard-container.tsx"
       ],
-      "reason": "CSS/PostCSS source contrast contracts coexist with rendered component class assertions and SourceTypeStep/react-hook-form/Wizard composition. Not computed browser style evidence; split static and rendered cases before unit admission.",
-      "sha256": "dbbb510244edce4f107493a893ff9707f85d791efbca23da1d13d70d8bab0da7"
+      "reason": "Renders full wizard/form, setup banner, dropdown and button components and applies authored token math to their DOM classes, not computed browser paint.",
+      "sha256": "d9f57c7c84a7e7412669fab725887525760ccbe62c598d19f3d73dea75ed5561"
     },
     {
       "path": "frontend/src/lib/utils/error-handler.test.ts",
@@ -2503,12 +2622,31 @@
     },
     {
       "path": "frontend/src/lib/workbench/turn-reconciliation.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "frontend/src/lib/workbench/turn-reconciliation.ts"
       ],
-      "reason": "Pure reconciliation and POST-outcome projections use in-memory records and internal pure helpers. One parameterized case feeds the reconciled result through real registry settlePost/beginCheck/settleCheck/beginRetry, testing an independent state-machine collaboration; expectTypeOf support metadata is a static type contract. Registry-built fixture values alone do not make all remaining projection cases integration.",
-      "sha256": "f669a00c85db48d0165a347529dcdf9767a0046ea11df6100586f460f59923af"
+      "reason": "Pure reconciliation and POST response projection over in-memory fixtures; a registry constructs capture input only, with no lifecycle assertions.",
+      "sha256": "4ce98ff461a25add25e26cfaded0bbf1c14ba001351a242b68e16abbe12879ea"
+    },
+    {
+      "path": "frontend/src/lib/workbench/turn-reconciliation.contract.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "frontend/src/lib/types/personal.ts"
+      ],
+      "reason": "Type-only checks on nullable independent-support metadata in retained evidence and citation DTOs.",
+      "sha256": "55410aad8287bf1ce84602cff624b318ed73c475dceabc91853d3888b3ed3f6f"
+    },
+    {
+      "path": "frontend/src/lib/workbench/turn-reconciliation.lifecycle.test.ts",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/lib/workbench/turn-reconciliation.ts",
+        "frontend/src/lib/workbench/turn-operations.ts"
+      ],
+      "reason": "Reconciled bound result flows into actual registry settlement/retry state transitions for in-memory inputs.",
+      "sha256": "7b1149483f0bd6123b4883a7260bf2f773905a882b74d10326cb563cd1464f2f"
     },
     {
       "path": "frontend/src/test/test-runner-policy.test.ts",
@@ -3377,16 +3515,15 @@
     },
     {
       "path": "tests/test_credentials_api.py",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "api/credentials_service.py",
-        "api/routers/credentials.py",
         "open_notebook/domain/credential.py",
         "open_notebook/ai/model_discovery.py",
         "open_notebook/ai/key_provider.py"
       ],
-      "reason": "TestCredentialCascadeDelete and TestCredentialUpdateClearsFields exercise actual TestClient API routing. Other discovery/config/env/provisioning/migration groups directly call logic with HTTP, pinning, persistence and save doubles, so those are unit candidates. Migration names do not imply real data migration, but the HTTP groups prevent whole-file unit approval.",
-      "sha256": "bb9929f0e23e707e7a7a0ad0a8afecc17318bacfe8422b03fd7a90f9c47f6851"
+      "reason": "Direct credential config, discovery, provisioning or migration decisions per case; external HTTP, name lookup/pinning, database and persistence doubled where reached. No ASGI or live provider.",
+      "sha256": "f0789fd391592ff4197dc27c7a6e26e93435c69f0c6e6fb31f3adc6cd03897bd"
     },
     {
       "path": "tests/test_credentials_router_boundaries.py",
@@ -3605,14 +3742,13 @@
     },
     {
       "path": "tests/test_encryption.py",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "open_notebook/utils/encryption.py",
-        "api/credentials_service.py",
-        "api/routers/credentials.py"
+        "api/credentials_service.py"
       ],
-      "reason": "Contains direct synthetic encryption/KDF units, credential migration with real encryption and fake repository, real TestClient route dispatch, and AST salt-declaration static check. Split four boundaries before unit selection.",
-      "sha256": "794e7e2f07e67a9a4b07a80aa2e1c230a4ac9299961061eb9d4e67c7ba8393e9"
+      "reason": "Direct key derivation/cipher compatibility using synthetic material, and direct unsupported persisted-type rejection. Key fixtures use synthetic environment and no file or network resources.",
+      "sha256": "a69551e91989faa25cb647da83eae7903c2270db658f044705fcda32742dda07"
     },
     {
       "path": "tests/test_error_classifier.py",
@@ -3980,21 +4116,26 @@
     },
     {
       "path": "tests/test_max_body_size_middleware.py",
-      "layer": "mixed",
+      "layer": "api-integration",
       "targets": [
-        "api/middleware.py"
+        "api/main.py",
+        "api/middleware.py",
+        "api/routers/portable.py",
+        "api/portable_limits.py"
       ],
-      "reason": "Retained real FastAPI/TestClient, CORS/auth composition and multipart spool lifecycle cases. Pure direct middleware/config cases split into test_max_body_size_middleware_unit.py; remaining file stays mixed.",
-      "sha256": "3c4ea4473a43f0f4c84e06d0bd9815e06d521a6b4e6626750014ddcb353de287"
+      "reason": "Actual FastAPI wiring, HTTP-shaped request handling, credentials/limits and multipart spools. No production service or real socket.",
+      "sha256": "680649c360cf227d083b7e062caa4f97ef380bac29d271a9051546b5d0c1b5c3"
     },
     {
       "path": "tests/test_max_body_size_middleware_unit.py",
       "layer": "unit",
       "targets": [
-        "api/middleware.py"
+        "api/middleware.py",
+        "api/portable_limits.py",
+        "api/routers/portable.py"
       ],
-      "reason": "Direct config function and one middleware under synthetic in-memory ASGI scope/receive/send/inner app. No framework pipeline, HTTP client, network, database, subprocess or spool/filesystem operations. 18 cases moved losslessly; see docs/quality/body-size-unit-split.md.",
-      "sha256": "e170c5f4b56da02b2d500553beb998a0871459f45139e0221de027cb77f6cb39"
+      "reason": "Direct mocked ASGI body-budget logic, portable environment parsing, and content-type rejection before reading the body. No real router dispatch or spool.",
+      "sha256": "439906152efe0cd29be0a77bd76276b7986ff3130931e9d99315e1c464a92315"
     },
     {
       "path": "tests/test_migration_integrity.py",
@@ -4266,13 +4407,12 @@
     },
     {
       "path": "tests/test_podcast_audio_containment.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
-        "open_notebook/podcasts/audio_paths.py",
-        "api/routers/podcasts.py"
+        "open_notebook/podcasts/audio_paths.py"
       ],
-      "reason": "Real disk/symlink containment and TestClient serve/delete routes plus direct early guards. TestResolveContainedAudioPath.test_empty_and_none_are_rejected is a unit split candidate; not the whole class.",
-      "sha256": "7f02073403c7a11d0bbaca4d3e4da80899f9002bb82896505c4bf2630b2f0169"
+      "reason": "Actual disposable filesystem, path resolution, symlink resolution and configured podcast root semantics. No request routing.",
+      "sha256": "081ece207d679d4b0d28b2a467383234fe7e961b676e6b8938dba924ac7250cf"
     },
     {
       "path": "tests/test_podcast_audio_paths.py",
@@ -4588,14 +4728,14 @@
     },
     {
       "path": "tests/test_recovered_browser_custody.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "scripts/v1/browser_check.py",
         "scripts/v1/browser_ownership.py",
         "scripts/v1/local_check.py"
       ],
-      "reason": "Direct mocked cleanup-order failure branch is unit; other cases create files/profiles or actual synthetic child processes, detached sessions/double-forks/signals and subreaper custody. No browser application launches; process integration is nevertheless real.",
-      "sha256": "0ab410845eeaa5aec0bf2b79466bc8d573c7184b82d561348ff315a81df20f81"
+      "reason": "Actual synthetic detached child processes, subreaper custody signals, and disposable browser-profile/filesystem operations. Does not launch a browser.",
+      "sha256": "357ae3987d236bf07c30b2f6335f0925b766bc74805d1e1944dca1c4e7eb0148"
     },
     {
       "path": "tests/test_recovered_browser_readiness.py",
@@ -4991,13 +5131,14 @@
     },
     {
       "path": "tests/test_spa_acceptance_ownership.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "scripts/v1/spa_acceptance.py",
+        "scripts/v1/artifact_identity.py",
         "apps/web/src/app/route-coverage.ts"
       ],
-      "reason": "Mixes pure minimal-environment logic, static catalog/source contracts and real directories/manifests/permissions/inode/FIFO/atomic publication checks. Synthetic inputs do not remove actual filesystem tool integration.",
-      "sha256": "188ae4b4769916123096abcd2efa98c59f8c3d590309224ae037dc4eec4ed796"
+      "reason": "Real disposable run roots, manifests, hashes, FIFO/inode checks, atomic publications and fixture/resource verification. No browser or product execution.",
+      "sha256": "3127bd1b9243672e139c170932a46374638597dc6171d547f34c08e3fe367000"
     },
     {
       "path": "tests/test_spa_artifacts.py",
@@ -5037,23 +5178,24 @@
     },
     {
       "path": "tests/test_spa_native_runtime.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "scripts/v1/spa_native_runtime.py",
         "scripts/v1/spa_acceptance.py",
         "scripts/v1/runtime_lifecycle.py"
       ],
-      "reason": "After pure transaction/config split, retains private-directory/log/receipt lifecycle tool cases and static import checks. No whole-file unit claim.",
-      "sha256": "298cd93fb0a01ec8e5d5cc0701efdc48d3447ec44b7919e3eb4ec5c5112363b8"
+      "reason": "Uses actual disposable root, executable/log/receipt or tested artifact/file custody, even when child process and network seams are doubled.",
+      "sha256": "3d2fcc68289627163a046db476edb12237038028019e5b242aa303f4cefb7788"
     },
     {
       "path": "tests/test_spa_native_runtime_unit.py",
       "layer": "unit",
       "targets": [
-        "scripts/v1/spa_native_runtime.py"
+        "scripts/v1/spa_native_runtime.py",
+        "scripts/v1/runtime_lifecycle.py"
       ],
-      "reason": "13 original functions/31 cases isolate transaction state/configuration using MockTransport, fake clock/guard and substituted port/source/run boundaries. No lifecycle directories, threads or runtime services; all original ASTs preserved.",
-      "sha256": "96b91ac144a0ff37b3fb3a90221bde60ef32a6ecdb68cc0420e776a9e7cb3704"
+      "reason": "Direct transaction/configuration with fake wire/clock and direct early launcher/cleanup failure checks. Preflight, process, signal and storage seams replaced; no real runtime or scratch creation.",
+      "sha256": "2968b92bada69548e6c836f082c511a1379cfb7ad0f033f6e2262c34a9ee542f"
     },
     {
       "path": "tests/test_ssl_config.py",
@@ -5301,12 +5443,13 @@
     },
     {
       "path": "tests/test_v1_api_contract.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
-        "scripts/v1/export_contract.py"
+        "scripts/v1/export_contract.py",
+        "contracts/v1/openapi.json"
       ],
-      "reason": "Exporter tests execute real subprocesses and filesystem fixture assembly; schema membership/app discovery checks are static/component contracts. Direct error-handler, DTO dispatch, reference mapping and EvidenceService citation validation with only static fixtures/memory store are unit candidates. tmp_path on citation cases is not proof of actual file writes; constructor only resolves its root.",
-      "sha256": "09284f5fe4a9611bc8064cfd5410db52a6c7c9e7dc3bf8bf000fd515cc9a97f4"
+      "reason": "Actual trusted local exporter subprocesses, repository and temporary file assembly, snapshot checks and no-write assertions.",
+      "sha256": "466864904ee713253d9a3edce00a04cf58ab49675eea1fa6338a4aa2d22d52ca"
     },
     {
       "path": "tests/test_v1_artifact_identity.py",
@@ -5337,27 +5480,25 @@
     },
     {
       "path": "tests/test_v1_browser_context.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "scripts/v1/browser_context.py",
         "scripts/v1/browser_check.py"
       ],
-      "reason": "Import-inertness and browser_environment direct synthetic checks are unit; context/custody cases create real JSON/mode/symlink/FIFO paths then verify them. Process/socket/artifact checks are doubles and browser is never launched; filesystem integration still remains.",
-      "sha256": "34a99ce0836bd4ef978b58c2c5844408889dac5b7f17cf31df0a411e3fd7b1f2"
+      "reason": "Actual disposable context, filesystem identity, artifact and process-custody checks against test doubles. No browser or external requests.",
+      "sha256": "80a6547c3adf5be8fa5088b94bad7c47cf7d1c1b9f5acb8969bd27622f6056e9"
     },
     {
       "path": "tests/test_v1_container_contract.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "scripts/v1/container_check.py",
         "deploy/v1/entrypoint.py",
-        "api/device_session_credentials.py",
-        "api/auth.py",
-        "api/personal_security.py",
-        "deploy/v1/compose.yaml"
+        "deploy/v1/compose.yaml",
+        "api/device_session_credentials.py"
       ],
-      "reason": "Real CLI subprocess, private secret filesystem preparation and FastAPI middleware/TestClient cases are mixed with source/build contract assertions. No complete independently reviewed pure unit function.",
-      "sha256": "b2c78215874ff609bab4cd101d1e7ca20f374445d2ebc4c047fe51c1d0207ead"
+      "reason": "Actual Compose/source assembly, entrypoint secure disposable file loading, or subprocess CLI fixture. Runs neither Docker nor an application or database.",
+      "sha256": "502cf60bdfcf4a5117a9b2823bea919248caaf8723f2bbb53e564ee87e18b855"
     },
     {
       "path": "tests/test_v1_device_session_core.py",
@@ -5381,12 +5522,14 @@
     },
     {
       "path": "tests/test_v1_device_session_repository.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
-        "api/device_session_repository.py"
+        "api/device_session_repository.py",
+        "api/device_session_runtime.py",
+        "open_notebook/database/migrations/28.surrealql"
       ],
-      "reason": "test_unknown_ack_fails_without_retry, test_malformed_mutation_ack_is_not_success and test_malformed_read_ack_is_not_absence use fake connection query_raw and are direct repository unit candidates. Opt-in native transaction and corruption cases use actual SurrealDB/migration SQL, and corruption also traverses ASGI; never unit even when skipped.",
-      "sha256": "464faeba710c22d828339a847c22ed001cd6d651f5f9ea2867bc0d558a118b8b"
+      "reason": "Existing opt-in cases both require actual isolated native database setup and real migration SQL, including the one that also exercises ASGI. Still opt-in and not unit.",
+      "sha256": "35a01f53829c62b6f1ceb6f2e7b3e5f0ba0b43673e0926da12d018b17caa4f81"
     },
     {
       "path": "tests/test_v1_device_session_unit.py",
@@ -5542,23 +5685,23 @@
     },
     {
       "path": "tests/test_v1_launcher_environment.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
-        "scripts/v1/local_check.py",
         "scripts/v1/run_native.py",
-        "scripts/v1/runtime_lifecycle.py"
+        "scripts/v1/runtime_lifecycle.py",
+        "scripts/v1/local_check.py"
       ],
-      "reason": "Direct synthetic environment/probe/socket-double cases plus actual config/log chmod/symlinks, dotenv compatibility and opt-in child-process lifecycle. Exact unit split candidates recorded in policy.",
-      "sha256": "b0e7ee7b3db16c6acb15aa9ff362f5317efcaceab9148a9bf59248e78b60c0a6"
+      "reason": "Actual disposable config and private log file creation, dotenv/library isolation, and an existing opt-in synthetic child process; no live service.",
+      "sha256": "e7cccf3bae350541849601c1dfd6fcf79fd7fa07c8d92db7a4d85b5497e2e235"
     },
     {
       "path": "tests/test_v1_launcher_ports.py",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "scripts/v1/run_native.py"
       ],
-      "reason": "apply_runtime_defaults URL/config policy and fake socket/listener parsing are direct unit candidates despite tmp_path values. mocked_launcher main cases assemble real runtime directories/log handles while Popen/signals/HTTP are doubles; these are filesystem/tool integration, not actual service starts. Preserve main log-close/custody assertions.",
-      "sha256": "6985f667b1d86bbe5372a12f6c8597e75893b1ea23600e13039be537a92b65e0"
+      "reason": "Direct runtime URL/port configuration and runtime path admission. Scope and listener HTTP/process seams are not reached or are replaced; tmp_path paths are not created by the parser.",
+      "sha256": "895491205908d438a0b448d449081fc37666872b3a5ac4c97368959eaec47b30"
     },
     {
       "path": "tests/test_v1_live_check.py",
@@ -5807,12 +5950,13 @@
     },
     {
       "path": "tests/test_v1_runtime_lifecycle.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
-        "scripts/v1/runtime_lifecycle.py"
+        "scripts/v1/runtime_lifecycle.py",
+        "scripts/v1/local_check.py"
       ],
-      "reason": "Direct lifecycle polling, identity checks, signal order, readiness and environment mapping use OS/network doubles and are unit candidates. Fixture symlink tests and local runner assembly write actual files; opt-in test_real_disposable_dummy_listeners_stop_a_leaves_b_and_foreign_zero_requests starts real child HTTP listeners. Keep those tool tests, not merely mark all skipped cases as unit.",
-      "sha256": "07a804be72cb6f07ea12804b1cac1e8052bf1962f7ad4ced09025e94968cb012"
+      "reason": "Real checkout/fixture and runtime directory assembly; opt-in owned local HTTP lifecycle remains tool integration and is skipped in ordinary offline runs.",
+      "sha256": "608713760f68bd903bf78cbb977f4432879994f45675f318f3e9d453242d32f2"
     },
     {
       "path": "tests/test_v1_scoped_retrieval.py",
@@ -5928,13 +6072,13 @@
     },
     {
       "path": "tests/test_vertex_credentials_file_oracle.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
-        "open_notebook/ai/connection_tester.py",
-        "api/credentials_service.py"
+        "api/credentials_service.py",
+        "open_notebook/ai/connection_tester.py"
       ],
-      "reason": "Real google service-account loader reads missing/malformed/wrong-shape files for compatibility and oracle checks. Direct synthetic unrelated/network exceptions and non-Vertex mocked failure paths can be units; do not count all as units. Full test file and relevant production/fixture boundaries reviewed at merged 588aaf5; no tests executed for classification.",
-      "sha256": "1cb80ae31fbafb2195e7b282e4ceab1c468d72a71dfd9eb751c49616a17ed230"
+      "reason": "Actual Google credential loader reads disposable fixture files before fake provider factory behavior, with no live credential or network use.",
+      "sha256": "c41d3db9b84d2c6c5314aae567e662f87afcf9e708d4748496534daa82a7f9ef"
     },
     {
       "path": "tests/test_visual_review_response_contract.py",
@@ -6053,16 +6197,14 @@
     },
     {
       "path": "tests/test_workbench_hybrid_retrieval.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "api/evidence_retrieval.py",
-        "api/evidence_service.py",
         "open_notebook/database/evidence_embedding_repository.py",
-        "open_notebook/database/project_locks.py",
-        "open_notebook/ai/evidence_embeddings.py"
+        "open_notebook/database/project_locks.py"
       ],
-      "reason": "RRF pure function split out; remaining cases mix pre-I/O rejection with actual capture_scope locks and retrieval/repository/evidence collaboration. Whole remaining file is not unit.",
-      "sha256": "4192c425e1793356ade0790f8329761b2309490817edf37ea9c34e45dd4c2ab9"
+      "reason": "Actual project scope capture and file locking with composed evidence/repository/retrieval. Provider and SQL transport are synthetic.",
+      "sha256": "5e6a817d4d2d3f8cd1b987446be3d58efb20669bf19fb7a91f8cf0c6e69be29a"
     },
     {
       "path": "tests/test_workbench_hybrid_rrf_unit.py",
@@ -6537,6 +6679,374 @@
       ],
       "reason": "Direct ensure-source creation with repository query, relation, and source/notebook lookups doubled. No checkpoint, provider, parser or filesystem.",
       "sha256": "164b4e03d804370e1ccb2c162ae359b6626e578bec9a3c806820133ee43be020"
+    },
+    {
+      "path": "tests/test_vertex_credentials_file_oracle_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/credentials_service.py",
+        "open_notebook/ai/connection_tester.py"
+      ],
+      "reason": "Direct classification and non-Vertex notice behavior using synthetic exceptions and mocked factory/credential reads. No filesystem or network boundary.",
+      "sha256": "acc4bc30bdcf5e88da3d81e8d70623a94df31f14c3cb412b8c9245ffeeae1e4b"
+    },
+    {
+      "path": "tests/test_max_body_size_middleware_component.py",
+      "layer": "component-integration",
+      "targets": [
+        "api/middleware.py"
+      ],
+      "reason": "Direct real CORS and body-size middleware composition with synthetic ASGI receive and send, no routing or request upload.",
+      "sha256": "e433f913beab5486a1394cd6b53467a5744e988a17ff180783bbb1289bf0086d"
+    },
+    {
+      "path": "tests/test_v1_runtime_lifecycle_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/v1/runtime_lifecycle.py",
+        "scripts/v1/run_native.py",
+        "scripts/v1/local_check.py"
+      ],
+      "reason": "Direct lifecycle and readiness decisions with process, procfs, signals, and HTTP replaced. Environment mapping uses path values without creating a workspace.",
+      "sha256": "b8cf058e6debacf724ced419f5192982da0072244aedeb942bb15a634bc97a18"
+    },
+    {
+      "path": "tests/test_v1_launcher_ports_tool.py",
+      "layer": "tool-integration",
+      "targets": [
+        "scripts/v1/run_native.py",
+        "scripts/v1/runtime_lifecycle.py"
+      ],
+      "reason": "Actual disposable runtime and launcher directories/log handles with fake subprocesses, sockets and HTTP.",
+      "sha256": "f4cac80e2ad8fadc614eefad4fd22e584b7ffe38d28178845deea399a8d8488e"
+    },
+    {
+      "path": "tests/test_v1_api_contract_static.py",
+      "layer": "static-contract",
+      "targets": [
+        "contracts/v1/openapi.json",
+        "contracts/v1/fixtures/job.json",
+        "contracts/v1/fixtures/turn.json"
+      ],
+      "reason": "Authored schema and public fixture declarations inspected with JSON reads only; no server, browser or export process.",
+      "sha256": "6dc6fce9bf116cac83d149e5d0a16c91dfcf2f5f697ee916e2b752b93e998c0b"
+    },
+    {
+      "path": "tests/test_v1_api_contract_component.py",
+      "layer": "component-integration",
+      "targets": [
+        "api/main.py",
+        "api/personal_service.py",
+        "api/routers/evidence.py",
+        "contracts/v1/openapi.json"
+      ],
+      "reason": "Actual OpenAPI generation/mapping and DTO-to-service job composition over synthetic persisted inputs; no transport or file assembly.",
+      "sha256": "e2d0119e2d0569fbdf940af2e49a6658d0a94dc156a7b54d0d2d5bf82033f41b"
+    },
+    {
+      "path": "tests/test_v1_api_contract_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/main.py",
+        "api/personal_service.py",
+        "api/routers/evidence.py",
+        "api/evidence_service.py",
+        "api/notebooklm_service.py"
+      ],
+      "reason": "Direct responder/DTO/mapping, citation, and service decisions over sealed static fixtures and substituted storage and queue. No request dispatch, parser or artifact writes.",
+      "sha256": "44c7820755f40798219f51a7895f680edad0ac06689ec57a0f669e7e30dd6db6"
+    },
+    {
+      "path": "tests/test_v1_browser_context_import_contract.py",
+      "layer": "static-contract",
+      "targets": [
+        "scripts/v1/browser_check.py"
+      ],
+      "reason": "Import-inertness contract with an explicit browser-package import spy and no runtime behavior tested.",
+      "sha256": "3faeabbb402bc5ae478bfe55a7ca9c40bf9bb129b85f3423c265ee650997fa06"
+    },
+    {
+      "path": "tests/test_v1_browser_context_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/v1/browser_check.py"
+      ],
+      "reason": "Direct environment projection with synthetic path and environment mapping. No profile or file writes.",
+      "sha256": "8c09a1bea3bc5cb7ca66f61b4359c08a5d5c70ddb9abef6dcfa430a088e2bf7d"
+    },
+    {
+      "path": "tests/test_podcast_audio_containment_api.py",
+      "layer": "api-integration",
+      "targets": [
+        "api/routers/podcasts.py",
+        "open_notebook/podcasts/audio_paths.py"
+      ],
+      "reason": "Actual in-process HTTP list/get/stream/delete routes with fake database and disposable audio.",
+      "sha256": "addcca731578b3f9614b1d521672f418164352d393155dee76bbe9a1d6614748"
+    },
+    {
+      "path": "tests/test_podcast_audio_containment_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/podcasts/audio_paths.py"
+      ],
+      "reason": "Direct empty/None rejection before filesystem resolution.",
+      "sha256": "13cd34b940c4772daa116121fa8ce3245c200c69689330bd733d1cd573977b50"
+    },
+    {
+      "path": "tests/test_workbench_hybrid_retrieval_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_retrieval.py"
+      ],
+      "reason": "Direct admission and bounds rejection with in-memory collaborators; no repository query, content operation or file lock is reached.",
+      "sha256": "ec8ab872e0b243b33b215ac14ae05434e4b9a28ec46208f854637327fcb6af7c"
+    },
+    {
+      "path": "apps/web/src/features/sources/selection-refresh.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/sources/source-operations.ts"
+      ],
+      "reason": "Direct selection operation and workspace projection state transitions using fixture receipts and a fixed context; no mounted UI.",
+      "sha256": "4449acb94efaf4af6fc43863e9579dafba2b4c1682f1081ba09c3e1bf6de6081"
+    },
+    {
+      "path": "apps/web/src/features/sources/upload-recovery.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/sources/source-operations.ts"
+      ],
+      "reason": "Direct source store unsent operation settlement and re-admission with an in-memory File and fixed session identities.",
+      "sha256": "30caaaf89048100e9639f1b71e6bec2c45b370558d586611054f646a01d9db80"
+    },
+    {
+      "path": "apps/web/src/features/studio/note-deletion.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/studio/studio-store.ts"
+      ],
+      "reason": "Direct Studio store deletion admission guard with a fixed context and synthetic editor; no mounted component or DELETE request.",
+      "sha256": "3dba83d40fc82f8740970c5459be3c87dab2393e0d556016450b5c88f567432a"
+    },
+    {
+      "path": "apps/web/src/features/auth/session-transitions.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/auth/session.ts"
+      ],
+      "reason": "Direct compatibility predicate against fixed artifact, runtime and capability values; no initialized controller or transport.",
+      "sha256": "2fc465fb92e084862076c0895bffc9b600a9639c210c47b5a860c184a88c8e0f"
+    },
+    {
+      "path": "apps/web/src/app/route-coverage.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/app/route-coverage.ts"
+      ],
+      "reason": "Direct completion predicate against synthetic rows; no source document or route table contract.",
+      "sha256": "42548910b8651815bebbdb927b17c122c1e5a769fb0a17624a5f26c77d4ab870"
+    },
+    {
+      "path": "apps/web/src/features/settings/transformation-store.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/settings/transformation-store.ts"
+      ],
+      "reason": "Transformation store state transitions against synthetic record, context and model evidence; registry is only the store factory.",
+      "sha256": "1519ea295d7b4cd61ab188e58bbe12b20b328718d80a97beb4f67af0ffa67db1"
+    },
+    {
+      "path": "apps/web/src/app/compatibility.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/auth/session.ts"
+      ],
+      "reason": "Direct compatibility predicate against fixed artifact, runtime and API evidence. No session controller, navigation or mounted UI.",
+      "sha256": "12a19973f54ea4f56de6905165b5d1fcd26fd25ba94bd22e0368cc04619e4f14"
+    },
+    {
+      "path": "apps/web/src/app/layout.unit.test.tsx",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/app/WorkspaceLayout.tsx"
+      ],
+      "reason": "Isolated WorkspaceLayout rendering with synthetic child slots, jsdom and media-query doubles; no app router or transport.",
+      "sha256": "642c688568492081418ec1f5db4cc654d792ef33ce0a7d21ae8aa4371be7cf81"
+    },
+    {
+      "path": "apps/web/src/app/layout.static.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "apps/web/src/app/styles.css"
+      ],
+      "reason": "Reads CSS source to verify responsive layout declarations; not behavioral coverage.",
+      "sha256": "970b0fc6c34ba4957ef93715885cf88e8dab960b70477e17394a2b2cc6d38554"
+    },
+    {
+      "path": "apps/web/src/app/navigation.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/app/drafts.ts"
+      ],
+      "reason": "Direct draft registry identity and retirement behavior using synthetic draft/editor/File inputs; no navigation controller and no router.",
+      "sha256": "877a7b4b89c247e63a3ae4042ebedeecec18a3655851621b460901e49ad35578"
+    },
+    {
+      "path": "apps/web/src/features/library/library-state.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/library/library-store.ts"
+      ],
+      "reason": "Library store receipt, ownership and recovery predicates with fixed contexts and in-memory fixtures; registry used only as store factory.",
+      "sha256": "c5b08dcfa8936ae26ba943ddc47cca07d797770a68a3998bb5b2c8ce0ad06d8e"
+    },
+    {
+      "path": "apps/web/src/features/settings/ownership.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/app/drafts.ts",
+        "apps/web/src/features/auth/cold-return.ts",
+        "apps/web/src/features/sources/source-operations.ts"
+      ],
+      "reason": "Direct registry callback, cold-return and source-store reservation predicates with explicit synthetic inputs and no controller or transport.",
+      "sha256": "d430c0a633839cd84f2501c56c52a977808b2e5da743b70b84c2fdf5e8ec56a8"
+    },
+    {
+      "path": "apps/web/src/features/sources/sources.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/sources/source-selection.ts"
+      ],
+      "reason": "Direct selection projection, explicit include and input limits using a synthetic selection object.",
+      "sha256": "f2c1c9d10ace1d94ef28c6f900d77e6c49e878ad1dee6bbb734baf35366b0909"
+    },
+    {
+      "path": "apps/web/src/features/reader/reader.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/reader/navigation.ts"
+      ],
+      "reason": "Direct reader-navigation intent construction against fixed context and citation records without mounting or transport.",
+      "sha256": "210ac751b770f71140b85b786d3cd2610126ed4313980bd1eaf666d07362f5ee"
+    },
+    {
+      "path": "tests/test_recovered_browser_custody_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/v1/local_check.py"
+      ],
+      "reason": "Environment projection and direct finish ordering with process, ports and artifact boundaries replaced by doubles; error returns before physical cleanup.",
+      "sha256": "f3ad5e0baa7287c9d37072f305543de61d5e619dcab759b955b784d9f02aed19"
+    },
+    {
+      "path": "tests/test_v1_launcher_environment_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/v1/run_native.py",
+        "scripts/v1/runtime_lifecycle.py",
+        "scripts/v1/local_check.py"
+      ],
+      "reason": "Direct environment construction, configuration defaults, readiness/port checks and cleanup with process, procfs, HTTP and socket doubles. Path inputs remain disposable values.",
+      "sha256": "60146a35d6a99cd2a85289f3df8058298bb9209eeb5d1b06f9b37b21aba2daee"
+    },
+    {
+      "path": "tests/test_spa_native_runtime_import_contract.py",
+      "layer": "static-contract",
+      "targets": [
+        "scripts/v1/spa_native_runtime.py"
+      ],
+      "reason": "Explicit import-inertness only, with process, socket, environment, and signal entry spies.",
+      "sha256": "2b41aa2654f007a3a089abc44ff202d8946ca7899a178adf6da4aa71dfad06d8"
+    },
+    {
+      "path": "tests/test_v1_container_contract_static.py",
+      "layer": "static-contract",
+      "targets": [
+        ".dockerignore",
+        "Dockerfile",
+        "deploy/v1/Dockerfile.backend",
+        "deploy/v1/Dockerfile.frontend",
+        "deploy/v1/compose.yaml"
+      ],
+      "reason": "Read-only Docker/Compose source ownership, public payload inclusion and credential file configuration contract. No build or execution.",
+      "sha256": "ea13de05373aa8f9cedf906401a27a77946a94fa327614b3060b725632ad194b"
+    },
+    {
+      "path": "tests/test_v1_container_contract_api.py",
+      "layer": "api-integration",
+      "targets": [
+        "api/auth.py",
+        "api/personal_security.py",
+        "api/routers/portable.py"
+      ],
+      "reason": "Actual in-process FastAPI request and security middleware composition over synthetic route inputs.",
+      "sha256": "274b4d3f892105eb11d628ae8e8c2aed5447a44d322e415623b96585437a89e6"
+    },
+    {
+      "path": "tests/test_spa_acceptance_ownership_static.py",
+      "layer": "static-contract",
+      "targets": [
+        "scripts/v1/spa_acceptance.py",
+        "apps/web/src/app/route-coverage.ts"
+      ],
+      "reason": "Read-only import-inertness plus executable-readiness catalog, rendered threshold and case/operation contract shape; not a product runtime or acceptance test.",
+      "sha256": "9b34a636481ee5ccefebb1ac804df7319106af08e36c0cf578b39e432148445f"
+    },
+    {
+      "path": "tests/test_spa_acceptance_ownership_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/v1/spa_acceptance.py"
+      ],
+      "reason": "Direct projection of an isolated verifier environment with synthetic values. No real tooling, fixture assembly or executable invocation.",
+      "sha256": "b5392b6107f4a873b3298860b551e8f6b75c9c246f7aa873250034322532addd"
+    },
+    {
+      "path": "tests/test_credentials_api_http.py",
+      "layer": "api-integration",
+      "targets": [
+        "api/routers/credentials.py"
+      ],
+      "reason": "Real in-process credential delete/update HTTP routes with fake model lookup, save and deletion.",
+      "sha256": "b6f1dc9fecf4e318dfd9a46fc0f1cf2af03efac2d31addffb571f4a8083081ae"
+    },
+    {
+      "path": "tests/test_encryption_migration.py",
+      "layer": "component-integration",
+      "targets": [
+        "api/credentials_service.py",
+        "open_notebook/utils/encryption.py"
+      ],
+      "reason": "Actual migration service and cipher/KDF collaborate across synthetic persistent credential/provider rows. No real DB or HTTP.",
+      "sha256": "61701a1931f2d3ce307697f1bcf05d90be5e89bbfe22d358165d7f2635283a56"
+    },
+    {
+      "path": "tests/test_encryption_api.py",
+      "layer": "api-integration",
+      "targets": [
+        "api/routers/credentials.py"
+      ],
+      "reason": "Actual in-process HTTP encryption migration dispatch with migration service double and no persisted data.",
+      "sha256": "e8c6cf0be107f9295eb008d5133e0f0dc269a8a85ab22b0740dbec69542d5b58"
+    },
+    {
+      "path": "tests/test_encryption_static.py",
+      "layer": "static-contract",
+      "targets": [
+        "open_notebook/utils/encryption.py"
+      ],
+      "reason": "Direct AST inspection of the declared fixed KDF salt; no cipher invocation.",
+      "sha256": "fcc75c316227f18d30931bce39612faddd27b5a907cf0086df949f736c29acea"
+    },
+    {
+      "path": "tests/test_v1_device_session_repository_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/device_session_repository.py"
+      ],
+      "reason": "Direct repository acknowledgement parsing and error decisions with literal schema acknowledgements and a synthetic connection context; no SQL service.",
+      "sha256": "a78ffe517d2fdc526091d60019d9b172328b4613a25d5dfcc90a612d8db83caf"
     }
   ]
 }

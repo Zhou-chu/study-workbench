@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import { createHash } from 'node:crypto';
 import { configurationMessages } from './configuration-messages';
+import { libraryMessages } from './library-messages';
 import { transformationMessages } from './transformation-messages';
 import { resources as canonicalResources, languages as canonicalLanguages } from '../../../../frontend/src/lib/locales';
 import { resources, languages, shellMessages, sessionMessages, notebookMessages, sourceMessages, chatMessages } from './index';
@@ -90,4 +91,9 @@ it('preserves the exact reviewed configuration messages and count labels', () =>
 it('preserves all reviewed transformation messages in their original key and locale order', () => {
     const digest = createHash('sha256').update(JSON.stringify(transformationMessages)).digest('hex');
     expect(digest).toBe('6ba823047a48e38e9e0bfd48849320e371521951dd83eb4d48e43c2baa31c90f');
+});
+
+it('preserves all reviewed library messages in their original key and locale order', () => {
+    const digest = createHash('sha256').update(JSON.stringify(libraryMessages)).digest('hex');
+    expect(digest).toBe('00091873ba1cd55462ae1dfb865ee94b00a2a2bd56c64a81715685eed7faafdb');
 });

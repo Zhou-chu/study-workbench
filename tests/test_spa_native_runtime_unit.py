@@ -4,7 +4,9 @@ No real HTTP, runtime start, database, private directory or receipt lifecycle.
 """
 
 import json
+import os
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from spa_native_runtime_support import helper, transact
@@ -264,3 +266,23 @@ def test_invalid_same_origin_config_never_admits_mutations(change):
         txn.execute(b"public fixture")
     assert txn.counts["mutations"] == 0
     assert len(service.requests) == 1
+
+
+def test_preflight_failure_never_creates_root_or_spawns(tmp_path, monkeypatch):
+    m = helper()
+
+    def refuse(*a, **k):
+        raise ValueError("untrusted input")
+
+    monkeypatch.setattr(m, "preflight", refuse)
+    monkeypatch.setattr(m.life, "start_owned", lambda *a, **k: pytest.fail("spawn"))
+    with pytest.raises(ValueError):
+        m.run(tmp_path / "no-root", "fixture", Path("/explicit/gateway"), "a" * 40)
+    assert not (tmp_path / "no-root").exists()
+
+
+def test_unknown_process_never_signalled(monkeypatch):
+    m = helper()
+    monkeypatch.setattr(os, "killpg", lambda *a: pytest.fail("unknown PID signalled"))
+    with pytest.raises(TypeError):
+        m.life.stop_processes([SimpleNamespace(pid=123456)])

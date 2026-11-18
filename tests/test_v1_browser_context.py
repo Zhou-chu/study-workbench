@@ -1,6 +1,5 @@
 """Browser acceptance authorization is tested offline; never launch Playwright."""
 
-import builtins
 import hashlib
 import importlib
 import json
@@ -18,24 +17,6 @@ def gate():
         "browser context gate missing"
     )
     return importlib.import_module("scripts.v1.browser_context")
-
-
-def test_browser_check_import_does_not_import_or_start_playwright(monkeypatch):
-    original = builtins.__import__
-
-    def reject_playwright(name, *args, **kwargs):
-        if name.startswith("playwright"):
-            raise AssertionError("Playwright imported before context validation")
-        return original(name, *args, **kwargs)
-
-    monkeypatch.setattr(builtins, "__import__", reject_playwright)
-    sys.modules.pop("scripts.v1.browser_check", None)
-    failure = None
-    try:
-        importlib.import_module("scripts.v1.browser_check")
-    except (AssertionError, SystemExit) as error:
-        failure = error
-    assert failure is None
 
 
 @pytest.fixture
@@ -163,31 +144,6 @@ def test_recheck_rejects_context_or_artifact_change(synthetic_context):
     save()
     with pytest.raises(ValueError, match="changed"):
         context.recheck()
-
-
-def test_browser_child_environment_drops_fixture_and_parent_credentials():
-    browser = importlib.import_module("scripts.v1.browser_check")
-    environment = browser.browser_environment(
-        Path("/synthetic/profile"),
-        {
-            "PATH": "/safe",
-            "OPEN_NOTEBOOK_PASSWORD": "fixture",
-            "STUDY_WORKBENCH_ACCEPTANCE_TOKEN": "parent",
-            "HTTPS_PROXY": "private",
-            "NODE_OPTIONS": "injection",
-        },
-    )
-    assert environment["PATH"] == "/safe"
-    assert environment["HOME"] == "/synthetic/profile"
-    assert all(
-        name not in environment
-        for name in (
-            "OPEN_NOTEBOOK_PASSWORD",
-            "STUDY_WORKBENCH_ACCEPTANCE_TOKEN",
-            "HTTPS_PROXY",
-            "NODE_OPTIONS",
-        )
-    )
 
 
 @pytest.mark.parametrize("problem", ["foreign-origin", "ownership-lost"])

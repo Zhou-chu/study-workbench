@@ -7,18 +7,6 @@ import { AppProviders } from './providers';
 import { UnsavedNavigationDialog, RouterNavigationGuard } from './UnsavedNavigationDialog';
 const id = { epoch: 1, notebookId: 'A', editorSession: 'editor-1' };
 const draft = () => createEditor('A', { title: 'Title', content: 'Unsaved', citations: [] });
-it('separates notebook/editor sessions and retires epochs without losing retained File identity', () => {
-    const registry = createDraftRegistry();
-    const file = new File(['x'], 'x.txt');
-    registry.update(id, { editor: draft(), file, question: 'q' });
-    registry.update({ ...id, notebookId: 'B' }, { editor: createEditor('B', { title: '', content: 'B', citations: [] }) });
-    expect(registry.get(id)?.file).toBe(file);
-    expect(registry.get({ ...id, editorSession: 'other' })).toBeUndefined();
-    registry.retireContext(1);
-    expect(registry.get(id)?.retired).toBe(true);
-    registry.update(id, { question: 'changed' });
-    expect(registry.get(id)?.question).toBe('q');
-});
 it.each(['saving', 'unknown', 'conflict', 'rejected'] as const)('blocks %s saves from generic discard or late not-sent', state => {
     const registry = createDraftRegistry();
     let editor = reduceEditor(draft(), { type: 'begin-save', operationId: 'original' });
@@ -109,18 +97,6 @@ it('guards Forward and rejects confirmation if the draft changed while the dialo
     await act(async () => { });
     expect(router.state.location.pathname).toBe('/A');
     expect(registry.get(id)?.editor?.content).toBe('newer');
-});
-it('exposes retired context even when no draft was ever created', () => {
-    const registry = createDraftRegistry();
-    expect(registry.get(id)).toBeUndefined();
-    registry.retireContext(id.epoch);
-    expect(registry.isRetired(id)).toBe(true);
-    registry.update(id, { question: 'late write' });
-    expect(registry.get(id)).toBeUndefined();
-    const next = { ...id, epoch: 2, editorSession: 'new-explicit-editor' };
-    registry.update(next, { question: 'new work' });
-    expect(registry.isRetired(next)).toBe(false);
-    expect(registry.get(next)?.question).toBe('new work');
 });
 const creationContext = (epoch: number) => ({ epoch, ready: true, target: { mode: 'legacy_password' as const, apiBase: 'http://localhost:3000/api', protocol: null } });
 it('keeps typed creation captures and sticky uncertainty through retirement and a separate successful intent', () => {

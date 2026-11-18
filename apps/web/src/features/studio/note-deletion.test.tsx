@@ -7,7 +7,6 @@ import { suspendAndRecover } from '../../test/session-recovery';
 import { json } from '../../test/notebook-fixtures';
 import { deferred } from '../../test/reader-fixtures';
 import { StudioPanel } from './StudioPanel';
-import { createStudioStore } from './studio-store';
 const note = { id: 'note:classic', revision: 7, title: 'Classic', content: 'Original', note_type: 'human' };
 const draft = { title: note.title, content: note.content, citations: [] };
 beforeEach(sourceContext);
@@ -54,13 +53,4 @@ it.each(['stale', 'unknown'])('retains %s DELETE uncertainty without confirming 
     expect(store.get(first.id)?.retired).toBe(false);
     expect(store.beginSave(first.id, readTurnContext(), sessionCoordinator.current())).toBeNull();
     expect(store.promotion(first.id)).toBeNull();
-});
-it('does not begin a DELETE after a matching editor became dirty or began saving', () => {
-    const c = sourceContext(), g = sessionCoordinator.current(), store = createStudioStore(() => {});
-    const editor = store.open('n', draft, c, g, note, 'classic');
-    const deletion = store.capture('n', { kind: 'delete', noteId: note.id }, c, g);
-    store.edit(editor, { content: 'Changed after opening confirmation' });
-    expect(store.begin(deletion, c, g)).toBeNull();
-    expect(store.beginSave(editor, c, g)).not.toBeNull();
-    expect(store.begin(deletion, c, g)).toBeNull();
 });

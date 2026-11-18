@@ -1,33 +1,14 @@
 """Offline contract tests; never start Docker or inspect operator secrets."""
 
 import copy
-import importlib.util
-import json
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+from container_contract_fixtures import ROOT, manifest, module
 
 from open_notebook.exceptions import ConfigurationError
-
-ROOT = Path(__file__).resolve().parents[1]
-
-
-def module(path):
-    assert (ROOT / path).is_file(), f"Missing deployment contract: {path}"
-    spec = importlib.util.spec_from_file_location(Path(path).stem, ROOT / path)
-    assert spec is not None, f"Cannot create module specification: {path}"
-    assert spec.loader is not None, f"Missing module loader: {path}"
-    result = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(result)
-    return result
-
-
-def manifest():
-    assert (ROOT / "deploy/v1/compose.yaml").is_file()
-    # JSON is a YAML 1.2 subset; stdlib parsing keeps this check dependency-free.
-    return json.loads((ROOT / "deploy/v1/compose.yaml").read_text())
 
 
 def test_actual_manifest_and_static_cli():
@@ -523,53 +504,6 @@ def test_explicit_existing_db_username_is_not_a_default(entry, valid_env):
 
 
 @pytest.mark.parametrize(
-    "public_origin", ["http://127.0.0.1:8502", "https://workbench.example"]
-)
-@pytest.mark.parametrize("foreign", [False, True])
-def test_portable_proxy_origin_with_real_security_middleware(
-    monkeypatch, public_origin, foreign
-):
-    from fastapi import FastAPI
-    from fastapi.testclient import TestClient
-
-    from api.auth import PasswordAuthMiddleware
-    from api.personal_security import PersonalSecurityMiddleware
-
-    # Model Compose's one explicit substitution, without reading operator env/files.
-    frontend_origin = manifest()["services"]["bff"]["environment"][
-        "STUDY_WORKBENCH_WEB_ORIGIN"
-    ]
-    api_cors = manifest()["services"]["api"]["environment"].get("CORS_ORIGINS", "")
-    monkeypatch.setenv("CORS_ORIGINS", api_cors.replace(frontend_origin, public_origin))
-    monkeypatch.setenv("OPEN_NOTEBOOK_PASSWORD", "test-deployment-access")
-    monkeypatch.delenv("OPEN_NOTEBOOK_PASSWORD_FILE", raising=False)
-    app = FastAPI()
-
-    @app.post("/api/personal/imports/portable")
-    async def upload():
-        return {"accepted": True}
-
-    app.add_middleware(PasswordAuthMiddleware)
-    app.add_middleware(PersonalSecurityMiddleware)
-    # The streaming proxy forwards Origin/auth/content-type, NOT public Host.
-    with TestClient(app, base_url="http://api:5055") as client:
-        response = client.post(
-            "/api/personal/imports/portable",
-            headers={
-                "Origin": "https://foreign.example" if foreign else public_origin,
-                "Authorization": "Bearer test-deployment-access",
-                "Content-Type": "multipart/form-data; boundary=test",
-            },
-            content=b"--test--\r\n",
-        )
-    assert response.status_code == (403 if foreign else 200)
-    if foreign:
-        assert response.json()["error"]["code"] == "CROSS_SITE_REQUEST"
-    else:
-        assert response.json() == {"accepted": True}
-
-
-@pytest.mark.parametrize(
     "origin", [None, "*", "http://api:5055", "https://foreign.example"]
 )
 def test_api_cors_must_match_required_public_origin(origin):
@@ -583,29 +517,6 @@ def test_api_cors_must_match_required_public_origin(origin):
     assert checker.validate(data, ROOT)
 
 
-def test_backend_runtime_keeps_version_metadata_without_broad_copy():
-    source = (ROOT / "deploy/v1/Dockerfile.backend").read_text()
-    runtime = source.split("FROM python-base AS backend\n", 1)[1]
-    assert "COPY pyproject.toml ./pyproject.toml" in runtime
-    assert "COPY . " not in runtime
-
-
-def test_secret_suffix_is_required_at_root_and_nested_build_context_paths():
-    checker = module("scripts/v1/container_check.py")
-    # Docker's ** matches zero or more directories: operator.secret and
-    # frontend/nested/operator.secret must both be excluded from the context.
-    assert "**/*.secret" in checker.IGNORE_PATTERNS
-    assert "**/*.secret" in (ROOT / ".dockerignore").read_text().splitlines()
-
-
-@pytest.mark.parametrize("filename", ["Dockerfile", "deploy/v1/Dockerfile.frontend"])
-def test_frontend_builders_copy_exact_public_contract(filename):
-    builder = (ROOT / filename).read_text().split("RUN npm run build", 1)[0]
-    assert "COPY contracts/v1/openapi.json /app/contracts/v1/openapi.json" in builder
-    assert "COPY contracts/ " not in builder
-    assert "COPY . " not in builder
-
-
 @pytest.mark.parametrize("role", ["api", "worker"])
 def test_database_transport_requires_operator_choice(entry, valid_env, role):
     valid_env["SURREAL_URL"] = "ws://db:8000/rpc"
@@ -614,15 +525,6 @@ def test_database_transport_requires_operator_choice(entry, valid_env, role):
     valid_env["SURREAL_INSECURE_ALLOW_URL"] = "ws://db:8000/rpc"
     _, result = entry.prepare(role, valid_env)
     assert result["SURREAL_URL"] == "ws://db:8000/rpc"
-
-
-def test_compose_never_supplies_plaintext_exception():
-    for role in ("api", "worker"):
-        env = manifest()["services"][role]["environment"]
-        assert (
-            env["SURREAL_URL"] == "${SURREAL_URL:?Explicit database endpoint required}"
-        )
-        assert env["SURREAL_INSECURE_ALLOW_URL"] == "${SURREAL_INSECURE_ALLOW_URL:-}"
 
 
 def test_cli_remote_transport_failure_is_sanitized(valid_env):

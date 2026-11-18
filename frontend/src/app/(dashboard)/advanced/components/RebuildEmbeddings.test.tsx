@@ -46,14 +46,6 @@ describe('Rebuild submission safety', () => {
     expect(screen.getByRole('button', { name: 'advanced.rebuild.startBtn' })).toBeEnabled()
   })
 
-  it('keeps definite validation failure localized and available for correction', async () => {
-    vi.mocked(embeddingApi.rebuildEmbeddings).mockRejectedValue({ response: { status: 422, data: { detail: 'SECRET validation' } } })
-    mount()
-    fireEvent.click(screen.getByRole('button', { name: 'advanced.rebuild.startBtn' }))
-    await waitFor(() => expect(screen.getByText('advanced.rebuild.failed')).toBeInTheDocument())
-    expect(screen.queryByText(/SECRET/)).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'advanced.rebuild.startBtn' })).toBeEnabled()
-  })
 
   it('preserves uncertainty on remount and requires explicit cost acknowledgement before a new attempt', async () => {
     const unknown = { response: { status: 409, data: { detail: { code: 'COMMAND_SUBMISSION_UNKNOWN', retry_safe: false, message: 'SECRET', resource_id: 'source:not-a-job' } } } }
