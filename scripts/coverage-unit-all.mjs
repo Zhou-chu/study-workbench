@@ -39,8 +39,10 @@ function options(args) {
 async function run() {
   const attempt = startUnitAttempt(root, names);
   const result = { ...attempt, children: [] };
+  let stage = "argument validation";
   try {
     const selectedOptions = options(process.argv.slice(2));
+    stage = "selection and classification";
     const { createUnitSelection, validateCurrentUnitSelection } = await import(
       "./coverage-unit-selection.mjs"
     );
@@ -78,6 +80,7 @@ async function run() {
       ],
     ];
     for (const [language, script, args] of children) {
+      stage = language + " unit execution";
       assert.deepEqual(validateCurrentUnitSelection(root, artifact), selected);
       assert.equal(inputDigest(root), input, "Inputs changed before child");
       const child = spawnSync(
@@ -103,6 +106,7 @@ async function run() {
       assert.deepEqual(validateCurrentUnitSelection(root, artifact), selected);
       assert.equal(inputDigest(root), input, "Inputs changed during child");
     }
+    stage = "coverage verification";
     const report = verifyUnitReports(root, {
       artifact,
       selected,
@@ -120,11 +124,16 @@ async function run() {
     });
   }
   writeUnitResult(root, "run-total.json", result);
+  if (!result.passed) {
+    console.error(
+      "Strict unit gate failed during " + stage + ". See the strict-unit diagnostics artifact.",
+    );
+  }
   return result.passed ? 0 : 1;
 }
 try {
   process.exitCode = await run();
-} catch (error) {
-  console.error(String(error));
+} catch {
+  console.error("Strict unit gate could not initialize or persist its diagnostic report.");
   process.exitCode = 1;
 }

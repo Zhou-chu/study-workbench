@@ -6,10 +6,6 @@ const id = '12345678-1234-1234-1234-123456789abc';
 const refresh = 'swr1_' + Buffer.alloc(32, 2).toString('base64url');
 const access = 'swa1_' + Buffer.alloc(32, 1).toString('base64url');
 const examples = browserRoutes.flatMap(([methods, template, kind = 'json']) => methods.split(' ').map(method => ({ method, template, kind })));
-it('freezes the full reviewed 153-entry corpus plus only two A1 additions', () => {
-    expect(examples).toHaveLength(155);
-    expect(examples.filter(x => x.template.endsWith('/workspace-view') || x.template === '/api/personal/client-capabilities')).toHaveLength(2);
-});
 describe.each(['legacy_password', 'device_sessions'] as const)('full handler corpus %s', mode => {
     it.each(examples)('$method $template $kind retains the reviewed dispatch', async ({ method, template, kind }) => {
         const calls: Array<{

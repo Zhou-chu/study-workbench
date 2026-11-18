@@ -79,13 +79,23 @@
     },
     {
       "path": "apps/bff/test/policy.test.ts",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "apps/bff/src/policy.ts",
         "apps/bff/src/config.ts"
       ],
-      "reason": "Direct environment config and route/header predicates are units; checked-in OpenAPI parity and actual frontend source AST discovery are static cross-source contracts. Split the static coverage-of-current-apiClient case before unit selection.",
-      "sha256": "2c12fc77f58044a7dbb53c413a49dfc8aec0c41f6edbc43b590d2c2432e7bbed"
+      "reason": "Direct route/header/config predicates with synthetic inputs, a checked-in literal route fixture and reversible environment stubs; no external calls or source discovery.",
+      "sha256": "04a7cf1ea4570fe56c09a50c4a27bb12dad48b23f1dc884bd2665e6e85322812"
+    },
+    {
+      "path": "apps/bff/test/policy-source-parity.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "apps/bff/src/policy.ts",
+        "contracts/v1/openapi.json"
+      ],
+      "reason": "Cross-checks the independent reviewed route corpus against checked-in OpenAPI and parses production frontend API-client source via filesystem and TypeScript AST before comparing to route policy.",
+      "sha256": "aa0a1542e203bd4430a64971ddfddcaf3e03a9e422e7c6332b217cf0009ba1b5"
     },
     {
       "path": "apps/bff/test/private-ingress.test.ts",
@@ -111,14 +121,23 @@
     },
     {
       "path": "apps/bff/test/route-dispatch.test.ts",
-      "layer": "mixed",
+      "layer": "api-integration",
       "targets": [
         "apps/bff/src/server.ts",
         "apps/bff/src/proxy.ts",
         "apps/bff/src/policy.ts"
       ],
-      "reason": "155-route Request-to-handler/proxy corpus executes actual API routing with fake upstream. Separate fixture corpus-size/addition assertion is static-contract; split it rather than declaring the whole file unit.",
-      "sha256": "7cc791a3d76396c9278479bb95308534ec8cf42d1a22149fd518f61799cb3599"
+      "reason": "Executes the real Request-to-BFF handler/proxy stack for 155 reviewed routes in each auth mode using a synthetic upstream response adapter; no live network.",
+      "sha256": "e44ff26e3a2aa7d18fac5bb0c2ffc16a10b572cc06e2b3c5d3f443ac65b72275"
+    },
+    {
+      "path": "apps/bff/test/route-corpus-contract.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "apps/bff/src/policy.ts"
+      ],
+      "reason": "Freezes the size and approved additions of the independent literal route fixture used to validate BFF policy; does not execute route dispatch.",
+      "sha256": "d9a0ed7a935ec1c8478a4c0bc470df709b32f7586235cfb81357cddf554037eb"
     },
     {
       "path": "apps/bff/test/session-store.test.ts",
@@ -1164,16 +1183,24 @@
     },
     {
       "path": "apps/web/src/ui/semantics.test.tsx",
-      "layer": "mixed",
+      "layer": "unit",
       "targets": [
         "apps/web/src/ui/Button.tsx",
         "apps/web/src/ui/StatusBadge.tsx",
         "apps/web/src/ui/Tabs.tsx",
-        "apps/web/src/ui/Dialog.tsx",
+        "apps/web/src/ui/Dialog.tsx"
+      ],
+      "reason": "Direct component rendering and synthetic DOM events check accessibility names, native state and focus in jsdom. No app shell, browser, API or source-file access.",
+      "sha256": "6d5957755e02969896fa82f907a7561b601d52873193f0f4500204c7dac5cdd1"
+    },
+    {
+      "path": "apps/web/src/ui/styles-semantics.test.ts",
+      "layer": "static-contract",
+      "targets": [
         "apps/web/src/app/styles.css"
       ],
-      "reason": "Parent full-file review at 006831f, SHA verified: single UI component behavior units coexist with declares-44px CSS source regex static-contract; split static check.",
-      "sha256": "05cc417d0777022bf8d32e68162c10937197d2da8cbf216aa04619c4f3ba877f"
+      "reason": "Reads the checked-in CSS and checks declarative target size, focus, selected-state and filter rules without rendering.",
+      "sha256": "9f3ea3e6545f60635ee6fd6d2f2fd4722ed8a50e64575e14a8d293d4454d9799"
     },
     {
       "path": "frontend/scripts/artifact-identity.test.mjs",
@@ -2640,7 +2667,7 @@
         "scripts/coverage-python-unit.mjs",
         "scripts/quality/unit_pytest_evidence.py"
       ],
-      "reason": "Five tool integration tests use real Git, filesystem, pytest, coverage.py and subprocesses. Includes old complete\u2192failed selection/argument/input and foreign-root regressions; not strict unit despite mocks at higher boundaries.",
+      "reason": "Five tool integration tests use real Git, filesystem, pytest, coverage.py and subprocesses. Includes old complete→failed selection/argument/input and foreign-root regressions; not strict unit despite mocks at higher boundaries.",
       "sha256": "d0c5bb24f13f536ea0a4f3038ce955ad1c8e3f4d9511d9f5118197d633da4091"
     },
     {
@@ -2651,7 +2678,7 @@
         "scripts/coverage-unit-output.mjs"
       ],
       "reason": "Actual CLI child startup with malformed options/module loading invalidates prior successful results; filesystem/subprocess test, not unit.",
-      "sha256": "a48a3f20298c91c851d5562c3b09e3d325ce56b731124f37eaba631ed29a1a62"
+      "sha256": "63d5386922cfd60118cbf60a731c2282868ae96a1518f27180ad1baa3375e9f3"
     },
     {
       "path": "scripts/coverage-unit-output.test.mjs",

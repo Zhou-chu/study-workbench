@@ -41,6 +41,13 @@ for (const args of [
           { encoding: "utf8" },
         );
         assert.equal(child.status, 1);
+        assert.match(
+          child.stderr,
+          args.length === 1
+            ? /Strict unit gate failed during argument validation/
+            : /Strict unit gate failed during selection and classification/,
+        );
+        assert.doesNotMatch(child.stderr, /Cannot find module|unit-all-/);
         const report = JSON.parse(
           readFileSync(resolve(root, "coverage/unit/run-total.json"), "utf8"),
         );

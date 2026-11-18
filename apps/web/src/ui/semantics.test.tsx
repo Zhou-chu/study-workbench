@@ -1,6 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { Button } from './Button';
 import { StatusBadge } from './StatusBadge';
 import { Tabs } from './Tabs';
@@ -33,15 +32,6 @@ it('dialog labels content, closes on Escape and restores trigger focus', async (
     await new Promise(resolve => setTimeout(resolve, 10));
     expect(trigger).toHaveFocus();
 });
-it('declares 44px targets, visible focus, distinct selection and no media filter', () => {
-    const css = readFileSync('src/app/styles.css', 'utf8');
-    expect(css).toMatch(/min-block-size:\s*44px/);
-    expect(css).toMatch(/min-inline-size:\s*44px/);
-    expect(css).toMatch(/:focus-visible/);
-    expect(css).toMatch(/aria-selected/);
-    expect(css).not.toMatch(/grayscale\(|filter\s*:/);
-});
-
 it('keeps an icon-only dialog trigger named when its visual label is hidden',()=>{
  render(<Dialog trigger={<span aria-hidden="true">⚙</span>} triggerLabel="Preferences" title="Appearance" description="Choose appearance" closeLabel="Close"><p>Options</p></Dialog>)
  expect(screen.getByRole('button',{name:'Preferences'})).toBeVisible()
