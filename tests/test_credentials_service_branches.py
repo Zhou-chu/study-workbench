@@ -400,6 +400,7 @@ async def test_registration_preserves_existing_and_links_new_real_model(monkeypa
         saved.append(self.model_dump())
 
     monkeypatch.setattr(Model, "save", persist)
+    assert cred.id is not None
     result = await service.register_models(
         cred.id,
         [

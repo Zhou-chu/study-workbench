@@ -16,7 +16,7 @@ from open_notebook.exceptions import InvalidInputError
 
 
 @pytest.fixture
-def policy():
+def policy(monkeypatch):
     events = []
     snapshot = ScopeSnapshot(
         notebook_id="notebook:one",
@@ -78,9 +78,9 @@ def policy():
         embeddings=embeddings,
         enabled=Mock(return_value=True),
     )
-    service._lexical = AsyncMock(side_effect=lexical)
-    service._semantic = AsyncMock(side_effect=semantic)
-    service._reread = AsyncMock(side_effect=reread)
+    monkeypatch.setattr(service, "_lexical", AsyncMock(side_effect=lexical))
+    monkeypatch.setattr(service, "_semantic", AsyncMock(side_effect=semantic))
+    monkeypatch.setattr(service, "_reread", AsyncMock(side_effect=reread))
 
     async def admission():
         events.append("admit")

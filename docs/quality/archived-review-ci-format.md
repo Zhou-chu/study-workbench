@@ -66,3 +66,18 @@ Actual public full-scope mypy: 235 errors in 43 files (462 checked), exit 1. Fou
 Publication verification also exposed Ruff namespace inference from ignored coverage/web reports. A real-source two-root regression passed without reports and failed with reports before the fix. Explicit known-third-party coverage classification makes both pass without changing source import execution order, suppressing rules or excluding files. The full CI tool contract suite has12 passing cases; tests remain tool-integration. A preliminary minimal fixture was replaced by the actual source layout before accepting the RED evidence. No code installs or network calls occur in the regression.
 
 Final public verification after the explicit dependency classification and AST-identical inherited-script formatting: Ruff check and format-check exit 0, 462 files formatted; CI contract 12 passed in 0.22 seconds. Full mypy was repeated and still reports 235 errors in 43 files (462 checked), exit 1. No type scope was reduced.
+
+## Static typing maintenance (2026-11-18)
+
+The public draft's **maintained copy** of the replay script changed from SHA-256
+`c927b9040bfb2edaf6f2cc12a5f523bbb46ed4cfd3371612cc4483d208ed7bdb` to
+`c6aefab82581f023ce45842ef40cb0086600959cd683e4dfad430097bbfb3e62`. The original executed script remains identified by
+`5affbecbad8e3c3db0f399bcf4bf7cf44a9f9aaa9d408c6adbb442d3587f8f9d`
+in the unchanged custody manifests. No screenshots, historical reports, or recorded hashes were replaced.
+
+The maintenance adds a typed report shape and an annotation for the synthetic route's
+JSON value, and narrows the stdout type at its existing subprocess.PIPE close. The full
+AST matches the antecedent after removing the typing import/schema and annotations and
+unwrapping that specific identity cast. All original assertions are retained. No browser,
+network, provider, or replay was executed; this is static verification, not new product
+evidence. A future replay with the maintained copy would record that copy's own hash.

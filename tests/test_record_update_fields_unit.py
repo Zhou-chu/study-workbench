@@ -41,7 +41,9 @@ async def test_update_uses_concrete_class_fields_without_instance_deprecation(
         {"inherited": "parent", "value": 3, "optional": None},
     )
     assert query.await_count == 1
-    assert query.await_args.args[0] == "SELECT * FROM $record_id"
-    assert query.await_args.args[1]["record_id"] == RecordID("test", "field-payload")
+    awaited = query.await_args
+    assert awaited is not None
+    assert awaited.args[0] == "SELECT * FROM $record_id"
+    assert awaited.args[1]["record_id"] == RecordID("test", "field-payload")
     assert model.value == (9 if stored else 3)
     assert not hasattr(model, "ignored")

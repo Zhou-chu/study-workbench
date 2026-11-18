@@ -58,7 +58,9 @@ def extraction(monkeypatch):
     )
     service = object.__new__(mod.EvidenceService)
     service.store = store
-    service.resolve_file = AsyncMock(return_value="synthetic-path-token")
+    monkeypatch.setattr(
+        service, "resolve_file", AsyncMock(return_value="synthetic-path-token")
+    )
     parsed = {
         "status": "ready",
         "page_count": 1,

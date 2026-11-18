@@ -2904,7 +2904,7 @@
         "scripts/v1/browser_check.py"
       ],
       "reason": "Direct geometry/raster/status/origin assertion helpers with dictionaries/SimpleNamespace. Runtime guard and route continue/abort are local function fakes; never launch browser/server or read runtime files.",
-      "sha256": "52be969c202553a59ec069ad001311d820972c61908dd434f958cf8a98b70537"
+      "sha256": "05531ef6aa0e1836a639be83232706d499c3862629e41da73e6af829089141c5"
     },
     {
       "path": "tests/test_browser_tokenizer_cache.py",
@@ -3089,14 +3089,23 @@
       "sha256": "36f1575b0ab330f0b6eb9e5399fc56d000e7a19ec034af269244858230043c18"
     },
     {
-      "path": "tests/test_context_length_no_retry.py",
-      "layer": "mixed",
+      "path": "tests/test_context_length_classification_unit.py",
+      "layer": "unit",
       "targets": [
         "open_notebook/utils/error_classifier.py",
+        "open_notebook/exceptions.py"
+      ],
+      "reason": "Direct exception classification and hierarchy assertions against synthetic provider responses; no command registry, retry loop, service or external IO.",
+      "sha256": "7f044758ffc26cd5818dff4b4f3eff3e3af013d8c86504c76f4207264f737113"
+    },
+    {
+      "path": "tests/test_context_length_no_retry.py",
+      "layer": "tool-integration",
+      "targets": [
         "commands/source_commands.py"
       ],
-      "reason": "Direct classification/stop_on checks coexist with actual surreal_commands build_async_retry_instance and tenacity retry compatibility execution. Split retry integration. Full-file independent review at f10d0f4; SHA256 verified after merge.",
-      "sha256": "ae4f49701082a6faa5bd95a8d246da04c35dab84ad7f1aaac6cf615736b11a1c"
+      "reason": "Actual registered command retry configuration drives surreal_commands and tenacity for permanent and transient errors; sleeps disabled without replacing registration or retry engine.",
+      "sha256": "fc898ebd1928dc7288a3cf98d82d9f8c815713caea74a8367da0492258d8d2ac"
     },
     {
       "path": "tests/test_context_policy_unit.py",
@@ -3106,7 +3115,7 @@
         "open_notebook/domain/notebook.py"
       ],
       "reason": "Actual formatting, fallback budget search and source projection with storage getters replaced; tokenizer availability forced to error exercises real fallback. No tokenizer files, graph, DB or provider.",
-      "sha256": "747ced14045447c124fb80eee68e97ac824af1ac6393047b57590324bf795edd"
+      "sha256": "5af3cf5b966b7d5031b12d7ce54681cb91c6f09b4692d5db5cc56b445e83e60c"
     },
     {
       "path": "tests/test_cors_credentials.py",
@@ -3188,7 +3197,7 @@
         "api/routers/credentials.py"
       ],
       "reason": "All cases use real TestClient(app); mocking service/storage does not remove HTTP routing integration. Independent full-file review at 71fbefb; test bytes verified identical to this 3e72ce0 base.",
-      "sha256": "f942dd1582bedf6db22d2d27e72bdd481e94e93cfd719c2afb680155be77bf06"
+      "sha256": "3c35bcf07507be0030ac50f982f89b8dbca163ca30c7a98913a30b49007252cc"
     },
     {
       "path": "tests/test_credentials_router_unit.py",
@@ -3206,7 +3215,7 @@
         "api/credentials_service.py"
       ],
       "reason": "Service operations with persistence, HTTP AsyncClient, pin/DNS, provider factories/probes, model save/repo doubles; real local DTO/migration logic only. Fake factory may use thread, never child process/network. Independent full-file review at 71fbefb; test bytes verified identical to this 3e72ce0 base.",
-      "sha256": "1f263f5bf57fecce22ec42be4ee7018633dcbe57e926470ca21177e92161073c"
+      "sha256": "178e35178c57e8f34f21eb7fc78ec90eb359a725f2a6d52aa1bcf9db48018941"
     },
     {
       "path": "tests/test_crud_404.py",
@@ -3304,7 +3313,7 @@
         "open_notebook/domain/notebook.py"
       ],
       "reason": "Real domain query projection, batch deduplication, empty results, read-only delete preview and error/cancellation behavior with repo_query replaced. SQL shape assertions do not prove database semantics.",
-      "sha256": "317df805a091a120092ba0914e96a0a83a002069e6e3d7e15e064e9b170fb0e7"
+      "sha256": "8810826f810f53bf4f16c25a339eda162edb3ec0030d891ebb6bb1e153c279a8"
     },
     {
       "path": "tests/test_domain_source_records_unit.py",
@@ -3374,7 +3383,7 @@
         "open_notebook/database/evidence_embedding_repository.py"
       ],
       "reason": "Real canonical metadata binding, capture and revalidation with query adapter and project lock doubles; immutable DTO/hash logic real, no SQL execution or physical lock isolation.",
-      "sha256": "75ce2732ebb9b370ffdbca248abdeb2f4092e8afd5d780d551a69e3ae034bd69"
+      "sha256": "c577a0609cf3ce71cab7ba7c41d1245504bfb70618f71aaff65f49d560fedda3"
     },
     {
       "path": "tests/test_empty_model_reply.py",
@@ -3496,7 +3505,7 @@
         "api/evidence_service.py"
       ],
       "reason": "Real extraction state and evidence publication; store/file/parser/dispatch/resource boundaries replaced, no file parser or persistence workflow.",
-      "sha256": "8d2f0c754e549281f7294177497a5c22ca9c01c7785ebba3951055379947c21e"
+      "sha256": "48b7aa9d4c0e3b7909e44249202bf3a82a2cea302fa424d788342963cae7da79"
     },
     {
       "path": "tests/test_evidence_indexing_jobs.py",
@@ -3516,7 +3525,7 @@
         "api/evidence_indexing.py"
       ],
       "reason": "Real indexing pipeline including preview/input/16+1 batches/admission/write/publish; external repository, transaction, provider, memory store and project lock replaced. No target methods mocked.",
-      "sha256": "498081f7192da1368fa6c18ece6a78afc96dd574909655ab930134f27d46696c"
+      "sha256": "1fd269b99c3d1e0b2f4f611503352a90cc9af86d16ec72d33fa099a2f583cecc"
     },
     {
       "path": "tests/test_evidence_indexing_routes.py",
@@ -3537,7 +3546,7 @@
         "api/evidence_indexing.py"
       ],
       "reason": "32 direct service state-machine cases replace storage/transaction/project-lock/repository/provider/queue boundaries only. Real target methods execute; cancellation/ownership/same-attempt reconciliation and snapshot/profile binding asserted, no real flock/DB/files.",
-      "sha256": "f9db25b40dde13ceffd44d5aec1f25b3d2a6e71852175e4c38a26ad01a508c40"
+      "sha256": "a1cc6f0f7eb3e51e74d93d7fea071b8b479b07b998de213720ba1819d29fa23f"
     },
     {
       "path": "tests/test_evidence_ingest_replay_unit.py",
@@ -3591,7 +3600,7 @@
         "open_notebook/database/evidence_embedding_repository.py"
       ],
       "reason": "Real receipt/abort/query sanitization, invalidation acknowledgment and lock-order orchestration; db_connection/query_raw/query and project_lock replaced. No real DB transaction/CAS/lock behavior is claimed.",
-      "sha256": "abfee8fc7f88e888a6d9d211b4cc95ad1a479dd56db9cadc56a5398245887213"
+      "sha256": "79ed3fd5d77edfbd1d21afc6512f4c1f3a909e641315e61e7cd6925acd19122c"
     },
     {
       "path": "tests/test_evidence_revalidation_unit.py",
@@ -3654,7 +3663,7 @@
         "open_notebook/graphs/grounded_chat.py"
       ],
       "reason": "Real prompt/response budgeting and model dispatch with only provider/default I/O boundaries replaced; inert repository dependencies prevent accidental collaboration. No graph runner, ingest, DB or HTTP.",
-      "sha256": "7a3233c70238c55e3f3259e22e8a5004a0f43b93ca2b039ecde3072a1a8a666b"
+      "sha256": "138abe5379f10014b463bde033c9b55e7d18ce3cea53e1a2c9bc4f5b26548e28"
     },
     {
       "path": "tests/test_grounded_turn_decisions_unit.py",
@@ -3672,7 +3681,7 @@
         "scripts/historical_database_pytest.py"
       ],
       "reason": "Direct network_guard and mocked registered-process unwind cases are unit, selection list is static contract; main/custody tests actually allocate/chmod/link/remove scratch and fake executable files. DB/socket/process start boundaries are doubles, not a real database run.",
-      "sha256": "3f9a7e5aaa79d359e580aa0d9234ccd8cfcbb296454819fb86c73de3b817f2ac"
+      "sha256": "9386f0ce9b15de45a5c3dc44657ead016336d9b17e930bd9a7bfea79eae75a40"
     },
     {
       "path": "tests/test_historical_device_credentials_wiring.py",
@@ -3790,7 +3799,7 @@
         "open_notebook/ai/model_discovery.py"
       ],
       "reason": "Discovery/sync/count target; HTTPclient, DNS/pin, credential store, repository and model persistence replaced. Real parser/priorities; localhost appears only as data. Independent full-file review at 71fbefb; test bytes verified identical to this 3e72ce0 base.",
-      "sha256": "ef84a94f1f98d1ff2fcb3af820432fa13c0b3e92e89ab397a555fa4e0f474a50"
+      "sha256": "89757f32d02cb1ee6ba4b1b4ee2a31f8a56036cf400db2c8f27957ff21ba1b96"
     },
     {
       "path": "tests/test_model_setup_report_contract.py",
@@ -4347,7 +4356,7 @@
         "open_notebook/domain/base.py"
       ],
       "reason": "Direct RecordModel.update with repository async boundaries replaced; concrete inherited/class-variable/nullable payload, query identity, returned stored update and no instance-level Pydantic deprecation. No database, HTTP or filesystem behavior.",
-      "sha256": "254ae9048a7149e1b7dc97366d71b53a726af362df008ed3d25b2d5f0f80cb54"
+      "sha256": "d63e48ffc5d7c2521bc6ac5eba6709e9ebd04a6c618d6f83414f5193c9827f1f"
     },
     {
       "path": "tests/test_recovered_browser_custody.py",
@@ -4423,7 +4432,7 @@
         "api/models.py"
       ],
       "reason": "Each parametrized case validates/serializes one response model or inspects its generated schema with static values. No HTTP stack, router or DB; Pydantic is the model runtime, not an external application collaborator.",
-      "sha256": "994c36081c35744835143e87750824978fab8e38d314f4dd5532b77022664c43"
+      "sha256": "80bfc97e187f9246309999840a3e1d5966a22f12d81b6a4acf0b29eabf9b2855"
     },
     {
       "path": "tests/test_retrieval_canonical_binding_unit.py",
@@ -4441,7 +4450,7 @@
         "api/evidence_retrieval.py"
       ],
       "reason": "Real retrieve coordinator/RRF/disclosure/DTO with lexical/semantic/reread internal phases explicit stubs; no claim of full retrieval collaboration or provider execution.",
-      "sha256": "e93a806adda711f5222933bb0ddcc4d768c958170a3628a5b021867005c76359"
+      "sha256": "1915e9988bec5166d91698bab5a48686d2f2db36e58ebd2b78dbbd48942087b5"
     },
     {
       "path": "tests/test_runtime_capabilities.py",
@@ -4622,7 +4631,7 @@
         "api/routers/sources.py"
       ],
       "reason": "Direct router function/projection calls; Source.get, progress, repo_query, reconcile and dispatch boundaries are stubbed. No ASGI client or real database/provider.",
-      "sha256": "13587a9cd0724591318d86c8932dc43df14bc601f5fa7bfb564d8be95f5366df"
+      "sha256": "bc5a0fa17d598624ae4aa92aa3af1c2953f5be7abcf8b64c20cba26679805c92"
     },
     {
       "path": "tests/test_source_input_policy_unit.py",
@@ -4632,7 +4641,7 @@
         "api/models.py"
       ],
       "reason": "Direct form parsing and content-state policy with real DTO validation; URL, resolved filesystem observation and header detector replaced. No ASGI, real DNS or disk containment proof.",
-      "sha256": "afcb6971acf0ab2311376671e9be11c648a4978575b2bafe8397cae43446889a"
+      "sha256": "c11971311704d4c12cc286c4fe5484b6d0760b7733291971146813c091bae643"
     },
     {
       "path": "tests/test_source_insight_decisions_unit.py",
@@ -4697,7 +4706,7 @@
         "api/routers/sources.py"
       ],
       "reason": "Direct advisory preflight function with parser/support dependency replaced; checks rejection, success and metadata-only error logging. No file extraction, HTTP or database.",
-      "sha256": "2c7f03f3f2d84664677d696892decb50b0f943f7fc34dc775d4370766aaf1b50"
+      "sha256": "a435265335755669bc20066a42777b3599128f8c78c7d02cbb1dad4fbb434fa4"
     },
     {
       "path": "tests/test_source_snapshot_decisions_unit.py",
@@ -4985,7 +4994,7 @@
         "open_notebook/utils/url_validation.py"
       ],
       "reason": "Real URL/address/pinning policy with literal values or only DNS resolver replaced; no network requests or real DNS.",
-      "sha256": "c78c8b8fbf826415bf515fd477663e24d76c9971e815723b7f71f3ce9976d52e"
+      "sha256": "374dd4e6d5142e3a8116b6aafa8ecc025e7280ed4619c01b3d064c26a569c2e7"
     },
     {
       "path": "tests/test_url_validation.py",
@@ -5715,13 +5724,22 @@
       "sha256": "6f20bf74ab8ee00d25878d4714fe5e07d852499181bc0d34ed4f51f3b24c7904"
     },
     {
-      "path": "tests/test_web_discovery_routes.py",
-      "layer": "mixed",
+      "path": "tests/test_web_discovery_openapi_contract.py",
+      "layer": "static-contract",
       "targets": [
         "api/routers/web_discovery.py"
       ],
-      "reason": "ASGI request/status/validation/error cases are API integration; separate generated OpenAPI query-parameter declaration check is static contract. No real provider request; split schema case if layer-specific execution is required.",
-      "sha256": "296767cd40ffa8a00785ef8f4b0d9d49731a16139478667dafbc3250efc9ce56"
+      "reason": "Checks generated OpenAPI parameter declarations for the registered discovery router; no request dispatch.",
+      "sha256": "954ed8010876129ad819ea9bb4b18d84dc695f92c88241ea217d3a08ed72673d"
+    },
+    {
+      "path": "tests/test_web_discovery_routes.py",
+      "layer": "api-integration",
+      "targets": [
+        "api/routers/web_discovery.py"
+      ],
+      "reason": "Actual ASGI request ingress, HTTP status, validation and response envelope with provider access not exercised and import service doubled.",
+      "sha256": "a1a37d515f6f4ebdc1ffe73ec01f774684368cb4bfb2d745417e8bbc75d4fbef"
     },
     {
       "path": "tests/test_web_discovery_service.py",
@@ -5739,7 +5757,7 @@
         "api/web_discovery_service.py"
       ],
       "reason": "Real finish/cache policies with copy-on-read memory store, source/evidence/submission boundaries replaced; no filesystem checkpoints, provider or worker.",
-      "sha256": "18b0a3f6cfd81d0d08537c4020feb26d58f1317a269700b6a9bfc38723ec1319"
+      "sha256": "37ad18735e41c495514680084864dafd0c40737f02d1c5f9039ba8f33c2951d9"
     },
     {
       "path": "tests/test_web_import_decisions_unit.py",
@@ -5836,13 +5854,25 @@
       "sha256": "4312cf85fc7ae9350275133ff10471eb5083548fa32d9206aca1c9aa7b281c06"
     },
     {
-      "path": "tests/test_workspace_view_v1.py",
-      "layer": "mixed",
+      "path": "tests/test_workspace_view_budget_component_integration.py",
+      "layer": "component-integration",
       "targets": [
+        "api/routers/evidence.py",
+        "api/source_upload_limits.py"
+      ],
+      "reason": "Direct router entrypoints for upload and capability projection share a replaced size-boundary function, with framework UploadFile backed by memory and persistence doubled. No HTTP, actual archive or filesystem.",
+      "sha256": "fcae95d8401a6a35364aac8ceb8c19c6f4f08d3c1d3a6ca8f92e87ff7e7b0d3e"
+    },
+    {
+      "path": "tests/test_workspace_view_v1.py",
+      "layer": "api-integration",
+      "targets": [
+        "api/routers/evidence.py",
+        "api/auth.py",
         "api/workspace_view_projection.py"
       ],
-      "reason": "Retained actual ASGI workspace reads and cross-entry upload/capability budget collaboration; pure projection/DTO cases moved unchanged to unit companion.",
-      "sha256": "7eb6de0e957b10cf6673e1294ef93f2a9fe139ada878c331dab17a272ef2e494"
+      "reason": "Exercises actual ASGI routing, auth middleware and workspace/capability wire format with workspace service doubled; one direct router call corroborates that scope enforcement is shared.",
+      "sha256": "98520f522d06bc75c85c9c80094e67a4fa3940e4e82327def83d2e6a89aa1729"
     }
   ]
 }

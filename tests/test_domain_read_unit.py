@@ -26,7 +26,9 @@ async def test_full_content_is_explicit_and_query_identity_is_bound(
     result = await getter(include)
     assert len(result) == 1 and result[0].id == key + ":one"
     assert result[0].title == "标题"
-    sql, params = query.await_args.args
+    awaited = query.await_args
+    assert awaited is not None
+    sql, params = awaited.args
     assert str(params["id"]) == "notebook:synthetic"
     assert "order by " + key + ".updated desc" in sql
     if kind == "sources":
@@ -60,7 +62,9 @@ async def test_chat_session_projection_preserves_order(monkeypatch):
     monkeypatch.setattr(target, "repo_query", query)
     result = await notebook().get_chat_sessions()
     assert [x.id for x in result] == ["chat_session:two", "chat_session:one"]
-    assert str(query.await_args.args[1]["id"]) == "notebook:synthetic"
+    awaited = query.await_args
+    assert awaited is not None
+    assert str(awaited.args[1]["id"]) == "notebook:synthetic"
 
 
 @pytest.mark.asyncio
@@ -137,7 +141,9 @@ async def test_batch_insights_deduplicates_ids_and_preserves_empty_buckets(monke
     assert [x.content for x in result["source:a"]] == ["第一条", "第二条"]
     assert result["source:b"] == []
     query.assert_awaited_once()
-    assert [str(x) for x in query.await_args.args[1]["source_ids"]] == [
+    awaited = query.await_args
+    assert awaited is not None
+    assert [str(x) for x in awaited.args[1]["source_ids"]] == [
         "source:a",
         "source:b",
     ]
@@ -180,4 +186,6 @@ async def test_omitted_content_option_keeps_default_light_projection(
     monkeypatch.setattr(target, "repo_query", query)
     assert await getattr(notebook(), "get_" + kind)() == []
     query.assert_awaited_once()
-    assert omitted in query.await_args.args[0]
+    awaited = query.await_args
+    assert awaited is not None
+    assert omitted in awaited.args[0]

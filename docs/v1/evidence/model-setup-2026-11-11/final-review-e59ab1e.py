@@ -11,6 +11,7 @@ import subprocess
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import IO, TypedDict, cast
 from urllib.parse import unquote, urlparse
 
 from playwright.sync_api import expect, sync_playwright
@@ -198,7 +199,7 @@ if BASELINE:
         subprocess.run(
             ["tar", "-xf", "-", "-C", str(SOURCE)], stdin=archive.stdout, check=True
         )
-        archive.stdout.close()
+        cast(IO[bytes], archive.stdout).close()
         assert archive.wait() == 0
     if not (SOURCE / "tsconfig.base.json").exists():
         (SOURCE / "tsconfig.base.json").write_bytes(
@@ -224,7 +225,35 @@ if BASELINE:
     )
     (APP / "vite.review.config.ts").write_text(config)
 
-report = {
+
+class _ReviewReport(TypedDict, total=False):
+    baseline: bool
+    source_root: str
+    boundary: str
+    started_utc: str
+    base: str
+    source_files: dict[str, dict[str, str]]
+    results: list[dict[str, object]]
+    network: list[dict[str, object]]
+    websockets: list[dict[str, object]]
+    page_errors: list[dict[str, object]]
+    console_errors: list[dict[str, object]]
+    failures: list[dict[str, str]]
+    not_run: list[str]
+    review_script_sha256: str
+    head: str
+    preview_kind: str
+    parameters: dict[str, str]
+    browser: str
+    preview_pid: int
+    preview_stopped: bool
+    finished_utc: str
+    screenshots: list[dict[str, str]]
+    source_unchanged: bool
+    counts: dict[str, int]
+
+
+report: _ReviewReport = {
     "baseline": BASELINE,
     "source_root": str(SOURCE),
     "boundary": "Private loopback Vite source preview and disposable Firefox contexts. All API/config/manifest responses synthetic; every HTTP URL is audited and other origins blocked. No provider, live 18770, user profile or credential reads.",
@@ -506,6 +535,7 @@ try:
                             content_type="font/ttf",
                         )
                         return
+                    value: object
                     if path.endswith("/spa-artifact-manifest.json"):
                         value = IDENTITY
                     elif path == "/config":

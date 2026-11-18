@@ -1,6 +1,7 @@
 """Pure browser evidence assertions; no browser, server, or network execution."""
 
 from copy import deepcopy
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -112,7 +113,7 @@ def test_response_requires_exact_method_url_and_success_status(
     ],
 )
 def test_origin_guard_aborts_without_continuing_on_boundary_failure(
-    url, runtime_ok, allowed
+    url, runtime_ok, allowed, monkeypatch
 ):
     events = []
 
@@ -121,8 +122,13 @@ def test_origin_guard_aborts_without_continuing_on_boundary_failure(
         if not runtime_ok:
             raise RuntimeError("owned runtime stopped")
 
-    guard = SimpleNamespace(
-        data={"ports": {"frontend": 18864}}, assert_runtime=assert_runtime
+    guard = check.BrowserContext(
+        path=Path("synthetic-fixture.json"),
+        digest="a" * 64,
+        data={"ports": {"frontend": 18864}},
+    )
+    monkeypatch.setattr(
+        check.BrowserContext, "assert_runtime", lambda self: assert_runtime()
     )
     route = SimpleNamespace(
         request=SimpleNamespace(url=url),

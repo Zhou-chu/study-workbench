@@ -20,18 +20,22 @@ def physical(kind, identity):
 
 @pytest.fixture
 def harness(monkeypatch):
-    events = []
-    rows = {
+    events: list[tuple[object, ...]] = []
+    versions: list[dict[str, object]] = []
+    extractions: list[dict[str, object]] = []
+    membership: list[dict[str, object]] = []
+    evidence: list[dict[str, object]] = []
+    rows: dict[str, list[dict[str, object]] | BaseException] = {
         "scope-notebook": [{"id": NB}],
-        "scope-versions": [],
-        "scope-extractions": [],
-        "scope-membership": [],
-        "canonical-evidence": [],
+        "scope-versions": versions,
+        "scope-extractions": extractions,
+        "scope-membership": membership,
+        "canonical-evidence": evidence,
         "scope-epochs": [{"version_id": "v2", "scope_epoch": 4}],
     }
     for i in (2, 1):
         v, x, e, source = f"v{i}", f"x{i}", f"e{i}", f"source:{i}"
-        rows["scope-versions"].append(
+        versions.append(
             dict(
                 id=physical("version", v),
                 source_version_id=v,
@@ -41,7 +45,7 @@ def harness(monkeypatch):
                 current_extraction_id=x,
             )
         )
-        rows["scope-extractions"].append(
+        extractions.append(
             dict(
                 id=physical("extraction", x),
                 extraction_id=x,
@@ -51,8 +55,8 @@ def harness(monkeypatch):
                 evidence_ids=[e],
             )
         )
-        rows["scope-membership"].append({"in": source, "out": NB})
-        rows["canonical-evidence"].append(
+        membership.append({"in": source, "out": NB})
+        evidence.append(
             dict(
                 id=physical("evidence", e),
                 evidence_id=e,

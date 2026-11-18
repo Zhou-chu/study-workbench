@@ -1,5 +1,6 @@
 """Advisory source preflight units with synthetic parser boundary responses."""
 
+from collections.abc import Awaitable
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -26,10 +27,10 @@ async def test_advisory_failure_skips_without_path_or_exception_prose(
     logs = []
     sink = logger.add(lambda message: logs.append(str(message)), level="DEBUG")
     try:
-        assert (
-            await r._assert_file_supported("/synthetic-private-path/document.pdf")
-            is None
+        advisory_check: Awaitable[object] = r._assert_file_supported(
+            "/synthetic-private-path/document.pdf"
         )
+        assert await advisory_check is None
     finally:
         logger.remove(sink)
     check.assert_awaited_once_with("/synthetic-private-path/document.pdf")
@@ -74,4 +75,5 @@ async def test_supported_verdict_is_accepted(monkeypatch):
     monkeypatch.setattr(
         r, "check_file_support", AsyncMock(return_value=SimpleNamespace(supported=True))
     )
-    assert await r._assert_file_supported("synthetic.pdf") is None
+    advisory_check: Awaitable[object] = r._assert_file_supported("synthetic.pdf")
+    assert await advisory_check is None

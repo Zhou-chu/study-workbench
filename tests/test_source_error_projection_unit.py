@@ -87,6 +87,11 @@ async def test_status_preserves_state_and_safe_progress(monkeypatch, state):
 
 @pytest.mark.asyncio
 async def test_list_projects_worker_error_without_changing_failed_status(monkeypatch):
+    worker_result = {
+        "id": "command:synthetic",
+        "status": "failed",
+        "error_message": SECRET,
+    }
     row = {
         "id": "source:synthetic",
         "created": "2026-01-01",
@@ -96,11 +101,7 @@ async def test_list_projects_worker_error_without_changing_failed_status(monkeyp
             "phase": "failed",
             "owner": "synthetic-owner",
         },
-        "command": {
-            "id": "command:synthetic",
-            "status": "failed",
-            "error_message": SECRET,
-        },
+        "command": worker_result,
     }
     monkeypatch.setattr(sources, "repo_query", AsyncMock(return_value=[row]))
     result = await sources.get_sources(
@@ -109,7 +110,7 @@ async def test_list_projects_worker_error_without_changing_failed_status(monkeyp
     assert result[0].status == "failed"
     assert result[0].command_id == "command:synthetic"
     assert SECRET not in str(result[0].processing_info)
-    assert row["command"]["error_message"] == SECRET
+    assert worker_result["error_message"] == SECRET
 
 
 @pytest.mark.asyncio

@@ -42,7 +42,7 @@ class MemoryStore:
 
 @pytest.fixture
 def harness():
-    events = []
+    events: list[tuple[object, ...]] = []
     store = MemoryStore(events)
     checkpoint = {
         "url": "https://example.invalid/article",

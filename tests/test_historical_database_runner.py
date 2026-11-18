@@ -304,8 +304,8 @@ def test_child_temporary_custody_matrix(monkeypatch):
     import pytest
 
     assert hasattr(runner, "validate_child_temporary")
-    with tempfile.TemporaryDirectory(prefix="historical-db-", dir="/tmp") as root:
-        root = Path(root)
+    with tempfile.TemporaryDirectory(prefix="historical-db-", dir="/tmp") as directory:
+        root = Path(directory)
         scratch = root / "tmp"
         scratch.mkdir(mode=0o700)
         monkeypatch.setenv("TMPDIR", str(scratch))
@@ -410,11 +410,16 @@ def test_main_closes_checked_parent_before_allocating_scratch(monkeypatch, tmp_p
         "argv",
         ["runner", "--surreal-binary", str(binary), "--tiktoken-cache", str(tmp_path)],
     )
-    events = []
+    events: list[str | tuple[str, int]] = []
+
+    def open_temporary_parent() -> int:
+        events.append("checked")
+        return 42
+
     monkeypatch.setattr(
         runner,
         "open_temporary_parent",
-        Mock(side_effect=lambda: events.append("checked") or 42),
+        Mock(side_effect=open_temporary_parent),
     )
     monkeypatch.setattr(
         runner.os, "close", Mock(side_effect=lambda fd: events.append(("close", fd)))

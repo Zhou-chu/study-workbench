@@ -110,6 +110,7 @@ def test_shared_insight_budget_is_included_not_double_counted():
     rendered = target.format_source_context({"sources": [result], "insights": insights})
     assert words(rendered) <= 70
     alone, _ = target._truncate_source_to_token_budget(item, 70, encoding=None)
+    assert alone is not None
     assert len(result["full_text"]) < len(alone["full_text"])
 
 

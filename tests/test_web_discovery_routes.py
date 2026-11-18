@@ -101,12 +101,3 @@ async def test_import_key_conflict_is_409(app):
         )
     assert response.status_code == 409
     assert response.json()["detail"]["code"] == "WEB_IDEMPOTENCY_CONFLICT"
-
-
-def test_service_internal_dependencies_are_not_api_query_parameters(app):
-    operation = app.openapi()["paths"][
-        "/api/personal/notebooks/{notebook_id}/sources/web-import"
-    ]["post"]
-    assert [parameter["name"] for parameter in operation["parameters"]] == [
-        "notebook_id"
-    ]

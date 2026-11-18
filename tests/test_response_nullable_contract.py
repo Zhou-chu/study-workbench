@@ -1,11 +1,11 @@
 """Response fields may be null but must not disappear from the wire contract."""
 
 import pytest
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from api.models import NoteResponse, SourceListResponse, SourceResponse
 
-CASES = [
+CASES: list[tuple[type[BaseModel], dict[str, object], dict[str, object]]] = [
     (
         NoteResponse,
         {

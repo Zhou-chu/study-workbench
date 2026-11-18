@@ -175,7 +175,7 @@ async def test_injected_model_forms_preserve_response_usage_and_admission_order(
     async def asynchronous(actual):
         return sync(actual)
 
-    model = sync if shape == "sync" else asynchronous
+    model: object = sync if shape == "sync" else asynchronous
     if shape == "ainvoke":
         model = SimpleNamespace(ainvoke=asynchronous)
 

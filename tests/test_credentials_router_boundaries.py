@@ -52,7 +52,7 @@ def test_read_routes_count_models_and_never_return_secret(
     assert "api_key" not in row and "synthetic-private-key" not in response.text
 
 
-CASES = [
+CASES: list[tuple[str, str, str, dict[str, list[object]] | None]] = [
     ("get", "/status", "get_provider_status", None),
     ("get", "/env-status", "svc_get_env_status", None),
     ("get", "", "get_all", None),

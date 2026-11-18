@@ -19,9 +19,9 @@ from open_notebook.exceptions import (
 
 @pytest.fixture
 def boundary(monkeypatch):
-    rows = {}
+    rows: dict[str, dict[str, object]] = {}
     events = []
-    faults = {}
+    faults: dict[str, bool | BaseException] = {}
 
     @asynccontextmanager
     async def lock(key):
@@ -41,14 +41,16 @@ def boundary(monkeypatch):
 
     async def get(kind, identity):
         assert kind == "job"
-        if faults.get("read"):
-            raise faults["read"]
+        read_error = faults.get("read")
+        if isinstance(read_error, BaseException):
+            raise read_error
         return deepcopy(rows.get(identity))
 
     async def transaction(_sql, params, *, operation):
         events.append(("transaction", operation))
-        if faults.get(operation):
-            raise faults[operation]
+        transaction_error = faults.get(operation)
+        if isinstance(transaction_error, BaseException):
+            raise transaction_error
         for write in params["job_writes"]:
             rows[write["identity"]] = deepcopy(write["value"])
 

@@ -5,6 +5,7 @@ import hashlib
 from contextlib import asynccontextmanager
 from copy import deepcopy
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
@@ -22,7 +23,9 @@ from open_notebook.exceptions import DatabaseOperationError
 @pytest.fixture
 def pipeline(monkeypatch):
     async def make(count=17):
-        jobs, events, faults = {}, [], {}
+        jobs: dict[str, dict[str, object]] = {}
+        events: list[tuple[object, ...]] = []
+        faults: dict[str, Any] = {}
         profile = EmbeddingProfile(
             profile_id="synthetic",
             model_id="model:x",

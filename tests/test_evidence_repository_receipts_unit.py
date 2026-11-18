@@ -154,9 +154,9 @@ async def test_transport_failure_unknown_but_cancellation_preserves_identity(wir
     assert caught.value.__context__ is None
     cancellation = asyncio.CancelledError()
     wire.error = cancellation
-    with pytest.raises(asyncio.CancelledError) as caught:
+    with pytest.raises(asyncio.CancelledError) as cancelled:
         await target._transaction("body", {})
-    assert caught.value is cancellation and wire.closed == 2
+    assert cancelled.value is cancellation and wire.closed == 2
 
 
 @pytest.mark.asyncio

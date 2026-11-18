@@ -2,6 +2,7 @@
 
 import asyncio
 import socket
+from collections.abc import Awaitable
 from unittest.mock import Mock
 
 import pytest
@@ -22,7 +23,10 @@ async def test_validation_tolerates_unresolved_configuration_but_outbound_pinnin
     failure = socket.gaierror("synthetic unresolved")
     resolver = Mock(side_effect=failure)
     monkeypatch.setattr(target.socket, "getaddrinfo", resolver)
-    assert await target.validate_url("https://synthetic.invalid", "custom") is None
+    validation: Awaitable[object] = target.validate_url(
+        "https://synthetic.invalid", "custom"
+    )
+    assert await validation is None
     with pytest.raises(ValueError, match="Could not resolve hostname") as caught:
         await target.prepare_pinned_http_target("https://synthetic.invalid", "custom")
     assert caught.value.__cause__ is failure

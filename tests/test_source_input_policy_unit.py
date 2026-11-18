@@ -2,30 +2,45 @@
 
 import asyncio
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from typing import TypedDict, Unpack
+from unittest.mock import AsyncMock, Mock
 
 import pytest
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 
 from api.models import SourceCreate
 from api.routers import sources as m
 from open_notebook.exceptions import UnsupportedTypeException
 
 
-def form(**changes):
-    args = dict(
-        type="text",
-        notebook_id=None,
-        notebooks=None,
-        url=None,
-        content="body",
-        title=None,
-        transformations=None,
-        embed="false",
-        delete_source="false",
-        async_processing="false",
-        file=None,
-    )
+class FormOverrides(TypedDict, total=False):
+    type: str
+    notebook_id: str | None
+    notebooks: str | None
+    url: str | None
+    content: str | None
+    title: str | None
+    transformations: str | None
+    embed: str
+    delete_source: str
+    async_processing: str
+    file: UploadFile | None
+
+
+def form(**changes: Unpack[FormOverrides]):
+    args: FormOverrides = {
+        "type": "text",
+        "notebook_id": None,
+        "notebooks": None,
+        "url": None,
+        "content": "body",
+        "title": None,
+        "transformations": None,
+        "embed": "false",
+        "delete_source": "false",
+        "async_processing": "false",
+        "file": None,
+    }
     args.update(changes)
     return m.parse_source_form_data(**args)
 
@@ -50,7 +65,7 @@ def test_form_boolean_conversion_is_explicit_and_consistent(value, expected):
 
 
 def test_form_preserves_upload_and_typed_fields_without_reading():
-    upload = object()
+    upload = Mock(spec=UploadFile)
     row, returned = form(
         type="upload",
         notebooks='["notebook:a","notebook:b"]',
@@ -59,6 +74,7 @@ def test_form_preserves_upload_and_typed_fields_without_reading():
         file=upload,
     )
     assert returned is upload
+    upload.read.assert_not_called()
     assert row.notebooks == ["notebook:a", "notebook:b"]
     assert row.transformations == ["transformation:a"]
     assert row.title == "标题" and row.file_path is None
@@ -73,7 +89,11 @@ def test_legacy_notebook_is_normalized_without_losing_original_field():
 @pytest.mark.parametrize("field", ["notebooks", "transformations"])
 def test_invalid_json_field_returns_specific_422(field):
     with pytest.raises(HTTPException) as caught:
-        form(**{field: "[malformed"})
+        if field == "notebooks":
+            form(notebooks="[malformed")
+        else:
+            assert field == "transformations"
+            form(transformations="[malformed")
     assert caught.value.status_code == 422
     assert caught.value.detail == "Invalid JSON in " + field + " field"
 
@@ -101,7 +121,7 @@ def boundaries(monkeypatch):
     monkeypatch.setattr(m, "validate_url", url)
     monkeypatch.setattr(m, "check_file_support", support)
     # Resolver result is an external filesystem observation, not a tested symlink guard.
-    resolved = {}
+    resolved: dict[str, str] = {}
     monkeypatch.setattr(m, "UPLOADS_FOLDER", "uploads-root")
     monkeypatch.setattr(
         m,

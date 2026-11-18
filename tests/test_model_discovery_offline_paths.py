@@ -264,8 +264,10 @@ async def test_sync_preview_and_empty_catalog_never_touch_persistence(
     monkeypatch.setattr(
         md, "discover_provider_models", AsyncMock(return_value=discovered)
     )
+    repository_query = md.repo_query
+    assert isinstance(repository_query, AsyncMock)
     assert await md.sync_provider_models("fake", auto) == (len(discovered), 0, 0)
-    md.repo_query.assert_not_awaited()
+    repository_query.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -302,7 +304,9 @@ async def test_sync_counts_existing_saved_and_failed_without_aborting(
     assert [row["name"] for row in saved] == (
         ["Existing", "New"] if read_fails else ["New"]
     )
-    assert query.await_args.args[1] == {"provider": "fake"}
+    awaited = query.await_args
+    assert awaited is not None
+    assert awaited.args[1] == {"provider": "fake"}
 
 
 @pytest.mark.asyncio
@@ -337,7 +341,9 @@ async def test_count_ignores_unknown_types_and_defaults_missing_counts(
         "speech_to_text": 0,
         "text_to_speech": 0,
     }
-    assert query.await_args.args[1] == {"provider": "FAKE"}
+    awaited = query.await_args
+    assert awaited is not None
+    assert awaited.args[1] == {"provider": "FAKE"}
 
 
 @pytest.mark.asyncio
