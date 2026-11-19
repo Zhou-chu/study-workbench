@@ -5357,7 +5357,7 @@
         "apps/web/src/app/route-coverage.ts"
       ],
       "reason": "Real disposable run roots, manifests, hashes, FIFO/inode checks, atomic publications and fixture/resource verification. No browser or product execution.",
-      "sha256": "40918e021d10a069271bd85de6d7185a819c1a29667c904921d4115a51eb1331"
+      "sha256": "67acb09ad36469d948666f527ca712fe6519136d5d6cbec6a7c56c4a60c395fb"
     },
     {
       "path": "tests/test_spa_artifacts.py",

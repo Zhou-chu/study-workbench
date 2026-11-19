@@ -651,7 +651,7 @@ def test_route_inventory_preserves_all_reviewed_operation_owners():
 
 @pytest.mark.parametrize(
     ("profiles", "batches"),
-    [("[\n]", "[\n]"), ("{\n}", "{\n}"), ("{\n}", "[\n[1, [\"x\"]]\n]")],
+    [("[\n]", "[\n]"), ("{\n}", "{\n}"), ("{\n}", '[\n[1, ["x"]]\n]')],
 )
 def test_route_inventory_reports_invalid_declared_shapes(tmp_path, profiles, batches):
     path = tmp_path / "apps/web/src/app/route-coverage.ts"
@@ -660,5 +660,7 @@ def test_route_inventory_reports_invalid_declared_shapes(tmp_path, profiles, bat
         f"const routeProfiles = {profiles} satisfies Record<string, RouteProfile>;\n"
         f"const routeBatches = {batches} satisfies readonly RouteBatch[];\n"
     )
-    with pytest.raises(ValueError, match="Invalid route (inventory shape|operation batch)"):
+    with pytest.raises(
+        ValueError, match="Invalid route (inventory shape|operation batch)"
+    ):
         helper().operation_inventory(tmp_path)
