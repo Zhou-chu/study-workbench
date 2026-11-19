@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import stat
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -197,6 +198,104 @@ def duplication_capability(read: Reader) -> str:
     return "analysis-selector-advertised-readback-not-enabled"
 
 
+def scanner_metadata_matches(raw: bytes, sha: str) -> bool:
+    """Check only the published ScannerReport Metadata fields 3, 13 and 14.
+
+    Known field layout: SonarSource/sonarqube 25.12.0.117093,
+    sonar-scanner-protocol/src/main/protobuf/scanner_report.proto.
+    """
+    if len(raw) > MAX_BODY or not re.fullmatch(r"[a-f0-9]{40}", sha):
+        return False
+    expected = {3: PROJECT.encode(), 13: sha.encode(), 14: PR.encode()}
+    seen: set[int] = set()
+    position = 0
+
+    def varint() -> int:
+        nonlocal position
+        value = 0
+        for shift in range(0, 70, 7):
+            byte = raw[position]
+            position += 1
+            value |= (byte & 127) << shift
+            if byte < 128:
+                return value
+        raise ValueError("invalid-varint")
+
+    try:
+        while position < len(raw):
+            field, wire = divmod(varint(), 8)
+            if not 0 < field < 2**29 or (field in expected and wire != 2):
+                return False
+            if wire == 0:
+                varint()
+            elif wire == 1:
+                position += 8
+            elif wire == 2:
+                length = varint()
+                end = position + length
+                if field in expected:
+                    if (
+                        field in seen
+                        or length != len(expected[field])
+                        or raw[position:end] != expected[field]
+                    ):
+                        return False
+                    seen.add(field)
+                position = end
+            elif wire == 5:
+                position += 4
+            else:
+                return False
+            if position > len(raw):
+                return False
+    except (IndexError, ValueError):
+        return False
+    return seen == expected.keys()
+
+
+def scanner_local_presence(workspace: Path, sha: str) -> str:
+    """Count known CPD record files; never read their content or other content."""
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    try:
+        cwd = os.open(workspace, flags)
+        try:
+            work = os.open(".scannerwork", flags, dir_fd=cwd)
+            try:
+                report = os.open("scanner-report", flags, dir_fd=work)
+                try:
+                    metadata = os.open(
+                        "metadata.pb",
+                        os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW,
+                        dir_fd=report,
+                    )
+                    with os.fdopen(metadata, "rb") as source:
+                        if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
+                            return "scanner-local-report-unavailable"
+                        raw = source.read(MAX_BODY + 1)
+                    if not scanner_metadata_matches(raw, sha):
+                        return "scanner-local-metadata-mismatch"
+                    with os.scandir(report) as entries:
+                        count = 0
+                        for total, entry in enumerate(entries, 1):
+                            if total > 100_000:
+                                return "scanner-local-report-limit"
+                            if re.fullmatch(
+                                r"duplications-[1-9][0-9]{0,8}\.pb", entry.name
+                            ):
+                                if not entry.is_file(follow_symlinks=False):
+                                    return "scanner-local-report-unavailable"
+                                count += 1
+                    return f"same-scan-metadata; {count} scanner-local CPD record files"
+                finally:
+                    os.close(report)
+            finally:
+                os.close(work)
+        finally:
+            os.close(cwd)
+    except (OSError, ValueError):
+        return "scanner-local-report-unavailable"
+
+
 def numeric(value: object) -> bool:
     return isinstance(value, str) and bool(NUMERIC.fullmatch(value))
 
@@ -258,6 +357,13 @@ def main() -> int:
         ):
             capability = duplication_capability(read)
             summary += f"\nPer-file duplication readback: `{capability}`.\n"
+            presence = "scanner-local-retention-not-enabled"
+            if os.environ.get("SONAR_KEEP_LOCAL_REPORT") == "true":
+                presence = scanner_local_presence(
+                    Path.cwd(), os.environ.get("PR_SHA", "")
+                )
+            summary += f"\nLocal scanner report: `{presence}` (not server metrics).\n"
+
     except (FeedbackError, OSError, KeyError, UnicodeError) as error:
         reason = (
             str(error)

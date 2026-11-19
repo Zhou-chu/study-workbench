@@ -255,6 +255,15 @@ jobs:
         done
         test -s ./python.xml
         sha256sum "${expected[@]}" ./python.xml ./revision.txt ./run.txt | cmp -s - SHA256SUMS
+    - name: Mark fresh runner-local scanner directory for optional diagnostics
+      id: local_report
+      continue-on-error: true
+      run: |
+        keep=false
+        if [[ "$PWD" == "$GITHUB_WORKSPACE" && ! -e .scannerwork && ! -L .scannerwork ]]; then
+          keep=true
+        fi
+        printf 'keep=%s\n' "$keep" >> "$GITHUB_OUTPUT"
     - name: Scan exact draft PR and wait for the quality gate
       id: sonar_scan
       uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
@@ -268,10 +277,19 @@ jobs:
           -Dsonar.pullrequest.base=main
           -Dsonar.qualitygate.wait=true
           -Dsonar.qualitygate.timeout=300
+          -Dsonar.scanner.keepReport=${{ steps.local_report.outputs.keep || 'false' }}
           -Dsonar.scanner.metadataFilePath=${{ runner.temp }}/notebook-sonar-gate-receipt.txt
     - name: Summarize the exact Sonar gate (aggregate metrics only)
       if: ${{ !cancelled() && (steps.sonar_scan.outcome == 'success' || steps.sonar_scan.outcome == 'failure') }}
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_KEEP_LOCAL_REPORT: ${{ steps.local_report.outputs.keep }}
         SONAR_RECEIPT: ${{ runner.temp }}/notebook-sonar-gate-receipt.txt
       run: /usr/bin/python3 -I -B scripts/ci/sonar_gate.py
+    - name: Remove only this run's local scanner work directory
+      if: ${{ always() && steps.local_report.outputs.keep == 'true' }}
+      continue-on-error: true
+      run: |
+        if [[ "$PWD" == "$GITHUB_WORKSPACE" && -d .scannerwork && ! -L .scannerwork ]]; then
+          rm -rf -- ./.scannerwork
+        fi

@@ -5532,7 +5532,7 @@
         "scripts/ci/sonar_gate.py"
       ],
       "reason": "Synthetic responses exercise precise receipt/API binding and public aggregate formatting; no file access, subprocess or networking.",
-      "sha256": "1357a294d4c29962b338d16fbfa51b8320c71a2613d07fb0469d9de435510b98"
+      "sha256": "1ae9f64d719b8c2afd94e16987aa131f89306b159f74501a68947a1295f67d38"
     },
     {
       "path": "tests/test_sonar_reports_unit.py",

@@ -146,3 +146,23 @@ def test_duplication_probe_does_not_consider_internal_analysis_selector():
     assert (
         duplication_capability(lambda *_: {"webServices": {}}) == "api-catalog-invalid"
     )
+
+
+def test_scanner_local_metadata_requires_same_project_pr_and_sha():
+    from scripts.ci.sonar_gate import scanner_metadata_matches
+
+    def field(number, value):
+        value = value.encode()
+        return bytes((number << 3 | 2, len(value))) + value
+
+    sha = "a" * 40
+    metadata = field(3, PROJECT) + field(13, sha) + field(14, "1")
+    assert scanner_metadata_matches(metadata, sha)
+    assert not scanner_metadata_matches(metadata, "b" * 40)
+    assert not scanner_metadata_matches(metadata, "a")
+    assert not scanner_metadata_matches(metadata + field(13, sha), sha)
+    assert not scanner_metadata_matches(metadata[:-1], sha)
+    assert not scanner_metadata_matches(metadata + b"\x00", sha)
+    assert not scanner_metadata_matches(
+        metadata.replace(b"\x72\x01" + b"1", b"\x72\x01" + b"2"), sha
+    )
