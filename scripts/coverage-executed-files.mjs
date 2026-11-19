@@ -1,5 +1,6 @@
 /** Compare runner-native completed test entrypoints, never the requested list alone. */
 import {isAbsolute,relative,resolve} from 'node:path';
+import { compareCoverageKeys } from './coverage-inventory.mjs';
 function local(root,file){
  if(typeof file!=='string'||!isAbsolute(file))throw Error('Execution file must be absolute');
  const path=relative(resolve(root),resolve(file)).replaceAll('\\','/');
@@ -33,7 +34,7 @@ export function auditExecutedFiles(root,selected,report,engine){
   });
  }else throw Error('Unsupported execution evidence engine');
  if(new Set(actual).size!==actual.length)throw Error('Duplicate executed entrypoint');
- actual.sort();
- if(JSON.stringify(actual)!==JSON.stringify([...selected].sort()))throw Error('Executed files do not match explicit selection');
+ actual.sort(compareCoverageKeys);
+ if(JSON.stringify(actual)!==JSON.stringify([...selected].sort(compareCoverageKeys)))throw Error('Executed files do not match explicit selection');
  return actual;
 }

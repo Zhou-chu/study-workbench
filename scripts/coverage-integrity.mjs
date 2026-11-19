@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { compareCoverageKeys } from './coverage-inventory.mjs';
 import { trustedGit, loadTrustedGit } from './coverage-trusted-git.mjs';
 import { existsSync, readFileSync, mkdirSync, writeFileSync, renameSync, openSync, closeSync, fstatSync, lstatSync, unlinkSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -13,7 +14,7 @@ export function inputDigest(root) {
     const hash = createHash('sha256');
     // Bind the independently registered tool identity as well as repository inputs.
     hash.update(JSON.stringify(loadTrustedGit()));
-    for (const file of [...new Set(files)].sort()) {
+    for (const file of [...new Set(files)].sort(compareCoverageKeys)) {
         hash.update(file);
         hash.update(readFileSync(resolve(root, file)));
     }

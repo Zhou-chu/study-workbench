@@ -2279,16 +2279,24 @@
       "sha256": "ce7ad1a9a166c54eab91c4bd9b69457f916d814f662ba8334dba788a0fe682a2"
     },
     {
+      "path": "frontend/src/lib/api/portable-download-policy.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/api/portable.ts"
+      ],
+      "reason": "Direct route admission check uses a fake client with a visible dispatch boundary. No real HTTP, routing or session state.",
+      "sha256": "cefc82947bf5e424f55617c849c3c251c97e5ca63bcc2713686edc89b4b4ae9b"
+    },
+    {
       "path": "frontend/src/lib/api/session-races.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "frontend/src/lib/stores/auth-store.ts",
         "frontend/src/lib/api/client.ts",
-        "frontend/src/lib/auth-token.ts",
-        "frontend/src/lib/api/portable.ts"
+        "frontend/src/lib/auth/session-coordinator.ts"
       ],
-      "reason": "Actual auth-store/coordinator/client refresh/revoke races, plus direct auth-token storage-event and portable path rejection cases. Fake fetch/adapter does not isolate auth lifecycle.",
-      "sha256": "4dc55a78a4b1592662a5886fd429468952528eae73caaa5ea873ffe3dc5ede36"
+      "reason": "Real auth store, HTTP client and coordinator interact through asynchronous mode and lifecycle transitions. Network fetch alone is replaced.",
+      "sha256": "27972e948574ab381a7206bc6ebed01003057f467675df640800a282f1f3544c"
     },
     {
       "path": "frontend/src/lib/api/session-recovery-edges.test.ts",
@@ -2308,7 +2316,7 @@
         "frontend/src/lib/auth-token.ts"
       ],
       "reason": "Direct auth-token fallback and invalidation checks use isolated JSDOM storage and storage events, with no client, store, or network.",
-      "sha256": "e226e2a2bee481d687ef735f28cdb8962d10a58182f48212ab8838b92cac64f7"
+      "sha256": "5292b136d4626d78393cf538ef68a21855c11edb16ceb4b3e567bf03d67366cd"
     },
     {
       "path": "frontend/src/lib/api/source-chat.test.ts",

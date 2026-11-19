@@ -29,3 +29,14 @@ it('volatile legacy fallback yields to a changed persistent baseline', async () 
  localStorage.setItem('auth-storage', JSON.stringify({ state: { token: 'synthetic-other-tab' } }))
  expect(getAuthToken('legacy_password')).toBe('synthetic-other-tab')
 })
+
+it('review: legacy credential removal in another tab must stop sending the removed password', async () => {
+  const { getAuthToken, purgeLegacyAuth } = await import('../auth-token')
+  purgeLegacyAuth()
+  localStorage.setItem('auth-storage', JSON.stringify({ state: { token: 'synthetic-legacy-password' } }))
+  expect(getAuthToken('legacy_password')).toBe('synthetic-legacy-password')
+  // This is what a different tab's legacy signout does to shared origin storage.
+  localStorage.removeItem('auth-storage')
+  window.dispatchEvent(new StorageEvent('storage', { key: 'auth-storage', newValue: null, storageArea: localStorage }))
+  expect(getAuthToken('legacy_password')).toBeNull()
+})

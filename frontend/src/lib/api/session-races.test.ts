@@ -42,24 +42,6 @@ it('review: superseded revoke must not dispatch after a shared delayed mode look
   await Promise.all([revoke, login])
   expect(request.mock.calls.map(([url, init]) => [url, init?.method])).not.toContainEqual(['/api/auth/sessions', 'DELETE'])
 })
-it('review: server supplied export paths must not select unrelated personal resource routes', async () => {
-  const { portableApi } = await import('./portable')
-  const { default: apiClient } = await import('./client')
-  const adapter = vi.fn(async config => ({ status: 200, statusText: 'OK', data: new Blob(['private']), headers: {}, config }))
-  apiClient.defaults.adapter = adapter
-  await expect(portableApi.download('/personal/notebooks/synthetic/workspace')).rejects.toThrow()
-  expect(adapter).not.toHaveBeenCalled()
-})
-it('review: legacy credential removal in another tab must stop sending the removed password', async () => {
-  const { getAuthToken, purgeLegacyAuth } = await import('../auth-token')
-  purgeLegacyAuth()
-  localStorage.setItem('auth-storage', JSON.stringify({ state: { token: 'synthetic-legacy-password' } }))
-  expect(getAuthToken('legacy_password')).toBe('synthetic-legacy-password')
-  // This is what a different tab's legacy signout does to shared origin storage.
-  localStorage.removeItem('auth-storage')
-  window.dispatchEvent(new StorageEvent('storage', { key: 'auth-storage', newValue: null, storageArea: localStorage }))
-  expect(getAuthToken('legacy_password')).toBeNull()
-})
 it('a shared pending config promise cannot dispatch an obsolete revoke alongside a newer login', async () => {
   const { getConfig } = await import('@/lib/config')
   let release!: (value: typeof cfg) => void
