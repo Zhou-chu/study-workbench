@@ -6,7 +6,8 @@ import json
 import os
 import re
 import stat
-from collections.abc import Callable
+import subprocess
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError
@@ -253,8 +254,248 @@ def scanner_metadata_matches(raw: bytes, sha: str) -> bool:
     return seen == expected.keys()
 
 
-def scanner_local_presence(workspace: Path, sha: str) -> str:
-    """Count known CPD record files; never read their content or other content."""
+# ScannerReport wire layout and delimited writer, SonarSource/sonarqube
+# 25.12.0.117093. This is an optional lower bound, never a CE metric.
+CPD_TOTAL_LIMIT = 64 * 1024 * 1024
+CPD_FILE_LIMIT = 8 * 1024 * 1024
+CPD_COUNT_LIMIT = 2048
+CPD_ORIGIN_LIMIT = 50_000
+CPD_CHANGED_LIMIT = 250_000
+SAFE_TRACKED_PATH = re.compile(rb"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*")
+
+
+def pb_varint(raw: bytes, pos: int) -> tuple[int, int]:
+    value = 0
+    for shift in range(0, 70, 7):
+        if pos == len(raw):
+            break
+        byte = raw[pos]
+        pos += 1
+        if shift == 63 and byte > 1:
+            break
+        value |= (byte & 127) << shift
+        if byte < 128:
+            return value, pos
+    raise ValueError("scanner-wire-varint")
+
+
+def pb_fields(raw: bytes) -> Iterator[tuple[int, int | bytes]]:
+    pos = 0
+    while pos < len(raw):
+        key, pos = pb_varint(raw, pos)
+        field, wire = divmod(key, 8)
+        if not 0 < field < 2**29:
+            raise ValueError("scanner-wire-field")
+        if wire == 0:
+            value, pos = pb_varint(raw, pos)
+            yield field, value
+        elif wire == 2:
+            size, pos = pb_varint(raw, pos)
+            end = pos + size
+            if end > len(raw):
+                raise ValueError("scanner-wire-size")
+            yield field, raw[pos:end]
+            pos = end
+        elif wire in (1, 5):
+            pos += 8 if wire == 1 else 4
+            if pos > len(raw):
+                raise ValueError("scanner-wire-size")
+        else:
+            raise ValueError("scanner-wire-type")
+
+
+def unique_fields(raw: bytes, keys: set[int]) -> dict[int, int | bytes]:
+    result: dict[int, int | bytes] = {}
+    for field, value in pb_fields(raw):
+        if field not in keys:
+            continue
+        if field in result:
+            raise ValueError("scanner-duplicate-field")
+        result[field] = value
+    return result
+
+
+def git_regular_paths(workspace: Path, sha: str) -> set[bytes]:
+    head = subprocess.run(
+        ["git", "rev-parse", "--verify", "HEAD"],
+        cwd=workspace,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        timeout=5,
+        check=True,
+    )
+    if head.stdout.strip() != sha.encode("ascii"):
+        raise ValueError("scanner-git-sha")
+    subprocess.run(
+        ["git", "diff", "--cached", "--quiet", "--no-ext-diff", "HEAD", "--"],
+        cwd=workspace,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        timeout=5,
+        check=True,
+    )
+    with subprocess.Popen(
+        ["git", "ls-files", "--stage", "-z"],
+        cwd=workspace,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+    ) as proc:
+        assert proc.stdout is not None
+        try:
+            data = proc.stdout.read(MAX_BODY + 1)
+            if len(data) > MAX_BODY or proc.wait(timeout=5):
+                raise ValueError("scanner-git-index")
+        finally:
+            if proc.poll() is None:
+                proc.kill()
+    if data and not data.endswith(b"\0"):
+        raise ValueError("scanner-git-index")
+    paths: set[bytes] = set()
+    for entry in data.split(b"\0")[:-1]:
+        info, path = entry.split(b"\t", 1)
+        mode, _, stage = info.split(b" ")
+        if stage == b"0" and mode in {b"100644", b"100755"}:
+            paths.add(path)
+    return paths
+
+
+def cpd_origin_rows(report: int, refs: list[int], workspace: Path, sha: str) -> str:
+    if len(refs) > CPD_COUNT_LIMIT:
+        return "scanner-local-report-limit"
+    remaining_bytes = CPD_TOTAL_LIMIT
+    remaining_origins = CPD_ORIGIN_LIMIT
+    remaining_lines = CPD_CHANGED_LIMIT
+
+    def read(name: str, limit: int) -> bytes:
+        nonlocal remaining_bytes
+        descriptor = os.open(
+            name, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW, dir_fd=report
+        )
+        with os.fdopen(descriptor, "rb") as stream:
+            if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                raise ValueError("scanner-report-type")
+            cap = min(limit, remaining_bytes)
+            data = stream.read(cap + 1)
+        if len(data) > cap:
+            raise OverflowError("scanner-report-limit")
+        remaining_bytes -= len(data)
+        return data
+
+    paths = git_regular_paths(workspace, sha)
+    missing = 0
+    counts: dict[bytes, int] = {}
+    seen: set[bytes] = set()
+    for ref in refs:
+        comp = unique_fields(read(f"component-{ref}.pb", MAX_BODY), {1, 4, 5, 11, 14})
+        if comp.get(1) != ref or comp.get(4) != 4 or comp.get(5, 0) not in {0, 1}:
+            raise ValueError("scanner-component")
+        if comp.get(5) == 1:
+            continue
+        path, lines = comp.get(14), comp.get(11)
+        if (
+            not isinstance(path, bytes)
+            or not isinstance(lines, int)
+            or not 0 < lines < 2**31
+        ):
+            raise ValueError("scanner-component")
+        if path in seen:
+            raise ValueError("scanner-component")
+        seen.add(path)
+        if (
+            len(path) > 240
+            or path not in paths
+            or not SAFE_TRACKED_PATH.fullmatch(path)
+        ):
+            continue
+        if any(part in {b".", b".."} for part in path.split(b"/")):
+            continue
+        try:
+            data = read(f"changed-lines-{ref}.pb", MAX_BODY)
+        except FileNotFoundError:
+            missing += 1
+            continue
+        changed: set[int] = set()
+
+        def add(line: int) -> None:
+            nonlocal remaining_lines
+            remaining_lines -= 1
+            if remaining_lines < 0:
+                raise OverflowError("scanner-report-limit")
+            if not 0 < line <= lines:
+                raise ValueError("scanner-changed-line")
+            changed.add(line)
+
+        for field, value in pb_fields(data):
+            if field != 1:
+                raise ValueError("scanner-changed-field")
+            if isinstance(value, int):
+                add(value)
+            else:
+                pos = 0
+                while pos < len(value):
+                    line, pos = pb_varint(value, pos)
+                    add(line)
+        if not changed:
+            continue
+
+        raw = read(f"duplications-{ref}.pb", CPD_FILE_LIMIT)
+        intervals = []
+        pos = 0
+        while pos < len(raw):
+            remaining_origins -= 1
+            if remaining_origins < 0:
+                raise OverflowError("scanner-report-limit")
+            size, pos = pb_varint(raw, pos)
+            end = pos + size
+            if end > len(raw):
+                raise ValueError("scanner-duplication-frame")
+            row = unique_fields(raw[pos:end], {1}).get(1)
+            if not isinstance(row, bytes):
+                raise ValueError("scanner-duplication-origin")
+            span = unique_fields(row, {1, 2})
+            first, last = span.get(1), span.get(2)
+            if (
+                not isinstance(first, int)
+                or not isinstance(last, int)
+                or not 0 < first <= last <= lines
+            ):
+                raise ValueError("scanner-duplication-range")
+            intervals.append((first, last))
+            pos = end
+        cursor = 0
+        count = 0
+        ordered = sorted(changed)
+        for first, last in sorted(intervals):
+            while cursor < len(ordered) and ordered[cursor] < first:
+                cursor += 1
+            while cursor < len(ordered) and ordered[cursor] <= last:
+                count += 1
+                cursor += 1
+        if count:
+            counts[path] = count
+    if not counts:
+        return (
+            "scanner-local-changed-lines-missing"
+            if missing
+            else "scanner-local-no-changed-origin-lines"
+        )
+    result = [
+        "Scanner-local changed duplicate origins (origin-only lower bound; not server metrics):",
+        "",
+        "| Tracked source file | Changed origin lines |",
+        "| --- | ---: |",
+    ]
+    for path, count in sorted(counts.items(), key=lambda row: (-row[1], row[0]))[:10]:
+        result.append(f"| `{path.decode('ascii')}` | {count} |")
+    if missing:
+        result.extend(
+            ("", f"{missing} tracked source file records had no changed-lines data.")
+        )
+    return "\n".join(result)
+
+
+def scanner_local_presence(workspace: Path, sha: str, *, origins: bool = False) -> str:
+    """Return aggregate presence or bounded origin-only file counts."""
     flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
     try:
         cwd = os.open(workspace, flags)
@@ -275,7 +516,7 @@ def scanner_local_presence(workspace: Path, sha: str) -> str:
                     if not scanner_metadata_matches(raw, sha):
                         return "scanner-local-metadata-mismatch"
                     with os.scandir(report) as entries:
-                        count = 0
+                        refs: list[int] = []
                         for total, entry in enumerate(entries, 1):
                             if total > 100_000:
                                 return "scanner-local-report-limit"
@@ -284,8 +525,17 @@ def scanner_local_presence(workspace: Path, sha: str) -> str:
                             ):
                                 if not entry.is_file(follow_symlinks=False):
                                     return "scanner-local-report-unavailable"
-                                count += 1
-                    return f"same-scan-metadata; {count} scanner-local CPD record files"
+                                refs.append(int(entry.name[13:-3]))
+                    status = f"same-scan-metadata; {len(refs)} scanner-local CPD record files"
+                    if not origins:
+                        return status
+                    try:
+                        details = cpd_origin_rows(report, refs, workspace, sha)
+                    except OverflowError:
+                        details = "scanner-local-report-limit"
+                    except (OSError, ValueError, subprocess.SubprocessError):
+                        details = "scanner-local-origin-data-unavailable"
+                    return f"{status} (not server metrics).\n\n{details}"
                 finally:
                     os.close(report)
             finally:
@@ -360,9 +610,9 @@ def main() -> int:
             presence = "scanner-local-retention-not-enabled"
             if os.environ.get("SONAR_KEEP_LOCAL_REPORT") == "true":
                 presence = scanner_local_presence(
-                    Path.cwd(), os.environ.get("PR_SHA", "")
+                    Path.cwd(), os.environ.get("PR_SHA", ""), origins=True
                 )
-            summary += f"\nLocal scanner report: `{presence}` (not server metrics).\n"
+            summary += f"\nLocal scanner report: {presence}\n"
 
     except (FeedbackError, OSError, KeyError, UnicodeError) as error:
         reason = (

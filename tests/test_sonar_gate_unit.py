@@ -166,3 +166,60 @@ def test_scanner_local_metadata_requires_same_project_pr_and_sha():
     assert not scanner_metadata_matches(
         metadata.replace(b"\x72\x01" + b"1", b"\x72\x01" + b"2"), sha
     )
+
+
+def test_scanner_origin_rows_include_only_changed_tracked_line_union(
+    tmp_path, monkeypatch
+):
+    from scripts.ci import sonar_gate
+
+    def wire(key, value):
+        return bytes([key, value])
+
+    def blob(key, value):
+        return bytes([key, len(value)]) + value
+
+    sha = "a" * 40
+    report = tmp_path / ".scannerwork/scanner-report"
+    report.mkdir(parents=True)
+    (report / "metadata.pb").write_bytes(
+        blob(26, PROJECT.encode()) + blob(106, sha.encode()) + blob(114, b"1")
+    )
+    path = b"src/report.py"
+    (report / "component-1.pb").write_bytes(
+        wire(8, 1) + wire(32, 4) + wire(88, 9) + blob(114, path)
+    )
+    (report / "changed-lines-1.pb").write_bytes(blob(10, bytes([1, 2, 4, 7])))
+    ranges = [
+        blob(10, wire(8, start) + wire(16, end)) for start, end in ((2, 5), (4, 6))
+    ]
+    (report / "duplications-1.pb").write_bytes(
+        b"".join(bytes([len(row)]) + row for row in ranges)
+    )
+    monkeypatch.setattr(sonar_gate, "git_regular_paths", lambda *_: {path})
+    summary = sonar_gate.scanner_local_presence(tmp_path, sha, origins=True)
+    assert "`src/report.py` | 2 |" in summary
+    assert "origin-only lower bound" in summary
+
+    (report / "changed-lines-1.pb").unlink()
+    summary = sonar_gate.scanner_local_presence(tmp_path, sha, origins=True)
+    assert "scanner-local-changed-lines-missing" in summary
+    assert "src/report.py" not in summary
+
+    (report / "changed-lines-1.pb").write_bytes(b"")
+    assert "scanner-local-no-changed-origin-lines" in sonar_gate.scanner_local_presence(
+        tmp_path, sha, origins=True
+    )
+
+    (report / "changed-lines-1.pb").write_bytes(wire(8, 2))
+    monkeypatch.setattr(sonar_gate, "git_regular_paths", lambda *_: set())
+    assert "src/report.py" not in sonar_gate.scanner_local_presence(
+        tmp_path, sha, origins=True
+    )
+
+    monkeypatch.setattr(sonar_gate, "git_regular_paths", lambda *_: {path})
+    invalid = blob(10, wire(8, 2) + wire(16, 10))
+    (report / "duplications-1.pb").write_bytes(bytes([len(invalid)]) + invalid)
+    summary = sonar_gate.scanner_local_presence(tmp_path, sha, origins=True)
+    assert "scanner-local-origin-data-unavailable" in summary
+    assert "src/report.py" not in summary

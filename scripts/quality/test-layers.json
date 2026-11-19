@@ -5531,8 +5531,8 @@
       "targets": [
         "scripts/ci/sonar_gate.py"
       ],
-      "reason": "Synthetic responses exercise precise receipt/API binding and public aggregate formatting; no file access, subprocess or networking.",
-      "sha256": "1ae9f64d719b8c2afd94e16987aa131f89306b159f74501a68947a1295f67d38"
+      "reason": "Synthetic API and bounded temporary ScannerReport fixtures exercise receipt binding and numeric aggregate formatting; mocked Git inventory, no subprocess or network.",
+      "sha256": "76bd966142b75979e3e3022d6a46a3ff54780c16af296d1bb5d7b9570eee40f7"
     },
     {
       "path": "tests/test_sonar_reports_unit.py",
