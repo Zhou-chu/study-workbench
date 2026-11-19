@@ -22,13 +22,6 @@ it('review: failed replacement login must not resurrect a predecessor rejected w
  expect(await login).toBe(false)
  expect(auth.getState().phase).toBe('reauth-required')
 })
-it('review: a legacy login remains usable in memory if writes fail while reads still work', async () => {
- const { getAuthToken, setLegacyAuthToken, purgeLegacyAuth } = await import('../auth-token')
- purgeLegacyAuth()
- vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('quota', 'QuotaExceededError') })
- setLegacyAuthToken('synthetic-storage-unavailable-password')
- expect(getAuthToken('legacy_password')).toBe('synthetic-storage-unavailable-password')
-})
 it('review: explicit signout lock must survive an unconfirmed login response with no returned cookie', async () => {
  const { useAuthStore: auth } = await import('../stores/auth-store')
  auth.setState({ mode: 'device_sessions', hasHydrated: true, phase: 'authenticated', isAuthenticated: true })
@@ -45,16 +38,6 @@ it('review: explicit signout lock must survive an unconfirmed login response wit
  expect({ pending: lockWhilePending, afterMissingCookie: auth.getState().signedOutLocally }).toEqual({ pending: true, afterMissingCookie: true })
 })
 
-it('volatile legacy authorization is invalidated by another tab and by device purge', async () => {
- const { getAuthToken, setLegacyAuthToken, purgeLegacyAuth } = await import('../auth-token')
- vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('quota', 'QuotaExceededError') })
- setLegacyAuthToken('synthetic-volatile')
- expect(getAuthToken('legacy_password')).toBe('synthetic-volatile')
- window.dispatchEvent(new StorageEvent('storage', { key: 'auth-storage', newValue: null }))
- expect(getAuthToken('legacy_password')).toBeNull()
- setLegacyAuthToken('synthetic-volatile-again'); purgeLegacyAuth()
- expect(getAuthToken('legacy_password')).toBeNull()
-})
 it('a confirmed pending sign-in can explicitly finish while the prior signout stays locked', async () => {
  const { useAuthStore: auth } = await import('../stores/auth-store')
  auth.setState({ mode: 'device_sessions', signedOutLocally: true, phase: 'anonymous', hasHydrated: true })
@@ -87,13 +70,4 @@ it('auth evidence fences invalid login even when the recovery phase changes away
  finish(json({ error: { code: 'AUTH_INVALID_CREDENTIALS' } }, 401))
  expect(await login).toBe(false)
  expect(auth.getState().phase).toBe('reauth-required')
-})
-it('volatile legacy fallback yields to a changed persistent baseline', async () => {
- const { getAuthToken, setLegacyAuthToken } = await import('../auth-token')
- const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('quota', 'QuotaExceededError') })
- setLegacyAuthToken('synthetic-volatile')
- expect(getAuthToken('legacy_password')).toBe('synthetic-volatile')
- write.mockRestore()
- localStorage.setItem('auth-storage', JSON.stringify({ state: { token: 'synthetic-other-tab' } }))
- expect(getAuthToken('legacy_password')).toBe('synthetic-other-tab')
 })

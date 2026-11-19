@@ -28,7 +28,7 @@ export async function bytes(filename,scan=true){
 export async function inventory(root,{metadata=false}={}){
  await noLinks(root);if(!(await lstat(root)).isDirectory())throw Error('expected directory');
  const rows=[];let total=0;
- async function walk(dir,prefix=''){for(const name of (await readdir(dir)).sort()){
+ async function walk(dir,prefix=''){for(const name of (await readdir(dir)).sort(compareUtf16)){
   const relative=safePath(prefix+name),full=path.join(dir,name),s=await lstat(full);
   if(s.isSymbolicLink())throw Error('symlink payload');if(s.isDirectory()){await walk(full,relative+'/');continue;}
   const b=await bytes(full);total+=b.data.length;if(rows.length>=20000||total>256*1024*1024)throw Error('inventory limit');
@@ -36,7 +36,7 @@ export async function inventory(root,{metadata=false}={}){
   rows.push({path:relative,size:b.data.length,mode:b.mode,sha256:sha(b.data)});
  }}await walk(root);return rows.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
 }
-function keys(v,wanted){if(!v||typeof v!=='object'||Array.isArray(v)||Object.keys(v).sort().join()!==[...wanted].sort().join())throw Error('malformed schema');}
+function keys(v,wanted){if(!v||typeof v!=='object'||Array.isArray(v)||Object.keys(v).sort(compareUtf16).join()!==[...wanted].sort(compareUtf16).join())throw Error('malformed schema');}
 const hashes=['authored_digest','asset_digest','contract_digest'];
 export function validateManifest(m){
  keys(m,['schema_version','source_commit',...hashes,'ui_transport_protocol','supported_contracts']);
@@ -54,7 +54,7 @@ export function authoredPaths(kind){
  if(!['web','bff'].includes(kind))throw Error('artifact kind');
  const roots=['package.json','package-lock.json','tsconfig.base.json','contracts/v1/openapi.json','packages/contracts','deploy/v1','scripts/v1/spa-artifact-common.mjs','scripts/coverage-trusted-git.mjs','scripts/coverage-git-provision.mjs','scripts/v1/check_spa_artifacts.py','scripts/v1/container_check.py','.dockerignore','apps/'+kind];
  if(kind==='web')roots.push('packages/domain','packages/web-transport','frontend/src/lib/locales');
- return git('ls-files','-z','--',...roots).split('\0').filter(Boolean).filter(p=>!p.includes('/dist/')).sort();
+ return git('ls-files','-z','--',...roots).split('\0').filter(Boolean).filter(p=>!p.includes('/dist/')).sort(compareUtf16);
 }
 export async function authoredInventory(kind){
  const rows=[];

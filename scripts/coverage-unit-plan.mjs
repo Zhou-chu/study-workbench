@@ -1,4 +1,5 @@
 /** Pure explicit-file planning only. Callers must independently validate selection. */
+import { compareCoverageKeys } from "./coverage-inventory.mjs";
 export const unitPartitions = Object.freeze({
   contracts: "packages/contracts",
   domain: "packages/domain",
@@ -33,7 +34,7 @@ export function planUnitPartitions(files) {
     Object.keys(unitPartitions).map((name) => [name, []]),
   );
   const pythonFiles = [];
-  for (const file of [...files].sort()) {
+  for (const file of [...files].sort(compareCoverageKeys)) {
     if (/^tests\/(?:.*\/)?(?:test_.*|.*_test)\.py$/.test(file)) {
       pythonFiles.push(file);
       continue;

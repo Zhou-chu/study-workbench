@@ -1,23 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { connect } from 'node:net'
 import { createServer } from 'node:http'
-import { classifyIngressResponse } from '../src/public-config.js'
 import { createBffHandler } from '../src/server.js'
 import { createHttpAdapter } from '../src/http-adapter.js'
 import { config, origin } from './fixtures.js'
 import { closeFixtures, instrumentBody, listen, sha256, startUpstream, type Consumption } from './fixtures/upstream.js'
 
 afterEach(closeFixtures)
-it.each([
-  [200, 'application/json', null, 'expected'], [401, 'application/json', null, 'expected'],
-  [416, 'text/plain', null, 'expected'], [304, null, null, 'expected'],
-  [200, 'Text/HTML; charset=utf-8', null, 'ingress_reauth'], [403, 'application/xhtml+xml', null, 'ingress_reauth'],
-  [302, null, 'https://synthetic-access.example/login', 'ingress_reauth'], [307, null, '/login', 'ingress_reauth'],
-  [302, null, null, 'unavailable'], [503, 'text/html', null, 'unavailable'], [0, null, null, 'unavailable'],
-] as const)('classifies only observable hop %s %s %s', (status, media, location, expected) => {
-  expect(classifyIngressResponse(status, media, location)).toBe(expected)
-})
-
 describe.each(['legacy_password', 'device_sessions'] as const)('actual BFF-hop ingress %s', mode => {
   it.each(['/api/notebooks', '/api/search/ask', '/api/personal/exports/export%3Aone/download'])('never serves upstream login HTML as successful JSON/SSE/file for %s', async path => {
     const run = await startUpstream(mode, { respond: (_req, res) => {

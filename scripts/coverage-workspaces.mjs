@@ -22,7 +22,7 @@ import {
 } from "node:fs";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { resolve, relative } from "node:path";
-import { auditReport, sourceDigest, inventory } from "./coverage-inventory.mjs";
+import { auditReport, compareCoverageKeys, sourceDigest, inventory } from "./coverage-inventory.mjs";
 export function runCoverage(
   root = fileURLToPath(new URL("../", import.meta.url)),
   args = process.argv.slice(2),
@@ -367,10 +367,10 @@ export function runCoverage(
             executedTestFiles = [
               ...executedTestFiles,
               ...nativeEvidence.executedNodeFiles,
-            ].sort();
+            ].sort(compareCoverageKeys);
             if (
               JSON.stringify(executedTestFiles) !==
-              JSON.stringify([...unitFiles].sort())
+              JSON.stringify([...unitFiles].sort(compareCoverageKeys))
             )
               throw Error("Combined execution mismatch");
           }

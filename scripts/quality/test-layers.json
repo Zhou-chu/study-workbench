@@ -97,15 +97,24 @@
       "sha256": "aa0a1542e203bd4430a64971ddfddcaf3e03a9e422e7c6332b217cf0009ba1b5"
     },
     {
+      "path": "apps/bff/test/private-ingress-classifier.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/bff/src/public-config.ts"
+      ],
+      "reason": "Direct ingress-hop classifier table passes literal observations and asserts its returned categorization, without opening listeners or invoking any routing layer.",
+      "sha256": "4055dcfce4dab7193f06e369c67878e7fa0254606d8854873dc70e3e7b62e9a5"
+    },
+    {
       "path": "apps/bff/test/private-ingress.test.ts",
-      "layer": "mixed",
+      "layer": "api-integration",
       "targets": [
         "apps/bff/src/public-config.ts",
         "apps/bff/src/proxy.ts",
         "apps/bff/src/http-adapter.ts"
       ],
-      "reason": "Initial direct hop classifier table is unit. Remaining cases start actual BFF/upstream/destination HTTP listeners and raw TCP uploads to test media/custody/zero-pull boundaries; API integration, never unit merely because payloads are synthetic.",
-      "sha256": "35195024c004f6959b30f6f2642e4aabd9a0fe017e956a70e6d1658db363c83f"
+      "reason": "Exercises actual HTTP request handling over owned fixture BFF and upstream listeners. Isolated from project user data, but not a strict unit.",
+      "sha256": "ecdf1b5550d768d815226eb78aa371adb282cb68113bd94138ea99e887900984"
     },
     {
       "path": "apps/bff/test/proxy-parity.test.ts",
@@ -2283,14 +2292,23 @@
     },
     {
       "path": "frontend/src/lib/api/session-recovery-edges.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "frontend/src/lib/stores/auth-store.ts",
         "frontend/src/lib/api/client.ts",
+        "frontend/src/lib/auth/session-coordinator.ts"
+      ],
+      "reason": "Retained real auth-store, Axios client and session coordinator lifecycle and recovery interactions. Synthetic fetch responses do not isolate the independently owned components.",
+      "sha256": "cada81a95ce1f89d3aca0ae54d4d360038ebbbf6959f4456dcbd8fa77034645d"
+    },
+    {
+      "path": "frontend/src/lib/api/session-recovery-token.unit.test.ts",
+      "layer": "unit",
+      "targets": [
         "frontend/src/lib/auth-token.ts"
       ],
-      "reason": "Auth-store/client/coordinator lifecycle races coexist with direct legacy-token memory fallback, storage event and persistent baseline cases. Split exact token-only nodes listed in policy.",
-      "sha256": "f7c85173ff0ab78e295395f3f59f84c0ec3ab11c0e70a12d91abdc5266bd4599"
+      "reason": "Direct auth-token fallback and invalidation checks use isolated JSDOM storage and storage events, with no client, store, or network.",
+      "sha256": "e226e2a2bee481d687ef735f28cdb8962d10a58182f48212ab8838b92cac64f7"
     },
     {
       "path": "frontend/src/lib/api/source-chat.test.ts",
