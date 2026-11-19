@@ -4180,12 +4180,30 @@
     },
     {
       "path": "tests/test_historical_database_runner.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "scripts/historical_database_pytest.py"
       ],
-      "reason": "Direct network_guard and mocked registered-process unwind cases are unit, selection list is static contract; main/custody tests actually allocate/chmod/link/remove scratch and fake executable files. DB/socket/process start boundaries are doubles, not a real database run.",
-      "sha256": "9386f0ce9b15de45a5c3dc44657ead016336d9b17e930bd9a7bfea79eae75a40"
+      "reason": "Retained runner checks create or inspect real owned temporary directories and files, or exercise main with checked scratch paths. Subprocess start and database execution are doubles.",
+      "sha256": "6dd1916fa4aec7bcdf393762b6f6b2973da783dfceac6233200a03714fc8a75e"
+    },
+    {
+      "path": "tests/test_historical_database_runner_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/historical_database_pytest.py"
+      ],
+      "reason": "Direct network event decisions use literal observations and socket doubles; lifecycle checks replace process start/cleanup and invoke the installed signal callback directly rather than starting a process.",
+      "sha256": "e81cf19e4e02cbb3f5680d3a31238eba91b03055093f5ba566862abcac643cb4"
+    },
+    {
+      "path": "tests/test_historical_database_runner_static_contract.py",
+      "layer": "static-contract",
+      "targets": [
+        "scripts/historical_database_pytest.py"
+      ],
+      "reason": "Reads the declared fixture test list without invoking the runner, inventory, database, or subprocess.",
+      "sha256": "bc18408c264a722bfc4336bc8d72b9a1694e7b4bca7dd243a24f5e62a2282b1b"
     },
     {
       "path": "tests/test_historical_device_credentials_wiring.py",

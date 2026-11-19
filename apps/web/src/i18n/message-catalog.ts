@@ -3,13 +3,28 @@ import { resources, type LanguageCode } from './locales';
 type TranslationRow = Readonly<Record<LanguageCode, string>>;
 type Catalog<K extends string> = Record<LanguageCode, Record<K, string>>;
 
-/** Author each message once; require all locale translations at its declaration. */
-export function messageCatalog<K extends string>(messages: Record<K, TranslationRow>): Catalog<K> {
+type Translations = Readonly<Record<string, TranslationRow>>;
+
+function transpose(messages: Translations, locales: readonly LanguageCode[]) {
     const entries = Object.entries<TranslationRow>(messages);
-    const locales = Object.keys(resources) as LanguageCode[];
     return Object.fromEntries(locales.map(locale => [
         locale, Object.fromEntries(entries.map(([key, byLocale]) => [key, byLocale[locale]])),
-    ])) as Catalog<K>;
+    ]));
+}
+
+/** Author each message once; require all locale translations at its declaration. */
+export function messageCatalog<K extends string>(messages: Record<K, TranslationRow>): Catalog<K> {
+    return transpose(messages, Object.keys(resources) as LanguageCode[]) as Catalog<K>;
+}
+
+type AuthoredCatalog<T extends Translations> = {
+    readonly [L in LanguageCode]: { readonly [K in keyof T]: T[K][L] };
+};
+
+/** Carry the original locale iteration order and literal types across a catalog migration. */
+export function orderedMessageCatalog<const T extends Translations>(messages: T): AuthoredCatalog<T> {
+    const first = Object.values(messages)[0];
+    return transpose(messages, first ? Object.keys(first) as LanguageCode[] : []) as AuthoredCatalog<T>;
 }
 
 /** Shell preview and session affordances refer to the same workspace state. */
