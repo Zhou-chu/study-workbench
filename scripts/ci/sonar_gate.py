@@ -1,4 +1,4 @@
-"""Aggregate-only SonarCloud gate readback for the same-repository draft PR #1."""
+"""Aggregate gate readback and capability-only probe for draft PR #1."""
 
 from __future__ import annotations
 
@@ -87,7 +87,11 @@ def sonar_reader(token: str) -> Reader:
     opener = build_opener(RejectRedirect())
 
     def read(endpoint: str, **params: str) -> Json:
-        if endpoint not in {"ce/task", "qualitygates/project_status"}:
+        if endpoint not in {
+            "ce/task",
+            "qualitygates/project_status",
+            "webservices/list",
+        } or (endpoint == "webservices/list" and params):
             raise FeedbackError("endpoint-outside-scope")
         try:
             request = Request(
@@ -154,6 +158,45 @@ def collect(receipt: str, branch: str, read: Reader) -> Json:
     return report
 
 
+def duplication_capability(read: Reader) -> str:
+    """Read API metadata only. Never fetch mutable per-file measures."""
+    try:
+        services = read("webservices/list").get("webServices")
+    except FeedbackError:
+        return "api-catalog-unavailable"
+    if not isinstance(services, list):
+        return "api-catalog-invalid"
+    catalog = [
+        service
+        for service in services
+        if isinstance(service, dict) and service.get("path") == "api/measures"
+    ]
+    if len(catalog) != 1 or not isinstance(catalog[0].get("actions"), list):
+        return "pr-file-measures-not-documented"
+    actions = [
+        action
+        for action in catalog[0]["actions"]
+        if isinstance(action, dict)
+        and action.get("key") == "component_tree"
+        and action.get("internal", False) is False
+    ]
+    if len(actions) != 1 or not isinstance(actions[0].get("params"), list):
+        return "pr-file-measures-not-documented"
+    keys = {
+        param["key"]
+        for param in actions[0]["params"]
+        if isinstance(param, dict)
+        and isinstance(param.get("key"), str)
+        and param.get("internal", False) is False
+    }
+    if not {"component", "pullRequest", "qualifiers", "metricKeys"} <= keys:
+        return "pr-file-measures-not-documented"
+    if "analysisId" not in keys:
+        return "exact-analysis-selector-not-documented"
+    # Documentation metadata alone does not prove revision-bound read semantics.
+    return "analysis-selector-advertised-readback-not-enabled"
+
+
 def numeric(value: object) -> bool:
     return isinstance(value, str) and bool(NUMERIC.fullmatch(value))
 
@@ -204,12 +247,17 @@ def main() -> int:
     try:
         with Path(os.environ["SONAR_RECEIPT"]).open(encoding="utf-8") as source:
             receipt = source.read(8193)
-        result = collect(
-            receipt,
-            os.environ.get("PR_BRANCH", ""),
-            sonar_reader(os.environ.get("SONAR_TOKEN", "")),
-        )
+        read = sonar_reader(os.environ.get("SONAR_TOKEN", ""))
+        result = collect(receipt, os.environ.get("PR_BRANCH", ""), read)
         summary = summarize(result)
+        if any(
+            isinstance(row, dict)
+            and row.get("metricKey") == "new_duplicated_lines_density"
+            and row.get("status") == "ERROR"
+            for row in result["conditions"]
+        ):
+            capability = duplication_capability(read)
+            summary += f"\nPer-file duplication readback: `{capability}`.\n"
     except (FeedbackError, OSError, KeyError, UnicodeError) as error:
         reason = (
             str(error)

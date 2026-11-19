@@ -2,7 +2,14 @@
 
 import pytest
 
-from scripts.ci.sonar_gate import PROJECT, FeedbackError, collect, summarize, task_id
+from scripts.ci.sonar_gate import (
+    PROJECT,
+    FeedbackError,
+    collect,
+    duplication_capability,
+    summarize,
+    task_id,
+)
 
 RECEIPT = (
     f"projectKey={PROJECT}\nceTaskId=task-1\n"
@@ -82,3 +89,60 @@ def test_wrong_ce_pr_stops_before_gate_query():
 
     with pytest.raises(FeedbackError, match="task-scope"):
         collect(RECEIPT, "", read)
+
+
+@pytest.mark.parametrize(
+    ("parameters", "status"),
+    [
+        (
+            ["component", "pullRequest", "qualifiers", "metricKeys"],
+            "exact-analysis-selector-not-documented",
+        ),
+        (
+            ["component", "pullRequest", "qualifiers", "metricKeys", "analysisId"],
+            "analysis-selector-advertised-readback-not-enabled",
+        ),
+        (["component", "metricKeys"], "pr-file-measures-not-documented"),
+    ],
+)
+def test_duplication_probe_reads_metadata_only(parameters, status):
+    def read(endpoint, **params):
+        assert (endpoint, params) == ("webservices/list", {})
+        return {
+            "webServices": [
+                {
+                    "path": "api/measures",
+                    "actions": [
+                        {
+                            "key": "component_tree",
+                            "params": [{"key": key} for key in parameters],
+                            "description": "irrelevant metadata is never emitted",
+                        }
+                    ],
+                }
+            ]
+        }
+
+    assert duplication_capability(read) == status
+
+
+def test_duplication_probe_failure_never_exports_external_error():
+    def read(endpoint, **params):
+        raise FeedbackError("irrelevant external error")
+
+    assert duplication_capability(read) == "api-catalog-unavailable"
+
+
+def test_duplication_probe_does_not_consider_internal_analysis_selector():
+    params = [
+        {"key": key} for key in ("component", "pullRequest", "qualifiers", "metricKeys")
+    ] + [{"key": "analysisId", "internal": True}]
+    actions = [{"key": "component_tree", "params": params}]
+    catalog = {"webServices": [{"path": "api/measures", "actions": actions}]}
+    assert (
+        duplication_capability(lambda *_: catalog)
+        == "exact-analysis-selector-not-documented"
+    )
+    assert (
+        duplication_capability(lambda *_: {"webServices": {}}) == "api-catalog-invalid"
+    )
