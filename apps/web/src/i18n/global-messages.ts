@@ -1,8 +1,7 @@
-import type { LanguageCode } from './locales';
-import { messageCatalog } from './message-catalog';
+import { messageCatalog, publishedLocaleOrder } from './message-catalog';
 
 /** Author one complete locale row per global library label. */
-const labelsByLocale = messageCatalog({
+export const globalMessages = messageCatalog({
   retainedReadOnly: {
     "en-US": "Retained output is read-only because its original connection is no longer current.",
     "zh-CN": "原连接已失效，保留的输出仅供阅读。",
@@ -483,23 +482,5 @@ const labelsByLocale = messageCatalog({
     "pl-PL": "Zatrzymano. Pozostałych miejsc nie wysłano.",
     "tr-TR": "Durduruldu. Kalan hedeflere gönderilmedi.",
   },
-});
-
-// Preserve the published catalog order, independent of the locale registry order.
-export const globalMessages = {
-  "en-US": labelsByLocale["en-US"],
-  "zh-CN": labelsByLocale["zh-CN"],
-  "zh-TW": labelsByLocale["zh-TW"],
-  "ja-JP": labelsByLocale["ja-JP"],
-  "pt-BR": labelsByLocale["pt-BR"],
-  "it-IT": labelsByLocale["it-IT"],
-  "fr-FR": labelsByLocale["fr-FR"],
-  "ru-RU": labelsByLocale["ru-RU"],
-  "bn-IN": labelsByLocale["bn-IN"],
-  "ca-ES": labelsByLocale["ca-ES"],
-  "es-ES": labelsByLocale["es-ES"],
-  "de-DE": labelsByLocale["de-DE"],
-  "pl-PL": labelsByLocale["pl-PL"],
-  "tr-TR": labelsByLocale["tr-TR"],
-} satisfies Record<LanguageCode, Record<string, string>>;
+}, publishedLocaleOrder);
 export type GlobalMessages = typeof globalMessages['en-US'];

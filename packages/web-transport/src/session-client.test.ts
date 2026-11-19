@@ -57,22 +57,6 @@ it('reports failed durable legacy removal without exposing credentials or claimi
  window.localStorage.removeItem=()=>{throw new Error('blocked')};
  expect(await client.signoutLocal()).toEqual({localConfirmed:false,serverRevocation:'not-performed'});
 });
-it('parses exact device local evidence and never calls it remote revocation', async () => {
- const client=createSessionClient({...config,auth_mode:'device_sessions',web_session_protocol:'bff-memory-v1'});
- fetcher.mockResolvedValueOnce(json({server_revocation:'unconfirmed'}));
- expect(await client.signoutLocal()).toEqual({localConfirmed:true,serverRevocation:'unconfirmed'});
- fetcher.mockResolvedValueOnce(json({server_revocation:'confirmed'}));
- expect(await client.signoutLocal()).toEqual({localConfirmed:false,serverRevocation:'unconfirmed'});
-});
-it('accepts only exact endpoint AUTH_REQUIRED on an explicit local retry', async () => {
- const client=createSessionClient({...config,auth_mode:'device_sessions',web_session_protocol:'bff-memory-v1'});
- fetcher.mockImplementation(async()=>json({error:{code:'AUTH_REQUIRED'}},401));
- expect(await client.signoutLocal()).toMatchObject({localConfirmed:false});
- expect(await client.signoutLocal(undefined,true)).toMatchObject({localConfirmed:true,serverRevocation:'unconfirmed'});
- fetcher.mockImplementation(async()=>json({error:{code:'AUTH_INVALID_CREDENTIALS'}},401));
- expect(await client.signoutLocal(undefined,true)).toMatchObject({localConfirmed:false});
-});
-
 it('does not call device local signout fully confirmed when legacy browser residue could not be removed',async()=>{
  const client=createSessionClient({...config,auth_mode:'device_sessions',web_session_protocol:'bff-memory-v1'});
  window.localStorage.removeItem=()=>{throw Error('synthetic blocked removal')};fetcher.mockResolvedValueOnce(json({server_revocation:'unconfirmed'}));
@@ -86,21 +70,9 @@ it('rejects stale explicit session operations before dispatch', async () => {
   await expect(client.signoutLocal(old)).rejects.toMatchObject({ reason: 'superseded' })
   expect(fetcher).not.toHaveBeenCalled()
 })
-it('rejects session operations reserved for the other auth mode', async () => {
-  const legacy = createSessionClient(config)
-  await expect(legacy.revoke()).rejects.toMatchObject({ reason: 'configuration' })
-  const device = createSessionClient({ ...config, auth_mode: 'device_sessions', web_session_protocol: 'bff-memory-v1' })
-  await expect(device.probeLegacy()).rejects.toMatchObject({ reason: 'configuration' })
-  expect(fetcher).not.toHaveBeenCalled()
-})
 it('uses legacy status for refresh and supports revoking all device sessions', async () => {
   await createSessionClient(config).refresh()
   const device = createSessionClient({ ...config, auth_mode: 'device_sessions', web_session_protocol: 'bff-memory-v1' })
   await device.revoke()
   expect(fetcher.mock.calls.map(([r]) => [(r as Request).method, new URL((r as Request).url).pathname])).toEqual([['GET', '/api/auth/status'], ['DELETE', '/api/auth/sessions']])
-})
-it.each([null, [], 'invalid'])('does not confirm local signout from malformed response %j', async value => {
-  const client = createSessionClient({ ...config, auth_mode: 'device_sessions', web_session_protocol: 'bff-memory-v1' })
-  fetcher.mockResolvedValueOnce(json(value))
-  expect(await client.signoutLocal()).toEqual({ localConfirmed: false, serverRevocation: 'unconfirmed' })
 })

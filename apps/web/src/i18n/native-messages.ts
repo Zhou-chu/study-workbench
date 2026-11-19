@@ -1,8 +1,7 @@
-import type { LanguageCode } from './locales';
-import { messageCatalog } from './message-catalog';
+import { messageCatalog, publishedLocaleOrder } from './message-catalog';
 
 /** Author one complete locale row per native conversation label. */
-const labelsByLocale = messageCatalog({
+export const nativeMessages = messageCatalog({
   parentUnavailable: {
     "en-US": "Notebook ownership is unavailable. This session is read-only.",
     "zh-CN": "无法确认所属笔记本。此会话仅供阅读。",
@@ -547,23 +546,5 @@ const labelsByLocale = messageCatalog({
     "pl-PL": "Żądanie odrzucone. Szkic został zachowany.",
     "tr-TR": "İstek reddedildi. Taslak korundu.",
   },
-});
-
-// Preserve the published catalog order, independent of the locale registry order.
-export const nativeMessages = {
-  "en-US": labelsByLocale["en-US"],
-  "zh-CN": labelsByLocale["zh-CN"],
-  "zh-TW": labelsByLocale["zh-TW"],
-  "ja-JP": labelsByLocale["ja-JP"],
-  "pt-BR": labelsByLocale["pt-BR"],
-  "it-IT": labelsByLocale["it-IT"],
-  "fr-FR": labelsByLocale["fr-FR"],
-  "ru-RU": labelsByLocale["ru-RU"],
-  "bn-IN": labelsByLocale["bn-IN"],
-  "ca-ES": labelsByLocale["ca-ES"],
-  "es-ES": labelsByLocale["es-ES"],
-  "de-DE": labelsByLocale["de-DE"],
-  "pl-PL": labelsByLocale["pl-PL"],
-  "tr-TR": labelsByLocale["tr-TR"],
-} satisfies Record<LanguageCode, Record<string, string>>;
+}, publishedLocaleOrder);
 export type NativeMessages = typeof nativeMessages['en-US'];

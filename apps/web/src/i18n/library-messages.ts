@@ -1,5 +1,4 @@
-import type { LanguageCode } from './locales';
-import { messageCatalog } from './message-catalog';
+import { messageCatalog, publishedLocaleOrder } from './message-catalog';
 
 type LibraryMessageKey =
   | "classicSources"
@@ -37,7 +36,7 @@ type LibraryMessageKey =
   | "observationStopped";
 
 /** Author one complete locale row per library label. */
-const labelsByLocale = messageCatalog<LibraryMessageKey>({
+export const libraryMessages = messageCatalog<LibraryMessageKey>({
   classicSources: {
     "en-US": "Classic sources",
     "zh-CN": "经典资料",
@@ -566,24 +565,6 @@ const labelsByLocale = messageCatalog<LibraryMessageKey>({
     "pl-PL": "Sprawdzanie zatrzymane. Przetwarzanie na serwerze może trwać dalej.",
     "tr-TR": "Kontrol durduruldu. Sunucudaki işlem devam edebilir.",
   },
-});
-
-// Preserve the published catalog order, independent of the locale registry order.
-export const libraryMessages = {
-  "en-US": labelsByLocale["en-US"],
-  "zh-CN": labelsByLocale["zh-CN"],
-  "zh-TW": labelsByLocale["zh-TW"],
-  "ja-JP": labelsByLocale["ja-JP"],
-  "pt-BR": labelsByLocale["pt-BR"],
-  "it-IT": labelsByLocale["it-IT"],
-  "fr-FR": labelsByLocale["fr-FR"],
-  "ru-RU": labelsByLocale["ru-RU"],
-  "bn-IN": labelsByLocale["bn-IN"],
-  "ca-ES": labelsByLocale["ca-ES"],
-  "es-ES": labelsByLocale["es-ES"],
-  "de-DE": labelsByLocale["de-DE"],
-  "pl-PL": labelsByLocale["pl-PL"],
-  "tr-TR": labelsByLocale["tr-TR"],
-} satisfies Record<LanguageCode, Record<LibraryMessageKey, string>>;
+}, publishedLocaleOrder);
 
 export type LibraryMessages = Record<LibraryMessageKey, string>;

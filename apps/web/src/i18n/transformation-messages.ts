@@ -1,9 +1,8 @@
-import type { LanguageCode } from './locales';
 import { messageCatalog } from './message-catalog';
 export type TransformationMessages = { deletedTarget: string; refresh: string; refreshModels: string; records: string; instructions: string; globalEffect: string; saveInstructions: string; create: string; resume: string; discard: string; details: string; futureImports: string; try: string; executionWarning: string; modelsUnavailable: string; transformation: string; languageModel: string; input: string; run: string; requests: string; original: string; requestedIdentity: string; identityLimit: string; title: string; prompt: string; defaultModel: string; save: string; importEffect: string; deleteEffect: string; replace: string; discardWarning: string; replaceWarning: string };
 
 /** Author one complete locale row per transformation label. */
-const labelsByLocale = messageCatalog<keyof TransformationMessages>({
+export const transformationMessages = messageCatalog<keyof TransformationMessages>({
   deletedTarget: {
     "en-US": "This transformation was deleted. Your editor text is retained for reference and cannot be saved.",
     "zh-CN": "此转换已删除。编辑器中的文本仍保留供查看，但无法保存。",
@@ -516,22 +515,19 @@ const labelsByLocale = messageCatalog<keyof TransformationMessages>({
     "ca-ES": "Vols canviar la transformació? Es conserven l’entrada i el model; no s’executarà res.",
     "bn-IN": "নির্বাচিত রূপান্তর বদলাবেন? বর্তমান ইনপুট ও মডেল থাকবে; কিছু চালানো হবে না।",
   },
-});
-
-// Preserve the published catalog order, independent of the locale registry order.
-export const transformationMessages = {
-  "en-US": labelsByLocale["en-US"],
-  "zh-CN": labelsByLocale["zh-CN"],
-  "zh-TW": labelsByLocale["zh-TW"],
-  "ja-JP": labelsByLocale["ja-JP"],
-  "de-DE": labelsByLocale["de-DE"],
-  "fr-FR": labelsByLocale["fr-FR"],
-  "es-ES": labelsByLocale["es-ES"],
-  "it-IT": labelsByLocale["it-IT"],
-  "pt-BR": labelsByLocale["pt-BR"],
-  "ru-RU": labelsByLocale["ru-RU"],
-  "pl-PL": labelsByLocale["pl-PL"],
-  "tr-TR": labelsByLocale["tr-TR"],
-  "ca-ES": labelsByLocale["ca-ES"],
-  "bn-IN": labelsByLocale["bn-IN"],
-} satisfies Record<LanguageCode, TransformationMessages>;
+}, [
+  "en-US",
+  "zh-CN",
+  "zh-TW",
+  "ja-JP",
+  "de-DE",
+  "fr-FR",
+  "es-ES",
+  "it-IT",
+  "pt-BR",
+  "ru-RU",
+  "pl-PL",
+  "tr-TR",
+  "ca-ES",
+  "bn-IN",
+]);

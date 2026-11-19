@@ -12,9 +12,15 @@ function transpose(messages: Translations, locales: readonly LanguageCode[]) {
     ]));
 }
 
+/** Published order for the native, global and library surfaces. */
+export const publishedLocaleOrder = [
+    "en-US", "zh-CN", "zh-TW", "ja-JP", "pt-BR", "it-IT", "fr-FR",
+    "ru-RU", "bn-IN", "ca-ES", "es-ES", "de-DE", "pl-PL", "tr-TR",
+] as const satisfies readonly LanguageCode[];
+
 /** Author each message once; require all locale translations at its declaration. */
-export function messageCatalog<K extends string>(messages: Record<K, TranslationRow>): Catalog<K> {
-    return transpose(messages, Object.keys(resources) as LanguageCode[]) as Catalog<K>;
+export function messageCatalog<K extends string>(messages: Record<K, TranslationRow>, locales: readonly LanguageCode[] = Object.keys(resources) as LanguageCode[]): Catalog<K> {
+    return transpose(messages, locales) as Catalog<K>;
 }
 
 type AuthoredCatalog<T extends Translations> = {

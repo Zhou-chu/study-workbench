@@ -50,23 +50,6 @@ describe('single guarded browser dispatch', () => {
     createWebTransport(config); suspendTurnTarget(); const transport = createWebTransport(config)
     await expect(transport.send(request())).rejects.toThrow('not sent'); expect(fetcher).not.toHaveBeenCalled(); expect(readTurnContext()?.ready).toBe(false)
   })
-  it('does not return a shared job observer to an already-aborted subscriber', async () => {
-    let finish!: (r: Response) => void; fetcher.mockImplementationOnce(() => new Promise(r => { finish = r }))
-    const transport = createWebTransport(config); const spec = request('GET','/personal/jobs/j'); const first = transport.send(spec)
-    const controller = new AbortController(); controller.abort()
-    const second = transport.send({ ...spec,signal:controller.signal }).catch(e => e)
-    finish(json()); expect(asRequestNotDispatchedError(await second)?.reason).toBe('aborted'); await first; expect(fetcher).toHaveBeenCalledTimes(1)
-  })
-  it('uses a synchronous duplicate latch and keeps unknown transport outcome unbranded', async () => {
-    let reject!: (e: Error) => void; fetcher.mockImplementationOnce(() => new Promise((_resolve,r) => { reject = r }))
-    const transport = createWebTransport(config); const spec = { ...request(), operationKey: 'same-key' }
-    const first = transport.send(spec).catch(e => e)
-    const second = await transport.send(spec).catch(e => e)
-    expect(asRequestNotDispatchedError(second)?.reason).toBe('duplicate'); expect(fetcher).toHaveBeenCalledTimes(1)
-    reject(new TypeError('network')); const failure = await first
-    expect(asRequestNotDispatchedError(failure)).toBeNull(); expect(failure).toMatchObject({ kind: 'unavailable' }); expect(failure).not.toHaveProperty('status')
-    expect(spec.operationKey).toBe('same-key'); expect(fetcher).toHaveBeenCalledTimes(1)
-  })
   it('does not interpret an opaque redirect-error rejection as logout or not-sent', async () => {
     storage.set('auth-storage', JSON.stringify({ state: { token: 'synthetic-password' } })); fetcher.mockRejectedValueOnce(new TypeError('Failed to fetch'))
     const report = vi.fn(); const unsub = sessionCoordinator.subscribe(report); const transport = createWebTransport(config)
@@ -103,19 +86,5 @@ describe('single guarded browser dispatch', () => {
     const transport = createWebTransport(config); const spec = request('GET','/personal/jobs/job:one'); const a = transport.send(spec); const b = transport.send(spec)
     expect(fetcher).toHaveBeenCalledTimes(1); finish(json({ state: 'queued' })); const [ra,rb] = await Promise.all([a,b]); expect(await ra.json()).toEqual({ state: 'queued' }); expect(await rb.json()).toEqual({ state: 'queued' })
     expect(endpointPolicy('GET',spec.path)).toEqual({ retry: false, prefetch: false, dedupeKey: 'GET /api/personal/jobs/job:one' }); expect(endpointPolicy('POST','/notes')).toEqual({ retry: false, prefetch: false })
-  })
-  it('retains streaming request bodies and FormData boundary generation', async () => {
-    const transport = createWebTransport(config)
-    const stream = new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('streamed')); c.close() } })
-    await transport.send({ ...request(),body:stream }); expect(await (fetcher.mock.calls[0]![0] as Request).text()).toBe('streamed')
-    const form = new FormData(); form.append('file',new Blob(['fixture'],{type:'text/plain'}),'fixture.txt')
-    await transport.send({ ...request(),body:form }); const sent = fetcher.mock.calls[1]![0] as Request
-    expect(sent.headers.get('content-type')).toMatch(/^multipart\/form-data; boundary=/); expect(await sent.text()).toContain('fixture.txt')
-  })
-  it('preserves successful SSE streams and abort identity without buffering', async () => {
-    const response = new Response(new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('event: status\ndata: running\n\n')) } }), { headers: { 'content-type': 'text/event-stream' } })
-    const clone = vi.spyOn(response,'clone'); fetcher.mockResolvedValueOnce(response); const transport = createWebTransport(config); const controller = new AbortController()
-    expect(await transport.send({ ...request('GET','/personal/jobs/j/events'), signal: controller.signal })).toBe(response); expect(clone).not.toHaveBeenCalled(); controller.abort(); expect((fetcher.mock.calls[0]![0] as Request).signal.aborted).toBe(true)
-    await response.body?.cancel()
   })
 })

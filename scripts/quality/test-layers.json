@@ -2945,15 +2945,26 @@
       "sha256": "0fcdf61a1182329b0a860398f2c1c465044db112ee8762f2e2ce53278e95e712"
     },
     {
+      "path": "packages/web-transport/src/client.delivery.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "packages/web-transport/src/client.ts"
+      ],
+      "reason": "Direct send, body streaming, duplicate and abort checks under stable fake context, coordinator, custody and fetch. Internal policy and request construction helpers remain real.",
+      "sha256": "337ea77a301d13785a2968e12d667a22090b6616dfa06caa4c3f04632dea0d5d"
+    },
+    {
       "path": "packages/web-transport/src/client.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "packages/web-transport/src/client.ts",
         "packages/web-transport/src/dispatch-context.ts",
-        "packages/web-transport/src/session-coordinator.ts"
+        "packages/web-transport/src/session-coordinator.ts",
+        "packages/web-transport/src/legacy-auth.ts",
+        "packages/web-transport/src/endpoint-policy.ts"
       ],
-      "reason": "Direct fake-fetch request/body/header/classifier cases coexist with real context A-B-A and coordinator.confirmed during body coercion/late settlement, and auth-report subscriber collaboration. Split those independent lifetime cases; native fetch/storage are doubles, not real HTTP.",
-      "sha256": "12999a183400cb4da02f1b18cbf2b74c9566be26732a0d6da36ff50684f2c5e9"
+      "reason": "Retained cases assert real lifecycle/retirement, context admission, auth custody, or endpoint policy collaborating with transport. The fake fetch replaces only network I/O.",
+      "sha256": "bc21a35d593a1c85f33c943195b6a43c1062391d6fc4fd88cc29295b466b6ea4"
     },
     {
       "path": "packages/web-transport/src/dispatch-context.test.ts",
@@ -2993,16 +3004,25 @@
       "sha256": "013d1886fb6ae629f8ee1c5ba7d9762577c27f2909a5fbed5e22201e0ef5d0aa"
     },
     {
+      "path": "packages/web-transport/src/session-client.policy.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "packages/web-transport/src/session-client.ts"
+      ],
+      "reason": "Direct session mode and response confirmation checks use doubles for transport dispatch, context, coordinator and legacy credential custody.",
+      "sha256": "96a667c6be00bb77a8f929611b35bc1e45002e44e26cb9a1b62690f669fb8884"
+    },
+    {
       "path": "packages/web-transport/src/session-client.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "packages/web-transport/src/session-client.ts",
         "packages/web-transport/src/client.ts",
         "packages/web-transport/src/session-coordinator.ts",
         "packages/web-transport/src/legacy-auth.ts"
       ],
-      "reason": "Mode guard and response-shape cases coexist with real session-client-to-dispatch transport/coordinator retirement and login-to-resource credential custody flows. In-memory storage/fetch doubles do not isolate those independent owners; split cases, including failed-and-retired login within one case.",
-      "sha256": "7e3c1f3ca7027a9e83a286316dfc26676b3c76bdc8859423fdd67d8df6348b41"
+      "reason": "Exercises real transport routes and wire preparation plus context, coordinator and legacy-storage lifecycle interactions. Replaced browser fetch does not isolate those independently owned boundaries.",
+      "sha256": "9894b9832c1dcde382f99e955263a19785a4c0652df536b11b8b9a71f90c5a29"
     },
     {
       "path": "packages/web-transport/src/session-coordinator.test.ts",
