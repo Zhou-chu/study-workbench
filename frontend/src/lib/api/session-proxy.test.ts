@@ -337,11 +337,6 @@ describe('transport and native separation', () => {
     expect(response.status).toBe(503)
     expect((await response.json()).error.code).toBe('AUTH_UNAVAILABLE')
   })
-  it('does not retain the external API rewrite in either runtime mode', async () => {
-    const { default: nextConfig } = await import('../../../next.config')
-    expect(nextConfig.rewrites).toBeUndefined()
-    expect(nextConfig.experimental?.proxyClientMaxBodySize).toBeUndefined()
-  })
 })
 
 describe('resource streaming and exact HTTP equivalence', () => {

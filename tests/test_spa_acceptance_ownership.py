@@ -638,3 +638,27 @@ def test_unavailable_or_modified_approved_source_cannot_run_node(tmp_path, monke
 
 # Literal operation/request expectations derived from the existing API and
 # C-RESULTS; no product module is executed or classifier copied here.
+
+
+def test_route_inventory_preserves_all_reviewed_operation_owners():
+    operations = helper().operation_inventory(ROOT)
+    assert len(operations) == 446
+    assert sum(owner == "B8" for owner in operations.values()) == 172
+    assert sum(owner == "B9" for owner in operations.values()) == 129
+    assert operations["shell.navigate_notebooks"] == "B3"
+    assert operations["notebooks.retain_creation_navigation"] == "B3"
+
+
+@pytest.mark.parametrize(
+    ("profiles", "batches"),
+    [("[\n]", "[\n]"), ("{\n}", "{\n}"), ("{\n}", "[\n[1, [\"x\"]]\n]")],
+)
+def test_route_inventory_reports_invalid_declared_shapes(tmp_path, profiles, batches):
+    path = tmp_path / "apps/web/src/app/route-coverage.ts"
+    path.parent.mkdir(parents=True)
+    path.write_text(
+        f"const routeProfiles = {profiles} satisfies Record<string, RouteProfile>;\n"
+        f"const routeBatches = {batches} satisfies readonly RouteBatch[];\n"
+    )
+    with pytest.raises(ValueError, match="Invalid route (inventory shape|operation batch)"):
+        helper().operation_inventory(tmp_path)

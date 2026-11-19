@@ -595,15 +595,47 @@ def stop(manifest: Path) -> dict[str, Any]:
 
 def operation_inventory(source: Path) -> dict[str, str]:
     text = read_file(source / "apps/web/src/app/route-coverage.ts").decode()
-    rows = [parse(x.encode()) for x in re.findall(r"^  (\{.*\}),?$", text, re.M)]
+    profile_blocks = re.findall(
+        r"^const routeProfiles = ([\[{]\n.*?^[\]}]) satisfies Record<string, RouteProfile>;$",
+        text,
+        re.M | re.S,
+    )
+    batch_blocks = re.findall(
+        r"^const routeBatches = ([\[{]\n.*?^[\]}]) satisfies readonly RouteBatch\[\];$",
+        text,
+        re.M | re.S,
+    )
+    if len(profile_blocks) != 1 or len(batch_blocks) != 1:
+        raise ValueError("Explicit route profile and operation inventories required")
+    profiles = parse(profile_blocks[0].encode())
+    batches = parse(batch_blocks[0].encode())
+    if not isinstance(profiles, dict) or not isinstance(batches, list):
+        raise ValueError("Invalid route inventory shape")
+    for profile in profiles.values():
+        if (
+            not isinstance(profile, dict)
+            or not {"legacyPath", "newPath", "ownerTask", "status", "coveredOperations"}
+            <= profile.keys()
+            or profile["coveredOperations"] is not None
+            or not isinstance(profile["ownerTask"], str)
+        ):
+            raise ValueError("Invalid route profile")
     operations: dict[str, str] = {}
-    for row in rows:
-        if len(row["coveredOperations"]) != 1:
-            raise ValueError("Individual operation inventory required")
-        op = row["coveredOperations"][0]
-        if op in operations:
-            raise ValueError("Duplicate operation")
-        operations[op] = row["ownerTask"]
+    for batch in batches:
+        if (
+            not isinstance(batch, list)
+            or len(batch) != 2
+            or not isinstance(batch[0], str)
+            or batch[0] not in profiles
+            or not isinstance(batch[1], list)
+            or not batch[1]
+        ):
+            raise ValueError("Invalid route operation batch")
+        profile, ids = batch
+        for op in ids:
+            if not isinstance(op, str) or not op or op in operations:
+                raise ValueError("Invalid or duplicate operation")
+            operations[op] = profiles[profile]["ownerTask"]
     for owner, (count, fingerprint) in FINGERPRINTS.items():
         ids = sorted(
             op for op, task in operations.items() if owner == "all" or task == owner

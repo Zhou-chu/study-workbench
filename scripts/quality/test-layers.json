@@ -2267,16 +2267,24 @@
       "sha256": "c4d698cf219ee7a01ce2754d04b5f7ebbda1312cdf83eda4f29a4fae45645e66"
     },
     {
+      "path": "frontend/src/lib/api/session-proxy-config.static.test.ts",
+      "layer": "static-contract",
+      "targets": [
+        "frontend/next.config.ts"
+      ],
+      "reason": "Inspects Next configuration properties only; does not start Next or instantiate a proxy.",
+      "sha256": "9ebb9d428c603ddeae410a53cb10f30bc7d7dc031b24423851fba86b405f7340"
+    },
+    {
       "path": "frontend/src/lib/api/session-proxy.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "frontend/src/lib/api/session-proxy.ts",
         "frontend/src/lib/api/session-proxy-policy.ts",
-        "frontend/src/lib/api/bff-session-store.ts",
-        "frontend/next.config.ts"
+        "frontend/src/lib/api/bff-session-store.ts"
       ],
-      "reason": "Early guard units split unchanged; retained real session store/proxy lifecycle collaboration and static config checks remain mixed.",
-      "sha256": "ce7ad1a9a166c54eab91c4bd9b69457f916d814f662ba8334dba788a0fe682a2"
+      "reason": "Runs the real session proxy and store/control-plane behavior behind in-memory request and upstream fixtures. No actual listener, but not isolated logic.",
+      "sha256": "fa9fa15528713d73555aacfd67d89c1096724ac752b452e6878857320d61618e"
     },
     {
       "path": "frontend/src/lib/api/portable-download-policy.unit.test.ts",
@@ -5349,7 +5357,7 @@
         "apps/web/src/app/route-coverage.ts"
       ],
       "reason": "Real disposable run roots, manifests, hashes, FIFO/inode checks, atomic publications and fixture/resource verification. No browser or product execution.",
-      "sha256": "3127bd1b9243672e139c170932a46374638597dc6171d547f34c08e3fe367000"
+      "sha256": "40918e021d10a069271bd85de6d7185a819c1a29667c904921d4115a51eb1331"
     },
     {
       "path": "tests/test_spa_artifacts.py",
