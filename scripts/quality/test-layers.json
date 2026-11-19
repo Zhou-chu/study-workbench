@@ -5580,13 +5580,31 @@
       "sha256": "fb43c9a3fa20be00e3b293ad89c3284da2562b5ca0164cdd849a834ab9163d69"
     },
     {
-      "path": "tests/test_upload_type_mitigations.py",
-      "layer": "mixed",
+      "path": "tests/test_upload_content_detector_integration.py",
+      "layer": "tool-integration",
+      "targets": [
+        "pyproject.toml"
+      ],
+      "reason": "Runs the actual external content-core detector on inert bytes written to a pytest-owned temporary file, without an HTTP path.",
+      "sha256": "3b8309b10dd0ff90dcf5f79a7ec6d7a5e666a19e55549d28e7de81af752fe087"
+    },
+    {
+      "path": "tests/test_upload_file_preflight_unit.py",
+      "layer": "unit",
       "targets": [
         "api/routers/sources.py"
       ],
-      "reason": "TestClient binary download plus real uploaded files and third-party FileDetector filesystem parsing coexist with direct _assert_file_supported verdict/error units whose content-core boundary is stubbed. Full test file and relevant production/fixture boundaries reviewed at merged 588aaf5; no tests executed for classification.",
-      "sha256": "e52613535c0ac1fe5180d9c4821161b42eb86e9496e0dbc68566e0d7c0b31e02"
+      "reason": "Calls the isolated upload preflight result mapper with async doubles for the only filesystem/detector dependency, covering accepted, declined, and transient missing-file outcomes.",
+      "sha256": "f6231dee830d5071042f95b8d33f176551057fad0906e0e5524435cbb3e41219"
+    },
+    {
+      "path": "tests/test_upload_type_mitigations.py",
+      "layer": "api-integration",
+      "targets": [
+        "api/routers/sources.py"
+      ],
+      "reason": "Both cases use FastAPI TestClient routing and actual fixture file responses, not an isolated unit.",
+      "sha256": "d59ae6fd049456cd79e7713ef139809b5b0d42ae8984be1f74ff6a960a846b3b"
     },
     {
       "path": "tests/test_url_resolution_policy_unit.py",
