@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { isDeepStrictEqual } from "node:util";
 import { compareCoverageKeys } from "./coverage-inventory.mjs";
 export function assertUnitIdentity(row, expected) {
   assert.match(
@@ -127,6 +128,21 @@ function location(loc, limit) {
   if (loc.end.line === loc.start.line && loc.end.column !== null)
     assert.ok(loc.end.column >= loc.start.column);
 }
+const implicitElseLocation = { start: {}, end: {} };
+function branchLocations(branch, limit) {
+  location(branch.loc, limit);
+  for (const [index, loc] of branch.locations.entries()) {
+    if (isDeepStrictEqual(loc, implicitElseLocation)) {
+      // The V8-to-Istanbul mapper counts an omitted else as a second if arm,
+      // with no source span. Validate that exact shape without dropping its slot.
+      assert.equal(branch.type, "if");
+      assert.equal(index, 1);
+      assert.equal(branch.locations.length, 2);
+      assert.equal(branch.line, branch.loc.start.line);
+      assert.deepEqual(branch.locations[0], branch.loc);
+    } else location(loc, limit);
+  }
+}
 function counter(value) {
   assert.ok(Number.isSafeInteger(value) && value >= 0);
   return value > 0;
@@ -170,10 +186,9 @@ export function istanbulRawCounts(report, limits) {
     }
     add("functions", Object.values(file.f).map(counter));
     for (const [id, b] of Object.entries(file.branchMap)) {
-      location(b.loc, limit);
       assert.ok(Array.isArray(b.locations) && Array.isArray(file.b[id]));
       assert.equal(b.locations.length, file.b[id].length);
-      for (const loc of b.locations) location(loc, limit);
+      branchLocations(b, limit);
       add("branches", file.b[id].map(counter));
     }
   }

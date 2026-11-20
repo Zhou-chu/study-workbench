@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { isDeepStrictEqual } from "node:util";
 import { compareCoverageKeys } from "./coverage-inventory.mjs";
 const sortedKeys = (value) => Object.keys(value).sort(compareCoverageKeys);
 function equal(a, b) {
@@ -23,6 +24,49 @@ function counts(entry) {
         );
     }
   }
+}
+const maps = ["statementMap", "fnMap", "branchMap"];
+const counterGroups = ["s", "f", "b"];
+const mapFields = ["path", ...maps, ...counterGroups];
+const hasDifferentGeometry = (native, transformed) =>
+  maps.some((key) => !isDeepStrictEqual(native[key], transformed[key]));
+export function nativeRebasedPaths(base, addition) {
+  return Object.keys(addition).filter((path) =>
+    hasDifferentGeometry(addition[path], base[path]),
+  ).sort(compareCoverageKeys);
+}
+function requireKnownSchema(entry) {
+  const fields = Object.hasOwn(entry, "meta") ? [...mapFields, "meta"] : mapFields;
+  equal(sortedKeys(entry), [...fields].sort(compareCoverageKeys));
+  if (Object.hasOwn(entry, "meta")) {
+    equal(sortedKeys(entry.meta), ["fnNames", "lastBranch", "lastFunction", "lastStatement", "seen"]);
+    for (const [last, map] of [["lastBranch", "branchMap"], ["lastFunction", "fnMap"], ["lastStatement", "statementMap"]])
+      assert.equal(entry.meta[last], Object.keys(entry[map]).length);
+  }
+}
+function requireUntouched(entry) {
+  assert.ok(
+    counterGroups.every((key) => Object.values(entry[key]).flat().every((count) => count === 0)),
+    "Canonical baseline requires an entirely untouched file",
+  );
+}
+function lineTopology(value) {
+  if (Array.isArray(value)) return value.map(lineTopology);
+  if (!value || typeof value !== "object") return value;
+  if (Object.hasOwn(value, "column") ||
+      (Object.hasOwn(value, "line") && Object.keys(value).length === 1)) {
+    equal(sortedKeys(value), ["column", "line"]);
+    assert.ok(Number.isSafeInteger(value.line) && value.line > 0);
+    assert.ok(
+      value.column === null ||
+      (Number.isSafeInteger(value.column) && value.column >= 0),
+      "Invalid source column",
+    );
+    return { line: value.line, endOfLine: value.column === null };
+  }
+  return Object.fromEntries(Object.entries(value).map(([key, row]) =>
+    [key, lineTopology(row)],
+  ));
 }
 function receipt(value, sources) {
   assert.equal(value.exitCode, 0);
@@ -53,15 +97,30 @@ export function mergeNativeCoverage({ base, addition, sources, left, right }) {
     assert.ok(Object.hasOwn(base, path), "Unexpected source");
     assert.equal(entry.path, path);
     counts(entry);
-    for (const key of ["statementMap", "fnMap", "branchMap"])
-      equal(entry[key], base[path][key]);
-    for (const key of ["s", "f", "b"])
+    const baseline = base[path];
+    if (hasDifferentGeometry(entry, baseline)) {
+      // Never move or reinterpret a Vitest hit. The collector mapped actual,
+      // verified V8 ranges against the hashed original native source. For an
+      // entirely untouched Vitest file, take that native geometry wholesale
+      // only when every counter ID, line bound and non-column map field agrees.
+      assert.ok(path.endsWith(".mjs"), "Canonical baseline is native ESM only");
+      equal(sortedKeys(entry), sortedKeys(baseline));
+      requireKnownSchema(entry);
+      requireKnownSchema(baseline);
+      requireUntouched(baseline);
+      for (const key of maps) {
+        equal(lineTopology(entry[key]), lineTopology(baseline[key]));
+      }
+      result[path] = structuredClone(entry);
+      continue;
+    }
+    for (const key of counterGroups)
       for (const id of Object.keys(entry[key])) {
         if (key === "b")
           result[path][key][id] = entry[key][id].map(
-            (count, index) => count + base[path][key][id][index],
+            (count, index) => count + baseline[key][id][index],
           );
-        else result[path][key][id] = entry[key][id] + base[path][key][id];
+        else result[path][key][id] = entry[key][id] + baseline[key][id];
       }
     counts(result[path]);
   }

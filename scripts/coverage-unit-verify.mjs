@@ -12,6 +12,7 @@ import { compareCoverageKeys, inventory, sourceDigest } from "./coverage-invento
 import { fileDigest, inputDigest } from "./coverage-integrity.mjs";
 import { auditRepositoryScope } from "./coverage-scope.mjs";
 import { auditExecutedFiles } from "./coverage-executed-files.mjs";
+import { mergeNativeCoverage, nativeRebasedPaths } from "./coverage-native-union.mjs";
 import {
   pythonSources,
   auditPythonExecution,
@@ -218,10 +219,25 @@ export function verifyUnitReports(root, context) {
           ]),
         ),
       );
-      executed = [
-        ...executed,
-        ...auditExecutedFiles(root, nativeFiles, read(root, execution), "node"),
-      ].sort(compareCoverageKeys);
+      const completedNative = auditExecutedFiles(
+        root, nativeFiles, read(root, execution), "node",
+      );
+      const receipt = (selected, executed) => ({
+        exitCode: 0, before: e.sourceHashes, after: e.sourceHashes,
+        selected, executed,
+      });
+      const base = read(root, resolve(run, "vitest-base.json"));
+      const addition = read(root, resolve(run, "native-map.json"));
+      const replayed = mergeNativeCoverage({
+        base,
+        addition,
+        sources: e.sourceHashes,
+        left: receipt(vitestFiles, executed),
+        right: receipt(nativeFiles, completedNative),
+      });
+      assert.deepEqual(e.rebasedUntouchedSources, nativeRebasedPaths(base, addition));
+      assert.deepEqual(raw, replayed, "Native union replay mismatch");
+      executed = [...executed, ...completedNative].sort(compareCoverageKeys);
     }
     assert.deepEqual(executed, [...expectedFiles].sort(compareCoverageKeys));
     assert.deepEqual(row.executedTestFiles, executed);

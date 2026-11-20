@@ -178,6 +178,40 @@ test("Istanbul counters rebuild native line union and all four totals", () =>
     functions: { total: 1, covered: 1 },
     branches: { total: 2, covered: 1 },
   }));
+const implicitElse = () => {
+  const report = js();
+  const file = report["/r/a.js"];
+  const branch = file.branchMap[0];
+  branch.type = "if";
+  branch.line = branch.loc.start.line;
+  branch.locations = [structuredClone(branch.loc), { start: {}, end: {} }];
+  return report;
+};
+test("an Istanbul implicit else arm retains its own denominator and hits", async () => {
+  const { default: coverage } = await import("istanbul-lib-coverage");
+  for (const hits of [[1, 0], [0, 3]]) {
+    const report = implicitElse();
+    report["/r/a.js"].b[0] = hits;
+    const expected = coverage.createCoverageMap(report).getCoverageSummary().toJSON();
+    const raw = istanbulRawCounts(report, { "/r/a.js": 2 });
+    assert.deepEqual(raw.branches, { total: 2, covered: 1 });
+    assert.equal(raw.branches.total, expected.branches.total);
+    assert.equal(raw.branches.covered, expected.branches.covered);
+  }
+});
+for (const [name, mutate] of Object.entries({
+  wrongType: (branch) => (branch.type = "cond-expr"),
+  wrongArm: (branch) => branch.locations.reverse(),
+  wrongParent: (branch) => (branch.line = 2),
+  unrelatedConsequent: (branch) => (branch.locations[0].end.column = 2),
+  partialPosition: (branch) => (branch.locations[1].start.line = 2),
+})) {
+  test("rejects an invalid implicit arm: " + name, () => {
+    const report = implicitElse();
+    mutate(report["/r/a.js"].branchMap[0]);
+    assert.throws(() => istanbulRawCounts(report, { "/r/a.js": 2 }));
+  });
+}
 for (const [name, mutate] of Object.entries({
   extra: (d) => (d["/r/a.js"].s[2] = 1),
   negative: (d) => (d["/r/a.js"].f[0] = -1),

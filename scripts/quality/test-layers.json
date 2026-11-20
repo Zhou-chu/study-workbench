@@ -1011,6 +1011,15 @@
       "sha256": "b49af2a098674990c51c4aa0724c654ae59cd19f3f35dc395cc6d8c7c4a52433"
     },
     {
+      "path": "apps/web/src/features/settings/settings-store.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/settings/settings-store.ts"
+      ],
+      "reason": "Exercises the in-memory notebook settings draft, baseline, operation receipts and retrieval obligations directly with synthetic contexts. No DOM, persistence, network or subprocess.",
+      "sha256": "3221616813137d00756a52b094e951be2504f5630871d1eb20dfd384676830b8"
+    },
+    {
       "path": "apps/web/src/features/settings/settings.test.tsx",
       "layer": "component-integration",
       "targets": [
@@ -3136,7 +3145,7 @@
         "scripts/coverage-native-union.mjs"
       ],
       "reason": "Pure native/Vitest counter merge guard over literal maps, source hashes and receipts; no filesystem, subprocess or runner invocation. Does not authenticate caller-provided evidence.",
-      "sha256": "87401b33ec33a7f590ecb0353fb83901fec7558dc4d13dfa7a55d237dc4cb348"
+      "sha256": "83ca2448b7e68799b4d0d786a04ef358b04e387dff6e65cbd8f8e6764c3946b4"
     },
     {
       "path": "scripts/coverage-node-reporter.test.mjs",
@@ -3201,7 +3210,7 @@
         "scripts/coverage-unit-policy.mjs"
       ],
       "reason": "Pure receipt identity, source-bounded raw counter reconstruction and exact integer ratio validation over synthetic records; installed native summarizer is pure library oracle, no process/filesystem fixture.",
-      "sha256": "c9e31f2baae7c9d8fea8d7f65774b7f4176b6066cc37006b10408386f625874d"
+      "sha256": "537cf8d1db5e4a63e5d707c484a33945e5f461cca9186f93fc975df0e576e41f"
     },
     {
       "path": "scripts/coverage-unit-runner.test.mjs",
@@ -3230,7 +3239,7 @@
         "scripts/coverage-unit-policy.mjs"
       ],
       "reason": "Actual raw/summary/execution files and production auditors with explicit inventory/Git adapter substitutes; validates evidence assembly, not a full repository measurement.",
-      "sha256": "f44d986f1b76344679697206ba13fc3a8e13b4ebf5ad769dc954c30f3a32d1c4"
+      "sha256": "edfa850cf4a6d7a01f1ff91bcee0f169fb0d250ac5883217b778dd32d70fe068"
     },
     {
       "path": "scripts/tests/deployment/easypanel.test.ts",
@@ -4428,7 +4437,7 @@
         "apps/web/scripts/model-setup-journey-review.py"
       ],
       "reason": "Loads the actual QA module and evaluates its report literal and capture/failure functions with browser and process boundaries replaced. Verifies report lifecycle and JSON output; not browser acceptance or pure unit.",
-      "sha256": "1d023955720eed9429e089dda8ed94d9d8aa7ac4b73becefc9c17647e24ec69d"
+      "sha256": "8b3594ce7a2f04c33cb3d56304c38205d903718525a0358426f374ce255402b4"
     },
     {
       "path": "tests/test_model_setup_review_archive_contract.py",
@@ -7177,6 +7186,15 @@
       ],
       "reason": "In-memory draft registry and navigation-controller decisions with synthetic editor/File and dispatch contexts, a focus stub and reload spy; no browser interactions, router, network, or durable storage.",
       "sha256": "8c8536846dca1936b86929b764a686c1f1cdc191eb38c26183d953c670225191"
+    },
+    {
+      "path": "apps/web/src/features/library/library-operations.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/library/library-operations.ts"
+      ],
+      "reason": "Runs the real library action and observation decisions with supplied typed API and store doubles, synthetic session context and controlled in-memory timers. No actual transport, browser interaction or durable storage.",
+      "sha256": "12cd4b24fedcb5cb904ce285b8ad85ccde91a18f0fc6aa526f39488ce2f3643a"
     },
     {
       "path": "apps/web/src/features/library/library-state.unit.test.ts",

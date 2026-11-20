@@ -35,6 +35,7 @@ async function fixture(fn) {
       "coverage-unit-policy.mjs",
       "coverage-executed-files.mjs",
       "coverage-python-protocol.mjs",
+      "coverage-native-union.mjs",
     ])
       copyFileSync(resolve(repo, "scripts", n), resolve(root, "scripts", n));
     put(

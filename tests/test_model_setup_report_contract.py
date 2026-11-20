@@ -112,6 +112,17 @@ def test_keyboard_review_rejects_mutating_requests_only_in_its_own_case(
         )
 
 
+def test_unconfirmed_result_review_rejects_rendered_internal_detail(
+    review: ModuleType,
+) -> None:
+    review.require_suppressed_model_details("Model status has not been confirmed")
+    with pytest.raises(ValueError, match="internal model details") as error:
+        review.require_suppressed_model_details(
+            "Model status is unknown: synthetic-private-response-details"
+        )
+    assert "synthetic-private-response-details" not in str(error.value)
+
+
 @pytest.mark.parametrize("issue", [None, "overflow", "language"])
 def test_capture_keeps_result_fields_and_failure_contract_without_files(
     review: ModuleType, monkeypatch: pytest.MonkeyPatch, issue: str | None

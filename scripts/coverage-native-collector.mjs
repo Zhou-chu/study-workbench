@@ -15,7 +15,7 @@ import { pathToFileURL, fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { compareCoverageKeys, qualityToolingFiles } from "./coverage-inventory.mjs";
 import { auditExecutedFiles } from "./coverage-executed-files.mjs";
-import { mergeNativeCoverage } from "./coverage-native-union.mjs";
+import { mergeNativeCoverage, nativeRebasedPaths } from "./coverage-native-union.mjs";
 import { coverageEnvironment } from "./coverage-environment.mjs";
 const require = createRequire(import.meta.url);
 const versions = Object.freeze({
@@ -427,6 +427,7 @@ export async function collectNativeUnion({
     executedNodeFiles,
     executedVitestFiles,
     mappedSources: Object.keys(addition),
+    rebasedUntouchedSources: nativeRebasedPaths(base, addition),
     sourceFiles: Object.keys(combined),
   };
   const { default: coverage } = await import("istanbul-lib-coverage");

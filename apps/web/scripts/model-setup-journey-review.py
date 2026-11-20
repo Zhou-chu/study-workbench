@@ -109,6 +109,7 @@ IDENTITY = {
     "ui_transport_protocol": 1,
     "supported_contracts": ["workspace-view-v1"],
 }
+SYNTHETIC_INTERNAL_MODEL_DETAIL = "synthetic-private-response-details"
 DEFAULTS = dict.fromkeys(
     (
         "default_chat_model",
@@ -260,6 +261,11 @@ def require_read_only_case(records: Sequence[NetworkRecord], tag: str) -> None:
     for record in records:
         if record["case"] == tag and record["method"] != "GET":
             raise ValueError(f"{tag} unexpectedly sent {record['method']}")
+
+
+def require_suppressed_model_details(body: str) -> None:
+    if SYNTHETIC_INTERNAL_MODEL_DETAIL in body:
+        raise ValueError("Unconfirmed model result exposed internal model details")
 
 
 def active(page):
@@ -773,7 +779,7 @@ def run_review(out, scratch):
                             value = {
                                 "success": True,
                                 "message": "Rate limited - but connection works",
-                                "details": "synthetic-private-response-details",
+                                "details": SYNTHETIC_INTERNAL_MODEL_DETAIL,
                             }
                         elif path.startswith("/api/"):
                             entry["decision"] = "unexpected_api_blocked"
@@ -890,9 +896,8 @@ def run_review(out, scratch):
                                 expect(
                                     page.locator(".model-setup-guide")
                                 ).to_contain_text("模型实际响应尚未确认")
-                                assert (
-                                    "synthetic-private-response-details"
-                                    not in page.locator("body").inner_text()
+                                require_suppressed_model_details(
+                                    page.locator("body").inner_text()
                                 )
                             if scenario == "unknown_write":
                                 page.get_by_role(
