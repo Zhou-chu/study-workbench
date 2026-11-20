@@ -1,5 +1,21 @@
 import { orderedMessageCatalog } from './message-catalog';
 export const sourceMessages = orderedMessageCatalog({
+  technicalDetails: {
+    "en-US": "Technical details",
+    "zh-CN": "技术详情",
+    "zh-TW": "技術詳細資料",
+    "pt-BR": "Detalhes técnicos",
+    "ja-JP": "技術的な詳細",
+    "it-IT": "Dettagli tecnici",
+    "fr-FR": "Détails techniques",
+    "ru-RU": "Технические подробности",
+    "bn-IN": "প্রযুক্তিগত বিবরণ",
+    "ca-ES": "Detalls tècnics",
+    "es-ES": "Detalles técnicos",
+    "de-DE": "Technische Details",
+    "pl-PL": "Szczegóły techniczne",
+    "tr-TR": "Teknik ayrıntılar",
+  },
   unavailableOperation: {
     "en-US": "Unavailable",
     "zh-CN": "不可用",

@@ -70,3 +70,60 @@ it.each(['cancel', 'save', 'failure'] as const)('returns from Tools model setup 
   expect(requests.filter(r => r.method === 'POST')).toHaveLength(outcome === 'cancel' ? 0 : 1);
   expect(requests.some(r => /discover|\/test|\/turns/.test(new URL(r.url).pathname) && r.method === 'POST')).toBe(false);
 });
+
+it('returns from the inline missing-model link with the original question ready for its selected source', async () => {
+  const workspace = sourceWorkspace();
+  let selectedModel: string | null = null;
+  const defaultMethods: string[] = [];
+  const requests = libraryServer(async request => {
+    const path = new URL(request.url).pathname;
+    if (path === '/api/models/defaults') {
+      defaultMethods.push(request.method);
+      if (request.method === 'PUT') {
+        const body = await request.clone().json();
+        expect(body).toEqual({ default_chat_model: 'model:chat' });
+        selectedModel = body.default_chat_model;
+      }
+      return json({ ...modelDefaults, default_chat_model: selectedModel });
+    }
+    if (path === '/api/credentials/status') return json({ configured: {}, source: {}, encryption_configured: true });
+    if (path === '/api/providers') return json([{ name: 'openai', display_name: 'OpenAI', modalities: ['language'], docs_url: null, env_configured: false }]);
+    if (path === '/api/credentials') return json([credentialFixture]);
+    if (path === '/api/credentials/env-status') return json({});
+    if (path === '/api/models') return json(configuredModels);
+    if (path === '/api/settings') return json(contentSettings);
+    return undefined;
+  }, () => json(workspace));
+  const route = '/notebooks/n?tab=conversation#composer';
+  const h = await renderLibrary(route);
+  const question = await screen.findByRole('textbox', { name: 'Question' });
+  fireEvent.change(question, { target: { value: 'Question about only the first version' } });
+  const ask = () => screen.getByRole('button', { name: 'Ask selected sources' });
+  await waitFor(() => expect(defaultMethods).toContain('GET'));
+  expect(ask()).toBeDisabled();
+
+  fireEvent.click(screen.getByRole('link', { name: 'Configure independent model' }));
+  const leave = await screen.findByRole('dialog', { name: 'Leave this draft?' });
+  fireEvent.click(within(leave).getByRole('button', { name: 'Leave without saving' }));
+  await screen.findByRole('heading', { name: 'Models', level: 1 });
+  const back = screen.getByRole('link', { name: 'Back' });
+  expect(back).toHaveAttribute('href', route);
+  const chatModel = screen.getByLabelText(/^Chat Model/);
+  await waitFor(() => expect(chatModel).toBeEnabled());
+  fireEvent.change(chatModel, { target: { value: 'model:chat' } });
+  const confirmation = await screen.findByRole('dialog');
+  fireEvent.click(within(confirmation).getByRole('button', { name: 'Confirm action' }));
+  await waitFor(() => expect(chatModel).toHaveValue('model:chat'));
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  const beforeReturn = defaultMethods.length;
+  fireEvent.click(back);
+
+  expect(await screen.findByRole('textbox', { name: 'Question' })).toHaveValue('Question about only the first version');
+  expect(h.router.state.location.pathname + h.router.state.location.search + h.router.state.location.hash).toBe(route);
+  await waitFor(() => expect(ask()).toBeEnabled());
+  expect(defaultMethods.slice(beforeReturn)).toContain('GET');
+  fireEvent.click(within(screen.getByRole('region', { name: 'Sources' })).getByRole('button', { name: 'Current question scope' }));
+  expect(screen.getByRole('checkbox', { name: 'Select Same title · Version 1' })).toBeChecked();
+  expect(screen.getByRole('checkbox', { name: 'Select Same title · Version 2' })).not.toBeChecked();
+  expect(requests.filter(r => r.method !== 'GET').map(r => [r.method, new URL(r.url).pathname])).toEqual([['PUT', '/api/models/defaults']]);
+});

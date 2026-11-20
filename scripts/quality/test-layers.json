@@ -1054,8 +1054,8 @@
         "apps/web/src/app/router.tsx",
         "apps/web/src/features/settings/ModelsPage.tsx"
       ],
-      "reason": "Real notebook/tools/models navigation, draft guard and credential form preserve question/scope through cancel/save/failure; fake transport only.",
-      "sha256": "2c9969ff99b9f444ab870722d6eec8d452c7736efd19e21702cd053d0a9ed034"
+      "reason": "Real mounted notebook, Tools and inline model configuration routes preserve question and exact source scope; synthetic transport checks credential cancel/save/failure and explicit default save followed by refreshed Ask availability.",
+      "sha256": "71f16260978aad87574d3d69b4723dc607045fc78acc047f14dab85309cb1757"
     },
     {
       "path": "apps/web/src/features/settings/setup-navigation.test.tsx",
@@ -1182,7 +1182,7 @@
         "apps/web/src/features/sources/UploadStatus.tsx"
       ],
       "reason": "Mounted upload controls combine real controller, source store and transport with fixture responses.",
-      "sha256": "bf6cd08251f047cd824b9718265d6e456a2420547157b8255ce8f8a06384a21d"
+      "sha256": "a5fd0be04be80d47f601a6ad2b80304c16ca3f0ee6368d0af8db6ea274599917"
     },
     {
       "path": "apps/web/src/features/sources/uploads.test.tsx",
