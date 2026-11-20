@@ -112,26 +112,6 @@ def test_exclusions_rejected_before_blob_reads(repo, tmp_path, monkeypatch, name
     assert not (tmp_path / "out").exists()
 
 
-@pytest.mark.parametrize(
-    "path",
-    [
-        "../x",
-        "/absolute",
-        "a/../x",
-        "a\\b",
-        ".git/config",
-        "A/.GIT/config",
-        "a//b",
-        "a/./b",
-        "a/",
-        "a\nname",
-    ],
-)
-def test_unsafe_paths(path):
-    with pytest.raises(ValueError, match="Unsafe"):
-        module().validate_path(path)
-
-
 @pytest.mark.parametrize("kind", ["link", "submodule"])
 def test_nonregular_entries_rejected(repo, tmp_path, kind):
     root, base = repo
@@ -269,26 +249,6 @@ def test_new_historical_runtime_is_not_grandfathered(repo, tmp_path):
     source = commit(root)
     with pytest.raises(ValueError, match="Forbidden"):
         m.prepare(root, source, base, tmp_path / "out")
-
-
-@pytest.mark.parametrize(
-    "entries",
-    [
-        b"100644 blob " + b"a" * 40 + b"\t../bad\0",
-        (b"100644 blob " + b"a" * 40 + b"\tduplicate\0") * 2,
-        b"100644 blob "
-        + b"a" * 40
-        + b"\tfile\0"
-        + b"100644 blob "
-        + b"a" * 40
-        + b"\tfile/child\0",
-    ],
-)
-def test_malformed_git_tree_inventory_rejected(monkeypatch, entries):
-    m = module()
-    monkeypatch.setattr(m, "git", lambda *args: entries)
-    with pytest.raises(ValueError):
-        m.read_tree("unused", "a" * 40)
 
 
 def test_blob_hash_mismatch_does_not_create_output(repo, tmp_path, monkeypatch):

@@ -770,3 +770,13 @@ Follow-up execution at 423fb8a: all 24 source-chat hook tests passed in a single
 ## Source detail component review
 
 The full 420-line SourceDetailContent suite was reviewed with its production imports and shared command-submission implementation. API stubs do not replace useSource or the shared uncertain/inFlight registry. The remount test intentionally checks cross-instance retry gating, and all cases mount the actual data-hook/component composition. It remains component integration; future isolated clipboard logic units must preserve these existing integration assertions. No new runtime result is claimed by this classification change.
+
+## Python mixed-file closeout
+
+The five remaining mixed Python files were split at existing case boundaries:
+direct exporter policies and mocked Notebook mutation are units; actual Git,
+filesystem, lock ownership, interacting services and ASGI routing remain in
+their respective integration files. Existing regression bodies and parameter
+decorators are retained. The manifest validates all tracked test files without
+mixed or unclassified entries. This closes inventory selection only; the
+strict coverage thresholds and complete hosted runs are separate acceptance.

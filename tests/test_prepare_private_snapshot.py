@@ -2,10 +2,8 @@
 
 import hashlib
 import importlib.util
-import io
 import json
 import subprocess
-import tarfile
 from pathlib import Path
 
 import pytest
@@ -123,30 +121,6 @@ def test_refuse_existing_or_symlink_output(repo, tmp_path, kind):
     assert (repo / "README.md").read_text() == "upstream\n"
 
 
-@pytest.mark.parametrize(
-    "name,kind",
-    [
-        ("../outside", "file"),
-        ("/absolute", "file"),
-        ("a/../../outside", "file"),
-        ("a\\evil", "file"),
-        ("link", "symlink"),
-        ("hard", "hardlink"),
-    ],
-)
-def test_reject_unsafe_archive_members(name, kind):
-    m = module()
-    buffer = io.BytesIO()
-    with tarfile.open(fileobj=buffer, mode="w") as archive:
-        member = tarfile.TarInfo(name)
-        if kind != "file":
-            member.type = tarfile.SYMTYPE if kind == "symlink" else tarfile.LNKTYPE
-            member.linkname = "outside"
-        archive.addfile(member)
-    with pytest.raises(ValueError):
-        m.read_archive(buffer.getvalue())
-
-
 def test_incremental_deletes_mode_changes_and_legacy_inventory(repo, tmp_path):
     m = module()
     first = m.prepare(repo, "HEAD", tmp_path / "first")
@@ -169,24 +143,6 @@ def test_incremental_deletes_mode_changes_and_legacy_inventory(repo, tmp_path):
     assert json.loads((tmp_path / "second/PUBLISH_MANIFEST.json").read_text())[
         "source_commit"
     ] == git(repo, "rev-parse", "HEAD")
-
-
-@pytest.mark.parametrize(
-    "name",
-    [
-        ".env.local",
-        ".env.v1",
-        "uploads/file.txt",
-        "runtime/state.json",
-        ".aws/config",
-        "nested/token.json",
-        "nested/key.pem",
-        "nested/state.sqlite",
-        "nested/node_modules/x.js",
-    ],
-)
-def test_sensitive_path_exclusions(name):
-    assert module().exclusion(name)
 
 
 @pytest.mark.parametrize(
@@ -225,42 +181,6 @@ def test_repeatable_bytes_and_tree(repo, tmp_path):
     assert first["files"] == second["files"]
     assert first["expected_tree_sha"] == second["expected_tree_sha"]
     assert second["changes"] == {"added": [], "deleted": [], "modified": []}
-
-
-@pytest.mark.parametrize(
-    "name", [".runtime/private.log", "evidence/browser/screen.png"]
-)
-def test_actual_runtime_and_root_browser_evidence_excluded(name):
-    assert module().exclusion(name)
-
-
-@pytest.mark.parametrize(
-    "name",
-    [
-        "provider.secret",
-        ".mcp.json",
-        ".claude/sessions/private.json",
-        ".maintainer/state/private.json",
-    ],
-)
-def test_repository_local_secret_conventions_excluded(name):
-    assert module().exclusion(name)
-
-
-@pytest.mark.parametrize(
-    "name",
-    [
-        ".git-credentials",
-        ".netrc",
-        ".pypirc",
-        ".npmrc",
-        ".config/gcloud/token.json",
-        ".config/notebooklm/state.json",
-        ".notebooklm/storage_state.json",
-    ],
-)
-def test_private_credential_configuration_excluded(name):
-    assert module().exclusion(name)
 
 
 def test_archive_bytes_must_match_independent_commit_blob_even_if_sha1_matches(

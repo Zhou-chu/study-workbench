@@ -1790,6 +1790,19 @@
       "sha256": "06a53ddceabf4f6f92db2d6f36dbaeaa8ee5c4dd0d3ee98e3165820855480dbd"
     },
     {
+      "path": "frontend/src/components/podcasts/ProfileActions.component.test.tsx",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/components/podcasts/ProfileActions.tsx",
+        "frontend/src/components/podcasts/EpisodeProfilesPanel.tsx",
+        "frontend/src/components/podcasts/SpeakerProfilesPanel.tsx",
+        "frontend/src/components/ui/dropdown-menu.tsx",
+        "frontend/src/components/ui/alert-dialog.tsx"
+      ],
+      "reason": "Real React and Radix dropdown/alert rendering with keyboard focus, cancel/confirm, pending and speaker usage guard; panel actions invoke fake mutations/form, no HTTP or provider calls. DOM component integration, not strict unit.",
+      "sha256": "3af0a62883466540071f68f5f1cd246774f6137cb7cf952c90ad77287ca3a66d"
+    },
+    {
       "path": "frontend/src/components/providers/TurnOperationProvider.test.tsx",
       "layer": "component-integration",
       "targets": [
@@ -4049,17 +4062,14 @@
     },
     {
       "path": "tests/test_evidence_embedding_repository.py",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "open_notebook/database/evidence_embedding_repository.py",
         "open_notebook/database/project_locks.py",
-        "open_notebook/domain/notebook.py",
-        "api/personal_store.py",
-        "api/routers/notebooks.py",
-        "api/evidence_service.py"
+        "api/personal_store.py"
       ],
-      "reason": "Fake SQL fixture does not replace project_lock: capture_scope/status/write_batch/publish use real lock files and flock. Parser/deletion cases also use real filesystem/process boundaries. Selected direct locked/delegation cases with explicit fake lock can be split, not the whole suite. The mocked cleanup and store-delegation cases are inventoried separately. The ordinary early-return case is isolated in test_evidence_repository_scope_unit.py.",
-      "sha256": "fb1729644bb5883a03395cf3808923ec120d9faf97b9db0e63ba7018b876edff"
+      "reason": "Repository dispatch uses the actual project lock implementation and hard-bound scope revalidation with fake SQL. Native mutation workflows and completely fake notebook operations are separately inventoried.",
+      "sha256": "2cd625009d830790e01014e31244b98eac09cf54d760f63c2b9a7b281d1cc4ad"
     },
     {
       "path": "tests/test_evidence_repository_scope_unit.py",
@@ -4597,14 +4607,13 @@
     },
     {
       "path": "tests/test_order_by_validation.py",
-      "layer": "mixed",
+      "layer": "api-integration",
       "targets": [
         "open_notebook/domain/base.py",
-        "open_notebook/domain/credential.py",
         "api/routers/notebooks.py"
       ],
-      "reason": "Retains Credential inherited parser collaboration and real FastAPI TestClient router cases after the ten direct parser cases moved unchanged to their unit file. These fourteen retained cases are not counted as strict unit.",
-      "sha256": "33a98926f6a471c107aa2365790b43c47cf5e25811c7e4cf7df230e0b4407017"
+      "reason": "Real FastAPI TestClient dispatch verifies notebook order validation with fake repository.",
+      "sha256": "f1b258645d6b0d5617cd7dba5e81139310f45fb33c86ba09d0e085ab77253e90"
     },
     {
       "path": "tests/test_personal_enqueue_reconciliation_unit.py",
@@ -4910,21 +4919,21 @@
     },
     {
       "path": "tests/test_prepare_canonical_publication.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "scripts/v1/prepare_canonical_publication.py"
       ],
-      "reason": "Real Git repositories, commits, subprocess CLI, output files, symlinks and missing object scenarios are tool integration. test_unsafe_paths and test_malformed_git_tree_inventory_rejected directly exercise policy/parser with literal paths or a fake git callable and are unit candidates.",
-      "sha256": "20a8aeaa9b69465b161097f0893b90259ab58c046d464048181dfbd93c403e5c"
+      "reason": "Real temporary Git repositories, commits, subprocess CLI, symlinks, missing objects or real export filesystem. Pure path and mocked parser cases are independently selected.",
+      "sha256": "9a425e2a1cd703cec4f38fa7b27cdbb59356a6a7a98422d30a03bcba76fcbb09"
     },
     {
       "path": "tests/test_prepare_private_snapshot.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "scripts/v1/prepare_private_snapshot.py"
       ],
-      "reason": "Direct path exclusion/in-memory tar rejection units coexist with actual Git repositories/commits/archive exports, mode changes, symlinks and tree verification. Real subprocess/file tool integration, not a pure exporter unit suite.",
-      "sha256": "199b51f18f4d96e621a41f90949f5c993d49c7c17771ac5aa38efa6a892c1902"
+      "reason": "Real Git/subprocess/filesystem snapshot tests. Direct path rules and in-memory archive parsing are separately inventoried.",
+      "sha256": "8370e7fbbc6861d0fe4d40820ee3c44cbc927a9de14cea8a1be4fa99a32dd56d"
     },
     {
       "path": "tests/test_provider_error_boundary.py",
@@ -5304,12 +5313,12 @@
     },
     {
       "path": "tests/test_source_path_containment.py",
-      "layer": "mixed",
+      "layer": "tool-integration",
       "targets": [
         "api/routers/sources.py"
       ],
-      "reason": "Actual file writes/exists/resolve/cleanup including upload path; download cases also TestClient. Split no-asset direct case from filesystem/API. Independent full-file review at 71fbefb; test bytes verified identical to this 3e72ce0 base. The ordinary early-return case is isolated in test_source_file_presence_unit.py.",
-      "sha256": "65a3b8b63776dd7ea82058d927449d0db9f348e73e3191fee460b11bc36888d6"
+      "reason": "Calls source-file helpers directly with actual temporary paths, filesystem presence and resolution. Real ASGI download dispatch and no-asset unit are separate.",
+      "sha256": "d64793d8b7ab9b6ac9dde994a0a6662b701ad4960ce6b58a42a034a64ce7c91c"
     },
     {
       "path": "tests/test_source_file_presence_unit.py",
@@ -7596,6 +7605,65 @@
       ],
       "reason": "Direct comparator tests using synthetic strings and numeric/null JSON fixtures; no app component, session, filesystem or network.",
       "sha256": "5e060355a59d5cb286d8487b315906b60c5184cf5550df08ba90e063d5fb3f4d"
+    },
+    {
+      "path": "tests/test_credential_order_by_integration.py",
+      "layer": "component-integration",
+      "targets": [
+        "open_notebook/domain/base.py",
+        "open_notebook/domain/credential.py"
+      ],
+      "reason": "Credential query owner and the inherited order-by parser collaborate; repository is mocked and no ASGI is used.",
+      "sha256": "cbd981a9c566549f97b13fcf97c51fa83b5e45e6479f28318de3e355b1ebac9a"
+    },
+    {
+      "path": "tests/test_prepare_canonical_publication_policy_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/v1/prepare_canonical_publication.py"
+      ],
+      "reason": "Direct policy input plus Git inventory parser fed by an explicit fake Git callable. No Git process, subprocess, archive or file I/O.",
+      "sha256": "57088e19f987301f0d0ee4a50a9274a4b912546f741c4067e29dfd4b8b0dd9ad"
+    },
+    {
+      "path": "tests/test_prepare_private_snapshot_policy_unit.py",
+      "layer": "unit",
+      "targets": [
+        "scripts/v1/prepare_private_snapshot.py"
+      ],
+      "reason": "Direct snapshot exclusion predicates and parser calls with literal paths and fixture bytes assembled in BytesIO only. No real archive file, Git, subprocess or filesystem I/O.",
+      "sha256": "3b10fa876ac544ac72e590bbef1f8dddc341a2d42b52df754c63d9c9575af14e"
+    },
+    {
+      "path": "tests/test_source_download_path_integration.py",
+      "layer": "api-integration",
+      "targets": [
+        "api/routers/sources.py"
+      ],
+      "reason": "Real FastAPI TestClient source download dispatch with actual temporary source files and doubled persistence.",
+      "sha256": "9ab57ced672985d0df374eb4848e893e295dd0485023fbdb679a013d0e0dff90"
+    },
+    {
+      "path": "tests/test_evidence_repository_notebook_mutation_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/domain/notebook.py"
+      ],
+      "reason": "One notebook mutation owner per case. Queries, lock, source cleanup, notes and evidence invalidation are explicitly mocked; domain fixtures are in memory.",
+      "sha256": "2322e188168cdeaa5bf5de5ed918bd871c00ed5a970dcaf8d1bef54900e5adb1"
+    },
+    {
+      "path": "tests/test_evidence_extraction_mutation_integration.py",
+      "layer": "component-integration",
+      "targets": [
+        "open_notebook/domain/notebook.py",
+        "api/personal_store.py",
+        "api/routers/notebooks.py",
+        "api/evidence_service.py",
+        "open_notebook/database/evidence_embedding_repository.py"
+      ],
+      "reason": "Native deletion, source extraction and direct router operations interact with independent production owners and real lock/filesystem boundaries; no ASGI routing or real database.",
+      "sha256": "5a1b1e9bfa6da660ebf14011523ee37be0367f32f56ca53b53d1bdd8212ecc98"
     }
   ]
 }

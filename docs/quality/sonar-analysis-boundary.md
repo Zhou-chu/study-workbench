@@ -42,3 +42,12 @@ This pilot has no issue or file-level queries, plaintext findings, or encrypted
 artifact. Do not infer it supplies rule or line-level feedback. An eventual private
 diagnostic channel can retain this aggregate view; it must not publish exact issue
 locations to these public outputs.
+
+For PRs where the existing SonarCloud GitHub integration emits annotations, use
+the separate **SonarCloud Code Analysis** check on the exact PR head, not the
+Actions scan-job check. Read the GitHub check-runs API for the head commit, verify
+the check's `head_sha` and app, then read that check's annotations via GitHub's
+read-only API. This adds no new publication or secret. Treat the returned
+locations as diagnostic leads, not an exhaustive issue list or matching
+duplication ranges. Use the Actions readback for the exact aggregate gate and
+keep detailed findings out of new public logs and artifacts.
