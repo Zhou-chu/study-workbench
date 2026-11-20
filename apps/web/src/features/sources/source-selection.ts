@@ -19,3 +19,44 @@ export function selectionFromView(value: SelectionView | null | unknown): Select
 export function includeImported(current: SelectionIntent, ids: readonly string[]): SelectionIntent { const next = [...new Set([...current.source_version_ids, ...ids])]; if (next.length > 20 || ids.some(id => !id))
     throw new Error('Selection limit'); return { ...current, source_version_ids: next, remote_source_ids: [...current.remote_source_ids] }; }
 export function sameSelection(a: SelectionIntent, b: SelectionIntent): boolean { return JSON.stringify(a) === JSON.stringify(b); }
+
+function versionInstant(value: unknown): number {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2}))?$/.test(value))
+        return NaN;
+    const day = value.slice(0, 10), midnight = new Date(day + 'T00:00:00Z');
+    // Date.parse alone normalizes impossible calendar dates.
+    return Number.isFinite(midnight.getTime()) && midnight.toISOString().slice(0, 10) === day ? Date.parse(value) : NaN;
+}
+
+function latestVersionId(versions: readonly unknown[]): string | null {
+    const seen = new Set<string>();
+    let latest: string | null = null, latestTime = -Infinity, tied = false;
+    for (const version of versions) {
+        if (isRecord(version) && version.projection_status) continue;
+        if (!isRecord(version) || typeof version.source_version_id !== 'string' || !version.source_version_id.trim()) return null;
+        const id = version.source_version_id, instant = versionInstant(version.created_at);
+        // Do not treat stale known versions as current when another eligible row cannot be ordered.
+        if (!Number.isFinite(instant) || seen.has(id)) return null;
+        seen.add(id);
+        if (instant > latestTime) {
+            latest = id;
+            latestTime = instant;
+            tied = false;
+        } else if (instant === latestTime) {
+            tied = true;
+        }
+    }
+    return tied ? null : latest;
+}
+
+/** Latest date-qualified version per eligible source; no inferred IDs or ordering. */
+export function latestEligibleVersionIds(sources: readonly unknown[]): string[] {
+    const ids = new Set<string>();
+    for (const source of sources) {
+        if (!isRecord(source) || source.projection_status || typeof source.source_id !== 'string' || !source.source_id.trim() || !Array.isArray(source.versions))
+            continue;
+        const id = latestVersionId(source.versions);
+        if (id !== null) ids.add(id);
+    }
+    return [...ids];
+}
