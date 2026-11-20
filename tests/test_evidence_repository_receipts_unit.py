@@ -287,3 +287,23 @@ async def test_deletion_barrier_rechecks_projects_before_yield_and_releases_lock
             assert len(wire.calls) == 1
     assert events[-2:] == [("exit", "notebook:b"), ("exit", "notebook:a")]
     assert reads == 2
+
+
+@pytest.mark.asyncio
+async def test_cleanup_staging_fences_without_removing_committed_attempt(wire):
+    cleanup_calls = []
+
+    async def query(sql, params):
+        assert len(wire.calls) == 1
+        cleanup_calls.append((sql, params))
+
+    await target.EvidenceEmbeddingRepository(query=query).cleanup_staging("attempt1")
+
+    [(fence_sql, fence_params)] = wire.calls
+    assert "attempt-cancel" in fence_sql and "cancelled = true" in fence_sql
+    assert fence_params["attempt_id"] == "attempt1"
+    assert fence_params["receipt"]["operation"] == "cancel_attempt"
+
+    [(cleanup_sql, cleanup_params)] = cleanup_calls
+    assert "NOT IN" in cleanup_sql and "evidence_embedding_manifest" in cleanup_sql
+    assert cleanup_params == {"attempt_id": "attempt1"}

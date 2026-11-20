@@ -326,14 +326,6 @@ def ready(fake, snap, p):
 
 
 @pytest.mark.asyncio
-async def test_empty_scope_reads_no_content(repository):
-    repo, fake, _ = repository
-    with pytest.raises(Exception, match="NO_SOURCES_SELECTED"):
-        await repo.capture_scope("notebook:allowed", [])
-    assert fake.calls == []
-
-
-@pytest.mark.asyncio
 async def test_all_metadata_checked_before_first_evidence_read(repository):
     repo, fake, _ = repository
     fake.versions["v2"]["notebook_id"] = "notebook:foreign"
@@ -592,16 +584,6 @@ async def test_write_batch_binds_canonical_hashes_scope_and_attempt_guard(reposi
 
 
 @pytest.mark.asyncio
-async def test_cleanup_staging_fences_without_removing_committed_attempt(repository):
-    repo, fake, _ = repository
-    await repo.cleanup_staging("attempt1")
-    assert fake.attempts["attempt1"] is True
-    queries = [q for q, _ in fake.calls]
-    assert "attempt-cancel" in queries[0]
-    assert "NOT IN" in queries[1] and "evidence_embedding_manifest" in queries[1]
-
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "boundary,hook",
     [
@@ -737,23 +719,6 @@ async def test_reparse_revokes_epoch_before_publication_and_keeps_original(
     await service.extract(version["source_version_id"], force=True)
     assert events[0][0] == "invalidate" and events[1][0] == "extracting"
     assert original.read_bytes() == b"Keep original."
-
-
-@pytest.mark.asyncio
-async def test_production_store_extraction_invalidation_delegates_under_existing_barrier(
-    monkeypatch,
-):
-    from api.personal_store import PersonalStore
-    from open_notebook.database import evidence_embedding_repository as module
-
-    invalidate = AsyncMock()
-    monkeypatch.setattr(
-        module.EvidenceEmbeddingRepository, "invalidate_locked", invalidate
-    )
-    await PersonalStore().invalidate_evidence_scope(
-        "notebook:allowed", ["v1"], "reparse"
-    )
-    invalidate.assert_awaited_once_with("notebook:allowed", ["v1"], "reparse")
 
 
 @pytest.mark.asyncio

@@ -1,8 +1,6 @@
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { MutationObserver } from '@tanstack/react-query'
 import apiClient from './client'
-import { queryClient } from './query-client'
 import { sessionCoordinator } from '@/lib/auth/session-coordinator'
 import { getConfig } from '@/lib/config'
 import { RequestNotDispatchedError } from './browser-transport'
@@ -29,7 +27,7 @@ beforeEach(() => {
   sessionCoordinator.setPhase('authenticated')
   localStorage.setItem('auth-storage', JSON.stringify({ state: { token: 'obsolete-password' } }))
 })
-afterEach(() => { vi.unstubAllGlobals(); apiClient.defaults.adapter = originalAdapter; localStorage.clear(); queryClient.clear() })
+afterEach(() => { vi.unstubAllGlobals(); apiClient.defaults.adapter = originalAdapter; localStorage.clear() })
 
 describe('same client, cookie-only device transport', () => {
   it.each(['get', 'post', 'put', 'patch', 'delete', 'head'] as const)('never sends password Bearer for %s; unsafe requests have exact CSRF', async method => {
@@ -69,13 +67,6 @@ describe('same client, cookie-only device transport', () => {
     await expect(apiClient.patch('/notes/n', { expected_revision: 7 }, { adapter: failing })).rejects.toThrow('Original resource error')
     expect(window.location.href).toBe(location)
     expect(failing).toHaveBeenCalledTimes(1)
-  })
-  it('generic mutations with no hook override make only one request', async () => {
-    let calls = 0
-    const observer = new MutationObserver(queryClient, { mutationFn: async () => { calls++; throw new Error('unknown save outcome') } })
-    await expect(observer.mutate()).rejects.toThrow('unknown save outcome')
-    expect(calls).toBe(1)
-    expect(queryClient.getDefaultOptions().queries?.retry).toBe(false)
   })
 })
 

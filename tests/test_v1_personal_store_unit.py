@@ -1,5 +1,7 @@
 """Direct logical-unit cases extracted without changing assertions or parameters."""
 
+from unittest.mock import AsyncMock
+
 import pytest
 
 
@@ -19,3 +21,20 @@ def test_record_identity_stable_and_kind_separated():
     assert record_key("version", "x") == f"v1_version:{digest}"
     assert record_key("evidence", "x") == f"v1_evidence:{digest}"
     assert record_key("version", "y") != f"v1_version:{digest}"
+
+
+@pytest.mark.asyncio
+async def test_production_store_extraction_invalidation_delegates_under_existing_barrier(
+    monkeypatch,
+):
+    from api.personal_store import PersonalStore
+    from open_notebook.database import evidence_embedding_repository as module
+
+    invalidate = AsyncMock()
+    monkeypatch.setattr(
+        module.EvidenceEmbeddingRepository, "invalidate_locked", invalidate
+    )
+    await PersonalStore().invalidate_evidence_scope(
+        "notebook:allowed", ["v1"], "reparse"
+    )
+    invalidate.assert_awaited_once_with("notebook:allowed", ["v1"], "reparse")

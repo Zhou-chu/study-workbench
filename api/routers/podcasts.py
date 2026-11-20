@@ -121,6 +121,39 @@ class PodcastEpisodeResponse(BaseModel):
     error_message: Optional[str] = None
 
 
+def _project_episode(
+    episode: PodcastEpisode,
+    *,
+    models_by_id: dict,
+    audio_url: Optional[str],
+    job_status: Optional[str],
+    error_message: Optional[str],
+) -> PodcastEpisodeResponse:
+    """Project identical public episode fields in the list and detail routes."""
+    return PodcastEpisodeResponse(
+        id=str(episode.id),
+        name=episode.name,
+        episode_profile=_with_resolved_model_fields(
+            episode.episode_profile,
+            _EPISODE_PROFILE_MODEL_FIELDS,
+            models_by_id,
+        ),
+        speaker_profile=_with_resolved_model_fields(
+            episode.speaker_profile,
+            _SPEAKER_PROFILE_MODEL_FIELDS,
+            models_by_id,
+        ),
+        briefing=episode.briefing,
+        audio_file=episode.audio_file,
+        audio_url=audio_url,
+        transcript=episode.transcript,
+        outline=episode.outline,
+        created=str(episode.created) if episode.created else None,
+        job_status=job_status,
+        error_message=error_message,
+    )
+
+
 @router.post("/podcasts/generate", response_model=PodcastGenerationResponse)
 async def generate_podcast(request: PodcastGenerationRequest):
     """
@@ -218,25 +251,10 @@ async def list_podcast_episodes():
                 audio_url = f"/api/podcasts/episodes/{episode.id}/audio"
 
             response_episodes.append(
-                PodcastEpisodeResponse(
-                    id=str(episode.id),
-                    name=episode.name,
-                    episode_profile=_with_resolved_model_fields(
-                        episode.episode_profile,
-                        _EPISODE_PROFILE_MODEL_FIELDS,
-                        models_by_id,
-                    ),
-                    speaker_profile=_with_resolved_model_fields(
-                        episode.speaker_profile,
-                        _SPEAKER_PROFILE_MODEL_FIELDS,
-                        models_by_id,
-                    ),
-                    briefing=episode.briefing,
-                    audio_file=episode.audio_file,
+                _project_episode(
+                    episode,
+                    models_by_id=models_by_id,
                     audio_url=audio_url,
-                    transcript=episode.transcript,
-                    outline=episode.outline,
-                    created=str(episode.created) if episode.created else None,
                     job_status=job_status,
                     error_message=error_message,
                 )
@@ -280,25 +298,10 @@ async def get_podcast_episode(episode_id: str):
 
         models_by_id = await _resolve_snapshot_models([episode])
 
-        return PodcastEpisodeResponse(
-            id=str(episode.id),
-            name=episode.name,
-            episode_profile=_with_resolved_model_fields(
-                episode.episode_profile,
-                _EPISODE_PROFILE_MODEL_FIELDS,
-                models_by_id,
-            ),
-            speaker_profile=_with_resolved_model_fields(
-                episode.speaker_profile,
-                _SPEAKER_PROFILE_MODEL_FIELDS,
-                models_by_id,
-            ),
-            briefing=episode.briefing,
-            audio_file=episode.audio_file,
+        return _project_episode(
+            episode,
+            models_by_id=models_by_id,
             audio_url=audio_url,
-            transcript=episode.transcript,
-            outline=episode.outline,
-            created=str(episode.created) if episode.created else None,
             job_status=job_status,
             error_message=error_message,
         )

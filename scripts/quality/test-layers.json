@@ -2171,16 +2171,33 @@
     },
     {
       "path": "frontend/src/lib/api/client.test.ts",
-      "layer": "mixed",
+      "layer": "component-integration",
       "targets": [
         "frontend/src/lib/api/client.ts",
         "frontend/src/lib/api/browser-transport.ts",
-        "frontend/src/lib/api/query-client.ts",
         "frontend/src/lib/auth/session-coordinator.ts",
         "frontend/src/lib/workbench/turn-context.ts"
       ],
-      "reason": "Fake Axios-adapter dispatch cases coexist with installed fetch-adapter redirect/multipart/blob/timeout compatibility and real turn-context/session epoch coordination. Neither all unit nor actual browser/network acceptance.",
-      "sha256": "2bf347f2e16919897f27c83a373b727f34fb089da2a62224b380fb1b35af7b5c"
+      "reason": "The real Axios client collaborates with browser policy, storage, the session coordinator and turn-context state even where the final adapter is fake; installed fetch-adapter cases also exercise native request construction without a network.",
+      "sha256": "bf978d0de11ba64f1f4bc94e2a5c7e2c3a001397138ec17c3fe564619f1574d4"
+    },
+    {
+      "path": "frontend/src/lib/api/client.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "frontend/src/lib/api/client.ts"
+      ],
+      "reason": "Direct Axios client interceptor checks native FormData handling against a fake adapter, stubbed browser policy and fake session coordinator; no real transport, browser storage, or session lifecycle.",
+      "sha256": "48d362f39fa99ba7e3bccef4587fd2ad9a9e805a6e2b5c12f24dfb3a67df5f34"
+    },
+    {
+      "path": "frontend/src/lib/api/query-client.integration.test.ts",
+      "layer": "component-integration",
+      "targets": [
+        "frontend/src/lib/api/query-client.ts"
+      ],
+      "reason": "The installed TanStack MutationObserver uses the actual QueryClient defaults and verifies a failed mutation callback is not retried, without network access.",
+      "sha256": "3ba8c137cc80e83aece651efdba5294b159630897c4d8f08eb93cf2539fa7f3d"
     },
     {
       "path": "frontend/src/lib/api/evidence.test.ts",
@@ -4041,8 +4058,17 @@
         "api/routers/notebooks.py",
         "api/evidence_service.py"
       ],
-      "reason": "Fake SQL fixture does not replace project_lock: capture_scope/status/write_batch/publish use real lock files and flock. Parser/deletion cases also use real filesystem/process boundaries. Selected direct locked/delegation cases with explicit fake lock can be split, not the whole suite.",
-      "sha256": "9ff10b49cfc6de993fea501a5a12be9518b31e5d1a90f4ad76423cf9d74fa72a"
+      "reason": "Fake SQL fixture does not replace project_lock: capture_scope/status/write_batch/publish use real lock files and flock. Parser/deletion cases also use real filesystem/process boundaries. Selected direct locked/delegation cases with explicit fake lock can be split, not the whole suite. The mocked cleanup and store-delegation cases are inventoried separately. The ordinary early-return case is isolated in test_evidence_repository_scope_unit.py.",
+      "sha256": "fb1729644bb5883a03395cf3808923ec120d9faf97b9db0e63ba7018b876edff"
+    },
+    {
+      "path": "tests/test_evidence_repository_scope_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/database/evidence_embedding_repository.py"
+      ],
+      "reason": "Empty-version validation raises before a project lock, database connection or any evidence query; all three boundaries replaced by test doubles. Positive attempt registration replaces lock, metadata and transaction edges, asserting per-scope/profile binding and operation ordering without touching storage.",
+      "sha256": "f6aa021462bb9247dac31cfed073f40f110006e5df72058ad64fdac6770b79b6"
     },
     {
       "path": "tests/test_evidence_extraction_state_unit.py",
@@ -4143,8 +4169,8 @@
       "targets": [
         "open_notebook/database/evidence_embedding_repository.py"
       ],
-      "reason": "Real receipt/abort/query sanitization, invalidation acknowledgment and lock-order orchestration; db_connection/query_raw/query and project_lock replaced. No real DB transaction/CAS/lock behavior is claimed.",
-      "sha256": "79ed3fd5d77edfbd1d21afc6512f4c1f3a909e641315e61e7cd6925acd19122c"
+      "reason": "Real receipt/abort/query sanitization, invalidation acknowledgment and lock-order orchestration; db_connection/query_raw/query and project_lock replaced. No real DB transaction/CAS/lock behavior is claimed. Includes cleanup ordering and manifest-reference preservation through a fake transaction wire and isolated query.",
+      "sha256": "272c60bf9c42fc6750325aca88c5110ae1b2efe111aecb26878ae925aa7ff96b"
     },
     {
       "path": "tests/test_evidence_revalidation_unit.py",
@@ -4661,7 +4687,7 @@
         "open_notebook/ai/models.py"
       ],
       "reason": "Direct model batch and list/detail functions; repository/service/job-status/model lookup doubles. All audio_file values None return before disk checks. DTO/internal projection real, no TestClient.",
-      "sha256": "23f93e7f9f23eb62374a69ae3b0e6cb57e1a7aaa0dc779070553dcb9eb5b8988"
+      "sha256": "cb14d32424a527d2a76ce1ec66fafeb3a26732140a97b0612c0dc401929f0740"
     },
     {
       "path": "tests/test_podcast_error_hints.py",
@@ -5282,8 +5308,17 @@
       "targets": [
         "api/routers/sources.py"
       ],
-      "reason": "Actual file writes/exists/resolve/cleanup including upload path; download cases also TestClient. Split no-asset direct case from filesystem/API. Independent full-file review at 71fbefb; test bytes verified identical to this 3e72ce0 base.",
-      "sha256": "4acdb2e0d2c12616c11b4b36d0414ff61b7ec05b0a7daadabe34c93861538e5a"
+      "reason": "Actual file writes/exists/resolve/cleanup including upload path; download cases also TestClient. Split no-asset direct case from filesystem/API. Independent full-file review at 71fbefb; test bytes verified identical to this 3e72ce0 base. The ordinary early-return case is isolated in test_source_file_presence_unit.py.",
+      "sha256": "65a3b8b63776dd7ea82058d927449d0db9f348e73e3191fee460b11bc36888d6"
+    },
+    {
+      "path": "tests/test_source_file_presence_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/routers/sources.py"
+      ],
+      "reason": "Direct no-asset result using a synthetic source and a fail-fast filesystem double; no path resolution, file access or HTTP handler.",
+      "sha256": "3c4b7b9e9025c390d4311ec222933a35a6f8aadc5f4e72e8afc0f1608e660b52"
     },
     {
       "path": "tests/test_source_preflight_unit.py",
@@ -6158,8 +6193,8 @@
         "api/personal_store.py",
         "open_notebook/database/project_locks.py"
       ],
-      "reason": "Extracted direct logical-unit cases: test_store_rejects_unknown_kind_before_database, test_record_identity_stable_and_kind_separated. External behavior remains synthetic; all original function/class AST, assertions and parameter decorators preserved. Static stream JSON is read-only; no actual network, database, browser or subprocess.",
-      "sha256": "54d95b13b9fc3553b87deb0dda53e670ba122c790ea8da04b9791b26038f7f6a"
+      "reason": "Extracted direct logical-unit cases: test_store_rejects_unknown_kind_before_database, test_record_identity_stable_and_kind_separated. External behavior remains synthetic; all original function/class AST, assertions and parameter decorators preserved. Static stream JSON is read-only; no actual network, database, browser or subprocess. Includes direct extraction invalidation delegation to a mocked repository; no lock or database use.",
+      "sha256": "c25552541239b8945717d0587e5d423b228ee3d0095d166b5981f910d04b416e"
     },
     {
       "path": "tests/test_v1_portable_roundtrip.py",

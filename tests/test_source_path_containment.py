@@ -78,10 +78,6 @@ class TestIsSourceFileAvailableRejectsSiblingDirectoryBypass:
         source = make_source(file_path=str(missing_file))
         assert _is_source_file_available(source) is False
 
-    def test_no_asset_returns_none(self):
-        source = make_source(file_path=None)
-        assert _is_source_file_available(source) is None
-
     def test_path_traversal_outside_root_is_not_available(self, tmp_path, monkeypatch):
         root = tmp_path / "uploads"
         root.mkdir()

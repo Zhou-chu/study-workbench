@@ -312,3 +312,46 @@ class TestGetEpisodeModelResolution:
         mock_batch.assert_awaited_once()
         assert response.episode_profile["outline_model_name"] == "gpt-4o"
         assert response.speaker_profile["voice_model_provider"] == "elevenlabs"
+
+
+@pytest.mark.asyncio
+async def test_episode_list_and_detail_use_same_full_projection():
+    from api.routers import podcasts
+
+    episode = referenced_episode()
+    episode.transcript = {"text": "Draft transcript"}
+    episode.outline = {"sections": ["Introduction"]}
+    job = {"status": "completed", "error_message": None}
+
+    with (
+        patch.object(
+            podcasts.PodcastService,
+            "list_episodes",
+            new=AsyncMock(return_value=[episode]),
+        ),
+        patch.object(
+            podcasts.PodcastService, "get_episode", new=AsyncMock(return_value=episode)
+        ),
+        patch.object(
+            PodcastEpisode,
+            "get_job_details_for_commands",
+            new=AsyncMock(return_value={str(episode.command): job}),
+        ),
+        patch.object(PodcastEpisode, "get_job_detail", new=AsyncMock(return_value=job)),
+        patch.object(
+            Model, "get_display_info_for_ids", new=AsyncMock(return_value=MODEL_INFO)
+        ),
+        patch.object(
+            podcasts, "_project_episode", wraps=podcasts._project_episode
+        ) as project,
+    ):
+        listed = await list_podcast_episodes()
+        detail = await get_podcast_episode("episode:ref")
+
+    assert project.call_count == 2
+    assert [item.model_dump() for item in listed] == [detail.model_dump()]
+    assert detail.transcript == {"text": "Draft transcript"}
+    assert detail.outline == {"sections": ["Introduction"]}
+    assert detail.episode_profile["outline_model_name"] == "gpt-4o"
+    assert detail.speaker_profile["voice_model_provider"] == "elevenlabs"
+    assert detail.job_status == "completed"
