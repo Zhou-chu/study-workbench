@@ -18,6 +18,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
 import { auditExecutedFiles } from "./coverage-executed-files.mjs";
+import { writeUnitVitestConfig } from "./coverage-workspaces.mjs";
 
 function invoke(root, args) {
   const env = { ...process.env };
@@ -84,6 +85,42 @@ test("explicit Node selection rejects directories and traversal before spawning"
       invoke(root, ["--files-json=" + JSON.stringify(paths)]).status,
       0,
     );
+});
+test("real Vitest loads a generated wrapper whose base config imports extensionless TypeScript", (t) => {
+  const root = fixture(t);
+  symlinkSync(resolve(repo, "node_modules"), join(root, "node_modules"), "dir");
+  writeFileSync(
+    join(root, "settings.ts"),
+    "export const settings = {test:{coverage:{enabled:true,provider:'v8',include:['src/logic.js'],reporter:['json-summary']}}};",
+  );
+  writeFileSync(
+    join(root, "coverage.config.ts"),
+    "import {settings} from './settings'; export default settings;",
+  );
+  writeFileSync(join(root, "src/logic.js"), "export const add = (a,b) => a+b;");
+  writeFileSync(
+    join(root, "src/logic.test.js"),
+    "import {it,expect} from 'vitest'; import {add} from './logic.js'; it('adds',()=>expect(add(2,3)).toBe(5));",
+  );
+  const files = ["src/logic.test.js"];
+  const generated = join(root, "coverage/unit/configs/synthetic.mjs");
+  const diagnostic = join(root, "coverage/unit/diagnostics/synthetic-tests.json");
+  const reports = join(root, "coverage/unit/synthetic");
+  writeUnitVitestConfig(
+    generated, join(root, "coverage.config.ts"),
+    join(repo, "scripts/coverage-unit-plan.mjs"), files, diagnostic, reports,
+  );
+  const result = spawnSync(process.execPath, [
+    join(repo, "node_modules/vitest/vitest.mjs"), "run", "--config", generated,
+    "--maxWorkers=1",
+  ], { cwd: root, encoding: "utf8", timeout: 15000 });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.deepEqual(
+    auditExecutedFiles(root, files, JSON.parse(readFileSync(diagnostic, "utf8")), "vitest"),
+    files,
+  );
+  const summary = JSON.parse(readFileSync(join(reports, "coverage-summary.json"), "utf8"));
+  assert.equal(summary.total.lines.covered, 1);
 });
 test("real Vitest empty include still reports untouched production sources at zero", (t) => {
   const root = fixture(t);

@@ -116,7 +116,8 @@ jobs:
         python-version: '3.12'
     - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
       with:
-        node-version: '24'
+        # The native coverage producer and verifier require this exact V8 runtime.
+        node-version: '24.19.0'
     - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
       with:
         version: 0.9.10

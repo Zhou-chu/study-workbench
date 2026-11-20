@@ -79,6 +79,21 @@ export function auditPythonExecution(selected, evidence) {
     );
     assert.equal(typeof row.wasxfail, "boolean");
     const phases = nodes.get(row.nodeid).phases;
+    assert.ok(
+      row.kind === undefined || row.kind === "subtest",
+      "Unknown report kind",
+    );
+    if (row.kind === "subtest") {
+      assert.ok(
+        row.when === "call" &&
+          phases.get("setup")?.outcome === "passed" &&
+          !phases.has("call") &&
+          !phases.has("teardown"),
+        "Subtest outside parent call",
+      );
+      assert.notEqual(row.outcome, "failed", "Subtest call failed");
+      continue;
+    }
     assert.ok(!phases.has(row.when), "Duplicate phase report");
     phases.set(row.when, row);
   }

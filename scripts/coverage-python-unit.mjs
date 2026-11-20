@@ -276,7 +276,11 @@ function executePythonUnit(root, args, attempt) {
       row.nativeSessionExitCode = evidence.sessionExitCode;
       row.nativeReports = {
         passedCalls: evidence.reports.filter(
-          (v) => v.when === "call" && v.outcome === "passed",
+          (v) =>
+            v.when === "call" && v.outcome === "passed" && v.kind !== "subtest",
+        ).length,
+        passedSubtests: evidence.reports.filter(
+          (v) => v.kind === "subtest" && v.outcome === "passed",
         ).length,
         failedReports: evidence.reports.filter((v) => v.outcome === "failed")
           .length,

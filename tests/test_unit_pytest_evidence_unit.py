@@ -98,3 +98,19 @@ def test_callbacks_preserve_complete_execution_record_without_filesystem_writes(
             },
         ],
     }
+
+
+def test_recorder_marks_only_native_subtest_reports() -> None:
+    recorder = evidence.ExecutionEvidence(Path("synthetic-output/execution.json"))
+    base = dict(nodeid="tests/example.py::test_ok", when="call", outcome="passed")
+    regular = SimpleNamespace(**base, kind="subtest")
+    child = pytest.SubtestReport.__new__(pytest.SubtestReport)
+    for name, value in base.items():
+        setattr(child, name, value)
+
+    recorder.pytest_runtest_logreport(regular)
+    recorder.pytest_runtest_logreport(child)
+
+    parent, subtest = recorder.value["reports"]
+    assert "kind" not in parent
+    assert subtest == {**parent, "kind": "subtest"}

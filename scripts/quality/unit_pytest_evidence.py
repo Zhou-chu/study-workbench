@@ -7,7 +7,9 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from typing import NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict
+
+from pytest import SubtestReport
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -34,6 +36,7 @@ class TestReport(TypedDict):
     when: str
     outcome: str
     wasxfail: bool
+    kind: NotRequired[Literal["subtest"]]
 
 
 class ExecutionRecord(TypedDict):
@@ -76,14 +79,17 @@ class ExecutionEvidence:
             self.value["collectionFailures"].append(report.nodeid)
 
     def pytest_runtest_logreport(self, report):
-        self.value["reports"].append(
-            {
-                "nodeid": report.nodeid,
-                "when": report.when,
-                "outcome": report.outcome,
-                "wasxfail": hasattr(report, "wasxfail"),
-            }
-        )
+        row: TestReport = {
+            "nodeid": report.nodeid,
+            "when": report.when,
+            "outcome": report.outcome,
+            "wasxfail": hasattr(report, "wasxfail"),
+        }
+        # Pytest 9 emits additional call-phase reports on the parent nodeid.
+        # Only the native report type can mark one as a child report.
+        if isinstance(report, SubtestReport):
+            row["kind"] = "subtest"
+        self.value["reports"].append(row)
 
     def pytest_sessionfinish(self, session, exitstatus):
         self.value.update({"complete": True, "sessionExitCode": int(exitstatus)})

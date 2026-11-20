@@ -89,3 +89,36 @@ test("empty mode is explicit and not fabricated pytest execution", () => {
   assert.deepEqual(auditPythonExecution([], e).executedFiles, []);
   assert.throws(() => auditPythonExecution([], evidence()));
 });
+
+test("native subtest calls are retained without replacing or multiplying parent calls", () => {
+  const e = evidence();
+  e.reports.splice(
+    1,
+    0,
+    { ...e.reports[1], kind: "subtest" },
+    { ...e.reports[1], kind: "subtest", outcome: "skipped" },
+  );
+  assert.deepEqual(auditPythonExecution(["tests/test_a.py"], e), {
+    executedFiles: ["tests/test_a.py"],
+    passed: 1,
+    skipped: 0,
+  });
+});
+
+for (const [name, mutate] of Object.entries({
+  "failed subtest": (e) =>
+    e.reports.splice(1, 0, { ...e.reports[1], kind: "subtest", outcome: "failed" }),
+  "subtest without parent call": (e) => (e.reports[1].kind = "subtest"),
+  "subtest on a non-call phase": (e) => (e.reports[0].kind = "subtest"),
+  "subtest after parent call": (e) =>
+    e.reports.splice(2, 0, { ...e.reports[1], kind: "subtest" }),
+  "subtest with orphan node": (e) =>
+    e.reports.splice(1, 0, { ...e.reports[1], nodeid: "foreign", kind: "subtest" }),
+  "unknown report kind": (e) => (e.reports[1].kind = "unknown"),
+})) {
+  test("rejects " + name, () => {
+    const e = evidence();
+    mutate(e);
+    assert.throws(() => auditPythonExecution(["tests/test_a.py"], e));
+  });
+}

@@ -20,9 +20,41 @@ import {
   rmSync,
   mkdtempSync,
 } from "node:fs";
-import { pathToFileURL, fileURLToPath } from "node:url";
-import { resolve, relative } from "node:path";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve, relative } from "node:path";
 import { auditReport, compareCoverageKeys, sourceDigest, inventory } from "./coverage-inventory.mjs";
+// Vite's bundle loader follows relative local imports. A file: URL is
+// externalized to native ESM, which cannot resolve the base TS config's
+// extensionless imports (including those in the legacy frontend config).
+export function writeUnitVitestConfig(
+  generated,
+  baseConfig,
+  helper,
+  exact,
+  diagnostic,
+  reports,
+) {
+  mkdirSync(dirname(generated), { recursive: true });
+  const specifier = (target) => {
+    const local = relative(dirname(generated), target).replaceAll("\\", "/");
+    return local.startsWith("../") ? local : "./" + local;
+  };
+  writeFileSync(
+    generated,
+    "import base from " +
+      JSON.stringify(specifier(baseConfig)) +
+      "; import {unitVitestConfig} from " +
+      JSON.stringify(specifier(helper)) +
+      "; const c=unitVitestConfig(base," +
+      JSON.stringify(exact) +
+      '); export default {...c,test:{...c.test,reporters:["default","json"],outputFile:{json:' +
+      JSON.stringify(diagnostic) +
+      "},coverage:{...c.test.coverage,reportsDirectory:" +
+      JSON.stringify(reports) +
+      "}}};",
+  );
+}
+
 export function runCoverage(
   root = fileURLToPath(new URL("../", import.meta.url)),
   args = process.argv.slice(2),
@@ -221,13 +253,6 @@ export function runCoverage(
               : "coverage.config.ts";
         if (plan) {
           const generated = resolve(root, outputBase, "configs", name + ".mjs");
-          mkdirSync(resolve(generated, ".."), { recursive: true });
-          const configUrl = pathToFileURL(
-            resolve(root, directory, config),
-          ).href;
-          const helperUrl = pathToFileURL(
-            resolve(root, "scripts/coverage-unit-plan.mjs"),
-          ).href;
           const exact = vitestFiles.map((file) =>
             relative(resolve(root, directory), resolve(root, file)).replaceAll(
               "\\",
@@ -241,19 +266,13 @@ export function runCoverage(
             "diagnostics",
             name + "-tests.json",
           );
-          writeFileSync(
+          writeUnitVitestConfig(
             generated,
-            "import base from " +
-              JSON.stringify(configUrl) +
-              "; import {unitVitestConfig} from " +
-              JSON.stringify(helperUrl) +
-              "; const c=unitVitestConfig(base," +
-              JSON.stringify(exact) +
-              '); export default {...c,test:{...c.test,reporters:["default","json"],outputFile:{json:' +
-              JSON.stringify(diagnostic) +
-              "},coverage:{...c.test.coverage,reportsDirectory:" +
-              JSON.stringify(reports) +
-              "}}};",
+            resolve(root, directory, config),
+            resolve(root, "scripts/coverage-unit-plan.mjs"),
+            exact,
+            diagnostic,
+            reports,
           );
           config = generated;
         }

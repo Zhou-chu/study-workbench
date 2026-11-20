@@ -7,7 +7,7 @@ continues server history, and isolated non-destructive new sessions are unverifi
 
 import asyncio
 import os
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, BinaryIO
@@ -509,20 +509,17 @@ async def _asset_file_operation(operation, *args):
     let cleanup race that syscall or leave an unobserved background operation.
     """
     work = asyncio.create_task(asyncio.to_thread(operation, *args))
-    cancellation = None
-    while not work.done():
-        try:
-            await asyncio.shield(work)
-        except asyncio.CancelledError as exc:
-            cancellation = exc
-        except Exception:
-            break
-    if cancellation is not None:
-        # Retrieve a possible worker error even when cancellation takes precedence.
+    try:
+        return await asyncio.shield(work)
+    except asyncio.CancelledError:
+        while not work.done():
+            # Later cancels must not interrupt the drain or replace the initiating
+            # reason. A worker error is retrieved below; cancellation takes priority.
+            with suppress(asyncio.CancelledError, Exception):
+                await asyncio.shield(work)
         if not work.cancelled():
             work.exception()
-        raise cancellation
-    return work.result()
+        raise
 
 
 class _AssetFile:

@@ -3154,7 +3154,7 @@
         "scripts/coverage-python-protocol.mjs"
       ],
       "reason": "16 direct pure tests of production inventory and native pytest evidence protocol; synthetic JSON only, no subprocess or filesystem fixture.",
-      "sha256": "f5c48079df8fee219a481f8cd40f177b46d270332306cc81a476ba24bb247f1b"
+      "sha256": "f15d7e65071215df89143c6ab5002a48891bcd0b35d235d1d478414342f9fc25"
     },
     {
       "path": "scripts/coverage-python-unit.test.mjs",
@@ -3211,7 +3211,7 @@
         "scripts/coverage-node-tests.mjs"
       ],
       "reason": "Real subprocess/filesystem/Git fixtures verify exact input and real empty-selection instrumenter behavior; separate reporter doubles only test dispatch, not coverage.",
-      "sha256": "0c08d63a9bc8c544605d86b88f4e66c153a3b194a49c74a26697a96267c09c80"
+      "sha256": "4d9e016326ef89c7a8150e438ea4946aefb554b773ec858aabe41562d9e76b1a"
     },
     {
       "path": "scripts/coverage-unit-selection.test.mjs",
@@ -4936,6 +4936,15 @@
       "sha256": "8370e7fbbc6861d0fe4d40820ee3c44cbc927a9de14cea8a1be4fa99a32dd56d"
     },
     {
+      "path": "tests/test_provider_config_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/domain/provider_config.py"
+      ],
+      "reason": "Direct legacy configuration and migration projection using synthetic records and in-memory repository/encryption spies. No database, network, filesystem or real key; singleton state isolated per test.",
+      "sha256": "e0e3e7f8bbdb631687820b4a4f1a92ce870601bfc7491b6d571cda0d0db3ee64"
+    },
+    {
       "path": "tests/test_provider_error_boundary.py",
       "layer": "api-integration",
       "targets": [
@@ -5603,7 +5612,7 @@
         "scripts/quality/unit_pytest_evidence.py"
       ],
       "reason": "Direct native exit-code policy and real execution-record callbacks/JSON serialization with filesystem output stubbed; no pytest subprocess, coverage engine, environment mutation or live service.",
-      "sha256": "0ee37d697c36d167d27cc4c6f035be460725a840d0b16cbffde2fde47cf1f6a6"
+      "sha256": "03ac67d4650f8a1ae9adffad85a90295faa8f8851a5c155fe2a8dca62ab4d7bd"
     },
     {
       "path": "tests/test_unit_selection_protocol.py",
@@ -6122,8 +6131,8 @@
       "targets": [
         "open_notebook/integrations/notebooklm/sdk_adapter.py"
       ],
-      "reason": "Directly assembles pinned client options and checks hidden retries with from_storage replaced by an in-process context double. Inert Path value only; no profile file, transport or network.",
-      "sha256": "f91ea78c29e5521bf6e6dbe6907fc96aa07e8f43a92be3d61ef270a4ae7f01cb"
+      "reason": "Pinned SDK options, file-cancel drain policy, bridge verification, paging, mapping and failure contracts. SDK construction/operations and filesystem metadata/actions replaced by in-memory doubles; no credential, file, subprocess or network.",
+      "sha256": "7f096c27d3803fe0423214d800df7c2d25d007636d81ecf3781389dd70ec5787"
     },
     {
       "path": "tests/test_v1_notebooklm_sources.py",

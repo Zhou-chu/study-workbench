@@ -120,3 +120,13 @@ report consumed independently of the runner invocation.
 ## Integrated regression evidence
 
 At integrated revision 842a923, all 21 focused tests passed independently (16 protocol units plus five tool integration tests), including the nested prior-complete invalid-selection/argument and foreign-root cases. The P1 entrypoint stale-report issue was reproduced red and separately reviewed after the fix. The final aggregate consumer still must require the current subprocess result and matching runId; an old file's existence is not a valid pass. This is a tool regression result, not project coverage.
+
+## Native pytest subtests
+
+pytest 9 emits extra call-phase reports for native subtests (including
+`unittest.TestCase.subTest`) with their collected parent node ID. The collector
+labels only actual `pytest.SubtestReport` instances. These records remain in
+the execution evidence, require a live parent call, and fail the audit if a
+child fails. They never satisfy or multiply the one required parent call.
+Ordinary duplicate phase reports still fail and the production source inventory
+and strict line and branch thresholds are unchanged.
