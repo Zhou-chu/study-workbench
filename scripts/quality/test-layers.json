@@ -2938,7 +2938,7 @@
         "packages/domain/src/editor.ts"
       ],
       "reason": "Every case exercises one editor reducer/constructor state machine using literal DTOs. Only same-unit pure copy/freezing utility; no other state machine, I/O or application coordinator.",
-      "sha256": "7d988012028693afdd15b7f77c1044d069d4d59daf46bbb3a4746d1b016c036e"
+      "sha256": "eb7fac42951d882c5c3daa5ad45f2d1d16531b54d473d54ba4fec233e907948d"
     },
     {
       "path": "packages/domain/src/embedding-disclosure.test.ts",
@@ -7206,6 +7206,15 @@
       "sha256": "c5b08dcfa8936ae26ba943ddc47cca07d797770a68a3998bb5b2c8ce0ad06d8e"
     },
     {
+      "path": "apps/web/src/features/settings/configuration-refresh.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/settings/configuration-refresh.ts"
+      ],
+      "reason": "Exercises the real configuration-read orchestrator using injected in-memory revision/context callbacks and API response doubles, no transport, router, mounted UI, or durable storage.",
+      "sha256": "bd37f9406f59c3ff9bf16c2488613366e89d4e12a71e8f1e4d8e288980e7568d"
+    },
+    {
       "path": "apps/web/src/features/settings/ownership.unit.test.ts",
       "layer": "unit",
       "targets": [
@@ -7231,8 +7240,8 @@
       "targets": [
         "apps/web/src/features/reader/navigation.ts"
       ],
-      "reason": "Direct reader-navigation intent construction against fixed context and citation records without mounting or transport.",
-      "sha256": "210ac751b770f71140b85b786d3cd2610126ed4313980bd1eaf666d07362f5ee"
+      "reason": "Direct reader navigation, Unicode quote verification and original-location resolution with in-memory contexts and citation records. No browser, DOM reads, persistence or transport.",
+      "sha256": "0492f21a89e85125f64a779a113fe4d5025d01078f00f3839d7f4e73666c4cb2"
     },
     {
       "path": "tests/test_recovered_browser_custody_unit.py",
@@ -7700,6 +7709,15 @@
       ],
       "reason": "Direct note projection/write decisions against explicit fake transaction, lookup and lock edges; no database, lock file, process, or network.",
       "sha256": "b47cdbaf8462d77a515366edd12637b02633a10fe00a85007bbd1438dd6b64f7"
+    },
+    {
+      "path": "tests/test_evidence_parser_boundary_unit.py",
+      "layer": "unit",
+      "targets": [
+        "api/evidence_service.py"
+      ],
+      "reason": "Direct ordinary PDF/text parser policy, result projection and dispatch/reaping semantics. PdfReader/path, result pipes and worker process are explicit stand-ins; no file, process, network or DB is started.",
+      "sha256": "b0da0a403ae6c056d9ecadbe055a2dcfb614214f86b3328030f0fbc15920abec"
     }
   ]
 }

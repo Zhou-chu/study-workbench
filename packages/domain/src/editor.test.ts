@@ -48,3 +48,39 @@ it('allows initial local not-sent evidence to release only the still-saving atte
   expect(notSent.saveResult).toBe('idle'); expect(notSent.pending).toBeNull()
   expect(reduceEditor(notSent, { type: 'begin-save', operationId: 'next' }).pending?.operationId).toBe('next')
 })
+
+it('preserves source scope and submitted text when the save receipt has only an identity', () => {
+  const scoped = { ...draft, scope_snapshot: {} }
+  let editor = createEditor('n', scoped)
+  expect(reduceEditor(editor, { type: 'edit', title: 'A working title' }).content).toBe(draft.content)
+  editor = reduceEditor(editor, { type: 'begin-save', operationId: 'save-scoped' })
+  expect(editor.pending?.payload.scope_snapshot).toEqual({})
+  expect(Object.isFrozen(editor.pending?.payload.scope_snapshot)).toBe(true)
+  editor = reduceEditor(editor, { type: 'save-success', operationId: 'save-scoped', note: { id: 'note:created', revision: 1 } })
+  expect(editor.base).toEqual(scoped)
+  expect(editor.noteId).toBe('note:created')
+  expect(editor.dirty).toBe(false)
+})
+
+it('keeps edits to a previously empty draft and does not dispatch blank content', () => {
+  const initial = createEditor('n', { title: '', content: '', citations: [] })
+  const named = reduceEditor(initial, { type: 'edit', title: 'Draft title' })
+  expect(initial.dirty).toBe(false)
+  expect(named.title).toBe('Draft title')
+  expect(named.dirty).toBe(true)
+  expect(reduceEditor(named, { type: 'begin-save', operationId: 'empty' })).toBe(named)
+  const started = reduceEditor(named, { type: 'edit', content: 'Draft body', title: '' })
+  expect(started.dirty).toBe(true)
+  expect(reduceEditor(started, { type: 'begin-save', operationId: 'valid' }).saveResult).toBe('saving')
+})
+
+it.each([{ id: '', revision: 5 }, { id: 'note:one', revision: 4 }, { id: 'note:one', revision: 5.5 }])
+('keeps the original save pending for an incomplete or stale receipt: %j', note => {
+  const editor = createEditor('n', draft, { id: 'note:one', revision: 4 })
+  const pending = reduceEditor(editor, { type: 'begin-save', operationId: 'current' })
+  const result = reduceEditor(pending, { type: 'save-success', operationId: 'current', note })
+  expect(result.saveResult).toBe('unknown')
+  expect(result.pending).toBe(pending.pending)
+  expect(result.baseRevision).toBe(4)
+  expect(result.content).toBe(draft.content)
+})

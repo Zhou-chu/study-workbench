@@ -3,7 +3,8 @@ import { RequestNotDispatchedError, asRequestNotDispatchedError, canDispatch, re
 import { useAppData, useAppDrafts } from '../../app/providers';
 import { useResourceNavigation, useWorkbenchSnapshot } from '../../app/WorkbenchSession';
 import { createSettingsApi, SettingsRequestError } from '../../data/settings-api';
-import type { CredentialWrite, SourceName, Sources } from '../../data/configuration-contracts';
+import type { CredentialWrite, SourceName } from '../../data/configuration-contracts';
+import { refreshConfigurationSources } from './configuration-refresh';
 import type { ConfigurationKind, ConfigurationToken } from './configuration-store';
 export function useConfiguration(kind: ConfigurationKind) {
     const drafts = useAppDrafts(), store = drafts.configuration;
@@ -19,37 +20,11 @@ export function useConfiguration(kind: ConfigurationKind) {
     useEffect(() => { if (!id)
         return; navigation?.activateResource(id); return navigation?.holdResource(id); }, [navigation, id]);
     const ready = !!row && !row.retired && !!api && state?.ready === true && canDispatch(row.context, context);
-    const refresh = useCallback(async (names: readonly SourceName[]) => {
-        if (!id || !api || !controller?.getSnapshot().ready)
-            return false;
-        const r = store.get(id), c = readTurnContext(), g = sessionCoordinator.current();
-        if (!r || r.retired || !canDispatch(r.context, c))
-            return false;
-        const reads: {
-            [K in SourceName]: () => Promise<Sources[K]>;
-        } = {
-            content: () => api.contentSettings(r.context), capabilities: () => api.extractionCapabilities(r.context),
-            web: () => api.webSearchStatus(r.context), providers: () => api.providers(r.context),
-            credentials: () => api.credentialsMetadata(r.context), models: () => api.models(r.context), defaults: () => api.modelDefaults(r.context)
-        };
-        const results = await Promise.all(names.map(async (name) => {
-            const revision = store.loading(id, name);
-            if (revision === null)
-                return false;
-            try {
-                const value = await reads[name]();
-                if (g !== sessionCoordinator.current() || !canDispatch(r.context, readTurnContext()))
-                    return false;
-                store.publish(id, name, revision, value);
-                return true;
-            }
-            catch {
-                store.publish(id, name, revision, null);
-                return false;
-            }
-        }));
-        return results.every(Boolean);
-    }, [id, api, controller, store]);
+    const refresh = useCallback((names: readonly SourceName[]) => refreshConfigurationSources(id, names, api, store, {
+        ready: () => controller?.getSnapshot().ready === true,
+        context: readTurnContext,
+        generation: () => sessionCoordinator.current(),
+    }), [id, api, controller, store]);
     useEffect(() => {
         if (!id || !ready)
             return;
