@@ -4428,7 +4428,7 @@
         "apps/web/scripts/model-setup-journey-review.py"
       ],
       "reason": "Loads the actual QA module and evaluates its report literal and capture/failure functions with browser and process boundaries replaced. Verifies report lifecycle and JSON output; not browser acceptance or pure unit.",
-      "sha256": "30c544a92d059544dab89fe39ddd66f4a6cdf24433e31b97196ee6d0afba0f67"
+      "sha256": "1d023955720eed9429e089dda8ed94d9d8aa7ac4b73becefc9c17647e24ec69d"
     },
     {
       "path": "tests/test_model_setup_review_archive_contract.py",
@@ -4942,7 +4942,7 @@
         "open_notebook/domain/provider_config.py"
       ],
       "reason": "Direct legacy configuration and migration projection using synthetic records and in-memory repository/encryption spies. No database, network, filesystem or real key; singleton state isolated per test.",
-      "sha256": "e0e3e7f8bbdb631687820b4a4f1a92ce870601bfc7491b6d571cda0d0db3ee64"
+      "sha256": "06044a3804d874f3319e1ea7c712622c8f8c338b05d00062dd2cf611d47f4ee3"
     },
     {
       "path": "tests/test_provider_error_boundary.py",
@@ -7175,8 +7175,8 @@
       "targets": [
         "apps/web/src/app/drafts.ts"
       ],
-      "reason": "Direct draft registry identity and retirement behavior using synthetic draft/editor/File inputs; no navigation controller and no router.",
-      "sha256": "877a7b4b89c247e63a3ae4042ebedeecec18a3655851621b460901e49ad35578"
+      "reason": "In-memory draft registry and navigation-controller decisions with synthetic editor/File and dispatch contexts, a focus stub and reload spy; no browser interactions, router, network, or durable storage.",
+      "sha256": "8c8536846dca1936b86929b764a686c1f1cdc191eb38c26183d953c670225191"
     },
     {
       "path": "apps/web/src/features/library/library-state.unit.test.ts",
@@ -7673,6 +7673,15 @@
       ],
       "reason": "Native deletion, source extraction and direct router operations interact with independent production owners and real lock/filesystem boundaries; no ASGI routing or real database.",
       "sha256": "5a1b1e9bfa6da660ebf14011523ee37be0367f32f56ca53b53d1bdd8212ecc98"
+    },
+    {
+      "path": "tests/test_note_repository_projection_unit.py",
+      "layer": "unit",
+      "targets": [
+        "open_notebook/database/note_repository.py"
+      ],
+      "reason": "Direct note projection/write decisions against explicit fake transaction, lookup and lock edges; no database, lock file, process, or network.",
+      "sha256": "b47cdbaf8462d77a515366edd12637b02633a10fe00a85007bbd1438dd6b64f7"
     }
   ]
 }

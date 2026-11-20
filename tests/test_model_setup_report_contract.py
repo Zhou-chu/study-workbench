@@ -78,6 +78,40 @@ def test_failure_appends_original_serializable_contract(
     assert json.loads(json.dumps(value))["failures"] == value["failures"]
 
 
+@pytest.mark.parametrize(
+    ("focus", "failure_reason"),
+    [
+        ({"label": "target", "visibleFocus": True, "outlineWidth": "2px"}, None),
+        ({"label": "other", "visibleFocus": True, "outlineWidth": "2px"}, "target"),
+        ({"label": "target", "visibleFocus": False, "outlineWidth": "2px"}, "outline"),
+        ({"label": "target", "visibleFocus": True, "outlineWidth": "1px"}, "outline"),
+        ({"label": "target", "visibleFocus": True, "outlineWidth": "nanpx"}, "outline"),
+    ],
+)
+def test_keyboard_focus_requires_expected_label_and_visible_outline(
+    review: ModuleType, focus: dict[str, object], failure_reason: str | None
+) -> None:
+    if failure_reason is None:
+        review.require_keyboard_focus(focus, "target")
+    else:
+        with pytest.raises(ValueError, match=failure_reason):
+            review.require_keyboard_focus(focus, "target")
+
+
+def test_keyboard_review_rejects_mutating_requests_only_in_its_own_case(
+    review: ModuleType,
+) -> None:
+    records = [
+        {"case": "keyboard", "method": "GET"},
+        {"case": "other", "method": "POST"},
+    ]
+    review.require_read_only_case(records, "keyboard")
+    with pytest.raises(ValueError, match="keyboard.*POST"):
+        review.require_read_only_case(
+            [*records, {"case": "keyboard", "method": "POST"}], "keyboard"
+        )
+
+
 @pytest.mark.parametrize("issue", [None, "overflow", "language"])
 def test_capture_keeps_result_fields_and_failure_contract_without_files(
     review: ModuleType, monkeypatch: pytest.MonkeyPatch, issue: str | None

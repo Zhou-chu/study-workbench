@@ -244,6 +244,24 @@ def failure(tag, detail):
     report["failures"].append({"case": tag, "detail": str(detail)})
 
 
+def require_keyboard_focus(focus: Mapping[str, object], expected_label: str) -> None:
+    if focus["label"] != expected_label:
+        raise ValueError(f"Keyboard focus did not reach {expected_label!r}")
+    width = focus["outlineWidth"]
+    if not (
+        focus["visibleFocus"]
+        and isinstance(width, str)
+        and float(width.removesuffix("px")) >= 2
+    ):
+        raise ValueError("Keyboard focus has no visible outline of at least 2 px")
+
+
+def require_read_only_case(records: Sequence[NetworkRecord], tag: str) -> None:
+    for record in records:
+        if record["case"] == tag and record["method"] != "GET":
+            raise ValueError(f"{tag} unexpectedly sent {record['method']}")
+
+
 def active(page):
     return page.evaluate(
         """() => {const e=document.activeElement,r=e.getBoundingClientRect(),s=getComputedStyle(e);return {tag:e.tagName,id:e.id,label:e.getAttribute('aria-label')||e.textContent.trim(),outline:s.outlineStyle,outlineWidth:s.outlineWidth,visibleFocus:e.matches(':focus-visible'),x:r.x,y:r.y,width:r.width,height:r.height}}"""
@@ -964,14 +982,10 @@ def run_review(out, scratch):
                             page.keyboard.press("Shift+Tab")
                             page.keyboard.press("Shift+Tab")
                             focus = active(page)
-                            assert (
-                                focus["label"] == "注册模型：DeepSeek · " + NEW["name"]
+                            require_keyboard_focus(
+                                focus, "注册模型：DeepSeek · " + NEW["name"]
                             )
                             anchor_focus = focus
-                            assert (
-                                focus["visibleFocus"]
-                                and float(focus["outlineWidth"].removesuffix("px")) >= 2
-                            )
                             page.screenshot(
                                 path=str(OUT / (tag + "-guide-focus.png")),
                                 full_page=False,
@@ -1008,10 +1022,7 @@ def run_review(out, scratch):
                                     "Dialog focus did not return: "
                                     + json.dumps(restored, ensure_ascii=False),
                                 )
-                            assert not any(
-                                n["case"] == tag and n["method"] != "GET"
-                                for n in report["network"]
-                            )
+                            require_read_only_case(report["network"], tag)
                             report["results"].append(
                                 {
                                     "tag": tag,

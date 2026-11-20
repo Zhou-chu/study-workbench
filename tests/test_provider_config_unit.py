@@ -117,7 +117,9 @@ async def test_loading_fetches_fresh_rows_and_keeps_valid_configurations(
     assert first.credentials["sample"][1].api_key is None
 
     second = await ProviderConfig.get_instance()
-    assert second.get_default_config("sample").id == "next"
+    default = second.get_default_config("sample")
+    assert default is not None
+    assert default.id == "next"
     assert [row.id for row in second.credentials["sample"]] == ["next"]
     decrypt.assert_called_once_with("opaque-stored-value")
     assert backend.await_count == 2
