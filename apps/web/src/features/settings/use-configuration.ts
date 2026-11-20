@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { RequestNotDispatchedError, asRequestNotDispatchedError, canDispatch, readTurnContext, sessionCoordinator, subscribeTurnContext } from '@study/web-transport';
+import { canDispatch, readTurnContext, sessionCoordinator, subscribeTurnContext } from '@study/web-transport';
 import { useAppData, useAppDrafts } from '../../app/providers';
 import { useResourceNavigation, useWorkbenchSnapshot } from '../../app/WorkbenchSession';
-import { createSettingsApi, SettingsRequestError } from '../../data/settings-api';
+import { createSettingsApi } from '../../data/settings-api';
 import type { CredentialWrite, SourceName } from '../../data/configuration-contracts';
+import { runConfigurationWrite } from './configuration-write';
 import { refreshConfigurationSources } from './configuration-refresh';
 import type { ConfigurationKind, ConfigurationToken } from './configuration-store';
 export function useConfiguration(kind: ConfigurationKind) {
@@ -39,64 +40,13 @@ export function useConfiguration(kind: ConfigurationKind) {
         return store.capture(id, intent, readTurnContext(), sessionCoordinator.current(), controller.getSnapshot().providerEvidenceRevision);
     };
     const valid = (token: ConfigurationToken) => controller?.getSnapshot().ready === true && store.canBegin(token, readTurnContext(), sessionCoordinator.current(), controller.getSnapshot().providerEvidenceRevision);
-    const run = async (token: ConfigurationToken, takePrivateBody?: () => CredentialWrite | null) => {
-        if (!api || !controller?.getSnapshot().ready || !store.begin(token, readTurnContext(), sessionCoordinator.current(), controller.getSnapshot().providerEvidenceRevision))
-            return null;
-        const c = token.context, k = token.id, i = token.intent;
-        try {
-            let result: Readonly<Record<string, unknown>>;
-            switch (i.kind) {
-                case 'content':
-                    result = await api.saveContentSettings(i.changes, c, k);
-                    break;
-                case 'defaults':
-                    result = await api.saveModelDefault(i.field, i.value, c, k);
-                    break;
-                case 'credential-create':
-                case 'credential-edit': {
-                    const privateBody = takePrivateBody?.();
-                    if (!privateBody)
-                        throw new RequestNotDispatchedError('configuration');
-                    result = await api.saveCredential(i.kind === 'credential-edit' ? i.id : null, privateBody, c, k);
-                    break;
-                }
-                case 'credential-test':
-                    result = await api.testCredential(i.id, c, k);
-                    break;
-                case 'discover':
-                    result = await api.discoverCredentialModels(i.id, i.provider, c, k);
-                    break;
-                case 'register':
-                    result = await api.registerCredentialModels(i.id, i.models, c, k);
-                    break;
-                case 'credential-delete':
-                    result = await api.deleteCredential(i.id, i.migrateTo, c, k);
-                    break;
-                case 'model-delete':
-                    result = await api.deleteModel(i.id, c, k);
-                    break;
-                case 'model-test':
-                    result = await api.testModel(i.id, c, k);
-                    break;
-                case 'migrate-env':
-                    result = await api.migrateEnvironment(c, k);
-                    break;
-                case 'auto-assign':
-                    result = await api.autoAssignDefaults(c, k);
-                    break;
-            }
-            if (i.kind === 'migrate-env' && typeof result.errors === 'number' && result.errors > 0) {
-                store.settle(token, 'unknown', readTurnContext(), sessionCoordinator.current(), result);
-                return null;
-            }
-            const confirmed = store.settle(token, 'confirmed', readTurnContext(), sessionCoordinator.current(), result);
-            return confirmed ? result : null;
-        }
-        catch (error) {
-            store.settle(token, asRequestNotDispatchedError(error) ? 'not-sent' : 'unknown', readTurnContext(), sessionCoordinator.current(), undefined, error instanceof SettingsRequestError ? error.status : undefined);
-            return null;
-        }
-    };
+    const run = (token: ConfigurationToken, takePrivateBody?: () => CredentialWrite | null) =>
+        runConfigurationWrite(token, api, store, {
+            ready: () => controller?.getSnapshot().ready === true,
+            context: readTurnContext,
+            generation: () => sessionCoordinator.current(),
+            providerRevision: () => controller!.getSnapshot().providerEvidenceRevision,
+        }, takePrivateBody);
     return { drafts, store, rows: rows.filter(r => r.kind === kind), row, id, ready, api, state, controller, navigation, context,
         refresh, capture, valid, run,
         select: (selected: string) => { if (store.select(selected))

@@ -1,13 +1,16 @@
 """Grounded turn orchestration; evidence services, persistence and model are boundaries."""
 
 import asyncio
+import json
 from contextlib import asynccontextmanager
 from copy import deepcopy
 from types import SimpleNamespace
+from typing import Literal, cast
 from unittest.mock import AsyncMock
 
 import pytest
 
+from open_notebook.domain.evidence_retrieval import RetrievalResult
 from open_notebook.exceptions import InvalidInputError
 from open_notebook.graphs import grounded_chat as module
 
@@ -358,3 +361,195 @@ async def test_model_cancellation_is_not_a_success_or_failed_receipt(
     assert caught.value is error
     assert [w["status"] for w in s.writes] == ["running"]
     assert s.events.count("lock:notebook:one") == s.events.count("unlock:notebook:one")
+
+
+def retrieval_hit(version, index, *, quote="Canonical passage"):
+    return {
+        "evidence_id": f"{version}_{index}",
+        "source_version_id": version,
+        "source_title": version,
+        "quote": quote,
+    }
+
+
+def model_citation(setup, evidence_id):
+    setup.model.ainvoke.return_value = {
+        "answer": "Answer [c1]",
+        "citations": [{"citation_id": "c1", "evidence_id": evidence_id}],
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mode", ["lexical", "hybrid"])
+async def test_scoped_followup_routes_query_without_hiding_fallback(
+    setup: SimpleNamespace, mode: Literal["lexical", "hybrid"]
+) -> None:
+    s = setup
+    scope = {
+        "engine": "independent",
+        "selection_origin": "local",
+        "source_version_ids": ["sv_one"],
+        "remote_source_ids": [],
+        "remote_notebook_id": None,
+        "mapping_version": 1,
+    }
+    s.history.append(
+        {
+            "created_at": "2024",
+            "status": "succeeded",
+            "scope_hash": module._hash(scope),
+            "message": "Earlier subject",
+        }
+    )
+    declarations = (
+        {
+            "embedding_profile_id": "chosen",
+            "acknowledge_query_processing": True,
+            "disclosed_profile_fingerprint": "configured-profile",
+            "destination_descriptor_version": "v1",
+        }
+        if mode == "hybrid"
+        else {}
+    )
+    chosen: Literal["lexical_fallback", "lexical"] = (
+        "lexical_fallback" if mode == "hybrid" else "lexical"
+    )
+    retrieval = s.service.retrieval_service.retrieve
+    retrieval.return_value = RetrievalResult(
+        requested_method=mode,
+        retrieval_method=chosen,
+        fallback_reason="INDEX_UNAVAILABLE" if mode == "hybrid" else None,
+        selected_version_count=1,
+        warnings=("Collected from selected sources",),
+        hits=[retrieval_hit("sv_one", 1)],
+    )
+    model_citation(s, "sv_one_1")
+
+    result = await s.service.turn(
+        "notebook:one",
+        "chat:one",
+        {**s.request, "message": "Explain it", "retrieval_mode": mode, **declarations},
+    )
+
+    expected_query = "Explain it" if mode == "hybrid" else "Explain it Earlier subject"
+    assert retrieval.await_args.args == (expected_query, "notebook:one", ["sv_one"])
+    assert retrieval.await_args.kwargs["mode"] == mode
+    assert retrieval.await_args.kwargs["profile_id"] == declarations.get(
+        "embedding_profile_id"
+    )
+    s.evidence.retrieve.assert_not_awaited()
+    assert result["retrieval"]["requested_method"] == mode
+    assert result["retrieval"]["retrieval_method"] == chosen
+    assert result["citations"][0]["evidence_id"] == "sv_one_1"
+    assert "Collected from selected sources" in result["warnings"]
+    assert any(w.startswith("LEXICAL_FALLBACK") for w in result["warnings"]) is (
+        mode == "hybrid"
+    )
+
+
+@pytest.mark.asyncio
+async def test_outline_balances_versions_before_applying_evidence_limit(
+    setup: SimpleNamespace,
+) -> None:
+    s = setup
+    versions = ["sv_one", "sv_two"]
+    groups = [[retrieval_hit(version, i) for i in range(8)] for version in versions]
+    s.evidence.list_evidence.side_effect = groups
+    model_citation(s, "sv_one_0")
+
+    result = await s.service.turn(
+        "notebook:one",
+        "chat:one",
+        {**s.request, "source_version_ids": versions, "task": "outline"},
+    )
+
+    expected = [f"{version}_{i}" for i in range(6) for version in versions]
+    assert result["evidence_ids"] == expected
+    assert result["coverage"] == {
+        "selected_source_count": 2,
+        "retrieved_source_count": 2,
+        "evidence_count": 12,
+    }
+    payload = json.loads(s.model.ainvoke.await_args.args[0][1]["content"])
+    assert [e["evidence_id"] for e in payload["evidence"]] == expected
+    assert result["retrieval"]["retrieval_method"] == "selected_overview"
+    assert any(w.startswith("BOUNDED_OVERVIEW") for w in result["warnings"])
+    s.evidence.retrieve.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_answer_reports_sources_omitted_by_context_budget(
+    setup: SimpleNamespace,
+) -> None:
+    s = setup
+    s.evidence.retrieve.return_value = [
+        retrieval_hit("sv_one", 1),
+        retrieval_hit("sv_two", 1, quote="Long excerpt. " * 1200),
+    ]
+    model_citation(s, "sv_one_1")
+
+    result = await s.service.turn(
+        "notebook:one",
+        "chat:one",
+        {**s.request, "source_version_ids": ["sv_one", "sv_two"]},
+    )
+
+    assert result["evidence_ids"] == ["sv_one_1"]
+    assert result["coverage"] == {
+        "selected_source_count": 2,
+        "retrieved_source_count": 1,
+        "evidence_count": 1,
+    }
+    assert result["budget"]["retrieved_evidence_count"] == 2
+    assert result["budget"]["included_evidence_count"] == 1
+    assert any(w.startswith("CONTEXT_BUDGET") for w in result["warnings"])
+    assert any(
+        w.startswith("PARTIAL_SOURCE_COVERAGE") and "sv_two" in w
+        for w in result["warnings"]
+    )
+    assert result["grounding_status"] == "references_verified"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("retired", [False, True])
+async def test_grounded_answer_revalidates_parent_turn_inside_barrier(
+    setup: SimpleNamespace, retired: bool
+) -> None:
+    s = setup
+    response = s.model.ainvoke.return_value
+    model_returned = False
+
+    async def generate(*_args):
+        nonlocal model_returned
+        model_returned = True
+        return response
+
+    async def check_parent(store):
+        assert store is s.store
+        assert s.events[-1] == "lock:notebook:one"
+        if retired and model_returned:
+            raise InvalidInputError("PARENT_TURN_RETIRED")
+
+    s.model.ainvoke.side_effect = generate
+    parent_check = AsyncMock(side_effect=check_parent)
+    parent = cast(
+        module.PersonalTurnAdmission, SimpleNamespace(assert_locked=parent_check)
+    )
+    if retired:
+        with pytest.raises(InvalidInputError, match="PARENT_TURN_RETIRED"):
+            await s.service.turn(
+                "notebook:one", "chat:one", s.request, parent_admission=parent
+            )
+        assert s.writes[-1]["status"] == "failed"
+        assert s.writes[-1]["answer"] == ""
+        assert s.writes[-1]["citations"] == []
+    else:
+        result = await s.service.turn(
+            "notebook:one", "chat:one", s.request, parent_admission=parent
+        )
+        assert result["status"] == "succeeded"
+        assert s.writes[-1]["citations"] == result["citations"]
+    assert parent_check.await_count >= 2
+    s.repository.assert_scope.assert_not_awaited()
+    s.repository._assert_locked.assert_awaited_with("captured-scope")
+    s.model.ainvoke.assert_awaited_once()

@@ -4274,8 +4274,8 @@
       "targets": [
         "open_notebook/graphs/grounded_chat.py"
       ],
-      "reason": "Real turn/message/generate/response decisions with synthetic history and model response; external evidence/retrieval services, persistence/project locks and model invocation replaced. Covers scope/receipt/followup/outline/citation/failure decisions, not real retrieval, LLM or durable transaction acceptance.",
-      "sha256": "dd38bc1e4272eec8e65bd183f16a3605701fb14ab3e2a3252451dfab4f39015f"
+      "reason": "Real turn/message/generate/response decisions with synthetic history and model response; external evidence/retrieval services, persistence/project locks and model invocation replaced. Covers scope/receipt/followup/outline/citation/failure decisions, not real retrieval, LLM or durable transaction acceptance. Scoped fallback, fair source overview, context omission and parent ownership checks use real turn decisions with external model/retriever/store/lock edges replaced.",
+      "sha256": "ee44bdd75134a4b8b561e1b96bbcf2b9278765134c3ad526cf675a47fdae68d1"
     },
     {
       "path": "tests/test_historical_database_runner.py",
@@ -7231,6 +7231,15 @@
       ],
       "reason": "Exercises the real configuration-read orchestrator using injected in-memory revision/context callbacks and API response doubles, no transport, router, mounted UI, or durable storage.",
       "sha256": "bd37f9406f59c3ff9bf16c2488613366e89d4e12a71e8f1e4d8e288980e7568d"
+    },
+    {
+      "path": "apps/web/src/features/settings/configuration-write.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/web/src/features/settings/configuration-write.ts"
+      ],
+      "reason": "Actual configuration write coordination with typed in-memory API, owner state and admission/settlement port doubles; no real network, provider, credential, browser or durable storage.",
+      "sha256": "416f36fed684263a04d94a03cae84aea495a653def461ccd87850588e6c18425"
     },
     {
       "path": "apps/web/src/features/settings/ownership.unit.test.ts",
