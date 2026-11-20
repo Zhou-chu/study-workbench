@@ -55,6 +55,15 @@
       "sha256": "7b0651f6411d7ab8850ad6749db861a6f435eaa23c662316c63dc17183a97705"
     },
     {
+      "path": "apps/bff/test/http-adapter.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "apps/bff/src/http-adapter.ts"
+      ],
+      "reason": "Actual HTTP adapter over fake EventEmitter ingress/output, in-memory Web Streams and stubbed policy/config/handler. Tests flow control and sanitized ordinary provider failure; no sockets, processes or filesystem.",
+      "sha256": "2afca7b05d9e3c48cc8f536d4a8f238a83c080fc897defd997e20b02ea40c9c0"
+    },
+    {
       "path": "apps/bff/test/http-streams.test.ts",
       "layer": "api-integration",
       "targets": [
@@ -3005,8 +3014,8 @@
       "targets": [
         "packages/web-transport/src/client.ts"
       ],
-      "reason": "Direct send, body streaming, duplicate and abort checks under stable fake context, coordinator, custody and fetch. Internal policy and request construction helpers remain real.",
-      "sha256": "337ea77a301d13785a2968e12d667a22090b6616dfa06caa4c3f04632dea0d5d"
+      "reason": "Direct browser-transport delivery and response decisions with in-memory request/response and fake native fetch/context/coordinator; no real browser or network.",
+      "sha256": "649311e51d6309bbf11b48c562ed95819799f76cf04afbc3a53a50b3ff102e17"
     },
     {
       "path": "packages/web-transport/src/client.test.ts",
@@ -3059,13 +3068,22 @@
       "sha256": "013d1886fb6ae629f8ee1c5ba7d9762577c27f2909a5fbed5e22201e0ef5d0aa"
     },
     {
+      "path": "packages/web-transport/src/legacy-auth.unit.test.ts",
+      "layer": "unit",
+      "targets": [
+        "packages/web-transport/src/legacy-auth.ts"
+      ],
+      "reason": "Direct legacy local value, in-memory fallback, storage notification and purge decisions with a fake storage/event port; uses synthetic values, no real browser or durable storage.",
+      "sha256": "3edd06281d3404169c953d619d4e80d44ed4432bfc2ee4a25441c23fa9512b90"
+    },
+    {
       "path": "packages/web-transport/src/session-client.policy.unit.test.ts",
       "layer": "unit",
       "targets": [
         "packages/web-transport/src/session-client.ts"
       ],
-      "reason": "Direct session mode and response confirmation checks use doubles for transport dispatch, context, coordinator and legacy credential custody.",
-      "sha256": "96a667c6be00bb77a8f929611b35bc1e45002e44e26cb9a1b62690f669fb8884"
+      "reason": "Session operation routing and confirmation against fake dispatch/context/coordinator/storage; no real credentials, transport, or browser.",
+      "sha256": "9ca6e5792a0beb9aae0cf615ae4cb1666e968a1dc322b05baff12689f84b6789"
     },
     {
       "path": "packages/web-transport/src/session-client.test.ts",
@@ -4115,8 +4133,8 @@
       "targets": [
         "api/evidence_indexing.py"
       ],
-      "reason": "Real indexing pipeline including preview/input/16+1 batches/admission/write/publish; external repository, transaction, provider, memory store and project lock replaced. No target methods mocked.",
-      "sha256": "1fd269b99c3d1e0b2f4f611503352a90cc9af86d16ec72d33fa099a2f583cecc"
+      "reason": "Real indexing pipeline including preview/input/16+1 batches/admission/write/publish; external repository, transaction, provider, memory store and project lock replaced. No target methods mocked. Submission, explicit retry and queue-observation cases run the service with fake store, lock, transaction and queue only; no provider call.",
+      "sha256": "1fe1872cc221685fc50d119a3d4edfc1d6db210871e6a408e5adb68ffaba5666"
     },
     {
       "path": "tests/test_evidence_indexing_routes.py",

@@ -1,12 +1,14 @@
 import { beforeEach, expect, it, vi } from 'vitest'
 import type { RuntimeConfig } from '@study/contracts'
 import type { DispatchContext, DispatchTarget } from '@study/domain'
+import type { RequestSpec } from './client.js'
 import { createSessionClient } from './session-client.js'
+import { setLegacyAuthToken } from './legacy-auth.js'
 
 const fake = vi.hoisted(() => {
   let target: DispatchTarget | null = null
   return {
-    dispatch: vi.fn<() => Promise<Response>>(),
+    dispatch: vi.fn<(config: RuntimeConfig, request: RequestSpec, resource?: boolean, password?: string) => Promise<Response>>(),
     read: (): DispatchContext | null => target ? { target, epoch: 1, ready: true } : null,
     publish: (value: DispatchTarget) => { target = value },
     reset: () => { target = null },
@@ -66,4 +68,31 @@ it.each([null, [], 'invalid'])('does not confirm local signout from malformed re
   const client = createSessionClient({ ...config, auth_mode: 'device_sessions', web_session_protocol: 'bff-memory-v1' })
   fetcher.mockResolvedValueOnce(json(value))
   expect(await client.signoutLocal()).toEqual({ localConfirmed: false, serverRevocation: 'unconfirmed' })
+})
+
+it('routes a normal device status, refresh, sign-in and scoped signout to their session operations',async()=>{
+  const client=createSessionClient({...config,auth_mode:'device_sessions',web_session_protocol:'bff-memory-v1'})
+  fetcher.mockImplementation(async()=>json())
+  await client.status()
+  await client.refresh()
+  await client.login('example-value','Reading laptop')
+  await client.revoke('session 1')
+  expect(fetcher.mock.calls.map(([,spec]) => [spec.method,spec.path,spec.body])).toEqual([
+    ['GET','/auth/status',undefined], ['POST','/auth/sessions/refresh','{}'],
+    ['POST','/auth/sessions',JSON.stringify({password:'example-value',device_name:'Reading laptop'})],
+    ['DELETE','/auth/sessions/session%201',undefined],
+  ])
+})
+
+it('keeps legacy login value only on successful validation and reports local-only signout',async()=>{
+  const client=createSessionClient(config)
+  vi.mocked(setLegacyAuthToken).mockClear()
+  fetcher.mockResolvedValueOnce(json({},401)).mockResolvedValueOnce(json({})).mockResolvedValueOnce(json({}))
+  expect((await client.login('first-example')).ok).toBe(false)
+  expect(setLegacyAuthToken).not.toHaveBeenCalled()
+  expect((await client.login('valid-example')).ok).toBe(true)
+  expect(setLegacyAuthToken).toHaveBeenCalledExactlyOnceWith('valid-example')
+  expect((await client.probeLegacy()).ok).toBe(true)
+  expect(await client.signoutLocal()).toEqual({localConfirmed:true,serverRevocation:'not-performed'})
+  expect(fetcher).toHaveBeenCalledTimes(3)
 })

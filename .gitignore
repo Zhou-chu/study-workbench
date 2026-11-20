@@ -2,6 +2,10 @@
 prompts/patterns/user/
 /notebooks/
 data/
+# This TypeScript layer is authored source, not runtime data.
+!/apps/web/src/data/
+/apps/web/src/data/*
+!/apps/web/src/data/*.ts
 .uploads/
 sqlite-db/
 surreal-data/
