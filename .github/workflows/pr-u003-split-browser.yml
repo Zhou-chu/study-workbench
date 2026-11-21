@@ -22,7 +22,6 @@ jobs:
       NPM_CONFIG_AUDIT: 'false'
       NPM_CONFIG_FUND: 'false'
       NEXT_TELEMETRY_DISABLED: '1'
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/notebook-u003-chromium
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       with:
@@ -59,6 +58,7 @@ jobs:
     - name: Prepare pinned SurrealDB and browser
       run: |
         set -euo pipefail
+        export PLAYWRIGHT_BROWSERS_PATH="$RUNNER_TEMP/notebook-u003-chromium"
         db="$RUNNER_TEMP/u003-surreal.tgz"
         mkdir -p .runtime/bin
         curl --proto '=https' --proto-redir '=https' --fail --location           https://github.com/surrealdb/surrealdb/releases/download/v2.3.10/surreal-v2.3.10.linux-amd64.tgz -o "$db"
@@ -74,6 +74,7 @@ jobs:
       id: attempt
       run: |
         set -euo pipefail
+        export PLAYWRIGHT_BROWSERS_PATH="$RUNNER_TEMP/notebook-u003-chromium"
         result="$RUNNER_TEMP/u003-evidence"
         mkdir "$result"
         git rev-parse HEAD^{tree} > "$result/tree.txt"
