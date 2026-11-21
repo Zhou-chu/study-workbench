@@ -49,6 +49,15 @@ function latestVersionId(versions: readonly unknown[]): string | null {
     return tied ? null : latest;
 }
 
+/** A known sole version can be opened without needing to establish any ordering. */
+export function defaultReadableVersionId(versions: readonly unknown[]): string | null {
+    const candidates = versions.filter(version => !isRecord(version) || !version.projection_status);
+    const sole = candidates.length === 1 ? candidates[0] : null;
+    if (isRecord(sole) && typeof sole.source_version_id === 'string' && sole.source_version_id.trim())
+        return sole.source_version_id;
+    return latestVersionId(candidates);
+}
+
 /** Latest date-qualified version per eligible source; no inferred IDs or ordering. */
 export function latestEligibleVersionIds(sources: readonly unknown[]): string[] {
     const ids = new Set<string>();

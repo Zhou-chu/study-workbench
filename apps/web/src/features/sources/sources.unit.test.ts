@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { selection } from '../../test/source-fixtures';
-import { includeImported, latestEligibleVersionIds, selectionFromView } from './source-selection';
+import { defaultReadableVersionId, includeImported, latestEligibleVersionIds, selectionFromView } from './source-selection';
 
 it('explicit inclusion preserves reading and rejects more than twenty without truncation', () => { expect(includeImported(selection, ['v-new'])).toEqual({ ...selection, source_version_ids: ['v-old', 'v-new'] }); expect(() => includeImported({ ...selection, source_version_ids: Array.from({ length: 20 }, (_, i) => String(i)) }, ['new'])).toThrow(); expect(selectionFromView({ engine: 'future', selection_origin: 'local', source_version_ids: [], remote_source_ids: [] })).toBeNull(); });
 
@@ -32,4 +32,11 @@ it.each([
     [version('  ', '2026-11-08')],
 ].map(versions => ({ versions })))('does not guess current identity from incomplete, duplicate or tied versions: $versions', ({ versions }) => {
     expect(latestEligibleVersionIds([source('ambiguous', versions)])).toEqual([]);
+});
+
+it('opens a known sole readable version, but does not infer a singleton through unidentified competitors', () => {
+    const known = version('v-known');
+    expect(defaultReadableVersionId([known, { projection_status: 'invalid' }])).toBe('v-known');
+    expect(defaultReadableVersionId([known, { created_at: '2026-11-08' }])).toBeNull();
+    expect(latestEligibleVersionIds([source('readable-but-undated', [known])])).toEqual([]);
 });

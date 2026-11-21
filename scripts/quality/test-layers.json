@@ -1170,10 +1170,11 @@
       "layer": "component-integration",
       "targets": [
         "apps/web/src/features/sources/SourcesPanel.tsx",
+        "apps/web/src/features/sources/SourceRow.tsx",
         "apps/web/src/features/sources/source-selection.ts"
       ],
       "reason": "Mounted AppProviders, WorkbenchSession and SourcesPanel coordinate reads/selection and upload state.",
-      "sha256": "8d3439e2ed3147a91a69cdc8869dc011ec87d368183c19b3bc0cab70f2254e05"
+      "sha256": "80325cca79dc3764f32a8ecfc82c8f8e431cc73773443c371ad512f3829e5913"
     },
     {
       "path": "apps/web/src/features/sources/upload-recovery.test.tsx",
@@ -7261,7 +7262,7 @@
         "apps/web/src/features/sources/source-selection.ts"
       ],
       "reason": "Direct selection projection, explicit include and input limits using a synthetic selection object.",
-      "sha256": "4e49bcb85f360f3bde7d9a87f500adfa5a7fc0b3d3a128ff44d7676d8b6a2270"
+      "sha256": "3b1664978b5b534ee053ec4197a916548d81d6201dd54a79687981847774c4d0"
     },
     {
       "path": "apps/web/src/features/reader/reader.unit.test.ts",

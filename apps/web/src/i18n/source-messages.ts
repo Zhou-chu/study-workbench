@@ -1,5 +1,21 @@
 import { orderedMessageCatalog } from './message-catalog';
 export const sourceMessages = orderedMessageCatalog({
+  chooseReadableVersion: {
+    "en-US": "The latest version could not be confirmed. Choose a version below.",
+    "zh-CN": "无法确认最新版本。请在下方选择要阅读的版本。",
+    "zh-TW": "無法確認最新版本。請在下方選擇要閱讀的版本。",
+    "pt-BR": "Não foi possível confirmar a versão mais recente. Escolha uma versão abaixo.",
+    "ja-JP": "最新バージョンを確認できませんでした。下からバージョンを選んでください。",
+    "it-IT": "Non è stato possibile confermare la versione più recente. Scegli una versione qui sotto.",
+    "fr-FR": "La version la plus récente n’a pas pu être confirmée. Choisissez une version ci-dessous.",
+    "ru-RU": "Не удалось подтвердить последнюю версию. Выберите версию ниже.",
+    "bn-IN": "সর্বশেষ সংস্করণ নিশ্চিত করা যায়নি। নিচে একটি সংস্করণ বেছে নিন।",
+    "ca-ES": "No s’ha pogut confirmar la versió més recent. Tria una versió a continuació.",
+    "es-ES": "No se pudo confirmar la versión más reciente. Elige una versión a continuación.",
+    "de-DE": "Die neueste Version konnte nicht bestätigt werden. Wähle unten eine Version aus.",
+    "pl-PL": "Nie udało się potwierdzić najnowszej wersji. Wybierz wersję poniżej.",
+    "tr-TR": "En son sürüm doğrulanamadı. Aşağıdan bir sürüm seçin.",
+  },
   technicalDetails: {
     "en-US": "Technical details",
     "zh-CN": "技术详情",

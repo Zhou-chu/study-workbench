@@ -50,3 +50,61 @@ it('refuses the entire Select All change when it would exceed twenty versions', 
     expect(h.requests.filter(r => r.method === 'PATCH')).toHaveLength(0);
     expect(h.read).toEqual([]);
 });
+
+it.each([false, true])('opens the actual latest source instant without changing question scope (reversed: %s)', async reverse => {
+    const workspace = sourceWorkspace();
+    const old = { source_version_id: 'v-old', created_at: '2026-11-08T09:00:00+02:00' };
+    const latest = { source_version_id: 'vA', created_at: '2026-11-08T08:00:00Z', status: 'pending', original_status: 'missing' };
+    const versions = [old, latest];
+    workspace.sources = [{ source_id: 's', title: 'Research notes', versions: reverse ? [...versions].reverse() : versions }];
+    const h = harness(workspace);
+    fireEvent.click(await screen.findByRole('button', { name: 'Research notes' }));
+    expect(h.read).toEqual([{ source_version_id: 'vA' }]);
+    fireEvent.click(screen.getByRole('button', { name: 'Current question scope' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Read Research notes · Version ' + (reverse ? 2 : 1) }));
+    expect(h.read).toEqual([{ source_version_id: 'vA' }, { source_version_id: 'v-old' }]);
+    expect(h.requests.filter(r => r.method === 'PATCH')).toHaveLength(0);
+});
+
+it.each([undefined, '2026-11-08T09:00:00+01:00'])('opens explicit history instead of guessing an ambiguous current version (%s)', async created_at => {
+    const workspace = sourceWorkspace();
+    workspace.sources = [{ source_id: 's', title: 'Research notes', versions: [
+        { source_version_id: 'v-old', created_at },
+        { source_version_id: 'vA', created_at: '2026-11-08T08:00:00Z' },
+    ] }];
+    const h = harness(workspace);
+    const title = await screen.findByRole('button', { name: 'Research notes' });
+    fireEvent.click(title);
+    expect(h.read).toEqual([]);
+    expect(title).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('The latest version could not be confirmed. Choose a version below.')).toBeVisible();
+    fireEvent.click(title);
+    expect(screen.getByRole('button', { name: 'Read Research notes · Version 1' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Read Research notes · Version 1' }));
+    expect(h.read).toEqual([{ source_version_id: 'v-old' }]);
+    expect(h.requests.filter(r => r.method === 'PATCH')).toHaveLength(0);
+});
+
+it('opens the sole known version even when no creation timestamp is available to order it', async () => {
+    const workspace = sourceWorkspace();
+    workspace.sources = [{ source_id: 's', title: 'Research notes', versions: [{ source_version_id: 'v-only' }] }];
+    const h = harness(workspace);
+    fireEvent.click(await screen.findByRole('button', { name: 'Research notes' }));
+    expect(h.read).toEqual([{ source_version_id: 'v-only' }]);
+    expect(h.requests.filter(r => r.method === 'PATCH')).toHaveLength(0);
+});
+
+it('does not offer a reading choice when every version is unavailable', async () => {
+    const workspace = sourceWorkspace();
+    workspace.sources = [{ source_id: 's', title: 'Research notes', versions: [
+        { source_version_id: 'v-hidden', projection_status: 'invalid' },
+    ] }];
+    const h = harness(workspace);
+    const title = await screen.findByRole('button', { name: 'Research notes' });
+    fireEvent.click(title);
+    const row = within(title.closest('li')!);
+    expect(row.getByText('Unavailable')).toBeVisible();
+    expect(row.queryByText(/choose a version below/i)).not.toBeInTheDocument();
+    expect(row.getByRole('button', { name: 'Read Research notes · Version 1' })).toBeDisabled();
+    expect(h.read).toEqual([]);
+});
