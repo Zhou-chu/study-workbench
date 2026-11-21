@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "../..",
+    "paths": {
+      "@/*": ["frontend/src/*"],
+      "@study/contracts": ["packages/contracts/src/index.ts"],
+      "@study/domain": ["packages/domain/src/index.ts"],
+      "@study/web-transport": ["packages/web-transport/src/index.ts"],
+      "@study/bff": ["apps/bff/src/server.ts"]
+    }
+  },
+  "include": ["../../apps/*/src", "../../packages/*/src", "../../frontend/src"]
+}

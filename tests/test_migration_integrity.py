@@ -1,0 +1,209 @@
+"""Migration integrity probes without application imports or runtime settings."""
+
+import asyncio
+from unittest.mock import AsyncMock, Mock
+
+import pytest
+from migration_integrity_fixtures import load_migrations
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "response",
+    [
+        None,
+        {},
+        {"result": []},
+        {"error": {"code": -1}, "result": [{"status": "OK", "result": None}]},
+        {"result": [{"status": "ERR", "result": "failed"}]},
+        {
+            "result": [
+                {"status": "OK", "result": None},
+                {"status": "ERR", "result": "failed"},
+            ]
+        },
+        {"result": [{"status": "OK"}]},
+        {"result": [{"status": "UNKNOWN", "result": None}]},
+        {"result": [None]},
+        {"result": {"status": "OK", "result": None}},
+    ],
+)
+@pytest.mark.parametrize("bump", [True, False])
+async def test_invalid_ack_does_not_advance_or_lower_version(response, bump):
+    ns, _ = load_migrations(response)
+    ns["bump_version"] = AsyncMock()
+    ns["lower_version"] = AsyncMock()
+    with pytest.raises(RuntimeError):
+        await ns["AsyncMigration"]("RETURN true; RETURN false;").run(bump=bump)
+    ns["bump_version"].assert_not_awaited()
+    ns["lower_version"].assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("bump", [True, False])
+async def test_all_acknowledgements_ok_updates_version(bump):
+    ns, _ = load_migrations(
+        {"result": [{"status": "OK", "result": None}, {"status": "OK", "result": []}]}
+    )
+    ns["bump_version"] = AsyncMock()
+    ns["lower_version"] = AsyncMock()
+    await ns["AsyncMigration"]("RETURN true; RETURN false;").run(bump=bump)
+    ns["bump_version" if bump else "lower_version"].assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "error", [ConnectionError("fixture"), PermissionError("fixture")]
+)
+async def test_version_read_failure_prevents_migration_replay(error):
+    ns, _ = load_migrations(error=error)
+    migration = Mock(run=AsyncMock())
+    with pytest.raises(type(error)):
+        await ns["AsyncMigrationRunner"]([migration], []).run_all()
+    migration.run.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "rows",
+    [
+        None,
+        {},
+        "failed",
+        [{}],
+        [{"version": True}],
+        [{"version": "1"}],
+        [{"version": -1}],
+        [{"version": 0}],
+        [None],
+    ],
+)
+async def test_malformed_version_history_is_not_empty(rows):
+    ns, _ = load_migrations({"result": [{"status": "OK", "result": rows}]})
+    with pytest.raises(RuntimeError):
+        await ns["get_latest_version"]()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "rows,expected", [([], 0), ([{"version": 1}, {"version": 3}], 3)]
+)
+async def test_successful_empty_or_valid_history(rows, expected):
+    ns, _ = load_migrations({"result": [{"status": "OK", "result": rows}]})
+    assert await ns["get_latest_version"]() == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("operation", ["bump_version", "lower_version"])
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"result": [{"status": "ERR", "result": "failed"}]},
+        {"result": []},
+        {"result": [{"status": "OK"}]},
+    ],
+)
+async def test_version_write_requires_acknowledgement(operation, response):
+    ns, _ = load_migrations(response)
+    ns["get_latest_version"] = AsyncMock(return_value=2)
+    with pytest.raises(RuntimeError):
+        await ns[operation]()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "operation,version", [("bump_version", 3), ("lower_version", 2)]
+)
+async def test_version_write_uses_bound_version(operation, version):
+    ns, connection = load_migrations({"result": [{"status": "OK", "result": []}]})
+    ns["get_latest_version"] = AsyncMock(return_value=2)
+    await ns[operation]()
+    assert connection.query_raw.await_args.args[1] == {"version": version}
+
+
+@pytest.mark.asyncio
+async def test_statement_failure_stops_later_migrations():
+    ns, _ = load_migrations({"result": [{"status": "ERR", "result": "failed"}]})
+    ns["get_latest_version"] = AsyncMock(return_value=0)
+    ns["bump_version"] = AsyncMock()
+    later = Mock(run=AsyncMock())
+    runner = ns["AsyncMigrationRunner"](
+        [ns["AsyncMigration"]("THROW 'fixture';"), later], []
+    )
+    with pytest.raises(RuntimeError):
+        await runner.run_all()
+    later.run.assert_not_awaited()
+    ns["bump_version"].assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_version_query_rejects_extra_statement_results():
+    ns, _ = load_migrations(
+        {"result": [{"status": "OK", "result": []}, {"status": "OK", "result": []}]}
+    )
+    with pytest.raises(RuntimeError):
+        await ns["get_latest_version"]()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("bump", [True, False])
+async def test_query_cancellation_does_not_change_version(bump):
+    error = asyncio.CancelledError()
+    ns, _ = load_migrations(error=error)
+    ns["bump_version"] = AsyncMock()
+    ns["lower_version"] = AsyncMock()
+    with pytest.raises(asyncio.CancelledError) as caught:
+        await ns["AsyncMigration"]("RETURN true;").run(bump=bump)
+    assert caught.value is error
+    ns["bump_version"].assert_not_awaited()
+    ns["lower_version"].assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("table", ["speaker_profile", "episode_profile", "episode"])
+async def test_podcast_preflight_rejects_existing_schema_before_writes(table):
+    ns, connection = load_migrations(
+        {
+            "result": [
+                {"status": "OK", "result": {"tables": {table: "private schema"}}},
+                {"status": "OK", "result": []},
+            ]
+        }
+    )
+    ns["bump_version"] = AsyncMock()
+    with pytest.raises(RuntimeError, match="manual review"):
+        await ns["PodcastProfileMigration"]("CREATE should_not_run;").run()
+    assert connection.query_raw.await_count == 1
+    assert "CREATE" not in connection.query_raw.await_args.args[0]
+    ns["bump_version"].assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "results",
+    [[], [{}], [{"tables": []}, []], [{"tables": {}}, {}], [{"tables": {}}, [], []]],
+)
+async def test_podcast_preflight_rejects_malformed_state(results):
+    ns, _ = load_migrations(
+        {"result": [{"status": "OK", "result": value} for value in results]}
+    )
+    ns["bump_version"] = AsyncMock()
+    with pytest.raises(RuntimeError):
+        await ns["PodcastProfileMigration"]("CREATE should_not_run;").run()
+    ns["bump_version"].assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_podcast_preflight_legacy_config_has_safe_operator_message():
+    ns, connection = load_migrations(
+        {
+            "result": [
+                {"status": "OK", "result": {"tables": {"podcast_config": "schema"}}},
+                {"status": "OK", "result": [{"private": "synthetic-private-value"}]},
+            ]
+        }
+    )
+    with pytest.raises(RuntimeError, match="manual review") as caught:
+        await ns["PodcastProfileMigration"]("CREATE should_not_run;").run()
+    assert "synthetic-private-value" not in str(caught.value)
+    assert connection.query_raw.await_count == 1

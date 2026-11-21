@@ -24,7 +24,7 @@ interface RecentlyViewedProps {
 
 function getItemHref(item: RecentlyViewedResponse) {
   if (item.type === 'notebook') {
-    return `/notebooks/${encodeURIComponent(item.id)}`
+    return `/notebooks/${encodeURIComponent(item.id)}/study`
   }
 
   return `/sources/${item.id}`

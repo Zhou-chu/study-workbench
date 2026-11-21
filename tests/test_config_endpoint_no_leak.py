@@ -23,7 +23,13 @@ from fastapi.testclient import TestClient
 def client():
     from api.main import app
 
-    return TestClient(app)
+    # Version checks are unrelated to the response-leak contract. Never fetch
+    # GitHub or mutate the process-wide version cache from these unit tests.
+    with patch(
+        "api.routers.config.get_latest_version_cached",
+        new=AsyncMock(return_value=(None, False)),
+    ):
+        yield TestClient(app)
 
 
 SENSITIVE_MESSAGE = "connection refused to internal-db-host.corp.local:8000: password auth failed for user 'root'"
@@ -72,5 +78,9 @@ class TestConfigEndpointDoesNotLeakDbErrors:
         """Sanity check that this endpoint really is reachable without a
         password - the scenario the finding's "unauthenticated" framing
         depends on."""
-        response = client.get("/api/config")
+        with patch(
+            "api.routers.config.repo_query",
+            new=AsyncMock(return_value=[{"result": 1}]),
+        ):
+            response = client.get("/api/config")
         assert response.status_code != 401

@@ -8,6 +8,21 @@ from api.personal_service import digest, now, submit_job
 from open_notebook.exceptions import InvalidInputError, NotFoundError
 
 
+def _can_process(version, operation):
+    if (
+        operation == "reparse"
+        and version.get("origin") == "web_snapshot"
+        and version.get("mime_type") == "text/markdown"
+        and version.get("file_path")
+    ):
+        # Retained provider Markdown can be repaired locally; it is not original HTML.
+        return True
+    return (
+        version.get("original_status") == "available"
+        and version.get("origin") != "remote_text_snapshot"
+    )
+
+
 def _next_dispatch():
     # Parsing has a hard process timeout. Give it an additional minute for DB
     # commits and queue overhead before enqueueing recovery of this same job.
@@ -37,10 +52,7 @@ class EvidenceMaintenanceService:
                 if old["request_hash"] != request_hash:
                     raise InvalidInputError("IDEMPOTENCY_CONFLICT")
                 return old
-            if (
-                version.get("original_status") != "available"
-                or version.get("origin") == "remote_text_snapshot"
-            ):
+            if not _can_process(version, operation):
                 raise InvalidInputError(
                     "ORIGINAL_UNAVAILABLE: retained original required"
                 )
@@ -162,10 +174,7 @@ class EvidenceMaintenanceService:
                 )
                 await self.store.put("job", job_id, job)
             try:
-                if (
-                    version.get("original_status") != "available"
-                    or version.get("origin") == "remote_text_snapshot"
-                ):
+                if not _can_process(version, job["operation"]):
                     raise InvalidInputError("ORIGINAL_UNAVAILABLE")
                 if job["operation"] == "revalidate":
                     result = await self.evidence.revalidate(
@@ -189,10 +198,13 @@ class EvidenceMaintenanceService:
                         "evidence_count": len(extraction["evidence_ids"]),
                     }
                 update = {"state": "succeeded", "result": result, "completed_at": now()}
-            except Exception as exc:
+            except Exception:
                 update = {
                     "state": "failed",
-                    "error": {"code": type(exc).__name__, "message": str(exc)[:500]},
+                    "error": {
+                        "code": "EVIDENCE_MAINTENANCE_FAILED",
+                        "message": "Evidence maintenance could not be completed.",
+                    },
                     "completed_at": now(),
                 }
             async with self.store.project_lock(job["notebook_id"]):

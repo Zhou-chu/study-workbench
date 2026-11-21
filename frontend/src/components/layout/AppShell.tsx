@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { Menu } from 'lucide-react'
 import { AppSidebar } from './AppSidebar'
 import { SetupBanner } from './SetupBanner'
+import { SettingsNavigation } from '@/components/settings/SettingsNavigation'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { useTranslation } from '@/lib/hooks/use-translation'
@@ -14,17 +16,19 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const { t } = useTranslation()
+  const pathname = usePathname()
+  const isSettings = pathname?.startsWith('/settings') || pathname === '/advanced' || pathname === '/transformations'
   const [navigationOpen, setNavigationOpen] = useState(false)
   return (
     <div className="flex h-dvh overflow-hidden">
-      <div className="hidden lg:block shrink-0"><AppSidebar /></div>
+      <div data-workbench-controls={pathname?.endsWith('/study') || undefined} className="hidden lg:block shrink-0"><AppSidebar /></div>
       <main className="flex-1 min-w-0 flex flex-col min-h-0 overflow-hidden">
-        <div className="lg:hidden shrink-0 border-b p-2">
+        <div data-workbench-controls className="lg:hidden shrink-0 border-b p-2">
           <Dialog open={navigationOpen} onOpenChange={setNavigationOpen}>
             <DialogTrigger asChild>
               <Button variant="ghost" size="sm"><Menu className="size-4" aria-hidden="true" /><span>{t('workbench.navigation')}</span></Button>
             </DialogTrigger>
-            <DialogContent className="left-0 top-0 h-dvh w-72 max-w-[calc(100%-2rem)] translate-x-0 translate-y-0 rounded-none p-0 block">
+            <DialogContent data-workbench-controls className="left-0 top-0 h-dvh w-72 max-w-[calc(100%-2rem)] translate-x-0 translate-y-0 rounded-none p-0 pt-14 block">
               <DialogTitle className="sr-only">{t('workbench.navigation')}</DialogTitle>
               <div className="h-full overflow-y-auto" onClick={event => { if ((event.target as HTMLElement).closest('a')) setNavigationOpen(false) }}>
                 <AppSidebar />
@@ -32,7 +36,7 @@ export function AppShell({ children }: AppShellProps) {
             </DialogContent>
           </Dialog>
         </div>
-        <SetupBanner />
+        {isSettings && <><SetupBanner /><SettingsNavigation /></>}
         {children}
       </main>
     </div>

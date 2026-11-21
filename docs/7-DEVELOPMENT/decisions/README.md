@@ -54,5 +54,9 @@ What this makes easier, what it makes harder, what to watch. (bullets)
 | [ADR-011](ADR-011-design-token-system.md) | Visual identity is a token contract in globals.css, reviewed through /dev/design | Accepted |
 | [ADR-012](ADR-012-provider-endpoint-overrides.md) | Provider endpoint overrides are declared in the registry | Accepted |
 | [ADR-013](ADR-013-objectmodel-get-error-contract.md) | ObjectModel.get raises NotFoundError only for a missing record | Accepted |
+| [ADR-022](ADR-022-personal-turn-dispatch-receipt.md) | Add personal turn dispatch ACK uncertainty evidence without replay | Accepted |
+| [ADR-023](ADR-023-document-owned-turn-recovery.md) | Bounded document-owned Ask/Outline identity and explicit recovery | Implemented; integrated review/build pending |
+| [ADR-024](ADR-024-scoped-evidence-vector-publication.md) | Evidence-native vectors use canonical scope and fenced publication | Accepted for source; isolated DB runtime gate pending |
+| [ADR-025](ADR-025-explicit-evidence-indexing-jobs.md) | Explicit evidence indexing reuses durable personal jobs without replay | Source-only; isolated DB/provider/runtime gates pending |
 | [PDR-001](PDR-001-single-user-first.md) | Single-user first; don't preclude multi-user | Accepted |
 | [PDR-002](PDR-002-provider-agnostic-core.md) | Provider-agnostic core by default | Accepted |

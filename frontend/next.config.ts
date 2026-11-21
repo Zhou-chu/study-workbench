@@ -11,34 +11,15 @@ const allowedDevOrigins = process.env.NEXT_ALLOWED_DEV_ORIGINS
 const nextConfig: NextConfig = {
   // Enable standalone output for optimized Docker deployment
   output: "standalone",
+  // Keep this independently built legacy app local after adding root workspaces.
+  // Otherwise Next infers the repository root and relocates standalone/server.js.
+  outputFileTracingRoot: __dirname,
 
   ...(allowedDevOrigins && allowedDevOrigins.length > 0 ? { allowedDevOrigins } : {}),
 
-  // Experimental features
-  experimental: {
-    // Bound Next.js request-body cloning for external rewrites (default is 10MB).
-    // Portable restores use a dedicated streaming App Route, not this buffered proxy.
-    proxyClientMaxBodySize: '100mb',
-  } as NextConfig['experimental'],
-
-  // API Rewrites: Proxy /api/* requests to FastAPI backend
-  // This simplifies reverse proxy configuration - users only need to proxy to port 8502
-  // Next.js handles internal routing to the API backend on port 5055
-  async rewrites() {
-    // INTERNAL_API_URL: Where Next.js server-side should proxy API requests
-    // Default: http://localhost:5055 (single-container deployment)
-    // Override for multi-container: INTERNAL_API_URL=http://api-service:5055
-    const internalApiUrl = process.env.INTERNAL_API_URL || 'http://localhost:5055'
-
-    console.log(`[Next.js Rewrites] Proxying /api/* to ${internalApiUrl}/api/*`)
-
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${internalApiUrl}/api/:path*`,
-      },
-    ]
-  },
+  // All /api traffic is handled by Node App Routes. A build-time external
+  // rewrite must never bypass device-mode runtime policy; legacy compatibility
+  // is explicit inside the same streaming handler, without a request clone cap.
 
   // Redirect the legacy credentials route to the canonical "Models" route so
   // existing bookmarks and links keep working.

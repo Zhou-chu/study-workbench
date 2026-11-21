@@ -1,0 +1,227 @@
+{
+  "base": "2d56f39ab08edc541fce586828cca8b647f4885c",
+  "method": "Original complete test function/class AST (including parameter decorators) equals the union after relocation. Expanded after nodeids are from actual offline collect; before nodeids reconstructed by exact unchanged-node relocation, not a separately executed pre-split collection. No cases copied or dropped.",
+  "groups": [
+    {
+      "original": "tests/test_v1_personal_store.py",
+      "unit": "tests/test_v1_personal_store_unit.py",
+      "moved": [
+        "test_store_rejects_unknown_kind_before_database",
+        "test_record_identity_stable_and_kind_separated"
+      ],
+      "top_level_before": 4,
+      "top_level_remaining": 2,
+      "ast_equal": true,
+      "case_map": [
+        {
+          "before_nodeid": "tests/test_v1_personal_store.py::test_project_lock_serializes_same_project",
+          "after_nodeid": "tests/test_v1_personal_store.py::test_project_lock_serializes_same_project"
+        },
+        {
+          "before_nodeid": "tests/test_v1_personal_store.py::test_cross_instance_lock_cancellation_releases_waiter_and_holder",
+          "after_nodeid": "tests/test_v1_personal_store.py::test_cross_instance_lock_cancellation_releases_waiter_and_holder"
+        },
+        {
+          "before_nodeid": "tests/test_v1_personal_store.py::test_store_rejects_unknown_kind_before_database",
+          "after_nodeid": "tests/test_v1_personal_store_unit.py::test_store_rejects_unknown_kind_before_database"
+        },
+        {
+          "before_nodeid": "tests/test_v1_personal_store.py::test_record_identity_stable_and_kind_separated",
+          "after_nodeid": "tests/test_v1_personal_store_unit.py::test_record_identity_stable_and_kind_separated"
+        }
+      ]
+    },
+    {
+      "original": "tests/test_recovered_browser_readiness.py",
+      "unit": "tests/test_recovered_browser_readiness_unit.py",
+      "moved": [
+        "test_exact_success_response_rejects_wrong_method_origin_path_and_error"
+      ],
+      "top_level_before": 2,
+      "top_level_remaining": 1,
+      "ast_equal": true,
+      "case_map": [
+        {
+          "before_nodeid": "tests/test_recovered_browser_readiness.py::test_obsolete_ui_contracts_are_not_used",
+          "after_nodeid": "tests/test_recovered_browser_readiness.py::test_obsolete_ui_contracts_are_not_used"
+        },
+        {
+          "before_nodeid": "tests/test_recovered_browser_readiness.py::test_exact_success_response_rejects_wrong_method_origin_path_and_error",
+          "after_nodeid": "tests/test_recovered_browser_readiness_unit.py::test_exact_success_response_rejects_wrong_method_origin_path_and_error"
+        }
+      ]
+    },
+    {
+      "original": "tests/test_v1_frontend_http.py",
+      "unit": "tests/test_v1_frontend_http_unit.py",
+      "moved": [
+        "test_http_requires_artifact_before_ports",
+        "test_coupled_restart_order_and_fail_closed"
+      ],
+      "top_level_before": 5,
+      "top_level_remaining": 3,
+      "ast_equal": true,
+      "case_map": [
+        {
+          "before_nodeid": "tests/test_v1_frontend_http.py::test_http_rejects_stale_artifact_before_ports",
+          "after_nodeid": "tests/test_v1_frontend_http.py::test_http_rejects_stale_artifact_before_ports"
+        },
+        {
+          "before_nodeid": "tests/test_v1_frontend_http.py::test_frontend_environment_excludes_backend_credentials",
+          "after_nodeid": "tests/test_v1_frontend_http.py::test_frontend_environment_excludes_backend_credentials"
+        },
+        {
+          "before_nodeid": "tests/test_v1_frontend_http.py::test_http_probe_exact_bytes_and_auth[]",
+          "after_nodeid": "tests/test_v1_frontend_http.py::test_http_probe_exact_bytes_and_auth[]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_frontend_http.py::test_http_probe_exact_bytes_and_auth[static]",
+          "after_nodeid": "tests/test_v1_frontend_http.py::test_http_probe_exact_bytes_and_auth[static]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_frontend_http.py::test_http_probe_exact_bytes_and_auth[auth]",
+          "after_nodeid": "tests/test_v1_frontend_http.py::test_http_probe_exact_bytes_and_auth[auth]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_frontend_http.py::test_http_probe_exact_bytes_and_auth[config]",
+          "after_nodeid": "tests/test_v1_frontend_http.py::test_http_probe_exact_bytes_and_auth[config]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_frontend_http.py::test_http_requires_artifact_before_ports",
+          "after_nodeid": "tests/test_v1_frontend_http_unit.py::test_http_requires_artifact_before_ports"
+        },
+        {
+          "before_nodeid": "tests/test_v1_frontend_http.py::test_coupled_restart_order_and_fail_closed[None]",
+          "after_nodeid": "tests/test_v1_frontend_http_unit.py::test_coupled_restart_order_and_fail_closed[None]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_frontend_http.py::test_coupled_restart_order_and_fail_closed[stop]",
+          "after_nodeid": "tests/test_v1_frontend_http_unit.py::test_coupled_restart_order_and_fail_closed[stop]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_frontend_http.py::test_coupled_restart_order_and_fail_closed[ports]",
+          "after_nodeid": "tests/test_v1_frontend_http_unit.py::test_coupled_restart_order_and_fail_closed[ports]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_frontend_http.py::test_coupled_restart_order_and_fail_closed[backend]",
+          "after_nodeid": "tests/test_v1_frontend_http_unit.py::test_coupled_restart_order_and_fail_closed[backend]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_frontend_http.py::test_coupled_restart_order_and_fail_closed[frontend]",
+          "after_nodeid": "tests/test_v1_frontend_http_unit.py::test_coupled_restart_order_and_fail_closed[frontend]"
+        }
+      ]
+    },
+    {
+      "original": "tests/test_cors_credentials.py",
+      "unit": "tests/test_cors_credentials_unit.py",
+      "moved": [
+        "TestExplicitWildcardAlsoDisablesCredentials",
+        "TestCorsHeadersHelperMatchesMiddlewarePolicy"
+      ],
+      "top_level_before": 3,
+      "top_level_remaining": 1,
+      "ast_equal": true,
+      "case_map": [
+        {
+          "before_nodeid": "tests/test_cors_credentials.py::TestRealAppDefaultsToNoCredentialsWithWildcard::test_default_test_environment_is_wildcard",
+          "after_nodeid": "tests/test_cors_credentials.py::TestRealAppDefaultsToNoCredentialsWithWildcard::test_default_test_environment_is_wildcard"
+        },
+        {
+          "before_nodeid": "tests/test_cors_credentials.py::TestRealAppDefaultsToNoCredentialsWithWildcard::test_cors_middleware_registered_with_credentials_disabled",
+          "after_nodeid": "tests/test_cors_credentials.py::TestRealAppDefaultsToNoCredentialsWithWildcard::test_cors_middleware_registered_with_credentials_disabled"
+        },
+        {
+          "before_nodeid": "tests/test_cors_credentials.py::TestRealAppDefaultsToNoCredentialsWithWildcard::test_real_response_does_not_claim_allow_credentials",
+          "after_nodeid": "tests/test_cors_credentials.py::TestRealAppDefaultsToNoCredentialsWithWildcard::test_real_response_does_not_claim_allow_credentials"
+        },
+        {
+          "before_nodeid": "tests/test_cors_credentials.py::TestExplicitWildcardAlsoDisablesCredentials::test_explicit_wildcard_disables_credentials",
+          "after_nodeid": "tests/test_cors_credentials_unit.py::TestExplicitWildcardAlsoDisablesCredentials::test_explicit_wildcard_disables_credentials"
+        },
+        {
+          "before_nodeid": "tests/test_cors_credentials.py::TestExplicitWildcardAlsoDisablesCredentials::test_explicit_origins_enable_credentials",
+          "after_nodeid": "tests/test_cors_credentials_unit.py::TestExplicitWildcardAlsoDisablesCredentials::test_explicit_origins_enable_credentials"
+        },
+        {
+          "before_nodeid": "tests/test_cors_credentials.py::TestCorsHeadersHelperMatchesMiddlewarePolicy::test_omits_allow_credentials_header_for_wildcard",
+          "after_nodeid": "tests/test_cors_credentials_unit.py::TestCorsHeadersHelperMatchesMiddlewarePolicy::test_omits_allow_credentials_header_for_wildcard"
+        },
+        {
+          "before_nodeid": "tests/test_cors_credentials.py::TestCorsHeadersHelperMatchesMiddlewarePolicy::test_includes_allow_credentials_header_for_explicit_origins",
+          "after_nodeid": "tests/test_cors_credentials_unit.py::TestCorsHeadersHelperMatchesMiddlewarePolicy::test_includes_allow_credentials_header_for_explicit_origins"
+        },
+        {
+          "before_nodeid": "tests/test_cors_credentials.py::TestCorsHeadersHelperMatchesMiddlewarePolicy::test_disallowed_origin_still_gets_no_allow_origin_header",
+          "after_nodeid": "tests/test_cors_credentials_unit.py::TestCorsHeadersHelperMatchesMiddlewarePolicy::test_disallowed_origin_still_gets_no_allow_origin_header"
+        }
+      ]
+    },
+    {
+      "original": "tests/test_v1_stream_contracts.py",
+      "unit": "tests/test_v1_stream_contracts_unit.py",
+      "moved": [
+        "test_exact_sse_wire",
+        "test_job_stages_repeat_and_transition_to_final"
+      ],
+      "top_level_before": 3,
+      "top_level_remaining": 1,
+      "ast_equal": true,
+      "case_map": [
+        {
+          "before_nodeid": "tests/test_v1_stream_contracts.py::test_transport_schema_has_no_fake_json_success",
+          "after_nodeid": "tests/test_v1_stream_contracts.py::test_transport_schema_has_no_fake_json_success"
+        },
+        {
+          "before_nodeid": "tests/test_v1_stream_contracts.py::test_exact_sse_wire[case0]",
+          "after_nodeid": "tests/test_v1_stream_contracts_unit.py::test_exact_sse_wire[case0]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_stream_contracts.py::test_exact_sse_wire[case1]",
+          "after_nodeid": "tests/test_v1_stream_contracts_unit.py::test_exact_sse_wire[case1]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_stream_contracts.py::test_exact_sse_wire[case2]",
+          "after_nodeid": "tests/test_v1_stream_contracts_unit.py::test_exact_sse_wire[case2]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_stream_contracts.py::test_exact_sse_wire[case3]",
+          "after_nodeid": "tests/test_v1_stream_contracts_unit.py::test_exact_sse_wire[case3]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_stream_contracts.py::test_exact_sse_wire[case4]",
+          "after_nodeid": "tests/test_v1_stream_contracts_unit.py::test_exact_sse_wire[case4]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_stream_contracts.py::test_exact_sse_wire[case5]",
+          "after_nodeid": "tests/test_v1_stream_contracts_unit.py::test_exact_sse_wire[case5]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_stream_contracts.py::test_exact_sse_wire[case6]",
+          "after_nodeid": "tests/test_v1_stream_contracts_unit.py::test_exact_sse_wire[case6]"
+        },
+        {
+          "before_nodeid": "tests/test_v1_stream_contracts.py::test_job_stages_repeat_and_transition_to_final",
+          "after_nodeid": "tests/test_v1_stream_contracts_unit.py::test_job_stages_repeat_and_transition_to_final"
+        }
+      ]
+    }
+  ],
+  "expected_collected_cases": {
+    "before": 35,
+    "after": 35,
+    "extracted_unit": 22,
+    "remaining": 13
+  },
+  "verification": {
+    "collect_exit": 0,
+    "test_exit": 0,
+    "passed": 35,
+    "warnings": 2,
+    "seconds": 2.87,
+    "unit_cases": 22,
+    "remaining_cases": 13,
+    "evidence_directory": "/home/USER/notebook-quality-20261113/python/unit-split-five",
+    "coverage": "Not measured; no full-suite or global unit coverage claim."
+  }
+}

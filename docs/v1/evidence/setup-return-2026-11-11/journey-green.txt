@@ -1,0 +1,13 @@
+[Publication copy: personal filesystem paths replaced; original results/failures unchanged.]
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web
+
+ ✓ src/features/settings/setup-journey.test.tsx (3 tests) 2714ms
+   ✓ returns from Tools model setup after cancel with question and chosen sources intact  1072ms
+   ✓ returns from Tools model setup after save with question and chosen sources intact  731ms
+   ✓ returns from Tools model setup after failure with question and chosen sources intact  910ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  02:50:55
+   Duration  4.95s (transform 1.35s, setup 92ms, import 1.82s, tests 2.71s, environment 231ms)

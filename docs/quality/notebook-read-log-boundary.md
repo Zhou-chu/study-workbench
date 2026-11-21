@@ -1,0 +1,5 @@
+# Notebook read failure logging
+
+Extended the existing real Loguru serialization assertion to chat-session reads and deletion previews. Both cases first failed because synthetic backend details and notebook identity appeared in output (red-payload.log). The minimal fix replaces raw error/traceback logging with the existing metadata-only boundary helper and two fixed operation names. DatabaseOperationError remains the exception type and its original cause is retained explicitly; cancellation remains outside Exception handling. The existing API database handler already emits a fixed generic message, so this is a logging-boundary fix, not a newly demonstrated HTTP leak.
+
+The 44 boundary tests plus 23 domain read and 21 database boundary tests passed together (88 total, one existing dependency warning). Ruff check/format passed. Evidence is retained privately under python/notebook-read-logging. Full-suite and latest complete coverage acceptance remain separate and are not claimed here. No real database, service, migration or deployment ran.

@@ -18,43 +18,37 @@ describe('AppSidebar', () => {
     vi.mocked(usePathname).mockReturnValue('')
   })
 
-  it('highlights only Models (not Settings) on the Models page', () => {
+  it('keeps administration behind one settings destination', () => {
     vi.mocked(usePathname).mockReturnValue('/settings/models')
-
     const { container } = render(<AppSidebar />)
+    expect(container.querySelector('a[href="/settings"]')).toHaveAttribute('aria-current', 'page')
+    for (const href of ['/settings/models', '/transformations', '/advanced']) {
+      expect(container.querySelector(`a[href="${href}"]`)).toBeNull()
+    }
+    expect(screen.queryByText('common.theme')).not.toBeInTheDocument()
+    expect(screen.queryByText('common.language')).not.toBeInTheDocument()
+  })
 
-    const modelsButton = container.querySelector('a[href="/settings/models"] button')
-    const settingsButton = container.querySelector('a[href="/settings"] button')
-
-    expect(modelsButton?.className).toContain('font-semibold')
-    expect(settingsButton?.className).toContain('font-medium')
-    expect(settingsButton?.className).not.toContain('font-semibold')
+  it('opens full settings separately while a study notebook is mounted', () => {
+    vi.mocked(usePathname).mockReturnValue('/notebooks/notebook%3A1/study')
+    render(<AppSidebar />)
+    expect(screen.getByRole('link', { name: 'navigation.settings' })).toHaveAttribute('target', '_blank')
+    expect(screen.getByRole('link', { name: 'navigation.settings' })).toHaveAttribute('rel', 'noopener noreferrer')
   })
 
   it('renders correctly when expanded', () => {
     render(<AppSidebar />)
 
     // With mocked t() returning keys, check for translation key strings
-    expect(screen.getByText('common.appName')).toBeDefined()
+    expect(screen.getByText('workbench.title')).toBeDefined()
     expect(screen.getByText('navigation.sources')).toBeDefined()
     expect(screen.getByText('navigation.notebooks')).toBeDefined()
   })
 
-  it('uses consistent spacing for expanded footer actions', () => {
+  it('keeps sign out accessible without exposing setup controls', () => {
     render(<AppSidebar />)
-
-    const themeButton = screen.getByText('common.theme').closest('button')
-    const languageButton = screen.getByText('common.language').closest('button')
-    const signOutButton = screen.getByRole('button', { name: 'common.signOut' })
-
-    expect(themeButton?.className.split(/\s+/)).toContain('px-3')
-
-    for (const button of [themeButton, languageButton, signOutButton]) {
-      expect(button?.className.split(/\s+/)).toContain('gap-2')
-    }
-
-    expect(themeButton?.querySelector(':scope > span.relative.size-4')).not.toBeNull()
-    expect(signOutButton.className.split(/\s+/)).not.toContain('gap-3')
+    expect(screen.getByRole('button', { name: 'common.signOut' })).toBeEnabled()
+    expect(screen.getByRole('link', { name: 'navigation.settings' })).toBeInTheDocument()
   })
 
   it('toggles collapse state when clicking handle', () => {
@@ -80,6 +74,6 @@ describe('AppSidebar', () => {
     render(<AppSidebar />)
 
     // In collapsed mode, app name shouldn't be visible (as text)
-    expect(screen.queryByText('common.appName')).toBeNull()
+    expect(screen.queryByText('workbench.title')).toBeNull()
   })
 })

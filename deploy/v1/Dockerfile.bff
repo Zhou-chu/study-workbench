@@ -1,0 +1,17 @@
+# Artifact-first standalone ESM closure. No dependency installation at image build/start.
+FROM node:24.22.2-bookworm-slim@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9 AS verified
+WORKDIR /work
+COPY scripts/v1/spa-artifact-common.mjs /work/scripts/v1/spa-artifact-common.mjs
+COPY contracts/v1/openapi.json /work/contracts/v1/openapi.json
+COPY apps/bff/dist /work/artifact
+RUN node --input-type=module -e "import {verifyArtifact} from './scripts/v1/spa-artifact-common.mjs'; await verifyArtifact('/work/artifact',{kind:'bff',contract:'/work/contracts/v1/openapi.json'});"
+
+FROM node:24.22.2-bookworm-slim@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9 AS bff
+WORKDIR /app
+ENV NODE_ENV=production PORT=3000 STUDY_WORKBENCH_BFF_LISTEN_HOST=0.0.0.0
+COPY --from=verified --chown=node:node /work/artifact /app
+COPY deploy/v1/licenses /usr/share/doc/study-workbench/licenses
+COPY deploy/v1/THIRD_PARTY_NOTICES.md /usr/share/doc/study-workbench/THIRD_PARTY_NOTICES.md
+USER node
+EXPOSE 3000
+ENTRYPOINT ["node", "cli.js"]

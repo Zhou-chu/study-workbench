@@ -1,0 +1,12 @@
+[Publication copy: personal filesystem paths replaced; original results/failures unchanged.]
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web
+
+ ✓ src/features/settings/setup-navigation.test.tsx (9 tests) 103ms
+ ✓ src/features/settings/settings-controls.test.tsx (60 tests) 6077ms
+   ✓ allows new credentials independently of failed models metadata  379ms
+
+ Test Files  2 passed (2)
+      Tests  69 passed (69)
+   Start at  02:48:45
+   Duration  8.46s (transform 1.44s, setup 258ms, import 1.96s, tests 6.18s, environment 516ms)

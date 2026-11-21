@@ -1,0 +1,6 @@
+-- Disabling hybrid is the non-destructive rollback. This removes derived data only.
+REMOVE TABLE evidence_embedding_vector;
+REMOVE TABLE evidence_embedding_manifest;
+REMOVE TABLE evidence_embedding_attempt;
+REMOVE TABLE evidence_embedding_scope;
+REMOVE TABLE evidence_embedding_profile;

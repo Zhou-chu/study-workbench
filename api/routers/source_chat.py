@@ -24,6 +24,7 @@ from open_notebook.exceptions import (
     OpenNotebookError,
 )
 from open_notebook.graphs.source_chat import source_chat_graph as source_chat_graph
+from open_notebook.utils.boundary_logging import log_boundary_failure
 from open_notebook.utils.graph_utils import (
     get_session_message_count,
     invoke_chat_turn,
@@ -424,7 +425,7 @@ async def stream_source_chat_response(
             error_message = str(e)
         else:
             _, error_message = classify_error(e)
-        logger.error(f"Error in source chat streaming: {str(e)}")
+        log_boundary_failure("source_chat_stream", e)
         error_event = {"type": "error", "message": error_message}
         yield f"data: {json.dumps(error_event)}\n\n"
 

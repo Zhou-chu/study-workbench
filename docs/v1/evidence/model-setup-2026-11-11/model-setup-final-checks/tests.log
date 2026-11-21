@@ -1,0 +1,402 @@
+[Publication copy: personal filesystem paths replaced; original results/failures unchanged.]
+
+> @study/bff@0.1.0 test
+> node --test scripts/*.test.mjs && vitest run --exclude=**/scripts/** --maxWorkers=2
+
+✔ standalone BFF closure accepts measured ESM package and local modules only (407.986586ms)
+✔ parses actual emitted ESM without confusing import route literals or executing code (50.54517ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = import // ordinary line comment\n('next');" (27.146801ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = import /* first */ // second\r\n /* third */ ('react');" (29.098895ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = import // line ('next');" (29.751262ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = import // line ('next');" (33.59497ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = import ﻿ /* space */ ('next');" (32.071048ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = `template ${import // line\n('next')}`;" (30.020183ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = require // line\n('next');" (28.729578ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = require /* comment */ ('next');" (31.397077ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const load = r\\u0065quire; load('next');" (29.792671ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const load = \\u{72}equire; load('next');" (29.477508ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = require?.('next');" (29.51421ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = (require)('next');" (25.659736ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = module.require // line\n('next');" (27.285936ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = eval // line\n('1');" (27.932179ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = (0,eval)('1');" (30.054928ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = e\\u0076al /* comment */ ('1');" (27.635645ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = Function // line\n('return 1')();" (30.110911ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = new Function /* comment */ ('return 1');" (32.98942ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = globalThis['Function']('return 1');" (26.86016ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = createRequire // line\n(import.meta.url)('next');" (32.740332ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "importScripts // line\n('next');" (28.139775ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1125.646125
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-model-setup-20261110/apps/bff
+
+ ✓ test/session-store.test.ts (43 tests) 145ms
+ ✓ test/proxy-parity.test.ts (159 tests) 258ms
+stdout | test/auth-loss-hops.test.ts > synthetic device refresh loss across real HTTP hops > recovers BFF→browser delivery loss through the same cookie after the successor pair was installed
+lost-hop fixture [ 'bff:successor-installed', 'browser:ack-lost-after-swap' ] native rotations 1
+
+ ✓ test/auth-loss-hops.test.ts (15 tests) 347ms
+stdout | test/streaming-http.test.ts > incremental native HTTP legacy_password > delivers split UTF-8 and split JSON before completion without rewriting any SSE bytes
+SSE fixture legacy_password [ 'client:first-incomplete-utf8', 'client:partial-json' ] f7df383fb76564a1081a9006ecf83ded32e01b33b6b637f8574bc08c15c8def2
+
+ ✓ test/policy.test.ts (274 tests) 265ms
+ ✓ test/private-ingress.test.ts (57 tests) 635ms
+ ✓ test/http-streams.test.ts (2 tests) 155ms
+ ✓ test/http-adapter.test.ts (83 tests) 175ms
+ ✓ test/handler.test.ts (84 tests) 46ms
+ ✓ test/route-dispatch.test.ts (311 tests) 125ms
+ ✓ test/cli.test.ts (2 tests) 4ms
+stdout | test/streaming-http.test.ts > incremental native HTTP legacy_password > forwards a chunked binary multipart body before EOF with the original boundary and file hash
+multipart fixture legacy_password 1048593 198fe22858bf90dd34cba065bf3e3d4680918f930e94ce51807b9b3055f2eb1e 3033dc9ebd2843ec3c1dd72ee1f6cd2ccd8246012b5cbad1f7df786fc521f44c api:upload-before-client-eof
+
+ ✓ test/package-boundary.test.ts (1 test) 3ms
+stdout | test/streaming-http.test.ts > incremental native HTTP device_sessions > delivers split UTF-8 and split JSON before completion without rewriting any SSE bytes
+SSE fixture device_sessions [ 'client:first-incomplete-utf8', 'client:partial-json' ] f7df383fb76564a1081a9006ecf83ded32e01b33b6b637f8574bc08c15c8def2
+
+stdout | test/streaming-http.test.ts > incremental native HTTP device_sessions > forwards a chunked binary multipart body before EOF with the original boundary and file hash
+multipart fixture device_sessions 1048593 198fe22858bf90dd34cba065bf3e3d4680918f930e94ce51807b9b3055f2eb1e 3033dc9ebd2843ec3c1dd72ee1f6cd2ccd8246012b5cbad1f7df786fc521f44c api:upload-before-client-eof
+
+ ✓ test/streaming-http.test.ts (19 tests) 4764ms
+     ✓ forwards a chunked binary multipart body before EOF with the original boundary and file hash  2155ms
+     ✓ forwards a chunked binary multipart body before EOF with the original boundary and file hash  1521ms
+
+ Test Files  12 passed (12)
+      Tests  1050 passed (1050)
+   Start at  15:21:08
+   Duration  5.96s (transform 545ms, setup 0ms, import 1.20s, tests 6.92s, environment 1ms)
+
+
+> @study/web@0.1.0 test
+> node --test scripts/*.test.mjs && vitest run --maxWorkers=2
+
+✔ Web manifest producer and verifier are independent callable file gates (0.598194ms)
+✔ canonical payload inventory rejects missing, extra, private, symlink and special bytes (16.878733ms)
+✔ canonical inventory digest measures sizes, modes, bytes and sorted paths (0.377959ms)
+✔ retains exact release manifests/assets, rejects reused slots and PDF/hash collisions (312.244507ms)
+✔ Node verifier rejects duplicate/noncanonical manifests and undeclared files (20.393032ms)
+✔ gateway packaging checks the selected current contract without replacing retained identities (59.183837ms)
+✔ fix1 I1 publishes and verifies the complete retained absolute PDF-version union (425.306814ms)
+✔ copies exact source bytes with every license and detects output drift (152.612318ms)
+✔ rejects source symlinks before copying (7.617952ms)
+✔ rejects destination symlink ancestors without changing external target (5.629302ms)
+✔ rejects private or oversized resources before public generation (29.246277ms)
+✔ rejects unknown destination files without deleting anything (18.361253ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 888.475864
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-model-setup-20261110/apps/web
+
+stderr | src/features/settings/settings.test.tsx > disconnect requires its exact confirmation and retires every original memory owner without claiming app signout
+Cannot update a component (`SelectedSourceSearch`) while rendering a different component (`NotebookPage`). To locate the bad setState() call inside `NotebookPage`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+
+ ✓ src/features/settings/retrieval.test.tsx (34 tests) 18422ms
+   ✓ T01-T04 keeps explicit hybrid through overlay close and requires its own query consent  875ms
+   ✓ T05-T09 previews exact metadata, separates consent, cancels locally and latches build  562ms
+   ✓ T10-T11 unknown POST retains same-key recovery and never adopts listed job IDs  363ms
+   ✓ T04/T05 configuration A-B-A retires acknowledgement and preview without resetting hybrid  315ms
+   ✓ T09 rejects missing-child receipts without claiming completion  367ms
+   ✓ T09 rejects unsafe-flags receipts without claiming completion  399ms
+   ✓ T14-T16 uses the resolved historical extraction and exact acknowledged maintenance job only  1043ms
+   ✓ T10/T12/T13 observes only the live original group and children, then performs a separately consented fresh full-version retry  651ms
+   ✓ T05 refuses a preview whose extraction changed since the disclosed status  392ms
+   ✓ T14 does not expose repair for unsupported origin remote_text_snapshot  747ms
+   ✓ T14 does not expose repair for unsupported origin future  607ms
+   ✓ T14 retained Markdown repair posts once, leaves unknown frozen, and never exposes the retained path  911ms
+   ✓ T01-T04 preserves ORIGINAL B5 closures across mode/configuration A-B-A and actual unmount  592ms
+   ✓ T05 delayed stale preview cannot unlock a newer explicit refresh  421ms
+   ✓ T10 explicit refresh reads at most one group plus twenty original children and stops on malformed child (false)  808ms
+   ✓ T10 explicit refresh reads at most one group plus twenty original children and stops on malformed child (true)  823ms
+   ✓ T11 same-key recovery is refused after configuration invalidation and never repaired by loading current status  479ms
+   ✓ T05/T11 a PREVIEW_CHANGED conflict retires preview consent but preserves the original unknown obligation  368ms
+   ✓ T16 closes the reader during an owned refresh without canceling CPU work or applying its late result  1336ms
+   ✓ T06 cancellation restores preview focus without substituting document consent for query consent  568ms
+   ✓ T16 rejects a maintenance refresh that changes its originally acknowledged fresh extraction  1372ms
+   ✓ I1 keeps ready visible and only supported states authorize hybrid and preview  373ms
+   ✓ I1 keeps future_state visible and only supported states authorize hybrid and preview  301ms
+   ✓ I2 malformed current status retires original query/build authority and preserves unknown records (false)  409ms
+   ✓ I2 malformed current status retires original query/build authority and preserves unknown records (true)  428ms
+   ✓ I2 later owned-job uncertainty does not invalidate newly validated semantic status  428ms
+   ✓ I3 full two-version refresh keeps the original child authority (group drift=false)  438ms
+   ✓ I3 full two-version refresh keeps the original child authority (group drift=true)  399ms
+ ✓ src/features/settings/settings.test.tsx (70 tests) 21309ms
+   ✓ opens actual notebook settings without replacing the workspace, and closes without a mutation  551ms
+   ✓ uses presence-aware notebook saves and retains edits made while saving  376ms
+   ✓ shows actual delete impacts, keeps the exclusive-source choice explicit and latches confirmation  338ms
+   ✓ archives and unarchives with exact presence-aware bodies and acknowledged baselines  314ms
+   ✓ renames without clearing an absent description, and explicitly clears a description  356ms
+   ✓ retains dirty notebook settings through dismissal and the one navigation confirmation  400ms
+   ✓ loads only explicit recent notebook pages with the exact opaque returned cursor  565ms
+   ✓ unknown link does not clear selection or repeat POST, and keeps the original reservation  458ms
+   ✓ acknowledged link clears remote IDs through the same writer and preserves two-stage unknown outcome  464ms
+   ✓ connect and reconnect show real unavailable manual flow, refresh is explicit, and never invent a login URL  379ms
+   ✓ remote create captures the confirmed original title and unknown receipt permits no job GET or replay  562ms
+   ✓ disconnect requires its exact confirmation and retires every original memory owner without claiming app signout  434ms
+   ✓ reverification does not renew the old remote listing or its selected link  620ms
+   ✓ stale remote-create confirmation cannot submit an edited title  454ms
+   ✓ observes only an acknowledged original create waiting_remote on an explicit click and never automatically links it  561ms
+   ✓ observes only an acknowledged original create queued on an explicit click and never automatically links it  512ms
+   ✓ observes only an acknowledged original create running on an explicit click and never automatically links it  531ms
+   ✓ publishes a reconciled link from A to the real retained workspace consumers  563ms
+   ✓ publishes a reconciled link from null to the real retained workspace consumers  517ms
+   ✓ blocks retained remote sync after link-unknown, closing settings and explicitly verifying again  567ms
+   ✓ blocks retained remote sync after clear-unknown, closing settings and explicitly verifying again  714ms
+   ✓ invalidates provider admission at disconnect intent while pending and unknown, without retiring local work  523ms
+   ✓ keeps retired dirty settings reachable across remount (closed at retirement: false)  854ms
+   ✓ keeps retired dirty settings reachable across remount (closed at retirement: true)  833ms
+   ✓ allows a new explicit selection after an unknown link retires without replaying the old reservation  808ms
+   ✓ requires an explicit blank successor after producer terminal create failed, retaining the original receipt  436ms
+   ✓ requires an explicit blank successor after producer terminal create cancelled_local, retaining the original receipt  467ms
+   ✓ requires an explicit blank successor after producer terminal create needs_reauth, retaining the original receipt  447ms
+   ✓ requires an explicit blank successor after producer terminal create succeeded, retaining the original receipt  482ms
+   ✓ keeps an unknown link receipt inspectable after retirement, remount and blank successor (closed: false)  676ms
+   ✓ keeps an unknown link receipt inspectable after retirement, remount and blank successor (closed: true)  674ms
+   ✓ publishes an exactly reconciled unknown clear without repeating either transaction write  450ms
+stderr | src/features/notebooks/workspace-observation.test.tsx > stops background observation and fences an old workspace completion across privacy retirement
+Cannot update a component (`SelectedSourceSearch`) while rendering a different component (`NotebookPage`). To locate the bad setState() call inside `NotebookPage`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+
+ ✓ src/features/notebooks/workspace-observation.test.tsx (3 tests) 9305ms
+   ✓ observes extraction ready at the two-second workspace cadence without dispatching jobs or writes  2656ms
+   ✓ observes extraction error at the two-second workspace cadence without dispatching jobs or writes  2439ms
+   ✓ stops background observation and fences an old workspace completion across privacy retirement  4209ms
+ ✓ src/features/settings/configuration.test.tsx (50 tests) 8235ms
+   ✓ B9c retains invalid unsent private input until explicit cancellation without storing it in resources or caches  314ms
+   ✓ B9c discovery explicitly chooses registration type and searches/toggles absent-type names with deduplication  551ms
+   ✓ B9c custom registration requires explicit type and explicit custom choice  360ms
+stderr | src/features/library/library-completion.test.tsx > I1 stale existing-source recovery after target keeps original search and selection; dirty=false
+Cannot update a component (`SelectedSourceSearch`) while rendering a different component (`NotebookPage`). To locate the bad setState() call inside `NotebookPage`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+
+ ✓ src/features/library/library-completion.test.tsx (28 tests) 7494ms
+   ✓ opens the empty-library import and preserves the notebook default without selecting question scope  374ms
+   ✓ palette navigates real destinations and launches actual source/notebook forms  452ms
+   ✓ retains transformation choice and unknown operation across source remount without resubmission  364ms
+   ✓ notebook sources paginate in their original parent and distinguish global delete from unlink  802ms
+   ✓ I1 source Details and Insights recover a separate current intent after reauth; dirty=true  374ms
+   ✓ I1 source Details and Insights recover a separate current intent after target; dirty=true  317ms
+   ✓ I1 stale existing-source recovery after reauth keeps original search and selection; dirty=false  332ms
+   ✓ I1 stale existing-source recovery after reauth keeps original search and selection; dirty=true  343ms
+   ✓ I1 stale existing-source recovery after target keeps original search and selection; dirty=true  417ms
+ ✓ src/features/library/global-lifecycle.test.tsx (46 tests) 7023ms
+   ✓ split UTF8 and CRLF append whole intermediates, replace final display and honor final completion  387ms
+ ✓ src/features/settings/settings-controls.test.tsx (60 tests) 7165ms
+   ✓ allows new credentials independently of failed models metadata  442ms
+ ✓ src/features/library/native-ownership.test.tsx (16 tests) 5749ms
+   ✓ context changes while its builder is pending never dispatch execute and permit only explicit unsent retry  720ms
+   ✓ late notebook send output cannot replace another selected session or its draft  452ms
+   ✓ does not allow a notebook session with null parent to send or save  305ms
+   ✓ pending source-origin note save stays in the existing navigation guard even after a successful source send  468ms
+   ✓ clearing notebook model after a completed send omits the previous override from the next explicit message  366ms
+   ✓ I3 displays null-parent notebook history as explained inspection only, never as mutation authority  358ms
+   ✓ I3 unknown notebook send exposes orphan inspection separately without changing original evidence; prior output=false  663ms
+   ✓ I3 unknown notebook send exposes orphan inspection separately without changing original evidence; prior output=true  754ms
+ ✓ src/features/library/library-safety.test.tsx (25 tests) 5693ms
+   ✓ serial multiple URLs stop on unknown with partial receipts, retain options, and never replay on reopen  620ms
+   ✓ multi-file import preserves exact File objects, next/back, and cancellation stops unsent items  356ms
+   ✓ I3 insight uncertainty retains actual producer IDs across remount without another POST  317ms
+ ✓ src/features/library/classic-chat.test.tsx (15 tests) 6527ms
+   ✓ opens classic with explicit empty independent context and native history controls  563ms
+   ✓ source modes and bulk target only loaded IDs while note include/exclude maps stay explicit  393ms
+   ✓ sends a synchronous full transcript once and refreshes the exact native session  363ms
+   ✓ native session create rename model null clear and delete cancel/confirm use exact wires  654ms
+   ✓ copy and explicit AI-note save omit title and keep source-only saves unavailable  307ms
+   ✓ I2 'rename' 'rejected' retry captures the changed exact wire intent  599ms
+   ✓ I2 'rename' 'not-sent' retry captures the changed exact wire intent  560ms
+   ✓ I2 'model' 'rejected' retry captures the changed exact wire intent  449ms
+   ✓ I2 'model' 'not-sent' retry captures the changed exact wire intent  435ms
+   ✓ I2 'create' 'rejected' retry captures the changed exact wire intent  836ms
+   ✓ I2 'create' 'not-sent' retry captures the changed exact wire intent  571ms
+ ✓ src/features/library/podcast-lifecycle.test.tsx (30 tests) 5280ms
+   ✓ I1 successful login retains old draft observationally and requires a blank new identity intent  572ms
+   ✓ an interrupted preview can be explicitly rebuilt after reauth without an abandoned busy latch  379ms
+ ✓ src/features/settings/model-setup-journey.test.tsx (49 tests) 7158ms
+   ✓ shows the next step after a DeepSeek save while preserving an existing other-provider chat default  505ms
+   ✓ uses the existing explicit discovery and registration flow without selecting a default  312ms
+   ✓ marks a previous successful check as stale after metadata is refreshed  390ms
+ ✓ src/features/settings/transformations.test.tsx (32 tests) 5675ms
+   ✓ keeps instructions edits during save and ignores an older default GET after the save baseline  435ms
+   ✓ unknown create survives dismissal and normal navigation, with no equality-based settlement or replay  308ms
+ ✓ src/features/library/podcast-profiles.test.tsx (21 tests) 3584ms
+   ✓ create episode profile sends full mandatory schema and explicit nullable/model/language fields  463ms
+   ✓ speaker creation, row limits and canceled draft persist without hidden mutation  388ms
+stderr | src/features/library/native-lifecycle.test.tsx > holds unknown notebook sends through reauthentication and privacy retirement without replay
+Cannot update a component (`SelectedSourceSearch`) while rendering a different component (`NotebookPage`). To locate the bad setState() call inside `NotebookPage`, follow the stack trace as described in https://react.dev/link/setstate-in-render
+
+ ✓ src/features/notebooks/notebooks.test.tsx (27 tests) 4552ms
+   ✓ loads literal-ID cards, searches only names, expands archived and changes tile/list view without disk caches  367ms
+   ✓ protects real B2 Back and Forward and keeps an unsent creation across an allowed route unmount  325ms
+   ✓ does not discard an unknown creation on Cancel or force-unlock it through real B2 navigation  349ms
+   ✓ keeps an older unknown creation across a successful different fresh creation and notebook-to-home navigation  342ms
+ ✓ src/features/library/native-lifecycle.test.tsx (13 tests) 3974ms
+   ✓ replaces repeated whole answers, handles split UTF8/CRLF, and keeps confirmed output when follow-up read is empty  512ms
+   ✓ retains partial source output and no replay after error and close/reopen  380ms
+   ✓ retains partial source output and no replay after malformed and close/reopen  342ms
+   ✓ retains partial source output and no replay after eof and close/reopen  318ms
+   ✓ holds unknown notebook sends through reauthentication and privacy retirement without replay  400ms
+   ✓ I1 notebook confirmed transcript survives successor draft, stale reads, remount and explicit follow-up  704ms
+ ✓ src/features/library/podcasts.test.tsx (9 tests) 2667ms
+   ✓ mounts podcast route, profiles/help and list details using historical snapshots, never filesystem paths  434ms
+   ✓ explicit source and note context starts empty and generation retains exact trimmed request with one dispatch  519ms
+   ✓ partial preview identifies missing items and requires selection revision before another preview  395ms
+   ✓ unknown generation survives closing and reopening without replay or new intent  488ms
+ ✓ src/features/library/classic-reference.test.tsx (8 tests) 5260ms
+   ✓ opens full typed source, note and insight alias references through supported reads, with detached notes read-only  1594ms
+   ✓ invalid or missing reference identity remains unavailable instead of trusting a foreign record  666ms
+   ✓ imported legacy history displays role, type, unknown identity and time without adopting or replaying its native-looking ID  337ms
+   ✓ retains independent explicit bulk IDs after refresh, newly discovered rows stay off, and hides stale context previews  745ms
+   ✓ unknown AI-note creation locks duplicate and remounted save with no guessed title or adoption  813ms
+   ✓ only an explicitly inspected notebook association grants source-message note save, never a return URL  842ms
+ ✓ src/features/chat/chat.test.tsx (30 tests) 2760ms
+ ✓ src/features/library/global-search.test.tsx (22 tests) 3198ms
+   ✓ search switches dispatch exact independent scope and raw identity results with score and matches  465ms
+   ✓ source origin returns to retained exact global query without a notebook save grant  303ms
+ ✓ src/features/library/library.test.tsx (11 tests) 3231ms
+   ✓ library.list / route.library retain a versionless real source and open its full-ID content without selecting evidence  356ms
+   ✓ library sort controls send all six fields, reverse direction and explicitly load the next page  953ms
+   ✓ classic.import submits text with explicit options through real multipart, never personal upload  354ms
+   ✓ insights list/open/generate waits for exact command rather than claiming 202 completion  313ms
+ ✓ src/features/library/global-save.test.tsx (8 tests) 1928ms
+   ✓ explicit selected notebooks save question-titled AI notes once through Studio and preserve each receipt  446ms
+ ✓ src/features/studio/interactions.test.tsx (18 tests) 1747ms
+ ✓ src/features/reader/reader-integration.test.tsx (4 tests) 2195ms
+   ✓ opens citations in the live shell, keeps conversation and returns focus through Back  921ms
+   ✓ keeps a later reading position visibly unsaved while a previous selection write is unresolved  400ms
+   ✓ saves reading against an authoritative later selection, not the stale workspace object  353ms
+   ✓ keeps narrow keyboard recovery inside the modal through settlement and explicit save  519ms
+ ✓ src/features/library/global-ask.test.tsx (12 tests) 1811ms
+   ✓ models cancel without provider work, then explicit three models dispatch once and show whole strategy/intermediates/final  499ms
+ ✓ src/features/sources/selection-refresh.test.tsx (7 tests) 1004ms
+   ✓ releases a succeeded scope overlay after a fresh authoritative read and preserves newer fields in the next edit  681ms
+ ✓ src/features/auth/auth.test.tsx (39 tests) 1445ms
+ ✓ src/features/sources/picker-races.test.tsx (5 tests) 848ms
+ ✓ src/features/studio/note-recovery.test.tsx (6 tests) 811ms
+ ✓ src/features/sources/discovery-remote.test.tsx (9 tests) 739ms
+ ✓ src/features/reader/pdf.test.tsx (20 tests) 706ms
+ ✓ src/features/chat/turn-runtime.test.ts (11 tests) 573ms
+ ✓ src/features/studio/note-deletion.test.tsx (4 tests) 706ms
+   ✓ revokes active, resumed and stale reopened classic editors only after the current DELETE acknowledgment  474ms
+ ✓ src/features/reader/reader.test.tsx (20 tests) 403ms
+ ✓ src/app/b9-routes.test.tsx (6 tests) 495ms
+ ✓ src/features/sources/retention.test.tsx (3 tests) 411ms
+ ✓ src/features/sources/upload-recovery.test.tsx (6 tests) 488ms
+ ✓ src/app/layout.test.tsx (4 tests) 343ms
+ ✓ src/features/sources/sources.test.tsx (3 tests) 298ms
+ ✓ src/features/reader/reader-recovery.test.tsx (3 tests) 305ms
+ ✓ src/features/chat/turn-observer.test.ts (6 tests) 265ms
+ ✓ src/features/auth/legacy-login.test.tsx (27 tests) 237ms
+ ✓ src/app/navigation.test.tsx (20 tests) 234ms
+ ✓ src/features/library/library-races.test.tsx (3 tests) 202ms
+ ✓ src/features/studio/notes.test.tsx (56 tests) 171ms
+ ✓ src/features/sources/selected-search.test.tsx (3 tests) 162ms
+ ✓ src/ui/semantics.test.tsx (5 tests) 143ms
+ ✓ src/features/studio/editorial.test.tsx (5 tests) 152ms
+ ✓ src/features/studio/artifacts.test.tsx (21 tests) 125ms
+ ✓ src/app/compatibility.test.tsx (11 tests) 123ms
+ ✓ src/features/settings/setup-navigation.test.tsx (9 tests) 111ms
+ ✓ src/theme/theme.test.tsx (9 tests) 105ms
+ ✓ src/i18n/parity.test.ts (10 tests) 73ms
+ ✓ src/data/library-api.test.ts (8 tests) 64ms
+ ✓ src/features/sources/editorial-review.test.tsx (2 tests) 54ms
+ ✓ src/data/retrieval-contracts.test.ts (31 tests) 39ms
+ ✓ src/features/settings/advanced.test.ts (22 tests) 33ms
+ ✓ src/app/route-coverage.test.ts (7 tests) 39ms
+ ✓ src/features/studio/html-attachment.test.tsx (14 tests) 39ms
+ ✓ src/app/providers.test.tsx (1 test) 33ms
+ ✓ src/features/sources/uploads.test.tsx (12 tests) 26ms
+ ✓ src/theme/contrast.test.ts (1 test) 32ms
+ ✓ src/features/settings/configuration-contracts.test.ts (8 tests) 26ms
+ ✓ src/features/reader/pdf-sizing.test.ts (3 tests) 18ms
+ ✓ src/features/library/library-accessibility.test.ts (2 tests) 15ms
+ ✓ src/data/evidence-api.test.ts (13 tests) 23ms
+ ✓ src/data/notebook-api.test.ts (5 tests) 14ms
+ ✓ src/features/library/command-observer.test.ts (8 tests) 13ms
+ ✓ src/features/library/global-ask-stream.test.ts (12 tests) 18ms
+ ✓ src/features/settings/transformation-store.test.ts (13 tests) 15ms
+ ✓ src/features/settings/contracts.test.ts (11 tests) 18ms
+ ✓ src/data/studio-api.test.ts (14 tests) 14ms
+ ✓ src/features/reader/note-origin.test.ts (1 test) 13ms
+ ✓ src/features/library/library-state.test.ts (12 tests) 16ms
+ ✓ src/data/source-api.test.ts (5 tests) 16ms
+ ✓ src/features/library/native-protocol.test.ts (10 tests) 14ms
+ ✓ src/features/library/global-contracts.test.ts (3 tests) 7ms
+ ✓ src/features/library/native-store.test.ts (7 tests) 13ms
+ ✓ src/data/artifact.test.ts (3 tests) 13ms
+ ✓ src/features/settings/ownership.test.ts (7 tests) 13ms
+ ✓ src/data/turn-api.test.ts (3 tests) 9ms
+ ✓ src/features/library/podcast-contracts.test.ts (3 tests) 7ms
+ ✓ src/data/transformation-contracts.test.ts (9 tests) 14ms
+ ✓ src/features/chat/turn-history.test.ts (20 tests) 7ms
+ ✓ src/features/settings/model-owner.test.ts (4 tests) 9ms
+ ✓ src/features/chat/chat-admission.test.ts (2 tests) 3ms
+
+ Test Files  86 passed (86)
+      Tests  1248 passed (1248)
+   Start at  15:21:15
+   Duration  115.91s (transform 4.63s, setup 6.53s, import 29.73s, tests 164.31s, environment 22.30s)
+
+
+> @study/contracts@0.1.0 test
+> vitest run --maxWorkers=2
+
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-model-setup-20261110/packages/contracts
+
+ ✓ src/consumer.test.ts (3 tests) 3ms
+ ✓ src/runtime-config.test.ts (1 test) 2ms
+ ✓ src/workspace-view.test.ts (67 tests) 71ms
+
+ Test Files  3 passed (3)
+      Tests  71 passed (71)
+   Start at  15:23:17
+   Duration  301ms (transform 112ms, setup 0ms, import 194ms, tests 76ms, environment 0ms)
+
+
+> @study/domain@0.1.0 test
+> vitest run --maxWorkers=2
+
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-model-setup-20261110/packages/domain
+
+ ✓ src/turn-operations.test.ts (46 tests) 39ms
+ ✓ src/turn-reconciliation.test.ts (143 tests) 31ms
+ ✓ src/operation.test.ts (17 tests) 8ms
+ ✓ src/embedding-disclosure.test.ts (18 tests) 8ms
+ ✓ src/editor.test.ts (9 tests) 5ms
+ ✓ src/scope.test.ts (2 tests) 2ms
+
+ Test Files  6 passed (6)
+      Tests  235 passed (235)
+   Start at  15:23:18
+   Duration  483ms (transform 184ms, setup 0ms, import 295ms, tests 94ms, environment 0ms)
+
+
+> @study/web-transport@0.1.0 test
+> vitest run --maxWorkers=2
+
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-model-setup-20261110/packages/web-transport
+
+ ✓ src/session-client.test.ts (12 tests) 38ms
+ ✓ src/client.test.ts (26 tests) 46ms
+ ✓ src/recovery.test.ts (10 tests) 54ms
+ ✓ src/dispatch-context.test.ts (3 tests) 5ms
+ ✓ src/ingress.test.ts (3 tests) 25ms
+ ✓ src/session-coordinator.test.ts (2 tests) 4ms
+ ✓ src/boundaries.test.ts (2 tests) 1310ms
+   ✓ compiles contracts and domain with ES-only globals and no platform ambient types  1248ms
+
+ Test Files  7 passed (7)
+      Tests  58 passed (58)
+   Start at  15:23:18
+   Duration  2.03s (transform 368ms, setup 0ms, import 891ms, tests 1.48s, environment 0ms)

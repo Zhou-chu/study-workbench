@@ -1,0 +1,15 @@
+
+> study-workbench@0.1.0 pretest
+> npm run build --workspace @study/contracts && npm run build --workspace @study/domain && npm run build --workspace @study/web-transport
+
+
+> @study/contracts@0.1.0 build
+> tsc --project tsconfig.build.json
+
+
+> @study/domain@0.1.0 build
+> tsc --project tsconfig.build.json
+
+
+> @study/web-transport@0.1.0 build
+> tsc --project tsconfig.build.json

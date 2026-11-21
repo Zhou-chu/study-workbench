@@ -1,0 +1,90 @@
+{
+  "profile": {
+    "profile_id": "chosen",
+    "model_id": "model:pinned",
+    "provider": "ollama",
+    "model_name": "explicit",
+    "revision": "r1",
+    "endpoint": "http://127.0.0.1:11434",
+    "credential_binding_id": "credential:pinned",
+    "dimension": 2,
+    "document_prefix": "",
+    "query_prefix": "",
+    "preprocessing_revision": "evidence-identity-v1",
+    "max_input_bytes": 1000,
+    "cosine_min_score": 0.4,
+    "destination_descriptor_version": "v1",
+    "destination_kind": "unknown",
+    "endpoint_fingerprint": "b26993598dffd1f14aed97def57ef67f753518a9b773d8a12033c82b4fa545ca",
+    "fingerprint": "ccef961bcfd29c2509bee3e0f507c7ca6e30b111c42bd9e06abd5dc58b8ad517"
+  },
+  "cases": {
+    "local_lexical": {
+      "notebook_id": "notebook:allowed",
+      "engine": "independent",
+      "selection_origin": "local",
+      "source_version_ids": [
+        "v1"
+      ],
+      "remote_source_ids": [],
+      "remote_notebook_id": null,
+      "task": "question",
+      "message": "Question",
+      "retrieval_mode": "lexical"
+    },
+    "local_hybrid": {
+      "notebook_id": "notebook:allowed",
+      "engine": "independent",
+      "selection_origin": "local",
+      "source_version_ids": [
+        "v1"
+      ],
+      "remote_source_ids": [],
+      "remote_notebook_id": null,
+      "task": "question",
+      "message": "Question",
+      "retrieval_mode": "hybrid",
+      "embedding_profile_id": "chosen",
+      "disclosed_profile_fingerprint": "ccef961bcfd29c2509bee3e0f507c7ca6e30b111c42bd9e06abd5dc58b8ad517",
+      "destination_descriptor_version": "v1",
+      "acknowledge_query_processing": true
+    },
+    "local_outline": {
+      "notebook_id": "notebook:allowed",
+      "engine": "independent",
+      "selection_origin": "local",
+      "source_version_ids": [
+        "v1"
+      ],
+      "remote_source_ids": [],
+      "remote_notebook_id": null,
+      "task": "outline",
+      "message": "workbench.outlinePrompt",
+      "retrieval_mode": "lexical"
+    },
+    "remote_question": {
+      "notebook_id": "notebook:allowed",
+      "engine": "notebooklm",
+      "selection_origin": "remote",
+      "source_version_ids": [],
+      "remote_source_ids": [
+        "remote:1"
+      ],
+      "remote_notebook_id": "remote1",
+      "task": "question",
+      "message": "Question"
+    },
+    "remote_outline": {
+      "notebook_id": "notebook:allowed",
+      "engine": "notebooklm",
+      "selection_origin": "remote",
+      "source_version_ids": [],
+      "remote_source_ids": [
+        "remote:1"
+      ],
+      "remote_notebook_id": "remote1",
+      "task": "outline",
+      "message": "workbench.outlinePrompt"
+    }
+  }
+}

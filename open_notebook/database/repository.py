@@ -8,6 +8,8 @@ from loguru import logger
 from surrealdb import AsyncSurreal, RecordID  # type: ignore
 from surrealdb.data.types.table import Table  # type: ignore
 
+from open_notebook.database.connection_url import validate_database_url
+from open_notebook.utils.boundary_logging import log_boundary_failure
 from open_notebook.utils.proxy import ensure_internal_no_proxy
 
 # Keep the internal SurrealDB websocket out of any configured HTTP proxy
@@ -41,14 +43,18 @@ def get_database_url() -> str:
     """Get database URL with backward compatibility"""
     surreal_url = os.getenv("SURREAL_URL")
     if surreal_url:
-        return surreal_url
+        return validate_database_url(
+            surreal_url, os.getenv("SURREAL_INSECURE_ALLOW_URL", "")
+        )
 
     # Fallback to the legacy variables. SURREAL_ADDRESS may already carry the
     # port ("host:8000", "[::1]:8000"); SURREAL_PORT only applies when it doesn't.
     address = os.getenv("SURREAL_ADDRESS", "localhost")
     if ":" not in address.rsplit("]", 1)[-1]:
         address = f"{address}:{os.getenv('SURREAL_PORT', '8000')}"
-    return f"ws://{address}/rpc"
+    return validate_database_url(
+        f"ws://{address}/rpc", os.getenv("SURREAL_INSECURE_ALLOW_URL", "")
+    )
 
 
 def get_database_password() -> str:
@@ -87,17 +93,29 @@ def ensure_record_id(value: Union[str, RecordID]) -> RecordID:
 @asynccontextmanager
 async def db_connection():
     db = AsyncSurreal(get_database_url())
-    await db.signin(
-        {
-            "username": os.environ.get("SURREAL_USER"),
-            "password": get_database_password(),
-        }
-    )
-    await db.use(get_database_namespace(), get_database_name())
+    failed = False
     try:
+        await db.signin(
+            {
+                "username": os.environ.get("SURREAL_USER"),
+                "password": get_database_password(),
+            }
+        )
+        await db.use(get_database_namespace(), get_database_name())
         yield db
+    except BaseException:
+        # Cancellation must also release a partially initialized connection.
+        failed = True
+        raise
     finally:
-        await db.close()
+        try:
+            await db.close()
+        except Exception:
+            if not failed:
+                raise
+            # Preserve the original failure (including cancellation), without
+            # logging connection details which can contain credentials.
+            logger.warning("Database connection cleanup failed after an error")
 
 
 async def repo_query(
@@ -113,10 +131,10 @@ async def repo_query(
             return result
         except RuntimeError as e:
             # RuntimeError is raised for retriable transaction conflicts - log at debug to avoid noise
-            logger.debug(str(e))
+            log_boundary_failure("repo_query", e, level="DEBUG")
             raise
         except Exception as e:
-            logger.exception(e)
+            log_boundary_failure("repo_query", e)
             raise
 
 
@@ -134,11 +152,11 @@ async def repo_create(table: str, data: Dict[str, Any]) -> Dict[str, Any]:
                 raise RuntimeError(result)
             return result
     except RuntimeError as e:
-        logger.error(str(e))
+        log_boundary_failure("repo_create", e)
         raise
     except Exception as e:
-        logger.exception(e)
-        raise RuntimeError("Failed to create record")
+        log_boundary_failure("repo_create", e)
+        raise RuntimeError("Failed to create record") from e
 
 
 async def repo_relate(
@@ -214,8 +232,8 @@ async def repo_delete(record_id: Union[str, RecordID]):
         async with db_connection() as connection:
             return await connection.delete(ensure_record_id(record_id))
     except Exception as e:
-        logger.exception(e)
-        raise RuntimeError(f"Failed to delete record: {str(e)}")
+        log_boundary_failure("repo_delete", e)
+        raise RuntimeError(f"Failed to delete record: {str(e)}") from e
 
 
 async def repo_insert(
@@ -251,13 +269,13 @@ async def repo_insert(
                 # Log transaction conflicts at debug level (they are expected during concurrent operations)
                 error_str = str(e).lower()
                 if "transaction" in error_str or "conflict" in error_str:
-                    logger.debug(str(e))
+                    log_boundary_failure("repo_insert", e, level="DEBUG")
                 else:
-                    logger.error(str(e))
+                    log_boundary_failure("repo_insert", e)
                 raise
             except Exception as e:
                 if ignore_duplicates and "already contains" in str(e):
                     continue
-                logger.exception(e)
-                raise RuntimeError("Failed to create record")
+                log_boundary_failure("repo_insert", e)
+                raise RuntimeError("Failed to create record") from e
     return results

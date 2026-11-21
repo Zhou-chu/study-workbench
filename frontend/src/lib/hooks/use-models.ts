@@ -45,7 +45,7 @@ export function useCreateModel() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -71,7 +71,7 @@ export function useDeleteModel() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -105,7 +105,7 @@ export function useUpdateModelDefaults() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -156,7 +156,7 @@ export function useAutoAssignDefaults() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },

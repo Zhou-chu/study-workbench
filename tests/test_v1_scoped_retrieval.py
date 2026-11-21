@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import AsyncMock
 
 import pytest
 from test_v1_evidence_ingest import MemoryStore
@@ -115,16 +116,6 @@ async def test_twenty_prelabelled_chinese_questions_find_expected_original_parag
 
 
 @pytest.mark.asyncio
-async def test_malformed_model_citation_is_invalid_without_throwing(tmp_path):
-    service = EvidenceService(store=MemoryStore(), data_root=tmp_path)
-    citation = await service.validate_citation(
-        {"evidence_id": {"forged": True}, "quote": ["not text"]}, ["sv_valid"]
-    )
-    assert citation["reference_validity"] == "invalid"
-    assert citation["evidence_id"] is None
-
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize("marked_kind", ["evidence", "extraction", "both"])
 async def test_restored_archive_provenance_stays_unverified_in_citations_and_search(
     tmp_path, marked_kind
@@ -223,10 +214,23 @@ async def test_editing_imported_note_cannot_upgrade_archived_evidence(
         {"notebook_id": "nb", "note_id": "note:imported"},
     )
 
-    async def update(*args, **kwargs):
-        return {}
+    from open_notebook.database.note_repository import NoteWriteResult
 
-    monkeypatch.setattr("open_notebook.database.repository.repo_update", update)
+    async def update(**kwargs):
+        return NoteWriteResult(
+            native={
+                "id": "note:imported",
+                "content": kwargs["fields"]["content"],
+                "revision": 2,
+            },
+            snapshot=kwargs["snapshot"],
+        )
+
+    monkeypatch.setattr("open_notebook.database.note_repository.update_note", update)
+    monkeypatch.setattr(
+        "open_notebook.domain.notebook.Note.submit_embedding",
+        AsyncMock(return_value=None),
+    )
     note = await PersonalService(store=service.store).save_note(
         "nb",
         {

@@ -1,0 +1,21 @@
+[Publication copy: personal filesystem paths replaced; original results/failures unchanged.]
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web
+
+ ✓ src/features/settings/setup-navigation.test.tsx (9 tests) 154ms
+ ✓ src/features/settings/setup-journey.test.tsx (3 tests) 3873ms
+   ✓ returns from Tools model setup after cancel with question and chosen sources intact  1570ms
+   ✓ returns from Tools model setup after save with question and chosen sources intact  1327ms
+   ✓ returns from Tools model setup after failure with question and chosen sources intact  975ms
+ ✓ src/features/library/classic-reference.test.tsx (8 tests) 4567ms
+   ✓ opens full typed source, note and insight alias references through supported reads, with detached notes read-only  1291ms
+   ✓ invalid or missing reference identity remains unavailable instead of trusting a foreign record  704ms
+   ✓ imported legacy history displays role, type, unknown identity and time without adopting or replaying its native-looking ID  454ms
+   ✓ retains independent explicit bulk IDs after refresh, newly discovered rows stay off, and hides stale context previews  840ms
+   ✓ unknown AI-note creation locks duplicate and remounted save with no guessed title or adoption  715ms
+   ✓ only an explicitly inspected notebook association grants source-message note save, never a return URL  410ms
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  02:54:32
+   Duration  7.40s (transform 3.12s, setup 412ms, import 4.45s, tests 8.59s, environment 1.17s)

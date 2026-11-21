@@ -1,3 +1,5 @@
+from typing import cast
+
 from ai_prompter import Prompter
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
@@ -44,13 +46,11 @@ async def run_transformation(state: dict, config: RunnableConfig) -> dict:
         # plain render variable into a fixed, developer-authored template instead.
         # See docs/7-DEVELOPMENT/security.md (GHSA-f35w-wx37-26q7).
         instructions = transformation.prompt
-        default_prompts: DefaultPrompts = DefaultPrompts(
-            transformation_instructions=None
-        )
-        if default_prompts.transformation_instructions:
-            instructions = (
-                f"{default_prompts.transformation_instructions}\n\n{instructions}"
-            )
+        default_prompts = cast(DefaultPrompts, await DefaultPrompts.get_instance())
+        # Snapshot once before any model await; execution never edits the singleton.
+        global_instructions = default_prompts.transformation_instructions
+        if global_instructions:
+            instructions = f"{global_instructions}\n\n{instructions}"
 
         system_prompt = Prompter(prompt_template="transformation/execute").render(
             data={**state, "instructions": instructions}

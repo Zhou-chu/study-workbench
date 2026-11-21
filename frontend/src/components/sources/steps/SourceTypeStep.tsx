@@ -219,7 +219,7 @@ export function SourceTypeStep({ control, register, setValue, errors, urlValidat
                           <ul className="space-y-1">
                             {urlValidationErrors.map((error, idx) => (
                               <li key={idx} className="text-xs text-destructive flex items-start gap-2">
-                                <span className="font-mono bg-destructive/20 px-1 rounded">
+                                <span className="font-mono bg-destructive/20 text-foreground px-1 rounded">
                                   {t('sources.lineLabel', { line: error.line.toString() })}
                                 </span>
                                 <span className="truncate">{error.url}</span>

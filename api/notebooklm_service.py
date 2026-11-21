@@ -73,10 +73,22 @@ class NotebookLMService:
         data_root=None,
     ):
         self.store = store or get_store()
-        self.bridge = bridge or SDKNotebookLMBridge()
+        self._bridge = bridge
         self.evidence = evidence
         self.enqueue = enqueue
         self.data_root = data_root
+
+    @property
+    def bridge(self):
+        # Personal job reads/cancellation also serve local-only operations. Do
+        # not construct the optional SDK until a legacy operation needs it.
+        if self._bridge is None:
+            self._bridge = SDKNotebookLMBridge()
+        return self._bridge
+
+    @bridge.setter
+    def bridge(self, value):
+        self._bridge = value
 
     async def job(self, job_id):
         job = await self.store.get("job", job_id)

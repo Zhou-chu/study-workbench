@@ -1,0 +1,55 @@
+{
+  "description": "Synthetic vectors exercise scoped routing, thresholds and ranking only; they do not prove a real multilingual model's recall, precision or quality.",
+  "documents": [
+    {
+      "id": "cars",
+      "text": "轿车使用电能。",
+      "vector": [
+        1.0,
+        0.0
+      ]
+    },
+    {
+      "id": "solar",
+      "text": "Solar panels. 太阳能电池通过光伏效应发电。",
+      "vector": [
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "id": "noise",
+      "text": "Unrelated cooking instructions.",
+      "vector": [
+        -1.0,
+        0.0
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "text": "汽车",
+      "vector": [
+        1.0,
+        0.0
+      ],
+      "expected": "cars"
+    },
+    {
+      "text": "electricity from sunlight",
+      "vector": [
+        0.0,
+        1.0
+      ],
+      "expected": "solar"
+    },
+    {
+      "text": "quasar",
+      "vector": [
+        0.0,
+        -1.0
+      ],
+      "expected": null
+    }
+  ]
+}

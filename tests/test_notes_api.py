@@ -1,113 +1,66 @@
-from unittest.mock import AsyncMock, patch
+"""Legacy responses retain embedding command IDs with the atomic repository boundary."""
+
+from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
 
 
 @pytest.fixture
-def client():
-    """Create test client after environment variables have been cleared by conftest."""
+def client(monkeypatch):
     from api.main import app
+    from open_notebook.database import note_repository as repository
+    from open_notebook.domain.notebook import Note
 
+    native = dict(
+        id="note:abc123",
+        title="Test Note",
+        content="Original content",
+        note_type="human",
+        revision=1,
+        created="2026-01-01T00:00:00Z",
+        updated="2026-01-01T00:00:00Z",
+    )
+
+    async def create(**kwargs):
+        return repository.NoteWriteResult(
+            native={**native, **kwargs["fields"]}, snapshot=None
+        )
+
+    async def update(**kwargs):
+        return repository.NoteWriteResult(
+            native={**native, **kwargs["fields"], "revision": 2}, snapshot=None
+        )
+
+    monkeypatch.setattr(repository, "create_note", create)
+    monkeypatch.setattr(repository, "update_note", update)
+    monkeypatch.setattr(Note, "get", AsyncMock(return_value=Note(**native)))
     return TestClient(app)
 
 
-class TestNoteCreation:
-    """Test suite for Note API endpoints."""
-
-    @patch("api.routers.notes.Note")
-    def test_create_note_returns_command_id(self, mock_note_cls, client):
-        """Test that creating a note returns the embed command_id."""
-        mock_note = AsyncMock()
-        mock_note.id = "note:abc123"
-        mock_note.title = "Test Note"
-        mock_note.content = "Some content"
-        mock_note.note_type = "human"
-        mock_note.created = "2026-01-01T00:00:00Z"
-        mock_note.updated = "2026-01-01T00:00:00Z"
-        mock_note.save.return_value = "command:embed123"
-        mock_note.add_to_notebook = AsyncMock()
-        mock_note_cls.return_value = mock_note
-
-        response = client.post(
-            "/api/notes",
-            json={"content": "Some content", "note_type": "human"},
-        )
-
-        assert response.status_code == 200
-        data = response.json()
-        assert data["command_id"] == "command:embed123"
-        assert data["id"] == "note:abc123"
-
-    @patch("api.routers.notes.Note")
-    def test_create_note_command_id_none_when_no_content_embedding(
-        self, mock_note_cls, client
-    ):
-        """Test that command_id is None when save returns None (no embedding)."""
-        mock_note = AsyncMock()
-        mock_note.id = "note:abc456"
-        mock_note.title = "Empty Note"
-        mock_note.content = "Some content"
-        mock_note.note_type = "human"
-        mock_note.created = "2026-01-01T00:00:00Z"
-        mock_note.updated = "2026-01-01T00:00:00Z"
-        mock_note.save.return_value = None
-        mock_note.add_to_notebook = AsyncMock()
-        mock_note_cls.return_value = mock_note
-
-        response = client.post(
-            "/api/notes",
-            json={"content": "Some content", "note_type": "human"},
-        )
-
-        assert response.status_code == 200
-        data = response.json()
-        assert data["command_id"] is None
+@pytest.mark.parametrize("command_id", ["command:embed123", None])
+def test_create_note_returns_command_id(client, monkeypatch, command_id):
+    monkeypatch.setattr(
+        "open_notebook.domain.notebook.submit_command",
+        AsyncMock(return_value=command_id),
+    )
+    response = client.post(
+        "/api/notes", json={"content": "Some content", "note_type": "human"}
+    )
+    assert response.status_code == 200
+    assert response.json()["command_id"] == command_id
+    assert response.json()["revision"] == 1
 
 
-class TestNoteUpdate:
-    """Test suite for Note update endpoint."""
-
-    @patch("api.routers.notes.Note")
-    def test_update_note_returns_command_id(self, mock_note_cls, client):
-        """Test that updating a note returns the embed command_id."""
-        mock_note = AsyncMock()
-        mock_note.id = "note:abc123"
-        mock_note.title = "Test Note"
-        mock_note.content = "Original content"
-        mock_note.note_type = "human"
-        mock_note.created = "2026-01-01T00:00:00Z"
-        mock_note.updated = "2026-01-01T00:00:00Z"
-        mock_note.save.return_value = "command:embed789"
-        mock_note_cls.get = AsyncMock(return_value=mock_note)
-
-        response = client.put(
-            "/api/notes/note:abc123",
-            json={"content": "Updated content"},
-        )
-
-        assert response.status_code == 200
-        data = response.json()
-        assert data["command_id"] == "command:embed789"
-
-    @patch("api.routers.notes.Note")
-    def test_update_note_command_id_none_when_no_embedding(self, mock_note_cls, client):
-        """Test that command_id is None on update when no embedding is triggered."""
-        mock_note = AsyncMock()
-        mock_note.id = "note:abc123"
-        mock_note.title = "Test Note"
-        mock_note.content = "Some content"
-        mock_note.note_type = "human"
-        mock_note.created = "2026-01-01T00:00:00Z"
-        mock_note.updated = "2026-01-01T00:00:00Z"
-        mock_note.save.return_value = None
-        mock_note_cls.get = AsyncMock(return_value=mock_note)
-
-        response = client.put(
-            "/api/notes/note:abc123",
-            json={"title": "Updated Title"},
-        )
-
-        assert response.status_code == 200
-        data = response.json()
-        assert data["command_id"] is None
+@pytest.mark.parametrize("command_id", ["command:embed789", None])
+def test_update_note_returns_command_id(client, monkeypatch, command_id):
+    monkeypatch.setattr(
+        "open_notebook.domain.notebook.submit_command",
+        AsyncMock(return_value=command_id),
+    )
+    response = client.put("/api/notes/note:abc123", json={"title": "Updated Title"})
+    assert response.status_code == 200
+    assert response.json()["command_id"] == command_id
+    assert response.json()["content"] == "Original content"
+    assert response.json()["title"] == "Updated Title"
+    assert response.json()["revision"] == 2

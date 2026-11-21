@@ -30,3 +30,11 @@ describe('TurnCoverage', () => {
     expect(screen.getByText('Source extraction is incomplete')).toBeInTheDocument()
   })
 })
+
+it('retains actual zero-hit fallback method/reason/coverage rather than implying semantic success', () => {
+  render(<TurnCoverage coverage={{ selected_source_count: 2, retrieved_source_count: 0, evidence_count: 0 }} retrieval={{ requested_method: 'hybrid', retrieval_method: 'lexical_fallback', fallback_reason: 'INDEX_NOT_READY', profile_id: 'p1', indexed_version_count: 1, selected_version_count: 2, warnings: ['QUERY_OUTCOME_UNKNOWN'] }} />)
+  expect(screen.getByText('Actual retrieval: Lexical only')).toBeVisible()
+  expect(screen.getByText('Lexical fallback reason: INDEX_NOT_READY')).toBeVisible()
+  expect(screen.getByText('Semantic coverage: 1 / 2 selected versions')).toBeVisible()
+  expect(screen.getByText('QUERY_OUTCOME_UNKNOWN')).toBeVisible()
+})

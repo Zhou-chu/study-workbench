@@ -1,3 +1,6 @@
+export type WebSessionMode = 'legacy_password' | 'device_sessions'
+export const WEB_SESSION_PROTOCOL = 'bff-memory-v1' as const
+
 /**
  * Backend configuration response from Python API /api/config endpoint.
  * Note: apiUrl is determined by the Next.js runtime-config endpoint,
@@ -15,6 +18,8 @@ export interface BackendConfigResponse {
  * This is constructed from the backend response + runtime-config.
  */
 export interface AppConfig {
+  authMode: WebSessionMode
+  webSessionProtocol: typeof WEB_SESSION_PROTOCOL | null
   apiUrl: string
   version: string
   buildTime: string

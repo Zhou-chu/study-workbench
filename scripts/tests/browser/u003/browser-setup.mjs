@@ -1,0 +1,442 @@
+/** Actual browser U003 setup rung, admitted only by the owned fixture launcher. */
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { inspectOrigin } from './release-preflight.mjs';
+
+const name = 'Notebook U003 public fixture';
+const labelA = 'fixture_a.pdf';
+const labelB = 'fixture_b.pdf';
+const model = 'acceptance-chat:latest';
+const connection = 'U003 local model fixture';
+const question = '实验 A 的标准温度是多少？';
+
+export function browserBoundaries(origin, modelOrigin) {
+  for (const candidate of [origin, modelOrigin]) {
+    const match = /^http:\/\/127\.0\.0\.1:([1-9][0-9]{0,4})$/.exec(candidate);
+    if (!match || Number(match[1]) < 1024 || Number(match[1]) > 65535) throw Error('Expected owned loopback origin');
+  }
+  if (origin === modelOrigin) throw Error('Gateway and fixture provider must be distinct listeners');
+  return url => {
+    const parsed = new URL(url);
+    return parsed.origin === origin && ['http:', 'blob:'].includes(parsed.protocol);
+  };
+}
+
+export function sourceReceipt(workspace) {
+  const byName = (expected) => {
+    const source = workspace.sources.find(s => s.title === expected);
+    return source?.versions.find(v => v.status === 'ready' && v.original_status === 'available')?.source_version_id;
+  };
+  const a = byName(labelA), b = byName(labelB);
+  return typeof a === 'string' && typeof b === 'string' && a !== b ? { a, b } : null;
+}
+
+const role = (parent, roleName, name) => parent.getByRole(roleName, { name, exact: true });
+async function enabled(page, locator) {
+  const ready = locator.and(page.locator(':enabled'));
+  await ready.waitFor({ state: 'visible' });
+  return ready;
+}
+
+// Receipt values are capped counts or booleans only. Never include DOM content,
+// path, locator errors, console text, or the raw Playwright exception.
+async function controlEvidence(locator) {
+  try {
+    const count = Math.min(await locator.count(), 2);
+    if (count !== 1) return { count, visible: false, enabled: false, hit: false };
+    const [visible, enabled, hit] = await Promise.all([
+      locator.isVisible(),
+      locator.isEnabled({ timeout: 500 }),
+      locator.evaluate(element => {
+        const box = element.getBoundingClientRect();
+        if (!box.width || !box.height) return false;
+        const target = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+        return target !== null && element.contains(target);
+      }, undefined, { timeout: 500 }),
+    ]);
+    return { count, visible, enabled, hit };
+  } catch {
+    return { unavailable: true };
+  }
+}
+
+const networkFailureClasses = new Map([
+  ['net::ERR_ABORTED', 'aborted'],
+  ['net::ERR_CONNECTION_RESET', 'connection-reset'],
+  ['net::ERR_CONNECTION_CLOSED', 'connection-closed'],
+  ['net::ERR_CONNECTION_REFUSED', 'connection-refused'],
+  ['net::ERR_CONTENT_LENGTH_MISMATCH', 'length-mismatch'],
+  ['net::ERR_CONTENT_DECODING_FAILED', 'decode'],
+  ['net::ERR_INCOMPLETE_CHUNKED_ENCODING', 'incomplete-chunks'],
+  ['net::ERR_EMPTY_RESPONSE', 'empty-response'],
+  ['net::ERR_NETWORK_CHANGED', 'network-changed'],
+  ['net::ERR_NO_BUFFER_SPACE', 'buffer-space'],
+  ['net::ERR_TIMED_OUT', 'network-timeout'],
+  ['net::ERR_FAILED', 'net-failed'],
+]);
+
+// Observe only browser-initiated GETs in this page. The diagnostic companion
+// page.request GET does not produce Page request/response events.
+function observeAppWorkspace(page, origin) {
+  const requests = [], responses = [], failed = [], finished = [];
+  function isWorkspace(request) {
+    const url = new URL(request.url());
+    return request.method() === 'GET' && url.origin === origin &&
+      /^\/api\/personal\/notebooks\/[^/]+\/workspace-view$/.test(url.pathname);
+  }
+  function record(samples, item) {
+    samples.push({ item, at: performance.now() });
+    if (samples.length > 3) samples.shift();
+  }
+  page.on('request', request => { if (isWorkspace(request)) record(requests, request); });
+  page.on('requestfailed', request => { if (isWorkspace(request)) record(failed, request); });
+  page.on('requestfinished', request => { if (isWorkspace(request)) record(finished, request); });
+  page.on('response', response => { if (isWorkspace(response.request())) record(responses, response); });
+  return async (expectedUrl, expectedId, password) => {
+    const start = requests.at(-1);
+    const request = start?.item;
+    const headers = responses.findLast(sample => sample.item.request() === request);
+    const response = headers?.item;
+    const failure = failed.findLast(sample => sample.item === request);
+    const complete = finished.findLast(sample => sample.item === request);
+    // No wall-clock, raw failure string, header values or timing of unrelated requests.
+    const elapsed = sample => sample && start ? Math.min(15_000, Math.max(0, Math.round(sample.at - start.at))) : null;
+    const failureClass = failure ? networkFailureClasses.get(failure.item.failure()?.errorText) ?? 'other' : null;
+    const result = {
+      requests: requests.length, failed: failed.length, responses: responses.length, finished: finished.length,
+      failureClass, headersMs: elapsed(headers), failureMs: elapsed(failure), finishedMs: elapsed(complete),
+      expectedUrl: request?.url() === expectedUrl,
+      responseExpectedUrl: response?.url() === expectedUrl,
+      responseStatus: response?.status() ?? 0,
+      responseIsJson: /^application\/json(?:;|$)/i.test(response?.headers()['content-type'] ?? ''),
+      authPresent: false, authMatchesFixture: false,
+      parserChecked: false, parserAccepted: false, identityMatches: false,
+    };
+    let timer;
+    try {
+      await Promise.race([(async () => {
+        const auth = await request?.headerValue('authorization');
+        result.authPresent = !!auth;
+        result.authMatchesFixture = auth === 'Bearer ' + password;
+        if (!response?.ok() || !result.responseIsJson) return;
+        const { parseWorkspaceView } = await import('../../../../packages/contracts/dist/workspace-view.js');
+        const json = await response.json();
+        result.parserChecked = true;
+        try {
+          const decoded = parseWorkspaceView(json);
+          result.parserAccepted = true;
+          result.identityMatches = decoded.notebook.id === expectedId;
+        } catch { /* only the boolean rejection is evidence */ }
+      })(), new Promise(resolve => { timer = setTimeout(resolve, 1000); })]);
+    } catch { /* do not emit wire values, parser messages or errors */ }
+    finally { clearTimeout(timer); }
+    return { ...result };
+  };
+}
+
+// Observe the browser's owned upload attempts, including differently encoded
+// candidates. Record only counts, statuses and bounded classes, never data.
+function observeSourceUpload(page, endpoint, password) {
+  const origin = new URL(endpoint).origin;
+  const posts = [], responses = [], finished = [], failed = [];
+  const matches = request => {
+    const url = new URL(request.url());
+    return request.method() === 'POST' && url.origin === origin && url.pathname.endsWith('/sources/upload');
+  };
+  const note = (list, item) => { if (list.length < 4) list.push(item); };
+  const handlers = {
+    request: request => { if (matches(request)) note(posts, request); },
+    response: response => { if (matches(response.request())) note(responses, response); },
+    requestfinished: request => { if (matches(request)) note(finished, request); },
+    requestfailed: request => { if (matches(request)) note(failed, request); },
+  };
+  for (const [event, handler] of Object.entries(handlers)) page.on(event, handler);
+  return {
+    detach() { for (const [event, handler] of Object.entries(handlers)) page.off(event, handler); },
+    async receipt() {
+      const exact = posts.filter(request => request.url() === endpoint);
+      const read = async (header, expected) => {
+        if (!posts.length) return false;
+        let timer;
+        try {
+          return await Promise.race([
+            Promise.all(posts.map(request => request.headerValue(header).then(expected))).then(values => values.every(Boolean)),
+            new Promise(resolve => { timer = setTimeout(() => resolve(false), 500); }),
+          ]);
+        } catch { return false; }
+        finally { clearTimeout(timer); }
+      };
+      const [authMatchesFixture, originMatchesFixture, multipart] = await Promise.all([
+        read('authorization', value => value === 'Bearer ' + password),
+        read('origin', value => value === origin),
+        read('content-type', value => /^multipart\/form-data(?:\s*;|$)/i.test(value ?? '')),
+      ]);
+      return {
+        posts: posts.length, exactPosts: exact.length, finished: finished.length, failed: failed.length,
+        authMatchesFixture, originMatchesFixture, multipart,
+        statuses: responses.map(response => [response.url() === endpoint, response.status()]),
+        failureClasses: failed.map(request => networkFailureClasses.get(request.failure()?.errorText) ?? 'other'),
+      };
+    },
+  };
+}
+
+// Tally only the three expected mutations in the setup-only fixture.
+function observeModelSetup(page, origin) {
+  const counters = Object.fromEntries(['save', 'discover', 'register'].map(kind =>
+    [kind, { posts: 0, finished: 0, statuses: [], failureClasses: [] }]));
+  function bucket(request) {
+    const url = new URL(request.url());
+    if (url.origin !== origin || request.method() !== 'POST') return undefined;
+    if (url.pathname === '/api/credentials') return counters.save;
+    const match = /^\/api\/credentials\/[^/]+\/(discover|register-models)$/.exec(url.pathname);
+    return match ? counters[match[1] === 'discover' ? 'discover' : 'register'] : undefined;
+  }
+  const handlers = {
+    request: request => { const row = bucket(request); if (row && row.posts < 4) row.posts++; },
+    response: response => {
+      const row = bucket(response.request());
+      if (row && row.statuses.length < 4) row.statuses.push(response.status());
+    },
+    requestfinished: request => { const row = bucket(request); if (row && row.finished < 4) row.finished++; },
+    requestfailed: request => {
+      const row = bucket(request);
+      if (row && row.failureClasses.length < 4)
+        row.failureClasses.push(networkFailureClasses.get(request.failure()?.errorText) ?? 'other');
+    },
+  };
+  for (const [event, handler] of Object.entries(handlers)) page.on(event, handler);
+  return {
+    counters,
+    detach() { for (const [event, handler] of Object.entries(handlers)) page.off(event, handler); },
+  };
+}
+
+/**
+ * The supplied chromium comes from the existing locked Playwright tooling.
+ * Performs real user actions only; conditional browser routing blocks outside
+ * network but never fulfills, edits, or stubs an application API response.
+ */
+export async function runModelSetup({ chromium, origin, modelOrigin, target, password, fixtures, checkOwned, onStage, onSourceOpenFailure, onSourceUploadFailure, onModelSetupFailure }) {
+  const allowed = browserBoundaries(origin, modelOrigin);
+  const phase = value => onStage?.(value);
+  await checkOwned();
+  const preflight = await inspectOrigin({ origin, target, password });
+  phase('chr-start');
+  const browser = await chromium.launch({ executablePath: chromium.executablePath(), chromiumSandbox: true, headless: true });
+  try {
+    const context = await browser.newContext({
+      locale: 'en-US', viewport: { width: 1440, height: 900 }, serviceWorkers: 'block',
+    });
+    const blocked = [], pageErrors = [];
+    await context.route('**/*', route => {
+      if (allowed(route.request().url())) return route.continue();
+      blocked.push(true);
+      return route.abort();
+    });
+    const page = await context.newPage();
+    const workspaceWire = observeAppWorkspace(page, origin);
+    page.setDefaultTimeout(12_000);
+    let submitCount = 0;
+    page.on('request', req => {
+      if (req.method() === 'POST' && /\/api\/personal\/chats\/[^/]+\/turns$/.test(new URL(req.url()).pathname)) submitCount++;
+    });
+    page.on('pageerror', () => pageErrors.push(true));
+    phase('sign-in');
+    await page.goto(origin + '/notebooks', { waitUntil: 'domcontentloaded' });
+    await page.getByLabel('Password', { exact: true }).fill(password);
+    await role(page, 'button', 'Sign in').click();
+    phase('open-create-notebook');
+    await role(page, 'button', 'New Notebook').first().click();
+    const editor = role(page, 'dialog', 'Create New Notebook');
+    await editor.getByLabel('Name', { exact: true }).fill(name);
+    phase('submit-create-notebook');
+    const [creation] = await Promise.all([
+      page.waitForResponse(r => r.url() === origin + '/api/notebooks' && r.request().method() === 'POST'),
+      role(editor, 'button', 'New').click(),
+    ]);
+    assert.equal(creation.status(), 200);
+    const created = await creation.json();
+    assert.equal(created.name, name);
+    assert.match(created.id, /^notebook:.+/);
+    phase('open-created-workspace');
+    const notebookPath = '/notebooks/' + encodeURIComponent(created.id);
+    await page.waitForURL(origin + notebookPath);
+    const section = title => role(role(page, 'navigation', 'Workspace sections'), 'button', title);
+    async function readWorkspace(accept) {
+      for (let attempt = 0; attempt < 60; attempt++) {
+        await checkOwned();
+        const response = await page.request.get(origin + '/api/personal' + notebookPath + '/workspace-view', {
+          headers: { authorization: 'Bearer ' + password }, timeout: 10_000, maxRedirects: 0,
+        });
+        assert.equal(response.status(), 200);
+        const payload = await response.json();
+        await response.dispose();
+        const witness = accept(payload);
+        if (witness) return witness;
+        await new Promise(resolve => setTimeout(resolve, 350));
+      }
+      throw Error('Workspace did not settle');
+    }
+    await readWorkspace(w => w.notebook.id === created.id && w.notebook.name === name);
+    const sourcesTab = section('Sources');
+    const addSource = role(role(page, 'region', 'Sources'), 'button', 'Add sources');
+    const upload = role(page, 'dialog', 'Add sources');
+    try {
+      phase('click-sources-tab');
+      await sourcesTab.click();
+      phase('click-add-sources');
+      await addSource.click();
+      phase('open-source-upload-dialog');
+      await upload.waitFor({ state: 'visible' });
+    } catch (failure) {
+      if (onSourceOpenFailure) {
+        const [tab, trigger, dialog, notebook] = await Promise.all([
+          controlEvidence(sourcesTab), controlEvidence(addSource), controlEvidence(upload),
+          controlEvidence(page.getByRole('heading', { name, exact: true, level: 1 })),
+        ]);
+        const tabActive = await sourcesTab.getAttribute('aria-pressed', { timeout: 500 })
+          .then(value => value === 'true', () => false);
+        const workspaceReadAlert = await page.locator('.workspace-read-status [role="alert"]').count()
+          .then(count => count !== 0, () => false);
+        const appWorkspace = await workspaceWire(origin + '/api/personal' + notebookPath + '/workspace-view', created.id, password);
+        onSourceOpenFailure({ tab, trigger, dialog, notebook, tabActive, workspaceReadAlert, pageError: pageErrors.length !== 0, appWorkspace });
+      }
+      throw failure;
+    }
+    phase('choose-source-files');
+    // setInputFiles does not wait for actionability; the real picker ignores choices
+    // before the authenticated upload capability and byte limit are known.
+    const pick = await enabled(page, upload.getByLabel('Choose files', { exact: true }));
+    await pick.setInputFiles([path.join(fixtures, labelA), path.join(fixtures, labelB)]);
+    phase('prepare-source-files');
+    for (const label of [labelA, labelB]) await upload.getByText(label, { exact: true }).waitFor();
+    const send = await enabled(page, role(upload, 'button', 'Upload'));
+    phase('submit-source-files');
+    const statuses = [];
+    const endpoint = origin + '/api/personal' + notebookPath + '/sources/upload';
+    const uploadWire = observeSourceUpload(page, endpoint, password);
+    try {
+      await Promise.all([
+        page.waitForResponse(r => {
+          if (r.url() !== endpoint || r.request().method() !== 'POST') return false;
+          statuses.push(r.status());
+          return statuses.length === 2 || !r.ok();
+        }),
+        send.click().then(() => phase('source-upload-http')),
+      ]);
+      assert.deepEqual(statuses, [200, 200]);
+    } catch (failure) {
+      uploadWire.detach();
+      if (onSourceUploadFailure) onSourceUploadFailure(await uploadWire.receipt());
+      throw failure;
+    } finally {
+      uploadWire.detach();
+    }
+    phase('source-extraction-ready');
+    const ids = await readWorkspace(sourceReceipt);
+    phase('close-source-upload');
+    await role(upload, 'button', 'Close').click();
+
+    phase('a-only-draft');
+    const source = title => role(page, 'button', title).locator('xpath=ancestor::li[1]');
+    const selected = title => role(page, 'checkbox', 'Select ' + title + ' · Version 1');
+    await role(source(labelA), 'button', 'Current question scope').click();
+    await (await enabled(page, selected(labelA))).check();
+    await role(source(labelB), 'button', 'Current question scope').click();
+    assert.equal(await selected(labelB).isChecked(), false);
+    await readWorkspace(w => JSON.stringify(w.selection?.source_version_ids) === JSON.stringify([ids.a]));
+    await section('Conversation').click();
+    const draft = () => role(page, 'textbox', 'Question');
+    const ask = () => role(page, 'button', 'Ask selected sources');
+    await draft().fill(question);
+    const configure = role(page, 'link', 'Configure independent model');
+    await configure.waitFor();
+    assert.equal(await ask().isDisabled(), true);
+    assert.equal(submitCount, 0);
+    phase('setup-entry');
+    const start = page.url();
+    await configure.click();
+    const leave = role(page, 'dialog', 'Leave this draft?');
+    await role(leave, 'button', 'Leave without saving').click();
+    await role(page, 'heading', 'Models').and(page.locator('h1')).waitFor();
+    const setChat = role(page, 'combobox', 'Chat Model');
+    await enabled(page, setChat);
+    assert.equal(await setChat.inputValue(), '');
+
+    const setupWire = observeModelSetup(page, origin);
+    const settings = role(page, 'dialog', 'Add Configuration');
+    const confirm = () => role(page, 'button', 'Confirm action');
+    let modelControl;
+    const modelAction = (stage, locator) => {
+      phase(stage);
+      modelControl = locator;
+      return locator;
+    };
+    try {
+      await modelAction('open-ollama-config', role(page, 'button', 'Add Configuration: Ollama')).click();
+      await modelAction('fill-ollama-name', settings.getByLabel('Name', { exact: true })).fill(connection);
+      await modelAction('enable-ollama-base-url', role(settings, 'combobox', 'Base URL')).selectOption('set');
+      await modelAction('fill-ollama-base-url', settings.getByRole('textbox', { name: /: Base URL$/ })).fill(modelOrigin);
+      await modelAction('save-ollama-config', role(settings, 'button', 'Save configuration')).click();
+      await modelAction('confirm-ollama-config-saved', settings).waitFor({ state: 'hidden' });
+      await modelAction('open-ollama-discovery', role(page, 'button', 'Discover Models ' + connection)).click();
+      await modelAction('confirm-ollama-discovery', confirm()).click();
+      const discovered = modelAction('wait-ollama-discovery', role(page, 'checkbox', model));
+      await discovered.waitFor();
+      await modelAction('select-ollama-model', discovered).check();
+      const modelType = page.getByRole('combobox', { name: 'Model Type', exact: true });
+      await modelAction('choose-ollama-model-type', modelType).selectOption('language');
+      await modelAction('register-ollama-model', role(page, 'button', 'Register selected')).click();
+      await modelAction('wait-ollama-registration', page.getByRole('heading', { name: model, exact: true })).waitFor();
+    } catch (failure) {
+      setupWire.detach();
+      if (onModelSetupFailure) onModelSetupFailure({ ...setupWire.counters, control: await controlEvidence(modelControl) });
+      throw failure;
+    } finally {
+      setupWire.detach();
+    }
+    phase('choose-default-model');
+    const option = role(setChat, 'option', model);
+    await option.waitFor({ state: 'attached' });
+    const modelId = await option.getAttribute('value');
+    assert.ok(modelId);
+    await setChat.selectOption({ value: modelId });
+    phase('confirm-default-model');
+    const [savedDefault] = await Promise.all([
+      page.waitForResponse(response => response.url() === origin + '/api/models/defaults' &&
+        response.request().method() === 'PUT'),
+      confirm().click(),
+    ]);
+    assert.equal(savedDefault.status(), 200);
+    assert.equal((await savedDefault.json()).default_chat_model, modelId);
+    phase('read-back-default-model');
+    const persisted = await page.request.get(origin + '/api/models/defaults', {
+      headers: { authorization: 'Bearer ' + password }, timeout: 10_000, maxRedirects: 0,
+    });
+    try {
+      assert.equal(persisted.status(), 200);
+      assert.equal((await persisted.json()).default_chat_model, modelId);
+    } finally {
+      await persisted.dispose();
+    }
+    // Confirmation closes before the write/metadata refresh. Wait for the
+    // exact server-backed option to be selected, not merely for the modal to hide.
+    await setChat.filter({ has: page.getByRole('option', { name: model, exact: true, selected: true }) }).waitFor();
+    assert.equal(await setChat.inputValue(), modelId);
+
+    phase('return-original-draft');
+    await role(page, 'link', 'Back').click();
+    await page.waitForURL(start);
+    assert.equal(await draft().inputValue(), question);
+    await enabled(page, ask());
+    await readWorkspace(w => JSON.stringify(w.selection?.source_version_ids) === JSON.stringify([ids.a]));
+    assert.equal(submitCount, 0);
+    assert.deepEqual(blocked, []);
+    assert.deepEqual(pageErrors, []);
+    return { ...preflight, chromium: browser.version(), status: 'pass', stage: 'setup-and-return',
+      selectedSources: 1, preservedDraft: true, browserTurnRequests: 0, citationStatus: 'not-run' };
+  } finally {
+    await browser.close();
+  }
+}

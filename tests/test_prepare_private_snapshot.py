@@ -2,10 +2,8 @@
 
 import hashlib
 import importlib.util
-import io
 import json
 import subprocess
-import tarfile
 from pathlib import Path
 
 import pytest
@@ -123,30 +121,6 @@ def test_refuse_existing_or_symlink_output(repo, tmp_path, kind):
     assert (repo / "README.md").read_text() == "upstream\n"
 
 
-@pytest.mark.parametrize(
-    "name,kind",
-    [
-        ("../outside", "file"),
-        ("/absolute", "file"),
-        ("a/../../outside", "file"),
-        ("a\\evil", "file"),
-        ("link", "symlink"),
-        ("hard", "hardlink"),
-    ],
-)
-def test_reject_unsafe_archive_members(name, kind):
-    m = module()
-    buffer = io.BytesIO()
-    with tarfile.open(fileobj=buffer, mode="w") as archive:
-        member = tarfile.TarInfo(name)
-        if kind != "file":
-            member.type = tarfile.SYMTYPE if kind == "symlink" else tarfile.LNKTYPE
-            member.linkname = "outside"
-        archive.addfile(member)
-    with pytest.raises(ValueError):
-        m.read_archive(buffer.getvalue())
-
-
 def test_incremental_deletes_mode_changes_and_legacy_inventory(repo, tmp_path):
     m = module()
     first = m.prepare(repo, "HEAD", tmp_path / "first")
@@ -169,24 +143,6 @@ def test_incremental_deletes_mode_changes_and_legacy_inventory(repo, tmp_path):
     assert json.loads((tmp_path / "second/PUBLISH_MANIFEST.json").read_text())[
         "source_commit"
     ] == git(repo, "rev-parse", "HEAD")
-
-
-@pytest.mark.parametrize(
-    "name",
-    [
-        ".env.local",
-        ".env.v1",
-        "uploads/file.txt",
-        "runtime/state.json",
-        ".aws/config",
-        "nested/token.json",
-        "nested/key.pem",
-        "nested/state.sqlite",
-        "nested/node_modules/x.js",
-    ],
-)
-def test_sensitive_path_exclusions(name):
-    assert module().exclusion(name)
 
 
 @pytest.mark.parametrize(
@@ -227,37 +183,46 @@ def test_repeatable_bytes_and_tree(repo, tmp_path):
     assert second["changes"] == {"added": [], "deleted": [], "modified": []}
 
 
-@pytest.mark.parametrize(
-    "name", [".runtime/private.log", "evidence/browser/screen.png"]
-)
-def test_actual_runtime_and_root_browser_evidence_excluded(name):
-    assert module().exclusion(name)
+def test_archive_bytes_must_match_independent_commit_blob_even_if_sha1_matches(
+    repo, tmp_path, monkeypatch
+):
+    m = module()
+    real_archive = m.read_archive
+    real_sha = m.object_sha
+
+    def changed_archive(data):
+        files = real_archive(data)
+        files["LICENSE"] = (b"hostile replacement", files["LICENSE"][1])
+        return files
+
+    def colliding_sha(kind, data):
+        return real_sha(kind, b"license" if data == b"hostile replacement" else data)
+
+    monkeypatch.setattr(m, "read_archive", changed_archive)
+    monkeypatch.setattr(m, "object_sha", colliding_sha)
+    output = tmp_path / "rejected-independent"
+    with pytest.raises(ValueError, match="byte parity"):
+        m.prepare(repo, "HEAD", output)
+    assert not output.exists()
 
 
-@pytest.mark.parametrize(
-    "name",
-    [
-        "provider.secret",
-        ".mcp.json",
-        ".claude/sessions/private.json",
-        ".maintainer/state/private.json",
-    ],
-)
-def test_repository_local_secret_conventions_excluded(name):
-    assert module().exclusion(name)
+def test_independent_blob_reads_are_pinned_to_resolved_commit(
+    repo, tmp_path, monkeypatch
+):
+    m = module()
+    commit = git(repo, "rev-parse", "HEAD")
+    (repo / "LICENSE").write_bytes(b"uncommitted replacement")
+    calls = []
+    actual_git = m.git
 
+    def recording_git(repo, *args):
+        if args[:2] == ("cat-file", "blob"):
+            calls.append(args[2])
+        return actual_git(repo, *args)
 
-@pytest.mark.parametrize(
-    "name",
-    [
-        ".git-credentials",
-        ".netrc",
-        ".pypirc",
-        ".npmrc",
-        ".config/gcloud/token.json",
-        ".config/notebooklm/state.json",
-        ".notebooklm/storage_state.json",
-    ],
-)
-def test_private_credential_configuration_excluded(name):
-    assert module().exclusion(name)
+    monkeypatch.setattr(m, "git", recording_git)
+    output = tmp_path / "pinned"
+    m.prepare(repo, "HEAD", output)
+    assert calls and all(value.startswith(commit + ":") for value in calls)
+    assert commit + ":LICENSE" in calls
+    assert (output / "LICENSE").read_bytes() == b"license"

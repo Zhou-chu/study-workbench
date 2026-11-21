@@ -1,0 +1,42 @@
+[importlinter]
+root_packages =
+    api
+    open_notebook
+    open_notebook.database
+    open_notebook.graphs
+
+[importlinter:contract:core-no-http-routing]
+name = Core modules do not depend on HTTP routers or API startup
+type = forbidden
+source_modules =
+    open_notebook
+forbidden_modules =
+    api.routers
+    api.main
+
+[importlinter:contract:routes-no-api-startup]
+name = API routers do not depend on API startup
+type = forbidden
+source_modules =
+    api.routers
+forbidden_modules =
+    api.main
+
+[importlinter:contract:domain-storage-no-api-imports]
+name = Domain and persistence do not import packages in the HTTP tier
+type = forbidden
+source_modules =
+    open_notebook.domain
+    open_notebook.database
+forbidden_modules =
+    api
+allow_indirect_imports = True
+ignore_imports =
+    open_notebook.database.source_snapshot_repository -> api.personal_store
+    open_notebook.database.source_snapshot_repository -> api.source_snapshot_contracts
+
+[importlinter:contract:router-module-cycles]
+name = API router modules have no dependency cycles
+type = acyclic_siblings
+ancestors =
+    api.routers

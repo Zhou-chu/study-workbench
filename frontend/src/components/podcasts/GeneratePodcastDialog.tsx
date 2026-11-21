@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react'
 import { useQueries } from '@tanstack/react-query'
 
 import { useNotebooks } from '@/lib/hooks/use-notebooks'
+import { hasUncertainCommandSubmission, isCommandSubmissionUnknown } from '@/lib/utils/command-submission'
 import { useEpisodeProfiles, useGeneratePodcast } from '@/lib/hooks/use-podcasts'
 import { chatApi } from '@/lib/api/chat'
 import { sourcesApi } from '@/lib/api/sources'
@@ -196,10 +197,10 @@ export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDia
   }, [])
 
   useEffect(() => {
-    if (!open) {
+    if (!open && !isBuildingContext && !generatePodcast.isPending && !hasUncertainCommandSubmission('podcast:generate')) {
       resetState()
     }
-  }, [open, resetState])
+  }, [open, resetState, isBuildingContext, generatePodcast.isPending])
 
   // Generation counter: any newer effect run invalidates in-flight count requests,
   // so a slow, stale response can never overwrite a fresher one.
@@ -448,10 +449,11 @@ export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDia
       onOpenChange(false)
       resetState()
     } catch (error) {
-      console.error('Failed to generate podcast', error)
+      // The mutation already presented the localized uncertainty warning.
+      if (isCommandSubmissionUnknown(error)) return
       toast({
         title: t('podcasts.generationFailed'),
-        description: error instanceof Error ? error.message : t('common.refreshPage'),
+        description: t('common.refreshPage'),
         variant: 'destructive',
       })
     } finally {
@@ -474,11 +476,17 @@ export function GeneratePodcastDialog({ open, onOpenChange }: GeneratePodcastDia
   return (
     <Dialog open={open} onOpenChange={(value) => {
       onOpenChange(value)
-      if (!value) {
+      if (!value && !isSubmitting && !hasUncertainCommandSubmission('podcast:generate')) {
         resetState()
       }
     }}>
       <DialogContent className="w-[80vw] max-w-[1080px] max-h-[90vh] overflow-hidden">
+        {hasUncertainCommandSubmission('podcast:generate') && (
+          <div role="alert" className="rounded-md bg-warn-tint p-3 text-sm text-warn">
+            <p>{t('commandSubmission.warning')}</p>
+            <p>{t('commandSubmission.sessionOnly')}</p>
+          </div>
+        )}
         <DialogHeader>
           <DialogTitle>{t('podcasts.generateEpisode')}</DialogTitle>
           <DialogDescription>

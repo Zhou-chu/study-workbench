@@ -1,0 +1,301 @@
+{
+  "base": "6a2550d",
+  "ast_definitions": {
+    "tests/test_async_command_submission.py": 24,
+    "tests/test_source_attempt_ownership.py": 10
+  },
+  "setup_duplication": "backend fixture identical in original and unit modules",
+  "before_count": 70,
+  "after_count": 70,
+  "cases": [
+    {
+      "before": "tests/test_async_command_submission.py::test_exact_locked_sdk_json_wire_and_id_parity",
+      "after": "tests/test_async_command_submission.py::test_exact_locked_sdk_json_wire_and_id_parity"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_heartbeat_while_create_waits",
+      "after": "tests/test_command_submission_unit.py::test_heartbeat_while_create_waits"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_errors_preserve_identity_stage_and_do_not_retry[signin]",
+      "after": "tests/test_command_submission_unit.py::test_errors_preserve_identity_stage_and_do_not_retry[signin]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_errors_preserve_identity_stage_and_do_not_retry[use]",
+      "after": "tests/test_command_submission_unit.py::test_errors_preserve_identity_stage_and_do_not_retry[use]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_errors_preserve_identity_stage_and_do_not_retry[create]",
+      "after": "tests/test_command_submission_unit.py::test_errors_preserve_identity_stage_and_do_not_retry[create]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_cancellation_does_not_claim_rollback_or_repeat[signin]",
+      "after": "tests/test_command_submission_unit.py::test_cancellation_does_not_claim_rollback_or_repeat[signin]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_cancellation_does_not_claim_rollback_or_repeat[create]",
+      "after": "tests/test_command_submission_unit.py::test_cancellation_does_not_claim_rollback_or_repeat[create]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_deadline_before_and_after_create[signin]",
+      "after": "tests/test_command_submission_unit.py::test_deadline_before_and_after_create[signin]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_deadline_before_and_after_create[create]",
+      "after": "tests/test_command_submission_unit.py::test_deadline_before_and_after_create[create]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_bounded_admission_cancel_and_timeout_never_dispatch",
+      "after": "tests/test_command_submission_unit.py::test_bounded_admission_cancel_and_timeout_never_dispatch"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_cleanup_is_bounded_and_does_not_mask_primary",
+      "after": "tests/test_command_submission_unit.py::test_cleanup_is_bounded_and_does_not_mask_primary"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_cleanup_failure_preserves_acknowledged_id",
+      "after": "tests/test_command_submission_unit.py::test_cleanup_failure_preserves_acknowledged_id"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_fresh_loops_have_independent_lifetimes",
+      "after": "tests/test_command_submission_unit.py::test_fresh_loops_have_independent_lifetimes"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_source_preserves_unknown_outcome[vectorize]",
+      "after": "tests/test_command_submission_unit.py::test_source_preserves_unknown_outcome[vectorize]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_source_preserves_unknown_outcome[add_insight]",
+      "after": "tests/test_command_submission_unit.py::test_source_preserves_unknown_outcome[add_insight]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_real_sdk_retry_predicate_never_replays_unknown_create[process_source]",
+      "after": "tests/test_async_command_submission.py::test_real_sdk_retry_predicate_never_replays_unknown_create[process_source]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_real_sdk_retry_predicate_never_replays_unknown_create[run_transformation]",
+      "after": "tests/test_async_command_submission.py::test_real_sdk_retry_predicate_never_replays_unknown_create[run_transformation]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_real_sdk_retry_predicate_never_replays_unknown_create[create_insight]",
+      "after": "tests/test_async_command_submission.py::test_real_sdk_retry_predicate_never_replays_unknown_create[create_insight]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_note_commit_and_command_service_remain_responsive",
+      "after": "tests/test_async_command_submission.py::test_note_commit_and_command_service_remain_responsive"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_missing_create_acknowledgement_is_unknown[None]",
+      "after": "tests/test_command_submission_unit.py::test_missing_create_acknowledgement_is_unknown[None]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_missing_create_acknowledgement_is_unknown[result1]",
+      "after": "tests/test_command_submission_unit.py::test_missing_create_acknowledgement_is_unknown[result1]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_missing_create_acknowledgement_is_unknown[result2]",
+      "after": "tests/test_command_submission_unit.py::test_missing_create_acknowledgement_is_unknown[result2]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_missing_create_acknowledgement_is_unknown[malformed]",
+      "after": "tests/test_command_submission_unit.py::test_missing_create_acknowledgement_is_unknown[malformed]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_validation_failure_never_dispatches",
+      "after": "tests/test_command_submission_unit.py::test_validation_failure_never_dispatches"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_invalid_receipt_identity_is_unknown[None]",
+      "after": "tests/test_command_submission_unit.py::test_invalid_receipt_identity_is_unknown[None]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_invalid_receipt_identity_is_unknown[]",
+      "after": "tests/test_command_submission_unit.py::test_invalid_receipt_identity_is_unknown[]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_invalid_receipt_identity_is_unknown[123]",
+      "after": "tests/test_command_submission_unit.py::test_invalid_receipt_identity_is_unknown[123]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_invalid_receipt_identity_is_unknown[identity3]",
+      "after": "tests/test_command_submission_unit.py::test_invalid_receipt_identity_is_unknown[identity3]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_invalid_receipt_identity_is_unknown[note:wrong]",
+      "after": "tests/test_command_submission_unit.py::test_invalid_receipt_identity_is_unknown[note:wrong]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_invalid_receipt_identity_is_unknown[command:]",
+      "after": "tests/test_command_submission_unit.py::test_invalid_receipt_identity_is_unknown[command:]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_invalid_receipt_identity_is_unknown[identity6]",
+      "after": "tests/test_command_submission_unit.py::test_invalid_receipt_identity_is_unknown[identity6]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_invalid_receipt_identity_is_unknown[identity7]",
+      "after": "tests/test_command_submission_unit.py::test_invalid_receipt_identity_is_unknown[identity7]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_new_cancellation_during_cleanup_replaces_primary_failure",
+      "after": "tests/test_command_submission_unit.py::test_new_cancellation_during_cleanup_replaces_primary_failure"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_real_sdk_does_not_replay_invalid_receipt_or_cancellation[invalid_receipt-process_source]",
+      "after": "tests/test_async_command_submission.py::test_real_sdk_does_not_replay_invalid_receipt_or_cancellation[invalid_receipt-process_source]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_real_sdk_does_not_replay_invalid_receipt_or_cancellation[invalid_receipt-run_transformation]",
+      "after": "tests/test_async_command_submission.py::test_real_sdk_does_not_replay_invalid_receipt_or_cancellation[invalid_receipt-run_transformation]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_real_sdk_does_not_replay_invalid_receipt_or_cancellation[invalid_receipt-create_insight]",
+      "after": "tests/test_async_command_submission.py::test_real_sdk_does_not_replay_invalid_receipt_or_cancellation[invalid_receipt-create_insight]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_real_sdk_does_not_replay_invalid_receipt_or_cancellation[cancelled-process_source]",
+      "after": "tests/test_async_command_submission.py::test_real_sdk_does_not_replay_invalid_receipt_or_cancellation[cancelled-process_source]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_real_sdk_does_not_replay_invalid_receipt_or_cancellation[cancelled-run_transformation]",
+      "after": "tests/test_async_command_submission.py::test_real_sdk_does_not_replay_invalid_receipt_or_cancellation[cancelled-run_transformation]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_real_sdk_does_not_replay_invalid_receipt_or_cancellation[cancelled-create_insight]",
+      "after": "tests/test_async_command_submission.py::test_real_sdk_does_not_replay_invalid_receipt_or_cancellation[cancelled-create_insight]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_valid_command_receipt_preserved_despite_cleanup_failure[identity0]",
+      "after": "tests/test_command_submission_unit.py::test_valid_command_receipt_preserved_despite_cleanup_failure[identity0]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_valid_command_receipt_preserved_despite_cleanup_failure[identity1]",
+      "after": "tests/test_command_submission_unit.py::test_valid_command_receipt_preserved_despite_cleanup_failure[identity1]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_valid_command_receipt_preserved_despite_cleanup_failure[command:fixture]",
+      "after": "tests/test_command_submission_unit.py::test_valid_command_receipt_preserved_despite_cleanup_failure[command:fixture]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_valid_command_receipt_preserved_despite_cleanup_failure[command:123]",
+      "after": "tests/test_command_submission_unit.py::test_valid_command_receipt_preserved_despite_cleanup_failure[command:123]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_valid_command_receipt_preserved_despite_cleanup_failure[command:\\u27e8fixture-with-dashes\\u27e9]",
+      "after": "tests/test_command_submission_unit.py::test_valid_command_receipt_preserved_despite_cleanup_failure[command:\\u27e8fixture-with-dashes\\u27e9]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_cleanup_deadline_preserves_acknowledged_id",
+      "after": "tests/test_command_submission_unit.py::test_cleanup_deadline_preserves_acknowledged_id"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_external_cleanup_cancellation_does_not_replay_real_sdk_attempt[success]",
+      "after": "tests/test_async_command_submission.py::test_external_cleanup_cancellation_does_not_replay_real_sdk_attempt[success]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_external_cleanup_cancellation_does_not_replay_real_sdk_attempt[signin]",
+      "after": "tests/test_async_command_submission.py::test_external_cleanup_cancellation_does_not_replay_real_sdk_attempt[signin]"
+    },
+    {
+      "before": "tests/test_async_command_submission.py::test_external_cleanup_cancellation_does_not_replay_real_sdk_attempt[create]",
+      "after": "tests/test_async_command_submission.py::test_external_cleanup_cancellation_does_not_replay_real_sdk_attempt[create]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_ambiguous_claim_ack_never_returns_permission[None]",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_ambiguous_claim_ack_never_returns_permission[None]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_ambiguous_claim_ack_never_returns_permission[response1]",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_ambiguous_claim_ack_never_returns_permission[response1]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_ambiguous_claim_ack_never_returns_permission[response2]",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_ambiguous_claim_ack_never_returns_permission[response2]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_ambiguous_claim_ack_never_returns_permission[response3]",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_ambiguous_claim_ack_never_returns_permission[response3]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_ambiguous_claim_ack_never_returns_permission[response4]",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_ambiguous_claim_ack_never_returns_permission[response4]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_ambiguous_claim_ack_never_returns_permission[response5]",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_ambiguous_claim_ack_never_returns_permission[response5]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_cancelled_claim_is_not_retried",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_cancelled_claim_is_not_retried"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_worker_refuses_before_graph_and_does_not_report_success[None]",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_worker_refuses_before_graph_and_does_not_report_success[None]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_worker_refuses_before_graph_and_does_not_report_success[stale-token]",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_worker_refuses_before_graph_and_does_not_report_success[stale-token]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_worker_refuses_before_graph_and_does_not_report_success[duplicate-token]",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_worker_refuses_before_graph_and_does_not_report_success[duplicate-token]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_fast_worker_completion_preserved_in_create_response",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_fast_worker_completion_preserved_in_create_response"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_portable_drops_operational_ownership",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_portable_drops_operational_ownership"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_existing_source_save_never_writes_old_owner",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_existing_source_save_never_writes_old_owner"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_create_cancellation_retains_durable_input",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_create_cancellation_retains_durable_input"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_unresolved_status_read_never_submits",
+      "after": "tests/test_source_attempt_ownership_unit.py::test_unresolved_status_read_never_submits"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_unresolved_attempt_hides_stale_command_in_all_read_views[True]",
+      "after": "tests/test_source_attempt_ownership.py::test_unresolved_attempt_hides_stale_command_in_all_read_views[True]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_unresolved_attempt_hides_stale_command_in_all_read_views[False]",
+      "after": "tests/test_source_attempt_ownership.py::test_unresolved_attempt_hides_stale_command_in_all_read_views[False]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_owner_completion_controls_all_read_views_and_refuses_retry[running-failed-unknown]",
+      "after": "tests/test_source_attempt_ownership.py::test_owner_completion_controls_all_read_views_and_refuses_retry[running-failed-unknown]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_owner_completion_controls_all_read_views_and_refuses_retry[running-completed-unknown]",
+      "after": "tests/test_source_attempt_ownership.py::test_owner_completion_controls_all_read_views_and_refuses_retry[running-completed-unknown]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_owner_completion_controls_all_read_views_and_refuses_retry[succeeded-failed-completed]",
+      "after": "tests/test_source_attempt_ownership.py::test_owner_completion_controls_all_read_views_and_refuses_retry[succeeded-failed-completed]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_owner_completion_controls_all_read_views_and_refuses_retry[confirmed-completed-unknown]",
+      "after": "tests/test_source_attempt_ownership.py::test_owner_completion_controls_all_read_views_and_refuses_retry[confirmed-completed-unknown]"
+    },
+    {
+      "before": "tests/test_source_attempt_ownership.py::test_owner_completion_controls_all_read_views_and_refuses_retry[None-completed-unknown]",
+      "after": "tests/test_source_attempt_ownership.py::test_owner_completion_controls_all_read_views_and_refuses_retry[None-completed-unknown]"
+    }
+  ],
+  "production_count": 180,
+  "production_digest": "71eddbf2136bb8c3891826d8f9a677db81f92e5d6004a4a6aec39a7644eba384",
+  "hashes": {
+    "tests/test_async_command_submission.py": "893ee68e29ea3f822dd4de88d0783b0df761c1b41ad0cb76359d678d1c37bde6",
+    "tests/test_command_submission_unit.py": "c3f1f1afff66bffa2b2530fb0829c49d8b9e9da941475f3ac01a0a51e308a7ba",
+    "tests/test_source_attempt_ownership.py": "5ce2c0436e6e1c7ba6feef515890961d06e65cf8bd6695235dddec6a5a3a88c6",
+    "tests/test_source_attempt_ownership_unit.py": "6a38ce14548e18985334b86bbd8020a4b523de79189d33cd35f383566a73773a",
+    "tests/command_submission_fixtures.py": "efeeff17a09be4e21da46e39ebae45f3daea7795ba7ed63e3049430d73e35a62"
+  }
+}

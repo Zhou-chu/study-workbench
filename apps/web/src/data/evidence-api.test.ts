@@ -1,0 +1,11 @@
+import { expect, it, vi } from 'vitest';
+import { createEvidenceApi } from './evidence-api';
+import { sourceContext } from '../test/source-fixtures';
+import { readerDetail } from '../test/reader-fixtures';
+import { sessionCoordinator, type RequestSpec } from '@study/web-transport';
+import { createHash } from 'node:crypto';
+const request = { notebookId: 'n', source_version_id: 'v-old', evidence_id: 'e-old', extraction_id: null };
+it('sends encoded exact identity selectors and rechecks after deferred JSON', async () => { const c = sourceContext(); let controller!: ReadableStreamDefaultController<Uint8Array>; const response = new Response(new ReadableStream<Uint8Array>({ start(value) { controller = value; } })); const send = vi.fn(async (_request: RequestSpec) => response); const api = createEvidenceApi({ send }); const p = api.detail({ ...request, source_version_id: 'v/a', extraction_id: 'x/old' }, c, sessionCoordinator.current()); await Promise.resolve(); sessionCoordinator.begin(); controller.enqueue(new TextEncoder().encode(JSON.stringify(readerDetail()))); controller.close(); await expect(p).rejects.toMatchObject({ kind: 'retired' }); expect(send.mock.calls[0]?.[0]).toMatchObject({ path: '/personal/source-versions/v%2Fa?evidence_id=e-old&extraction_id=x%2Fold' }); });
+const bytes = new TextEncoder().encode('%PDF-1.7\nfixture');
+const version = { source_version_id: 'v-old', mime_type: 'application/pdf', byte_size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
+it('rejects a stale download after hashing, not only after headers', async () => { const c = sourceContext(); const digest = crypto.subtle.digest.bind(crypto.subtle); vi.spyOn(crypto.subtle, 'digest').mockImplementation(async (...args) => { const result = await digest(...args); sessionCoordinator.begin(); return result; }); const api = createEvidenceApi({ send: async () => new Response(bytes, { headers: { 'Content-Type': 'application/pdf' } }) }); await expect(api.download(version, c, sessionCoordinator.current())).rejects.toMatchObject({ kind: 'retired' }); });

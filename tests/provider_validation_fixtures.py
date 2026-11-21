@@ -1,0 +1,28 @@
+"""Expected provider names shared by validation and registry contract tests."""
+
+KNOWN_GOOD_PROVIDERS = [
+    "openai",
+    "anthropic",
+    "google",
+    "groq",
+    "mistral",
+    "deepseek",
+    "xai",
+    "openrouter",
+    "dashscope",
+    "minimax",
+    "novita",
+    "siliconflow",
+    "zai",
+    "ppq",
+    "cohere",
+    "voyage",
+    "elevenlabs",
+    "deepgram",
+    "ollama",
+    "omlx",
+    "azure",
+    "vertex",
+    "openai_compatible",
+    "anthropic_compatible",
+]

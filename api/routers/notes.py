@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Query
 from loguru import logger
 
 from api.models import NoteCreate, NoteResponse, NoteUpdate
+from api.personal_contracts import NoteConflictResponse, NoteRequiredResponse
 from open_notebook.domain.notebook import Note
 from open_notebook.exceptions import (
     InvalidInputError,
@@ -33,6 +34,7 @@ async def get_notes(
         return [
             NoteResponse(
                 id=note.id or "",
+                revision=note.revision,
                 title=note.title,
                 content=note.content,
                 note_type=note.note_type,
@@ -86,18 +88,11 @@ async def create_note(note_data: NoteCreate):
             content=note_data.content,
             note_type=note_type,
         )
-        command_id = await new_note.save()
-
-        # Add to notebook if specified
-        if note_data.notebook_id:
-            from open_notebook.domain.notebook import Notebook
-
-            # Verify the notebook exists (raises NotFoundError -> 404)
-            await Notebook.get(note_data.notebook_id)
-            await new_note.add_to_notebook(note_data.notebook_id)
+        command_id = await new_note.save(notebook_id=note_data.notebook_id)
 
         return NoteResponse(
             id=new_note.id or "",
+            revision=new_note.revision,
             title=new_note.title,
             content=new_note.content,
             note_type=new_note.note_type,
@@ -126,6 +121,7 @@ async def get_note(note_id: str):
 
         return NoteResponse(
             id=note.id or "",
+            revision=note.revision,
             title=note.title,
             content=note.content,
             note_type=note.note_type,
@@ -143,7 +139,14 @@ async def get_note(note_id: str):
         raise HTTPException(status_code=500, detail=f"Error fetching note: {str(e)}")
 
 
-@router.put("/notes/{note_id}", response_model=NoteResponse)
+@router.put(
+    "/notes/{note_id}",
+    response_model=NoteResponse,
+    responses={
+        409: {"model": NoteConflictResponse},
+        428: {"model": NoteRequiredResponse},
+    },
+)
 async def update_note(note_id: str, note_update: NoteUpdate):
     """Update a note."""
     try:
@@ -162,10 +165,33 @@ async def update_note(note_id: str, note_update: NoteUpdate):
                     status_code=400, detail="note_type must be 'human' or 'ai'"
                 )
 
-        command_id = await note.save()
+        from open_notebook.config import get_note_write_mode
+        from open_notebook.exceptions import NoteRevisionRequired
+
+        if (
+            note_update.expected_revision is None
+            and get_note_write_mode() == "multiclient"
+        ):
+            raise NoteRevisionRequired()
+        fields = note_update.model_dump(
+            exclude_none=True, exclude={"expected_revision"}
+        )
+        # Apply only supplied fields against the transaction row. Legacy omission
+        # remains unconditional; domain saves otherwise use their loaded base.
+        from open_notebook.database.note_repository import update_note as commit_note
+
+        result = await commit_note(
+            note_id=note_id,
+            fields=fields,
+            expected_revision=note_update.expected_revision,
+            mode=get_note_write_mode(),
+        )
+        note = Note(**result.native)
+        command_id = await note.submit_embedding()
 
         return NoteResponse(
             id=note.id or "",
+            revision=note.revision,
             title=note.title,
             content=note.content,
             note_type=note.note_type,

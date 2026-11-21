@@ -7,10 +7,10 @@ continues server history, and isolated non-destructive new sessions are unverifi
 
 import asyncio
 import os
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 from uuid import uuid4
 
 from .contracts import (
@@ -502,6 +502,76 @@ def _validate_asset_url(url):
         raise BridgeError("UNSAFE_DOWNLOAD", "Artifact download origin is not allowed.")
 
 
+async def _asset_file_operation(operation, *args):
+    """Drain owned disk work before propagating cancellation, including repeated cancel.
+
+    Cancelling an asyncio waiter cannot stop a running filesystem syscall. Never
+    let cleanup race that syscall or leave an unobserved background operation.
+    """
+    work = asyncio.create_task(asyncio.to_thread(operation, *args))
+    try:
+        return await asyncio.shield(work)
+    except asyncio.CancelledError:
+        while not work.done():
+            # Later cancels must not interrupt the drain or replace the initiating
+            # reason. A worker error is retrieved below; cancellation takes priority.
+            with suppress(asyncio.CancelledError, Exception):
+                await asyncio.shield(work)
+        if not work.cancelled():
+            work.exception()
+        raise
+
+
+class _AssetFile:
+    """One download owns its handle; methods run serially in worker threads."""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self.handle: BinaryIO | None = None
+
+    def open(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.handle = self.path.open("xb")
+
+    def _open_handle(self) -> BinaryIO:
+        handle = self.handle
+        if handle is None:
+            raise RuntimeError("The asset file is not open.")
+        return handle
+
+    def write(self, chunk: bytes) -> None:
+        self._open_handle().write(chunk)
+
+    def finish(self) -> None:
+        handle = self._open_handle()
+        handle.flush()
+        os.fsync(handle.fileno())
+        handle.close()
+        self.handle = None
+
+    def commit(self, target, expected_sha):
+        import hashlib
+
+        # Preserve an existing identity; only reuse byte-identical content.
+        if target.exists():
+            if hashlib.sha256(target.read_bytes()).hexdigest() != expected_sha:
+                raise BridgeError(
+                    "ARTIFACT_CONFLICT",
+                    "An asset with this identity already has different bytes.",
+                )
+            self.path.unlink()
+        else:
+            self.path.rename(target)
+
+    def cleanup(self):
+        try:
+            if self.handle is not None:
+                self.handle.close()
+                self.handle = None
+        finally:
+            self.path.unlink(missing_ok=True)
+
+
 async def download_signed_asset(url, output_path: Path, max_bytes: int, client):
     """Bounded, unauthenticated signed-asset download. Never accepts a UI URL.
 
@@ -514,6 +584,7 @@ async def download_signed_asset(url, output_path: Path, max_bytes: int, client):
     output_path = Path(output_path)
     temp = output_path.with_name(output_path.name + ".partial-" + uuid4().hex)
     total, sha, header = 0, hashlib.sha256(), b""
+    asset_file = _AssetFile(temp)
     try:
         for _ in range(6):
             _validate_asset_url(url)
@@ -542,20 +613,18 @@ async def download_signed_asset(url, output_path: Path, max_bytes: int, client):
                         "ARTIFACT_TOO_LARGE",
                         "Audio exceeds the configured download limit.",
                     )
-                output_path.parent.mkdir(parents=True, exist_ok=True)
-                with temp.open("xb") as out:
-                    async for chunk in response.aiter_bytes(65536):
-                        total += len(chunk)
-                        if total > max_bytes:
-                            raise BridgeError(
-                                "ARTIFACT_TOO_LARGE",
-                                "Audio exceeds the configured download limit.",
-                            )
-                        header = (header + chunk)[:32]
-                        sha.update(chunk)
-                        out.write(chunk)
-                    out.flush()
-                    await asyncio.to_thread(os.fsync, out.fileno())
+                await _asset_file_operation(asset_file.open)
+                async for chunk in response.aiter_bytes(65536):
+                    total += len(chunk)
+                    if total > max_bytes:
+                        raise BridgeError(
+                            "ARTIFACT_TOO_LARGE",
+                            "Audio exceeds the configured download limit.",
+                        )
+                    header = (header + chunk)[:32]
+                    sha.update(chunk)
+                    await _asset_file_operation(asset_file.write, chunk)
+                await _asset_file_operation(asset_file.finish)
                 mime, extension = _audio_type(header)
                 declared = response.headers.get("content-type", "").split(";")[0]
                 if declared and not (
@@ -567,19 +636,9 @@ async def download_signed_asset(url, output_path: Path, max_bytes: int, client):
                         "The server did not return an audio content type.",
                     )
                 target = output_path.with_suffix(extension)
-                # Fresh app-generated identities mean no user file is overwritten.
-                if target.exists():
-                    if (
-                        hashlib.sha256(target.read_bytes()).hexdigest()
-                        != sha.hexdigest()
-                    ):
-                        raise BridgeError(
-                            "ARTIFACT_CONFLICT",
-                            "An asset with this identity already has different bytes.",
-                        )
-                    temp.unlink()
-                else:
-                    temp.rename(target)
+                # Rename remains the commit point; cancellation during a completed
+                # commit may leave the valid final asset, never a partial target.
+                await _asset_file_operation(asset_file.commit, target, sha.hexdigest())
                 from .contracts import DownloadedAsset
 
                 return DownloadedAsset(
@@ -590,4 +649,4 @@ async def download_signed_asset(url, output_path: Path, max_bytes: int, client):
                 )
         raise BridgeError("UNSAFE_DOWNLOAD", "Too many artifact redirects.")
     finally:
-        temp.unlink(missing_ok=True)
+        await _asset_file_operation(asset_file.cleanup)

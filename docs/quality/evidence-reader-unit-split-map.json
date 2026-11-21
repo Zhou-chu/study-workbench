@@ -1,0 +1,544 @@
+{
+  "base": "2f68bbf",
+  "beforeNodes": 47,
+  "afterNodes": 47,
+  "movedNodes": 20,
+  "allTestASTEqual": true,
+  "mapping": [
+    {
+      "name": "zoom_survives_same_version_refetch_and_citation_jump",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "zoom_resets_on_new_version",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "wraps complete long citation text while preserving its frozen validity, locator, warnings, provenance and filter",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "distinguishes no matching blocks from missing extracted text and Clear restores the current document",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "does not claim no matches when the current document has no extracted text",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "resets a document A filter before displaying document B without changing scope or reading position",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "resets the filter for newly opened %s identity within the same document",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "resets a reused turn-local c1 for a different $change in the same evidence block",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "retains typed filters across equivalent citation objects and reading-only rerenders until explicit Clear",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "keeps technical version IDs inside collapsed details when the original is %s",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "labels saved snapshot downloads without claiming an original %j",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "labels derived snapshots as not independent evidence",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "does not fabricate a URL for a restored web snapshot",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "re-extracts retained web snapshots without offering original-page revalidation",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "recovers an initial read failure manually without changing historical identity or page",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "retries PDF loading explicitly while retaining the quote and current page",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "ignores a delayed retry after switching to another source",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "does not show an old original download failure on a newly selected document",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "clears the previous local document when opening an unmapped remote citation",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "does not offer network retry for an original known to be missing",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "keeps maintenance secondary to reading without hiding archived verification actions",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "fetches the exact historical version through the authenticated client and uses physical page + 1",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "opens the canonical physical page of an archived reference without upgrading its validity",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "opens a restored exact subquote on canonical physical page two without trusting its archived page",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "does not locate an archived subquote merely because it occurs somewhere in canonical evidence",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "passes page changes to the canvas renderer",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "keeps explicit page navigation after the cited page is persisted by the workspace",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "highlights canonical archived text without trusting archived offsets or changing its unverified label",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "does not navigate using mismatched canonical evidence %j",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "aborts protected original loading on unmount",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "does not invent a local page for an unmapped remote reference",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "retains the saved extraction identity after refresh and further page navigation",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "persists physical page navigation",
+      "group": "EvidenceReader",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "highlights text at codepoint offsets without splitting astral characters",
+      "group": "",
+      "destination": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "does not promote malformed maintenance counts: %j",
+      "group": "Reader maintenance",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "renders unknown maintenance state and opaque error safely",
+      "group": "Reader maintenance",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "preserves frozen citation %s even when canonical evidence is verified",
+      "group": "Reader maintenance",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "does not upgrade an unverified citation outside restored archive revalidation",
+      "group": "Reader maintenance",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "revalidates exact historical extraction then refreshes a matching reader badge, not the citation snapshot",
+      "group": "Reader maintenance",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "preserves historical extraction selector through reparse",
+      "group": "Reader maintenance",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "keeps an unmatched citation unverified even when other evidence passes",
+      "group": "Reader maintenance",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "does not offer original-dependent actions when the original is missing",
+      "group": "Reader maintenance",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "does not double-submit while pending and ignores completion after navigation",
+      "group": "Reader maintenance",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "shows submission failure without automatic retry and allows explicit retry with a new key",
+      "group": "Reader maintenance",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "submits with a live abort signal under StrictMode",
+      "group": "Reader maintenance",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "shows failed background job without claiming validation succeeded",
+      "group": "Reader maintenance",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "allows rechecking an existing job after polling fails without resubmitting",
+      "group": "Reader maintenance",
+      "destination": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    }
+  ],
+  "beforeCases": 56,
+  "afterCases": 56,
+  "movedCases": 22,
+  "remainingCases": 34,
+  "caseMapping": [
+    {
+      "name": "EvidenceReader > zoom_survives_same_version_refetch_and_citation_jump",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > zoom_resets_on_new_version",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > wraps complete long citation text while preserving its frozen validity, locator, warnings, provenance and filter",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > distinguishes no matching blocks from missing extracted text and Clear restores the current document",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > does not claim no matches when the current document has no extracted text",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > resets a document A filter before displaying document B without changing scope or reading position",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > resets the filter for newly opened evidence identity within the same document",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > resets the filter for newly opened citation identity within the same document",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > resets a reused turn-local c1 for a different 'quote' in the same evidence block",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > resets a reused turn-local c1 for a different 'locator' in the same evidence block",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > retains typed filters across equivalent citation objects and reading-only rerenders until explicit Clear",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > keeps technical version IDs inside collapsed details when the original is available",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > keeps technical version IDs inside collapsed details when the original is missing",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > labels saved snapshot downloads without claiming an original {\"origin\":\"derived_snapshot\"}",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > labels saved snapshot downloads without claiming an original {\"provenance\":{\"kind\":\"derived\",\"origin_kind\":\"note\",\"origin_id\":\"note:1\",\"note_revision\":1,\"origin_title\":\"Saved note\",\"authorship\":\"unknown\",\"captured_at\":\"2026-10-22\",\"content_sha256\":\"digest\",\"scope_snapshot\":{\"source_version_ids\":[]},\"citations\":[]}}",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > labels derived snapshots as not independent evidence",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > does not fabricate a URL for a restored web snapshot",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > re-extracts retained web snapshots without offering original-page revalidation",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > recovers an initial read failure manually without changing historical identity or page",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > retries PDF loading explicitly while retaining the quote and current page",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > ignores a delayed retry after switching to another source",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > does not show an old original download failure on a newly selected document",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > clears the previous local document when opening an unmapped remote citation",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > does not offer network retry for an original known to be missing",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > keeps maintenance secondary to reading without hiding archived verification actions",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > fetches the exact historical version through the authenticated client and uses physical page + 1",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > opens the canonical physical page of an archived reference without upgrading its validity",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > opens a restored exact subquote on canonical physical page two without trusting its archived page",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > does not locate an archived subquote merely because it occurs somewhere in canonical evidence",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > passes page changes to the canvas renderer",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > keeps explicit page navigation after the cited page is persisted by the workspace",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > highlights canonical archived text without trusting archived offsets or changing its unverified label",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > does not navigate using mismatched canonical evidence {\"evidence_id\":\"different\"}",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > does not navigate using mismatched canonical evidence {\"source_version_id\":\"different\"}",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > does not navigate using mismatched canonical evidence {\"quote\":\"different\"}",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > does not navigate using mismatched canonical evidence {\"extraction_id\":\"different\"}",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > aborts protected original loading on unmount",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > does not invent a local page for an unmapped remote reference",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > retains the saved extraction identity after refresh and further page navigation",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "EvidenceReader > persists physical page navigation",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "highlights text at codepoint offsets without splitting astral characters",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.unit.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > does not promote malformed maintenance counts: \"historical\"",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > does not promote malformed maintenance counts: {\"checked_count\":\"1\",\"verified_count\":1,\"unverified_count\":0}",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > renders unknown maintenance state and opaque error safely",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > preserves frozen citation invalid even when canonical evidence is verified",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > preserves frozen citation out_of_scope even when canonical evidence is verified",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > does not upgrade an unverified citation outside restored archive revalidation",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > revalidates exact historical extraction then refreshes a matching reader badge, not the citation snapshot",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > preserves historical extraction selector through reparse",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > keeps an unmatched citation unverified even when other evidence passes",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > does not offer original-dependent actions when the original is missing",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > does not double-submit while pending and ignores completion after navigation",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > shows submission failure without automatic retry and allows explicit retry with a new key",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > submits with a live abort signal under StrictMode",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > shows failed background job without claiming validation succeeded",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    },
+    {
+      "name": "Reader maintenance > allows rechecking an existing job after polling fails without resubmitting",
+      "from": "frontend/src/components/evidence/EvidenceReader.test.tsx",
+      "to": "frontend/src/components/evidence/EvidenceReader.test.tsx"
+    }
+  ],
+  "legacyWebInventory": {
+    "base": "2f68bbf",
+    "beforeCount": 288,
+    "afterCount": 288,
+    "missing": [],
+    "unexpected": [],
+    "beforeDigest": "317c7cca6faf2327cb0e48f118d8a99f70c0bdb5cea1b2f5077ef2d288d71f38",
+    "afterDigest": "317c7cca6faf2327cb0e48f118d8a99f70c0bdb5cea1b2f5077ef2d288d71f38"
+  },
+  "fileSha256": {
+    "frontend/src/components/evidence/EvidenceReader.test.tsx": "00dc0ae4fc65786724d7a6692308da39560e02c322c26947d53bb7d505af06a6",
+    "frontend/src/components/evidence/EvidenceReader.unit.test.tsx": "16289b22fe03f5a25972b806763c6596c38b4a4a032b6221526583697ae26988",
+    "frontend/src/test/evidence-reader-fixtures.tsx": "768f3c5a77e8a1a90e0ee6cde02d8bdfe9c501e1dec75117be6bbabf77d03cea"
+  }
+}

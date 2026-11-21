@@ -1,0 +1,90 @@
+name: PR split Notebook model setup browser
+'on':
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: pr-u003-split-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  setup-return:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.repository == 'Zhou-chu/study-workbench' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.number == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    env:
+      PR_SHA: ${{ github.event.pull_request.head.sha }}
+      NPM_CONFIG_AUDIT: 'false'
+      NPM_CONFIG_FUND: 'false'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: '24.19.0'
+    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      with:
+        version: 0.9.10
+        enable-cache: false
+    - name: Install locked dependencies and prepare trusted tools
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$PR_SHA"
+        test -z "$(git status --porcelain --untracked-files=all)"
+        uv sync --locked --dev --python 3.12
+        npm ci
+        .venv/bin/python scripts/ci/prepare_tools.py --node "$(node -p process.execPath)"
+        node --test scripts/tests/browser/u003/*.test.mjs \
+          apps/web/scripts/u003-browser-boundaries.test.mjs apps/web/scripts/u003-release-preflight.test.mjs
+    - name: Build and verify exact Web and BFF artifacts
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$PR_SHA"
+        npm run build --workspace @study/web
+        npm run build --workspace @study/bff
+        node apps/web/scripts/build-manifest.mjs --verify apps/web/dist
+        node apps/bff/scripts/build-manifest.mjs --verify apps/bff/dist
+        test -z "$(git status --porcelain --untracked-files=all)"
+    - name: Prepare pinned SurrealDB and browser
+      run: |
+        set -euo pipefail
+        export PLAYWRIGHT_BROWSERS_PATH="$RUNNER_TEMP/notebook-u003-chromium"
+        db="$RUNNER_TEMP/u003-surreal.tgz"
+        mkdir -p .runtime/bin
+        curl --proto '=https' --proto-redir '=https' --fail --location           https://github.com/surrealdb/surrealdb/releases/download/v2.3.10/surreal-v2.3.10.linux-amd64.tgz -o "$db"
+        tar -xOzf "$db" surreal > .runtime/bin/surreal
+        printf '%s  %s\n' bc916c7c775ed32aa40c33fd57bc9b477128c8ad9118bb1620696a05247bb0a7 .runtime/bin/surreal | sha256sum -c -
+        chmod 0755 .runtime/bin/surreal
+        tooling="$RUNNER_TEMP/u003-playwright"
+        mkdir "$tooling"
+        cp scripts/tests/browser/pdf/{package.json,package-lock.json} "$tooling/"
+        npm ci --prefix "$tooling" --ignore-scripts --omit=optional
+        node "$tooling/node_modules/playwright-core/cli.js" install --with-deps --no-shell chromium
+    - name: Setup from an A-only draft, then return to the unsent question
+      id: attempt
+      run: |
+        set -euo pipefail
+        export PLAYWRIGHT_BROWSERS_PATH="$RUNNER_TEMP/notebook-u003-chromium"
+        result="$RUNNER_TEMP/u003-evidence"
+        mkdir "$result"
+        git rev-parse HEAD^{tree} > "$result/tree.txt"
+        trap 'if [[ ! -s "$result/browser.json" ]]; then printf "{\"status\":\"fail\",\"stage\":\"owned-fixture-start\",\"sourceCommit\":\"%s\"}\n" "$PR_SHA" > "$result/browser.json"; fi' EXIT
+        .venv/bin/python scripts/tests/browser/u003/run-owned.py           --sha "$PR_SHA" --tokenizer "$NOTEBOOK_TOKEN_CACHE"           --playwright "$RUNNER_TEMP/u003-playwright" --browser-bin "$PLAYWRIGHT_BROWSERS_PATH"           --evidence "$result/browser.json"
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: ${{ !cancelled() && (steps.attempt.outcome == 'success' || steps.attempt.outcome == 'failure') }}
+      with:
+        name: notebook-u003-setup-${{ github.run_attempt }}-${{ github.event.pull_request.head.sha }}
+        path: ${{ runner.temp }}/u003-evidence/
+        if-no-files-found: error
+        retention-days: 7

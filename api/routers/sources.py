@@ -16,7 +16,7 @@ from fastapi import (
 from fastapi.responses import FileResponse, Response
 from loguru import logger
 from pydantic import ValidationError
-from surreal_commands import execute_command_sync, submit_command
+from surreal_commands import execute_command_sync
 
 from api.command_service import CommandService
 from api.credentials_service import validate_url
@@ -33,14 +33,22 @@ from api.models import (
 )
 from commands.source_commands import SourceProcessingInput
 from open_notebook.config import UPLOADS_FOLDER
-from open_notebook.database.repository import ensure_record_id, repo_query
+from open_notebook.database import source_attempt_repository as source_attempts
+from open_notebook.database.repository import ensure_record_id, repo_query, repo_update
 from open_notebook.domain.notebook import Asset, Notebook, Source
 from open_notebook.domain.transformation import Transformation
 from open_notebook.exceptions import (
+    CommandSubmissionUnknownError,
     InvalidInputError,
     NotFoundError,
     OpenNotebookError,
     UnsupportedTypeException,
+)
+from open_notebook.utils.boundary_logging import log_boundary_failure
+from open_notebook.utils.command_submission import submit_command
+from open_notebook.utils.source_execution import (
+    source_owner_progress,
+    source_processing_status,
 )
 
 router = APIRouter()
@@ -61,8 +69,8 @@ async def _assert_file_supported(file_path: str) -> None:
     """
     try:
         support = await check_file_support(file_path)
-    except Exception as e:  # pragma: no cover - defensive
-        logger.debug(f"Pre-flight file-support check skipped for {file_path}: {e}")
+    except Exception as e:
+        log_boundary_failure("source_preflight", e, level="DEBUG")
         return
 
     if not support.supported:
@@ -73,15 +81,31 @@ async def _assert_file_supported(file_path: str) -> None:
 
 
 def _truncate_error(msg: Optional[str], limit: int = 200) -> Optional[str]:
-    """Cap error text surfaced to clients.
+    """Legacy length-only utility; never use this as a privacy boundary.
 
-    Command/processing failures can carry arbitrary internal exception text;
-    return at most ``limit`` characters so a raw traceback message can't leak
-    to the API response. ``None`` passes through unchanged.
+    Truncation can retain secrets. Public processing errors are projected by
+    _public_processing_info instead. None passes through unchanged.
     """
     if not msg:
         return msg
     return msg if len(msg) <= limit else msg[:limit] + "…"
+
+
+def _public_processing_info(info: Optional[dict[str, Any]]) -> Optional[dict[str, Any]]:
+    """Project untrusted worker error text without changing lifecycle metadata.
+
+    Arbitrary exception prose is not a trustworthy error code: do not infer
+    permissions, retryability or submission outcome from it. Those remain
+    governed by typed errors and existing status/attempt fields.
+    """
+    if info is None:
+        return None
+    result = dict(info)
+    if result.get("error"):
+        result["error"] = (
+            "Source processing failed. Review the source and processing settings."
+        )
+    return result
 
 
 SOURCE_SORT_FIELDS = {
@@ -304,7 +328,7 @@ async def get_sources(
 
         # Query sources - include command field with FETCH
         query = f"""
-            SELECT id, asset, created, title, updated, topics, command,
+            SELECT id, asset, created, title, updated, topics, command, processing_attempt,
             string::lowercase(title OR '') AS title_sort,
             ({SOURCE_TYPE_EXPRESSION}) AS type,
             (SELECT VALUE count() FROM source_insight WHERE source = $parent.id GROUP ALL)[0].count OR 0 AS insights_count,
@@ -323,10 +347,16 @@ async def get_sources(
             command = row.get("command")
             command_id = None
             status = None
-            processing_info = None
+            processing_info: Optional[dict[str, Any]] = None
+
+            if row.get("processing_attempt") and not row["processing_attempt"].get(
+                "command"
+            ):
+                status = "unknown"
+                processing_info = {"submission_unknown": True}
 
             # Extract status from fetched command object (already resolved by FETCH)
-            if command and isinstance(command, dict):
+            elif command and isinstance(command, dict):
                 command_id = str(command.get("id")) if command.get("id") else None
                 status = command.get("status")
                 # Extract execution metadata from nested result structure
@@ -339,12 +369,22 @@ async def get_sources(
                 processing_info = {
                     "started_at": execution_metadata.get("started_at"),
                     "completed_at": execution_metadata.get("completed_at"),
-                    "error": _truncate_error(command.get("error_message")),
+                    "error": command.get("error_message"),
                 }
             elif command:
                 # Command exists but FETCH failed to resolve it (broken reference)
                 command_id = str(command)
                 status = "unknown"
+
+            if command_id is not None:
+                projected = source_processing_status(
+                    row.get("processing_attempt"), status
+                )
+                if projected != status:
+                    processing_info = source_owner_progress(
+                        row.get("processing_attempt"), projected
+                    )
+                status = projected
 
             response_list.append(
                 SourceListResponse(
@@ -367,7 +407,7 @@ async def get_sources(
                     # Status fields from fetched command
                     command_id=command_id,
                     status=status,
-                    processing_info=processing_info,
+                    processing_info=_public_processing_info(processing_info),
                 )
             )
 
@@ -494,25 +534,34 @@ async def _create_source_async_path(
     else:
         source_asset = None
 
+    attempt = source_attempts.new_attempt()
     source = Source(
+        processing_attempt=attempt,
+        full_text=source_data.content if source_data.type == "text" else None,
         title=source_data.title or "Processing...",
         topics=[],
         asset=source_asset,
     )
-    await source.save()
-
-    # Add source to notebooks immediately so it appears in the UI
-    # The source_graph will skip adding duplicates
-    for notebook_id in source_data.notebooks or []:
-        await source.add_to_notebook(notebook_id)
-
+    command_id = None
     try:
+        # The initial CREATE can commit before its acknowledgement is lost too.
+        # Retain inputs even if no source identity made it back to this process.
+        await source.save()
+        if not isinstance(source.id, str) or not source.id.strip():
+            raise CommandSubmissionUnknownError()
+
+        # Once the durable intent exists, any association/submission failure
+        # preserves it and the original input for read-only reconciliation.
+        for notebook_id in source_data.notebooks or []:
+            await source.add_to_notebook(notebook_id)
+
         # Import command modules to ensure they're registered
         import commands.source_commands  # noqa: F401
 
         # Submit command for background processing
         command_input = SourceProcessingInput(
             source_id=str(source.id),
+            submission_token=attempt["token"],
             content_state=content_state,
             notebook_ids=source_data.notebooks,
             transformations=transformation_ids,
@@ -529,38 +578,36 @@ async def _create_source_async_path(
 
         # Update source with command reference immediately
         # command_id already includes 'command:' prefix
-        source.command = ensure_record_id(command_id)
-        await source.save()
+        source = Source(
+            **(
+                await source_attempts.bind_command(
+                    str(source.id), attempt["token"], command_id
+                )
+            )
+        )
 
         # Return source with command info
         return _source_to_response(
             source,
-            asset=None,  # Will be populated after processing
-            full_text=None,  # Will be populated after processing
-            embedded=False,  # Will be updated after processing
-            embedded_chunks=0,
+            embedded_chunks=await source.get_embedded_chunks(),
             command_id=command_id,
-            status="new",
+            status=await source.get_status(),
             processing_info={"async": True, "queued": True},
         )
 
-    except (HTTPException, OpenNotebookError):
-        # Clean up source record before the error propagates (typed domain
-        # errors are mapped by the global handlers in api/main.py)
-        try:
-            await source.delete()
-        except Exception:
-            pass
+    except CommandSubmissionUnknownError as exc:
+        exc.source_id = (
+            source.id if isinstance(source.id, str) and source.id.strip() else None
+        )
+        exc.command_id = command_id or exc.command_id
         raise
-    except Exception as e:
-        logger.error(f"Failed to submit async processing command: {e}")
-        # Clean up source record on command submission failure
-        try:
-            await source.delete()
-        except Exception:
-            pass
-        # The uploaded file (if any) is cleaned up by create_source's handlers
-        raise HTTPException(status_code=500, detail="Failed to queue processing")
+    except Exception as exc:
+        raise CommandSubmissionUnknownError(
+            source_id=(
+                source.id if isinstance(source.id, str) and source.id.strip() else None
+            ),
+            command_id=command_id,
+        ) from exc
 
 
 async def _create_source_sync_path(
@@ -571,16 +618,20 @@ async def _create_source_sync_path(
     """SYNC PATH: Execute synchronously using execute_command_sync."""
     logger.info("Using sync processing path")
 
-    try:
-        # Import command modules to ensure they're registered
-        import commands.source_commands  # noqa: F401
+    # Import/construct before the write boundary so definite validation errors
+    # still reach create_source's request-owned upload cleanup.
+    import commands.source_commands  # noqa: F401
 
-        # Create source record - let SurrealDB generate the ID
-        source = Source(
-            title=source_data.title or "Processing...",
-            topics=[],
-        )
+    source = Source(
+        title=source_data.title or "Processing...",
+        topics=[],
+    )
+    try:
+        # Initial CREATE and all later writes can outlive their acknowledgement.
+        # From this boundary onward, preserve inputs and existing work on error.
         await source.save()
+        if not isinstance(source.id, str) or not source.id.strip():
+            raise CommandSubmissionUnknownError()
 
         # Add source to notebooks immediately so it appears in the UI
         # The source_graph will skip adding duplicates
@@ -608,16 +659,9 @@ async def _create_source_sync_path(
         )
 
         if not result.is_success():
-            logger.error(f"Sync processing failed: {result.error_message}")
-            # Clean up source record
-            try:
-                await source.delete()
-            except Exception:
-                pass
-            raise HTTPException(
-                status_code=500,
-                detail=f"Processing failed: {_truncate_error(result.error_message)}",
-            )
+            # Shared SDK failure/cancellation is not source-owner termination
+            # evidence. Even a definite failure retains partial work for review.
+            raise CommandSubmissionUnknownError(source_id=source.id)
 
         # Get the processed source
         if not source.id:
@@ -630,10 +674,15 @@ async def _create_source_sync_path(
         # No command_id or status for sync processing (legacy behavior)
         return _source_to_response(processed_source, embedded_chunks=embedded_chunks)
 
-    except Exception as e:
-        logger.error(f"Sync processing failed: {e}")
-        # The uploaded file (if any) is cleaned up by create_source's handlers
-        raise
+    except Exception as exc:
+        # A failed request does not prove rollback or make replay/cleanup safe.
+        # Cancellation (BaseException) still propagates and does not stop the
+        # SDK thread or its queued worker. Never invent a command receipt.
+        raise CommandSubmissionUnknownError(
+            source_id=(
+                source.id if isinstance(source.id, str) and source.id.strip() else None
+            )
+        ) from exc
 
 
 @router.post("/sources", response_model=SourceResponse)
@@ -686,6 +735,10 @@ async def create_source(
             source_data, content_state, transformation_ids
         )
 
+    except CommandSubmissionUnknownError:
+        # A source or worker may already own these inputs. Expose only a known
+        # identity for inspection; never delete its upload on an uncertain ACK.
+        raise
     except HTTPException:
         # Clean up uploaded file on HTTP exceptions if we created it
         _cleanup_uploaded_file(file_path, upload_file)
@@ -762,10 +815,19 @@ async def get_source(source_id: str):
 
         await _stamp_source_view(source.id or source_id)
 
-        # Get status information if command exists
+        # Resolve the current attempt before consulting any command metadata.
+        # A stale top-level command is not the owner of an unbound new attempt.
         status = None
         processing_info = None
-        if source.command:
+        if source.processing_attempt and not source.processing_attempt.get("command"):
+            source = await source_attempts.reconcile(source)
+        unresolved = bool(
+            source.processing_attempt and not source.processing_attempt.get("command")
+        )
+        if unresolved:
+            status = "unknown"
+            processing_info = {"submission_unknown": True}
+        elif source.command:
             try:
                 status = await source.get_status()
                 processing_info = await source.get_processing_progress()
@@ -789,9 +851,11 @@ async def get_source(source_id: str):
             embedded_chunks=embedded_chunks,
             file_available=_is_source_file_available(source),
             # Status fields
-            command_id=str(source.command) if source.command else None,
+            command_id=str(source.command)
+            if source.command and not unresolved
+            else None,
             status=status,
-            processing_info=processing_info,
+            processing_info=_public_processing_info(processing_info),
             # Notebook associations
             notebooks=notebook_ids,
         )
@@ -802,7 +866,7 @@ async def get_source(source_id: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error fetching source {source_id}: {str(e)}")
+        log_boundary_failure("source_get", e)
         raise HTTPException(status_code=500, detail="Error fetching source")
 
 
@@ -817,7 +881,7 @@ async def check_source_file(source_id: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error checking file for source {source_id}: {str(e)}")
+        log_boundary_failure("source_file_check", e)
         raise HTTPException(status_code=500, detail="Failed to verify file")
 
 
@@ -836,7 +900,7 @@ async def download_source_file(source_id: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error downloading file for source {source_id}: {str(e)}")
+        log_boundary_failure("source_file_download", e)
         raise HTTPException(status_code=500, detail="Failed to download source file")
 
 
@@ -848,6 +912,16 @@ async def get_source_status(source_id: str):
         source = await Source.get(source_id)
         if not source:
             raise HTTPException(status_code=404, detail="Source not found")
+
+        if source.processing_attempt and not source.processing_attempt.get("command"):
+            source = await source_attempts.reconcile(source)
+            if not source.processing_attempt.get("command"):
+                return SourceStatusResponse(
+                    status="unknown",
+                    message="Submission unresolved; do not resubmit",
+                    processing_info={"submission_unknown": True},
+                    command_id=None,
+                )
 
         # Check if this is a legacy source (no command)
         if not source.command:
@@ -880,7 +954,7 @@ async def get_source_status(source_id: str):
             return SourceStatusResponse(
                 status=status,
                 message=message,
-                processing_info=processing_info,
+                processing_info=_public_processing_info(processing_info),
                 command_id=str(source.command) if source.command else None,
             )
 
@@ -898,7 +972,7 @@ async def get_source_status(source_id: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error fetching status for source {source_id}: {str(e)}")
+        log_boundary_failure("source_status", e)
         raise HTTPException(status_code=500, detail="Error fetching source status")
 
 
@@ -910,13 +984,14 @@ async def update_source(source_id: str, source_update: SourceUpdate):
         if not source:
             raise HTTPException(status_code=404, detail="Source not found")
 
-        # Update only provided fields
-        if source_update.title is not None:
-            source.title = source_update.title
-        if source_update.topics is not None:
-            source.topics = source_update.topics
-
-        await source.save()
+        # Never save this read snapshot: a worker may have published content or
+        # changed processing ownership since the read. Null/omitted metadata
+        # remains unchanged; an empty patch still refreshes updated as before.
+        metadata = source_update.model_dump(exclude_none=True)
+        rows = await repo_update("source", source_id, metadata)
+        if not rows:
+            raise HTTPException(status_code=404, detail="Source not found")
+        source = Source.model_validate(rows[0])
 
         embedded_chunks = await source.get_embedded_chunks()
         return _source_to_response(source, embedded_chunks=embedded_chunks)
@@ -940,20 +1015,27 @@ async def retry_source_processing(source_id: str):
         if not source:
             raise HTTPException(status_code=404, detail="Source not found")
 
-        # Check if source already has a running command
+        if source.processing_attempt and not source.processing_attempt.get("command"):
+            source = await source_attempts.reconcile(source)
+            if not source.processing_attempt.get("command"):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Submission remains unresolved; retry refused.",
+                )
+
         if source.command:
             try:
                 status = await source.get_status()
-                if status in ["running", "queued"]:
-                    raise HTTPException(
-                        status_code=400,
-                        detail="Source is already processing. Cannot retry while processing is active.",
-                    )
-            except Exception as e:
-                logger.warning(
-                    f"Failed to check current status for source {source_id}: {e}"
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Cannot verify prior command status; retry refused.",
+                ) from exc
+            if status not in {"failed", "canceled", "cancelled"}:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Prior processing is active, completed, or unknown; retry refused.",
                 )
-                # Continue with retry if we can't check status
 
         # Get notebooks that this source belongs to. `reference` is a graph edge
         # (RELATE source->reference->notebook), so it only has `in`/`out` columns —
@@ -996,12 +1078,18 @@ async def retry_source_processing(source_id: str):
                 )
 
         try:
+            attempt = await source_attempts.claim_retry(source)
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        command_id = None
+        try:
             # Import command modules to ensure they're registered
             import commands.source_commands  # noqa: F401
 
             # Submit new command for background processing
             command_input = SourceProcessingInput(
                 source_id=str(source.id),
+                submission_token=attempt["token"],
                 content_state=content_state,
                 notebook_ids=notebook_ids,
                 transformations=[],  # Use default transformations on retry
@@ -1020,8 +1108,13 @@ async def retry_source_processing(source_id: str):
 
             # Update source with new command ID
             # command_id already includes 'command:' prefix
-            source.command = ensure_record_id(command_id)
-            await source.save()
+            source = Source(
+                **(
+                    await source_attempts.bind_command(
+                        str(source.id), attempt["token"], command_id
+                    )
+                )
+            )
 
             # Get current embedded chunks count
             embedded_chunks = await source.get_embedded_chunks()
@@ -1031,24 +1124,25 @@ async def retry_source_processing(source_id: str):
                 source,
                 embedded_chunks=embedded_chunks,
                 command_id=command_id,
-                status="queued",
+                status=await source.get_status(),
                 processing_info={"retry": True, "queued": True},
             )
 
-        except Exception as e:
-            logger.error(
-                f"Failed to submit retry processing command for source {source_id}: {e}"
-            )
-            raise HTTPException(
-                status_code=500, detail="Failed to queue retry processing"
-            )
+        except CommandSubmissionUnknownError as exc:
+            exc.source_id = str(source.id)
+            exc.command_id = command_id or exc.command_id
+            raise
+        except Exception as exc:
+            raise CommandSubmissionUnknownError(
+                source_id=str(source.id), command_id=command_id
+            ) from exc
 
     except HTTPException:
         raise
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error retrying source processing for {source_id}: {str(e)}")
+        log_boundary_failure("source_retry", e)
         raise HTTPException(status_code=500, detail="Error retrying source processing")
 
 
@@ -1068,7 +1162,7 @@ async def delete_source(source_id: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error deleting source {source_id}: {str(e)}")
+        log_boundary_failure("source_delete", e)
         raise HTTPException(status_code=500, detail="Error deleting source")
 
 
@@ -1097,7 +1191,7 @@ async def get_source_insights(source_id: str):
     except OpenNotebookError:
         raise
     except Exception as e:
-        logger.error(f"Error fetching insights for source {source_id}: {str(e)}")
+        log_boundary_failure("source_insights", e)
         raise HTTPException(status_code=500, detail="Error fetching insights")
 
 
@@ -1131,7 +1225,7 @@ async def create_source_insight(source_id: str, request: CreateSourceInsightRequ
             raise HTTPException(status_code=404, detail="Transformation not found")
 
         # Submit transformation as background job (fire-and-forget)
-        command_id = submit_command(
+        command_id = await submit_command(
             "open_notebook",
             "run_transformation",
             {
@@ -1152,6 +1246,9 @@ async def create_source_insight(source_id: str, request: CreateSourceInsightRequ
             command_id=str(command_id),
         )
 
+    except CommandSubmissionUnknownError as exc:
+        exc.source_id = source_id
+        raise
     except HTTPException:
         raise
     except OpenNotebookError:

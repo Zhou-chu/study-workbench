@@ -1,12 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { InternalAxiosRequestConfig } from 'axios'
 import apiClient from './client'
+import { notesApi } from './notes'
 import { evidenceApi } from './evidence'
 import { workbenchApi } from './workbench'
 import { notebooklmApi } from './notebooklm'
 import type { TurnRequest, WorkbenchSelection } from '@/lib/types/personal'
 
-vi.mock('@/lib/config', () => ({ getApiUrl: async () => 'http://127.0.0.1:5055' }))
+vi.mock('@/lib/config', () => ({ getApiUrl: async () => 'http://127.0.0.1:5055', getConfig: async () => ({ authMode: 'legacy_password', apiUrl: 'http://127.0.0.1:5055' }) }))
 vi.mock('@/lib/auth-token', () => ({ getAuthToken: () => 'unit-test-token-not-a-credential' }))
 
 // Keep the real shared Axios client, interceptors and JSON/FormData transforms.
@@ -88,7 +89,7 @@ describe('workbench transport contracts', () => {
     expect(request.headers.get('Authorization')).toBe('Bearer unit-test-token-not-a-credential')
   })
   it('forwards exact outline scope and idempotency, then polls only the encoded session', async () => {
-    const body: TurnRequest = { ...selection, notebook_id: notebook, task: 'outline', message: 'Outline these sources', idempotency_key: 'turn-fixed-key' }
+    const body: TurnRequest = { ...selection, engine: 'independent', notebook_id: notebook, task: 'outline', message: 'Outline these sources', idempotency_key: 'turn-fixed-key' }
     await workbenchApi.turn('v1_notebook:one/two', body)
     await workbenchApi.turns('v1_notebook:one/two')
     expect(requests.map(request => [request.method, request.url])).toEqual([['post', '/personal/chats/v1_notebook%3Aone%2Ftwo/turns'], ['get', '/personal/chats/v1_notebook%3Aone%2Ftwo/turns']])
@@ -97,10 +98,11 @@ describe('workbench transport contracts', () => {
   it('saves and edits the original citation/scope snapshot rather than rewriting it', async () => {
     const note = { title: 'Saved answer', content: '**Original answer**', citations: [{ citation_id: 'C1', kind: 'local_evidence' as const, source_version_id: 'sv_old', evidence_id: 'ev_old', quote: 'original', source_title: 'Old PDF', reference_validity: 'unverified' }], scope_snapshot: { source_version_ids: ['sv_old'] } }
     await workbenchApi.saveNote(notebook, note)
-    await workbenchApi.updateNote(notebook, 'note:one/two', note)
+    await workbenchApi.updateNote(notebook, 'note:one/two', { ...note, expected_revision: 7 })
     expect(requests.map(request => [request.method, request.url])).toEqual([['post', `/personal/notebooks/${notebookPath}/notes`], ['patch', `/personal/notebooks/${notebookPath}/notes/note%3Aone%2Ftwo`]])
     expect(requestBody()).toEqual(note)
-    expect(requestBody(1)).toEqual(note)
+    expect(requestBody(1)).toEqual({ ...note, expected_revision: 7 })
+    expect(requestBody()).not.toHaveProperty('expected_revision')
   })
   it('does not cancel a job just by polling it', async () => {
     await workbenchApi.job('job:one/two')
@@ -185,4 +187,12 @@ it('submits maintenance with encoded version, exact archived extraction and idem
   expect(requestBody(1)).toEqual({ idempotency_key: 'parse-key' })
   expect(requests.every(request => request.signal === controller.signal && request.method === 'post')).toBe(true)
   expect(requests[0].headers.get('Authorization')).toBe('Bearer unit-test-token-not-a-credential')
+})
+
+it('legacy PUT sends its captured predecessor and create omits it', async () => {
+  await notesApi.update('note:a', { title: 'draft', content: 'body', expected_revision: 9 })
+  await notesApi.create({ title: 'new', content: 'body', notebook_id: 'notebook:1' })
+  expect(requestBody()).toEqual({ title: 'draft', content: 'body', expected_revision: 9 })
+  expect(requests[0].method).toBe('put')
+  expect(requestBody(1)).not.toHaveProperty('expected_revision')
 })

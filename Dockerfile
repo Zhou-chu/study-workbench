@@ -1,8 +1,7 @@
-# Single source of truth for both published image variants:
-#   - regular (multi-container, SurrealDB external): default build / --target runtime
-#   - single-container (app + SurrealDB):            --target single
-# Shared stages below guarantee that fixes (tiktoken pre-cache, env defaults,
-# npm retry logic, ...) apply to both variants at once.
+# Historical upstream all-in-one recipe, retained for compatibility only.
+# This is not an endorsed release or migration workflow for the private project.
+# The explicit four-service candidate is deploy/v1/compose.yaml; neither recipe
+# has current Docker build/runtime acceptance. See docs/v1/DOCKER_MIGRATION.md.
 
 # Stage 1: Frontend builder
 FROM node:22-slim AS frontend-builder
@@ -25,6 +24,8 @@ RUN i=0; until npm ci; do \
 
 # Copy the rest of the frontend source and build
 COPY frontend/ ./
+# Public contract is an explicit frontend typecheck/build input, not runtime data.
+COPY contracts/v1/openapi.json /app/contracts/v1/openapi.json
 RUN npm run build
 
 # Stage 2: Backend builder

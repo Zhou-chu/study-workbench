@@ -1,0 +1,47 @@
+
+> study-workbench@0.1.0 pretypecheck
+> npm run build --workspace @study/contracts && npm run build --workspace @study/domain && npm run build --workspace @study/web-transport
+
+
+> @study/contracts@0.1.0 build
+> tsc --project tsconfig.build.json
+
+
+> @study/domain@0.1.0 build
+> tsc --project tsconfig.build.json
+
+
+> @study/web-transport@0.1.0 build
+> tsc --project tsconfig.build.json
+
+
+> study-workbench@0.1.0 typecheck
+> npm run typecheck --workspaces --if-present
+
+
+> @study/bff@0.1.0 pretypecheck
+> npm -w @study/contracts run build
+
+
+> @study/contracts@0.1.0 build
+> tsc --project tsconfig.build.json
+
+
+> @study/bff@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @study/web@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @study/contracts@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @study/domain@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @study/web-transport@0.1.0 typecheck
+> tsc --noEmit

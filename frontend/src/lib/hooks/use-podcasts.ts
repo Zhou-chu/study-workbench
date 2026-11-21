@@ -1,3 +1,5 @@
+import { isCommandSubmissionUnknown, runCommandSubmission } from '@/lib/utils/command-submission'
+import { isAuthRecoveryError } from '@/lib/api/browser-transport'
 import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -46,6 +48,7 @@ export function usePodcastEpisodes(options?: { autoRefresh?: boolean }) {
     queryKey: QUERY_KEYS.podcastEpisodes,
     queryFn: podcastsApi.listEpisodes,
     refetchInterval: (current) => {
+      if (isAuthRecoveryError(current.state.error)) return false
       if (!autoRefresh) {
         return false
       }
@@ -94,7 +97,8 @@ export function useRetryPodcastEpisode() {
   const { t } = useTranslation()
 
   return useMutation({
-    mutationFn: (episodeId: string) => podcastsApi.retryEpisode(episodeId),
+    retry: false,
+    mutationFn: (episodeId: string) => runCommandSubmission('podcast:retry:' + episodeId, () => podcastsApi.retryEpisode(episodeId), t('commandSubmission.newAttemptConfirm')),
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
       toast({
@@ -103,9 +107,13 @@ export function useRetryPodcastEpisode() {
       })
     },
     onError: (error: unknown) => {
+      if (isCommandSubmissionUnknown(error)) {
+        toast({ title: t('commandSubmission.title'), description: `${t('commandSubmission.warning')} ${t('commandSubmission.sessionOnly')}` })
+        return
+      }
       toast({
         title: t('podcasts.failedToRetry'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -129,7 +137,7 @@ export function useDeletePodcastEpisode() {
     onError: (error: unknown) => {
       toast({
         title: t('podcasts.failedToDeleteEpisode'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -167,7 +175,7 @@ export function useCreateEpisodeProfile() {
     onError: (error: unknown) => {
       toast({
         title: t('podcasts.failedToCreateProfile'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -198,7 +206,7 @@ export function useUpdateEpisodeProfile() {
     onError: (error: unknown) => {
       toast({
         title: t('podcasts.failedToUpdateProfile'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -224,7 +232,7 @@ export function useDeleteEpisodeProfile() {
     onError: (error: unknown) => {
       toast({
         title: t('podcasts.failedToDeleteProfile'),
-        description: getApiErrorKey(error, t('podcasts.failedToDeleteProfileDesc')),
+        description: t(getApiErrorKey(error, 'podcasts.failedToDeleteProfileDesc')),
         variant: 'destructive',
       })
     },
@@ -250,7 +258,7 @@ export function useDuplicateEpisodeProfile() {
     onError: (error: unknown) => {
       toast({
         title: t('podcasts.failedToDuplicateProfile'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -297,7 +305,7 @@ export function useCreateSpeakerProfile() {
     onError: (error: unknown) => {
       toast({
         title: t('podcasts.failedToCreateSpeaker'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -329,7 +337,7 @@ export function useUpdateSpeakerProfile() {
     onError: (error: unknown) => {
       toast({
         title: t('podcasts.failedToUpdateSpeaker'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -356,7 +364,7 @@ export function useDeleteSpeakerProfile() {
     onError: (error: unknown) => {
       toast({
         title: t('podcasts.failedToDeleteSpeaker'),
-        description: getApiErrorKey(error, t('podcasts.failedToDeleteSpeakerDesc')),
+        description: t(getApiErrorKey(error, 'podcasts.failedToDeleteSpeakerDesc')),
         variant: 'destructive',
       })
     },
@@ -381,7 +389,7 @@ export function useDuplicateSpeakerProfile() {
     onError: (error: unknown) => {
       toast({
         title: t('podcasts.failedToDuplicateSpeaker'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -394,8 +402,9 @@ export function useGeneratePodcast() {
   const { t } = useTranslation()
 
   return useMutation({
+    retry: false,
     mutationFn: (payload: PodcastGenerationRequest) =>
-      podcastsApi.generatePodcast(payload),
+      runCommandSubmission('podcast:generate', () => podcastsApi.generatePodcast(payload), t('commandSubmission.newAttemptConfirm')),
     onSuccess: async (response) => {
       // Immediately refetch to show the new episode
       await queryClient.refetchQueries({ queryKey: QUERY_KEYS.podcastEpisodes })
@@ -405,9 +414,13 @@ export function useGeneratePodcast() {
       })
     },
     onError: (error: unknown) => {
+      if (isCommandSubmissionUnknown(error)) {
+        toast({ title: t('commandSubmission.title'), description: `${t('commandSubmission.warning')} ${t('commandSubmission.sessionOnly')}` })
+        return
+      }
       toast({
         title: t('podcasts.failedToStartGeneration'),
-        description: getApiErrorKey(error, t('podcasts.tryAgainMoment')),
+        description: t(getApiErrorKey(error, 'podcasts.tryAgainMoment')),
         variant: 'destructive',
       })
     },

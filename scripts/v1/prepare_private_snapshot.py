@@ -224,6 +224,11 @@ def prepare(repo, commit, output, previous=None):
             "Archive differs from tracked tree (e.g. export-ignore attributes)"
         )
     for name, (data, mode) in source.items():
+        # Independently read the selected immutable commit, not archive bytes.
+        # Git SHA1 below is protocol compatibility, not our byte-equality proof.
+        committed = git(repo, "cat-file", "blob", f"{resolved}:{name}")
+        if data != committed:
+            raise ValueError(f"Archive byte parity mismatch: {name}")
         if tracked[name] != (mode, object_sha("blob", data)):
             raise ValueError(f"Archive parity mismatch (e.g. export-subst): {name}")
     if "README.md" not in source or {

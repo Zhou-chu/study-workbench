@@ -1,0 +1,253 @@
+[Publication copy: personal filesystem paths replaced; original results/failures unchanged.]
+
+> study-workbench@0.1.0 pretest
+> npm run build --workspace @study/contracts && npm run build --workspace @study/domain && npm run build --workspace @study/web-transport
+
+
+> @study/contracts@0.1.0 build
+> tsc --project tsconfig.build.json
+
+
+> @study/domain@0.1.0 build
+> tsc --project tsconfig.build.json
+
+
+> @study/web-transport@0.1.0 build
+> tsc --project tsconfig.build.json
+
+
+> study-workbench@0.1.0 test
+> npm run test --workspaces --if-present
+
+
+> @study/bff@0.1.0 test
+> node --test scripts/*.test.mjs && vitest run --exclude=**/scripts/**
+
+✔ standalone BFF closure accepts measured ESM package and local modules only (362.01437ms)
+✔ parses actual emitted ESM without confusing import route literals or executing code (48.735352ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = import // ordinary line comment\n('next');" (27.755861ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = import /* first */ // second\r\n /* third */ ('react');" (24.480204ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = import // line ('next');" (27.409018ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = import // line ('next');" (26.717626ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = import ﻿ /* space */ ('next');" (29.047664ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = `template ${import // line\n('next')}`;" (25.859013ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = require // line\n('next');" (25.351568ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = require /* comment */ ('next');" (27.15585ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const load = r\\u0065quire; load('next');" (23.902258ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const load = \\u{72}equire; load('next');" (26.469292ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = require?.('next');" (26.10849ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = (require)('next');" (27.15448ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = module.require // line\n('next');" (27.691177ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = eval // line\n('1');" (27.748928ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = (0,eval)('1');" (26.340632ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = e\\u0076al /* comment */ ('1');" (25.325971ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = Function // line\n('return 1')();" (25.021489ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = new Function /* comment */ ('return 1');" (25.296411ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = globalThis['Function']('return 1');" (28.097148ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "const later = createRequire // line\n(import.meta.url)('next');" (28.348836ms)
+✔ fix1 I3 rejects comment/escape/indirect loader "importScripts // line\n('next');" (25.228237ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1013.937402
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/bff
+
+stdout | test/streaming-http.test.ts > incremental native HTTP legacy_password > delivers split UTF-8 and split JSON before completion without rewriting any SSE bytes
+SSE fixture legacy_password [ 'client:first-incomplete-utf8', 'client:partial-json' ] f7df383fb76564a1081a9006ecf83ded32e01b33b6b637f8574bc08c15c8def2
+
+ ✓ test/session-store.test.ts (43 tests) 225ms
+ ✓ test/http-streams.test.ts (2 tests) 350ms
+stdout | test/auth-loss-hops.test.ts > synthetic device refresh loss across real HTTP hops > recovers BFF→browser delivery loss through the same cookie after the successor pair was installed
+lost-hop fixture [ 'bff:successor-installed', 'browser:ack-lost-after-swap' ] native rotations 1
+
+ ✓ test/proxy-parity.test.ts (159 tests) 589ms
+ ✓ test/auth-loss-hops.test.ts (15 tests) 649ms
+ ✓ test/policy.test.ts (274 tests) 397ms
+ ✓ test/handler.test.ts (84 tests) 90ms
+ ✓ test/http-adapter.test.ts (83 tests) 351ms
+ ✓ test/cli.test.ts (2 tests) 8ms
+ ✓ test/package-boundary.test.ts (1 test) 3ms
+ ✓ test/route-dispatch.test.ts (311 tests) 160ms
+ ✓ test/private-ingress.test.ts (57 tests) 1075ms
+stdout | test/streaming-http.test.ts > incremental native HTTP legacy_password > forwards a chunked binary multipart body before EOF with the original boundary and file hash
+multipart fixture legacy_password 1048593 198fe22858bf90dd34cba065bf3e3d4680918f930e94ce51807b9b3055f2eb1e 3033dc9ebd2843ec3c1dd72ee1f6cd2ccd8246012b5cbad1f7df786fc521f44c api:upload-before-client-eof
+
+stdout | test/streaming-http.test.ts > incremental native HTTP device_sessions > delivers split UTF-8 and split JSON before completion without rewriting any SSE bytes
+SSE fixture device_sessions [ 'client:first-incomplete-utf8', 'client:partial-json' ] f7df383fb76564a1081a9006ecf83ded32e01b33b6b637f8574bc08c15c8def2
+
+stdout | test/streaming-http.test.ts > incremental native HTTP device_sessions > forwards a chunked binary multipart body before EOF with the original boundary and file hash
+multipart fixture device_sessions 1048593 198fe22858bf90dd34cba065bf3e3d4680918f930e94ce51807b9b3055f2eb1e 3033dc9ebd2843ec3c1dd72ee1f6cd2ccd8246012b5cbad1f7df786fc521f44c api:upload-before-client-eof
+
+ ✓ test/streaming-http.test.ts (19 tests) 5109ms
+     ✓ forwards a chunked binary multipart body before EOF with the original boundary and file hash  2321ms
+     ✓ forwards a chunked binary multipart body before EOF with the original boundary and file hash  1595ms
+
+ Test Files  12 passed (12)
+      Tests  1050 passed (1050)
+   Start at  02:51:13
+   Duration  5.57s (transform 1.53s, setup 0ms, import 2.86s, tests 9.01s, environment 2ms)
+
+
+> @study/web@0.1.0 test
+> node --test scripts/*.test.mjs && vitest run
+
+✔ Web manifest producer and verifier are independent callable file gates (0.663332ms)
+✔ canonical payload inventory rejects missing, extra, private, symlink and special bytes (18.296997ms)
+✔ canonical inventory digest measures sizes, modes, bytes and sorted paths (0.505726ms)
+✔ retains exact release manifests/assets, rejects reused slots and PDF/hash collisions (292.336248ms)
+✔ Node verifier rejects duplicate/noncanonical manifests and undeclared files (14.694933ms)
+✔ gateway packaging checks the selected current contract without replacing retained identities (62.563381ms)
+✔ fix1 I1 publishes and verifies the complete retained absolute PDF-version union (430.426641ms)
+✖ copies exact source bytes with every license and detects output drift (3.27903ms)
+✖ rejects source symlinks before copying (2.846664ms)
+✖ rejects destination symlink ancestors without changing external target (1.15912ms)
+✖ rejects private or oversized resources before public generation (1.27701ms)
+✖ rejects unknown destination files without deleting anything (2.362806ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 7
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 874.665716
+
+✖ failing tests:
+
+test at scripts/pdf-assets.test.mjs:8:1
+✖ copies exact source bytes with every license and detects output drift (3.27903ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/.superpowers/sdd/notebook-spa-redesign/pdf-assets-test-ut2cAp'
+      at async mkdtemp (node:internal/fs/promises:1254:10)
+      at async fixture (file:///home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web/scripts/pdf-assets.test.mjs:7:37)
+      at async TestContext.<anonymous> (file:///home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web/scripts/pdf-assets.test.mjs:8:96)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/.superpowers/sdd/notebook-spa-redesign/pdf-assets-test-ut2cAp'
+  }
+
+test at scripts/pdf-assets.test.mjs:9:1
+✖ rejects source symlinks before copying (2.846664ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/.superpowers/sdd/notebook-spa-redesign/pdf-assets-test-J8y2N0'
+      at async mkdtemp (node:internal/fs/promises:1254:10)
+      at async fixture (file:///home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web/scripts/pdf-assets.test.mjs:7:37)
+      at async TestContext.<anonymous> (file:///home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web/scripts/pdf-assets.test.mjs:9:65)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/.superpowers/sdd/notebook-spa-redesign/pdf-assets-test-J8y2N0'
+  }
+
+test at scripts/pdf-assets.test.mjs:10:1
+✖ rejects destination symlink ancestors without changing external target (1.15912ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/.superpowers/sdd/notebook-spa-redesign/pdf-assets-test-sOzQ4f'
+      at async mkdtemp (node:internal/fs/promises:1254:10)
+      at async fixture (file:///home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web/scripts/pdf-assets.test.mjs:7:37)
+      at async TestContext.<anonymous> (file:///home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web/scripts/pdf-assets.test.mjs:10:97)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/.superpowers/sdd/notebook-spa-redesign/pdf-assets-test-sOzQ4f'
+  }
+
+test at scripts/pdf-assets.test.mjs:11:1
+✖ rejects private or oversized resources before public generation (1.27701ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/.superpowers/sdd/notebook-spa-redesign/pdf-assets-test-Jwb30b'
+      at async mkdtemp (node:internal/fs/promises:1254:10)
+      at async fixture (file:///home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web/scripts/pdf-assets.test.mjs:7:37)
+      at async TestContext.<anonymous> (file:///home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web/scripts/pdf-assets.test.mjs:11:90)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/.superpowers/sdd/notebook-spa-redesign/pdf-assets-test-Jwb30b'
+  }
+
+test at scripts/pdf-assets.test.mjs:12:1
+✖ rejects unknown destination files without deleting anything (2.362806ms)
+  Error: ENOENT: no such file or directory, mkdtemp '/home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/.superpowers/sdd/notebook-spa-redesign/pdf-assets-test-WeeoOt'
+      at async mkdtemp (node:internal/fs/promises:1254:10)
+      at async fixture (file:///home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web/scripts/pdf-assets.test.mjs:7:37)
+      at async TestContext.<anonymous> (file:///home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web/scripts/pdf-assets.test.mjs:12:86)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'mkdtemp',
+    path: '/home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/.superpowers/sdd/notebook-spa-redesign/pdf-assets-test-WeeoOt'
+  }
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web
+npm error workspace @study/web@0.1.0
+npm error location /home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web
+npm error command failed
+npm error command sh -c node --test scripts/*.test.mjs && vitest run
+
+
+> @study/contracts@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/packages/contracts
+
+ ✓ src/runtime-config.test.ts (1 test) 3ms
+ ✓ src/consumer.test.ts (3 tests) 4ms
+ ✓ src/workspace-view.test.ts (67 tests) 75ms
+
+ Test Files  3 passed (3)
+      Tests  71 passed (71)
+   Start at  02:51:19
+   Duration  309ms (transform 101ms, setup 0ms, import 204ms, tests 82ms, environment 0ms)
+
+
+> @study/domain@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/packages/domain
+
+ ✓ src/scope.test.ts (2 tests) 6ms
+ ✓ src/operation.test.ts (17 tests) 8ms
+ ✓ src/editor.test.ts (9 tests) 8ms
+ ✓ src/embedding-disclosure.test.ts (18 tests) 13ms
+ ✓ src/turn-operations.test.ts (46 tests) 44ms
+ ✓ src/turn-reconciliation.test.ts (143 tests) 31ms
+
+ Test Files  6 passed (6)
+      Tests  235 passed (235)
+   Start at  02:51:20
+   Duration  366ms (transform 511ms, setup 0ms, import 691ms, tests 111ms, environment 1ms)
+
+
+> @study/web-transport@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/packages/web-transport
+
+ ✓ src/session-coordinator.test.ts (2 tests) 3ms
+ ✓ src/ingress.test.ts (3 tests) 31ms
+ ✓ src/dispatch-context.test.ts (3 tests) 5ms
+ ✓ src/session-client.test.ts (12 tests) 45ms
+ ✓ src/recovery.test.ts (10 tests) 63ms
+ ✓ src/client.test.ts (26 tests) 60ms
+ ✓ src/boundaries.test.ts (2 tests) 1464ms
+   ✓ compiles contracts and domain with ES-only globals and no platform ambient types  1388ms
+
+ Test Files  7 passed (7)
+      Tests  58 passed (58)
+   Start at  02:51:20
+   Duration  2.00s (transform 1.16s, setup 0ms, import 1.85s, tests 1.67s, environment 1ms)

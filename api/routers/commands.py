@@ -92,7 +92,11 @@ async def get_command_job_status(job_id: str):
         raise HTTPException(status_code=500, detail="Failed to fetch job status")
 
 
-@router.get("/commands/jobs", response_model=List[Dict[str, Any]])
+@router.get(
+    "/commands/jobs",
+    response_model=List[Dict[str, Any]],
+    responses={501: {"description": "Generic command listing is not supported"}},
+)
 async def list_command_jobs(
     command_filter: Optional[str] = Query(None, description="Filter by command name"),
     status_filter: Optional[str] = Query(None, description="Filter by status"),
@@ -114,7 +118,10 @@ async def list_command_jobs(
         raise HTTPException(status_code=500, detail="Failed to list command jobs")
 
 
-@router.delete("/commands/jobs/{job_id}")
+@router.delete(
+    "/commands/jobs/{job_id}",
+    responses={501: {"description": "Generic command cancellation is not supported"}},
+)
 async def cancel_command_job(job_id: str):
     """Cancel a running command job"""
     try:

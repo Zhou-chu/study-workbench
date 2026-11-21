@@ -1,0 +1,41 @@
+/* Collection pages are an index, not the denser study workspace. */
+.collection-home.notebook-home { max-width: 1240px; padding: 56px 40px 80px; }
+.collection-home .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; padding-bottom: 32px; border-bottom: 1px solid var(--interactive-border); }
+.collection-home .page-heading h1 { font: 650 32px/42px var(--heading-font); margin: 0 0 12px; letter-spacing: 0; }
+.collection-home .page-heading p { max-width: 48ch; font: 400 var(--type-ui)/1.8 var(--ui-font); color: var(--muted); }
+.collection-home .page-heading > .button { flex-shrink: 0; margin: 0; }
+.collection-home .notebook-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding-block: 24px 32px; }
+.collection-home .notebook-toolbar > input { flex: 1 1 220px; max-width: 400px; border: 1px solid var(--interactive-border); border-radius: 3px; }
+.collection-home .collection-sort { display: flex; align-items: center; gap: 10px; font-size: var(--type-meta); color: var(--muted); margin-left: auto; }
+.collection-home .collection-sort select { color: var(--text); font-size: var(--type-ui); min-height: 44px; border: 1px solid var(--interactive-border); border-radius: 3px; padding: 8px 12px; }
+.collection-home .view-control { margin: 0; gap: 4px; }
+.collection-home .view-control .button { font-size: var(--type-meta); min-height: 44px; border-radius: 3px; }
+.collection-home > section > h2, .collection-home .section-heading h2 { font: 600 20px/28px var(--heading-font); margin: 0; }
+.collection-home .notebook-collection { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: 48px; row-gap: 0; margin-block: 20px 40px; }
+.collection-home .notebook-collection[data-view="list"] { grid-template-columns: 1fr; }
+.collection-home .notebook-card { border: 0; border-top: 1px solid var(--decorative-line); border-radius: 0; padding: 24px 0; background: transparent; }
+.collection-home .notebook-card:hover { border-color: var(--interactive-border); }
+.collection-home .notebook-open { display: block; min-height: 44px; padding-bottom: 8px; text-decoration: none; }
+.collection-home .notebook-open:hover h3 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+.collection-home .notebook-card h3 { font: 600 18px/28px var(--heading-font); margin: 0; letter-spacing: 0; }
+.collection-home .notebook-card p { font: 400 var(--type-ui)/1.8 var(--ui-font); color: var(--muted); margin: 0 0 16px; }
+.collection-home .notebook-facts { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 12px 0 0; padding: 0; border: 0; font: 400 var(--type-meta)/1.5 var(--ui-font); }
+.collection-home .notebook-facts > div { display: flex; align-items: baseline; gap: 6px; }
+.collection-home .notebook-facts dd { font-variant-numeric: tabular-nums; }
+.collection-home .notebook-classic-link { font-size: var(--type-meta); margin-top: 16px; color: var(--muted); }
+.collection-home .recent-notebooks { padding-block: 0 28px; }
+.collection-home .recent-list { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 48px; margin: 12px 0 0; }
+.collection-home .recent-list a { border: 0; border-bottom: 1px solid var(--decorative-line); padding: 16px 0; font-size: var(--type-ui); }
+.collection-home .recent-list strong { font-weight: 500; }
+.collection-home .recent-list .meta { font: 400 var(--type-meta)/1.6 var(--ui-font); margin-top: 6px; }
+.collection-home .archived-notebooks { border-top: 1px solid var(--decorative-line); padding-top: 16px; }
+@media (max-width: 799px) {
+ .collection-home.notebook-home { padding: 32px 20px 64px; }
+ .collection-home .page-heading { align-items: flex-start; flex-wrap: wrap; gap: 20px; padding-bottom: 24px; }
+ .collection-home .page-heading h1 { font-size: 28px; line-height: 38px; }
+ .collection-home .notebook-toolbar > input { flex-basis: 100%; max-width: none; }
+ .collection-home .collection-sort { margin-left: 0; flex-wrap: wrap; }
+ .collection-home .view-control { margin-left: auto; }
+ .collection-home .notebook-collection, .collection-home .recent-list { grid-template-columns: 1fr; }
+ .collection-home .notebook-card { padding-block: 22px; }
+}

@@ -1,0 +1,91 @@
+[Publication copy: personal filesystem paths replaced; original results/failures unchanged.]
+
+> study-workbench@0.1.0 pretypecheck
+> npm run build --workspace @study/contracts && npm run build --workspace @study/domain && npm run build --workspace @study/web-transport
+
+
+> @study/contracts@0.1.0 build
+> tsc --project tsconfig.build.json
+
+
+> @study/domain@0.1.0 build
+> tsc --project tsconfig.build.json
+
+
+> @study/web-transport@0.1.0 build
+> tsc --project tsconfig.build.json
+
+
+> study-workbench@0.1.0 typecheck
+> npm run typecheck --workspaces --if-present
+
+
+> @study/bff@0.1.0 pretypecheck
+> npm -w @study/contracts run build
+
+
+> @study/contracts@0.1.0 build
+> tsc --project tsconfig.build.json
+
+
+> @study/bff@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @study/web@0.1.0 typecheck
+> tsc --noEmit
+
+src/features/settings/setup-journey.test.tsx(30,68): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+  Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+src/features/settings/setup-journey.test.tsx(38,66): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+  Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+src/features/settings/setup-journey.test.tsx(40,69): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+  Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+src/features/settings/setup-journey.test.tsx(44,69): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+  Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+src/features/settings/setup-journey.test.tsx(46,56): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined, waitForElementOptions?: waitForOptions | undefined): Promise<HTMLElement>', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+  Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined, waitForElementOptions?: waitForOptions | undefined): Promise<HTMLElement>', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+src/features/settings/setup-journey.test.tsx(47,57): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+  Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+src/features/settings/setup-journey.test.tsx(67,68): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+  Overload 2 of 2, '(role: ByRoleMatcher, options?: ByRoleOptions | undefined): HTMLElement', gave the following error.
+    Object literal may only specify known properties, and 'exact' does not exist in type 'ByRoleOptions'.
+npm error Lifecycle script `typecheck` failed with error:
+npm error code 2
+npm error path /home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web
+npm error workspace @study/web@0.1.0
+npm error location /home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web
+npm error command failed
+npm error command sh -c tsc --noEmit
+
+
+> @study/contracts@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @study/domain@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @study/web-transport@0.1.0 typecheck
+> tsc --noEmit

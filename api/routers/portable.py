@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from starlette.datastructures import UploadFile
 
+from api.personal_transport_contracts import transport_responses
 from api.portable_service import get_portable_service
 from open_notebook.exceptions import InvalidInputError
 
@@ -62,7 +63,14 @@ async def import_portable(request: Request):
         return await get_portable_service().import_archive(file.file)
 
 
-@router.get("/exports/{export_id}/download")
+@router.get(
+    "/exports/{export_id}/download",
+    response_class=FileResponse,
+    responses=transport_responses(
+        ["application/zip"],
+        "Protected ZIP bytes; attachment study-workbench-project.zip, private/no-store.",
+    ),
+)
 async def download_export(export_id: str):
     path = await get_portable_service().download(export_id)
     return FileResponse(

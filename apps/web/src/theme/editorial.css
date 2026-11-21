@@ -1,0 +1,198 @@
+/* Reading-first editorial system: a quiet tool rail around a book-like page.
+   Shared tokens control type. Source documents and PDF canvases keep their colors. */
+body { font: var(--type-ui)/1.65 var(--ui-font); font-kerning: normal; text-rendering: optimizeLegibility; }
+h1, h2 { font-family: var(--heading-font); font-weight: 650; letter-spacing: normal; }
+h3 { font-size: var(--type-section); font-family: var(--ui-font); line-height: 1.5; font-weight: 600; }
+h4, h5, h6 { font: 600 var(--type-ui)/1.6 var(--ui-font); margin-block: 0; }
+p { line-height: inherit; }
+button, input, select, textarea, .button { font-family: var(--ui-font); }
+.button { font-size: var(--type-ui); line-height: 1.45; border-radius: 3px; }
+button, .button, input, select { min-height: 44px; }
+input, select, textarea { font-size: var(--type-ui); border-radius: 3px; }
+code, pre, kbd { font-family: var(--mono-font); }
+.eyebrow, .meta { font: 400 var(--type-meta)/1.65 var(--ui-font); letter-spacing: 0; }
+.app-header, .common-navigation { padding-inline: max(24px, calc((100vw - 1480px) / 2)); }
+.app-header { min-height: 72px; background: var(--background); }
+.common-navigation { background: var(--background); border-bottom: 1px solid var(--decorative-line); }
+.brand { font-family: var(--heading-font); font-size: 24px; font-weight: 650; letter-spacing: normal; }
+.brand-mark { font-family: var(--heading-font); font-size: 26px; }
+.header-title, .header-tools .button, .navigation-utilities .button { font-size: var(--type-meta); }
+.navigation-link { font-size: var(--type-ui); }
+.workspace-heading { max-width: 1480px; margin-inline: auto; padding: 36px 0 18px; }
+.workspace-heading h1 { font-size: var(--type-title); line-height: 1.4; margin-top: 12px; }
+.notebook-back { font: 400 var(--type-meta)/1.6 var(--ui-font); color: var(--muted); }
+.notebook-context { max-width: 1480px; margin-inline: auto; padding: 0 0 24px; }
+.workspace-scope, .workspace-read-status { font-size: var(--type-meta); }
+.workspace-read-status .button, .notebook-menu > summary { font-size: var(--type-meta); }
+.workspace-frame { max-width: 1480px; margin: 0 auto 40px; border-radius: 2px; }
+.section-navigation { padding-inline: 24px; gap: 32px; }
+.section-navigation .button { font-size: var(--type-ui); padding-block: 12px; }
+.workspace-layout { grid-template-columns: 272px minmax(0, 1fr); height: calc(100dvh - 330px); min-height: 520px; }
+.workspace-sources { background: var(--background); }
+.panel-heading { min-height: 72px; padding: 16px 24px; }
+.panel-heading h2 { font: 600 var(--type-section)/1.5 var(--heading-font); letter-spacing: normal; }
+.panel-heading .eyebrow { font: 400 var(--type-meta)/1.6 var(--ui-font); text-transform: none; letter-spacing: 0; }
+.panel-hint { font-size: var(--type-meta); line-height: 1.8; padding: 12px 24px 20px; }
+.source-row { padding: 16px 24px; }
+.source-row > .button { font-size: var(--type-ui); line-height: 1.65; font-weight: 500; }
+.source-row > .meta, .source-versions > li, .source-actions .button,
+.workspace-sources > details, .workspace-sources > .selected-search,
+.workspace-sources > .remote-sources { font-size: var(--type-meta); }
+.source-versions { color: var(--muted); }
+.source-check { color: var(--text); align-items: center; }
+.chat-message { max-width: var(--reading-measure); width: 100%; margin-inline: auto; padding: 40px 40px 36px; }
+.chat-question { font: 600 1.125rem/1.65 var(--ui-font); letter-spacing: normal; }
+.chat-answer, .reader-text { font-family: var(--ui-font); font-size: var(--type-body); line-height: 1.8; letter-spacing: normal; }
+.artifact-card .markdown { font-family: var(--reading-font); font-size: var(--type-body); line-height: 1.9; letter-spacing: normal; }
+.chat-answer { margin-block: 24px; }
+.markdown > :first-child { margin-top: 0; }
+.markdown > :last-child { margin-bottom: 0; }
+.markdown p { margin-block: 0 1.25em; }
+.markdown h1 { font-size: 1.75rem; margin: 1.6em 0 .75em; }
+.markdown h2 { font-size: 1.375rem; margin: 1.6em 0 .75em; }
+.markdown h3, .markdown h4 { font: 650 1.125rem/1.7 var(--heading-font); margin: 1.5em 0 .65em; }
+.markdown ul, .markdown ol { padding-inline-start: 1.5em; margin-block: 1em 1.4em; }
+.markdown li { margin-block: .4em; }
+.markdown blockquote { margin: 1.6em 0; padding: .25em 0 .25em 1.25em; border-inline-start: 2px solid var(--text); font-size: 1.1em; color: var(--muted); }
+.markdown blockquote p:last-child { margin-bottom: 0; }
+.markdown code { font-size: .85em; letter-spacing: 0; }
+.markdown pre { padding: 18px 20px; font-size: .875rem; line-height: 1.75; background: var(--background); border-radius: 2px; }
+.markdown pre code { font-size: inherit; }
+.markdown table { font-family: var(--ui-font); font-size: var(--type-ui); line-height: 1.7; }
+.markdown img { max-width: 100%; height: auto; }
+.chat-citations { font: 400 var(--type-meta)/1.8 var(--ui-font); margin-top: 28px; }
+.chat-citations .button { font-size: var(--type-meta); text-align: start; }
+.chat-message details, .chat-scope, .chat-scope p { font-size: var(--type-meta); color: var(--muted); }
+.chat-admission, .chat-outline-hint { width: 100%; max-width: var(--reading-measure); margin-inline: auto; padding-inline: 40px; }
+.chat-admission p, .chat-outline-hint { font-size: var(--type-meta); line-height: 1.75; }
+.composer { width: calc(100% - 80px); max-width: calc(var(--reading-measure) - 80px); margin: 20px auto 32px; padding: 20px; border-radius: 4px; }
+.composer label { font-size: var(--type-ui); color: var(--text); }
+.composer textarea { font-size: 1rem; line-height: 1.8; }
+.composer-footer p { font-size: var(--type-meta); }
+.studio-content { max-width: var(--reading-measure); padding: 16px 40px 40px; }
+.artifact-card h3 { font: 600 1.5rem/1.6 var(--heading-font); }
+.artifact-card p, .artifact-card summary { font-size: var(--type-ui); }
+.artifact-card .markdown p { font-size: var(--type-body); }
+.note-editor { border-radius: 3px; }
+.note-editor input { font-family: var(--heading-font); font-size: 1.5rem; }
+.note-editor textarea { font-family: var(--reading-font); font-size: var(--type-body); }
+.note-editor label, .status-badge, .reader-controls { font-size: var(--type-meta); }
+.reader-pane .reader-scroll { padding: 24px; }
+.reader-text { max-width: 44rem; margin-inline: auto; }
+.reader-controls { line-height: 1.6; }
+.notebook-home { max-width: 1280px; padding-top: 56px; }
+.page-heading h1, .podcast-page > header h1 { font-size: var(--type-title); line-height: 1.3125; }
+.notebook-card { border-radius: 2px; padding: 28px; }
+.notebook-card h2, .notebook-card h3 { font: 600 1.5rem/1.6 var(--heading-font); }
+.notebook-card p, .page-heading p { font-size: var(--type-ui); line-height: 1.85; }
+.notebook-facts, .recent-list .meta, .notebook-classic-link { font-size: var(--type-meta); }
+.configuration-page > h1 { font-size: var(--type-title); }
+.configuration-page label, .configuration-field, .settings-links { font-size: var(--type-ui); }
+.dialog-content { border-radius: 4px; }
+.dialog-content h2 { font-size: 1.5rem; }
+@media (min-width: 900px) and (max-width: 1528px) {
+ .workspace-heading, .notebook-context { margin-inline: 24px; }
+ .workspace-frame { margin-inline: 24px; }
+}
+@media (max-width: 899px) {
+ .app-header, .common-navigation { padding-inline: 16px; }
+ .workspace-heading { margin-inline: 20px; padding: 24px 0 16px; }
+ .workspace-heading h1 { font-size: 1.625rem; }
+ .notebook-context { margin-inline: 20px; padding: 0 0 20px; }
+ .workspace-scope { font-size: var(--type-meta); }
+ .workspace-frame { margin: 0 12px calc(80px + env(safe-area-inset-bottom)); }
+ .chat-message { padding: 28px 24px; }
+ .chat-question { font-size: 1.125rem; }
+ .chat-answer, .reader-text, .artifact-card .markdown { font-size: 1rem; line-height: 1.8; }
+ .chat-admission, .chat-outline-hint { padding-inline: 24px; }
+ .composer { width: calc(100% - 32px); max-width: none; margin: 16px auto 24px; padding: 16px; }
+ .studio-content { padding-inline: 24px; }
+ .panel-heading { min-height: 68px; padding: 16px 20px; }
+ .navigation-link, .header-tools > a, .navigation-utilities > .button { font-size: var(--type-meta); }
+ .section-navigation .button { font-size: var(--type-ui); min-height: 60px; }
+ .configuration-page > h1 { font-size: 1.75rem; }
+}
+
+/* Essential affordances do not borrow low-contrast decorative rules. */
+input, select, textarea, .button { border-color: var(--interactive-border); }
+.button-primary { border-color: var(--primary); }
+.button-quiet, .theme-control .button { border-color: transparent; }
+.source-row > .button, .source-actions .button, .header-tools > .button, .section-navigation .button { border-color: transparent; }
+.section-navigation .button[aria-pressed="true"] { border-bottom-color: var(--text); }
+.status-error, .read-error, .chat-error { color: var(--error); }
+.status-warning, .chat-warning { color: var(--warning); }
+.status-success { color: var(--success); }
+.status-badge { border-color: var(--interactive-border); }
+
+.configuration-page fieldset, .configuration-page select, .global-search textarea, .global-search select, .global-search fieldset, .podcast-card, .podcast-page > aside, .setup-warning, .notebook-menu-content { border-radius: 4px; }
+
+/* Functional labels remain at the common control size, not metadata size. */
+.header-tools .button, .navigation-utilities .button, .workspace-read-status .button, .notebook-menu > summary, .source-actions .button, .chat-citations .button { font-size: var(--type-ui); }
+
+/* Soft floating layers only. Reading and conversation remain opaque paper. */
+:root {
+ --overlay-radius: 18px;
+ --overlay-glass: rgb(250 249 246 / 96%);
+ --overlay-highlight: rgb(255 255 255 / 65%);
+ --overlay-shadow: 0 12px 36px rgb(0 0 0 / 12%);
+}
+:root[data-theme="dark"] {
+ --overlay-glass: rgb(27 27 26 / 94%);
+ --overlay-highlight: rgb(255 255 255 / 8%);
+ --overlay-shadow: 0 12px 36px rgb(0 0 0 / 28%);
+}
+.dialog-content, .notebook-menu-content {
+ background: var(--surface);
+ color: var(--text);
+ border: 1px solid var(--interactive-border);
+ border-radius: var(--overlay-radius);
+ box-shadow: inset 0 1px 0 var(--overlay-highlight), var(--overlay-shadow);
+}
+.dialog-content { padding: 24px; scroll-padding-block: 24px; }
+.notebook-menu-content { z-index: 15; max-height: min(560px, calc(100dvh - 160px)); overflow-y: auto; }
+.dialog-heading { gap: 16px; }
+.dialog-content .button, .notebook-menu-content .button { border-radius: 6px; }
+@supports ((backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px))) {
+ .dialog-content, .notebook-menu-content {
+  background: var(--overlay-glass);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+ }
+}
+@media (prefers-reduced-transparency: reduce) {
+ .dialog-content, .notebook-menu-content {
+  background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none;
+ }
+}
+@media (forced-colors: active) {
+ .dialog-content, .notebook-menu-content {
+  background: Canvas; color: CanvasText; border-color: CanvasText;
+  -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none;
+ }
+}
+@media (max-width: 599px) {
+ .dialog-content { padding: 20px; width: calc(100vw - 24px); max-height: calc(100dvh - 24px); }
+}
+
+.maintenance-controls { margin-block: 0 12px; }
+.maintenance-controls > details > summary { min-height: 44px; padding: 10px 12px; cursor: pointer; font-size: var(--type-ui); border-block: 1px solid var(--decorative-line); }
+.maintenance-controls .retrieval-panel { margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+ .dialog-content, .notebook-menu-content { animation: none; transition: none; }
+}
+
+/* User-requested diffuse charcoal shell; content planes stay opaque. */
+:root[data-theme="dark"] body {
+ background-image: radial-gradient(ellipse 80% 560px at 12% 0%, #2B2B2A 0%, transparent 76%), radial-gradient(ellipse 65% 640px at 100% 240px, #232322 0%, transparent 80%);
+ background-repeat: no-repeat;
+}
+:root[data-theme="dark"] .app-header,
+:root[data-theme="dark"] .common-navigation { background: transparent; }
+.dialog-content, .notebook-menu-content {
+ background-image: linear-gradient(145deg, rgb(255 255 255 / 2%), transparent 55%);
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+ .dialog-content, .notebook-menu-content { background-image: none; }
+ :root[data-theme="dark"] body { background-image: none; }
+}

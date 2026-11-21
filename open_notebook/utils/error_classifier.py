@@ -5,8 +5,6 @@ Maps raw exceptions from AI providers/Esperanto/LangChain to user-friendly
 error messages and appropriate exception types.
 """
 
-from loguru import logger
-
 from open_notebook.exceptions import (
     AuthenticationError,
     ConfigurationError,
@@ -16,9 +14,10 @@ from open_notebook.exceptions import (
     OpenNotebookError,
     RateLimitError,
 )
+from open_notebook.utils.boundary_logging import log_boundary_failure
 
-# Classification rules: (keywords, exception_class, user_message or None to pass through)
-_CLASSIFICATION_RULES: list[tuple[list[str], type[OpenNotebookError], str | None]] = [
+# Classification rules: (keywords, exception_class, fixed user_message)
+_CLASSIFICATION_RULES: list[tuple[list[str], type[OpenNotebookError], str]] = [
     # Authentication errors
     (
         ["authentication", "unauthorized", "invalid api key", "invalid_api_key", "401"],
@@ -31,17 +30,17 @@ _CLASSIFICATION_RULES: list[tuple[list[str], type[OpenNotebookError], str | None
         RateLimitError,
         "Rate limit exceeded. Please wait a moment and try again.",
     ),
-    # Model not found (pass through original message)
+    # Model not found
     (
         ["model not found", "does not exist", "model_not_found"],
         ConfigurationError,
-        None,
+        "The selected AI model is unavailable. Please check your model configuration in Manage -> Models.",
     ),
-    # Configuration errors from provision.py (pass through)
+    # Configuration errors from provision.py
     (
         ["no model configured", "please go to settings", "please go to manage"],
         ConfigurationError,
-        None,
+        "No AI model is configured for this operation. Please configure a default model in Manage -> Models.",
     ),
     # Network errors (connect timeouts included: the provider was never reached)
     (
@@ -113,18 +112,11 @@ def classify_error(exception: BaseException) -> tuple[type[OpenNotebookError], s
     for keywords, exc_class, message in _CLASSIFICATION_RULES:
         for keyword in keywords:
             if keyword in combined:
-                user_message = (
-                    message if message is not None else _truncate(str(exception))
-                )
-                return exc_class, user_message
+                return exc_class, message
 
     # Unclassified error - log for future improvement
-    logger.warning(f"Unclassified LLM error ({type(exception).__name__}): {exception}")
-    return ExternalServiceError, f"AI service error: {_truncate(str(exception))}"
-
-
-def _truncate(text: str, max_length: int = 200) -> str:
-    """Truncate text to max_length to avoid leaking verbose internal details."""
-    if len(text) <= max_length:
-        return text
-    return text[:max_length] + "..."
+    log_boundary_failure("llm_error_classification", exception, level="WARNING")
+    return (
+        ExternalServiceError,
+        "The AI service could not complete the request. Please try again later.",
+    )

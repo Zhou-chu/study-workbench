@@ -3,14 +3,17 @@
 import asyncio
 import hashlib
 from pathlib import Path
-from uuid import NAMESPACE_URL, uuid5
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field
 
+from api.evidence_indexing import INDEX_OPERATIONS, EvidenceIndexingService
+from api.notebooklm_links import notebooklm_link_id
 from api.notebooklm_service import get_notebooklm_service
+from api.personal_contracts import PersonalJobResponse
 from api.personal_store import data_root
+from api.personal_transport_contracts import transport_responses
 from open_notebook.domain.notebook import Notebook
 from open_notebook.exceptions import InvalidInputError, NotFoundError
 from open_notebook.integrations.notebooklm.sdk_adapter import now
@@ -168,7 +171,7 @@ async def link_notebook(
     await Notebook.get(notebook_id)
     await service._ensure_connection()
     await service.all_sources(request.remote_notebook_id)
-    link_id = "link_" + str(uuid5(NAMESPACE_URL, notebook_id))
+    link_id = notebooklm_link_id(notebook_id)
     record = {
         "link_id": link_id,
         "notebook_id": notebook_id,
@@ -253,7 +256,15 @@ async def download_artifact(
     )
 
 
-@router.get("/artifacts/{artifact_id}/download")
+@router.get(
+    "/artifacts/{artifact_id}/download",
+    response_class=FileResponse,
+    responses=transport_responses(
+        ["*/*"],
+        "Protected integrity-checked artifact bytes with stored MIME (not fixed to audio); "
+        "attachment uses the stored path basename, private/no-store.",
+    ),
+)
 async def local_artifact(artifact_id: str, service=Depends(get_notebooklm_service)):
     artifact = await service.store.get("artifact", artifact_id)
     if not artifact:
@@ -295,11 +306,17 @@ async def local_artifact(artifact_id: str, service=Depends(get_notebooklm_servic
     )
 
 
-@router.get("/jobs/{job_id}")
+@router.get(
+    "/jobs/{job_id}",
+    response_model=PersonalJobResponse,
+    response_model_exclude_unset=True,
+)
 async def job_status(job_id: str, service=Depends(get_notebooklm_service)):
     job = await service.store.get("job", job_id)
     if not job:
         raise NotFoundError("Job not found")
+    if job.get("operation") in INDEX_OPERATIONS:
+        return await EvidenceIndexingService(store=service.store).reconcile(job_id)
     if job.get("provider") == "notebooklm":
         await service._dispatch(job)
         job = await service.job(job_id)
@@ -310,11 +327,17 @@ async def job_status(job_id: str, service=Depends(get_notebooklm_service)):
     return job
 
 
-@router.post("/jobs/{job_id}/cancel")
+@router.post(
+    "/jobs/{job_id}/cancel",
+    response_model=PersonalJobResponse,
+    response_model_exclude_unset=True,
+)
 async def cancel_job(job_id: str, service=Depends(get_notebooklm_service)):
     job = await service.store.get("job", job_id)
     if not job:
         raise NotFoundError("Job not found")
+    if job.get("operation") in INDEX_OPERATIONS:
+        return await EvidenceIndexingService(store=service.store).cancel(job_id)
     if job.get("provider") == "notebooklm":
         return await service.cancel_job(job_id)
     async with service.store.project_lock(job["notebook_id"]):

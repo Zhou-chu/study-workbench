@@ -1,5 +1,5 @@
 import apiClient from './client'
-import { getApiUrl } from '@/lib/config'
+import { protectedApiPath } from './browser-transport'
 import {
   PodcastEpisode,
   EpisodeProfile,
@@ -13,21 +13,10 @@ export type EpisodeProfileInput = Omit<EpisodeProfile, 'id'>
 export type SpeakerProfileInput = Omit<SpeakerProfile, 'id'>
 
 export async function resolvePodcastAssetUrl(path?: string | null): Promise<string | undefined> {
-  if (!path) {
-    return undefined
-  }
-
-  if (/^https?:\/\//i.test(path)) {
-    return path
-  }
-
-  const base = await getApiUrl()
-
-  if (path.startsWith('/')) {
-    return `${base}${path}`
-  }
-
-  return `${base}/${path}`
+  if (!path) return undefined
+  const canonical = protectedApiPath(path)
+  if (!/^\/podcasts\/episodes\/[^/]+\/audio$/.test(canonical)) throw new Error('Invalid protected podcast path')
+  return canonical
 }
 
 export const podcastsApi = {

@@ -106,7 +106,7 @@ async def run_acceptance(
             selected = [versions[source] for source in step["sources"]]
             try:
                 turn = await chat.turn(
-                    "acceptance",
+                    "notebook:acceptance",
                     f"{run_id}-{case['id']}",
                     {
                         "engine": "independent",

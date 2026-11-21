@@ -1,0 +1,43 @@
+{
+  "date_utc": "2026-10-22",
+  "baseline_commit": "f61086bd6a0ed73934686b7eed0780370e793dee",
+  "source_file_sha256": {
+    "scripts/v1/run_native.py": "6230703d9c53f75160ece10688c445ca61c98445ace3167d35b5bea1b0ef29b9",
+    "tests/test_v1_launcher_ports.py": "16f88f03dc7b0eec13e02bd71e127bd64868bcb3dd4f09192f558e687de8fd78",
+    "docs/v1/RUNBOOK.md": "2cb2985f4498297c4c8bb1fb068946ace1ad624a0a04b4249c9c19568bac1412"
+  },
+  "checks": {
+    "launcher_tests_passed": 84,
+    "backend_tests_passed": 1785,
+    "backend_gated_skips": 46,
+    "backend_existing_warnings": 2,
+    "integration_backend_seconds": 70.64,
+    "frontend_tests_passed": 1172,
+    "frontend_test_files": 77,
+    "frontend_source_unchanged": true,
+    "frontend_lint_errors": 0,
+    "frontend_lint_existing_warnings": 7,
+    "frontend_build_id": "C82N_78XX_9-2xL1dZdG4",
+    "static_checked_python_files": 257
+  },
+  "network_guard": {
+    "denied_dns_attempts": 8,
+    "denied_bind_attempts": 1,
+    "network_restrictions_relaxed": false
+  },
+  "review_fixes": [
+    "Numeric loopback aliases and IPv4-mapped IPv6 recognized without DNS",
+    "Nondefault browser URL authorities require unambiguous HTTP(S) ASCII/punycode hosts with no escaped authority, backslash, userinfo or missing host",
+    "Unicode/escaped public paths and existing wildcard CORS preserved",
+    "Cookie isolation/HTTPS/legacy_password documentation added",
+    "Reserved *.localhost treated as local without DNS"
+  ],
+  "limits": [
+    "Offline/unit verification, not a deployed service or successful web search/import.",
+    "Forty-six actual-database opt-ins were skipped.",
+    "No new runtime credentials/configuration, browser session, or user data restoration.",
+    "Separate storage paths are required; ports alone do not isolate cookies.",
+    "Temporary workspace durability remains unproven; frontend artifacts are available only in the current session.",
+    "No Docker execution, native-client delivery, live Google/model acceptance or external Sites hosting established."
+  ]
+}

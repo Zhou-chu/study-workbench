@@ -1,0 +1,3 @@
+REMOVE TABLE auth_access;
+REMOVE TABLE auth_session;
+REMOVE TABLE auth_session_guard;
