@@ -38,12 +38,34 @@ async function enabled(page, locator) {
   return ready;
 }
 
+// Receipt values are capped counts or booleans only. Never include DOM content,
+// path, locator errors, console text, or the raw Playwright exception.
+async function controlEvidence(locator) {
+  try {
+    const count = Math.min(await locator.count(), 2);
+    if (count !== 1) return { count, visible: false, enabled: false, hit: false };
+    const [visible, enabled, hit] = await Promise.all([
+      locator.isVisible(),
+      locator.isEnabled({ timeout: 500 }),
+      locator.evaluate(element => {
+        const box = element.getBoundingClientRect();
+        if (!box.width || !box.height) return false;
+        const target = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+        return target !== null && element.contains(target);
+      }, undefined, { timeout: 500 }),
+    ]);
+    return { count, visible, enabled, hit };
+  } catch {
+    return { unavailable: true };
+  }
+}
+
 /**
  * The supplied chromium comes from the existing locked Playwright tooling.
  * Performs real user actions only; conditional browser routing blocks outside
  * network but never fulfills, edits, or stubs an application API response.
  */
-export async function runModelSetup({ chromium, origin, modelOrigin, target, password, fixtures, checkOwned, onStage }) {
+export async function runModelSetup({ chromium, origin, modelOrigin, target, password, fixtures, checkOwned, onStage, onSourceOpenFailure }) {
   const allowed = browserBoundaries(origin, modelOrigin);
   const phase = value => onStage?.(value);
   await checkOwned();
@@ -104,10 +126,30 @@ export async function runModelSetup({ chromium, origin, modelOrigin, target, pas
       throw Error('Workspace did not settle');
     }
     await readWorkspace(w => w.notebook.id === created.id && w.notebook.name === name);
-    phase('open-source-upload');
-    await section('Sources').click();
-    await role(role(page, 'region', 'Sources'), 'button', 'Add sources').click();
+    const sourcesTab = section('Sources');
+    const addSource = role(role(page, 'region', 'Sources'), 'button', 'Add sources');
     const upload = role(page, 'dialog', 'Add sources');
+    try {
+      phase('click-sources-tab');
+      await sourcesTab.click();
+      phase('click-add-sources');
+      await addSource.click();
+      phase('open-source-upload-dialog');
+      await upload.waitFor({ state: 'visible' });
+    } catch (failure) {
+      if (onSourceOpenFailure) {
+        const [tab, trigger, dialog, notebook] = await Promise.all([
+          controlEvidence(sourcesTab), controlEvidence(addSource), controlEvidence(upload),
+          controlEvidence(page.getByRole('heading', { name, exact: true, level: 1 })),
+        ]);
+        const tabActive = await sourcesTab.getAttribute('aria-pressed', { timeout: 500 })
+          .then(value => value === 'true', () => false);
+        const workspaceReadAlert = await page.locator('.workspace-read-status [role="alert"]').count()
+          .then(count => count !== 0, () => false);
+        onSourceOpenFailure({ tab, trigger, dialog, notebook, tabActive, workspaceReadAlert, pageError: pageErrors.length !== 0 });
+      }
+      throw failure;
+    }
     phase('choose-source-files');
     // setInputFiles does not wait for actionability; the real picker ignores choices
     // before the authenticated upload capability and byte limit are known.
