@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Use the original PDF’s verified physical page count for reading controls, even when extraction is absent or partial. Do not save out-of-range page jumps or rewrite a retained reading position automatically.
+
 - Select the latest eligible version of each source regardless of version order, without replacing historical selections or changing reading position.
 
 - Keep source upload identifiers in collapsed technical details, separate from file names and announced status. Show the source title when adding a version.

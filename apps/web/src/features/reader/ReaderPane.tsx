@@ -10,7 +10,7 @@ import { canonicalCitationLocator, readerIsOwned, readerIsCurrent, restoreReader
 import { ReaderHeader } from './ReaderHeader';
 import { CitationContext } from './CitationContext';
 import { TextView, type TextPosition } from './TextView';
-import { PdfView, PdfTextFallback } from './PdfView';
+import { PdfView, PdfTextFallback, type PdfPageEvidence } from './PdfView';
 import type { PdfZoom } from './pdf-render-sizing';
 export interface ReaderPaneProps {
     maintenance?: (detail: ReaderDetail) => ReactNode;
@@ -26,6 +26,10 @@ function ReaderDocument({ intent, onClose, onPositionChange, positionSave, maint
     const session = useWorkbenchSnapshot();
     const api = useMemo(() => transport ? createEvidenceApi(transport) : null, [transport]);
     const [detail, setDetail] = useState<ReaderDetail | null>(null), [blob, setBlob] = useState<Blob | null>(null), [page, setPage] = useState(intent.initialPage), [search, setSearch] = useState(''), [zoom, setZoom] = useState<PdfZoom>('fit'), [revision, setRevision] = useState(0), [loading, setLoading] = useState(false), [failure, setFailure] = useState<string | null>(null), [downloadFailure, setDownloadFailure] = useState<string | null>(null), [downloading, setDownloading] = useState(false);
+    const [pdfPageEvidence, setPdfPageEvidence] = useState<PdfPageEvidence | null>(null);
+    const queuedPage = useRef<{ page: number; generation: number } | null>(null);
+    const positionChange = useRef(onPositionChange);
+    positionChange.current = onPositionChange;
     const pane = useRef<HTMLElement>(null);
     const [textPosition, setTextPosition] = useState<TextPosition | null>(() => intent.evidence_id ? { kind: 'locator' } : { kind: 'page', page: intent.initialPage });
     const [narrow, setNarrow] = useState(() => window.matchMedia('(max-width: 899px)').matches);
@@ -36,7 +40,12 @@ function ReaderDocument({ intent, onClose, onPositionChange, positionSave, maint
     useEffect(() => () => { downloadOwner.current?.abort(); downloadOwner.current = null; }, []);
     const evidence = detail?.evidence.find(e => e.evidence_id === intent.evidence_id);
     const locator = intent.citation && evidence ? canonicalCitationLocator(intent.citation, evidence) : evidence?.locator ?? null;
-    const pageCount = detail?.extraction?.page_count ?? null;
+    const isPdf = detail?.version.mime_type === 'application/pdf';
+    const pdfEvidence = blob && pdfPageEvidence?.blob === blob ? pdfPageEvidence : null;
+    const waitingForOriginal = isPdf && detail.version.original_status === 'available' && !downloadFailure && pdfEvidence === null;
+    const extractionCount = detail?.extraction?.page_count ?? null;
+    const pageCount = waitingForOriginal ? null : pdfEvidence?.count ?? (isPdf && extractionCount === 0 ? null : extractionCount);
+    const pageNavigationBlocked = isPdf && pageCount === null;
     const blocks = detail?.extraction?.blocks.length ? detail.extraction.blocks : detail?.extraction?.text ? [{ block_id: 'document', page_index: null, text: detail.extraction.text }] : [];
     const close = () => { onClose(); restoreReaderFocus(intent); };
     useEffect(() => {
@@ -62,8 +71,22 @@ function ReaderDocument({ intent, onClose, onPositionChange, positionSave, maint
                 setDetail(value);
                 const record = value.evidence.find(e => e.evidence_id === intent.evidence_id);
                 const loc = record ? (intent.citation ? canonicalCitationLocator(intent.citation, record) : record.locator) : null;
-                if (!manual.current && typeof loc?.page_index === 'number') setPage(loc.page_index);
-                if (value.version.mime_type === 'application/pdf' && value.version.original_status === 'available') {
+                const pdf = value.version.mime_type === 'application/pdf';
+                const hasPhysicalPdf = pdf && value.version.original_status === 'available';
+                const extractedPages = value.extraction?.page_count ?? null;
+                const staged = queuedPage.current;
+                queuedPage.current = null;
+                if (staged && !hasPhysicalPdf && staged.generation === request.generation &&
+                    (extractedPages === null ? !pdf : staged.page < extractedPages)) {
+                    manual.current = true;
+                    positionChange.current({ source_version_id: value.version.source_version_id, page_index: staged.page });
+                } else if (!manual.current && (staged || typeof loc?.page_index === 'number')) {
+                    // An early local draft cannot override the original PDF/citation position.
+                    const initial = typeof loc?.page_index === 'number' ? loc.page_index : intent.initialPage;
+                    setPage(initial);
+                    if (staged) setTextPosition(position => position === null ? null : intent.evidence_id ? { kind: 'locator' } : { kind: 'page', page: initial });
+                }
+                if (hasPhysicalPdf) {
                     try {
                         const original = await api.download(value.version, request.context, request.generation, abort.signal);
                         if (ownsRead()) setBlob(original);
@@ -80,8 +103,17 @@ function ReaderDocument({ intent, onClose, onPositionChange, positionSave, maint
         })();
         return () => { pending = false; off(); abort.abort(); };
     }, [api, intent, revision]);
-    const changePage = (value: number) => { if (!Number.isSafeInteger(value) || value < 0 || !current())
-        return; manual.current = true; const next = pageCount ? Math.min(value, pageCount - 1) : value; setPage(next); setTextPosition({ kind: 'page', page: next }); if (intent.source_version_id)
+    const changePage = (value: number) => { if (!Number.isSafeInteger(value) || value < 0 || pageNavigationBlocked || (isPdf && pageCount !== null && value >= pageCount) || !current())
+        return;
+        if (!detail) {
+            if (intent.source_version_id) {
+                queuedPage.current = { page: value, generation: sessionCoordinator.current() };
+                setPage(value);
+                setTextPosition({ kind: 'page', page: value });
+            }
+            return;
+        }
+        manual.current = true; const next = pageCount ? Math.min(value, pageCount - 1) : value; setPage(next); setTextPosition({ kind: 'page', page: next }); if (intent.source_version_id)
         onPositionChange({ source_version_id: intent.source_version_id, page_index: next }); };
     const download = async () => {
         if (!api || !detail || downloadOwner.current || !current()) return;
@@ -119,13 +151,13 @@ function ReaderDocument({ intent, onClose, onPositionChange, positionSave, maint
             e.preventDefault();
             first?.focus();
         }
-    } }}><ReaderHeader title={detail && typeof detail.version.source_title === 'string' ? detail.version.source_title : t.workbench.reader} page={page} pageCount={pageCount} onPage={changePage} onClose={close}/><div className="reader-scroll" onScroll={event => {
+    } }}><ReaderHeader title={detail && typeof detail.version.source_title === 'string' ? detail.version.source_title : t.workbench.reader} page={page} pageCount={pageCount} pageNavigationBlocked={pageNavigationBlocked} onPage={changePage} onClose={close}/><div className="reader-scroll" onScroll={event => {
         // CitationContext is scrollable before TextView exists. This newer
         // scroll supersedes any pending reveal, including an older page request.
         // A later explicit page action can still supply a fresh request.
         if (event.target === event.currentTarget)
             setTextPosition(null);
-    }}><CitationContext citation={intent.citation} provenance={evidence?.provenance ?? detail?.version.provenance} independentSupport={evidence?.independent_support}/>{!intent.source_version_id && <p role="status">{intent.citation?.kind === 'remote_unmapped' ? t.workbench.remoteUnmapped : m.unavailable}</p>}{loading && <p role="status">{t.common.loading}</p>}{failure && <p role="alert">{failure === 'unavailable' ? m.unavailable : t.workbench.readerLoadFailed}</p>}{(failure || downloadFailure) && <Button disabled={loading || !ready} onClick={() => { setDownloadFailure(null); setRevision(n => n + 1); }}>{t.workbench.retry}</Button>}{downloadFailure && <p role="alert">{downloadFailure === 'missing' ? t.workbench.originalMissing : downloadFailure === 'invalid' ? m.invalid : t.workbench.readerDownloadFailed}</p>}{detail && <>{maintenance?.(detail)}{detail.version.original_status !== 'available' ? <p role="status">{t.workbench.originalMissing}</p> : <Button disabled={downloading || !ready} onClick={() => { void download(); }}>{t.workbench.downloadOriginal}</Button>}{detail.version.mime_type === 'application/pdf' && <>{blob ? <PdfView blob={blob} pageIndex={page} zoom={zoom} onZoomChange={setZoom} fallbackText={blocks.filter(b => b.page_index === page).map(b => b.text).join('\n')}/> : !loading && <PdfTextFallback text={blocks.filter(b => b.page_index === page).map(b => b.text).join('\n')}/>}<p className="panel-hint">{t.workbench.highlightUnavailable}</p></>}{intent.citation && !locator && <p className="panel-hint">{t.workbench.quoteMismatch}</p>}<TextView position={detail.version.mime_type === 'application/pdf' ? null : textPosition} blocks={blocks} search={search} onSearchChange={setSearch} locator={locator} quote={typeof intent.citation?.quote === 'string' ? intent.citation.quote : null} onPage={changePage}/></>}</div>{positionSave && <div className="reader-save-notice"><p role="status">{m.unsaved}</p><Button disabled={positionSave.blocked} onClick={() => {
+    }}><CitationContext citation={intent.citation} provenance={evidence?.provenance ?? detail?.version.provenance} independentSupport={evidence?.independent_support}/>{!intent.source_version_id && <p role="status">{intent.citation?.kind === 'remote_unmapped' ? t.workbench.remoteUnmapped : m.unavailable}</p>}{loading && <p role="status">{t.common.loading}</p>}{failure && <p role="alert">{failure === 'unavailable' ? m.unavailable : t.workbench.readerLoadFailed}</p>}{(failure || downloadFailure) && <Button disabled={loading || !ready} onClick={() => { setDownloadFailure(null); setRevision(n => n + 1); }}>{t.workbench.retry}</Button>}{downloadFailure && <p role="alert">{downloadFailure === 'missing' ? t.workbench.originalMissing : downloadFailure === 'invalid' ? m.invalid : t.workbench.readerDownloadFailed}</p>}{detail && <>{maintenance?.(detail)}{detail.version.original_status !== 'available' ? <p role="status">{t.workbench.originalMissing}</p> : <Button disabled={downloading || !ready} onClick={() => { void download(); }}>{t.workbench.downloadOriginal}</Button>}{detail.version.mime_type === 'application/pdf' && <>{blob ? <PdfView blob={blob} pageIndex={page} zoom={zoom} onZoomChange={setZoom} onPageEvidence={setPdfPageEvidence} fallbackText={blocks.filter(b => b.page_index === page).map(b => b.text).join('\n')}/> : !loading && <PdfTextFallback text={blocks.filter(b => b.page_index === page).map(b => b.text).join('\n')}/>}<p className="panel-hint">{t.workbench.highlightUnavailable}</p></>}{intent.citation && !locator && <p className="panel-hint">{t.workbench.quoteMismatch}</p>}<TextView position={detail.version.mime_type === 'application/pdf' ? null : textPosition} blocks={blocks} search={search} onSearchChange={setSearch} locator={locator} quote={typeof intent.citation?.quote === 'string' ? intent.citation.quote : null} onPage={changePage}/></>}</div>{positionSave && <div className="reader-save-notice"><p role="status">{m.unsaved}</p><Button disabled={positionSave.blocked} onClick={() => {
         positionSave.onSave();
         // Keep focus in the reader when successful recovery removes this action.
         pane.current?.querySelector<HTMLButtonElement>('.reader-header button')?.focus({ preventScroll: true });

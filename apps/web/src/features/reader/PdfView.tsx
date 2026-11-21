@@ -12,19 +12,21 @@ export function PdfTextFallback({ text }: {
     <pre className="reader-text">{text || t.workbench.pdfNoPageText}</pre>
   </div>;
 }
+export type PdfPageEvidence = Readonly<{ blob: Blob; count: number | null }>;
 interface Props {
     blob: Blob;
     pageIndex: number;
     fallbackText: string;
     zoom: PdfZoom;
     onZoomChange: (zoom: PdfZoom) => void;
+    onPageEvidence?: (evidence: PdfPageEvidence) => void;
 }
 interface RenderOwner {
     task: RenderTask;
     settled: Promise<void>;
     cancelled: boolean;
 }
-export function PdfView({ blob, pageIndex, fallbackText, zoom, onZoomChange }: Props) {
+export function PdfView({ blob, pageIndex, fallbackText, zoom, onZoomChange, onPageEvidence }: Props) {
     const { t } = useI18n();
     const container = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
@@ -103,12 +105,21 @@ export function PdfView({ blob, pageIndex, fallbackText, zoom, onZoomChange }: P
             pdfjs.GlobalWorkerOptions.workerSrc = `${assets}pdf.worker.min.mjs`;
             task = pdfjs.getDocument({ data: bytes, cMapUrl: `${assets}cmaps/`, cMapPacked: true, standardFontDataUrl: `${assets}standard_fonts/`, wasmUrl: `${assets}wasm/`, enableXfa: false });
             const document = await task.promise;
-            if (!stopped)
-                setLoaded({ blob, pdf: document });
-        })().catch(() => { if (!stopped)
-            setLoadFailed(blob); });
+            if (stopped) return;
+            const count = document.numPages;
+            if (!Number.isSafeInteger(count) || count < 1)
+                throw new Error('Invalid PDF page count');
+            setLoaded({ blob, pdf: document });
+            onPageEvidence?.({ blob, count });
+        })().catch(() => {
+            if (!stopped) {
+                setLoadFailed(blob);
+                onPageEvidence?.({ blob, count: null });
+            }
+        });
         return () => { stopped = true; void task?.destroy().catch(() => { }); };
-    }, [blob]);
+    }, [blob, onPageEvidence]);
+    const outsideDocument = pdf !== null && (pageIndex < 0 || pageIndex >= pdf.numPages);
     useEffect(() => {
         const nextGeneration = () => ++generation.current;
         const isGeneration = (value: number) => generation.current === value;
@@ -123,7 +134,7 @@ export function PdfView({ blob, pageIndex, fallbackText, zoom, onZoomChange }: P
             }
             return owner?.settled ?? Promise.resolve();
         };
-        if (pdf && target && width > 0) {
+        if (pdf && !outsideDocument && target && width > 0) {
             const identity = { pdf, page: pageIndex, zoom, width };
             setRenderState({ ...identity, state: 'loading' });
             void (async () => {
@@ -170,10 +181,10 @@ export function PdfView({ blob, pageIndex, fallbackText, zoom, onZoomChange }: P
                 }
             });
         };
-    }, [pdf, pageIndex, zoom, width]);
+    }, [pdf, pageIndex, zoom, width, outsideDocument]);
     const size = geometry?.pdf === pdf && geometry.page === pageIndex
         ? pdfRenderSizing(geometry.width, geometry.height, width, zoom, window.devicePixelRatio) : null;
-    const state = loadFailed === blob ? 'failed' : renderState?.pdf === pdf && renderState.page === pageIndex && renderState.zoom === zoom && renderState.width === width ? renderState.state : 'loading';
+    const state = loadFailed === blob || outsideDocument ? 'failed' : renderState?.pdf === pdf && renderState.page === pageIndex && renderState.zoom === zoom && renderState.width === width ? renderState.state : 'loading';
     const stepZoom = (step: number) => { if (size)
         onZoomChange(Math.max(0.25, Math.min(3, size.scale + step))); };
     return <div className="pdf-view" data-pdf-render-state={state}>

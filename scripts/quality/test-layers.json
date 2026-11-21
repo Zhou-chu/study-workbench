@@ -869,11 +869,13 @@
       "layer": "component-integration",
       "targets": [
         "apps/web/src/features/reader/ReaderPane.tsx",
+        "apps/web/src/features/reader/ReaderHeader.tsx",
+        "apps/web/src/features/reader/PdfView.tsx",
         "apps/web/src/features/reader/use-notebook-reader.ts",
         "apps/web/src/features/auth/session.ts"
       ],
       "reason": "Real reader owner/selection writes/controller recovery and late completion fences; PDF engine and network fake, independent application lifecycle remains real.",
-      "sha256": "3e9d00a1fe47a034c6c8bd6fcf641d5af4104cd341e28ca865fac08bde6c7154"
+      "sha256": "5a31d025b25a028b9d17ff34a4ba39b40b5c1a2f36a8ad71143b888e168d90b7"
     },
     {
       "path": "apps/web/src/features/reader/reader.test.tsx",
@@ -882,7 +884,7 @@
         "apps/web/src/features/reader/ReaderPane.tsx"
       ],
       "reason": "Mounted ReaderPane consumes live navigation, context, application providers and adapter responses; coordinator retirement is exercised outside unit scope.",
-      "sha256": "203520e044989d0d6ef19acf950d345eb112c75e63c431ec9b3dc1307741c8c0"
+      "sha256": "f2cd27305f6a16455b040c70f7e6e846ee0d317b1ce58500503468da6a92ceeb"
     },
     {
       "path": "apps/web/src/features/settings/advanced.test.ts",
