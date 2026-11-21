@@ -14,6 +14,7 @@ export function useSourceSelection(notebookId: string, epoch: number | undefined
     return {
         operation,
         selection: authoritative ? read.selection : operation?.payload.kind === 'selection' ? operation.payload.selection : selectionFromView(workspace?.selection),
+        firstLocalVersionIds: authoritative && !operation ? read.firstLocalVersionIds : undefined,
         unconfirmed: rows.some(row => unconfirmedSelection(row,notebookId,epoch)),
     };
 }

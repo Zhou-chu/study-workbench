@@ -1174,7 +1174,7 @@
         "apps/web/src/features/sources/source-selection.ts"
       ],
       "reason": "Mounted AppProviders, WorkbenchSession and SourcesPanel coordinate reads/selection and upload state.",
-      "sha256": "80325cca79dc3764f32a8ecfc82c8f8e431cc73773443c371ad512f3829e5913"
+      "sha256": "608e1138214c453397503be1cf3cdecdbf30b71587c9e70c984ce3c7c204b80d"
     },
     {
       "path": "apps/web/src/features/sources/upload-recovery.test.tsx",
@@ -7127,7 +7127,7 @@
         "apps/web/src/features/sources/source-operations.ts"
       ],
       "reason": "Direct selection operation and workspace projection state transitions using fixture receipts and a fixed context; no mounted UI.",
-      "sha256": "4449acb94efaf4af6fc43863e9579dafba2b4c1682f1081ba09c3e1bf6de6081"
+      "sha256": "fd86bdda9831ad8d79a1f8f82aeaf192da37ca5ed170f7e4f5a665fb9145bed3"
     },
     {
       "path": "apps/web/src/features/sources/upload-recovery.unit.test.ts",

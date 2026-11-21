@@ -52,6 +52,7 @@ export type SourceWorkspaceReadToken = Readonly<{
 export type SourceSelectionRead = Readonly<{
     token: SourceWorkspaceReadToken;
     selection: WorkbenchSelection | null;
+    firstLocalVersionIds?: readonly string[];
 }>;
 export type SourceOutcome = {
     kind: 'unknown' | 'not-sent' | 'succeeded';
@@ -72,6 +73,15 @@ function freezePayload(p: SourcePayload): SourcePayload { if (p.kind === 'select
     return Object.freeze({ kind: p.kind, selection: Object.freeze({ ...p.selection, source_version_ids: Object.freeze([...p.selection.source_version_ids]) as unknown as string[], remote_source_ids: Object.freeze([...p.selection.remote_source_ids]) as unknown as string[], ...(p.selection.reading ? { reading: Object.freeze({ ...p.selection.reading }) } : {}) }) }); if (p.kind === 'remote')
     return Object.freeze({ kind: p.kind, action: Object.freeze({ ...p.action, versionIds: Object.freeze([...p.action.versionIds]), remoteIds: Object.freeze([...p.action.remoteIds]) }) }); if (p.kind === 'web')
     return Object.freeze({ kind: p.kind, result: Object.freeze({ ...p.result }) }); return Object.freeze({ ...p }); }
+// Only a canonical fresh, unlinked workspace can offer an initial local choice.
+function firstLocalVersionIds(workspace: WorkspaceViewV1) {
+    return Object.freeze(workspace.sources.flatMap(source =>
+        !source.projection_status && 'versions' in source && Array.isArray(source.versions)
+            ? source.versions.flatMap(version => !version.projection_status && 'source_version_id' in version
+                && typeof version.source_version_id === 'string' && version.source_version_id.trim()
+                ? [version.source_version_id] : [])
+            : []));
+}
 export const unconfirmedSelection=(r:SourceOperation,notebookId:string,epoch:number|undefined)=>r.notebookId===notebookId&&!r.retired&&r.operation.context.epoch===epoch&&r.payload.kind==='selection'&&(['idle','submitting','unknown'].includes(r.operation.state)||!!r.transaction&&!r.workspaceConfirmed);
 const matchesLink=(r:SourceOperation,w:WorkspaceViewV1)=>!r.transaction||r.workspaceConfirmed===true||!!w.link&&!w.link.projection_status&&'remote_notebook_id' in w.link&&w.link.remote_notebook_id===r.transaction.remoteNotebookId&&r.payload.kind==='selection'&&!!selectionFromView(w.selection)&&sameSelection(r.payload.selection,selectionFromView(w.selection)!);
 /** App-lifetime in-memory ownership. No disk cache, automatic queue, or server replay claim. */
@@ -95,6 +105,15 @@ export function createSourceOperations(onChange: () => void) {
     return { get: (id: string) => rows.get(id), getSnapshot: () => snapshot, subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
         getSelectionRead: (notebookId: string) => selectionReads.get(notebookId),
         selectionRevision: (notebookId: string) => revisions.get(notebookId) ?? 0,
+        captureFirstLocalSelection(notebookId: string, versionId: string, context: DispatchContext, generation: number) {
+            const read = selectionReads.get(notebookId);
+            if (!read?.firstLocalVersionIds?.includes(versionId) || latestSelection(notebookId, context.epoch)
+                || retiredEpochs.has(context.epoch) || !canDispatch(read.token.context, context) || read.token.generation !== generation)
+                return null;
+            return add(notebookId, { kind: 'selection', selection: {
+                engine: 'independent', selection_origin: 'local', source_version_ids: [versionId], remote_source_ids: [],
+            } }, context, generation);
+        },
         hasSelectionTransaction:(notebookId:string,epoch:number|undefined)=>epoch!==undefined&&!!latestSelection(notebookId,epoch)?.transaction,
         selectionUnconfirmed: (notebookId:string,epoch:number|undefined)=>[...rows.values()].some(r=>unconfirmedSelection(r,notebookId,epoch)),
         reserveSelection(notebookId: string, selection: WorkbenchSelection, context: DispatchContext, generation: number, transaction?:Readonly<{providerRevision:number;remoteNotebookId:string}>) {
@@ -117,7 +136,12 @@ export function createSourceOperations(onChange: () => void) {
             if (JSON.stringify(selectionReads.get(token.notebookId)?.selection) !== JSON.stringify(parsed)) advance(token.notebookId);
             let acceptedToken=token;
             if(operation?.transaction&&!operation.workspaceConfirmed){const published=Object.freeze({...operation,workspaceConfirmed:true});rows.set(operation.id,published);acceptedToken=Object.freeze({...token,selectionOperation:published});}
-            selectionReads.set(token.notebookId, Object.freeze({ token:acceptedToken, selection: payload?.kind === 'selection' ? payload.selection : null }));
+            selectionReads.set(token.notebookId, Object.freeze({
+                token: acceptedToken,
+                selection: payload?.kind === 'selection' ? payload.selection : null,
+                ...(!operation && workspace.selection === null && workspace.link === null
+                    ? { firstLocalVersionIds: firstLocalVersionIds(workspace) } : {}),
+            }));
             emit();
             return true;
         },

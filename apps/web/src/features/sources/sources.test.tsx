@@ -108,3 +108,56 @@ it('does not offer a reading choice when every version is unavailable', async ()
     expect(row.getByRole('button', { name: 'Read Research notes · Version 1' })).toBeDisabled();
     expect(h.read).toEqual([]);
 });
+
+it('lets a fresh unlinked notebook explicitly choose one source and restores only that saved choice', async () => {
+    const { libraryServer, renderLibrary } = await import('../../test/library-harness');
+    const workspace = sourceWorkspace();
+    workspace.selection = null;
+    const requests = libraryServer(async r => {
+        if (r.method === 'PATCH' && new URL(r.url).pathname === '/api/personal/notebooks/n/selection') {
+            const accepted = await r.clone().json();
+            workspace.selection = { ...accepted, notebook_id: 'n' };
+            return json({ ...accepted, notebook_id: 'n' });
+        }
+        if (new URL(r.url).pathname === '/api/models/defaults') return json({ default_chat_model: '', default_embedding_model: null });
+        return undefined;
+    }, () => json(workspace));
+
+    async function openScope() {
+        const view = await renderLibrary('/notebooks/n');
+        const sources = await screen.findByRole('region', { name: /^Sources$/ });
+        fireEvent.click(await within(sources).findByRole('button', { name: /^Current question scope$/ }));
+        return { view, a: within(sources).getByRole('checkbox', { name: 'Select Same title · Version 1' }), b: within(sources).getByRole('checkbox', { name: 'Select Same title · Version 2' }), sources };
+    }
+    const first = await openScope();
+    expect(first.a).toBeEnabled();
+    expect(first.a).not.toBeChecked();
+    expect(first.b).not.toBeChecked();
+    expect(within(first.sources).getByRole('button', { name: 'Select all current versions' })).toBeDisabled();
+    expect(requests.filter(r => r.method !== 'GET')).toHaveLength(0);
+    fireEvent.click(first.a);
+    await waitFor(() => expect(requests.filter(r => r.method === 'PATCH')).toHaveLength(1));
+    expect(await requests.find(r => r.method === 'PATCH')!.clone().json()).toEqual({
+        engine: 'independent', selection_origin: 'local', source_version_ids: ['v-old'], remote_source_ids: [],
+    });
+    first.view.unmount();
+    const reopened = await openScope();
+    expect(reopened.a).toBeChecked();
+    expect(reopened.b).not.toBeChecked();
+    expect(requests.filter(r => r.method !== 'GET')).toHaveLength(1);
+});
+
+it.each([
+    { selection: { projection_status: 'invalid' } as const, link: null },
+    { selection: null, link: { remote_notebook_id: 'remote-n' } },
+])('does not initialize malformed or linked source scope on a click', async ({ selection, link }) => {
+    const { libraryServer, renderLibrary } = await import('../../test/library-harness');
+    const workspace = { ...sourceWorkspace(), selection, link };
+    const requests = libraryServer(undefined, () => json(workspace));
+    await renderLibrary('/notebooks/n');
+    fireEvent.click(await screen.findByRole('button', { name: /^Current question scope$/ }));
+    const source = screen.getByRole('checkbox', { name: 'Select Same title · Version 1' });
+    expect(source).toBeDisabled();
+    fireEvent.click(source);
+    expect(requests.filter(r => r.method !== 'GET')).toHaveLength(0);
+});

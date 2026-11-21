@@ -60,6 +60,56 @@ async function controlEvidence(locator) {
   }
 }
 
+// Observe only browser-initiated GETs in this page. The diagnostic companion
+// page.request GET does not produce Page request/response events.
+function observeAppWorkspace(page, origin) {
+  const requests = [], responses = [], failed = [];
+  function isWorkspace(request) {
+    const url = new URL(request.url());
+    return request.method() === 'GET' && url.origin === origin &&
+      /^\/api\/personal\/notebooks\/[^/]+\/workspace-view$/.test(url.pathname);
+  }
+  function record(samples, item) {
+    samples.push(item);
+    if (samples.length > 3) samples.shift();
+  }
+  page.on('request', request => { if (isWorkspace(request)) record(requests, request); });
+  page.on('requestfailed', request => { if (isWorkspace(request)) record(failed, request); });
+  page.on('response', response => { if (isWorkspace(response.request())) record(responses, response); });
+  return async (expectedUrl, expectedId, password) => {
+    const request = requests.at(-1);
+    const response = responses.at(-1);
+    const result = {
+      requests: requests.length, failed: failed.length, responses: responses.length,
+      expectedUrl: request?.url() === expectedUrl,
+      responseExpectedUrl: response?.url() === expectedUrl,
+      responseStatus: response?.status() ?? 0,
+      responseIsJson: /^application\/json(?:;|$)/i.test(response?.headers()['content-type'] ?? ''),
+      authPresent: false, authMatchesFixture: false,
+      parserChecked: false, parserAccepted: false, identityMatches: false,
+    };
+    let timer;
+    try {
+      await Promise.race([(async () => {
+        const auth = await request?.headerValue('authorization');
+        result.authPresent = !!auth;
+        result.authMatchesFixture = auth === 'Bearer ' + password;
+        if (!response?.ok() || !result.responseIsJson) return;
+        const { parseWorkspaceView } = await import('../../../../packages/contracts/dist/workspace-view.js');
+        const json = await response.json();
+        result.parserChecked = true;
+        try {
+          const decoded = parseWorkspaceView(json);
+          result.parserAccepted = true;
+          result.identityMatches = decoded.notebook.id === expectedId;
+        } catch { /* only the boolean rejection is evidence */ }
+      })(), new Promise(resolve => { timer = setTimeout(resolve, 1000); })]);
+    } catch { /* do not emit wire values, parser messages or errors */ }
+    finally { clearTimeout(timer); }
+    return { ...result };
+  };
+}
+
 /**
  * The supplied chromium comes from the existing locked Playwright tooling.
  * Performs real user actions only; conditional browser routing blocks outside
@@ -83,6 +133,7 @@ export async function runModelSetup({ chromium, origin, modelOrigin, target, pas
       return route.abort();
     });
     const page = await context.newPage();
+    const workspaceWire = observeAppWorkspace(page, origin);
     page.setDefaultTimeout(12_000);
     let submitCount = 0;
     page.on('request', req => {
@@ -146,7 +197,8 @@ export async function runModelSetup({ chromium, origin, modelOrigin, target, pas
           .then(value => value === 'true', () => false);
         const workspaceReadAlert = await page.locator('.workspace-read-status [role="alert"]').count()
           .then(count => count !== 0, () => false);
-        onSourceOpenFailure({ tab, trigger, dialog, notebook, tabActive, workspaceReadAlert, pageError: pageErrors.length !== 0 });
+        const appWorkspace = await workspaceWire(origin + '/api/personal' + notebookPath + '/workspace-view', created.id, password);
+        onSourceOpenFailure({ tab, trigger, dialog, notebook, tabActive, workspaceReadAlert, pageError: pageErrors.length !== 0, appWorkspace });
       }
       throw failure;
     }
@@ -182,7 +234,7 @@ export async function runModelSetup({ chromium, origin, modelOrigin, target, pas
     await (await enabled(page, selected(labelA))).check();
     await role(source(labelB), 'button', 'Current question scope').click();
     assert.equal(await selected(labelB).isChecked(), false);
-    await readWorkspace(w => JSON.stringify(w.selection.source_version_ids) === JSON.stringify([ids.a]));
+    await readWorkspace(w => JSON.stringify(w.selection?.source_version_ids) === JSON.stringify([ids.a]));
     await section('Conversation').click();
     const draft = () => role(page, 'textbox', 'Question');
     const ask = () => role(page, 'button', 'Ask selected sources');
@@ -230,7 +282,7 @@ export async function runModelSetup({ chromium, origin, modelOrigin, target, pas
     await page.waitForURL(start);
     assert.equal(await draft().inputValue(), question);
     await enabled(page, ask());
-    await readWorkspace(w => JSON.stringify(w.selection.source_version_ids) === JSON.stringify([ids.a]));
+    await readWorkspace(w => JSON.stringify(w.selection?.source_version_ids) === JSON.stringify([ids.a]));
     assert.equal(submitCount, 0);
     assert.deepEqual(blocked, []);
     assert.deepEqual(pageErrors, []);
