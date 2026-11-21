@@ -4942,10 +4942,12 @@
       "targets": [
         "scripts/ci/prepare_tools.py",
         ".github/workflows/pr-quality.yml",
+        ".github/workflows/pr-pdf-browser.yml",
+        "scripts/ci/pdf-browser/probe.mjs",
         "pyproject.toml"
       ],
       "reason": "Workflow static contract checks plus real synthetic tar and filesystem custody/extraction tests. No hosted dependency install, official-source build or complete remote CI is exercised; not wholly pure unit. Actual Ruff subprocess checks preserve external coverage import grouping with/without generated report directories.",
-      "sha256": "c7eb635121c3bdce7734f99b4703653840c3a15dd87114ecf55cf20d2d740c8f"
+      "sha256": "d9befb710640cfe8d4a6636a5b7c26d5e437e80c61d3c298f46fa8ada347cc2a"
     },
     {
       "path": "tests/test_prepare_canonical_publication.py",

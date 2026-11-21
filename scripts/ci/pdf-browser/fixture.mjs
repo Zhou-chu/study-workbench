@@ -1,0 +1,105 @@
+import { createServer } from 'node:http';
+import { readFileSync, statSync, writeFileSync } from 'node:fs';
+import { extname, join, resolve, relative } from 'node:path';
+import { createHash } from 'node:crypto';
+
+const [repository, artifact, sourceCommit, output] = process.argv.slice(2);
+if (!repository || !artifact || !/^[a-f0-9]{40}$/.test(sourceCommit ?? '') || !output)
+  throw new Error('Expected checkout, verified artifact, full source SHA and fixture ledger path');
+const hash = bytes => createHash('sha256').update(bytes).digest('hex');
+const localFixture = join(repository, 'tests/fixtures/v1');
+const fixtures = [
+  ['a', 'PDF fixture A', '9d0cd69bbcc02c806f065d2e456b5a08f38c5822c342226d964125077b982032', 3],
+  ['b', 'PDF fixture B', 'd94cea49810b0e3c132428b612ca886001fb5337cb13664e5f61323c10bc258c', 4],
+].map(([key, title, expected, pages]) => {
+  const bytes = readFileSync(join(localFixture, 'fixture_' + key + '.pdf'));
+  if (hash(bytes) !== expected) throw new Error('Fixture bytes do not match the committed hash');
+  return { bytes, pages, version: {
+    source_id: 'source-' + key, source_version_id: 'version-' + key, notebook_id: 'synthetic',
+    source_title: title, created_at: '2026-11-20T12:00:00Z', origin: 'upload', status: 'ready', original_status: 'available',
+    mime_type: 'application/pdf', byte_size: bytes.length, sha256: expected,
+  } };
+});
+const root = resolve(artifact);
+const index = readFileSync(join(root, 'index.html'));
+const manifest = JSON.parse(readFileSync(join(root, 'spa-artifact-manifest.json'), 'utf8'));
+const identity = JSON.parse(readFileSync(join(root, 'artifact-identity.json'), 'utf8'));
+if (manifest.source_commit !== sourceCommit || identity.source_commit !== sourceCommit ||
+    !/^[a-z0-9][a-z0-9-]{15,79}$/.test(identity.release_slot)) throw new Error('Artifact does not match requested commit');
+const release = '/_spa/releases/' + identity.release_slot + '/';
+const notebook = { id: 'synthetic', name: 'PDF pagination synthetic notebook', description: '', archived: false };
+let selection = { engine: 'independent', selection_origin: 'local', source_version_ids: [], remote_source_ids: [], reading: null };
+const workspace = () => ({
+  schema_version: 'workspace-view-v1', notebook, selection: { ...selection, notebook_id: notebook.id },
+  sources: fixtures.map(({ version }) => ({ source_id: version.source_id, title: version.source_title, versions: [version] })),
+  jobs: [], notes: [], turns: [], link: null, legacy_history: [],
+});
+const methods = [];
+const summary = () => ({
+  expectedSourceCommit: sourceCommit, artifactKind: 'verified-release-manifests',
+  indexSha256: hash(index), artifact: manifest, fixtureBytes: fixtures.map(({ version, pages }) => ({
+    id: version.source_version_id, sha256: version.sha256, bytes: version.byte_size, pages,
+  })), requests: methods, current: selection,
+});
+const record = (req, path, status, extra = undefined) => {
+  if (path.startsWith('/api/') || path === '/config' || path.endsWith('/pdf.worker.min.mjs')) {
+    methods.push({ method: req.method, path: status === 404 ? 'unlisted-fixture-route' : path, status, ...(extra ?? {}) });
+    writeFileSync(output, JSON.stringify(summary(), null, 2) + '\n', { mode: 0o600 });
+  }
+};
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.pdf': 'application/pdf', '.wasm': 'application/wasm', '.json': 'application/json', '.woff': 'font/woff', '.woff2': 'font/woff2' };
+createServer(async (req, res) => {
+  const path = new URL(req.url, 'http://127.0.0.1').pathname;
+  const send = (status, body, type = 'application/json', extra) => {
+    const bytes = type === 'application/json' ? Buffer.from(JSON.stringify(body)) : Buffer.from(body);
+    res.writeHead(status, { 'content-type': type, 'content-length': bytes.length, 'x-content-type-options': 'nosniff', 'cache-control': 'no-store' });
+    res.end(bytes);
+    record(req, path, status, extra);
+  };
+  if (req.method === 'GET' && path === '/__fixture_evidence') return send(200, summary());
+  const method = req.method;
+  if (method === 'GET') {
+    if (path === '/config') return send(200, { apiUrl: '', auth_mode: 'legacy_password', web_session_protocol: null,
+      client_contracts: ['workspace-view-v1'], ui_transport_protocol: 1 });
+    if (path === '/api/auth/status') return send(200, { auth_enabled: false });
+    if (path === '/api/personal/client-capabilities') return send(200, { contract_version: 'client-capabilities-v1',
+      supported_contracts: ['workspace-view-v1'], limits: { source_upload_max_bytes: 50, portable: {
+      max_archive_bytes: 10, max_expanded_bytes: 20, max_entity_bytes: 10, max_request_bytes: 30,
+      multipart_overhead_bytes: 10, max_entries: 2, max_compression_ratio: 5 } } });
+    if (path === '/api/personal/notebooks/synthetic/workspace-view') return send(200, workspace());
+    if (path === '/api/notebooks/synthetic') return send(200, notebook);
+    for (const { bytes, version } of fixtures) {
+      const p = '/api/personal/source-versions/' + version.source_version_id;
+      if (path === p) return send(200, { version, extraction: null, evidence: [] });
+      if (path === p + '/download') return send(200, bytes, 'application/pdf', { sha256: version.sha256, bytes: bytes.length });
+    }
+    if (/^\/api\/(?:personal\/notebooks\/synthetic\/(?:turns|notes)|models|notebooks|recently-viewed)$/.test(path)) return send(200, []);
+  }
+  if (method === 'PATCH' && path === '/api/personal/notebooks/synthetic/selection') {
+    try {
+      const chunks = []; let length = 0;
+      for await (const part of req) { length += part.length; if (length > 2000) return send(413, {}); chunks.push(part); }
+      const next = JSON.parse(Buffer.concat(chunks).toString());
+      const allowed = fixtures.map(({ version }) => version.source_version_id);
+      const reader = next.reading == null ? null : fixtures.find(({ version }) => version.source_version_id === next.reading.source_version_id);
+      if (next.engine !== 'independent' || next.selection_origin !== 'local' || !Array.isArray(next.source_version_ids) ||
+          !next.source_version_ids.every(id => allowed.includes(id)) || !Array.isArray(next.remote_source_ids) || next.remote_source_ids.length ||
+          next.reading != null && (!reader || !Number.isSafeInteger(next.reading.page_index) || next.reading.page_index < 0 || next.reading.page_index >= reader.pages)) return send(422, {});
+      selection = { engine: next.engine, selection_origin: next.selection_origin,
+        source_version_ids: next.source_version_ids, remote_source_ids: [], reading: reader ? { source_version_id: reader.version.source_version_id, page_index: next.reading.page_index } : null };
+      return send(200, {}, 'application/json', { syntheticSelected: selection.source_version_ids, syntheticReading: selection.reading });
+    } catch { return send(400, {}); }
+  }
+  if (path.startsWith('/api/') || method !== 'GET') return send(404, {});
+  if (path === '/' || path === '/notebooks/synthetic') return send(200, index, 'text/html');
+  const relativePath = path.startsWith(release) ? path.slice(release.length) : path.slice(1);
+  if (relativePath !== 'spa-artifact-manifest.json' && !relativePath.startsWith('assets/') && !relativePath.startsWith('pdfjs/')) return send(404, {});
+  const candidate = resolve(root, relativePath), file = relative(root, candidate);
+  if (!file || file === '..' || file.startsWith('../')) return send(404, {});
+  try { if (statSync(candidate).isFile()) { const type = types[extname(candidate)] ?? 'application/octet-stream'; return type === 'application/json' ? send(200, JSON.parse(readFileSync(candidate, 'utf8'))) : send(200, readFileSync(candidate), type); } }
+  catch (e) { if (e.code !== 'ENOENT') return send(500, {}); }
+  return send(404, {});
+}).listen(Number(process.env.PORT ?? 0), '127.0.0.1', function () {
+  writeFileSync(output, JSON.stringify(summary(), null, 2) + '\n', { mode: 0o600 });
+  process.stdout.write('http://127.0.0.1:' + this.address().port + '\n');
+});

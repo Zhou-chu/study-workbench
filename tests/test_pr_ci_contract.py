@@ -226,3 +226,38 @@ def test_frontend_static_requires_dependencies_but_not_python_success():
     assert "continue-on-error" not in frontend
     assert "|| true" not in python["run"]
     assert "|| true" not in frontend["run"]
+
+
+def test_synthetic_pdf_browser_workflow_is_read_only_and_fails_closed():
+    text = (ROOT / ".github/workflows/pr-pdf-browser.yml").read_text()
+    workflow = yaml.load(text, Loader=yaml.BaseLoader)
+    assert workflow["on"] == {"pull_request": {"branches": ["main"]}}
+    assert workflow["permissions"] == {"contents": "read"}
+    assert set(workflow["jobs"]) == {"physical-pdf-pagination"}
+    job = workflow["jobs"]["physical-pdf-pagination"]
+    assert job["runs-on"] == "ubuntu-22.04"
+    assert (
+        "github.event.pull_request.head.repo.full_name == github.repository"
+        in job["if"]
+    )
+    assert "github.event.pull_request.number == 1" in job["if"]
+    assert "pull_request_target" not in text
+    assert "secrets." not in text
+    assert "continue-on-error" not in text
+    assert "--verify apps/web/dist" in text
+    assert "prepare_tools.py" in text
+    by_action = {
+        step["uses"].split("@")[0]: step for step in job["steps"] if "uses" in step
+    }
+    assert by_action["actions/checkout"]["with"] == {
+        "ref": "${{ github.event.pull_request.head.sha }}",
+        "persist-credentials": "false",
+    }
+    assert all(
+        len(sha) == 40 and all(c in "0123456789abcdef" for c in sha)
+        for step in by_action.values()
+        for sha in [step["uses"].split("@")[1]]
+    )
+    probe = (ROOT / "scripts/ci/pdf-browser/probe.mjs").read_text()
+    assert "chromiumSandbox: true" in probe
+    assert "--no-sandbox" not in probe + text
