@@ -181,12 +181,43 @@ function observeSourceUpload(page, endpoint, password) {
   };
 }
 
+// Tally only the three expected mutations in the setup-only fixture.
+function observeModelSetup(page, origin) {
+  const counters = Object.fromEntries(['save', 'discover', 'register'].map(kind =>
+    [kind, { posts: 0, finished: 0, statuses: [], failureClasses: [] }]));
+  function bucket(request) {
+    const url = new URL(request.url());
+    if (url.origin !== origin || request.method() !== 'POST') return undefined;
+    if (url.pathname === '/api/credentials') return counters.save;
+    const match = /^\/api\/credentials\/[^/]+\/(discover|register-models)$/.exec(url.pathname);
+    return match ? counters[match[1] === 'discover' ? 'discover' : 'register'] : undefined;
+  }
+  const handlers = {
+    request: request => { const row = bucket(request); if (row && row.posts < 4) row.posts++; },
+    response: response => {
+      const row = bucket(response.request());
+      if (row && row.statuses.length < 4) row.statuses.push(response.status());
+    },
+    requestfinished: request => { const row = bucket(request); if (row && row.finished < 4) row.finished++; },
+    requestfailed: request => {
+      const row = bucket(request);
+      if (row && row.failureClasses.length < 4)
+        row.failureClasses.push(networkFailureClasses.get(request.failure()?.errorText) ?? 'other');
+    },
+  };
+  for (const [event, handler] of Object.entries(handlers)) page.on(event, handler);
+  return {
+    counters,
+    detach() { for (const [event, handler] of Object.entries(handlers)) page.off(event, handler); },
+  };
+}
+
 /**
  * The supplied chromium comes from the existing locked Playwright tooling.
  * Performs real user actions only; conditional browser routing blocks outside
  * network but never fulfills, edits, or stubs an application API response.
  */
-export async function runModelSetup({ chromium, origin, modelOrigin, target, password, fixtures, checkOwned, onStage, onSourceOpenFailure, onSourceUploadFailure }) {
+export async function runModelSetup({ chromium, origin, modelOrigin, target, password, fixtures, checkOwned, onStage, onSourceOpenFailure, onSourceUploadFailure, onModelSetupFailure }) {
   const allowed = browserBoundaries(origin, modelOrigin);
   const phase = value => onStage?.(value);
   await checkOwned();
@@ -333,25 +364,39 @@ export async function runModelSetup({ chromium, origin, modelOrigin, target, pas
     await enabled(page, setChat);
     assert.equal(await setChat.inputValue(), '');
 
-    phase('save-discover-register');
-    await role(page, 'button', 'Add Configuration: Ollama').click();
+    const setupWire = observeModelSetup(page, origin);
     const settings = role(page, 'dialog', 'Add Configuration');
-    await settings.getByLabel('Name', { exact: true }).fill(connection);
-    await settings.getByLabel('Base URL', { exact: true }).selectOption('set');
-    await settings.getByRole('textbox', { name: /: Base URL$/ }).fill(modelOrigin);
-    await role(settings, 'button', 'Save configuration').click();
-    await settings.waitFor({ state: 'hidden' });
-    await role(page, 'button', 'Discover Models ' + connection).click();
     const confirm = () => role(page, 'button', 'Confirm action');
-    await confirm().click();
-    const discovered = role(page, 'checkbox', model);
-    await discovered.waitFor();
-    await discovered.check();
-    const modelType = page.getByRole('combobox', { name: 'Model Type', exact: true });
-    await modelType.selectOption('language');
-    await role(page, 'button', 'Register selected').click();
+    let modelControl;
+    const modelAction = (stage, locator) => {
+      phase(stage);
+      modelControl = locator;
+      return locator;
+    };
+    try {
+      await modelAction('open-ollama-config', role(page, 'button', 'Add Configuration: Ollama')).click();
+      await modelAction('fill-ollama-name', settings.getByLabel('Name', { exact: true })).fill(connection);
+      await modelAction('enable-ollama-base-url', settings.getByLabel('Base URL', { exact: true })).selectOption('set');
+      await modelAction('fill-ollama-base-url', settings.getByRole('textbox', { name: /: Base URL$/ })).fill(modelOrigin);
+      await modelAction('save-ollama-config', role(settings, 'button', 'Save configuration')).click();
+      await modelAction('confirm-ollama-config-saved', settings).waitFor({ state: 'hidden' });
+      await modelAction('open-ollama-discovery', role(page, 'button', 'Discover Models ' + connection)).click();
+      await modelAction('confirm-ollama-discovery', confirm()).click();
+      const discovered = modelAction('wait-ollama-discovery', role(page, 'checkbox', model));
+      await discovered.waitFor();
+      await modelAction('select-ollama-model', discovered).check();
+      const modelType = page.getByRole('combobox', { name: 'Model Type', exact: true });
+      await modelAction('choose-ollama-model-type', modelType).selectOption('language');
+      await modelAction('register-ollama-model', role(page, 'button', 'Register selected')).click();
+      await modelAction('wait-ollama-registration', page.getByRole('heading', { name: model, exact: true })).waitFor();
+    } catch (failure) {
+      setupWire.detach();
+      if (onModelSetupFailure) onModelSetupFailure({ ...setupWire.counters, control: await controlEvidence(modelControl) });
+      throw failure;
+    } finally {
+      setupWire.detach();
+    }
     phase('assign-default');
-    await page.getByRole('heading', { name: model, exact: true }).waitFor();
     await setChat.selectOption({ label: model });
     await confirm().click();
     await confirm().waitFor({ state: 'hidden' });

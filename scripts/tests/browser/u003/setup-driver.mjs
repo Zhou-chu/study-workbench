@@ -9,7 +9,7 @@ if (!tooling || !proofFile || !fixtures || !evidence || process.env.GITHUB_ACTIO
 const { chromium } = await import(pathToFileURL(path.join(tooling, 'node_modules/playwright-core/index.mjs')));
 const target = JSON.parse(readFileSync(proofFile, 'utf8'));
 let stage = 'wire-preflight';
-let sourceOpen, sourceUpload;
+let sourceOpen, sourceUpload, modelSetup;
 try {
   const result = await runModelSetup({
     chromium, origin: process.env.U003_GATEWAY_ORIGIN, modelOrigin: process.env.U003_MODEL_ORIGIN,
@@ -18,9 +18,10 @@ try {
     onStage: value => { stage = value; },
     onSourceOpenFailure: values => { sourceOpen = values; },
     onSourceUploadFailure: values => { sourceUpload = values; },
+    onModelSetupFailure: values => { modelSetup = values; },
   });
   writeFileSync(evidence, JSON.stringify(result), { flag: 'wx', mode: 0o600 });
 } catch {
-  writeFileSync(evidence, JSON.stringify({ status: 'fail', stage, sourceCommit: target.sourceCommit, ...(sourceOpen ? { sourceOpen } : {}), ...(sourceUpload ? { sourceUpload } : {}) }), { flag: 'wx', mode: 0o600 });
+  writeFileSync(evidence, JSON.stringify({ status: 'fail', stage, sourceCommit: target.sourceCommit, ...(sourceOpen ? { sourceOpen } : {}), ...(sourceUpload ? { sourceUpload } : {}), ...(modelSetup ? { modelSetup } : {}) }), { flag: 'wx', mode: 0o600 });
   process.exitCode = 1;
 }
