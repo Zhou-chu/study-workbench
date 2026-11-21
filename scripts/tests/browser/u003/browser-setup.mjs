@@ -60,7 +60,7 @@ async function controlEvidence(locator) {
   }
 }
 
-const workspaceFailureClasses = new Map([
+const networkFailureClasses = new Map([
   ['net::ERR_ABORTED', 'aborted'],
   ['net::ERR_CONNECTION_RESET', 'connection-reset'],
   ['net::ERR_CONNECTION_CLOSED', 'connection-closed'],
@@ -101,7 +101,7 @@ function observeAppWorkspace(page, origin) {
     const complete = finished.findLast(sample => sample.item === request);
     // No wall-clock, raw failure string, header values or timing of unrelated requests.
     const elapsed = sample => sample && start ? Math.min(15_000, Math.max(0, Math.round(sample.at - start.at))) : null;
-    const failureClass = failure ? workspaceFailureClasses.get(failure.item.failure()?.errorText) ?? 'other' : null;
+    const failureClass = failure ? networkFailureClasses.get(failure.item.failure()?.errorText) ?? 'other' : null;
     const result = {
       requests: requests.length, failed: failed.length, responses: responses.length, finished: finished.length,
       failureClass, headersMs: elapsed(headers), failureMs: elapsed(failure), finishedMs: elapsed(complete),
@@ -134,12 +134,59 @@ function observeAppWorkspace(page, origin) {
   };
 }
 
+// Observe the browser's owned upload attempts, including differently encoded
+// candidates. Record only counts, statuses and bounded classes, never data.
+function observeSourceUpload(page, endpoint, password) {
+  const origin = new URL(endpoint).origin;
+  const posts = [], responses = [], finished = [], failed = [];
+  const matches = request => {
+    const url = new URL(request.url());
+    return request.method() === 'POST' && url.origin === origin && url.pathname.endsWith('/sources/upload');
+  };
+  const note = (list, item) => { if (list.length < 4) list.push(item); };
+  const handlers = {
+    request: request => { if (matches(request)) note(posts, request); },
+    response: response => { if (matches(response.request())) note(responses, response); },
+    requestfinished: request => { if (matches(request)) note(finished, request); },
+    requestfailed: request => { if (matches(request)) note(failed, request); },
+  };
+  for (const [event, handler] of Object.entries(handlers)) page.on(event, handler);
+  return {
+    detach() { for (const [event, handler] of Object.entries(handlers)) page.off(event, handler); },
+    async receipt() {
+      const exact = posts.filter(request => request.url() === endpoint);
+      const read = async (header, expected) => {
+        if (!posts.length) return false;
+        let timer;
+        try {
+          return await Promise.race([
+            Promise.all(posts.map(request => request.headerValue(header).then(expected))).then(values => values.every(Boolean)),
+            new Promise(resolve => { timer = setTimeout(() => resolve(false), 500); }),
+          ]);
+        } catch { return false; }
+        finally { clearTimeout(timer); }
+      };
+      const [authMatchesFixture, originMatchesFixture, multipart] = await Promise.all([
+        read('authorization', value => value === 'Bearer ' + password),
+        read('origin', value => value === origin),
+        read('content-type', value => /^multipart\/form-data(?:\s*;|$)/i.test(value ?? '')),
+      ]);
+      return {
+        posts: posts.length, exactPosts: exact.length, finished: finished.length, failed: failed.length,
+        authMatchesFixture, originMatchesFixture, multipart,
+        statuses: responses.map(response => [response.url() === endpoint, response.status()]),
+        failureClasses: failed.map(request => networkFailureClasses.get(request.failure()?.errorText) ?? 'other'),
+      };
+    },
+  };
+}
+
 /**
  * The supplied chromium comes from the existing locked Playwright tooling.
  * Performs real user actions only; conditional browser routing blocks outside
  * network but never fulfills, edits, or stubs an application API response.
  */
-export async function runModelSetup({ chromium, origin, modelOrigin, target, password, fixtures, checkOwned, onStage, onSourceOpenFailure }) {
+export async function runModelSetup({ chromium, origin, modelOrigin, target, password, fixtures, checkOwned, onStage, onSourceOpenFailure, onSourceUploadFailure }) {
   const allowed = browserBoundaries(origin, modelOrigin);
   const phase = value => onStage?.(value);
   await checkOwned();
@@ -237,15 +284,24 @@ export async function runModelSetup({ chromium, origin, modelOrigin, target, pas
     phase('submit-source-files');
     const statuses = [];
     const endpoint = origin + '/api/personal' + notebookPath + '/sources/upload';
-    await Promise.all([
-      page.waitForResponse(r => {
-        if (r.url() !== endpoint || r.request().method() !== 'POST') return false;
-        statuses.push(r.status());
-        return statuses.length === 2 || !r.ok();
-      }),
-      send.click().then(() => phase('source-upload-http')),
-    ]);
-    assert.deepEqual(statuses, [200, 200]);
+    const uploadWire = observeSourceUpload(page, endpoint, password);
+    try {
+      await Promise.all([
+        page.waitForResponse(r => {
+          if (r.url() !== endpoint || r.request().method() !== 'POST') return false;
+          statuses.push(r.status());
+          return statuses.length === 2 || !r.ok();
+        }),
+        send.click().then(() => phase('source-upload-http')),
+      ]);
+      assert.deepEqual(statuses, [200, 200]);
+    } catch (failure) {
+      uploadWire.detach();
+      if (onSourceUploadFailure) onSourceUploadFailure(await uploadWire.receipt());
+      throw failure;
+    } finally {
+      uploadWire.detach();
+    }
     phase('source-extraction-ready');
     const ids = await readWorkspace(sourceReceipt);
     phase('close-source-upload');
