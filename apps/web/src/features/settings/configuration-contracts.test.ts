@@ -80,6 +80,17 @@ it('B9c safe projections preserve false zero absent null and future data without
     expect(cfg.safeDocs('javascript:alert(1)')).toBeNull();
     expect(cfg.safeDocs('https://user:pass@invalid.test')).toBeNull();
 });
+it('normalizes only the real fresh-backend empty chat default, not malformed IDs', () => {
+    expect(cfg.parseDefaults({ ...modelDefaults, default_chat_model: '' }).default_chat_model).toBeNull();
+    expect(cfg.parseDefaults({ ...modelDefaults, default_chat_model: 'model:valid' }).default_chat_model).toBe('model:valid');
+    for (const invalid of [
+        { ...modelDefaults, default_chat_model: ' ' },
+        { ...modelDefaults, default_chat_model: ' model:valid' },
+        { ...modelDefaults, default_chat_model: 'model:valid ' },
+        { ...modelDefaults, default_chat_model: undefined },
+        { ...modelDefaults, default_embedding_model: '' },
+    ]) expect(() => cfg.parseDefaults(invalid)).toThrow();
+});
 it('B9c settings adapter preserves wire ownership, default-null semantics and exact credential/model paths', async () => {
     const calls: {
         method: string;

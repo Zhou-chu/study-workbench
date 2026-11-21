@@ -71,9 +71,9 @@ it.each(['cancel', 'save', 'failure'] as const)('returns from Tools model setup 
   expect(requests.some(r => /discover|\/test|\/turns/.test(new URL(r.url).pathname) && r.method === 'POST')).toBe(false);
 });
 
-it('returns from the inline missing-model link with the original question ready for its selected source', async () => {
+it.each([null, ''] as const)('returns from inline model setup with original question and only its selected source (initial default %j)', async initialDefault => {
   const workspace = sourceWorkspace();
-  let selectedModel: string | null = null;
+  let selectedModel: string | null = initialDefault;
   const defaultMethods: string[] = [];
   const requests = libraryServer(async request => {
     const path = new URL(request.url).pathname;

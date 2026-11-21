@@ -200,7 +200,12 @@ export function parseModels(value: unknown): readonly Model[] {
 }
 export function parseDefaults(value: unknown): Defaults {
     const r = record(value);
-    return Object.freeze(Object.fromEntries(defaultKeys.map(key => [key, r[key] === null ? null : identity(r[key])])) as Record<DefaultKey, string | null>);
+    // The initial database migration stores an unassigned chat model as ''.
+    // Keep other defaults and malformed IDs subject to normal identity validation.
+    return Object.freeze(Object.fromEntries(defaultKeys.map(key => {
+        const raw = r[key];
+        return [key, raw === null || (key === 'default_chat_model' && raw === '') ? null : identity(raw)];
+    })) as Record<DefaultKey, string | null>);
 }
 export function parseDiscovery(value: unknown, id: string, provider: string): Discovery {
     const r = record(value);

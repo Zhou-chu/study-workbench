@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Allow fresh Notebook installations to set a first chat model when the database reports the initial empty default; returning to the notebook keeps the question draft and selected sources.
+
 - Open the latest source version by actual creation time. When it cannot be confirmed, show version history for an explicit reading choice without changing question scope.
 
 - Use the original PDF’s verified physical page count for reading controls, even when extraction is absent or partial. Do not save out-of-range page jumps or rewrite a retained reading position automatically.
