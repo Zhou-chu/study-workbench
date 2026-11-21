@@ -1,0 +1,489 @@
+{
+  "test_v1_personal_enqueue_reconciliation.py": {
+    "originalNodes": 8,
+    "allASTEqual": true,
+    "duplicatedIdenticalSetupOnly": [
+      "request_payload"
+    ],
+    "unitNodes": [
+      "request_payload",
+      "test_enqueue_error_preserves_advanced_job",
+      "test_enqueue_failure_rereads_after_project_lock",
+      "test_enqueue_failure_does_not_recreate_deleted_job",
+      "test_unadvanced_enqueue_error_keeps_existing_failure_contract"
+    ]
+  },
+  "test_workspace_view_v1.py": {
+    "originalNodes": 18,
+    "allASTEqual": true,
+    "duplicatedIdenticalSetupOnly": [],
+    "unitNodes": [
+      "test_workspace_view_allowlist_preserves_compatibility",
+      "test_bad_dispatch_receipts_stay_non_actionable",
+      "test_unknown_request_and_nested_proof_fields_do_not_become_known",
+      "test_proof_disagreements_null_absence_and_history_survive",
+      "test_input_marker_cannot_erase_unknown_fields",
+      "test_recovery_golden_python_wire_for_ts",
+      "test_dispatch_false_is_not_coerced_from_other_json_types",
+      "test_reserved_projection_marker_null_is_not_a_known_raw_request",
+      "test_current_grounded_turn_metadata_is_shape_known_without_internal_hash_or_usage",
+      "test_receipt_view_union_has_exact_branches",
+      "test_reviewed_note_authorship_and_history_producer_fields_remain_readable",
+      "test_malformed_reserved_markers_preserve_identifiable_history_rows",
+      "test_actual_extraction_command_result_is_known_without_erasing_fields",
+      "test_extraction_result_invalid_or_unknown_fields_still_block"
+    ]
+  },
+  "downstream": "test_v1_personal_dispatch_receipt.py: import-only change, all test/function AST equal",
+  "remainingOldModuleImports": [],
+  "base": "1393ae1",
+  "beforeCases": 106,
+  "afterCases": 106,
+  "allTrackedPythonOldImports": [],
+  "literalMentions": [],
+  "productionFiles": 180,
+  "productionBeforeDigest": "250fe265331e7768cfccbf4d21b45347c7360d24ff89e8a4f06c927fca45e6cd",
+  "productionAfterDigest": "250fe265331e7768cfccbf4d21b45347c7360d24ff89e8a4f06c927fca45e6cd",
+  "caseMapping": [
+    {
+      "before": "tests/test_v1_personal_enqueue_reconciliation.py::test_store_snapshots_and_create_only_are_independent",
+      "after": "tests/test_v1_personal_enqueue_reconciliation.py::test_store_snapshots_and_create_only_are_independent"
+    },
+    {
+      "before": "tests/test_v1_personal_enqueue_reconciliation.py::test_enqueue_error_preserves_advanced_job[succeeded]",
+      "after": "tests/test_personal_enqueue_reconciliation_unit.py::test_enqueue_error_preserves_advanced_job[succeeded]"
+    },
+    {
+      "before": "tests/test_v1_personal_enqueue_reconciliation.py::test_enqueue_error_preserves_advanced_job[running]",
+      "after": "tests/test_personal_enqueue_reconciliation_unit.py::test_enqueue_error_preserves_advanced_job[running]"
+    },
+    {
+      "before": "tests/test_v1_personal_enqueue_reconciliation.py::test_enqueue_error_preserves_advanced_job[cancelled_local]",
+      "after": "tests/test_personal_enqueue_reconciliation_unit.py::test_enqueue_error_preserves_advanced_job[cancelled_local]"
+    },
+    {
+      "before": "tests/test_v1_personal_enqueue_reconciliation.py::test_enqueue_error_preserves_advanced_job[submission_unknown]",
+      "after": "tests/test_personal_enqueue_reconciliation_unit.py::test_enqueue_error_preserves_advanced_job[submission_unknown]"
+    },
+    {
+      "before": "tests/test_v1_personal_enqueue_reconciliation.py::test_enqueue_error_preserves_advanced_job[failed]",
+      "after": "tests/test_personal_enqueue_reconciliation_unit.py::test_enqueue_error_preserves_advanced_job[failed]"
+    },
+    {
+      "before": "tests/test_v1_personal_enqueue_reconciliation.py::test_enqueue_error_preserves_advanced_job[future_worker_state]",
+      "after": "tests/test_personal_enqueue_reconciliation_unit.py::test_enqueue_error_preserves_advanced_job[future_worker_state]"
+    },
+    {
+      "before": "tests/test_v1_personal_enqueue_reconciliation.py::test_enqueue_error_preserves_advanced_job[queued]",
+      "after": "tests/test_personal_enqueue_reconciliation_unit.py::test_enqueue_error_preserves_advanced_job[queued]"
+    },
+    {
+      "before": "tests/test_v1_personal_enqueue_reconciliation.py::test_enqueue_failure_rereads_after_project_lock",
+      "after": "tests/test_personal_enqueue_reconciliation_unit.py::test_enqueue_failure_rereads_after_project_lock"
+    },
+    {
+      "before": "tests/test_v1_personal_enqueue_reconciliation.py::test_enqueue_failure_does_not_recreate_deleted_job",
+      "after": "tests/test_personal_enqueue_reconciliation_unit.py::test_enqueue_failure_does_not_recreate_deleted_job"
+    },
+    {
+      "before": "tests/test_v1_personal_enqueue_reconciliation.py::test_unadvanced_enqueue_error_keeps_existing_failure_contract",
+      "after": "tests/test_personal_enqueue_reconciliation_unit.py::test_unadvanced_enqueue_error_keeps_existing_failure_contract"
+    },
+    {
+      "before": "tests/test_v1_personal_enqueue_reconciliation.py::test_unchanged_queued_ack_loss_reports_unknown_without_reenqueue[False]",
+      "after": "tests/test_v1_personal_enqueue_reconciliation.py::test_unchanged_queued_ack_loss_reports_unknown_without_reenqueue[False]"
+    },
+    {
+      "before": "tests/test_v1_personal_enqueue_reconciliation.py::test_unchanged_queued_ack_loss_reports_unknown_without_reenqueue[True]",
+      "after": "tests/test_v1_personal_enqueue_reconciliation.py::test_unchanged_queued_ack_loss_reports_unknown_without_reenqueue[True]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_workspace_view_allowlist_preserves_compatibility",
+      "after": "tests/test_workspace_view_projection_unit.py::test_workspace_view_allowlist_preserves_compatibility"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_bad_dispatch_receipts_stay_non_actionable[None-invalid]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_bad_dispatch_receipts_stay_non_actionable[None-invalid]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_bad_dispatch_receipts_stay_non_actionable[value1-invalid]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_bad_dispatch_receipts_stay_non_actionable[value1-invalid]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_bad_dispatch_receipts_stay_non_actionable[value2-unknown]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_bad_dispatch_receipts_stay_non_actionable[value2-unknown]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_bad_dispatch_receipts_stay_non_actionable[value3-invalid]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_bad_dispatch_receipts_stay_non_actionable[value3-invalid]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_unknown_request_and_nested_proof_fields_do_not_become_known",
+      "after": "tests/test_workspace_view_projection_unit.py::test_unknown_request_and_nested_proof_fields_do_not_become_known"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_proof_disagreements_null_absence_and_history_survive",
+      "after": "tests/test_workspace_view_projection_unit.py::test_proof_disagreements_null_absence_and_history_survive"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_routes_keep_old_wire_and_use_same_service_scope_check",
+      "after": "tests/test_workspace_view_v1.py::test_routes_keep_old_wire_and_use_same_service_scope_check"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_client_capabilities_are_authenticated_read_only_real_limits",
+      "after": "tests/test_workspace_view_v1.py::test_client_capabilities_are_authenticated_read_only_real_limits"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_input_marker_cannot_erase_unknown_fields",
+      "after": "tests/test_workspace_view_projection_unit.py::test_input_marker_cannot_erase_unknown_fields"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[lost_2xx_no_receipt]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[lost_2xx_no_receipt]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[dispatch_null]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[dispatch_null]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[dispatch_malformed]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[dispatch_malformed]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[dispatch_future_field]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[dispatch_future_field]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[dispatch_mismatched_id]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[dispatch_mismatched_id]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[dispatch_retry_true]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[dispatch_retry_true]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[request_future_field]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[request_future_field]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[unknown_state_is_verbatim]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[unknown_state_is_verbatim]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[restored_non_replayable]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[restored_non_replayable]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[same_key_google_child_is_not_parent]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[same_key_google_child_is_not_parent]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[child_result_id_does_not_bind_parent]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[child_result_id_does_not_bind_parent]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[unconfirmed_parent]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[unconfirmed_parent]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[result_notebook_id_disagreement]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[result_notebook_id_disagreement]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[result_chat_session_id_disagreement]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[result_chat_session_id_disagreement]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[result_message_disagreement]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[result_message_disagreement]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[result_status_disagreement]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[result_status_disagreement]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[result_state_disagreement]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[result_state_disagreement]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[result_generation_status_disagreement]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[result_generation_status_disagreement]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[result_answer_disagreement]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[result_answer_disagreement]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[scope_array_order_disagreement]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[scope_array_order_disagreement]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[scope_future_field]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[scope_future_field]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[citation_quote_disagreement]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[citation_quote_disagreement]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[citation_future_field]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[citation_future_field]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[locator_future_field]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[locator_future_field]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[remote_reference_future_field]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[remote_reference_future_field]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[retrieval_null_not_omission]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[retrieval_null_not_omission]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[retrieval_future_field]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[retrieval_future_field]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[raw_provider_error_removed]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[raw_provider_error_removed]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[modern_disclosure_exact]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[modern_disclosure_exact]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[notebooklm_lexical_omission]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[notebooklm_lexical_omission]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[legacy_forged_projection_wrapper]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[legacy_forged_projection_wrapper]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[dispatch_numeric_zero]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[dispatch_numeric_zero]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[dispatch_string_false]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[dispatch_string_false]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[raw_reserved_marker_null]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[raw_reserved_marker_null]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[actual_grounded_turn_metadata]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[actual_grounded_turn_metadata]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[raw_result_reserved_marker_null]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[raw_result_reserved_marker_null]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_job_valid_string]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_job_valid_string]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_request_snapshot_valid_string]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_request_snapshot_valid_string]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_result_valid_string]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_result_valid_string]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_job_boolean]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_job_boolean]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_request_snapshot_boolean]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_request_snapshot_boolean]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_result_boolean]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_result_boolean]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_job_number]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_job_number]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_request_snapshot_number]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_request_snapshot_number]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_result_number]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_result_number]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_job_array]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_job_array]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_request_snapshot_array]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_request_snapshot_array]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_result_array]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_result_array]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_job_object]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_job_object]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_request_snapshot_object]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_request_snapshot_object]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_result_object]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_recovery_golden_python_wire_for_ts[malformed_reserved_marker_result_object]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_upload_and_capabilities_share_actual_budget",
+      "after": "tests/test_workspace_view_v1.py::test_upload_and_capabilities_share_actual_budget"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_dispatch_false_is_not_coerced_from_other_json_types[retry_safe-0]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_dispatch_false_is_not_coerced_from_other_json_types[retry_safe-0]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_dispatch_false_is_not_coerced_from_other_json_types[retry_safe-false]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_dispatch_false_is_not_coerced_from_other_json_types[retry_safe-false]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_reserved_projection_marker_null_is_not_a_known_raw_request",
+      "after": "tests/test_workspace_view_projection_unit.py::test_reserved_projection_marker_null_is_not_a_known_raw_request"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_current_grounded_turn_metadata_is_shape_known_without_internal_hash_or_usage",
+      "after": "tests/test_workspace_view_projection_unit.py::test_current_grounded_turn_metadata_is_shape_known_without_internal_hash_or_usage"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_receipt_view_union_has_exact_branches[value0]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_receipt_view_union_has_exact_branches[value0]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_receipt_view_union_has_exact_branches[value1]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_receipt_view_union_has_exact_branches[value1]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_reviewed_note_authorship_and_history_producer_fields_remain_readable",
+      "after": "tests/test_workspace_view_projection_unit.py::test_reviewed_note_authorship_and_history_producer_fields_remain_readable"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_malformed_reserved_markers_preserve_identifiable_history_rows[valid_string]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_malformed_reserved_markers_preserve_identifiable_history_rows[valid_string]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_malformed_reserved_markers_preserve_identifiable_history_rows[boolean]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_malformed_reserved_markers_preserve_identifiable_history_rows[boolean]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_malformed_reserved_markers_preserve_identifiable_history_rows[number]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_malformed_reserved_markers_preserve_identifiable_history_rows[number]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_malformed_reserved_markers_preserve_identifiable_history_rows[array]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_malformed_reserved_markers_preserve_identifiable_history_rows[array]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_malformed_reserved_markers_preserve_identifiable_history_rows[object]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_malformed_reserved_markers_preserve_identifiable_history_rows[object]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_actual_extraction_command_result_is_known_without_erasing_fields",
+      "after": "tests/test_workspace_view_projection_unit.py::test_actual_extraction_command_result_is_known_without_erasing_fields"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_extraction_result_invalid_or_unknown_fields_still_block[patch0]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_extraction_result_invalid_or_unknown_fields_still_block[patch0]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_extraction_result_invalid_or_unknown_fields_still_block[patch1]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_extraction_result_invalid_or_unknown_fields_still_block[patch1]"
+    },
+    {
+      "before": "tests/test_workspace_view_v1.py::test_extraction_result_invalid_or_unknown_fields_still_block[patch2]",
+      "after": "tests/test_workspace_view_projection_unit.py::test_extraction_result_invalid_or_unknown_fields_still_block[patch2]"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_dispatch_unknown_fixture_matches_real_service_and_registered_handler",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_dispatch_unknown_fixture_matches_real_service_and_registered_handler"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[receipt0]",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[receipt0]"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[None]",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[None]"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[legacy receipt]",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[legacy receipt]"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[receipt3]",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[receipt3]"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[False]",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[False]"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[17]",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[17]"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[receipt6]",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[receipt6]"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[receipt7]",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[receipt7]"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[receipt8]",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_same_key_preserves_any_retained_receipt_without_dispatch[receipt8]"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_dispatch_handler_allowlists_fixed_fields_and_retains_cors",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_dispatch_handler_allowlists_fixed_fields_and_retains_cors"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_receipt_persistence_error_is_not_a_durable_dispatch_receipt[False]",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_receipt_persistence_error_is_not_a_durable_dispatch_receipt[False]"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_receipt_persistence_error_is_not_a_durable_dispatch_receipt[True]",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_receipt_persistence_error_is_not_a_durable_dispatch_receipt[True]"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_turn_error_schema_documents_strict_generation_not_retained_data",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_turn_error_schema_documents_strict_generation_not_retained_data"
+    },
+    {
+      "before": "tests/test_v1_personal_dispatch_receipt.py::test_archive_remaps_nested_receipt_ids_without_replay",
+      "after": "tests/test_v1_personal_dispatch_receipt.py::test_archive_remaps_nested_receipt_ids_without_replay"
+    }
+  ],
+  "sha256": {
+    "tests/test_v1_personal_enqueue_reconciliation.py": "f8675ea1695ae2a0d62e4d8945cada9a950497d646cdddb6ad0c507d5ae3018c",
+    "tests/test_personal_enqueue_reconciliation_unit.py": "1de96c57114c1c039f181836ff28492fdacce730570e4dcdbba28e63ce4ebbd5",
+    "tests/personal_enqueue_fixtures.py": "a69a9c125d04ce100f08e38385b5e9e7a7f3c726025ae87a623cadf116694ad8",
+    "tests/test_workspace_view_v1.py": "7eb6de0e957b10cf6673e1294ef93f2a9fe139ada878c331dab17a272ef2e494",
+    "tests/test_workspace_view_projection_unit.py": "4312cf85fc7ae9350275133ff10471eb5083548fa32d9206aca1c9aa7b281c06",
+    "tests/workspace_view_fixtures.py": "bb0c1ae8183d9f763baf77c8703d6d3825aa15f27c907a5ff755f3ef46969032",
+    "tests/test_v1_personal_dispatch_receipt.py": "17c706f67963a3a7cae6c1affeb341665ddedbfb22f46aca787c14afb3ab5061"
+  },
+  "afterFileCounts": {
+    "tests/test_v1_personal_enqueue_reconciliation.py": 3,
+    "tests/test_personal_enqueue_reconciliation_unit.py": 10,
+    "tests/test_workspace_view_v1.py": 3,
+    "tests/test_workspace_view_projection_unit.py": 75,
+    "tests/test_v1_personal_dispatch_receipt.py": 15
+  }
+}

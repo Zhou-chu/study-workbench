@@ -48,7 +48,9 @@ function NotebookPortableControls({ notebookId, onChanged }: PortableControlsPro
   const currentExport = submitted ? exportStatus.data || submitted : undefined
   const terminalExport = currentExport && ['succeeded', 'failed', 'cancelled_local'].includes(currentExport.state)
   const exportBusy = exporting.isPending || (!!submitted && (!terminalExport || exportStatus.isError))
-  const downloadUrl = currentExport?.state === 'succeeded' ? currentExport.result?.download_url : undefined
+  const result = currentExport?.result && typeof currentExport.result === 'object' && !Array.isArray(currentExport.result) ? currentExport.result as Record<string, unknown> : undefined
+  const candidate = result?.download_url
+  const downloadUrl = currentExport?.state === 'succeeded' && currentExport.operation === 'portable_export' && currentExport.restored_history !== true && typeof candidate === 'string' && /^\/(?:api\/)?personal\/exports\/[^/?#]+\/download$/.test(candidate) ? candidate : undefined
   const download = useMutation({ mutationFn: async () => {
     if (!downloadUrl || !currentExport) return
     const blob = await portableApi.download(downloadUrl)
@@ -80,7 +82,7 @@ function NotebookPortableControls({ notebookId, onChanged }: PortableControlsPro
     {restoring.isPending && <p role="status" className="text-xs">{t('common.processing')}</p>}
     {restoring.isError && <p role="alert" className="text-xs text-destructive">{requestError(restoring.error) || t('workbench.error')}</p>}
     {restoring.data?.notebook_id && <Link className="text-sm text-primary hover:underline" href={`/notebooks/${encodeURIComponent(restoring.data.notebook_id)}/study`}>{t('workbench.restoredNotebook')}</Link>}
-    <Dialog open={!!file} onOpenChange={open => { if (!open && !restoring.isPending) setFile(null) }}><DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>{t('workbench.restoreProject')}</DialogTitle><DialogDescription>{t('workbench.restoreConfirm')}</DialogDescription></DialogHeader><p className="text-sm break-all">{file?.name}</p><p className="text-xs text-muted-foreground">{t('workbench.packageSize', { bytes: file?.size.toLocaleString() })}</p>{limits.isFetching && <p role="status" className="text-xs">{t('workbench.portableLimitsLoading')}</p>}
+    <Dialog open={!!file} onOpenChange={open => { if (!open && !restoring.isPending) setFile(null) }}><DialogContent data-workbench-controls className="sm:max-w-lg"><DialogHeader><DialogTitle>{t('workbench.restoreProject')}</DialogTitle><DialogDescription>{t('workbench.restoreConfirm')}</DialogDescription></DialogHeader><p className="text-sm break-all">{file?.name}</p><p className="text-xs text-muted-foreground">{t('workbench.packageSize', { bytes: file?.size.toLocaleString() })}</p>{limits.isFetching && <p role="status" className="text-xs">{t('workbench.portableLimitsLoading')}</p>}
       {limitsFailed && <div><p role="alert" className="text-xs text-destructive">{t('workbench.portableLimitsError')}</p><Button size="sm" variant="outline" onClick={() => void limits.refetch()}>{t('workbench.retry')}</Button></div>}
       {tooLarge && <p role="alert" className="text-xs text-destructive">{t('workbench.packageTooLarge', { bytes: file?.size.toLocaleString(), limit: limits.data!.max_archive_bytes.toLocaleString() })}</p>}
       <DialogFooter><Button variant="outline" disabled={restoring.isPending} onClick={() => setFile(null)}>{t('common.cancel')}</Button><Button disabled={restoring.isPending || !canRestore} onClick={() => { if (file && canRestore) restoring.mutate(file) }}>{t('common.confirm')}</Button></DialogFooter></DialogContent></Dialog>

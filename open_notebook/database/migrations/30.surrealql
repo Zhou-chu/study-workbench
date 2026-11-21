@@ -1,0 +1,6 @@
+-- Submission identity is durable even when the queue acknowledgement is lost.
+DEFINE FIELD processing_attempt ON source TYPE option<object>;
+DEFINE FIELD processing_attempt.token ON source TYPE string;
+DEFINE FIELD processing_attempt.phase ON source TYPE string ASSERT $value IN ['pending', 'confirmed', 'running', 'succeeded', 'failed'];
+DEFINE FIELD processing_attempt.command ON source TYPE option<record<command>>;
+DEFINE FIELD processing_attempt.owner ON source TYPE option<string>;

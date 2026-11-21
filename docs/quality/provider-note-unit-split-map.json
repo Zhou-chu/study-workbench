@@ -1,0 +1,139 @@
+{
+  "productionFiles": 180,
+  "beforeDigest": "0497469f0000a45b454be015f80aa69ec0da1f0fd5b313c81273d760e633991c",
+  "afterDigest": "0497469f0000a45b454be015f80aa69ec0da1f0fd5b313c81273d760e633991c",
+  "missing": [],
+  "unexpected": [],
+  "caseMapping": [
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_credential_config_preserves_anthropic_compatible_fields",
+      "after": "tests/test_anthropic_compatible_provider_unit.py::test_credential_config_preserves_anthropic_compatible_fields"
+    },
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_update_rejects_clearing_compatible_base_url",
+      "after": "tests/test_anthropic_compatible_provider_unit.py::test_update_rejects_clearing_compatible_base_url"
+    },
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_connection_handler_normalizes_url_and_uses_anthropic_headers[https://api.example.com/v1-https://api.example.com/v1/models]",
+      "after": "tests/test_anthropic_compatible_provider_unit.py::test_connection_handler_normalizes_url_and_uses_anthropic_headers[https://api.example.com/v1-https://api.example.com/v1/models]"
+    },
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_connection_handler_normalizes_url_and_uses_anthropic_headers[https://api.example.com-https://api.example.com/v1/models]",
+      "after": "tests/test_anthropic_compatible_provider_unit.py::test_connection_handler_normalizes_url_and_uses_anthropic_headers[https://api.example.com-https://api.example.com/v1/models]"
+    },
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_connection_handler_normalizes_url_and_uses_anthropic_headers[https://api.example.com/models-https://api.example.com/v1/models]",
+      "after": "tests/test_anthropic_compatible_provider_unit.py::test_connection_handler_normalizes_url_and_uses_anthropic_headers[https://api.example.com/models-https://api.example.com/v1/models]"
+    },
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_connection_handler_normalizes_url_and_uses_anthropic_headers[https://api.example.com/v1/models-https://api.example.com/v1/models]",
+      "after": "tests/test_anthropic_compatible_provider_unit.py::test_connection_handler_normalizes_url_and_uses_anthropic_headers[https://api.example.com/v1/models-https://api.example.com/v1/models]"
+    },
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_model_manager_maps_normalized_url_to_anthropic_factory[https://api.example.com/v1-https://api.example.com/v1]",
+      "after": "tests/test_anthropic_compatible_provider_unit.py::test_model_manager_maps_normalized_url_to_anthropic_factory[https://api.example.com/v1-https://api.example.com/v1]"
+    },
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_model_manager_maps_normalized_url_to_anthropic_factory[https://api.example.com-https://api.example.com/v1]",
+      "after": "tests/test_anthropic_compatible_provider_unit.py::test_model_manager_maps_normalized_url_to_anthropic_factory[https://api.example.com-https://api.example.com/v1]"
+    },
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_model_manager_maps_normalized_url_to_anthropic_factory[https://api.example.com/models-https://api.example.com/v1]",
+      "after": "tests/test_anthropic_compatible_provider_unit.py::test_model_manager_maps_normalized_url_to_anthropic_factory[https://api.example.com/models-https://api.example.com/v1]"
+    },
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_model_manager_maps_normalized_url_to_anthropic_factory[https://api.example.com/v1/models-https://api.example.com/v1]",
+      "after": "tests/test_anthropic_compatible_provider_unit.py::test_model_manager_maps_normalized_url_to_anthropic_factory[https://api.example.com/v1/models-https://api.example.com/v1]"
+    },
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_model_manager_uses_default_database_credential_when_unlinked",
+      "after": "tests/test_anthropic_compatible_provider_unit.py::test_model_manager_uses_default_database_credential_when_unlinked"
+    },
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_connection_handler_accepts_unsupported_model_listing[404]",
+      "after": "tests/test_anthropic_compatible_provider_unit.py::test_connection_handler_accepts_unsupported_model_listing[404]"
+    },
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_connection_handler_accepts_unsupported_model_listing[405]",
+      "after": "tests/test_anthropic_compatible_provider_unit.py::test_connection_handler_accepts_unsupported_model_listing[405]"
+    },
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_model_manager_rejects_missing_compatible_endpoint",
+      "after": "tests/test_anthropic_compatible_provider_unit.py::test_model_manager_rejects_missing_compatible_endpoint"
+    },
+    {
+      "before": "tests/test_anthropic_compatible_provider.py::test_langchain_bridge_forwards_base_url",
+      "after": "tests/test_anthropic_compatible_provider.py::test_langchain_bridge_forwards_base_url"
+    },
+    {
+      "before": "tests/test_note_save_embed_resilience.py::TestNoteSaveEmbedResilience::test_commit_precedes_best_effort_embedding[some content-command:xyz789-command:xyz789]",
+      "after": "tests/test_note_save_embed_unit.py::TestNoteSaveEmbedResilience::test_commit_precedes_best_effort_embedding[some content-command:xyz789-command:xyz789]"
+    },
+    {
+      "before": "tests/test_note_save_embed_resilience.py::TestNoteSaveEmbedResilience::test_commit_precedes_best_effort_embedding[some content-submission1-None]",
+      "after": "tests/test_note_save_embed_unit.py::TestNoteSaveEmbedResilience::test_commit_precedes_best_effort_embedding[some content-submission1-None]"
+    },
+    {
+      "before": "tests/test_note_save_embed_resilience.py::TestNoteSaveEmbedResilience::test_commit_precedes_best_effort_embedding[None-unused-None]",
+      "after": "tests/test_note_save_embed_unit.py::TestNoteSaveEmbedResilience::test_commit_precedes_best_effort_embedding[None-unused-None]"
+    },
+    {
+      "before": "tests/test_note_save_embed_resilience.py::TestNoteSaveEmbedResilience::test_failed_commit_never_submits_embedding",
+      "after": "tests/test_note_save_embed_unit.py::TestNoteSaveEmbedResilience::test_failed_commit_never_submits_embedding"
+    },
+    {
+      "before": "tests/test_note_save_embed_resilience.py::TestEmbeddingEndpointNoteBranch::test_returns_500_when_submission_fails_with_content",
+      "after": "tests/test_note_save_embed_resilience.py::TestEmbeddingEndpointNoteBranch::test_returns_500_when_submission_fails_with_content"
+    },
+    {
+      "before": "tests/test_note_save_embed_resilience.py::TestEmbeddingEndpointNoteBranch::test_succeeds_when_submission_works",
+      "after": "tests/test_note_save_embed_resilience.py::TestEmbeddingEndpointNoteBranch::test_succeeds_when_submission_works"
+    },
+    {
+      "before": "tests/test_note_save_embed_resilience.py::TestEmbeddingEndpointNoteBranch::test_succeeds_with_no_command_id_when_note_has_no_content",
+      "after": "tests/test_note_save_embed_resilience.py::TestEmbeddingEndpointNoteBranch::test_succeeds_with_no_command_id_when_note_has_no_content"
+    },
+    {
+      "before": "tests/test_note_save_embed_resilience.py::test_invalid_mutable_note_fields_never_reach_coordinator[False]",
+      "after": "tests/test_note_save_embed_unit.py::test_invalid_mutable_note_fields_never_reach_coordinator[False]"
+    },
+    {
+      "before": "tests/test_note_save_embed_resilience.py::test_invalid_mutable_note_fields_never_reach_coordinator[True]",
+      "after": "tests/test_note_save_embed_unit.py::test_invalid_mutable_note_fields_never_reach_coordinator[True]"
+    }
+  ],
+  "ast": {
+    "tests/test_anthropic_compatible_provider.py": {
+      "originalNodes": 8,
+      "remainingNodes": 1,
+      "unitNodes": 7,
+      "allASTEqual": true,
+      "movedNames": [
+        "test_credential_config_preserves_anthropic_compatible_fields",
+        "test_update_rejects_clearing_compatible_base_url",
+        "test_connection_handler_normalizes_url_and_uses_anthropic_headers",
+        "test_model_manager_maps_normalized_url_to_anthropic_factory",
+        "test_model_manager_uses_default_database_credential_when_unlinked",
+        "test_connection_handler_accepts_unsupported_model_listing",
+        "test_model_manager_rejects_missing_compatible_endpoint"
+      ]
+    },
+    "tests/test_note_save_embed_resilience.py": {
+      "originalNodes": 4,
+      "remainingNodes": 2,
+      "unitNodes": 2,
+      "allASTEqual": true,
+      "movedNames": [
+        "TestNoteSaveEmbedResilience",
+        "test_invalid_mutable_note_fields_never_reach_coordinator"
+      ]
+    }
+  },
+  "base": "a6c4017",
+  "sha256": {
+    "tests/test_anthropic_compatible_provider.py": "c9396d4a3553ff2ae4250731b8fab452ec0e226b9c44b6d105dd1c2cdc173670",
+    "tests/test_anthropic_compatible_provider_unit.py": "f51d3d13760cb29579692f791387162ea6889dc09549be8077d2be7de6df0cea",
+    "tests/test_note_save_embed_resilience.py": "caea0bf346d52a9809d847ca113dacec2a24eee952d03bc6ba44fba472401987",
+    "tests/test_note_save_embed_unit.py": "52e871d7ff5bf6c6d0be2ad8624480c14f67bf570a15564bee8c6f900f7d1d14"
+  }
+}

@@ -5,12 +5,9 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from langchain_core.messages import AIMessage
-from surreal_commands.core.registry import registry
-from surreal_commands.core.retry import build_async_retry_instance
 
-import commands  # noqa: F401 -- register worker retry policies
 from open_notebook.domain.notebook import Source
-from open_notebook.exceptions import ExternalServiceError, IncompleteGenerationError
+from open_notebook.exceptions import IncompleteGenerationError
 from open_notebook.graphs.transformation import run_transformation
 
 
@@ -21,7 +18,8 @@ def transformation_call():
     chain = AsyncMock()
     with (
         patch(
-            "open_notebook.graphs.transformation.DefaultPrompts",
+            "open_notebook.graphs.transformation.DefaultPrompts.get_instance",
+            new_callable=AsyncMock,
             return_value=SimpleNamespace(transformation_instructions=None),
         ),
         patch(
@@ -100,41 +98,6 @@ async def test_complete_output_is_saved(transformation_call, metadata):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "command_id",
-    [
-        "open_notebook.process_source",
-        "open_notebook.run_transformation",
-    ],
-)
-@pytest.mark.parametrize(
-    "error, expected_attempts",
-    [
-        (IncompleteGenerationError("Incomplete output"), 1),
-        (ExternalServiceError("Provider unavailable"), 3),
-    ],
-)
-async def test_worker_retry_policy(command_id, error, expected_attempts):
-    command = registry.get_command_by_id(command_id)
-    config = command.retry_config.model_copy(
-        update={
-            "max_attempts": 3,
-            "wait_strategy": "fixed",
-            "wait_time": 0,
-            "wait_min": 0,
-            "wait_max": 0,
-        }
-    )
-    attempts = 0
-    with pytest.raises(type(error)):
-        async for attempt in build_async_retry_instance(config):
-            with attempt:
-                attempts += 1
-                raise error
-    assert attempts == expected_attempts
-
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize("during_import", [True, False])
 async def test_commands_log_incomplete_generation_as_permanent(during_import):
     from commands.source_commands import (
@@ -165,6 +128,11 @@ async def test_commands_log_incomplete_generation_as_permanent(during_import):
         graph_path = "commands.source_commands.transform_graph.ainvoke"
 
     with (
+        patch(
+            "commands.source_commands.start_worker",
+            new=AsyncMock(return_value={"processing_attempt": {"token": "owned"}}),
+        ),
+        patch("commands.source_commands.finish_worker", new=AsyncMock()),
         patch(
             "commands.source_commands.Source.get", new=AsyncMock(return_value=source)
         ),

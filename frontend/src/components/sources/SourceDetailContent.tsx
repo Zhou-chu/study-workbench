@@ -8,6 +8,7 @@ import { QUERY_KEYS } from '@/lib/api/query-client'
 import { useSource, useUpdateSource, useDeleteSource } from '@/lib/hooks/use-sources'
 import { insightsApi, SourceInsightResponse } from '@/lib/api/insights'
 import { transformationsApi } from '@/lib/api/transformations'
+import { isCommandSubmissionUnknown, runCommandSubmission } from '@/lib/utils/command-submission'
 import { embeddingApi } from '@/lib/api/embedding'
 import { SourceDetailResponse } from '@/lib/types/api'
 import { Transformation } from '@/lib/types/transformations'
@@ -108,6 +109,18 @@ function SourceDetailContentInner({
   const [loadingInsights, setLoadingInsights] = useState(false)
   const [creatingInsight, setCreatingInsight] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [isCopying, setIsCopying] = useState(false)
+  const copyingRef = useRef(false)
+  const copyMountedRef = useRef(false)
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    copyMountedRef.current = true
+    return () => {
+      copyMountedRef.current = false
+      if (copiedTimerRef.current !== null) clearTimeout(copiedTimerRef.current)
+    }
+  }, [])
   const [isEmbedding, setIsEmbedding] = useState(false)
   const [isDownloadingFile, setIsDownloadingFile] = useState(false)
   const [fileAvailable, setFileAvailable] = useState<boolean | null>(null)
@@ -172,9 +185,11 @@ function SourceDetailContentInner({
 
     try {
       setCreatingInsight(true)
-      const response = await insightsApi.create(sourceId, {
-        transformation_id: selectedTransformation
-      })
+      const response = await runCommandSubmission(
+        `source:insight:${sourceId}:${selectedTransformation}`,
+        () => insightsApi.create(sourceId, { transformation_id: selectedTransformation }),
+        t('commandSubmission.newAttemptConfirm'),
+      )
       if (controller.signal.aborted) return
 
       // Show toast for async operation
@@ -220,6 +235,11 @@ function SourceDetailContentInner({
       }
     } catch (err) {
       if (controller.signal.aborted) return
+      if (isCommandSubmissionUnknown(err)) {
+        toast.warning(t('commandSubmission.title'), { description: t('commandSubmission.warning') })
+        if (insightPollingRef.current === controller) insightPollingRef.current = null
+        return
+      }
       console.error('Failed to create insight:', err)
       // Show the server's reason when there is one; a network error has no
       // detail and keeps the localized generic message.
@@ -277,10 +297,18 @@ function SourceDetailContentInner({
 
     try {
       setIsEmbedding(true)
-      const response = await embeddingApi.embedContent(sourceId, 'source')
+      const response = await runCommandSubmission(
+        `source:embed:${sourceId}`,
+        () => embeddingApi.embedContent(sourceId, 'source'),
+        t('commandSubmission.newAttemptConfirm'),
+      )
       toast.success(response.message || t('common.success'))
       await refetchSource()
     } catch (err) {
+      if (isCommandSubmissionUnknown(err)) {
+        toast.warning(t('commandSubmission.title'), { description: t('commandSubmission.warning') })
+        return
+      }
       console.error('Failed to embed content:', err)
       toast.error(t('common.error'))
     } finally {
@@ -364,12 +392,23 @@ function SourceDetailContentInner({
 
   const externalHref = useMemo(() => safeExternalHref(source?.asset?.url), [source?.asset?.url])
 
-  const handleCopyUrl = useCallback(() => {
-    if (source?.asset?.url) {
-      navigator.clipboard.writeText(source.asset.url)
+  const handleCopyUrl = useCallback(async () => {
+    if (!source?.asset?.url || copyingRef.current) return
+    copyingRef.current = true
+    setIsCopying(true)
+    setCopied(false)
+    if (copiedTimerRef.current !== null) clearTimeout(copiedTimerRef.current)
+    try {
+      await navigator.clipboard.writeText(source.asset.url)
+      if (!copyMountedRef.current) return
       setCopied(true)
       toast.success(t('sources.urlCopied'))
-      setTimeout(() => setCopied(false), 2000)
+      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000)
+    } catch {
+      if (copyMountedRef.current) toast.error(t('common.error'))
+    } finally {
+      copyingRef.current = false
+      if (copyMountedRef.current) setIsCopying(false)
     }
   }, [source, t])
 
@@ -716,7 +755,9 @@ function SourceDetailContentInner({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={handleCopyUrl}
+                          aria-label={t('common.copyToClipboard')}
+                          disabled={isCopying}
+                          onClick={() => { void handleCopyUrl() }}
                         >
                           {copied ? (
                             <CheckCircle className="h-4 w-4" />

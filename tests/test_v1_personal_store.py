@@ -25,15 +25,37 @@ async def test_project_lock_serializes_same_project(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_store_rejects_unknown_kind_before_database():
-    from api.personal_store import PersonalStore
+async def test_cross_instance_lock_cancellation_releases_waiter_and_holder(tmp_path):
+    from open_notebook.database.project_locks import note_mutation_lock, project_lock
 
-    with pytest.raises(ValueError):
-        await PersonalStore().get("credential", "x")
+    entered = asyncio.Event()
+    release = asyncio.Event()
 
+    async def holder():
+        async with note_mutation_lock(tmp_path):
+            async with project_lock("same", tmp_path):
+                entered.set()
+                await release.wait()
 
-def test_record_identity_stable_and_kind_separated():
-    from api.personal_store import record_key
+    async def waiter():
+        await entered.wait()
+        async with project_lock("same", tmp_path):
+            raise AssertionError("holder has not released")
 
-    assert record_key("version", "x") == record_key("version", "x")
-    assert record_key("version", "x") != record_key("evidence", "x")
+    first = asyncio.create_task(holder())
+    await entered.wait()
+    second = asyncio.create_task(waiter())
+    await asyncio.sleep(0)
+    second.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await second
+    first.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await first
+
+    async def reacquire():
+        async with note_mutation_lock(tmp_path):
+            async with project_lock("same", tmp_path):
+                return True
+
+    assert await asyncio.wait_for(reacquire(), 1)

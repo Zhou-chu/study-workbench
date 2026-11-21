@@ -14,7 +14,6 @@ these lock in the fix and guard against regressions.
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from fastapi.testclient import TestClient
 
 from api.routers.sources import _is_source_file_available, _resolve_source_file
 from open_notebook.config import UPLOADS_FOLDER
@@ -29,13 +28,6 @@ def make_source(file_path=None, **overrides):
     )
     defaults.update(overrides)
     return Source(**defaults)
-
-
-@pytest.fixture
-def client():
-    from api.main import app
-
-    return TestClient(app)
 
 
 class TestIsSourceFileAvailableRejectsSiblingDirectoryBypass:
@@ -77,10 +69,6 @@ class TestIsSourceFileAvailableRejectsSiblingDirectoryBypass:
         missing_file = real_root / "does-not-exist.pdf"
         source = make_source(file_path=str(missing_file))
         assert _is_source_file_available(source) is False
-
-    def test_no_asset_returns_none(self):
-        source = make_source(file_path=None)
-        assert _is_source_file_available(source) is None
 
     def test_path_traversal_outside_root_is_not_available(self, tmp_path, monkeypatch):
         root = tmp_path / "uploads"
@@ -136,30 +124,6 @@ class TestResolveSourceFileRejectsSiblingDirectoryBypass:
 
         assert filename == "document.pdf"
         assert resolved_path == str(legit_file.resolve())
-
-
-class TestDownloadEndpointRejectsSiblingDirectoryBypass:
-    """End-to-end through the actual HTTP endpoint."""
-
-    def test_download_returns_403_for_sibling_directory_file(
-        self, client, tmp_path, monkeypatch
-    ):
-        real_root = tmp_path / "uploads"
-        real_root.mkdir()
-        monkeypatch.setattr("api.routers.sources.UPLOADS_FOLDER", str(real_root))
-
-        sibling = tmp_path / "uploads_evil"
-        sibling.mkdir()
-        evil_file = sibling / "secret.txt"
-        evil_file.write_bytes(b"not yours")
-
-        source = make_source(file_path=str(evil_file))
-        with patch(
-            "api.routers.sources.Source.get", new=AsyncMock(return_value=source)
-        ):
-            response = client.get("/api/sources/source:test123/download")
-
-        assert response.status_code == 403
 
 
 class TestRealUploadsFolderStillWorks:

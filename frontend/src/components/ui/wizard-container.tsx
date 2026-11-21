@@ -31,11 +31,14 @@ function StepIndicator({ currentStep, steps, onStepClick }: {
         
         return (
           <div key={step.number} className="flex items-center flex-1">
-            <div 
-              className={cn('flex items-center', isClickable && 'cursor-pointer')}
+            <button
+              type="button"
+              disabled={!isClickable}
+              aria-current={isCurrent ? "step" : undefined}
+              className={cn('flex items-center text-left rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2', isClickable && 'cursor-pointer')}
               onClick={isClickable ? () => onStepClick(step.number) : undefined}
             >
-              <div
+              <span
                 className={cn(
                   'flex items-center justify-center w-8 h-8 rounded-full border-2 text-sm font-medium transition-colors',
                   isCompleted 
@@ -46,22 +49,22 @@ function StepIndicator({ currentStep, steps, onStepClick }: {
                 )}
               >
                 {isCompleted ? "✓" : step.number}
-              </div>
-              <div className="ml-3 min-w-0">
-                <p className={cn(
-                  'text-sm font-medium',
+              </span>
+              <span className="ml-3 min-w-0">
+                <span className={cn(
+                  'block text-sm font-medium',
                   isCurrent ? 'text-foreground' : 'text-muted-foreground'
                 )}>
                   {step.title}
-                </p>
-                <p className={cn(
-                  'text-xs',
+                </span>
+                <span className={cn(
+                  'block text-xs',
                   isCurrent ? 'text-muted-foreground' : 'text-muted-foreground/80'
                 )}>
                   {step.description}
-                </p>
-              </div>
-            </div>
+                </span>
+              </span>
+            </button>
             {index < steps.length - 1 && (
               <div 
                 className={cn(

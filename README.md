@@ -5,16 +5,22 @@
 
 ## 当前进度与验收边界
 
+- [全仓风险与功能缺口审查](docs/v1/REPOSITORY_AUDIT_2026-10-22.md) · [风险优先整改计划](docs/v1/GAP_CLOSURE_PLAN.md)
+- [安全启动与停止入口](docs/v1/ENTRYPOINTS.md)：旧全局停止和上游发布命令已禁用；默认 Compose 不启动服务，四服务 Docker 仍待真实验收。
+
 - [当前进度](docs/v1/PROGRESS.md)：最新检查点、测试结果及下一步。
 - [验收矩阵](docs/v1/ACCEPTANCE.md)：真实验证、模拟测试、部分完成和阻塞项。
 - [运行手册](docs/v1/RUNBOOK.md)：本地配置与复现。
+- [多端施工计划](docs/v1/MULTICLIENT_IMPLEMENTATION_PLAN.md) · [多端验收与阻塞](docs/v1/MULTICLIENT_ACCEPTANCE.md)
 - [开发计划](docs/v1/DEVELOPMENT_PLAN.md) · [验证证据](docs/v1/evidence/)
 - [上游说明](README_UPSTREAM.md)：原始 README 字节保留，不作为本项目功能承诺。
 
 测试数量及功能状态以以上文档中对应提交的最新记录为准；本次导出不重新运行测试，
 也不把历史测试或 fake 注入结果当作当前线上能力证明。
 
-## 快照来源与发布边界
+## 历史快照来源与后续开发边界
+
+私有仓库现已成为多端开发的规范基线；后续提交保留原历史，在独立功能分支审查后集成。以下源提交与 PUBLISH_MANIFEST 仅记录最初过滤快照，不代表后续提交仍是它的原样导出。规范分支通过完整 Git 树校验发布，见 [基线审计](docs/v1/MULTICLIENT_BASELINE.md) 和 [发布约束](docs/v1/CANONICAL_PUBLICATION.md)。
 
 源提交：`e3dba32314e2d9606136d4125d40e8c343502ef3`。仅以 `git archive` 导出该提交的已跟踪文件，无 Git 历史或未跟踪文件。
 保留的源码、许可证、锁文件、静态资源、测试夹具及合成示例 ZIP 逐字节一致。

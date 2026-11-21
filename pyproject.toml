@@ -91,6 +91,10 @@ ignore = [
     "F541",  # f-string without placeholders
 ]
 
+[tool.ruff.lint.isort]
+# Generated coverage reports must not turn the external library into first-party code.
+known-third-party = ["coverage"]
+
 [tool.uv]
 # Security floors for transitive runtime, notebook and development dependencies,
 # so a future resolution cannot select versions with known advisories again

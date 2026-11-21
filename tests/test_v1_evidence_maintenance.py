@@ -75,7 +75,10 @@ async def test_cancelled_job_never_parses_and_failed_queue_can_be_explicitly_ret
     service = maintenance(evidence, fail)
     job = await service.submit(version["source_version_id"], "reparse", "once")
     assert job["state"] == "failed"
-    assert job["error"]["code"] == "WORKER_UNAVAILABLE"
+    assert job["error"] == {
+        "code": "WORKER_UNAVAILABLE",
+        "message": "Local maintenance could not be queued; retry explicitly",
+    }
 
     async def submit(*_):
         return "command:two"
@@ -95,6 +98,8 @@ async def test_failed_parse_records_failure_and_new_key_can_retry(tmp_path):
     original = await evidence.resolve_file(version["source_version_id"])
     data = original.read_bytes()
     original.write_bytes(b"bad")
+    with pytest.raises(InvalidInputError, match="integrity"):
+        await evidence.resolve_file(version["source_version_id"])
 
     async def submit(*_):
         return "command:one"
@@ -103,7 +108,11 @@ async def test_failed_parse_records_failure_and_new_key_can_retry(tmp_path):
     job = await service.submit(version["source_version_id"], "reparse", "once")
     result = await service.run(job["job_id"])
     assert result["state"] == "failed"
-    assert "integrity" in result["error"]["message"]
+    assert result["error"] == {
+        "code": "EVIDENCE_MAINTENANCE_FAILED",
+        "message": "Evidence maintenance could not be completed.",
+    }
+    assert (await evidence.version(version["source_version_id"]))["status"] == "ready"
     original.write_bytes(data)
     assert (await service.run(job["job_id"]))["state"] == "failed"
     new = await service.submit(version["source_version_id"], "reparse", "new-key")

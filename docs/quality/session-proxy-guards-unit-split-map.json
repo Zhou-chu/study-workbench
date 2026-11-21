@@ -1,0 +1,832 @@
+{
+  "originalNodes": 73,
+  "remainingNodes": 65,
+  "unitNodes": 8,
+  "allTestASTEqual": true,
+  "allHooksEqual": true,
+  "inventory": {
+    "beforeCount": 288,
+    "afterCount": 288,
+    "beforeDigest": "317c7cca6faf2327cb0e48f118d8a99f70c0bdb5cea1b2f5077ef2d288d71f38",
+    "afterDigest": "317c7cca6faf2327cb0e48f118d8a99f70c0bdb5cea1b2f5077ef2d288d71f38",
+    "missing": [],
+    "unexpected": []
+  },
+  "base": "2f81790cede3c1aa0b13a6ad9eb02a810a5da2d7",
+  "beforeCases": 159,
+  "afterCases": 159,
+  "caseMapping": [
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/auth/sessions Origin \"\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/auth/sessions Origin \"null\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/auth/sessions Origin \"https://evil.example\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/auth/sessions Origin \"https://workbench.example, https://workbench.example\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/auth/sessions/refresh Origin \"\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/auth/sessions/refresh Origin \"null\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/auth/sessions/refresh Origin \"https://evil.example\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/auth/sessions/refresh Origin \"https://workbench.example, https://workbench.example\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/auth/web-signout-local Origin \"\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/auth/web-signout-local Origin \"null\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/auth/web-signout-local Origin \"https://evil.example\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/auth/web-signout-local Origin \"https://workbench.example, https://workbench.example\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/notes Origin \"\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/notes Origin \"null\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/notes Origin \"https://evil.example\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/notes Origin \"https://workbench.example, https://workbench.example\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/search/ask Origin \"\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/search/ask Origin \"null\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/search/ask Origin \"https://evil.example\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/search/ask Origin \"https://workbench.example, https://workbench.example\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/personal/imports/portable Origin \"\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/personal/imports/portable Origin \"null\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/personal/imports/portable Origin \"https://evil.example\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects unsafe /api/personal/imports/portable Origin \"https://workbench.example, https://workbench.example\" before fetch/body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects absent/wrong CSRF  before body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects absent/wrong CSRF 0 before body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects absent/wrong CSRF 1, 1 before body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects foreign read Origin and cross-site Fetch Metadata",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > rejects browser Authorization and ambiguous cookies before upstream",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "Web BFF request boundary > keeps native passthrough off by default despite client-kind header",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > ignores ambient app/ingress credentials only for exact public config (private_ingress=synthetic)",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > ignores ambient app/ingress credentials only for exact public config (private_ingress=synthetic; __Host-sw-session=malformed)",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > ignores ambient app/ingress credentials only for exact public config (private_ingress=synthetic; __Host-sw-session=x; __Host-sw-session=y)",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > ignores ambient app/ingress credentials only for exact public config (__Host-sw-session=x; sw-session=y; sw-access=obsolete; sw-refresh=obsolete)",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > ignores ambient app/ingress credentials only for exact public config (__Host-sw-session=x, __Host-sw-session=y)",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > ignores ambient app/ingress credentials only for exact public config (__Host-sw-session=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > retains public config safe-read guards {\"origin\":\"https://foreign.example\"} before upstream",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > retains public config safe-read guards {\"origin\":\"null\"} before upstream",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > retains public config safe-read guards {\"origin\":\"\"} before upstream",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > retains public config safe-read guards {\"sec-fetch-site\":\"cross-site\"} before upstream",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > retains public config safe-read guards {\"sec-fetch-site\":\"same-origin, same-origin\"} before upstream",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > never ignores ambiguous cookies for /api/auth/status",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > never ignores ambiguous cookies for /api/notes",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > never ignores ambiguous cookies for /api/auth/sessions",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > does not widen metadata exception to HEAD /api/config",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > does not widen metadata exception to POST /api/config",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > does not widen metadata exception to GET /api/%63onfig",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > does not widen metadata exception to GET /api/config/extra",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > preserves credential-free legacy metadata compatibility and rejects backend replacement",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > still fails backend mode mismatch before config dispatch despite stale app credentials",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > does not confirm or alter a pending app session during metadata bootstrap",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > returns only documented metadata, retaining dbStatus online",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > returns only documented metadata, retaining dbStatus offline",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > preserves documented optional metadata compatibility {\"version\":\"1.0.0\"}",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > preserves documented optional metadata compatibility {\"version\":\"1.0.0\",\"latestVersion\":\"1.0.1\",\"hasUpdate\":false,\"dbStatus\":\"online\"}",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > fails malformed/oversized metadata unavailable {}",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > fails malformed/oversized metadata unavailable {\"version\":7,\"latestVersion\":null,\"hasUpdate\":false,\"dbStatus\":\"online\"}",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > fails malformed/oversized metadata unavailable {\"version\":\"1.0.0\",\"latestVersion\":{},\"hasUpdate\":false,\"dbStatus\":\"online\"}",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > fails malformed/oversized metadata unavailable {\"version\":\"1.0.0\",\"latestVersion\":null,\"hasUpdate\":\"yes\",\"dbStatus\":\"online\"}",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > fails malformed/oversized metadata unavailable {\"version\":\"1.0.0\",\"latestVersion\":null,\"hasUpdate\":false,\"dbStatus\":\"unknown\"}",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > fails malformed/oversized metadata unavailable {\"version\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"latestVersion\":null,\"hasUpdate\":false,\"dbStatus\":\"online\"}",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > does not follow metadata redirects or reflect token-bearing error bytes",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "metadata-only private-ingress bootstrap > preserves the metadata request signal instead of imposing the auth operation timeout",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "Web wire shapes and custody > publishes only metadata and one strictly scoped opaque login cookie",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "Web wire shapes and custody > public readiness alone never authenticates; status confirms handle and refresh never writes cookie",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "Web wire shapes and custody > verifies actual backend status before login and fails closed on mismatch",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "Web wire shapes and custody > prevents native refresh credentials in browser requests",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > rejects malformed/oversized login without upstream ({\"password\":\"界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界\",\"device_name\":\"Browser\"})",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > rejects malformed/oversized login without upstream ({\"password\":\"x\",\"device_name\":\" \"})",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > rejects malformed/oversized login without upstream ({\"password\":\"x\",\"device_name\":\"界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界界\"})",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > rejects malformed/oversized login without upstream ({\"password\":\"x\",\"device_name\":\"Browser\",\"extra\":\"hidden\"})",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > rejects malformed/oversized login without upstream ([])",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > rejects malformed/oversized login without upstream (not-json)",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > rejects malformed/oversized login without upstream (                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 )",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > accepts maximum UTF8 password and Unicode codepoint device name, trimming before native create",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > rejects non-JSON and length bombs before consuming body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > bounds chunked auth JSON and rejects invalid UTF8",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.guards.unit.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > rejects extra positive native envelope before cookie publication",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > rejects missing positive native envelope before cookie publication",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > rejects bad-token positive native envelope before cookie publication",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > rejects bad-date positive native envelope before cookie publication",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > rejects wrong-status positive native envelope before cookie publication",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > rejects html positive native envelope before cookie publication",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > preserves safe login failure AUTH_INVALID_CREDENTIALS without reflecting upstream messages",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > preserves safe login failure AUTH_RATE_LIMITED without reflecting upstream messages",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > preserves safe login failure AUTH_UNAVAILABLE without reflecting upstream messages",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > only successful password login may migrate obsolete token cookies",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "bounded auth parsing and sanitized responses > does not let pending or stale handles authorize resources",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "authoritative session management and local signout > retires local handle during API outage without readiness and never clears cookie",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "authoritative session management and local signout > uses the validated proof exactly once after capture retires revoke-all caller",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "authoritative session management and local signout > never claims confirmed revocation for native 401",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "authoritative session management and local signout > never claims confirmed revocation for native 429",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "authoritative session management and local signout > never claims confirmed revocation for native 503",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "authoritative session management and local signout > never claims confirmed revocation for native 200",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "authoritative session management and local signout > does not dispatch management when protected authority is revoked",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "authoritative session management and local signout > rejects request bodies on DELETE and forged local signout before native calls",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "transport and native separation > passes native credentials only with the explicit nonambient gate, never a cookie",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "transport and native separation > still applies Web policy with passthrough enabled when any browser marker is present",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "transport and native separation > sanitizes all actionable redirect statuses and never follows or echoes them",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "transport and native separation > reports readiness transport failure as auth unavailable, never a legacy downgrade",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "transport and native separation > does not retain the external API rewrite in either runtime mode",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > preserves download 200, range/filename validators and untransformed length",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > preserves download 206, range/filename validators and untransformed length",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > preserves download 304, range/filename validators and untransformed length",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > preserves download 416, range/filename validators and untransformed length",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > omits stale gzip encoding and compressed content length",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > omits stale br encoding and compressed content length",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > omits stale deflate encoding and compressed content length",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > only supports registered HEAD and never performs a mutation for OPTIONS",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > rejects unlisted or noncanonical route /api/commands/registry/debug before dispatch",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > rejects unlisted or noncanonical route /api/notebooks/n/anything before dispatch",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > rejects unlisted or noncanonical route /api/sources/a%2Fb/download before dispatch",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > rejects unlisted or noncanonical route /api/models/m before dispatch",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > rejects unlisted or noncanonical route /api/auth/anything before dispatch",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > retains non-auth resource 403 errors exactly without retrying/retiring",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > retains non-auth resource 409 errors exactly without retrying/retiring",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > retains non-auth resource 429 errors exactly without retrying/retiring",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > retains non-auth resource 503 errors exactly without retrying/retiring",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > retains non-auth resource 401 errors exactly without retrying/retiring",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > retires fresh typed AUTH_REQUIRED but never retries the original operation",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > preserves oversized JSON errors incrementally instead of cloning/buffering them all",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > classifies a late AUTH_REQUIRED on expired access as explicit refresh-needed",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > validates before reading any portable bytes, then forwards original stream/boundary/signal without a rewrite cap",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > consumes zero upload chunks when fresh probe fails AUTH_REQUIRED",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > consumes zero upload chunks when fresh probe fails AUTH_UNAVAILABLE",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "resource streaming and exact HTTP equivalence > streams GET turn events immediately and propagates cancellation once",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "auth adapter bounds, isolation and legacy regression > fails oversized native session-list responses unavailable, without reflecting or truncating rows",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "auth adapter bounds, isolation and legacy regression > preserves more than32 valid metadata rows instead of assuming every retained row is live",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "auth adapter bounds, isolation and legacy regression > never exposes extra native list fields to Web or treats them as successful protected authentication",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "auth adapter bounds, isolation and legacy regression > sanitizes a protected status probe redirect as502 rather than publishing readiness as authentication",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "auth adapter bounds, isolation and legacy regression > isolates refresh redirect502 to its observing owner; followers only see terminal reauth and no second rotation",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "auth adapter bounds, isolation and legacy regression > keeps validated Origin/CSRF request-local across concurrent native create adapters",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "auth adapter bounds, isolation and legacy regression > only publishes the later-admitted successful Web login cookie, suppressing an older completion",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "auth adapter bounds, isolation and legacy regression > keeps legacy default status/password transport and unlisted API routes explicit",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "remaining boundary edge cases > requires exact Origin plus CSRF on PUT /api/notes/note%3Aone",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "remaining boundary edge cases > requires exact Origin plus CSRF on PATCH /api/personal/notebooks/n/notes/note%3Aone",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "remaining boundary edge cases > requires exact Origin plus CSRF on DELETE /api/auth/sessions",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "remaining boundary edge cases > requires exact Origin plus CSRF on DELETE /api/auth/sessions/12345678-1234-1234-1234-123456789abc",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "remaining boundary edge cases > requires exact Origin plus CSRF on DELETE /api/notes/note%3Aone",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "remaining boundary edge cases > rejects comma-coalesced duplicate Cookie headers even on fresh password login",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "remaining boundary edge cases > never expires old credential cookies after rejected migration login",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "remaining boundary edge cases > does not lose a valid predecessor on wrong password",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "remaining boundary edge cases > uses only explicitly configured insecure loopback cookie name, not a request Host downgrade",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "remaining boundary edge cases > returns busy without forwarding a ninth admitted/pending login",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "validates explicit native upload credentials before consuming portable bytes",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "fails closed if legacy Web is pointed at a device-mode backend, never forwarding native token JSON",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "rejects legacy native-issuance escape /api/auth/sessions before reading the body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "rejects legacy native-issuance escape /api/%61uth/sessions before reading the body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "rejects legacy native-issuance escape /api/auth/%73essions before reading the body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "rejects legacy native-issuance escape /api/auth%2Fsessions before reading the body",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "rejects actual device readiness when Web is configured legacy",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "review: legacy resource mode boundary > does not send native credentials through legacy POST /api/notes to a device backend",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "review: legacy resource mode boundary > does not send native credentials through legacy POST /api/search/ask to a device backend",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "review: legacy resource mode boundary > does not send native credentials through legacy POST /api/sources/s/chat/sessions/c/messages to a device backend",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "review: legacy resource mode boundary > does not send native credentials through legacy GET /api/notes to a device backend",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "review: legacy resource mode boundary > consumes zero legacy multipart chunks on backend mode mismatch",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "review: legacy resource mode boundary > never caches a successful legacy mode check across backend replacement",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "reports known readiness mismatch as503 during due refresh without sending the native token",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    },
+    {
+      "name": "keeps orphan cleanup redirects and incidental headers out of another caller context",
+      "from": "frontend/src/lib/api/session-proxy.test.ts",
+      "to": "frontend/src/lib/api/session-proxy.test.ts"
+    }
+  ],
+  "unit": {
+    "numTotalTests": 39,
+    "numPassedTests": 39,
+    "numFailedTests": 0,
+    "numPendingTests": 0
+  },
+  "combined": {
+    "numTotalTests": 159,
+    "numPassedTests": 159,
+    "numFailedTests": 0,
+    "numPendingTests": 0
+  },
+  "fileSha256": {
+    "frontend/src/lib/api/session-proxy.test.ts": "ce7ad1a9a166c54eab91c4bd9b69457f916d814f662ba8334dba788a0fe682a2",
+    "frontend/src/lib/api/session-proxy.guards.unit.test.ts": "c4d698cf219ee7a01ce2754d04b5f7ebbda1312cdf83eda4f29a4fae45645e66",
+    "frontend/src/test/session-proxy-fixtures.ts": "161f993233dddd8c0946024333aab8723abdbb2fe424037bcf28254c20dfcf5a"
+  }
+}

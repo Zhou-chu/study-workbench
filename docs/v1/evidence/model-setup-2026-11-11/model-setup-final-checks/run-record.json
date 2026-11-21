@@ -1,0 +1,46 @@
+[
+  {
+    "check": "pretest",
+    "command": [
+      "npm",
+      "run",
+      "pretest"
+    ],
+    "started": "2026-11-11T06:21:04.210003+00:00",
+    "exit": 0
+  },
+  {
+    "check": "tests",
+    "command": [
+      "npm",
+      "run",
+      "test",
+      "--workspaces",
+      "--if-present",
+      "--",
+      "--maxWorkers=2"
+    ],
+    "started": "2026-11-11T06:21:07.226503+00:00",
+    "exit": 0
+  },
+  {
+    "check": "typecheck",
+    "command": [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    "started": "2026-11-11T06:23:22.675019+00:00",
+    "exit": 0
+  },
+  {
+    "check": "lint",
+    "command": [
+      "npm",
+      "run",
+      "lint"
+    ],
+    "started": "2026-11-11T06:23:39.454064+00:00",
+    "exit": 0
+  }
+]

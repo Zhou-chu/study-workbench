@@ -129,7 +129,8 @@ export function SessionManager({
                   placeholder={t('chat.sessionTitlePlaceholder')}
                   className="mb-2"
                   autoFocus
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
+                    if (e.nativeEvent.isComposing || e.keyCode === 229) return
                     if (e.key === 'Enter') handleCreateSession()
                   }}
                 />
@@ -166,31 +167,32 @@ export function SessionManager({
                 {sessions.map((session) => (
                   <div
                     key={session.id}
-                    className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                    className={`relative p-3 rounded-lg border cursor-pointer transition-colors ${
                       currentSessionId === session.id
                         ? 'bg-primary/10 border-primary'
                         : 'hover:bg-muted'
                     }`}
-                    onClick={() => onSelectSession(session.id)}
                   >
                     {editingId === session.id ? (
-                      <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="space-y-2">
                         <Input
                           value={editTitle}
                           onChange={(e) => setEditTitle(e.target.value)}
-                          onKeyPress={(e) => {
+                          onKeyDown={(e) => {
+                            if (e.nativeEvent.isComposing || e.keyCode === 229) return
                             if (e.key === 'Enter') handleSaveEdit()
                             if (e.key === 'Escape') handleCancelEdit()
                           }}
                           autoFocus
                         />
                         <div className="flex gap-2">
-                          <Button size="sm" onClick={handleSaveEdit}>
+                          <Button size="sm" aria-label={t('common.save')} onClick={handleSaveEdit}>
                             <Check className="h-3 w-3" />
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
+                            aria-label={t('common.cancel')}
                             onClick={handleCancelEdit}
                           >
                             <X className="h-3 w-3" />
@@ -201,14 +203,22 @@ export function SessionManager({
                       <>
                         <div className="flex items-start justify-between mb-1">
                           <h4 className="font-medium text-sm">
-                            {session.title}
+                            <button
+                              type="button"
+                              aria-pressed={currentSessionId === session.id}
+                              className="text-left after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+                              onClick={() => onSelectSession(session.id)}
+                            >
+                              {session.title}
+                            </button>
                           </h4>
-                          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                          <div className="relative z-10 flex gap-1">
                             <Button
                               size="sm"
                               variant="ghost"
                               className="h-6 w-6 p-0"
-                              onClick={() => handleStartEdit(session)}
+                              aria-label={t('common.edit')}
+                                onClick={() => handleStartEdit(session)}
                             >
                               <Edit2 className="h-3 w-3" />
                             </Button>
@@ -216,7 +226,8 @@ export function SessionManager({
                               size="sm"
                               variant="ghost"
                               className="h-6 w-6 p-0"
-                              onClick={() => setDeleteConfirmId(session.id)}
+                              aria-label={t('chat.deleteSession')}
+                                onClick={() => setDeleteConfirmId(session.id)}
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>

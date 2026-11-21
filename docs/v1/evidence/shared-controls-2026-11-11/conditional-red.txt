@@ -1,0 +1,65 @@
+[Publication copy: personal filesystem paths replaced; original results/failures unchanged.]
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-shared-controls-20261111/apps/web
+
+ ❯ src/features/library/LibraryDialog.focus.test.tsx (7 tests | 2 failed) 2386ms
+   ✓ returns focus to the opener after Escape 135ms
+   ✓ returns focus to the opener after Close 57ms
+   × returns focus to the opener after conditional Escape 1047ms
+   × returns focus to the opener after conditional Close 1032ms
+   ✓ does not restore an invalid opener after removed 41ms
+   ✓ does not restore an invalid opener after disabled 37ms
+   ✓ does not restore an invalid opener after unmounted 36ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/library/LibraryDialog.focus.test.tsx > returns focus to the opener after conditional Escape
+ FAIL  src/features/library/LibraryDialog.focus.test.tsx > returns focus to the opener after conditional Close
+Error: expect(element).toHaveFocus()
+
+Expected element with focus:
+  <button>
+  Test model
+</button>
+Received element with focus:
+  <body
+  style=""
+>
+  <div>
+    <button>
+      Test model
+    </button>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body
+    style=""
+  >
+    <div>
+      <button>
+        Test model
+      </button>
+    </div>
+  </body>
+</html>
+ ❯ src/features/library/LibraryDialog.focus.test.tsx:16:35
+     14|  else fireEvent.click(screen.getByRole('button',{name:'Close'}));
+     15|  await waitFor(()=>expect(screen.queryByRole('dialog')).toBeNull());
+     16|  await waitFor(()=>expect(opener).toHaveFocus());
+       |                                   ^
+     17| });
+     18|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  15:14:41
+   Duration  3.40s (transform 79ms, setup 243ms, import 104ms, tests 2.39s, environment 529ms)

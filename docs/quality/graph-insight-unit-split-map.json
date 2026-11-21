@@ -1,0 +1,143 @@
+{
+  "base": "cd9c3873e1f4b9ff254e7cea7bd5faeeb1111f4a",
+  "function_method_ast_counts": {
+    "tests/test_graphs.py": 23,
+    "tests/test_create_insight_empty_source.py": 5
+  },
+  "before_count": 31,
+  "after_count": 31,
+  "case_mapping": [
+    {
+      "before": "tests/test_graphs.py::TestGraphTools::test_get_current_timestamp_format",
+      "after": "tests/test_graphs.py::TestGraphTools::test_get_current_timestamp_format"
+    },
+    {
+      "before": "tests/test_graphs.py::TestGraphTools::test_get_current_timestamp_validity",
+      "after": "tests/test_graphs.py::TestGraphTools::test_get_current_timestamp_validity"
+    },
+    {
+      "before": "tests/test_graphs.py::TestGraphTools::test_get_current_timestamp_is_tool",
+      "after": "tests/test_graphs.py::TestGraphTools::test_get_current_timestamp_is_tool"
+    },
+    {
+      "before": "tests/test_graphs.py::TestPromptGraph::test_pattern_chain_state_structure",
+      "after": "tests/test_graphs.py::TestPromptGraph::test_pattern_chain_state_structure"
+    },
+    {
+      "before": "tests/test_graphs.py::TestPromptGraph::test_prompt_graph_compilation",
+      "after": "tests/test_graphs.py::TestPromptGraph::test_prompt_graph_compilation"
+    },
+    {
+      "before": "tests/test_graphs.py::TestTransformationGraph::test_transformation_state_structure",
+      "after": "tests/test_graph_nodes_unit.py::TestTransformationGraph::test_transformation_state_structure"
+    },
+    {
+      "before": "tests/test_graphs.py::TestTransformationGraph::test_run_transformation_assertion_no_content",
+      "after": "tests/test_graph_nodes_unit.py::TestTransformationGraph::test_run_transformation_assertion_no_content"
+    },
+    {
+      "before": "tests/test_graphs.py::TestTransformationGraph::test_run_transformation_rejects_source_without_text[]",
+      "after": "tests/test_graph_nodes_unit.py::TestTransformationGraph::test_run_transformation_rejects_source_without_text[]"
+    },
+    {
+      "before": "tests/test_graphs.py::TestTransformationGraph::test_run_transformation_rejects_source_without_text[   \\n\\t ]",
+      "after": "tests/test_graph_nodes_unit.py::TestTransformationGraph::test_run_transformation_rejects_source_without_text[   \\n\\t ]"
+    },
+    {
+      "before": "tests/test_graphs.py::TestTransformationGraph::test_run_transformation_rejects_source_without_text[None]",
+      "after": "tests/test_graph_nodes_unit.py::TestTransformationGraph::test_run_transformation_rejects_source_without_text[None]"
+    },
+    {
+      "before": "tests/test_graphs.py::TestTransformationGraph::test_transformation_graph_compilation",
+      "after": "tests/test_graphs.py::TestTransformationGraph::test_transformation_graph_compilation"
+    },
+    {
+      "before": "tests/test_graphs.py::TestSaveSourceTitlePreservation::test_custom_title_preserved",
+      "after": "tests/test_graph_nodes_unit.py::TestSaveSourceTitlePreservation::test_custom_title_preserved"
+    },
+    {
+      "before": "tests/test_graphs.py::TestSaveSourceTitlePreservation::test_placeholder_title_replaced",
+      "after": "tests/test_graph_nodes_unit.py::TestSaveSourceTitlePreservation::test_placeholder_title_replaced"
+    },
+    {
+      "before": "tests/test_graphs.py::TestSaveSourceTitlePreservation::test_none_title_replaced",
+      "after": "tests/test_graph_nodes_unit.py::TestSaveSourceTitlePreservation::test_none_title_replaced"
+    },
+    {
+      "before": "tests/test_graphs.py::TestSaveSourceTitlePreservation::test_empty_title_replaced",
+      "after": "tests/test_graph_nodes_unit.py::TestSaveSourceTitlePreservation::test_empty_title_replaced"
+    },
+    {
+      "before": "tests/test_graphs.py::TestContentProcessDeleteSource::test_uploaded_file_deleted_when_flag_set",
+      "after": "tests/test_graphs.py::TestContentProcessDeleteSource::test_uploaded_file_deleted_when_flag_set"
+    },
+    {
+      "before": "tests/test_graphs.py::TestContentProcessDeleteSource::test_uploaded_file_kept_when_flag_not_set",
+      "after": "tests/test_graphs.py::TestContentProcessDeleteSource::test_uploaded_file_kept_when_flag_not_set"
+    },
+    {
+      "before": "tests/test_graphs.py::TestContentProcessDeleteSource::test_empty_extraction_raises_valueerror",
+      "after": "tests/test_graphs.py::TestContentProcessDeleteSource::test_empty_extraction_raises_valueerror"
+    },
+    {
+      "before": "tests/test_graphs.py::TestContentProcessDeleteSource::test_persisted_engines_wired_into_config",
+      "after": "tests/test_graphs.py::TestContentProcessDeleteSource::test_persisted_engines_wired_into_config"
+    },
+    {
+      "before": "tests/test_graphs.py::TestContentProcessDeleteSource::test_persisted_youtube_languages_wired_into_config",
+      "after": "tests/test_graphs.py::TestContentProcessDeleteSource::test_persisted_youtube_languages_wired_into_config"
+    },
+    {
+      "before": "tests/test_graphs.py::TestContentProcessDeleteSource::test_unavailable_engine_falls_back_to_auto",
+      "after": "tests/test_graphs.py::TestContentProcessDeleteSource::test_unavailable_engine_falls_back_to_auto"
+    },
+    {
+      "before": "tests/test_graphs.py::TestContentProcessDeleteSource::test_runtime_free_engines_never_fall_back",
+      "after": "tests/test_graphs.py::TestContentProcessDeleteSource::test_runtime_free_engines_never_fall_back"
+    },
+    {
+      "before": "tests/test_graphs.py::TestTransformationModelIdForwarding::test_source_graph_forwards_model_id",
+      "after": "tests/test_graph_nodes_unit.py::TestTransformationModelIdForwarding::test_source_graph_forwards_model_id"
+    },
+    {
+      "before": "tests/test_graphs.py::TestTransformationModelIdForwarding::test_source_graph_forwards_none_model_id",
+      "after": "tests/test_graph_nodes_unit.py::TestTransformationModelIdForwarding::test_source_graph_forwards_none_model_id"
+    },
+    {
+      "before": "tests/test_graphs.py::TestTransformationModelIdForwarding::test_command_forwards_model_id",
+      "after": "tests/test_graph_nodes_unit.py::TestTransformationModelIdForwarding::test_command_forwards_model_id"
+    },
+    {
+      "before": "tests/test_create_insight_empty_source.py::test_source_without_text_returns_400_and_queues_nothing[None]",
+      "after": "tests/test_create_insight_empty_source.py::test_source_without_text_returns_400_and_queues_nothing[None]"
+    },
+    {
+      "before": "tests/test_create_insight_empty_source.py::test_source_without_text_returns_400_and_queues_nothing[]",
+      "after": "tests/test_create_insight_empty_source.py::test_source_without_text_returns_400_and_queues_nothing[]"
+    },
+    {
+      "before": "tests/test_create_insight_empty_source.py::test_source_without_text_returns_400_and_queues_nothing[  \\n ]",
+      "after": "tests/test_create_insight_empty_source.py::test_source_without_text_returns_400_and_queues_nothing[  \\n ]"
+    },
+    {
+      "before": "tests/test_create_insight_empty_source.py::test_source_with_text_is_queued",
+      "after": "tests/test_create_insight_empty_source.py::test_source_with_text_is_queued"
+    },
+    {
+      "before": "tests/test_create_insight_empty_source.py::test_worker_treats_invalid_input_as_permanent",
+      "after": "tests/test_create_insight_worker_unit.py::test_worker_treats_invalid_input_as_permanent"
+    },
+    {
+      "before": "tests/test_create_insight_empty_source.py::test_source_processing_skips_transformations_on_whitespace_text",
+      "after": "tests/test_create_insight_worker_unit.py::test_source_processing_skips_transformations_on_whitespace_text"
+    }
+  ],
+  "production_count": 180,
+  "production_digest": "71eddbf2136bb8c3891826d8f9a677db81f92e5d6004a4a6aec39a7644eba384",
+  "hashes": {
+    "tests/test_graphs.py": "d89f698ab4992025d472df16699db229d33aaa9e147ebdbe04210d4e7fa538c0",
+    "tests/test_graph_nodes_unit.py": "6586c2c607e1af5faf01902603c634833084abd06fb5e9b411aa070e65af4213",
+    "tests/test_create_insight_empty_source.py": "b0e4bdb4951b0e239e24402225ed4e1b0529c0f69e5a5b2615284875a5962b91",
+    "tests/test_create_insight_worker_unit.py": "234939b8064682b698e6cd91ec38a113a6503e1708ca1a9ec10c7faa22510e76"
+  }
+}

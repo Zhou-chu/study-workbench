@@ -4,20 +4,89 @@ How the test suites are laid out, how to run them, and the patterns to copy when
 
 ## Running the tests
 
-```bash
-# Backend (repo root)
-uv run pytest tests/                                   # what CI runs (plus coverage flags)
-uv run pytest tests/test_sources_api.py                # one file
-uv run pytest tests/test_sources_api.py -k retry       # tests matching a name
-uv run pytest tests/ --cov=open_notebook --cov=api     # with coverage
+`make v1-check` is a **backend offline gate only**, not an aggregate repository
+check. It requires explicit paths to an already prepared Python executable and
+token-cache directory (paths containing spaces are supported):
 
-# Frontend (inside frontend/)
-npm run test              # vitest run, once
-npm run test:watch        # watch mode
-npm run test:coverage     # what CI runs
+```bash
+make v1-check OFFLINE_PYTHON="/path/to/prepared/bin/python" TIKTOKEN_CACHE="/path/to/prepared/tiktoken-cache"
 ```
 
-The backend suite needs **no running SurrealDB, worker or AI provider**. CI runs it with nothing but `uv sync`. SurrealDB access, models and HTTP requests are mocked; a few tests use in-memory substitutes instead (for example an in-memory `SqliteSaver` in `tests/test_empty_model_reply.py`).
+Use an absolute interpreter path or a relative path containing `/` (for example
+`./.venv/bin/python`), not a bare command name resolved through `PATH`.
+Missing/blank configuration, an unqualified or non-executable interpreter, or a
+missing cache directory fails before any child is called. The target delegates only to
+`scripts/offline_pytest.py`; the runner verifies the pinned cache bytes. Neither
+installs dependencies, discovers a fallback environment, or downloads token data.
+A failing runner makes Make fail; it never reports repository-wide success.
+
+**NOT RUN by this target:** Python lint/format/type checks; frontend
+lint/types/tests/build; coverage; database/runtime/browser/provider acceptance;
+and CI. Record these separate gates and their actual results independently.
+`make clean-cache` is disabled, exits nonzero and deletes nothing; it is not a
+replacement for an ownership-reviewed cleanup procedure.
+
+```bash
+# Backend (repo root; use an already prepared Python environment)
+python scripts/offline_pytest.py --tiktoken-cache /path/to/prepared/tiktoken-cache
+python scripts/offline_pytest.py --tiktoken-cache /path/to/prepared/tiktoken-cache -- tests/test_sources_api.py -k retry
+python scripts/offline_pytest.py --tiktoken-cache /path/to/prepared/tiktoken-cache -- tests/ --cov=open_notebook --cov=api
+
+# Frontend (inside frontend/; already prepared local dependencies, no installation)
+export NPM_CONFIG_OFFLINE=true NPM_CONFIG_UPDATE_NOTIFIER=false
+export NPM_CONFIG_AUDIT=false NPM_CONFIG_FUND=false NEXT_TELEMETRY_DISABLED=1
+npm run lint
+./node_modules/.bin/tsc --noEmit
+npm run test              # artifact identity tests and Vitest, once
+npm run test:watch        # watch mode
+npm run test:coverage     # separate optional coverage gate, not evidence of CI
+
+# Python static checks (repo root; prepared interpreter)
+"$OFFLINE_PYTHON" -m ruff check .
+"$OFFLINE_PYTHON" -m ruff format --check .
+"$OFFLINE_PYTHON" -m mypy .
+```
+
+Set the shell variable `OFFLINE_PYTHON` separately for the static-check commands;
+a Make command-line assignment does not configure later shell commands. Frontend
+builds are a separate [artifact identity gate](../v1/ARTIFACT_IDENTITY.md), not
+implicitly run by `v1-check`. Use only its prepared offline inputs and report
+build/runtime identity separately.
+
+The default backend suite needs **no running SurrealDB, worker or AI provider**.
+Use the supported `scripts/offline_pytest.py` entrypoint rather than bare pytest
+when checking untrusted ambient configuration. It starts a fresh subprocess with
+an allowlisted environment, disables dotenv and third-party pytest plugin
+autoloading, selects this checkout ahead of editable installations, and creates
+temporary HOME, application, personal, runtime, NotebookLM storage and pytest
+paths. Host provider credentials, proxies, Python/pytest overrides, and all live
+DB/lifecycle opt-in variables are not forwarded. Temporary state is removed on
+exit. Pytest arguments are trusted developer input, not a sandbox boundary.
+
+The runner never installs or downloads anything. Supply an **existing** directory
+containing the `o200k_base` tiktoken cache file
+`fb374d419588a4632f3f557e76b4b70aebbca790` with SHA-256
+`446a9538cb6c348e3516120d7c08b09f57c36495e2acfffe59a5bf8b0cfb1a2d`.
+It verifies the bytes and copies them into temporary storage; it does not modify
+the supplied cache. Prepare dependencies and token data separately in an
+authorized environment. Missing or invalid cache data produces an actionable
+error before pytest starts.
+
+A Python audit hook rejects DNS and IPv4/IPv6 connect, bind and sendto in the test
+process (also installed when multiprocessing spawn reimports the entrypoint).
+Unix sockets remain available for local test machinery. **This is a tripwire, not
+an OS firewall:** native extensions and arbitrary subprocesses are not guaranteed
+to be covered; it does not isolate filesystem reads or malicious tests. Use an
+external network/filesystem sandbox when that stronger guarantee is needed.
+Synthetic isolation regressions never inspect an actual user `.env` or credential.
+
+Tests intentionally mock DB/models/HTTP and many intentionally disable auth.
+Passing them does **not** establish production authentication or runtime
+acceptance. Disposable database, embedding, device-session repository and
+lifecycle suites retain their explicit opt-ins and must be invoked separately
+with authorized, disposable configuration, not through this offline runner.
+Report skips and runtime/coverage gates separately. No checked-in CI is active
+in this private source delivery; a local command is not evidence of CI execution.
 
 ## Backend layout (`tests/`)
 
@@ -26,7 +95,8 @@ The backend suite needs **no running SurrealDB, worker or AI provider**. CI runs
 `tests/conftest.py` has no shared fixtures. It only:
 
 - sets `OPEN_NOTEBOOK_PASSWORD=""` before anything is imported, so the auth middleware is disabled in tests;
-- loads the repo's `.env` if it exists;
+- forces `PYTHON_DOTENV_DISABLED=1`, including for later application imports;
+- preserves the upstream mocked-auth/private-mode baseline;
 - puts the repo root on `sys.path`.
 
 pytest-asyncio runs in its default (strict) mode, so async tests need `@pytest.mark.asyncio`.
@@ -72,6 +142,55 @@ def test_delete_notebook_missing_returns_404(mock_get, client):
 
 **Migrations** can be tested as text, without a database, by reading the `.surrealql` file (see `tests/test_insight_timestamps.py`).
 
+### Disposable fresh-install migration gate
+
+`tests/test_source_attempt_repository_db.py::test_fresh_full_migration_chain_composite`
+runs the actual registered migrations 1–30 on an empty, memory-only SurrealDB
+2.3.10 database, then exercises source-attempt ownership, embedding publication,
+and revision-guarded note writes together. Enable only with
+`SOURCE_ATTEMPT_DISPOSABLE_DB=1` and `SOURCE_ATTEMPT_TEST_SURREAL_BINARY` pointing
+to the official binary matching the fixture's pinned SHA-256. The fixture owns
+an unused loopback listener, public synthetic credentials, and process cleanup;
+it never uses a configured application database.
+
+### Migration 7: legacy podcast safety stop
+
+Migration 7 no longer resets `speaker_profile`. Before submitting writes, the
+registered migration performs a read-only preflight. Any existing
+`speaker_profile`, `episode_profile`, or `episode` table (even empty, since its
+schema is unknown), or any record in legacy `podcast_config`, stops startup with
+an explicit **manual review** error. Empty `podcast_config` from migrations 1–6
+is supported and is not modified. Custom fields and conflicting default profile
+names are not converted, discarded, or overwritten.
+
+The SQL independently guards against existing records and uses strict table
+creation inside one transaction; it does not rely solely on the earlier Python
+check. An existing table introduced between preflight and execution aborts the
+transaction, including earlier schema writes. Indexes are built synchronously
+inside that transaction, not in background jobs. These guarantees are tested on
+owned memory-only SurrealDB 2.3.10: manager and direct SQL paths compare all
+records, schema definitions, and migration version before/after rejection;
+a failure after seed insertion rolls back and permits a clean retry. The actual
+fresh chain 1–30 also remains covered.
+
+**If startup stops at migration 7:** stop application writers, retain the existing
+database, take a backup and verify restoration on a separate copy, then have an
+operator review a data-preserving conversion against that copy's actual legacy
+schema. No automatic conversion is supplied. Do not delete tables, rename away
+conflicts, or advance the migration version merely to bypass the stop. A raw SQL
+race/failure may produce the generic sanitized statement-error message rather
+than the preflight's manual-review message; investigate the copy, not live data.
+
+This is not acceptance of arbitrary existing upgrades, partially applied
+migration replay, or backup/restore. Migration SQL and version bookkeeping still
+use separate requests: interruption after a successful schema commit but before
+the version bump needs operator review, not automatic replay. Already completed
+migration 7 is not rerun, and previously deleted data cannot be recovered by this
+change. **`7_down.surrealql` remains destructive**: it removes podcast/profile
+tables and records. It was not invoked by these tests and is not a safe downgrade
+or recovery procedure; any manual rollback requires its own reviewed backup and
+restore plan. Never run these disposable gates against user data.
+
 ## Frontend layout
 
 Tests are colocated with the code as `*.test.ts` / `*.test.tsx` (for example `src/lib/locales/index.test.ts`, `src/components/common/ConfirmDialog.test.tsx`). `frontend/src/test/` holds only the shared setup (`setup.ts`: jest-dom matchers and mocks for `next/navigation`, `matchMedia` and `@/lib/hooks/use-translation`, whose `t()` returns the key itself, so assert on keys rather than English text).
@@ -83,3 +202,33 @@ Vitest runs in `jsdom` with globals enabled and the `@/` alias (`frontend/vitest
 - A bug fix comes with a test that fails without the fix. Name it after the behavior (`test_delete_notebook_missing_returns_404`) and reference the issue in the docstring.
 - API changes: status codes, validation errors and the error mapping, not only the happy path.
 - Don't test third-party libraries (Esperanto, content-core, LangGraph) or make real provider calls.
+
+### Evidence-detail read batching
+
+`tests/test_v1_evidence_reads.py` exercises the real route, evidence service and
+personal store against a synthetic `repo_query` boundary. The ordinary retained
+172-record fixture requires four SELECT calls (version, current extraction and
+two evidence batches), compared with 692 before request-local reuse. This is a
+query-count assertion, not database execution or a latency benchmark. Each batch
+binds at most 128 physical RecordIDs; unordered rows, duplicates, missing/malformed
+records, history and archive validation are covered. Other service callers retain
+their original sequential reads.
+
+The context belongs only to one source-version detail response, returns copies,
+and intentionally reuses each identity's first observed value. It is **not** an
+atomic snapshot: concurrent writes may produce mixed-time records, and a change
+after an identity's first read is observed only by a later request. Query size is
+bounded, not total response/context memory.
+
+Integrity regressions reject payload-ID aliases before copying another physical
+record's verdict, bind supplied-evidence membership to the requested ID, and check
+retained extraction ownership. Direct evidence/detail/search reads reject stored
+identity inconsistencies with a controlled 400; citation validation instead
+returns `invalid` with the existing integrity-failure reason. Evidence listed by
+an extraction must belong to that exact source version and extraction. HTTP tests
+and fake-provider question/outline tests verify that corrupt index membership
+fails before returning foreign quotes or constructing a prompt. Correct explicit
+historical selection, duplicate order and batching counts remain covered. These
+tests address inconsistent stored metadata; they do not establish an ordinary
+import or unauthorized-access path, database/runtime acceptance, or protection
+against every possible form of metadata corruption.

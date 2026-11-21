@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "verified_at_utc": "2026-10-26T12:57:00Z",
+  "tested_local_commit": "152250609b142b12aa86dc0e7f1f2cc2436ef0f5",
+  "tested_local_tree": "53ade43f81b08759ff445434023c030b92409981",
+  "frontend": {
+    "unit_tests_passed": 1739,
+    "test_files": 99,
+    "synthetic_artifact_tests_passed": 25,
+    "focused_tests_passed": 407,
+    "typecheck": "passed",
+    "lint_errors": 0,
+    "inherited_lint_warnings": 7
+  },
+  "backend": {
+    "passed": 2778,
+    "skipped": 128,
+    "warnings": 2,
+    "ruff": "passed",
+    "format": "passed",
+    "mypy_source_files": 318,
+    "openapi_contract": "passed",
+    "note": "Fresh integrated backend run before the final frontend-only correction; backend source unchanged."
+  },
+  "review": {
+    "whole_feature": "completed; required findings corrected",
+    "scoped_final": "approved",
+    "findings_closed": [
+      "UUID-limited mount crash",
+      "full-range EOF whitespace"
+    ],
+    "deferred": "Same-instance notebook-switch read tagging; actual sole product route uses keyed remount."
+  },
+  "production_build": {
+    "command": "npm run build",
+    "status": "passed",
+    "separate_verify": "passed",
+    "manifest_sha256": "adfc375c6d648cbf68a1fa2177cdfa46407caa7a8b083d39e6c69988822300a8",
+    "build_id": "4876fd5d-8638-424f-87f8-12428a4fa267",
+    "source_sha256": "ba1db0c0a7783be853cde9f79bd88df42e79dcb8e16347b7af051496a4f62853",
+    "artifact_sha256": "d35d66d8395d6d8cf5799530535c0a0eeab8271ea3dcaa1619fd45b1e76be3f2",
+    "generated_sha256": "52d6dbf123c1155f4ecf503800bea441b5473eaadfb3378c303edd079642711d",
+    "claim": "source-artifact-association-not-reproducibility"
+  },
+  "limits": [
+    "Source/artifact association, not reproducible build or dependency attestation.",
+    "No actual browser, database, worker, provider, CI, deployment or main-merge acceptance.",
+    "Document-memory-only recovery; unknown outcomes can remain fenced.",
+    "Browser endpoint equality is not human/Google account continuity."
+  ]
+}

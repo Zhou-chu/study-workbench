@@ -24,3 +24,7 @@ Useful upstream license locations:
 - https://github.com/mozilla/pdf.js/blob/master/LICENSE
 
 This inventory highlights added/pinned dependencies and is not a legal opinion or exhaustive transitive license audit. Lockfiles are authoritative for the complete dependency inventory. No vendor account agreement was accepted or paid service purchased during implementation.
+
+## Independent Notebook SPA PDF reader
+
+The SPA pins `pdfjs-dist` 6.4.299 from the official npm package (Apache-2.0). `apps/web/scripts/prepare-pdf-assets.mjs` generates `apps/web/public/pdfjs/6.4.299/` from the installed dependency and verifies exact size/SHA256 inventory, bundled worker/LICENSE, CMaps, standard fonts and WASM codec licenses. No remote CDN/font fallback or hand-authored vendor bytes are used. Generated output cannot overwrite unknown/drifted files. Root `package-lock.json` records the npm tarball integrity; the original frontend lock is unchanged.

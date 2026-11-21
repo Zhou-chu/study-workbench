@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { NotebookResponse } from '@/lib/types/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -26,7 +25,6 @@ interface NotebookRowProps {
 export function NotebookRow({ notebook }: NotebookRowProps) {
   const { t, language } = useTranslation()
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const router = useRouter()
   const updateNotebook = useUpdateNotebook()
 
   const handleArchiveToggle = (e: React.MouseEvent) => {
@@ -37,29 +35,17 @@ export function NotebookRow({ notebook }: NotebookRowProps) {
     })
   }
 
-  const handleRowClick = () => {
-    router.push(`/notebooks/${encodeURIComponent(notebook.id)}`)
-  }
-
   return (
     <>
-      {/* The row is mouse-clickable for convenience, but the notebook name is
-          the accessible primary action (a real link) for keyboard/screen-reader
-          users — avoiding nested interactive (button-in-button) semantics. */}
-      <div
-        className="group flex items-center gap-4 rounded-lg border bg-card px-4 py-3 card-hover"
-        onClick={handleRowClick}
-        style={{ cursor: 'pointer' }}
-      >
+      <div className="group flex items-center gap-4 rounded-lg border bg-card px-4 py-3 card-hover">
+        <Link
+          href={`/notebooks/${encodeURIComponent(notebook.id)}/study`}
+          aria-label={notebook.name}
+          className="flex flex-1 min-w-0 items-center gap-4 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <Link
-              href={`/notebooks/${encodeURIComponent(notebook.id)}`}
-              onClick={(e) => e.stopPropagation()}
-              className="font-medium truncate rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {notebook.name}
-            </Link>
+            <span className="font-medium truncate">{notebook.name}</span>
             {notebook.archived && (
               <Badge variant="secondary">
                 {t('notebooks.archived')}
@@ -71,7 +57,7 @@ export function NotebookRow({ notebook }: NotebookRowProps) {
               {notebook.description}
             </p>
           )}
-          <Link href={`/notebooks/${encodeURIComponent(notebook.id)}/study`} onClick={event => event.stopPropagation()} className="mt-1 inline-flex rounded-sm text-xs font-medium text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring">{t('workbench.open')}</Link>
+          <span className="mt-1 inline-flex text-xs font-medium text-primary group-hover:underline">{t('workbench.open')}</span>
         </div>
 
         <div className="flex items-center gap-3 shrink-0 text-xs text-muted-foreground">
@@ -91,6 +77,8 @@ export function NotebookRow({ notebook }: NotebookRowProps) {
             locale: getDateLocale(language)
           }) })}
         </div>
+
+        </Link>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

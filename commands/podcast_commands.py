@@ -7,7 +7,8 @@ from loguru import logger
 from surreal_commands import CommandInput, CommandOutput, command
 
 from open_notebook.config import PODCASTS_FOLDER
-from open_notebook.database.repository import ensure_record_id, repo_query
+from open_notebook.database.repository import ensure_record_id
+from open_notebook.exceptions import ConfigurationError, OpenNotebookError
 from open_notebook.podcasts.audio_paths import to_relative_audio_path
 from open_notebook.podcasts.models import (
     EpisodeProfile,
@@ -203,124 +204,48 @@ async def generate_podcast_command(
             f"tts: {tts_provider}/{tts_model_name}"
         )
 
-        # 4. Load all profiles and configure podcast-creator
-        episode_profiles = await repo_query("SELECT * FROM episode_profile")
-        speaker_profiles = await repo_query("SELECT * FROM speaker_profile")
-
-        # Transform the surrealdb array into a dictionary for podcast-creator
-        episode_profiles_dict = {
-            profile["name"]: profile for profile in episode_profiles
-        }
-        speaker_profiles_dict = {
-            profile["name"]: profile for profile in speaker_profiles
-        }
-
-        # Map speaker_profile record ID -> name so podcast-creator keeps
-        # receiving speaker names (its EpisodeProfile.speaker_config is a
-        # required non-empty name string, cross-referenced against the
-        # speakers config keyed by name).
-        speaker_name_by_id = {
-            str(profile["id"]): profile["name"] for profile in speaker_profiles
-        }
-
-        # 5. Inject resolved model configs into profile dicts
-        # Resolve ALL episode profiles (podcast-creator validates all).
-        # Remove profiles that fail resolution to prevent validation errors.
-        for ep_name in list(episode_profiles_dict.keys()):
-            ep_dict = episode_profiles_dict[ep_name]
-
-            # Since migration 20, speaker_config stores a record ID (and is
-            # None when the referenced speaker profile no longer exists).
-            # Rewrite it back to the speaker name for podcast-creator; drop
-            # profiles whose reference doesn't resolve so a single orphaned
-            # profile can't fail validation for the whole config. The profile
-            # being generated always resolves: its speaker was validated above.
-            speaker_ref = ep_dict.get("speaker_config")
-            speaker_name = (
-                speaker_name_by_id.get(str(speaker_ref)) if speaker_ref else None
-            )
-            if not speaker_name and ep_name == episode_profile.name:
-                speaker_name = speaker_profile.name
-            if not speaker_name:
-                logger.warning(
-                    f"Episode profile '{ep_name}' references a speaker profile "
-                    f"that no longer exists ({speaker_ref!r}), removing from "
-                    "config to prevent validation errors"
+        # Use only the selected, validated snapshots. Reloading all profiles can
+        # lose a renamed/deleted selection or clear a binding between awaits,
+        # making podcast-creator silently choose file/bundled defaults.
+        ep_dict = full_model_dump(episode_profile.model_dump())
+        sp_dict = full_model_dump(speaker_profile.model_dump())
+        ep_dict["speaker_config"] = speaker_profile.name
+        for target, prefix, provider, model_name, config in (
+            (ep_dict, "outline", outline_provider, outline_model_name, outline_config),
+            (
+                ep_dict,
+                "transcript",
+                transcript_provider,
+                transcript_model_name,
+                transcript_config,
+            ),
+            (sp_dict, "tts", tts_provider, tts_model_name, tts_config),
+        ):
+            if not provider or not model_name:
+                raise ConfigurationError(
+                    "Selected podcast model configuration is incomplete"
                 )
-                del episode_profiles_dict[ep_name]
-                continue
-            ep_dict["speaker_config"] = speaker_name
+            target[f"{prefix}_provider"] = provider
+            target[f"{prefix}_model"] = model_name
+            target[f"{prefix}_config"] = config
 
-            try:
-                if ep_dict.get("outline_llm"):
-                    prov, model, conf = await _resolve_model_config(
-                        str(ep_dict["outline_llm"]),
-                        max_tokens=ep_dict.get("max_tokens"),
-                    )
-                    ep_dict["outline_provider"] = prov
-                    ep_dict["outline_model"] = model
-                    ep_dict["outline_config"] = conf
-                if ep_dict.get("transcript_llm"):
-                    prov, model, conf = await _resolve_model_config(
-                        str(ep_dict["transcript_llm"]),
-                        max_tokens=ep_dict.get("max_tokens"),
-                    )
-                    ep_dict["transcript_provider"] = prov
-                    ep_dict["transcript_model"] = model
-                    ep_dict["transcript_config"] = conf
-            except Exception as e:
-                logger.warning(
-                    f"Failed to resolve models for episode profile '{ep_name}', "
-                    f"removing from config to prevent validation errors: {e}"
+        # Explicit per-speaker bindings must resolve, never downgrade to the
+        # profile default voice/account on failure.
+        for speaker in sp_dict.get("speakers", []):
+            if speaker.get("voice_model"):
+                provider, model_name, config = await _resolve_model_config(
+                    str(speaker["voice_model"])
                 )
-                del episode_profiles_dict[ep_name]
-
-        # Resolve TTS for ALL speaker profiles (podcast-creator validates all).
-        # Remove profiles that fail resolution to prevent validation errors.
-        for sp_name in list(speaker_profiles_dict.keys()):
-            sp_dict = speaker_profiles_dict[sp_name]
-            if not sp_dict.get("voice_model") and sp_name != speaker_profile.name:
-                # podcast-creator requires tts_provider/tts_model on every
-                # profile in the config, so one unconfigured profile (the
-                # seeded ones ship without a voice model) would fail every
-                # generation (#1450). The selected profile never gets here
-                # without a voice model: it was validated above.
-                logger.warning(
-                    f"Speaker profile '{sp_name}' has no voice model, removing "
-                    "from config to prevent validation errors"
-                )
-                del speaker_profiles_dict[sp_name]
-                continue
-            if sp_dict.get("voice_model"):
-                try:
-                    prov, model, conf = await _resolve_model_config(
-                        str(sp_dict["voice_model"])
+                if not provider or not model_name:
+                    raise ConfigurationError(
+                        "Selected podcast voice configuration is incomplete"
                     )
-                    sp_dict["tts_provider"] = prov
-                    sp_dict["tts_model"] = model
-                    sp_dict["tts_config"] = conf
-                except Exception as e:
-                    logger.warning(
-                        f"Failed to resolve TTS for speaker profile '{sp_name}', "
-                        f"removing from config to prevent validation errors: {e}"
-                    )
-                    del speaker_profiles_dict[sp_name]
-                    continue
+                speaker["tts_provider"] = provider
+                speaker["tts_model"] = model_name
+                speaker["tts_config"] = config
 
-            # Per-speaker TTS overrides
-            for speaker in sp_dict.get("speakers", []):
-                if speaker.get("voice_model"):
-                    try:
-                        prov, model, conf = await _resolve_model_config(
-                            str(speaker["voice_model"])
-                        )
-                        speaker["tts_provider"] = prov
-                        speaker["tts_model"] = model
-                        speaker["tts_config"] = conf
-                    except Exception as e:
-                        logger.warning(
-                            f"Failed to resolve per-speaker TTS for '{speaker.get('name')}': {e}"
-                        )
+        episode_profiles_dict = {episode_profile.name: ep_dict}
+        speaker_profiles_dict = {speaker_profile.name: sp_dict}
 
         # 6. Generate briefing
         briefing = episode_profile.default_briefing
@@ -429,6 +354,10 @@ async def generate_podcast_command(
             else None,
             processing_time=processing_time,
         )
+
+    except OpenNotebookError:
+        # Preserve permanent configuration vs transient database failures.
+        raise
 
     except ValueError as e:
         # ValueError is the command layer's "permanent failure, do not retry"

@@ -1,0 +1,222 @@
+{
+  "hybrid": {
+    "hits": [
+      {
+        "evidence_id": "v1_0000",
+        "source_version_id": "v1",
+        "extraction_id": "ex_v1",
+        "notebook_id": "notebook:allowed",
+        "source_title": "v1",
+        "quote": "Solar electricity.",
+        "quote_hash": "e5716b563ff0dd38c3c297e98d3d65600068a06a039683bbb5a5573f5ce6fa2b",
+        "locator": {
+          "block_id": "0",
+          "page_index": null,
+          "start_offset": 0,
+          "end_offset": 18
+        },
+        "evidence_kind": "text",
+        "score": 0.03278688524590164,
+        "retrieval_method": "hybrid",
+        "channels": [
+          "lexical",
+          "semantic"
+        ],
+        "reference_validity": "verified",
+        "reference_reason": null,
+        "provenance": null,
+        "independent_support": null
+      },
+      {
+        "evidence_id": "v1_0001",
+        "source_version_id": "v1",
+        "extraction_id": "ex_v1",
+        "notebook_id": "notebook:allowed",
+        "source_title": "v1",
+        "quote": "Wind energy.",
+        "quote_hash": "c5b8faea4cde9981b44b07a7ca55614736a170f7786ecb7cd12f829b6df3f4b4",
+        "locator": {
+          "block_id": "1",
+          "page_index": null,
+          "start_offset": 0,
+          "end_offset": 12
+        },
+        "evidence_kind": "text",
+        "score": 0.016129032258064516,
+        "retrieval_method": "hybrid",
+        "channels": [
+          "semantic"
+        ],
+        "reference_validity": "verified",
+        "reference_reason": null,
+        "provenance": null,
+        "independent_support": null
+      }
+    ],
+    "retrieval": {
+      "requested_method": "hybrid",
+      "retrieval_method": "hybrid",
+      "fallback_reason": null,
+      "profile_id": "chosen",
+      "indexed_version_count": 1,
+      "selected_version_count": 1,
+      "warnings": []
+    }
+  },
+  "unknown": {
+    "hits": [
+      {
+        "evidence_id": "v1_0000",
+        "source_version_id": "v1",
+        "extraction_id": "ex_v1",
+        "notebook_id": "notebook:allowed",
+        "source_title": "v1",
+        "quote": "Solar electricity.",
+        "quote_hash": "e5716b563ff0dd38c3c297e98d3d65600068a06a039683bbb5a5573f5ce6fa2b",
+        "locator": {
+          "block_id": "0",
+          "page_index": null,
+          "start_offset": 0,
+          "end_offset": 18
+        },
+        "evidence_kind": "text",
+        "score": 6.1,
+        "retrieval_method": "lexical_fallback",
+        "channels": [
+          "lexical"
+        ],
+        "reference_validity": "verified",
+        "reference_reason": null,
+        "provenance": null,
+        "independent_support": null
+      }
+    ],
+    "retrieval": {
+      "requested_method": "hybrid",
+      "retrieval_method": "lexical_fallback",
+      "fallback_reason": "EMBEDDING_OUTCOME_UNKNOWN",
+      "profile_id": "chosen",
+      "indexed_version_count": 1,
+      "selected_version_count": 1,
+      "warnings": [
+        "EMBEDDING_OUTCOME_UNKNOWN"
+      ]
+    }
+  },
+  "empty_unknown": {
+    "hits": [],
+    "retrieval": {
+      "requested_method": "hybrid",
+      "retrieval_method": "lexical_fallback",
+      "fallback_reason": "EMBEDDING_OUTCOME_UNKNOWN",
+      "profile_id": "chosen",
+      "indexed_version_count": 1,
+      "selected_version_count": 1,
+      "warnings": [
+        "EMBEDDING_OUTCOME_UNKNOWN"
+      ]
+    }
+  },
+  "not_ready": {
+    "hits": [
+      {
+        "evidence_id": "v1_0000",
+        "source_version_id": "v1",
+        "extraction_id": "ex_v1",
+        "notebook_id": "notebook:allowed",
+        "source_title": "v1",
+        "quote": "Solar electricity.",
+        "quote_hash": "e5716b563ff0dd38c3c297e98d3d65600068a06a039683bbb5a5573f5ce6fa2b",
+        "locator": {
+          "block_id": "0",
+          "page_index": null,
+          "start_offset": 0,
+          "end_offset": 18
+        },
+        "evidence_kind": "text",
+        "score": 6.1,
+        "retrieval_method": "lexical_fallback",
+        "channels": [
+          "lexical"
+        ],
+        "reference_validity": "verified",
+        "reference_reason": null,
+        "provenance": null,
+        "independent_support": null
+      }
+    ],
+    "retrieval": {
+      "requested_method": "hybrid",
+      "retrieval_method": "lexical_fallback",
+      "fallback_reason": "INDEX_NOT_READY",
+      "profile_id": "chosen",
+      "indexed_version_count": 0,
+      "selected_version_count": 1,
+      "warnings": []
+    }
+  },
+  "lexical": {
+    "hits": [
+      {
+        "evidence_id": "v1_0000",
+        "source_version_id": "v1",
+        "extraction_id": "ex_v1",
+        "notebook_id": "notebook:allowed",
+        "source_title": "v1",
+        "quote": "Solar electricity.",
+        "quote_hash": "e5716b563ff0dd38c3c297e98d3d65600068a06a039683bbb5a5573f5ce6fa2b",
+        "locator": {
+          "block_id": "0",
+          "page_index": null,
+          "start_offset": 0,
+          "end_offset": 18
+        },
+        "evidence_kind": "text",
+        "score": 6.1,
+        "retrieval_method": "lexical",
+        "channels": [
+          "lexical"
+        ],
+        "reference_validity": "verified",
+        "reference_reason": null,
+        "provenance": null,
+        "independent_support": null
+      }
+    ],
+    "retrieval": {
+      "requested_method": "lexical",
+      "retrieval_method": "lexical",
+      "fallback_reason": null,
+      "profile_id": null,
+      "indexed_version_count": 0,
+      "selected_version_count": 1,
+      "warnings": []
+    }
+  },
+  "legacy": {
+    "hits": [
+      {
+        "evidence_id": "v1_0000",
+        "source_version_id": "v1",
+        "extraction_id": "ex_v1",
+        "notebook_id": "notebook:allowed",
+        "source_title": "v1",
+        "quote": "Solar electricity.",
+        "quote_hash": "e5716b563ff0dd38c3c297e98d3d65600068a06a039683bbb5a5573f5ce6fa2b",
+        "locator": {
+          "block_id": "0",
+          "page_index": null,
+          "start_offset": 0,
+          "end_offset": 18
+        },
+        "evidence_kind": "text",
+        "score": 6.1,
+        "retrieval_method": "lexical",
+        "reference_validity": "verified",
+        "reference_reason": null,
+        "provenance": null,
+        "independent_support": null
+      }
+    ]
+  }
+}

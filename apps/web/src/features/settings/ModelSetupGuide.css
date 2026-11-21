@@ -1,0 +1,10 @@
+.configuration-page .model-setup-guide dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem 1.5rem;
+}
+.model-setup-guide { min-width: 0; overflow-wrap: anywhere; }
+.model-setup-guide dt { color: var(--muted); font-size: .875rem; }
+.model-setup-guide dd { margin: .25rem 0 0; }
+.model-setup-wide { grid-column: 1 / -1; }
+.model-setup-guide details p { margin-block-start: .75rem; }

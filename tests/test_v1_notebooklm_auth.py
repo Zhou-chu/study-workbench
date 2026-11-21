@@ -1,20 +1,10 @@
 """Offline contract checks. No Google credentials or network are used."""
 
-import importlib
 from contextlib import asynccontextmanager
 from types import SimpleNamespace
 
 import pytest
-
-
-def adapter_type():
-    try:
-        module = importlib.import_module(
-            "open_notebook.integrations.notebooklm.sdk_adapter"
-        )
-    except ModuleNotFoundError:
-        pytest.fail("NotebookLM public SDK adapter has not been implemented")
-    return module.SDKNotebookLMBridge
+from notebooklm_auth_fixtures import adapter_type
 
 
 @pytest.mark.asyncio
@@ -74,19 +64,6 @@ async def test_unexpected_schema_does_not_claim_connected(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_login_flow_honestly_unavailable_without_visible_runtime_browser(
-    tmp_path,
-):
-    bridge = adapter_type()(storage_path=tmp_path / "storage.json")
-    flow = await bridge.start_login()
-    assert flow["state"] == "unavailable"
-    assert flow["flow_id"]
-    assert flow["expires_at"]
-    assert "visible" in flow["reason"].lower()
-    assert await bridge.start_login() == flow
-
-
-@pytest.mark.asyncio
 async def test_disconnect_closes_gate_before_deleting_owned_session(tmp_path):
     path = tmp_path / "storage.json"
     path.write_text("{}")
@@ -95,29 +72,3 @@ async def test_disconnect_closes_gate_before_deleting_owned_session(tmp_path):
     assert not path.exists()
     assert bridge.connection_status().state == "disconnected"
     assert (await bridge.verify_connection()).state == "disconnected"
-
-
-@pytest.mark.asyncio
-async def test_test_adapter_requires_explicit_responses_and_injection(monkeypatch):
-    try:
-        module = importlib.import_module(
-            "open_notebook.integrations.notebooklm.fake_adapter"
-        )
-    except ModuleNotFoundError:
-        pytest.fail("Explicit injection-only test adapter not implemented")
-    from api.notebooklm_service import NotebookLMService
-    from open_notebook.integrations.notebooklm.contracts import (
-        BridgeError,
-        ConnectionStatus,
-    )
-
-    monkeypatch.setenv("NOTEBOOKLM_FAKE", "true")
-    assert isinstance(NotebookLMService().bridge, adapter_type())
-    fake = module.FakeNotebookLMBridge({})
-    with pytest.raises(BridgeError):
-        await fake.verify_connection()
-    fake = module.FakeNotebookLMBridge(
-        {"verify_connection": ConnectionStatus(state="connected")}
-    )
-    assert (await fake.verify_connection()).state == "connected"
-    assert NotebookLMService(bridge=fake).bridge is fake

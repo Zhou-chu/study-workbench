@@ -1,23 +1,23 @@
 import { QueryClient } from '@tanstack/react-query'
-import { isNotFoundError } from '@/lib/utils/error-handler'
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 10 * 60 * 1000, // 10 minutes
-      // Retry transient failures, but never retry 404s: the item was
-      // deleted (or never existed) and retrying cannot change that.
-      retry: (failureCount, error) => !isNotFoundError(error) && failureCount < 2,
+      retry: false,
       refetchOnWindowFocus: false,
     },
     mutations: {
-      retry: 1,
+      retry: false,
     },
   },
 })
 
 export const QUERY_KEYS = {
+  semanticIndexAttempt: (id: string, jobId: string, identity: string, generation: number, epoch?: number) => ['personal', 'semantic-index-attempt', id, jobId, identity, generation, epoch ?? null] as const,
+  semanticIndex: (id: string, versions: readonly string[], epoch?: number) => ['personal', 'semantic-index', id, [...versions], epoch ?? null] as const,
+  workbenchTurnCheck: (id: string) => ['personal', 'turn-check', id] as const,
   portableLimits: ['personal', 'portable', 'limits'] as const,
   workbench: (id: string) => ['personal', 'workspace', id] as const,
   personalTurns: (id: string) => ['personal', 'turns', id] as const,

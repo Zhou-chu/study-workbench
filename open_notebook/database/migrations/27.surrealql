@@ -1,0 +1,9 @@
+-- Native editorial revision, independent of embeddings and personal snapshots.
+-- TYPE int coerces integral floats in 2.3.10; assert the original type instead.
+DEFINE FIELD revision ON note TYPE any DEFAULT 1 ASSERT type::is::int($value) AND $value >= 1;
+UPDATE note SET revision = 1 WHERE revision = NONE;
+
+-- Separate guard records prevent membership/deletion write skew without
+-- triggering native updated timestamps. Retained tombstones contain no content.
+DEFINE TABLE note_write_guard SCHEMAFULL;
+DEFINE FIELD token ON note_write_guard TYPE uuid;

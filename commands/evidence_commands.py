@@ -129,3 +129,22 @@ async def maintain_evidence_command(
 ) -> EvidenceMaintenanceOutput:
     job = await EvidenceMaintenanceService().run(input_data.job_id)
     return EvidenceMaintenanceOutput(job_id=job["job_id"], state=job["state"])
+
+
+class EvidenceIndexingInput(CommandInput):
+    job_id: str
+
+
+class EvidenceIndexingOutput(CommandOutput):
+    job_id: str
+    state: str
+
+
+@command("index_evidence", app="open_notebook", retry={"max_attempts": 1})
+async def index_evidence_command(
+    input_data: EvidenceIndexingInput,
+) -> EvidenceIndexingOutput:
+    from api.evidence_indexing import EvidenceIndexingService
+
+    job = await EvidenceIndexingService().run(input_data.job_id)
+    return EvidenceIndexingOutput(job_id=job["job_id"], state=job["state"])

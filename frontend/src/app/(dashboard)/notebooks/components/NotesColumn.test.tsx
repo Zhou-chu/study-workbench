@@ -41,6 +41,7 @@ vi.mock('@/lib/stores/notebook-columns-store', () => ({
 
 const notebookId = 'notebook:123'
 const existingNote: NoteResponse = {
+  revision: 1,
   id: 'note:456',
   title: 'Existing note',
   content: 'Existing note content',
@@ -104,5 +105,48 @@ describe('NotesColumn', () => {
 
     expect(editor).toHaveAttribute('data-open', 'true')
     expect(editor).toHaveAttribute('data-note-id', '')
+  })
+})
+
+describe('existing note native selection', () => {
+  it('offers a focusable native button and synthetic detail-zero activation', () => {
+    const editor = renderNotes([existingNote])
+    const open = screen.getByRole('button', { name: existingNote.title! })
+    expect(open.tagName).toBe('BUTTON')
+    open.focus()
+    expect(open).toHaveFocus()
+    expect(open).toHaveAttribute('type', 'button')
+    fireEvent.click(open, { detail: 0 })
+    expect(editor).toHaveAttribute('data-note-id', existingNote.id)
+    expect(editor).toHaveAttribute('data-open', 'true')
+  })
+})
+
+describe('note secondary controls', () => {
+  it('opens delete menu by keyboard and cancels without opening editor', async () => {
+    const editor = renderNotes([existingNote])
+    const menu = screen.getByRole('button', { name: 'notebooks.deleteNote' })
+    menu.focus()
+    fireEvent.keyDown(menu, { key: 'Enter' })
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'notebooks.deleteNote' }))
+    expect(editor).toHaveAttribute('data-open', 'false')
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }))
+    expect(editor).toHaveAttribute('data-open', 'false')
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+  })
+  it('changes context independently and keeps controls outside selection button', () => {
+    const change = vi.fn()
+    const { container } = render(<NotesColumn notes={[existingNote]} isLoading={false} notebookId={notebookId}
+      contextSelections={{ [existingNote.id]: 'off' }} onContextModeChange={change} />)
+    const control = container.querySelector('svg.lucide-eye-off')?.closest('button')
+    expect(control).not.toBeNull()
+    fireEvent.click(control!)
+    expect(change).toHaveBeenCalledExactlyOnceWith(existingNote.id, 'full')
+    expect(screen.getByTestId('note-editor-dialog')).toHaveAttribute('data-open', 'false')
+    expect(container.querySelector('button button')).toBeNull()
+  })
+  it('gives untitled notes a nonempty translated selection name', () => {
+    renderNotes([{ ...existingNote, title: '' }])
+    expect(screen.getByRole('button', { name: 'sources.untitledNote' })).toBeInTheDocument()
   })
 })

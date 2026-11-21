@@ -1,6 +1,8 @@
 import os
 from typing import MutableMapping
 
+from open_notebook.database.note_contract import NoteWriteMode
+
 # ROOT DATA FOLDER
 DATA_FOLDER = os.environ.get("OPEN_NOTEBOOK_DATA_DIR") or "./data"
 
@@ -45,3 +47,13 @@ def ensure_llm_timeout_default(environ: MutableMapping[str, str] = os.environ) -
 
 
 ensure_llm_timeout_default()
+
+
+def get_note_write_mode() -> NoteWriteMode:
+    """Compatibility must be explicitly disabled; unknown modes fail closed."""
+    from open_notebook.exceptions import ConfigurationError
+
+    mode = os.getenv("STUDY_WORKBENCH_NOTE_WRITE_MODE", "legacy_single_web")
+    if mode not in ("legacy_single_web", "multiclient"):
+        raise ConfigurationError("Invalid STUDY_WORKBENCH_NOTE_WRITE_MODE")
+    return mode  # type: ignore[return-value]

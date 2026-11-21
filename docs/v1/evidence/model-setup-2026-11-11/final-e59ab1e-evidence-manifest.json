@@ -1,0 +1,105 @@
+{
+  "product_head": "e59ab1efc3e0a4fcafd000282694ef6b216fe8bd",
+  "verified_utc": "2026-11-11T06:49:06.860615+00:00",
+  "scope": "Source preview with synthetic API only",
+  "product_files": {
+    "apps/web/src/features/settings/ModelsPage.tsx": {
+      "sha256": "9ff31ad269e674da84b90e4779d3334c2126e928da01cbd77f69690af7cc6e0c",
+      "mtime_utc": "2026-11-10T19:31:52.057652+00:00"
+    },
+    "apps/web/src/features/settings/ModelSetupGuide.tsx": {
+      "sha256": "91ea2e231af2b21db07412dbf9b0c4e79029d1b0fbf7cc9acfb229e62bf9db45",
+      "mtime_utc": "2026-11-10T19:31:52.056961+00:00"
+    },
+    "apps/web/src/features/settings/ModelSetupGuide.css": {
+      "sha256": "104f4cf44aa658f9f3555469730523b32da89763adb93f089854cbbeac81e2d1",
+      "mtime_utc": "2026-11-10T19:08:52.852351+00:00"
+    },
+    "apps/web/src/i18n/model-setup-messages.ts": {
+      "sha256": "bce003a8e6e40e67e0d8583eb0a783a9d3a156646ec97ceb5c5c4add65ed29ed",
+      "mtime_utc": "2026-11-10T19:21:57.760849+00:00"
+    },
+    "apps/web/src/features/library/LibraryDialog.tsx": {
+      "sha256": "8bf03be2ce0c64154d66b89412502d710615d66a7ca646ca49bbe8c8025c12b7",
+      "mtime_utc": "2026-11-11T06:32:15.803501+00:00"
+    },
+    "apps/web/src/app/styles.css": {
+      "sha256": "a381b505784e2ba5cadf1499593621d2cbbcb7689333bfb2004406e79597aad3",
+      "mtime_utc": "2026-11-11T06:31:47.880935+00:00"
+    },
+    "apps/web/src/app/AppChrome.tsx": {
+      "sha256": "5be12a9a542c738b62f46faeca82a33f7dc4b8993661b14c8d704eb631295471",
+      "mtime_utc": "2026-11-10T17:47:46.135810+00:00"
+    },
+    "apps/web/src/features/notebooks/NotebookShell.tsx": {
+      "sha256": "8a4a515b6c6fe8739653aad98e54177e771b6433c6556ee65ca900c69d14ab59",
+      "mtime_utc": "2026-11-11T06:26:26.107649+00:00"
+    }
+  },
+  "artifacts": [
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/final-review-e59ab1e.py",
+      "sha256": "5affbecbad8e3c3db0f399bcf4bf7cf44a9f9aaa9d408c6adbb442d3587f8f9d"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/final-source-review-e59ab1e.md",
+      "sha256": "842056184a4b00de350fb5255e1bc071f8bd8f49da01745f55a591c3e29dd828"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/visual-qa/final-e59ab1e-shared-smoke/report.json",
+      "sha256": "383a5355f433bf310d0e618d609be2b188ace19ec44220517d7498e337dd3027"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/visual-qa/final-e59ab1e-shared-smoke/review-script.py",
+      "sha256": "5affbecbad8e3c3db0f399bcf4bf7cf44a9f9aaa9d408c6adbb442d3587f8f9d"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/visual-qa/final-e59ab1e-shared-smoke/screenshot-manifest.json",
+      "sha256": "2f669c23d163a3344cbf07bb8c159863e7b1fc2a831099d866ed0e701c4239ea"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/visual-qa/final-e59ab1e-matrix/report.json",
+      "sha256": "cc8ba01e2b9238eff5911db99e040b954b74631058f187ddd19bfb4703fc246a"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/visual-qa/final-e59ab1e-matrix/review-script.py",
+      "sha256": "5affbecbad8e3c3db0f399bcf4bf7cf44a9f9aaa9d408c6adbb442d3587f8f9d"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/visual-qa/final-e59ab1e-matrix/screenshot-manifest.json",
+      "sha256": "9f397761016fbe54eb59085d1fa0678db63e41b5df71006346ee31412c90c51e"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/visual-qa/final-e59ab1e-shared-smoke/390-light-old_default-text-200-viewport.png",
+      "sha256": "7903b8d9e87a7f740297f7c49022bb703fb1f700a12283ad518203c5ce84066a"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/visual-qa/final-e59ab1e-shared-smoke/390-dark-keyboard-close-restored.png",
+      "sha256": "999565f1bf7b6b7e0b2f3e88fe1ae9a057b6482fda8c35902c3dec076f22d6f5"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/visual-qa/final-e59ab1e-shared-smoke/390-light-keyboard-close-button-focus.png",
+      "sha256": "6222548d4e5baf9de75ed5ae24be32748e59ee78e8aa7faf09408ad5e833b0cc"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/visual-qa/final-e59ab1e-matrix/390-dark-rate_limit_receipt-modal.png",
+      "sha256": "2c15f509248ed6c28abf9e0c6f91fe3c21c9403e3ff1e4b3ae98664f65e3a210"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/visual-qa/final-e59ab1e-matrix/768-dark-multiple_pending-guide.png",
+      "sha256": "8f58e0ad7aa8e3ef5830403416c6030c6ea36c55b315caa1a9b7de78f0391be8"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/visual-qa/final-e59ab1e-matrix/1024-light-metadata_failure-guide.png",
+      "sha256": "7aab59f2d02256bda34024a5b3a818f1ec5f08f2ff617781e302eb5bcf4254e3"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/visual-qa/final-e59ab1e-matrix/1440-light-old_default-viewport.png",
+      "sha256": "ce303668dc3993efaa4161b1725bf75a4afe0a330b5784558b28f2ec32824e70"
+    },
+    {
+      "path": ".superpowers/sdd/2026-11-10-model-setup-journey/visual-qa/final-e59ab1e-matrix/390-dark-saved_unregistered-viewport.png",
+      "sha256": "7d24eb884eae02562e84bfc6766db0f3c9d4841256793a7f24e792ccbd56fdee"
+    }
+  ]
+}

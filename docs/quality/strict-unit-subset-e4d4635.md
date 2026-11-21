@@ -1,0 +1,9 @@
+# Reviewed Python unit stage e4d4635
+
+This test-only stage adds 38 canonical embedding scope capture/revalidation cases and 29 portable budget/in-memory ZIP verifier cases. Two lossless splits separate six source-worker finalization and four default-model selection cases from actual SDK/StateGraph/API integration. All original class/function ASTs and assertions are preserved. Independent review accepted the isolated boundaries; query/lock, provider/persistence and outer-file hash doubles do not establish real SQL, transaction isolation, task drainage, physical custody or large-file transport.
+
+Frozen 113-file reviewed unit diagnostic: 2467 passed, zero failures/skips, one existing warning, 90.92 seconds. Complete 180 production sources: lines 12497/23902 = 52.2843%, branches 2949/6998 = 42.1406%, combined 15446/30900 = 49.9871%. Native exit 1 retains the unmet 90.01 threshold. Compared with d36ebf4: +153 covered lines and +60 arcs, same denominator and existing 56 exclusions.
+
+Separate full mixed offline regression: 5437 passed, 128 skipped, zero failures, two existing warnings, 197.08 seconds. Lines 18232/23902 = 76.2781%, branches 5072/6998 = 72.4779%, combined 23304/30900 = 75.4175%; native exit 1. Mixed coverage is not unit coverage; skipped opt-in/runtime checks are not acceptance.
+
+Both runs preserved HEAD and every tracked input hash, with 180/180 sources and no missing/extra. Classification has exactly 158 unresolved mixed files and no other errors; the formal all-project strict gate remains blocked. Raw command, log, JUnit, native coverage, exits and audits remain private under python/frozen-e4d4635/{unit,mixed}. No current CI or Sonar pass is claimed. Public draft remains 92d08ef, derived from private source6a2550d. No push, deployment, migration or real-data changes occurred in this stage.

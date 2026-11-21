@@ -1,6 +1,7 @@
 """Tests for the sources API endpoint."""
 
 import os
+import socket
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -16,6 +17,30 @@ def client():
     from api.main import app
 
     return TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def ownership_repository(monkeypatch):
+    # These API tests exercise request/asset wiring; atomic DB transitions are
+    # covered separately against real SurrealDB.
+    async def bind(source_id, token, command_id):
+        return {
+            "id": source_id,
+            "command": command_id,
+            "processing_attempt": {
+                "token": token,
+                "phase": "confirmed",
+                "command": command_id,
+            },
+        }
+
+    monkeypatch.setattr("api.routers.sources.source_attempts.bind_command", bind)
+    monkeypatch.setattr(
+        "api.routers.sources.source_attempts.claim_retry",
+        AsyncMock(return_value={"token": "claimed", "phase": "pending"}),
+    )
+    monkeypatch.setattr(Source, "get_embedded_chunks", AsyncMock(return_value=0))
+    monkeypatch.setattr(Source, "get_status", AsyncMock(return_value="queued"))
 
 
 class TestAsyncSourceAssetPersistence:
@@ -46,7 +71,16 @@ class TestAsyncSourceAssetPersistence:
             self_source.id = "source:fake"
             self_source.command = None
 
-        with patch.object(Source, "save", autospec=True, side_effect=capture_save):
+        with (
+            patch.object(Source, "save", autospec=True, side_effect=capture_save),
+            # Exercise real source URL validation with deterministic public DNS.
+            patch(
+                "open_notebook.utils.url_validation.socket.getaddrinfo",
+                return_value=[
+                    (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 0)),
+                ],
+            ),
+        ):
             response = client.post(
                 "/api/sources",
                 data={
@@ -164,6 +198,7 @@ class TestRetrySourceProcessing:
         source = MagicMock()
         source.id = "source:1"
         source.command = None
+        source.processing_attempt = None
         source.title = "My source"
         source.topics = []
         source.full_text = None
@@ -188,8 +223,7 @@ class TestRetrySourceProcessing:
         # Regression guard: command_id must not be double-prefixed
         # (`command:command:…`), which previously raised a 500 on save.
         assert "command:command" not in str(source.command)
-        assert str(source.command).count("command:") == 1
-        assert str(source.command).startswith("command:")
+        assert response.json()["command_id"] == "command:123"
 
     @pytest.mark.asyncio
     @patch("api.routers.sources.repo_query", new_callable=AsyncMock)
@@ -200,6 +234,7 @@ class TestRetrySourceProcessing:
         source = MagicMock()
         source.id = "source:1"
         source.command = None
+        source.processing_attempt = None
         mock_get.return_value = source
         mock_repo_query.return_value = []  # genuinely no notebooks
 

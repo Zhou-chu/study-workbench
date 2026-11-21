@@ -1,0 +1,9 @@
+# Embedding logical unit split
+
+The two original files collect 133 cases. After lossless separation: embedding client logical units 55; profile value units 30; real installed SDK/HTTP adapter interoperability 43; real profile-file loader cases 5. All original 55 top-level function/class ASTs, including decorators, parameters and assertions, remain identical. Synthetic profile construction moves to a non-collected helper. The old profile_data export remains available to existing tests. Production sources, denominator and exclusions are unchanged.
+
+The client unit target is real vector validation, pinned disclosure, 16-item batching, single dispatch slot, failure sanitization, deadlines and per-call admission context restoration. The resolver/provider are boundary doubles. Adapter compatibility deliberately retains actual installed SDK and MockTransport in the separate component suite, not mislabeled as unit because it is offline. Profile loader writes/reads stay tool-integration. Unit files do not import collected test modules.
+
+Baseline 133 passed in 1.22s; combined split 133 passed in 0.81s; isolated 85 units passed in 0.35s. Ruff passed and exact expanded collection counts were checked. Existing offline runner isolates configuration import side effects; no real credentials, provider requests, database or user data were used. Raw evidence and original files are retained privately under python/embedding-unit-split. This targeted result is not full-project coverage or overall gate acceptance.
+
+Downstream import audit found the hybrid boundary integration still importing FakeResolver from the old path. Its unchanged class now lives in a non-collected client fixture and is explicitly re-exported at that old path; no test-module-to-test-module import is added to the strict unit suite.

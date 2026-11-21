@@ -1,0 +1,57 @@
+{
+  "base": "2dadeee",
+  "original_AST_count": 5,
+  "retained": [
+    "test_actual_sdk_duplicate_failure_does_not_finalize_live_owner",
+    "test_owner_failure_waits_for_actual_langgraph_sibling_cleanup",
+    "test_actual_langgraph_hidden_sibling_unknown_never_releases_owner"
+  ],
+  "moved": [
+    "test_only_acknowledged_positive_pipeline_termination_finalizes",
+    "test_lost_claim_receipt_cannot_finalize_even_if_it_committed"
+  ],
+  "case_mapping": [
+    {
+      "before": "tests/test_source_worker_completion.py::test_actual_sdk_duplicate_failure_does_not_finalize_live_owner",
+      "after": "tests/test_source_worker_completion.py::test_actual_sdk_duplicate_failure_does_not_finalize_live_owner"
+    },
+    {
+      "before": "tests/test_source_worker_completion.py::test_only_acknowledged_positive_pipeline_termination_finalizes[ordinary]",
+      "after": "tests/test_source_worker_finalization_unit.py::test_only_acknowledged_positive_pipeline_termination_finalizes[ordinary]"
+    },
+    {
+      "before": "tests/test_source_worker_completion.py::test_only_acknowledged_positive_pipeline_termination_finalizes[unknown]",
+      "after": "tests/test_source_worker_finalization_unit.py::test_only_acknowledged_positive_pipeline_termination_finalizes[unknown]"
+    },
+    {
+      "before": "tests/test_source_worker_completion.py::test_only_acknowledged_positive_pipeline_termination_finalizes[cancelled]",
+      "after": "tests/test_source_worker_finalization_unit.py::test_only_acknowledged_positive_pipeline_termination_finalizes[cancelled]"
+    },
+    {
+      "before": "tests/test_source_worker_completion.py::test_only_acknowledged_positive_pipeline_termination_finalizes[success]",
+      "after": "tests/test_source_worker_finalization_unit.py::test_only_acknowledged_positive_pipeline_termination_finalizes[success]"
+    },
+    {
+      "before": "tests/test_source_worker_completion.py::test_only_acknowledged_positive_pipeline_termination_finalizes[success_acklost]",
+      "after": "tests/test_source_worker_finalization_unit.py::test_only_acknowledged_positive_pipeline_termination_finalizes[success_acklost]"
+    },
+    {
+      "before": "tests/test_source_worker_completion.py::test_lost_claim_receipt_cannot_finalize_even_if_it_committed",
+      "after": "tests/test_source_worker_finalization_unit.py::test_lost_claim_receipt_cannot_finalize_even_if_it_committed"
+    },
+    {
+      "before": "tests/test_source_worker_completion.py::test_owner_failure_waits_for_actual_langgraph_sibling_cleanup",
+      "after": "tests/test_source_worker_completion.py::test_owner_failure_waits_for_actual_langgraph_sibling_cleanup"
+    },
+    {
+      "before": "tests/test_source_worker_completion.py::test_actual_langgraph_hidden_sibling_unknown_never_releases_owner",
+      "after": "tests/test_source_worker_completion.py::test_actual_langgraph_hidden_sibling_unknown_never_releases_owner"
+    }
+  ],
+  "production_count": 180,
+  "production_digest": "71eddbf2136bb8c3891826d8f9a677db81f92e5d6004a4a6aec39a7644eba384",
+  "sha256": {
+    "tests/test_source_worker_completion.py": "a2a1811e5cf2c0658e24372ebd0783983a0518ba8eb206826681be49c1b0ff01",
+    "tests/test_source_worker_finalization_unit.py": "9ff9f0101a85e07eeaab05ead012400905399efb13ab0b13ed16ac875faf29e2"
+  }
+}

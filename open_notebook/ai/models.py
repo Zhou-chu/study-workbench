@@ -14,7 +14,8 @@ from surrealdb import RecordID
 from open_notebook.ai.connection_tester import normalize_anthropic_compatible_base_url
 from open_notebook.database.repository import ensure_record_id, repo_query
 from open_notebook.domain.base import ObjectModel, RecordModel
-from open_notebook.exceptions import ConfigurationError
+from open_notebook.exceptions import ConfigurationError, NotFoundError
+from open_notebook.utils.boundary_logging import log_boundary_failure
 from open_notebook.utils.url_validation import validate_url
 
 ModelType = Union[LanguageModel, EmbeddingModel, SpeechToTextModel, TextToSpeechModel]
@@ -148,18 +149,17 @@ class Model(ObjectModel):
         return data
 
     async def get_credential_obj(self):
-        """Get the Credential object linked to this model, if any."""
+        """Return None only for unbound models; bound lookup failures must propagate."""
         if not self.credential:
             return None
         from open_notebook.domain.credential import Credential
 
         try:
             return await Credential.get(self.credential)
-        except Exception:
-            logger.warning(
-                f"Could not load credential {self.credential} for model {self.id}"
-            )
-            return None
+        except NotFoundError as e:
+            raise ConfigurationError(
+                "The credential linked to this model was not found"
+            ) from e
 
 
 class DefaultModels(RecordModel):
@@ -209,8 +209,8 @@ class ModelManager:
 
         try:
             model: Model = await Model.get(model_id)
-        except Exception:
-            raise ConfigurationError(f"Model with ID {model_id} not found")
+        except NotFoundError as e:
+            raise ConfigurationError(f"Model with ID {model_id} not found") from e
 
         if not model.type or model.type not in [
             "language",
@@ -224,22 +224,14 @@ class ModelManager:
         config: dict = {}
         if model.credential:
             credential = await model.get_credential_obj()
-            if credential:
-                config = credential.to_esperanto_config()
-                if model.provider != "anthropic_compatible":
-                    await _revalidate_config_urls(config, model.provider)
-                logger.debug(
-                    f"Using credential '{credential.name}' for model {model.name}"
+            config = credential.to_esperanto_config()
+            if not config:
+                raise ConfigurationError(
+                    "The credential linked to this model has no configuration"
                 )
-            else:
-                logger.warning(
-                    f"Model {model.id} has credential {model.credential} but it could not be loaded. "
-                    f"Falling back to env vars."
-                )
-                # Fall back to env var provisioning
-                from open_notebook.ai.key_provider import provision_provider_keys
-
-                await provision_provider_keys(model.provider)
+            if model.provider != "anthropic_compatible":
+                await _revalidate_config_urls(config, model.provider)
+            logger.debug(f"Using credential '{credential.name}' for model {model.name}")
         else:
             # No credential linked - use env var fallback
             from open_notebook.ai.key_provider import provision_provider_keys
@@ -364,11 +356,7 @@ class ModelManager:
         try:
             return await self.get_model(model_id, **kwargs)
         except (ValueError, ConfigurationError) as e:
-            logger.error(
-                f"Failed to load default model for type '{model_type}': {e}. "
-                f"The configured model_id '{model_id}' may have been deleted or misconfigured. "
-                f"Please go to Manage → Models and reconfigure the default model."
-            )
+            log_boundary_failure("default_model_load", e)
             return None
 
 

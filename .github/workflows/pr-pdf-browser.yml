@@ -1,0 +1,101 @@
+name: PR synthetic PDF browser
+'on':
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: pr-pdf-browser-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  physical-pdf-pagination:
+    name: PDF physical pagination (sandboxed Chromium)
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.repository == 'Zhou-chu/study-workbench' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.number == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    env:
+      PR_SHA: ${{ github.event.pull_request.head.sha }}
+      NPM_CONFIG_AUDIT: 'false'
+      NPM_CONFIG_FUND: 'false'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: '24.19.0'
+    - name: Prepare exact source and locked workspace
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$PR_SHA"
+        test -z "$(git status --porcelain --untracked-files=all)"
+        npm ci
+        python scripts/ci/prepare_tools.py --node "$(node -p process.execPath)"
+    - name: Build and verify release-shaped Web artifact
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$PR_SHA"
+        npm run build --workspace @study/web
+        node apps/web/scripts/build-manifest.mjs --verify apps/web/dist
+        test "$(node -p "require('./apps/web/dist/spa-artifact-manifest.json').source_commit")" = "$PR_SHA"
+        test -z "$(git status --porcelain --untracked-files=all)"
+        node scripts/tests/browser/pdf/fixture.mjs --preflight
+        git rev-parse HEAD^{tree} > "$RUNNER_TEMP/notebook-browser-tree.txt"
+    - name: Install locked Chromium for Playwright
+      env:
+        PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/notebook-chromium
+      run: |
+        set -euo pipefail
+        tooling="$RUNNER_TEMP/notebook-pdf-browser-tooling"
+        mkdir "$tooling"
+        cp scripts/tests/browser/pdf/{package.json,package-lock.json,probe.mjs} "$tooling/"
+        npm ci --prefix "$tooling" --ignore-scripts --omit=optional
+        node "$tooling/node_modules/playwright-core/cli.js" install --with-deps --no-shell chromium
+    - name: Verify actual PDF canvas and independent question scope
+      id: browser
+      env:
+        PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/notebook-chromium
+      run: |
+        set -euo pipefail
+        out="$(mktemp -d "$RUNNER_TEMP/notebook-pdf-probe.XXXXXX")"
+        evidence="$RUNNER_TEMP/notebook-pdf-browser-evidence"
+        mkdir "$evidence"
+        cp "$RUNNER_TEMP/notebook-browser-tree.txt" "$evidence/tree.txt"
+        stage=fixture-start
+        cleanup() {
+          result=$?
+          if [[ -n "${pid:-}" ]]; then kill "$pid" 2>/dev/null || true; fi
+          if (( result != 0 )) && [[ ! -s "$evidence/browser.json" ]]; then
+            timeout 1s node "$RUNNER_TEMP/notebook-pdf-browser-tooling/probe.mjs" \
+              --failure-witness "$out/fixture.json" "$stage" "$PR_SHA" > "$evidence/browser.json" ||
+              printf '{"status":"fail","stage":"%s","sourceCommit":"%s","requests":[]}\n' "$stage" "$PR_SHA" > "$evidence/browser.json"
+          fi
+        }
+        trap cleanup EXIT
+        node scripts/tests/browser/pdf/fixture.mjs "$PWD" "$PWD/apps/web/dist" "$PR_SHA" "$out/fixture.json" > "$out/origin.txt" &
+        pid=$!
+        for attempt in {1..80}; do
+          [[ -s "$out/origin.txt" ]] && break
+          kill -0 "$pid"
+          sleep 0.1
+        done
+        test -s "$out/origin.txt"
+        stage=probe-start-or-timeout
+        timeout 90s node "$RUNNER_TEMP/notebook-pdf-browser-tooling/probe.mjs" "$(cat "$out/origin.txt")" > "$evidence/browser.json"
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: ${{ !cancelled() && (steps.browser.outcome == 'success' || steps.browser.outcome == 'failure') }}
+      with:
+        name: notebook-pdf-browser-${{ github.run_attempt }}-${{ github.event.pull_request.head.sha }}
+        path: ${{ runner.temp }}/notebook-pdf-browser-evidence/
+        if-no-files-found: error
+        retention-days: 7

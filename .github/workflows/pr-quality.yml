@@ -1,0 +1,301 @@
+# Non-deploying checks; complete strict quality acceptance remains pending.
+name: PR quality candidate
+'on':
+  pull_request:
+    branches:
+    - main
+  workflow_dispatch: {}
+permissions:
+  contents: read
+concurrency:
+  group: pr-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
+env:
+  PYTHON_DOTENV_DISABLED: '1'
+  NEXT_TELEMETRY_DISABLED: '1'
+  NPM_CONFIG_AUDIT: 'false'
+  NPM_CONFIG_FUND: 'false'
+jobs:
+  static:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: '24'
+    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      with:
+        version: 0.9.10
+        enable-cache: false
+    - name: Install locked dependencies
+      run: |-
+        uv sync --locked --dev --python 3.12
+        npm ci
+        npm ci --prefix frontend
+      id: dependencies
+    - name: TypeScript dependency architecture
+      run: npm run architecture:ts
+    - name: Python import architecture
+      if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+      run: |-
+        uv venv --python 3.12 "$RUNNER_TEMP/notebook-architecture-venv"
+        uv pip sync --python "$RUNNER_TEMP/notebook-architecture-venv/bin/python" --require-hashes scripts/architecture/python-requirements.txt
+        PYTHONPATH=. "$RUNNER_TEMP/notebook-architecture-venv/bin/lint-imports" .importlinter --no-cache --no-logo
+    - name: Python static checks
+      if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+      run: |-
+        .venv/bin/ruff check .
+        .venv/bin/ruff format --check .
+        .venv/bin/python -m mypy .
+    - name: Workspace and legacy frontend checks
+      if: ${{ !cancelled() && steps.dependencies.outcome == 'success' }}
+      run: |-
+        npm run lint
+        npm run typecheck
+        npm --prefix frontend run lint
+        (cd frontend && node_modules/.bin/tsc --noEmit)
+  mixed:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: '24'
+    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      with:
+        version: 0.9.10
+        enable-cache: false
+    - name: Install locked dependencies
+      run: |-
+        uv sync --locked --dev --python 3.12
+        npm ci
+        npm ci --prefix frontend
+      id: dependencies
+    - name: Prepare authenticated Git and tokenizer (no system install)
+      run: .venv/bin/python scripts/ci/prepare_tools.py --node "$(node -p process.execPath)"
+      id: prepare
+    - name: Mixed Python regression (not pure-unit coverage)
+      run: .venv/bin/python scripts/offline_pytest.py --tiktoken-cache "$NOTEBOOK_TOKEN_CACHE" -- tests/ -ra --junitxml="$RUNNER_TEMP/mixed-python.xml"
+    - name: Mixed JavaScript regression and measurement
+      if: ${{ !cancelled() && steps.dependencies.outcome == 'success' && steps.prepare.outcome == 'success' }}
+      run: npm run coverage
+    - name: Preserve mixed diagnostics
+      if: ${{ always() }}
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: mixed-diagnostics
+        path: |-
+          ${{ runner.temp }}/mixed-python.xml
+          coverage/
+        if-no-files-found: warn
+        retention-days: 7
+  strict-unit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        # The native coverage producer and verifier require this exact V8 runtime.
+        node-version: '24.19.0'
+    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      with:
+        version: 0.9.10
+        enable-cache: false
+    - name: Install locked dependencies
+      run: |-
+        uv sync --locked --dev --python 3.12
+        npm ci
+        npm ci --prefix frontend
+      id: dependencies
+    - name: Prepare authenticated Git and tokenizer (no system install)
+      run: .venv/bin/python scripts/ci/prepare_tools.py --node "$(node -p process.execPath)"
+      id: prepare
+    - name: Strict complete unit gate (currently expected to fail closed)
+      run: node scripts/coverage-unit-all.mjs --python="$GITHUB_WORKSPACE/.venv/bin/python" --tiktoken-cache="$NOTEBOOK_TOKEN_CACHE"
+    - name: Preserve strict gate diagnostics
+      if: ${{ always() }}
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: strict-unit-diagnostics
+        path: coverage/unit/
+        if-no-files-found: warn
+        retention-days: 7
+  sonar-coverage:
+    name: Sonar coverage inputs
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.repository == 'Zhou-chu/study-workbench' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.number == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      PR_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version: '24'
+    - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      with:
+        version: 0.9.10
+        enable-cache: false
+    - name: Install locked dependencies
+      run: |
+        test "$(git rev-parse HEAD)" = "$PR_SHA"
+        uv sync --locked --dev --python 3.12
+        npm ci
+        npm ci --prefix frontend
+    - name: Prepare authenticated Git and tokenizer (no system install)
+      run: .venv/bin/python scripts/ci/prepare_tools.py --node "$(node -p process.execPath)"
+    - name: Collect mixed JavaScript coverage
+      run: |
+        npm run coverage
+        npm run coverage:scope
+    - name: Measure Python coverage without changing the strict-unit gate
+      run: |
+        cfg="$RUNNER_TEMP/sonar-coverage.ini"
+        mkdir -p coverage
+        sed "s|^data_file = .*|data_file = $RUNNER_TEMP/sonar.coverage|" scripts/quality/coverage-python.ini > "$cfg"
+        # A valid below-target measurement must still reach the separate Sonar quality gate.
+        # Pytest failures still fail this step; strict-unit retains its own 90.01 threshold.
+        .venv/bin/python scripts/offline_pytest.py --tiktoken-cache "$NOTEBOOK_TOKEN_CACHE" -- \
+          tests/ -ra --cov --cov-config="$cfg" --cov-fail-under=0 \
+          --cov-report="xml:$PWD/coverage/python.xml"
+    - name: Package only normalized coverage from this checkout
+      run: |
+        out="$RUNNER_TEMP/notebook-sonar"
+        .venv/bin/python scripts/ci/sonar_reports.py --repo "$PWD" --revision "$PR_SHA" \
+          --bundle "$PWD/coverage" --output "$out"
+        printf '%s\n' "$PR_SHA" > "$out/revision.txt"
+        printf '%s\n' "$GITHUB_RUN_ID:$GITHUB_RUN_ATTEMPT" > "$out/run.txt"
+        (cd "$out" && export LC_ALL=C && sha256sum ./*.lcov.info ./python.xml ./revision.txt ./run.txt > SHA256SUMS)
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: notebook-sonar-${{ github.run_attempt }}-${{ github.event.pull_request.head.sha }}
+        path: ${{ runner.temp }}/notebook-sonar/
+        if-no-files-found: error
+        retention-days: 7
+  sonar:
+    name: SonarQube Cloud PR analysis
+    needs: sonar-coverage
+    if: >-
+      ${{ !cancelled() &&
+      github.event_name == 'pull_request' &&
+      github.repository == 'Zhou-chu/study-workbench' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.number == 1 }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PR_SHA: ${{ github.event.pull_request.head.sha }}
+      PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+      PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
+        persist-credentials: false
+    - name: Require this run's coverage producer and exact PR checkout
+      env:
+        COVERAGE_RESULT: ${{ needs.sonar-coverage.result }}
+      run: |
+        if [[ "$COVERAGE_RESULT" != success ]]; then
+          echo '::error::The same-run Sonar coverage producer did not succeed.'
+          exit 1
+        fi
+        test "$(git rev-parse HEAD)" = "$PR_SHA"
+        git cat-file -e "$PR_BASE_SHA^{commit}"
+        git merge-base HEAD "$PR_BASE_SHA" >/dev/null
+        [[ "$PR_BRANCH" =~ ^[[:alnum:]_./-]+$ ]]
+    - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      with:
+        name: notebook-sonar-${{ github.run_attempt }}-${{ github.event.pull_request.head.sha }}
+        path: coverage/sonar
+    - name: Validate downloaded coverage identity and completeness
+      run: |
+        cd coverage/sonar
+        test "$(cat revision.txt)" = "$PR_SHA"
+        test "$(cat run.txt)" = "$GITHUB_RUN_ID:$GITHUB_RUN_ATTEMPT"
+        test -z "$(find . -type l -print -quit)"
+        files=(bff contracts deployment-config domain legacy-node-tools legacy-web node-tools quality-configs quality-tooling web-transport web)
+        expected=()
+        for name in "${files[@]}"; do
+          test -s "./$name.lcov.info"
+          expected+=("./$name.lcov.info")
+        done
+        test -s ./python.xml
+        sha256sum "${expected[@]}" ./python.xml ./revision.txt ./run.txt | cmp -s - SHA256SUMS
+    - name: Mark fresh runner-local scanner directory for optional diagnostics
+      id: local_report
+      run: |
+        if [[ "$PWD" == "$GITHUB_WORKSPACE" && ! -e .scannerwork && ! -L .scannerwork ]] &&
+          { printf 'keep=true\n' >> "$GITHUB_OUTPUT"; } 2>/dev/null; then
+          echo 'Local scanner report retention enabled.'
+        else
+          echo 'Local scanner report retention disabled.'
+        fi
+    - name: Scan exact draft PR and wait for the quality gate
+      id: sonar_scan
+      uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >-
+          -Dsonar.scm.revision=${{ env.PR_SHA }}
+          -Dsonar.pullrequest.key=1
+          -Dsonar.pullrequest.branch=${{ env.PR_BRANCH }}
+          -Dsonar.pullrequest.base=main
+          -Dsonar.qualitygate.wait=true
+          -Dsonar.qualitygate.timeout=300
+          -Dsonar.scanner.keepReport=${{ steps.local_report.outputs.keep || 'false' }}
+          -Dsonar.scanner.metadataFilePath=${{ runner.temp }}/notebook-sonar-gate-receipt.txt
+    - name: Summarize the exact Sonar gate (aggregate metrics only)
+      if: ${{ !cancelled() && (steps.sonar_scan.outcome == 'success' || steps.sonar_scan.outcome == 'failure') }}
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_KEEP_LOCAL_REPORT: ${{ steps.local_report.outputs.keep }}
+        SONAR_RECEIPT: ${{ runner.temp }}/notebook-sonar-gate-receipt.txt
+      run: |
+        cleanup_local_report() {
+          if [[ "$SONAR_KEEP_LOCAL_REPORT" == true && "$PWD" == "$GITHUB_WORKSPACE" &&
+            -d .scannerwork && ! -L .scannerwork ]]; then
+            if rm -rf -- ./.scannerwork 2>/dev/null; then
+              echo 'Local scanner work directory removed.'
+            else
+              echo 'Local scanner work directory cleanup deferred to runner teardown.'
+            fi
+          fi
+        }
+        trap cleanup_local_report EXIT
+        /usr/bin/python3 -I -B scripts/ci/sonar_gate.py

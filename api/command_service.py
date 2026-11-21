@@ -1,7 +1,10 @@
 from typing import Any, Dict, List, Optional
 
 from loguru import logger
-from surreal_commands import get_command_status, submit_command
+from surreal_commands import get_command_status
+
+from open_notebook.exceptions import UnsupportedCapabilityError
+from open_notebook.utils.command_submission import submit_command
 
 
 class CommandService:
@@ -25,10 +28,11 @@ class CommandService:
                 raise ValueError("Command modules not available")
 
             # surreal-commands expects: submit_command(app_name, command_name, args)
-            cmd_id = submit_command(
+            cmd_id = await submit_command(
                 module_name,  # This is actually the app name (e.g., "open_notebook")
                 command_name,  # Command name (e.g., "generate_podcast")
                 command_args,  # Input data
+                **({"context": context} if context is not None else {}),
             )
             # Convert RecordID to string if needed
             if not cmd_id:
@@ -74,19 +78,10 @@ class CommandService:
         status_filter: Optional[str] = None,
         limit: int = 50,
     ) -> List[Dict[str, Any]]:
-        """List command jobs with optional filtering"""
-        # This will be implemented with proper SurrealDB queries
-        # For now, return empty list as this is foundation phase
-        return []
+        """Generic job listing is unavailable; never present it as an empty queue."""
+        raise UnsupportedCapabilityError("GENERIC_COMMAND_LISTING_UNSUPPORTED")
 
     @staticmethod
     async def cancel_command_job(job_id: str) -> bool:
-        """Cancel a running command job"""
-        try:
-            # Implementation depends on surreal-commands cancellation support
-            # For now, just log the attempt
-            logger.info(f"Attempting to cancel job: {job_id}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to cancel command job: {e}")
-            raise
+        """Generic cancellation is unavailable; no backend job is changed."""
+        raise UnsupportedCapabilityError("GENERIC_COMMAND_CANCELLATION_UNSUPPORTED")

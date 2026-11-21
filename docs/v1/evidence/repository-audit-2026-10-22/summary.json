@@ -1,0 +1,80 @@
+{
+  "date_utc": "2026-10-22",
+  "status": "offline_and_disposable_db_verified_not_deployed",
+  "verification_local_commit": "5d787a07e5dcb4c93b549fbe159ce2a164197538",
+  "verification_local_tree": "26f2d8aaf23b01c9b6094dbb9760e4fe02c76379",
+  "frontend_verified_tree": "a6a85c461ee3b388403681c9ed4b849dac218179",
+  "source_identity_note": "Local verification commit identifies code/tests; subsequent report, changelog and guidance edits are documentation only. Canonical publication is separately verified by complete Git tree.",
+  "backend": {
+    "passed": 1965,
+    "skipped": 60,
+    "warnings": 2,
+    "duration_seconds": 46.5,
+    "method": "pytest tests -q through isolated guarded runner",
+    "isolation": [
+      "dotenv disabled",
+      "no live configuration",
+      "synthetic temporary storage",
+      "DNS and INET socket operations blocked"
+    ],
+    "default_skips_not_counted_as_pass": true
+  },
+  "embedding_disposable_database": {
+    "passed": 14,
+    "duration_seconds": 5.64,
+    "server_version": "2.3.10",
+    "binary_sha256": "bc916c7c775ed32aa40c33fd57bc9b477128c8ad9118bb1620696a05247bb0a7",
+    "storage": "owned in-memory fixture",
+    "public_fixture_credentials_only": true,
+    "owned_process_reaped": true,
+    "gates": [
+      "empty and existing index concurrency",
+      "atomic reader visibility",
+      "rollback",
+      "source edit/delete",
+      "stale input",
+      "note revision and invalidation",
+      "insight content guard",
+      "committed lost acknowledgment",
+      "migration up/down",
+      "vector/text/count compatibility"
+    ]
+  },
+  "remaining_default_opt_in_skips_not_executed": 46,
+  "frontend": {
+    "passed": 1207,
+    "files": 78,
+    "typescript": "passed",
+    "lint_errors": 0,
+    "existing_lint_warnings": 7,
+    "production_build": "passed",
+    "build_id": "Bd4jYIShq8Z_UeEdxp6S7",
+    "build_transport_note": "Initial sanitized build omitted existing proxy/CA settings and failed font downloads. Successful normal-sandbox retry inherited only the existing transport configuration; no proxy/TLS policy was changed."
+  },
+  "python_static": {
+    "ruff": "passed",
+    "format_files": 268,
+    "mypy_files": 268,
+    "mypy": "passed"
+  },
+  "container_static": "passed; Docker build/runtime NOT RUN",
+  "not_verified": [
+    "updated live deployment",
+    "user browser login",
+    "Docker build/runtime",
+    "native mobile builds/devices",
+    "live Google/NotebookLM",
+    "live independent model quality",
+    "live web discovery/import",
+    "durable hosting/storage",
+    "all historical opt-in integration gates"
+  ],
+  "remaining_risks": [
+    "non-atomic schema/version migration and concurrent migration locking",
+    "async queue submission (next isolated batch)",
+    "legacy local-check instance/build identity",
+    "complete response schemas/native clients",
+    "default test hermeticity and coverage freshness",
+    "large-library query and evidence N+1 costs"
+  ]
+}

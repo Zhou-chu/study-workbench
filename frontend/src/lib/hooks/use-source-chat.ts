@@ -14,14 +14,68 @@ import {
   UpdateSourceChatSessionRequest
 } from '@/lib/types/api'
 
+interface ChatOperation {
+  controller: AbortController
+  reader?: ReadableStreamDefaultReader<Uint8Array>
+}
+
 export function useSourceChat(sourceId: string) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
+  const [selection, setSelection] = useState<{ sourceId: string, id: string | null }>({ sourceId, id: null })
+  // A new source must never fetch the previous source's selected session.
+  const currentSessionId = selection.sourceId === sourceId ? selection.id : null
   const [messages, setMessages] = useState<SourceChatMessage[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
   const [contextIndicators, setContextIndicators] = useState<SourceChatContextIndicator | null>(null)
-  const abortControllerRef = useRef<AbortController | null>(null)
+  const operationRef = useRef<ChatOperation | null>(null)
+  const generationRef = useRef(0)
+  const mountedRef = useRef(true)
+  const sourceRef = useRef(sourceId)
+  const selectedSessionRef = useRef<string | null>(null)
+  // Once sending starts, only that operation's fresh read may replace local
+  // text. An earlier session read must not erase live or canceled partial text.
+  const hydrateSessionRef = useRef(true)
+
+  const cancelOperation = useCallback(() => {
+    generationRef.current += 1
+    const operation = operationRef.current
+    operationRef.current = null
+    operation?.controller.abort()
+    void operation?.reader?.cancel().catch(() => { /* Already aborted/closed. */ })
+  }, [])
+
+  const selectSession = useCallback((id: string | null) => {
+    selectedSessionRef.current = id
+    hydrateSessionRef.current = true
+    setSelection({ sourceId, id })
+    setMessages([])
+    setContextIndicators(null)
+  }, [sourceId])
+
+  const cancelStreaming = useCallback(() => {
+    cancelOperation()
+    setIsStreaming(false)
+  }, [cancelOperation])
+
+  const switchSession = useCallback((sessionId: string) => {
+    if (selectedSessionRef.current === sessionId) return
+    cancelStreaming()
+    selectSession(sessionId)
+  }, [cancelStreaming, selectSession])
+
+  useEffect(() => {
+    mountedRef.current = true
+    if (sourceRef.current !== sourceId) {
+      sourceRef.current = sourceId
+      selectSession(null)
+      setIsStreaming(false)
+    }
+    return () => {
+      mountedRef.current = false
+      cancelOperation()
+    }
+  }, [sourceId, selectSession, cancelOperation])
 
   // Fetch sessions
   const { data: sessions = [], isLoading: loadingSessions, refetch: refetchSessions } = useQuery<SourceChatSession[]>({
@@ -31,7 +85,7 @@ export function useSourceChat(sourceId: string) {
   })
 
   // Fetch current session with messages
-  const { data: currentSession, refetch: refetchCurrentSession } = useQuery({
+  const { data: currentSession } = useQuery({
     queryKey: ['sourceChatSession', sourceId, currentSessionId],
     queryFn: () => sourceChatApi.getSession(sourceId, currentSessionId!),
     enabled: !!sourceId && !!currentSessionId
@@ -39,32 +93,35 @@ export function useSourceChat(sourceId: string) {
 
   // Update messages when session changes
   useEffect(() => {
+    if (!hydrateSessionRef.current || currentSession?.id !== currentSessionId) return
     if (currentSession?.messages) {
       setMessages(currentSession.messages)
     }
     // Also clears the badge when the session goes away (deleted / switched).
     setContextIndicators(currentSession?.context_indicators ?? null)
-  }, [currentSession])
+  }, [currentSession, currentSessionId])
 
   // Auto-select most recent session when sessions are loaded
   useEffect(() => {
-    if (sessions.length > 0 && !currentSessionId) {
+    if (sessions.length > 0 && !currentSessionId && !operationRef.current) {
       // Find most recent session (sessions are sorted by created date desc from API)
       const mostRecentSession = sessions[0]
-      setCurrentSessionId(mostRecentSession.id)
+      selectSession(mostRecentSession.id)
     }
-  }, [sessions, currentSessionId])
+  }, [sessions, currentSessionId, selectSession])
 
   // Create session mutation
   const createSessionMutation = useMutation({
-    mutationFn: (data: Omit<CreateSourceChatSessionRequest, 'source_id'>) => 
-      sourceChatApi.createSession(sourceId, data),
-    onSuccess: (newSession) => {
-      queryClient.invalidateQueries({ queryKey: ['sourceChatSessions', sourceId] })
-      setCurrentSessionId(newSession.id)
+    mutationFn: ({ data, source }: { data: Omit<CreateSourceChatSessionRequest, 'source_id'>, source: string, generation: number }) =>
+      sourceChatApi.createSession(source, data),
+    onSuccess: (newSession, { source, generation }) => {
+      if (!mountedRef.current || sourceRef.current !== source || generationRef.current !== generation) return
+      queryClient.invalidateQueries({ queryKey: ['sourceChatSessions', source] })
+      selectSession(newSession.id)
       toast.success(t('chat.sessionCreated'))
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, { source, generation }) => {
+      if (!mountedRef.current || sourceRef.current !== source || generationRef.current !== generation) return
       const error = err as { response?: { data?: { detail?: string } }, message?: string };
       toast.error(getApiErrorMessage(error.response?.data?.detail || error.message, (key) => t(key), 'apiErrors.failedToCreateSession'))
     }
@@ -92,8 +149,8 @@ export function useSourceChat(sourceId: string) {
     onSuccess: (_, deletedId) => {
       queryClient.invalidateQueries({ queryKey: ['sourceChatSessions', sourceId] })
       if (currentSessionId === deletedId) {
-        setCurrentSessionId(null)
-        setMessages([])
+        cancelStreaming()
+        selectSession(null)
       }
       toast.success(t('chat.sessionDeleted'))
     },
@@ -103,54 +160,67 @@ export function useSourceChat(sourceId: string) {
     }
   })
 
-  // Send message with streaming
+  // Send message with streaming. Admission is synchronous, before any await:
+  // a second click cannot create a second session or dispatch another message.
   const sendMessage = useCallback(async (message: string, modelOverride?: string) => {
-    let sessionId = currentSessionId
-
-    // Auto-create session if none exists
-    if (!sessionId) {
-      try {
-        const defaultTitle = message.length > 30 ? `${message.substring(0, 30)}...` : message
-        const newSession = await sourceChatApi.createSession(sourceId, { title: defaultTitle })
-        sessionId = newSession.id
-        setCurrentSessionId(sessionId)
-        queryClient.invalidateQueries({ queryKey: ['sourceChatSessions', sourceId] })
-      } catch (err: unknown) {
-        const error = err as { response?: { data?: { detail?: string } }, message?: string };
-        console.error('Failed to create chat session:', error)
-        toast.error(getApiErrorMessage(error.response?.data?.detail || error.message, (key) => t(key), 'apiErrors.failedToCreateSession'))
-        return
-      }
-    }
-
-    // Add user message optimistically
-    const userMessage: SourceChatMessage = {
-      id: `temp-${Date.now()}`,
-      type: 'human',
-      content: message,
-      timestamp: new Date().toISOString()
-    }
-    setMessages(prev => [...prev, userMessage])
+    if (!mountedRef.current || sourceRef.current !== sourceId || operationRef.current) return
+    const operation: ChatOperation = { controller: new AbortController() }
+    operationRef.current = operation
+    const generation = ++generationRef.current
+    const isCurrent = () => mountedRef.current && sourceRef.current === sourceId &&
+      generationRef.current === generation && !operation.controller.signal.aborted
+    hydrateSessionRef.current = false
     setIsStreaming(true)
+    let sessionId = selectedSessionRef.current
+    let userMessageId: string | undefined
 
     try {
+      if (!sessionId) {
+        try {
+          const defaultTitle = message.length > 30 ? `${message.substring(0, 30)}...` : message
+          const newSession = await sourceChatApi.createSession(sourceId, { title: defaultTitle })
+          if (!isCurrent()) return
+          sessionId = newSession.id
+          selectedSessionRef.current = sessionId
+          setSelection({ sourceId, id: sessionId })
+          queryClient.invalidateQueries({ queryKey: ['sourceChatSessions', sourceId] })
+        } catch (err: unknown) {
+          if (!isCurrent()) return
+          const error = err as { response?: { data?: { detail?: string } }, message?: string };
+          console.error('Failed to create chat session:', error)
+          toast.error(getApiErrorMessage(error.response?.data?.detail || error.message, (key) => t(key), 'apiErrors.failedToCreateSession'))
+          return
+        }
+      }
+
+      userMessageId = `temp-${generation}-${Date.now()}`
+      const userMessage: SourceChatMessage = {
+        id: userMessageId,
+        type: 'human',
+        content: message,
+        timestamp: new Date().toISOString()
+      }
+      setMessages(prev => [...prev, userMessage])
+
       const response = await sourceChatApi.sendMessage(sourceId, sessionId, {
         message,
         model_override: modelOverride
-      })
-
-      if (!response) {
-        throw new Error('No response body')
+      }, operation.controller.signal)
+      if (!isCurrent()) {
+        void response?.cancel().catch(() => { /* Late body already closed. */ })
+        return
       }
+      if (!response) throw new Error('No response body')
 
       const reader = response.getReader()
+      operation.reader = reader
       const decoder = new TextDecoder()
       let aiMessage: SourceChatMessage | null = null
       let buffer = ''
 
       while (true) {
         const { done, value } = await reader.read()
-        if (done) break
+        if (!isCurrent() || done) break
 
         buffer += decoder.decode(value, { stream: true })
         const lines = buffer.split('\n')
@@ -170,7 +240,7 @@ export function useSourceChat(sourceId: string) {
                 // Create AI message on first content chunk to avoid empty bubble
                 if (!aiMessage) {
                   aiMessage = {
-                    id: `ai-${Date.now()}`,
+                    id: `ai-${generation}-${Date.now()}`,
                     type: 'ai',
                     content: data.content || '',
                     timestamp: new Date().toISOString()
@@ -201,36 +271,49 @@ export function useSourceChat(sourceId: string) {
         }
       }
     } catch (err: unknown) {
+      if (!isCurrent()) return
       const error = err as { response?: { data?: { detail?: string } }, message?: string };
       console.error('Error sending message:', error)
       toast.error(getApiErrorMessage(error.response?.data?.detail || error.message, (key) => t(key), 'apiErrors.failedToSendMessage'))
-      // Remove optimistic messages on error
-      setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')))
+      setMessages(prev => prev.filter(msg => msg.id !== userMessageId))
     } finally {
-      setIsStreaming(false)
-      // Refetch session to get persisted messages
-      refetchCurrentSession()
+      void operation.reader?.cancel().catch(() => { /* Also close errored streams. */ })
+      operation.reader?.releaseLock()
+      if (isCurrent()) {
+        operationRef.current = null
+        setIsStreaming(false)
+        if (sessionId) {
+          // Capture the actual target, including a just-created session. Never
+          // refetch the observer's possibly changed selection after an await.
+          const targetSessionId = sessionId
+          const queryKey = ['sourceChatSession', sourceId, targetSessionId]
+          try {
+            await queryClient.cancelQueries({ queryKey, exact: true })
+            if (isCurrent()) {
+              const saved = await queryClient.fetchQuery({
+                queryKey,
+                queryFn: () => sourceChatApi.getSession(sourceId, targetSessionId),
+                // Completion must bypass the production five-minute cache.
+                staleTime: 0,
+                retry: false
+              })
+              if (isCurrent()) {
+                hydrateSessionRef.current = true
+                setMessages(saved.messages)
+                setContextIndicators(saved.context_indicators ?? null)
+              }
+            }
+          } catch { /* Keep local text if the persisted-session refresh fails. */ }
+        }
+      }
     }
-  }, [sourceId, currentSessionId, refetchCurrentSession, queryClient, t])
-
-  // Cancel streaming
-  const cancelStreaming = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-      setIsStreaming(false)
-    }
-  }, [])
-
-  // Switch session
-  const switchSession = useCallback((sessionId: string) => {
-    setCurrentSessionId(sessionId)
-    setContextIndicators(null)
-  }, [])
+  }, [sourceId, queryClient, t])
 
   // Create session
   const createSession = useCallback((data: Omit<CreateSourceChatSessionRequest, 'source_id'>) => {
-    return createSessionMutation.mutate(data)
-  }, [createSessionMutation])
+    cancelStreaming()
+    return createSessionMutation.mutate({ data, source: sourceId, generation: generationRef.current })
+  }, [createSessionMutation, cancelStreaming, sourceId])
 
   // Update session
   const updateSession = useCallback((sessionId: string, data: UpdateSourceChatSessionRequest) => {

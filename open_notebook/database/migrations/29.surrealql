@@ -1,0 +1,2 @@
+-- Real common-row write serializes whole-index publication with edits/deletion.
+DEFINE FIELD embedding_publication ON source TYPE option<string>;

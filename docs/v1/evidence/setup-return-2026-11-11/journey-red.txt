@@ -1,0 +1,2605 @@
+[Publication copy: personal filesystem paths replaced; original results/failures unchanged.]
+
+ RUN  v4.1.12 /home/USER/study-workbench-worktrees-20261108/notebook-setup-return-20261111/apps/web
+
+ ❯ src/features/settings/setup-journey.test.tsx (3 tests | 3 failed) 2285ms
+   × returns from Tools model setup after cancel with question and chosen sources intact 1058ms
+   × returns from Tools model setup after save with question and chosen sources intact 664ms
+   × returns from Tools model setup after failure with question and chosen sources intact 562ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/settings/setup-journey.test.tsx > returns from Tools model setup after cancel with question and chosen sources intact
+TestingLibraryElementError: Unable to find an accessible element with the role "link" and name "Back"
+
+Here are the accessible roles:
+
+  link:
+
+  Name "Skip to main content":
+  <a
+    class="skip-link"
+    href="#main-content"
+  />
+
+  Name "My notebooks":
+  <a
+    aria-label="My notebooks"
+    class="brand"
+    data-discover="true"
+    href="/"
+  />
+
+  Name "Settings":
+  <a
+    class="button"
+    data-discover="true"
+    href="/settings"
+  />
+
+  Name "Notebooks":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/notebooks"
+  />
+
+  Name "Sources":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/sources"
+  />
+
+  Name "Search library":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/search?mode=search"
+  />
+
+  Name "Ask library":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/search?mode=ask"
+  />
+
+  Name "Podcasts":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/podcasts"
+  />
+
+  Name "Open Advanced":
+  <a
+    class="button"
+    data-discover="true"
+    href="/advanced"
+  />
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  <header
+    class="app-header"
+  />
+
+  --------------------------------------------------
+  group:
+
+  Name "Theme":
+  <div
+    aria-label="Theme"
+    class="theme-control"
+    role="group"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "Light":
+  <button
+    aria-pressed="false"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Dark":
+  <button
+    aria-pressed="false"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "System":
+  <button
+    aria-pressed="true"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Sign Out":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Appearance and language":
+  <button
+    aria-expanded="false"
+    aria-haspopup="dialog"
+    aria-label="Appearance and language"
+    class="button button-secondary "
+    data-state="closed"
+    type="button"
+  />
+
+  Name "Toggle sidebar":
+  <button
+    aria-controls="library-sidebar"
+    aria-expanded="true"
+    class="button button-quiet navigation-toggle"
+    type="button"
+  />
+
+  Name "Open navigation":
+  <button
+    class="button button-quiet mobile-navigation"
+    type="button"
+  />
+
+  Name "Commands":
+  <button
+    class="button button-quiet "
+    type="button"
+  />
+
+  Name "Refresh":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Migrate to Database":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Add Configuration: OpenAI":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Auto-assign Defaults":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Test Model Chat fixture":
+  <button
+    aria-label="Test Model Chat fixture"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Delete Chat fixture":
+  <button
+    aria-label="Delete Chat fixture"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Test Model Embedding fixture":
+  <button
+    aria-label="Test Model Embedding fixture"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Delete Embedding fixture":
+  <button
+    aria-label="Delete Embedding fixture"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Test Model Next embedding":
+  <button
+    aria-label="Test Model Next embedding"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Delete Next embedding":
+  <button
+    aria-label="Delete Next embedding"
+    class="button button-secondary "
+    type="button"
+  />
+
+  --------------------------------------------------
+  navigation:
+
+  Name "Navigation":
+  <nav
+    aria-label="Navigation"
+  />
+
+  --------------------------------------------------
+  main:
+
+  Name "":
+  <main
+    id="main-content"
+    tabindex="-1"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "Models":
+  <h1 />
+
+  Name "OpenAI":
+  <h2 />
+
+  Name "Default Model Assignments":
+  <h2 />
+
+  Name "Models":
+  <h2 />
+
+  Name "Chat fixture":
+  <h3 />
+
+  Name "Embedding fixture":
+  <h3 />
+
+  Name "Next embedding":
+  <h3 />
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Retained configuration records":
+  <select />
+
+  Name "Chat Model":
+  <select />
+
+  Name "Embedding Model":
+  <select />
+
+  Name "Text-to-Speech Model Not set — audio generation unavailable until configured":
+  <select />
+
+  Name "Speech-to-Text Model Not set — transcription unavailable until configured":
+  <select />
+
+  Name "Transformation Model":
+  <select />
+
+  Name "Tools Model":
+  <select />
+
+  Name "Large Context Model":
+  <select />
+
+  --------------------------------------------------
+  option:
+
+  Name "1: Models":
+  <option
+    value="configuration:22500ce4-70b9-4c11-82c0-6663207481df"
+  />
+
+  Name "⚠️ Required - Select a model":
+  <option
+    disabled=""
+    value=""
+  />
+
+  Name "Chat fixture":
+  <option
+    value="model:chat"
+  />
+
+  Name "⚠️ Required - Select a model":
+  <option
+    disabled=""
+    value=""
+  />
+
+  Name "Embedding fixture":
+  <option
+    value="model:embed"
+  />
+
+  Name "Next embedding":
+  <option
+    value="model:next"
+  />
+
+  Name "None":
+  <option
+    value=""
+  />
+
+  Name "None":
+  <option
+    value=""
+  />
+
+  Name "Use fallback (chat default)":
+  <option
+    value=""
+  />
+
+  Name "Chat fixture":
+  <option
+    value="model:chat"
+  />
+
+  Name "Use fallback (chat default)":
+  <option
+    value=""
+  />
+
+  Name "Chat fixture":
+  <option
+    value="model:chat"
+  />
+
+  Name "Use fallback (chat default)":
+  <option
+    value=""
+  />
+
+  Name "Chat fixture":
+  <option
+    value="model:chat"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p />
+
+  Name "":
+  <p />
+
+  Name "":
+  <p />
+
+  Name "":
+  <p />
+
+  Name "":
+  <p />
+
+  --------------------------------------------------
+  article:
+
+  Name "":
+  <article />
+
+  Name "":
+  <article />
+
+  Name "":
+  <article />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body
+  style=""
+>
+  <div>
+    <div
+      class="session-workspace"
+    >
+      <span
+        hidden=""
+      >
+        Library ready
+      </span>
+      <a
+        class="skip-link"
+        href="#main-content"
+      >
+        Skip to main content
+      </a>
+      <header
+        class="app-header"
+      >
+        <a
+          aria-label="My notebooks"
+          class="brand"
+          data-discover="true"
+          href="/"
+        >
+          <span
+            aria-hidden="true"
+            class="brand-mark"
+          >
+            N.
+          </span>
+          <span>
+            Notebook
+          </span>
+        </a>
+        <span
+          aria-hidden="true"
+          class="header-divider"
+        />
+        <div
+          class="header-tools"
+        >
+          <div
+            aria-label="Theme"
+            class="theme-control"
+            role="group"
+          >
+            <button
+              aria-pressed="false"
+              class="button button-secondary "
+              type="button"
+            >
+              <span
+                aria-hidden="true"
+              >
+                ☼
+              </span>
+              Light
+            </button>
+            <button
+              aria-pressed="false"
+              class="button button-secondary "
+              type="button"
+            >
+              <span
+                aria-hidden="true"
+              >
+                ◐
+              </span>
+              Dark
+            </button>
+            <button
+              aria-pressed="true"
+              class="button button-secondary "
+              type="button"
+            >
+              <span
+                aria-hidden="true"
+              >
+                ◑
+              </span>
+              System
+            </button>
+          </div>
+          <a
+            class="button"
+            data-discover="true"
+            href="/settings"
+          >
+            Settings
+          </a>
+          <button
+            class="button button-secondary "
+            type="button"
+          >
+            Sign Out
+          </button>
+          <button
+            aria-expanded="false"
+            aria-haspopup="dialog"
+            aria-label="Appearance and language"
+            class="button button-secondary "
+            data-state="closed"
+            type="button"
+          >
+            <span
+              aria-hidden="true"
+            >
+              ⚙
+            </span>
+            <span
+              class="settings-label"
+            >
+              Appearance and language
+            </span>
+          </button>
+        </div>
+      </header>
+      <div
+        class="common-navigation"
+      >
+        <div
+          id="library-sidebar"
+        >
+          <nav
+            aria-label="Navigation"
+          >
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/notebooks"
+            >
+              Notebooks
+            </a>
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/sources"
+            >
+              Sources
+            </a>
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/search?mode=search"
+            >
+              Search library
+            </a>
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/search?mode=ask"
+            >
+              Ask library
+            </a>
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/podcasts"
+            >
+              Podcasts
+            </a>
+          </nav>
+        </div>
+        <div
+          class="navigation-utilities"
+        >
+          <button
+            aria-controls="library-sidebar"
+            aria-expanded="true"
+            class="button button-quiet navigation-toggle"
+            type="button"
+          >
+            Toggle sidebar
+          </button>
+          <button
+            class="button button-quiet mobile-navigation"
+            type="button"
+          >
+            Open navigation
+          </button>
+          <button
+            class="button button-quiet "
+            type="button"
+          >
+            Commands
+            <kbd
+              aria-hidden="true"
+            >
+              ⌘ K
+            </kbd>
+          </button>
+        </div>
+      </div>
+      <main
+        id="main-content"
+        tabindex="-1"
+      >
+        <section
+          class="notebook-home configuration-page"
+        >
+          <h1>
+            Models
+          </h1>
+          <label>
+            Retained configuration records
+            <select>
+              <option
+                value="configuration:22500ce4-70b9-4c11-82c0-6663207481df"
+              >
+                1
+                :
+                Models
+              </option>
+            </select>
+          </label>
+          <button
+            class="button button-secondary "
+            type="button"
+          >
+            Refresh
+          </button>
+          <p>
+            This explicit action changes local configuration or may contact the selected provider and incur costs. Configuration, model availability and quota are separate. No automatic retries.
+          </p>
+          <button
+            class="button button-secondary "
+            type="button"
+          >
+            Migrate to Database
+          </button>
+          <section
+            class="configuration-provider"
+          >
+            <h2>
+              OpenAI
+            </h2>
+            <p>
+              Language
+            </p>
+            <button
+              class="button button-secondary "
+              type="button"
+            >
+              Add Configuration
+              :
+              OpenAI
+            </button>
+          </section>
+          <section>
+            <h2>
+              Default Model Assignments
+            </h2>
+            <label>
+              Chat Model
+              <select>
+                <option
+                  disabled=""
+                  value=""
+                >
+                  ⚠️ Required - Select a model
+                </option>
+                <option
+                  value="model:chat"
+                >
+                  Chat fixture
+                </option>
+              </select>
+            </label>
+            <label>
+              Embedding Model
+              <select>
+                <option
+                  disabled=""
+                  value=""
+                >
+                  ⚠️ Required - Select a model
+                </option>
+                <option
+                  value="model:embed"
+                >
+                  Embedding fixture
+                </option>
+                <option
+                  value="model:next"
+                >
+                  Next embedding
+                </option>
+              </select>
+            </label>
+            <label>
+              Text-to-Speech Model
+              <select>
+                <option
+                  value=""
+                >
+                  None
+                </option>
+              </select>
+              <span>
+                Not set — audio generation unavailable until configured
+              </span>
+            </label>
+            <label>
+              Speech-to-Text Model
+              <select>
+                <option
+                  value=""
+                >
+                  None
+                </option>
+              </select>
+              <span>
+                Not set — transcription unavailable until configured
+              </span>
+            </label>
+            <label>
+              Transformation Model
+              <select>
+                <option
+                  value=""
+                >
+                  Use fallback (chat default)
+                </option>
+                <option
+                  value="model:chat"
+                >
+                  Chat fixture
+                </option>
+              </select>
+            </label>
+            <label>
+              Tools Model
+              <select>
+                <option
+                  value=""
+                >
+                  Use fallback (chat default)
+                </option>
+                <option
+                  value="model:chat"
+                >
+                  Chat fixture
+                </option>
+              </select>
+            </label>
+            <label>
+              Large Context Model
+              <select>
+                <option
+                  value=""
+                >
+                  Use fallback (chat default)
+                </option>
+                <option
+                  value="model:chat"
+                >
+                  Chat fixture
+                </option>
+              </select>
+            </label>
+            <button
+              class="button button-secondary "
+              type="button"
+            >
+              Auto-assign Defaults
+            </button>
+          </section>
+          <section>
+            <h2>
+              Models
+            </h2>
+            <article>
+              <h3>
+                Chat fixture
+              </h3>
+              <p>
+                openai
+                 ·
+                Language
+              </p>
+              <button
+                aria-label="Test Model Chat fixture"
+                class="button button-secondary "
+                type="button"
+              >
+                Test Model
+              </button>
+              <button
+                aria-label="Delete Chat fixture"
+                class="button button-secondary "
+                type="button"
+              >
+                Delete
+              </button>
+            </article>
+            <article>
+              <h3>
+                Embedding fixture
+              </h3>
+              <p>
+                openai
+                 ·
+                Embedding Models
+              </p>
+              <button
+                aria-label="Test Model Embedding fixture"
+                class="button button-secondary "
+                type="button"
+              >
+                Test Model
+              </button>
+              <button
+                aria-label="Delete Embedding fixture"
+                class="button button-secondary "
+                type="button"
+              >
+                Delete
+              </button>
+            </article>
+            <article>
+              <h3>
+                Next embedding
+              </h3>
+              <p>
+                openai
+                 ·
+                Embedding Models
+              </p>
+              <button
+                aria-label="Test Model Next embedding"
+                class="button button-secondary "
+                type="button"
+              >
+                Test Model
+              </button>
+              <button
+                aria-label="Delete Next embedding"
+                class="button button-secondary "
+                type="button"
+              >
+                Delete
+              </button>
+            </article>
+          </section>
+          <a
+            class="button"
+            data-discover="true"
+            href="/advanced"
+          >
+            Open Advanced
+          </a>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/settings/setup-journey.test.tsx:47:23
+     45|   fireEvent.click(await screen.findByRole('button', { name: 'Leave wit…
+     46|   await screen.findByRole('heading', { name: 'Models', exact: true, le…
+     47|   const back = screen.getByRole('link', { name: 'Back', exact: true });
+       |                       ^
+     48|   expect(back).toHaveAttribute('href', '/notebooks/n?tab=conversation#…
+     49|   await waitFor(() => expect(screen.getByRole('button', { name: 'Add C…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/features/settings/setup-journey.test.tsx > returns from Tools model setup after save with question and chosen sources intact
+TestingLibraryElementError: Unable to find an accessible element with the role "link" and name "Back"
+
+Here are the accessible roles:
+
+  link:
+
+  Name "Skip to main content":
+  <a
+    class="skip-link"
+    href="#main-content"
+  />
+
+  Name "My notebooks":
+  <a
+    aria-label="My notebooks"
+    class="brand"
+    data-discover="true"
+    href="/"
+  />
+
+  Name "Settings":
+  <a
+    class="button"
+    data-discover="true"
+    href="/settings"
+  />
+
+  Name "Notebooks":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/notebooks"
+  />
+
+  Name "Sources":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/sources"
+  />
+
+  Name "Search library":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/search?mode=search"
+  />
+
+  Name "Ask library":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/search?mode=ask"
+  />
+
+  Name "Podcasts":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/podcasts"
+  />
+
+  Name "Open Advanced":
+  <a
+    class="button"
+    data-discover="true"
+    href="/advanced"
+  />
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  <header
+    class="app-header"
+  />
+
+  --------------------------------------------------
+  group:
+
+  Name "Theme":
+  <div
+    aria-label="Theme"
+    class="theme-control"
+    role="group"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "Light":
+  <button
+    aria-pressed="false"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Dark":
+  <button
+    aria-pressed="false"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "System":
+  <button
+    aria-pressed="true"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Sign Out":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Appearance and language":
+  <button
+    aria-expanded="false"
+    aria-haspopup="dialog"
+    aria-label="Appearance and language"
+    class="button button-secondary "
+    data-state="closed"
+    type="button"
+  />
+
+  Name "Toggle sidebar":
+  <button
+    aria-controls="library-sidebar"
+    aria-expanded="true"
+    class="button button-quiet navigation-toggle"
+    type="button"
+  />
+
+  Name "Open navigation":
+  <button
+    class="button button-quiet mobile-navigation"
+    type="button"
+  />
+
+  Name "Commands":
+  <button
+    class="button button-quiet "
+    type="button"
+  />
+
+  Name "Refresh":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Migrate to Database":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Add Configuration: OpenAI":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Auto-assign Defaults":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Test Model Chat fixture":
+  <button
+    aria-label="Test Model Chat fixture"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Delete Chat fixture":
+  <button
+    aria-label="Delete Chat fixture"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Test Model Embedding fixture":
+  <button
+    aria-label="Test Model Embedding fixture"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Delete Embedding fixture":
+  <button
+    aria-label="Delete Embedding fixture"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Test Model Next embedding":
+  <button
+    aria-label="Test Model Next embedding"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Delete Next embedding":
+  <button
+    aria-label="Delete Next embedding"
+    class="button button-secondary "
+    type="button"
+  />
+
+  --------------------------------------------------
+  navigation:
+
+  Name "Navigation":
+  <nav
+    aria-label="Navigation"
+  />
+
+  --------------------------------------------------
+  main:
+
+  Name "":
+  <main
+    id="main-content"
+    tabindex="-1"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "Models":
+  <h1 />
+
+  Name "OpenAI":
+  <h2 />
+
+  Name "Default Model Assignments":
+  <h2 />
+
+  Name "Models":
+  <h2 />
+
+  Name "Chat fixture":
+  <h3 />
+
+  Name "Embedding fixture":
+  <h3 />
+
+  Name "Next embedding":
+  <h3 />
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Retained configuration records":
+  <select />
+
+  Name "Chat Model":
+  <select />
+
+  Name "Embedding Model":
+  <select />
+
+  Name "Text-to-Speech Model Not set — audio generation unavailable until configured":
+  <select />
+
+  Name "Speech-to-Text Model Not set — transcription unavailable until configured":
+  <select />
+
+  Name "Transformation Model":
+  <select />
+
+  Name "Tools Model":
+  <select />
+
+  Name "Large Context Model":
+  <select />
+
+  --------------------------------------------------
+  option:
+
+  Name "1: Models":
+  <option
+    value="configuration:1fe807fe-339b-4a6d-9ab7-a9b3d8c4ac3f"
+  />
+
+  Name "⚠️ Required - Select a model":
+  <option
+    disabled=""
+    value=""
+  />
+
+  Name "Chat fixture":
+  <option
+    value="model:chat"
+  />
+
+  Name "⚠️ Required - Select a model":
+  <option
+    disabled=""
+    value=""
+  />
+
+  Name "Embedding fixture":
+  <option
+    value="model:embed"
+  />
+
+  Name "Next embedding":
+  <option
+    value="model:next"
+  />
+
+  Name "None":
+  <option
+    value=""
+  />
+
+  Name "None":
+  <option
+    value=""
+  />
+
+  Name "Use fallback (chat default)":
+  <option
+    value=""
+  />
+
+  Name "Chat fixture":
+  <option
+    value="model:chat"
+  />
+
+  Name "Use fallback (chat default)":
+  <option
+    value=""
+  />
+
+  Name "Chat fixture":
+  <option
+    value="model:chat"
+  />
+
+  Name "Use fallback (chat default)":
+  <option
+    value=""
+  />
+
+  Name "Chat fixture":
+  <option
+    value="model:chat"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p />
+
+  Name "":
+  <p />
+
+  Name "":
+  <p />
+
+  Name "":
+  <p />
+
+  Name "":
+  <p />
+
+  --------------------------------------------------
+  article:
+
+  Name "":
+  <article />
+
+  Name "":
+  <article />
+
+  Name "":
+  <article />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body
+  style=""
+>
+  <div>
+    <div
+      class="session-workspace"
+    >
+      <span
+        hidden=""
+      >
+        Library ready
+      </span>
+      <a
+        class="skip-link"
+        href="#main-content"
+      >
+        Skip to main content
+      </a>
+      <header
+        class="app-header"
+      >
+        <a
+          aria-label="My notebooks"
+          class="brand"
+          data-discover="true"
+          href="/"
+        >
+          <span
+            aria-hidden="true"
+            class="brand-mark"
+          >
+            N.
+          </span>
+          <span>
+            Notebook
+          </span>
+        </a>
+        <span
+          aria-hidden="true"
+          class="header-divider"
+        />
+        <div
+          class="header-tools"
+        >
+          <div
+            aria-label="Theme"
+            class="theme-control"
+            role="group"
+          >
+            <button
+              aria-pressed="false"
+              class="button button-secondary "
+              type="button"
+            >
+              <span
+                aria-hidden="true"
+              >
+                ☼
+              </span>
+              Light
+            </button>
+            <button
+              aria-pressed="false"
+              class="button button-secondary "
+              type="button"
+            >
+              <span
+                aria-hidden="true"
+              >
+                ◐
+              </span>
+              Dark
+            </button>
+            <button
+              aria-pressed="true"
+              class="button button-secondary "
+              type="button"
+            >
+              <span
+                aria-hidden="true"
+              >
+                ◑
+              </span>
+              System
+            </button>
+          </div>
+          <a
+            class="button"
+            data-discover="true"
+            href="/settings"
+          >
+            Settings
+          </a>
+          <button
+            class="button button-secondary "
+            type="button"
+          >
+            Sign Out
+          </button>
+          <button
+            aria-expanded="false"
+            aria-haspopup="dialog"
+            aria-label="Appearance and language"
+            class="button button-secondary "
+            data-state="closed"
+            type="button"
+          >
+            <span
+              aria-hidden="true"
+            >
+              ⚙
+            </span>
+            <span
+              class="settings-label"
+            >
+              Appearance and language
+            </span>
+          </button>
+        </div>
+      </header>
+      <div
+        class="common-navigation"
+      >
+        <div
+          id="library-sidebar"
+        >
+          <nav
+            aria-label="Navigation"
+          >
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/notebooks"
+            >
+              Notebooks
+            </a>
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/sources"
+            >
+              Sources
+            </a>
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/search?mode=search"
+            >
+              Search library
+            </a>
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/search?mode=ask"
+            >
+              Ask library
+            </a>
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/podcasts"
+            >
+              Podcasts
+            </a>
+          </nav>
+        </div>
+        <div
+          class="navigation-utilities"
+        >
+          <button
+            aria-controls="library-sidebar"
+            aria-expanded="true"
+            class="button button-quiet navigation-toggle"
+            type="button"
+          >
+            Toggle sidebar
+          </button>
+          <button
+            class="button button-quiet mobile-navigation"
+            type="button"
+          >
+            Open navigation
+          </button>
+          <button
+            class="button button-quiet "
+            type="button"
+          >
+            Commands
+            <kbd
+              aria-hidden="true"
+            >
+              ⌘ K
+            </kbd>
+          </button>
+        </div>
+      </div>
+      <main
+        id="main-content"
+        tabindex="-1"
+      >
+        <section
+          class="notebook-home configuration-page"
+        >
+          <h1>
+            Models
+          </h1>
+          <label>
+            Retained configuration records
+            <select>
+              <option
+                value="configuration:1fe807fe-339b-4a6d-9ab7-a9b3d8c4ac3f"
+              >
+                1
+                :
+                Models
+              </option>
+            </select>
+          </label>
+          <button
+            class="button button-secondary "
+            type="button"
+          >
+            Refresh
+          </button>
+          <p>
+            This explicit action changes local configuration or may contact the selected provider and incur costs. Configuration, model availability and quota are separate. No automatic retries.
+          </p>
+          <button
+            class="button button-secondary "
+            type="button"
+          >
+            Migrate to Database
+          </button>
+          <section
+            class="configuration-provider"
+          >
+            <h2>
+              OpenAI
+            </h2>
+            <p>
+              Language
+            </p>
+            <button
+              class="button button-secondary "
+              type="button"
+            >
+              Add Configuration
+              :
+              OpenAI
+            </button>
+          </section>
+          <section>
+            <h2>
+              Default Model Assignments
+            </h2>
+            <label>
+              Chat Model
+              <select>
+                <option
+                  disabled=""
+                  value=""
+                >
+                  ⚠️ Required - Select a model
+                </option>
+                <option
+                  value="model:chat"
+                >
+                  Chat fixture
+                </option>
+              </select>
+            </label>
+            <label>
+              Embedding Model
+              <select>
+                <option
+                  disabled=""
+                  value=""
+                >
+                  ⚠️ Required - Select a model
+                </option>
+                <option
+                  value="model:embed"
+                >
+                  Embedding fixture
+                </option>
+                <option
+                  value="model:next"
+                >
+                  Next embedding
+                </option>
+              </select>
+            </label>
+            <label>
+              Text-to-Speech Model
+              <select>
+                <option
+                  value=""
+                >
+                  None
+                </option>
+              </select>
+              <span>
+                Not set — audio generation unavailable until configured
+              </span>
+            </label>
+            <label>
+              Speech-to-Text Model
+              <select>
+                <option
+                  value=""
+                >
+                  None
+                </option>
+              </select>
+              <span>
+                Not set — transcription unavailable until configured
+              </span>
+            </label>
+            <label>
+              Transformation Model
+              <select>
+                <option
+                  value=""
+                >
+                  Use fallback (chat default)
+                </option>
+                <option
+                  value="model:chat"
+                >
+                  Chat fixture
+                </option>
+              </select>
+            </label>
+            <label>
+              Tools Model
+              <select>
+                <option
+                  value=""
+                >
+                  Use fallback (chat default)
+                </option>
+                <option
+                  value="model:chat"
+                >
+                  Chat fixture
+                </option>
+              </select>
+            </label>
+            <label>
+              Large Context Model
+              <select>
+                <option
+                  value=""
+                >
+                  Use fallback (chat default)
+                </option>
+                <option
+                  value="model:chat"
+                >
+                  Chat fixture
+                </option>
+              </select>
+            </label>
+            <button
+              class="button button-secondary "
+              type="button"
+            >
+              Auto-assign Defaults
+            </button>
+          </section>
+          <section>
+            <h2>
+              Models
+            </h2>
+            <article>
+              <h3>
+                Chat fixture
+              </h3>
+              <p>
+                openai
+                 ·
+                Language
+              </p>
+              <button
+                aria-label="Test Model Chat fixture"
+                class="button button-secondary "
+                type="button"
+              >
+                Test Model
+              </button>
+              <button
+                aria-label="Delete Chat fixture"
+                class="button button-secondary "
+                type="button"
+              >
+                Delete
+              </button>
+            </article>
+            <article>
+              <h3>
+                Embedding fixture
+              </h3>
+              <p>
+                openai
+                 ·
+                Embedding Models
+              </p>
+              <button
+                aria-label="Test Model Embedding fixture"
+                class="button button-secondary "
+                type="button"
+              >
+                Test Model
+              </button>
+              <button
+                aria-label="Delete Embedding fixture"
+                class="button button-secondary "
+                type="button"
+              >
+                Delete
+              </button>
+            </article>
+            <article>
+              <h3>
+                Next embedding
+              </h3>
+              <p>
+                openai
+                 ·
+                Embedding Models
+              </p>
+              <button
+                aria-label="Test Model Next embedding"
+                class="button button-secondary "
+                type="button"
+              >
+                Test Model
+              </button>
+              <button
+                aria-label="Delete Next embedding"
+                class="button button-secondary "
+                type="button"
+              >
+                Delete
+              </button>
+            </article>
+          </section>
+          <a
+            class="button"
+            data-discover="true"
+            href="/advanced"
+          >
+            Open Advanced
+          </a>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/settings/setup-journey.test.tsx:47:23
+     45|   fireEvent.click(await screen.findByRole('button', { name: 'Leave wit…
+     46|   await screen.findByRole('heading', { name: 'Models', exact: true, le…
+     47|   const back = screen.getByRole('link', { name: 'Back', exact: true });
+       |                       ^
+     48|   expect(back).toHaveAttribute('href', '/notebooks/n?tab=conversation#…
+     49|   await waitFor(() => expect(screen.getByRole('button', { name: 'Add C…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/features/settings/setup-journey.test.tsx > returns from Tools model setup after failure with question and chosen sources intact
+TestingLibraryElementError: Unable to find an accessible element with the role "link" and name "Back"
+
+Here are the accessible roles:
+
+  link:
+
+  Name "Skip to main content":
+  <a
+    class="skip-link"
+    href="#main-content"
+  />
+
+  Name "My notebooks":
+  <a
+    aria-label="My notebooks"
+    class="brand"
+    data-discover="true"
+    href="/"
+  />
+
+  Name "Settings":
+  <a
+    class="button"
+    data-discover="true"
+    href="/settings"
+  />
+
+  Name "Notebooks":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/notebooks"
+  />
+
+  Name "Sources":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/sources"
+  />
+
+  Name "Search library":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/search?mode=search"
+  />
+
+  Name "Ask library":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/search?mode=ask"
+  />
+
+  Name "Podcasts":
+  <a
+    class="navigation-link"
+    data-discover="true"
+    href="/podcasts"
+  />
+
+  Name "Open Advanced":
+  <a
+    class="button"
+    data-discover="true"
+    href="/advanced"
+  />
+
+  --------------------------------------------------
+  banner:
+
+  Name "":
+  <header
+    class="app-header"
+  />
+
+  --------------------------------------------------
+  group:
+
+  Name "Theme":
+  <div
+    aria-label="Theme"
+    class="theme-control"
+    role="group"
+  />
+
+  --------------------------------------------------
+  button:
+
+  Name "Light":
+  <button
+    aria-pressed="false"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Dark":
+  <button
+    aria-pressed="false"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "System":
+  <button
+    aria-pressed="true"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Sign Out":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Appearance and language":
+  <button
+    aria-expanded="false"
+    aria-haspopup="dialog"
+    aria-label="Appearance and language"
+    class="button button-secondary "
+    data-state="closed"
+    type="button"
+  />
+
+  Name "Toggle sidebar":
+  <button
+    aria-controls="library-sidebar"
+    aria-expanded="true"
+    class="button button-quiet navigation-toggle"
+    type="button"
+  />
+
+  Name "Open navigation":
+  <button
+    class="button button-quiet mobile-navigation"
+    type="button"
+  />
+
+  Name "Commands":
+  <button
+    class="button button-quiet "
+    type="button"
+  />
+
+  Name "Refresh":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Migrate to Database":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Add Configuration: OpenAI":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Auto-assign Defaults":
+  <button
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Test Model Chat fixture":
+  <button
+    aria-label="Test Model Chat fixture"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Delete Chat fixture":
+  <button
+    aria-label="Delete Chat fixture"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Test Model Embedding fixture":
+  <button
+    aria-label="Test Model Embedding fixture"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Delete Embedding fixture":
+  <button
+    aria-label="Delete Embedding fixture"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Test Model Next embedding":
+  <button
+    aria-label="Test Model Next embedding"
+    class="button button-secondary "
+    type="button"
+  />
+
+  Name "Delete Next embedding":
+  <button
+    aria-label="Delete Next embedding"
+    class="button button-secondary "
+    type="button"
+  />
+
+  --------------------------------------------------
+  navigation:
+
+  Name "Navigation":
+  <nav
+    aria-label="Navigation"
+  />
+
+  --------------------------------------------------
+  main:
+
+  Name "":
+  <main
+    id="main-content"
+    tabindex="-1"
+  />
+
+  --------------------------------------------------
+  heading:
+
+  Name "Models":
+  <h1 />
+
+  Name "OpenAI":
+  <h2 />
+
+  Name "Default Model Assignments":
+  <h2 />
+
+  Name "Models":
+  <h2 />
+
+  Name "Chat fixture":
+  <h3 />
+
+  Name "Embedding fixture":
+  <h3 />
+
+  Name "Next embedding":
+  <h3 />
+
+  --------------------------------------------------
+  combobox:
+
+  Name "Retained configuration records":
+  <select />
+
+  Name "Chat Model":
+  <select />
+
+  Name "Embedding Model":
+  <select />
+
+  Name "Text-to-Speech Model Not set — audio generation unavailable until configured":
+  <select />
+
+  Name "Speech-to-Text Model Not set — transcription unavailable until configured":
+  <select />
+
+  Name "Transformation Model":
+  <select />
+
+  Name "Tools Model":
+  <select />
+
+  Name "Large Context Model":
+  <select />
+
+  --------------------------------------------------
+  option:
+
+  Name "1: Models":
+  <option
+    value="configuration:3a70e238-0ccf-45b4-bdda-fad71a08ccd2"
+  />
+
+  Name "⚠️ Required - Select a model":
+  <option
+    disabled=""
+    value=""
+  />
+
+  Name "Chat fixture":
+  <option
+    value="model:chat"
+  />
+
+  Name "⚠️ Required - Select a model":
+  <option
+    disabled=""
+    value=""
+  />
+
+  Name "Embedding fixture":
+  <option
+    value="model:embed"
+  />
+
+  Name "Next embedding":
+  <option
+    value="model:next"
+  />
+
+  Name "None":
+  <option
+    value=""
+  />
+
+  Name "None":
+  <option
+    value=""
+  />
+
+  Name "Use fallback (chat default)":
+  <option
+    value=""
+  />
+
+  Name "Chat fixture":
+  <option
+    value="model:chat"
+  />
+
+  Name "Use fallback (chat default)":
+  <option
+    value=""
+  />
+
+  Name "Chat fixture":
+  <option
+    value="model:chat"
+  />
+
+  Name "Use fallback (chat default)":
+  <option
+    value=""
+  />
+
+  Name "Chat fixture":
+  <option
+    value="model:chat"
+  />
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  <p />
+
+  Name "":
+  <p />
+
+  Name "":
+  <p />
+
+  Name "":
+  <p />
+
+  Name "":
+  <p />
+
+  --------------------------------------------------
+  article:
+
+  Name "":
+  <article />
+
+  Name "":
+  <article />
+
+  Name "":
+  <article />
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+<body
+  style=""
+>
+  <div>
+    <div
+      class="session-workspace"
+    >
+      <span
+        hidden=""
+      >
+        Library ready
+      </span>
+      <a
+        class="skip-link"
+        href="#main-content"
+      >
+        Skip to main content
+      </a>
+      <header
+        class="app-header"
+      >
+        <a
+          aria-label="My notebooks"
+          class="brand"
+          data-discover="true"
+          href="/"
+        >
+          <span
+            aria-hidden="true"
+            class="brand-mark"
+          >
+            N.
+          </span>
+          <span>
+            Notebook
+          </span>
+        </a>
+        <span
+          aria-hidden="true"
+          class="header-divider"
+        />
+        <div
+          class="header-tools"
+        >
+          <div
+            aria-label="Theme"
+            class="theme-control"
+            role="group"
+          >
+            <button
+              aria-pressed="false"
+              class="button button-secondary "
+              type="button"
+            >
+              <span
+                aria-hidden="true"
+              >
+                ☼
+              </span>
+              Light
+            </button>
+            <button
+              aria-pressed="false"
+              class="button button-secondary "
+              type="button"
+            >
+              <span
+                aria-hidden="true"
+              >
+                ◐
+              </span>
+              Dark
+            </button>
+            <button
+              aria-pressed="true"
+              class="button button-secondary "
+              type="button"
+            >
+              <span
+                aria-hidden="true"
+              >
+                ◑
+              </span>
+              System
+            </button>
+          </div>
+          <a
+            class="button"
+            data-discover="true"
+            href="/settings"
+          >
+            Settings
+          </a>
+          <button
+            class="button button-secondary "
+            type="button"
+          >
+            Sign Out
+          </button>
+          <button
+            aria-expanded="false"
+            aria-haspopup="dialog"
+            aria-label="Appearance and language"
+            class="button button-secondary "
+            data-state="closed"
+            type="button"
+          >
+            <span
+              aria-hidden="true"
+            >
+              ⚙
+            </span>
+            <span
+              class="settings-label"
+            >
+              Appearance and language
+            </span>
+          </button>
+        </div>
+      </header>
+      <div
+        class="common-navigation"
+      >
+        <div
+          id="library-sidebar"
+        >
+          <nav
+            aria-label="Navigation"
+          >
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/notebooks"
+            >
+              Notebooks
+            </a>
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/sources"
+            >
+              Sources
+            </a>
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/search?mode=search"
+            >
+              Search library
+            </a>
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/search?mode=ask"
+            >
+              Ask library
+            </a>
+            <a
+              class="navigation-link"
+              data-discover="true"
+              href="/podcasts"
+            >
+              Podcasts
+            </a>
+          </nav>
+        </div>
+        <div
+          class="navigation-utilities"
+        >
+          <button
+            aria-controls="library-sidebar"
+            aria-expanded="true"
+            class="button button-quiet navigation-toggle"
+            type="button"
+          >
+            Toggle sidebar
+          </button>
+          <button
+            class="button button-quiet mobile-navigation"
+            type="button"
+          >
+            Open navigation
+          </button>
+          <button
+            class="button button-quiet "
+            type="button"
+          >
+            Commands
+            <kbd
+              aria-hidden="true"
+            >
+              ⌘ K
+            </kbd>
+          </button>
+        </div>
+      </div>
+      <main
+        id="main-content"
+        tabindex="-1"
+      >
+        <section
+          class="notebook-home configuration-page"
+        >
+          <h1>
+            Models
+          </h1>
+          <label>
+            Retained configuration records
+            <select>
+              <option
+                value="configuration:3a70e238-0ccf-45b4-bdda-fad71a08ccd2"
+              >
+                1
+                :
+                Models
+              </option>
+            </select>
+          </label>
+          <button
+            class="button button-secondary "
+            type="button"
+          >
+            Refresh
+          </button>
+          <p>
+            This explicit action changes local configuration or may contact the selected provider and incur costs. Configuration, model availability and quota are separate. No automatic retries.
+          </p>
+          <button
+            class="button button-secondary "
+            type="button"
+          >
+            Migrate to Database
+          </button>
+          <section
+            class="configuration-provider"
+          >
+            <h2>
+              OpenAI
+            </h2>
+            <p>
+              Language
+            </p>
+            <button
+              class="button button-secondary "
+              type="button"
+            >
+              Add Configuration
+              :
+              OpenAI
+            </button>
+          </section>
+          <section>
+            <h2>
+              Default Model Assignments
+            </h2>
+            <label>
+              Chat Model
+              <select>
+                <option
+                  disabled=""
+                  value=""
+                >
+                  ⚠️ Required - Select a model
+                </option>
+                <option
+                  value="model:chat"
+                >
+                  Chat fixture
+                </option>
+              </select>
+            </label>
+            <label>
+              Embedding Model
+              <select>
+                <option
+                  disabled=""
+                  value=""
+                >
+                  ⚠️ Required - Select a model
+                </option>
+                <option
+                  value="model:embed"
+                >
+                  Embedding fixture
+                </option>
+                <option
+                  value="model:next"
+                >
+                  Next embedding
+                </option>
+              </select>
+            </label>
+            <label>
+              Text-to-Speech Model
+              <select>
+                <option
+                  value=""
+                >
+                  None
+                </option>
+              </select>
+              <span>
+                Not set — audio generation unavailable until configured
+              </span>
+            </label>
+            <label>
+              Speech-to-Text Model
+              <select>
+                <option
+                  value=""
+                >
+                  None
+                </option>
+              </select>
+              <span>
+                Not set — transcription unavailable until configured
+              </span>
+            </label>
+            <label>
+              Transformation Model
+              <select>
+                <option
+                  value=""
+                >
+                  Use fallback (chat default)
+                </option>
+                <option
+                  value="model:chat"
+                >
+                  Chat fixture
+                </option>
+              </select>
+            </label>
+            <label>
+              Tools Model
+              <select>
+                <option
+                  value=""
+                >
+                  Use fallback (chat default)
+                </option>
+                <option
+                  value="model:chat"
+                >
+                  Chat fixture
+                </option>
+              </select>
+            </label>
+            <label>
+              Large Context Model
+              <select>
+                <option
+                  value=""
+                >
+                  Use fallback (chat default)
+                </option>
+                <option
+                  value="model:chat"
+                >
+                  Chat fixture
+                </option>
+              </select>
+            </label>
+            <button
+              class="button button-secondary "
+              type="button"
+            >
+              Auto-assign Defaults
+            </button>
+          </section>
+          <section>
+            <h2>
+              Models
+            </h2>
+            <article>
+              <h3>
+                Chat fixture
+              </h3>
+              <p>
+                openai
+                 ·
+                Language
+              </p>
+              <button
+                aria-label="Test Model Chat fixture"
+                class="button button-secondary "
+                type="button"
+              >
+                Test Model
+              </button>
+              <button
+                aria-label="Delete Chat fixture"
+                class="button button-secondary "
+                type="button"
+              >
+                Delete
+              </button>
+            </article>
+            <article>
+              <h3>
+                Embedding fixture
+              </h3>
+              <p>
+                openai
+                 ·
+                Embedding Models
+              </p>
+              <button
+                aria-label="Test Model Embedding fixture"
+                class="button button-secondary "
+                type="button"
+              >
+                Test Model
+              </button>
+              <button
+                aria-label="Delete Embedding fixture"
+                class="button button-secondary "
+                type="button"
+              >
+                Delete
+              </button>
+            </article>
+            <article>
+              <h3>
+                Next embedding
+              </h3>
+              <p>
+                openai
+                 ·
+                Embedding Models
+              </p>
+              <button
+                aria-label="Test Model Next embedding"
+                class="button button-secondary "
+                type="button"
+              >
+                Test Model
+              </button>
+              <button
+                aria-label="Delete Next embedding"
+                class="button button-secondary "
+                type="button"
+              >
+                Delete
+              </button>
+            </article>
+          </section>
+          <a
+            class="button"
+            data-discover="true"
+            href="/advanced"
+          >
+            Open Advanced
+          </a>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+ ❯ Object.getElementError ../../node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/features/settings/setup-journey.test.tsx:47:23
+     45|   fireEvent.click(await screen.findByRole('button', { name: 'Leave wit…
+     46|   await screen.findByRole('heading', { name: 'Models', exact: true, le…
+     47|   const back = screen.getByRole('link', { name: 'Back', exact: true });
+       |                       ^
+     48|   expect(back).toHaveAttribute('href', '/notebooks/n?tab=conversation#…
+     49|   await waitFor(() => expect(screen.getByRole('button', { name: 'Add C…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  02:49:55
+   Duration  4.84s (transform 1.54s, setup 107ms, import 2.08s, tests 2.29s, environment 263ms)

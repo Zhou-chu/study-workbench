@@ -18,6 +18,7 @@ from open_notebook.exceptions import (
     OpenNotebookError,
 )
 from open_notebook.graphs.ask import graph as ask_graph
+from open_notebook.utils.boundary_logging import log_boundary_failure
 
 router = APIRouter()
 
@@ -132,7 +133,7 @@ async def stream_ask_response(
             user_message = str(e)
         else:
             _, user_message = classify_error(e)
-        logger.error(f"Error in ask streaming: {str(e)}")
+        log_boundary_failure("ask_stream", e)
         error_data = {"type": "error", "message": user_message}
         yield f"data: {json.dumps(error_data)}\n\n"
 

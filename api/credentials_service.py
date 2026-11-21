@@ -259,19 +259,19 @@ async def test_credential(credential_id: str) -> dict:
 
     Returns dict with provider, success, message keys.
     """
+    from open_notebook.ai.connection_tester import (
+        _is_vertex_credentials_file_error,
+        _test_anthropic_compatible_connection,
+        _test_azure_connection,
+        _test_ollama_connection,
+        _test_openai_compatible_connection,
+        classify_provider_test_error,
+    )
+
     provider = "unknown"
     try:
         cred = await Credential.get(credential_id)
         config = cred.to_esperanto_config()
-
-        from open_notebook.ai.connection_tester import (
-            _is_vertex_credentials_file_error,
-            _test_anthropic_compatible_connection,
-            _test_azure_connection,
-            _test_ollama_connection,
-            _test_openai_compatible_connection,
-            classify_provider_test_error,
-        )
 
         provider = cred.provider.lower()
 
@@ -386,6 +386,12 @@ async def test_credential(credential_id: str) -> dict:
         }
 
     except Exception as e:
+        if provider == "unknown":
+            return {
+                "provider": provider,
+                "success": False,
+                "message": "Credential configuration could not be loaded",
+            }
         if provider == "vertex" and _is_vertex_credentials_file_error(e):
             logger.debug(
                 f"Vertex credentials file error for credential {credential_id}: {e}"

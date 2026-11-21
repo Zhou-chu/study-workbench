@@ -5,6 +5,8 @@ from langchain_core.messages import BaseMessage, RemoveMessage
 from langchain_core.runnables import RunnableConfig
 from loguru import logger
 
+from open_notebook.utils.boundary_logging import log_boundary_failure
+
 
 async def get_session_message_count(graph, session_id: str) -> int:
     """Get message count from LangGraph state, returns 0 on error."""
@@ -37,8 +39,8 @@ def discard_unanswered_message(graph, thread_id: str, message: BaseMessage) -> N
         messages = (state.values or {}).get("messages", []) if state else []
         if any(getattr(m, "id", None) == message.id for m in messages):
             graph.update_state(config, {"messages": [RemoveMessage(id=message.id)]})
-    except Exception:
-        logger.exception(f"Could not discard unanswered message in {thread_id}")
+    except Exception as e:
+        log_boundary_failure("discard_unanswered_message", e)
 
 
 def invoke_chat_turn(

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -19,6 +19,30 @@ import {
 import { embeddingApi } from '@/lib/api/embedding'
 import type { RebuildEmbeddingsRequest, RebuildStatusResponse } from '@/lib/api/embedding'
 import { useTranslation } from '@/lib/hooks/use-translation'
+import { parseCommandSubmissionUnknown, runCommandSubmission } from '@/lib/utils/command-submission'
+import { isAuthRecoveryError } from '@/lib/api/browser-transport'
+import { getApiErrorKey } from '@/lib/utils/error-handler'
+
+// Metadata only: reactive across remounts, never durable across reloads.
+interface RebuildSession {
+  commandId: string | null
+  pending: boolean
+  unknown: boolean
+  errorKey: string | null
+}
+const initialSession: RebuildSession = { commandId: null, pending: false, unknown: false, errorKey: null }
+let session = initialSession
+const listeners = new Set<() => void>()
+const subscribe = (listener: () => void) => {
+  listeners.add(listener)
+  return () => { listeners.delete(listener) }
+}
+const getSession = () => session
+const getServerSession = () => initialSession
+function updateSession(update: Partial<RebuildSession>) {
+  session = { ...session, ...update }
+  listeners.forEach(listener => listener())
+}
 
 export function RebuildEmbeddings() {
   const { t } = useTranslation()
@@ -26,61 +50,73 @@ export function RebuildEmbeddings() {
   const [includeSources, setIncludeSources] = useState(true)
   const [includeNotes, setIncludeNotes] = useState(true)
   const [includeInsights, setIncludeInsights] = useState(true)
-  const [commandId, setCommandId] = useState<string | null>(null)
+  const { commandId, unknown, pending, errorKey } = useSyncExternalStore(subscribe, getSession, getServerSession)
+  const [statusUnavailable, setStatusUnavailable] = useState(false)
   const [status, setStatus] = useState<RebuildStatusResponse | null>(null)
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null)
-
-  // Rebuild mutation
+  // An acknowledged command is active even before the first status response.
   const rebuildMutation = useMutation({
+    retry: false,
     mutationFn: async (request: RebuildEmbeddingsRequest) => {
-      return embeddingApi.rebuildEmbeddings(request)
-    },
-    onSuccess: (data) => {
-      setCommandId(data.command_id)
-      // Start polling for status
-      startPolling(data.command_id)
+      if (session.commandId || session.pending) return
+      updateSession({ pending: true, errorKey: null })
+      try {
+        const data = await runCommandSubmission(
+          'embeddings:rebuild',
+          () => embeddingApi.rebuildEmbeddings(request),
+          t('commandSubmission.newAttemptConfirm')
+        )
+        // Publish before resolving: mounted and remounted views share the same
+        // accepted command, even if the initiating component no longer exists.
+        // A new accepted attempt does not reconcile an older unknown attempt.
+        updateSession({ commandId: data.command_id })
+        return data
+      } catch (error) {
+        const uncertain = parseCommandSubmissionUnknown(error)
+        if (uncertain) {
+          updateSession({ unknown: true, ...(uncertain.command_id ? { commandId: uncertain.command_id } : {}) })
+        } else {
+          updateSession({ errorKey: getApiErrorKey(error, 'advanced.rebuild.failed') })
+        }
+        throw error
+      } finally {
+        updateSession({ pending: false })
+      }
     }
   })
 
-  // Start polling for rebuild status
-  const startPolling = (cmdId: string) => {
-    if (pollingInterval) {
-      clearInterval(pollingInterval)
-    }
-
-    const interval = setInterval(async () => {
+  useEffect(() => {
+    if (!commandId) return
+    setStatus(null)
+    setStatusUnavailable(false)
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const poll = async () => {
       try {
-        const statusData = await embeddingApi.getRebuildStatus(cmdId)
-        setStatus(statusData)
-
-        // Stop polling if completed or failed
-        if (statusData.status === 'completed' || statusData.status === 'failed') {
-          stopPolling()
+        const next = await embeddingApi.getRebuildStatus(commandId)
+        if (cancelled) return
+        setStatus(next)
+        setStatusUnavailable(false)
+        if (next.status === 'completed' || next.status === 'failed') {
+          if (session.commandId === commandId) updateSession({ commandId: null })
+          return
         }
       } catch (error) {
-        console.error('Failed to fetch rebuild status:', error)
+        if (cancelled) return
+        // An unavailable status never establishes rejection or permits replay.
+        setStatusUnavailable(true)
+        if (isAuthRecoveryError(error)) return
       }
-    }, 5000) // Poll every 5 seconds
-
-    setPollingInterval(interval)
-  }
-
-  // Stop polling
-  const stopPolling = useCallback(() => {
-    if (pollingInterval) {
-      clearInterval(pollingInterval)
-      setPollingInterval(null)
+      if (!cancelled) timer = setTimeout(poll, 5000)
     }
-  }, [pollingInterval])
-
-  // Cleanup on unmount
-  useEffect(() => {
+    void poll()
     return () => {
-      stopPolling()
+      cancelled = true
+      if (timer) clearTimeout(timer)
     }
-  }, [stopPolling])
+  }, [commandId])
 
   const handleStartRebuild = () => {
+    if (session.commandId || session.pending) return
     const request: RebuildEmbeddingsRequest = {
       mode,
       include_sources: includeSources,
@@ -92,14 +128,14 @@ export function RebuildEmbeddings() {
   }
 
   const handleReset = () => {
-    stopPolling()
-    setCommandId(null)
+    if (session.commandId || session.pending) return
+    updateSession({ errorKey: null })
     setStatus(null)
     rebuildMutation.reset()
   }
 
   const isAnyTypeSelected = includeSources || includeNotes || includeInsights
-  const isRebuildActive = commandId && status && (status.status === 'queued' || status.status === 'running')
+  const isRebuildActive = !!commandId
 
   const progressData = status?.progress
   const stats = status?.stats
@@ -130,6 +166,20 @@ export function RebuildEmbeddings() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {unknown && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {t('commandSubmission.warning')} {t('commandSubmission.sessionOnly')}
+            </AlertDescription>
+          </Alert>
+        )}
+        {isRebuildActive && (!status || statusUnavailable) && (
+          <Alert>
+            <Clock className="h-4 w-4" />
+            <AlertDescription>{t('commandSubmission.observing')}</AlertDescription>
+          </Alert>
+        )}
         {/* Configuration Form */}
         {!isRebuildActive && (
           <div className="space-y-6">
@@ -197,10 +247,10 @@ export function RebuildEmbeddings() {
 
             <Button
               onClick={handleStartRebuild}
-              disabled={!isAnyTypeSelected || rebuildMutation.isPending}
+              disabled={!isAnyTypeSelected || pending}
               className="w-full"
             >
-              {rebuildMutation.isPending ? (
+              {pending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {t('advanced.rebuild.starting')}
@@ -210,11 +260,12 @@ export function RebuildEmbeddings() {
               )}
             </Button>
 
-            {rebuildMutation.isError && (
+            {errorKey && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  {t('advanced.rebuild.failed')}: {(rebuildMutation.error as Error)?.message || t('common.error')}
+                  {unknown && <p>{t('commandSubmission.newAttemptError')}</p>}
+                  <p>{t(errorKey)}</p>
                 </AlertDescription>
               </Alert>
             )}
@@ -294,7 +345,7 @@ export function RebuildEmbeddings() {
             {status.error_message && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{status.error_message}</AlertDescription>
+                <AlertDescription>{t('advanced.rebuild.failed')}</AlertDescription>
               </Alert>
             )}
 

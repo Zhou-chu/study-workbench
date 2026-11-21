@@ -1,0 +1,7 @@
+import { expect, it } from 'vitest';
+import { originalScopeAvailable } from './chat-admission';
+import { sourceWorkspace } from '../../test/source-fixtures';
+import type { TurnRequest } from '@study/contracts';
+const dto: TurnRequest = { notebook_id: 'n', engine: 'independent', task: 'question', selection_origin: 'local', source_version_ids: ['v-old'], remote_source_ids: [], message: 'Q', idempotency_key: 'k' };
+it('validates the original unsent source versions, not a newer ready selection', () => { const w = sourceWorkspace(); expect(originalScopeAvailable({ dto }, w)).toBe(true); w.sources = [{ source_id: 's', versions: [{ source_version_id: 'v-new', extraction_status: 'ready' }] }]; w.selection = { engine: 'independent', selection_origin: 'local', source_version_ids: ['v-new'], remote_source_ids: [] }; expect(originalScopeAvailable({ dto }, w)).toBe(false); });
+it('requires the same explicit Google notebook and connection binding for a retry', () => { const w = sourceWorkspace(), capture = { dto: { ...dto, engine: 'notebooklm' as const, remote_notebook_id: 'rn' }, googleConnectionId: 'c' }; w.link = { remote_notebook_id: 'rn', connection_id: 'c' }; expect(originalScopeAvailable(capture, w)).toBe(true); w.link = { remote_notebook_id: 'rn', connection_id: 'other' }; expect(originalScopeAvailable(capture, w)).toBe(false); w.link = { remote_notebook_id: 'rn', connection_id: 'c', projection_status: 'unknown' }; expect(originalScopeAvailable(capture, w)).toBe(false); });

@@ -11,7 +11,7 @@ from api.podcast_service import (
     PodcastService,
 )
 from open_notebook.ai.models import Model
-from open_notebook.exceptions import OpenNotebookError
+from open_notebook.exceptions import CommandSubmissionUnknownError, OpenNotebookError
 from open_notebook.podcasts.audio_paths import resolve_contained_audio_path
 from open_notebook.podcasts.models import PodcastEpisode
 
@@ -121,6 +121,39 @@ class PodcastEpisodeResponse(BaseModel):
     error_message: Optional[str] = None
 
 
+def _project_episode(
+    episode: PodcastEpisode,
+    *,
+    models_by_id: dict,
+    audio_url: Optional[str],
+    job_status: Optional[str],
+    error_message: Optional[str],
+) -> PodcastEpisodeResponse:
+    """Project identical public episode fields in the list and detail routes."""
+    return PodcastEpisodeResponse(
+        id=str(episode.id),
+        name=episode.name,
+        episode_profile=_with_resolved_model_fields(
+            episode.episode_profile,
+            _EPISODE_PROFILE_MODEL_FIELDS,
+            models_by_id,
+        ),
+        speaker_profile=_with_resolved_model_fields(
+            episode.speaker_profile,
+            _SPEAKER_PROFILE_MODEL_FIELDS,
+            models_by_id,
+        ),
+        briefing=episode.briefing,
+        audio_file=episode.audio_file,
+        audio_url=audio_url,
+        transcript=episode.transcript,
+        outline=episode.outline,
+        created=str(episode.created) if episode.created else None,
+        job_status=job_status,
+        error_message=error_message,
+    )
+
+
 @router.post("/podcasts/generate", response_model=PodcastGenerationResponse)
 async def generate_podcast(request: PodcastGenerationRequest):
     """
@@ -218,25 +251,10 @@ async def list_podcast_episodes():
                 audio_url = f"/api/podcasts/episodes/{episode.id}/audio"
 
             response_episodes.append(
-                PodcastEpisodeResponse(
-                    id=str(episode.id),
-                    name=episode.name,
-                    episode_profile=_with_resolved_model_fields(
-                        episode.episode_profile,
-                        _EPISODE_PROFILE_MODEL_FIELDS,
-                        models_by_id,
-                    ),
-                    speaker_profile=_with_resolved_model_fields(
-                        episode.speaker_profile,
-                        _SPEAKER_PROFILE_MODEL_FIELDS,
-                        models_by_id,
-                    ),
-                    briefing=episode.briefing,
-                    audio_file=episode.audio_file,
+                _project_episode(
+                    episode,
+                    models_by_id=models_by_id,
                     audio_url=audio_url,
-                    transcript=episode.transcript,
-                    outline=episode.outline,
-                    created=str(episode.created) if episode.created else None,
                     job_status=job_status,
                     error_message=error_message,
                 )
@@ -280,25 +298,10 @@ async def get_podcast_episode(episode_id: str):
 
         models_by_id = await _resolve_snapshot_models([episode])
 
-        return PodcastEpisodeResponse(
-            id=str(episode.id),
-            name=episode.name,
-            episode_profile=_with_resolved_model_fields(
-                episode.episode_profile,
-                _EPISODE_PROFILE_MODEL_FIELDS,
-                models_by_id,
-            ),
-            speaker_profile=_with_resolved_model_fields(
-                episode.speaker_profile,
-                _SPEAKER_PROFILE_MODEL_FIELDS,
-                models_by_id,
-            ),
-            briefing=episode.briefing,
-            audio_file=episode.audio_file,
+        return _project_episode(
+            episode,
+            models_by_id=models_by_id,
             audio_url=audio_url,
-            transcript=episode.transcript,
-            outline=episode.outline,
-            created=str(episode.created) if episode.created else None,
             job_status=job_status,
             error_message=error_message,
         )
@@ -348,7 +351,7 @@ async def stream_podcast_episode_audio(episode_id: str):
 
 @router.post("/podcasts/episodes/{episode_id}/retry")
 async def retry_podcast_episode(episode_id: str):
-    """Retry a failed podcast episode by deleting it and submitting a new job"""
+    """Submit a separate attempt without destroying the previous episode/audio."""
     try:
         episode = await PodcastService.get_episode(episode_id)
 
@@ -372,12 +375,8 @@ async def retry_podcast_episode(episode_id: str):
                 detail="Cannot retry: episode or speaker profile name missing from stored data",
             )
 
-        # Delete audio file if any
-        _delete_episode_audio(episode, episode_id)
-
-        # Delete the failed episode
-        await episode.delete()
-
+        # A new attempt is a separate job. Preserve the previous result even if
+        # its acknowledgement is lost; deletion remains an explicit user action.
         # Submit a new job
         job_id = await PodcastService.submit_generation_job(
             episode_profile_name=ep_profile_name,
@@ -388,6 +387,10 @@ async def retry_podcast_episode(episode_id: str):
 
         return {"job_id": job_id, "message": "Retry submitted successfully"}
 
+    except CommandSubmissionUnknownError as exc:
+        exc.resource_id = episode_id
+        exc.resource_type = "podcast_episode"
+        raise
     except HTTPException:
         raise
     except OpenNotebookError:

@@ -21,7 +21,19 @@ class PasswordAuthMiddleware(BaseHTTPMiddleware):
         self, app: ASGIApp, excluded_paths: Optional[list[str]] = None
     ) -> None:
         super().__init__(app)
-        self.password = get_secret_from_env("OPEN_NOTEBOOK_PASSWORD")
+        from api.device_session_models import AuthError
+        from api.device_session_runtime import get_auth_mode
+
+        self.mode: str
+        try:
+            self.mode = get_auth_mode()
+        except AuthError:
+            self.mode = "invalid"
+        self.password = (
+            get_secret_from_env("OPEN_NOTEBOOK_PASSWORD")
+            if self.mode == "legacy_password"
+            else None
+        )
         self.excluded_paths: list[str] = excluded_paths or [
             "/",
             "/health",
@@ -33,6 +45,21 @@ class PasswordAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
+        from api.device_session_models import AuthError
+        from api.device_session_runtime import device_dispatch, error_response
+
+        if self.mode == "invalid":
+            return error_response(AuthError("AUTH_UNAVAILABLE"))
+        if self.mode == "device_sessions":
+            return await device_dispatch(request, call_next, self.excluded_paths)
+
+        # New session routes cannot accidentally become password-Bearer APIs
+        # in compatibility mode; reject before validation/body consumption.
+        if request.url.path == "/api/auth/sessions" or request.url.path.startswith(
+            "/api/auth/sessions/"
+        ):
+            return error_response(AuthError("AUTH_UNAVAILABLE"))
+
         # Skip authentication if no password is set
         if not self.password:
             return await call_next(request)

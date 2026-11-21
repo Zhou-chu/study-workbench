@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { AlertTriangle, Copy, Edit3, MoreVertical, Trash2, Users } from 'lucide-react'
+import { AlertTriangle, Users } from 'lucide-react'
 
 import { EpisodeProfile, SpeakerProfile, needsModelSetup } from '@/lib/types/podcasts'
 import {
@@ -10,17 +10,6 @@ import {
 } from '@/lib/hooks/use-podcasts'
 import { useModels } from '@/lib/hooks/use-models'
 import { EpisodeProfileFormDialog } from '@/components/podcasts/forms/EpisodeProfileFormDialog'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -30,13 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { ProfileActions } from '@/components/podcasts/ProfileActions'
 import { useTranslation } from '@/lib/hooks/use-translation'
 
 interface EpisodeProfilesPanelProps {
@@ -139,64 +122,15 @@ export function EpisodeProfilesPanel({
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditProfile(profile)}
-                    >
-                      <Edit3 className="mr-2 h-4 w-4" /> {t('podcasts.edit')}
-                    </Button>
-                    <AlertDialog>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="w-44"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <DropdownMenuItem
-                            onClick={() => duplicateProfile.mutate(profile.id)}
-                            disabled={duplicateProfile.isPending}
-                          >
-                            <Copy className="h-4 w-4 mr-2" />
-                            {t('podcasts.duplicate')}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem className="text-destructive focus:text-destructive">
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              {t('podcasts.delete')}
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>{t('podcasts.deleteProfileTitle')}</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            {t('podcasts.deleteProfileDesc', { name: profile.name })}
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => deleteProfile.mutate({ profileId: profile.id, name: profile.name })}
-                            disabled={deleteProfile.isPending}
-                          >
-                            {deleteProfile.isPending ? t('podcasts.deleting') : t('podcasts.delete')}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <ProfileActions
+                      kind="episode"
+                      name={profile.name}
+                      onEdit={() => setEditProfile(profile)}
+                      onDuplicate={() => duplicateProfile.mutate(profile.id)}
+                      onDelete={() => deleteProfile.mutate({ profileId: profile.id, name: profile.name })}
+                      duplicatePending={duplicateProfile.isPending}
+                      deletePending={deleteProfile.isPending}
+                    />
                   </div>
                 </CardHeader>
 

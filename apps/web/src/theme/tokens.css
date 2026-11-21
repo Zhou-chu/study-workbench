@@ -1,0 +1,42 @@
+:root {
+  --background: #F2F1ED;
+  --surface: #FAF9F6;
+  --text: #20201E;
+  --muted: #595952;
+  --interactive-border: #70706C;
+  --decorative-line: #D5D4CE;
+  --primary: #20201E;
+  --on-primary: #FAF9F6;
+  --selected: #E8E7E1;
+  --focus: #20201E;
+  --auxiliary: #66665F;
+  --error: #A32924;
+  --warning: #7D5200;
+  --success: #276142;
+  --heading-font: "Source Serif 4 Variable", "Noto Serif SC Variable", "Songti SC", serif;
+  --reading-font: "Source Serif 4 Variable", "Noto Serif SC Variable", Georgia, serif;
+  --ui-font: "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --type-meta: .75rem;
+  --type-ui: .875rem;
+  --type-body: 1rem;
+  --type-section: 1.25rem;
+  --type-title: 2rem;
+  --reading-measure: 49rem;
+  --mono-font: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+:root[data-theme="dark"] {
+  --background: #141414;
+  --surface: #1B1B1A;
+  --text: #ECECE6;
+  --muted: #B6B6AE;
+  --interactive-border: #777771;
+  --decorative-line: #393937;
+  --primary: #ECECE6;
+  --on-primary: #141414;
+  --selected: #252524;
+  --focus: #ECECE6;
+  --auxiliary: #96968F;
+  --error: #F0A6A0;
+  --warning: #DEBF83;
+  --success: #A1C9AE;
+}

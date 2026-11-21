@@ -10,6 +10,7 @@ import unicodedata
 import weakref
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from itertools import islice
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -20,7 +21,11 @@ from open_notebook.domain.evidence import (
     Extraction,
     SourceVersion,
 )
-from open_notebook.exceptions import InvalidInputError, NotFoundError
+from open_notebook.exceptions import (
+    InvalidInputError,
+    NotFoundError,
+    UploadCommitUnknownError,
+)
 
 _PARSE_SLOTS: weakref.WeakKeyDictionary[
     asyncio.AbstractEventLoop, asyncio.Semaphore
@@ -78,7 +83,12 @@ def _parse_original(path, mime_type, page_limit, text_limit):
             if nonempty == len(blocks) and nonempty
             else ("partial" if nonempty else "needs_ocr"),
         }
-    text = Path(path).read_bytes().decode("utf-8-sig")
+    return parse_text_bytes(Path(path).read_bytes(), text_limit)
+
+
+def parse_text_bytes(data, text_limit):
+    """Shared UTF-8 interpretation, including BOM and empty-text behavior."""
+    text = data.decode("utf-8-sig")
     if len(text) > text_limit:
         raise ValueError("TEXT_LIMIT: extracted text exceeds configured limit")
     return {
@@ -151,6 +161,103 @@ def _terms(text):
     return normalized, terms
 
 
+def _lexical_score(normalized_query, terms, quote):
+    """The unchanged V1 term/bigram algorithm, shared by explicit retrieval."""
+    normalized, _ = _terms(quote)
+    score = sum(
+        1 + min(normalized.count(term), 3) * 0.1 for term in terms if term in normalized
+    )
+    if normalized_query in normalized:
+        score += 5
+    return score
+
+
+def publish_snapshot_bytes(path, data, *, durability_root=None):
+    """Publish deterministic bytes durably without overwriting a competing winner."""
+    root = Path(durability_root or path.parent).resolve()
+    if not path.resolve().is_relative_to(root):
+        raise InvalidInputError("Unsafe snapshot publication path")
+    created_parents = set()
+    directory = path.parent
+    while not directory.exists():
+        created_parents.add(directory.parent)
+        directory = directory.parent
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + ".staging-" + uuid4().hex)
+    try:
+        EvidenceService._write_new(temporary, data)
+        try:
+            os.link(temporary, path)
+        except FileExistsError:
+            if path.read_bytes() != data:
+                raise InvalidInputError("SNAPSHOT_CONFLICT: staged bytes differ")
+    finally:
+        temporary.unlink(missing_ok=True)
+    # The published name and every newly created ancestor entry must be durable
+    # before metadata can acknowledge these bytes. Unsupported filesystems fail
+    # explicitly here; callers retain the unacknowledged file, not a ready receipt.
+    directories = []
+    for directory in path.parents:
+        directories.append(directory)
+        if directory == root:
+            break
+    directories.extend(
+        sorted(
+            created_parents.difference(directories), key=lambda item: -len(item.parts)
+        )
+    )
+    for directory in directories:
+        descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+
+
+def build_evidence_records(version, extraction_id, blocks, max_records=None):
+    """Single codepoint/paragraph indexing implementation for all retained text."""
+    origin = version["origin"]
+    kind = (
+        "derived_snapshot"
+        if origin == "derived_snapshot"
+        else "remote_text_snapshot"
+        if origin in ("remote_text_snapshot", "web_snapshot")
+        else "pdf_text"
+        if version["mime_type"] == "application/pdf"
+        else "text"
+    )
+    records: list[dict[str, Any]] = []
+    for block in blocks:
+        for start, end, quote in _paragraphs(block["text"]):
+            if max_records is not None and len(records) >= max_records:
+                raise InvalidInputError("EVIDENCE_LIMIT: too many evidence records")
+            identity = (
+                "ev_"
+                + _sha(
+                    f"{version['source_version_id']}:{extraction_id}:{block['block_id']}:{start}:{end}".encode()
+                )[:32]
+            )
+            records.append(
+                EvidenceRecord(
+                    evidence_id=identity,
+                    source_version_id=version["source_version_id"],
+                    extraction_id=extraction_id,
+                    notebook_id=version["notebook_id"],
+                    source_title=version["source_title"],
+                    quote=quote,
+                    quote_hash=_sha(quote.encode()),
+                    evidence_kind=kind,
+                    locator={
+                        "block_id": block["block_id"],
+                        "page_index": block["page_index"],
+                        "start_offset": start,
+                        "end_offset": end,
+                    },
+                ).model_dump()
+            )
+    return records
+
+
 class EvidenceService:
     def __init__(self, store=None, data_root=None):
         if store is None:
@@ -173,7 +280,18 @@ class EvidenceService:
         filename=None,
         origin="upload",
         original_status="available",
+        provenance=None,
+        source_version_id=None,
+        preserve_on_error=False,
     ):
+        # preserve_on_error remains accepted for existing deterministic callers;
+        # a metadata-write failure must never authorize deleting original bytes.
+        if origin == "web_snapshot" and (
+            not isinstance(provenance, dict)
+            or not provenance.get("source_url")
+            or provenance.get("historical_url_omitted")
+        ):
+            raise InvalidInputError("New web ingestion requires the fetched source URL")
         limit = float(os.getenv("STUDY_WORKBENCH_MAX_FILE_MB", "50")) * 1024 * 1024
         if not data or len(data) > limit:
             raise InvalidInputError(
@@ -203,7 +321,12 @@ class EvidenceService:
                 raise InvalidInputError(
                     "UTF-8 encoding required; convert the text file and upload again"
                 ) from exc
-        version_id = f"sv_{uuid4().hex}"
+        if source_version_id is not None and (
+            not isinstance(source_version_id, str)
+            or not re.fullmatch(r"sv_[A-Za-z0-9_-]{1,180}", source_version_id)
+        ):
+            raise InvalidInputError("Invalid source version identity")
+        version_id = source_version_id or f"sv_{uuid4().hex}"
         suffix = {v: k for k, v in types.items()}[mime]
         relative = f"originals/{version_id}/original{suffix}"
         path = self.data_root / relative
@@ -213,6 +336,7 @@ class EvidenceService:
             notebook_id=notebook_id,
             source_title=title,
             origin=origin,
+            provenance=provenance,
             original_status=original_status,
             sha256=_sha(data),
             mime_type=mime,
@@ -221,12 +345,51 @@ class EvidenceService:
             created_at=_now(),
         ).model_dump()
         async with self.store.project_lock(notebook_id):
-            await asyncio.to_thread(path.parent.mkdir, parents=True, exist_ok=True)
-            try:
+            if not source_version_id:
+                await asyncio.to_thread(path.parent.mkdir, parents=True, exist_ok=True)
+            previous = (
+                await self.store.get("version", version_id)
+                if source_version_id
+                else None
+            )
+            if previous:
+                fields = (
+                    "notebook_id",
+                    "source_id",
+                    "source_title",
+                    "origin",
+                    "original_status",
+                    "sha256",
+                    "mime_type",
+                    "byte_size",
+                    "file_path",
+                    "provenance",
+                )
+                if any(previous.get(key) != version.get(key) for key in fields):
+                    raise InvalidInputError(
+                        "SNAPSHOT_CONFLICT: version identity already has different content"
+                    )
+                await self.resolve_file(version_id)
+                return previous
+            if source_version_id:
+                await asyncio.to_thread(
+                    publish_snapshot_bytes,
+                    path,
+                    data,
+                    durability_root=self.data_root,
+                )
+            else:
                 await asyncio.to_thread(self._write_new, path, data)
+            try:
                 await self.store.put("version", version_id, version, create_only=True)
-            except Exception:
-                path.unlink(missing_ok=True)
+            except Exception as exc:
+                # Even a typed DB exception does not establish rollback. Ordinary
+                # uploads have no deterministic receipt to make replay safe.
+                if source_version_id is None:
+                    raise UploadCommitUnknownError(
+                        source_id=source_id, source_version_id=version_id
+                    ) from exc
+                # Preserve deterministic callers' existing reconciliation contract.
                 raise
         return version
 
@@ -243,16 +406,18 @@ class EvidenceService:
             key=lambda v: v["created_at"],
         )
 
-    async def _version(self, version_id):
-        version = await self.store.get("version", version_id)
+    async def _version(self, version_id, *, _reads=None):
+        version = await (_reads or self.store).get("version", version_id)
         if version is None:
             raise NotFoundError("Source version not found")
         return version
 
-    async def version(self, version_id):
-        version = await self._version(version_id)
+    async def version(self, version_id, *, _reads=None):
+        version = await self._version(version_id, _reads=_reads)
         extraction = (
-            await self.store.get("extraction", version["current_extraction_id"])
+            await (_reads or self.store).get(
+                "extraction", version["current_extraction_id"]
+            )
             if version.get("current_extraction_id")
             else None
         )
@@ -340,6 +505,13 @@ class EvidenceService:
             ).model_dump()
         )
         async with self.store.project_lock(version["notebook_id"]):
+            if prior_current_id and prior_current_id != extraction_id:
+                # The production metadata adapter revokes derived vector scope
+                # before publishing reparse state. Custom text-only stores keep
+                # their existing compatibility and need no derived DB tables.
+                invalidate = getattr(self.store, "invalidate_evidence_scope", None)
+                if invalidate is not None:
+                    await invalidate(version["notebook_id"], [version_id], "reparse")
             await self.store.put("extraction", extraction_id, extraction)
             version["status"] = "extracting"
             if not version.get("current_extraction_id"):
@@ -357,35 +529,7 @@ class EvidenceService:
                     int(os.getenv("STUDY_WORKBENCH_MAX_TEXT_CODEPOINTS", "5000000")),
                 )
             extraction.update(parsed)
-            records = []
-            for block in parsed["blocks"]:
-                for start, end, quote in _paragraphs(block["text"]):
-                    evidence_id = (
-                        "ev_"
-                        + _sha(
-                            f"{version_id}:{extraction_id}:{block['block_id']}:{start}:{end}".encode()
-                        )[:32]
-                    )
-                    records.append(
-                        EvidenceRecord(
-                            evidence_id=evidence_id,
-                            source_version_id=version_id,
-                            extraction_id=extraction_id,
-                            notebook_id=version["notebook_id"],
-                            source_title=version["source_title"],
-                            quote=quote,
-                            quote_hash=_sha(quote.encode()),
-                            evidence_kind="remote_text_snapshot"
-                            if version["origin"] == "remote_text_snapshot"
-                            else ("pdf_text" if is_pdf else "text"),
-                            locator={
-                                "block_id": block["block_id"],
-                                "page_index": block["page_index"],
-                                "start_offset": start,
-                                "end_offset": end,
-                            },
-                        ).model_dump()
-                    )
+            records = build_evidence_records(version, extraction_id, parsed["blocks"])
             extraction["evidence_ids"] = [record["evidence_id"] for record in records]
             extraction["completed_at"] = _now()
             async with self.store.project_lock(version["notebook_id"]):
@@ -403,9 +547,11 @@ class EvidenceService:
                 )
                 await self.store.put("version", version_id, version)
             return extraction
-        except Exception as exc:
+        except Exception:
             extraction.update(
-                status="failed", error=str(exc)[:500], completed_at=_now()
+                status="failed",
+                error="Source extraction could not be completed.",
+                completed_at=_now(),
             )
             async with self.store.project_lock(version["notebook_id"]):
                 await self.store.put("extraction", extraction_id, extraction)
@@ -496,21 +642,46 @@ class EvidenceService:
             await self.store.put("extraction", extraction_id, current)
         return report
 
-    async def evidence(self, evidence_id):
-        evidence = await self.store.get("evidence", evidence_id)
+    async def evidence(self, evidence_id, *, _reads=None):
+        evidence = await (_reads or self.store).get("evidence", evidence_id)
         if evidence is None:
             raise NotFoundError("Evidence not found")
+        if evidence.get("evidence_id") != evidence_id:
+            raise InvalidInputError("Stored evidence integrity check failed")
         return evidence
 
-    async def list_evidence(self, version_id, extraction_id=None):
-        version = await self._version(version_id)
+    async def list_evidence(self, version_id, extraction_id=None, *, _reads=None):
+        version = await self._version(version_id, _reads=_reads)
         extraction_id = extraction_id or version.get("current_extraction_id")
         if not extraction_id:
             return []
-        extraction = await self.store.get("extraction", extraction_id)
+        extraction = await (_reads or self.store).get("extraction", extraction_id)
         if not extraction or extraction["source_version_id"] != version_id:
             raise NotFoundError("Extraction not found for this source version")
-        return [await self.evidence(id) for id in extraction["evidence_ids"]]
+
+        def checked(record):
+            # A retained index is not authority to expose another extraction's
+            # evidence to a reader, lexical search, or a model prompt.
+            if (
+                record.get("source_version_id") != version_id
+                or record.get("extraction_id") != extraction_id
+            ):
+                raise InvalidInputError("Stored evidence integrity check failed")
+            return record
+
+        if _reads is None:
+            return [
+                checked(await self.evidence(id)) for id in extraction["evidence_ids"]
+            ]
+        from api.personal_store import READ_BATCH_SIZE
+
+        records = []
+        identities = iter(extraction["evidence_ids"])
+        while batch := list(islice(identities, READ_BATCH_SIZE)):
+            await _reads.prefetch("evidence", batch)
+            for identity in batch:
+                records.append(checked(await self.evidence(identity, _reads=_reads)))
+        return records
 
     async def retrieve(self, query, version_ids, limit=12):
         version_ids = list(dict.fromkeys(version_ids))
@@ -535,14 +706,7 @@ class EvidenceService:
             scoped.extend(await self.list_evidence(version_id))
         hits = []
         for record in scoped:
-            normalized, _ = _terms(record["quote"])
-            score = sum(
-                1 + min(normalized.count(term), 3) * 0.1
-                for term in terms
-                if term in normalized
-            )
-            if normalized_query in normalized:
-                score += 5
+            score = _lexical_score(normalized_query, terms, record["quote"])
             if score > 0:
                 hits.append({**record, "score": score, "retrieval_method": "lexical"})
         ranked = sorted(hits, key=lambda hit: (-hit["score"], hit["evidence_id"]))[
@@ -554,9 +718,13 @@ class EvidenceService:
             )
             hit["reference_validity"] = reference["reference_validity"]
             hit["reference_reason"] = reference.get("reason")
+            hit["provenance"] = reference.get("provenance")
+            hit["independent_support"] = reference.get("independent_support")
         return ranked
 
-    async def validate_citation(self, citation, version_ids, evidence_ids=None):
+    async def validate_citation(
+        self, citation, version_ids, evidence_ids=None, *, _reads=None
+    ):
         evidence_id = citation.get("evidence_id")
         result = EvidenceCitation(
             citation_id=str(citation.get("citation_id") or "c1"),
@@ -568,16 +736,20 @@ class EvidenceService:
         ).model_dump()
         if not isinstance(evidence_id, str) or not evidence_id:
             return {**result, "reason": "Malformed evidence ID"}
-        evidence = await self.store.get("evidence", evidence_id)
+        evidence = await (_reads or self.store).get("evidence", evidence_id)
         if not evidence:
             return {**result, "reason": "Unknown evidence ID"}
+        # Bind the verdict and supplied-ID membership to the physical lookup,
+        # never to a possibly corrupted identity declared inside its payload.
+        if evidence.get("evidence_id") != evidence_id:
+            return {**result, "reason": "Stored evidence integrity check failed"}
         if evidence["source_version_id"] not in version_ids:
             return {
                 **result,
                 "reference_validity": "out_of_scope",
                 "reason": "Evidence is outside the selected source versions",
             }
-        if evidence_ids is not None and evidence["evidence_id"] not in evidence_ids:
+        if evidence_ids is not None and evidence_id not in evidence_ids:
             return {**result, "reason": "Evidence was not supplied to this answer"}
         if (
             citation.get("source_version_id")
@@ -588,7 +760,14 @@ class EvidenceService:
         if not isinstance(quote, str) or quote not in evidence["quote"]:
             return {**result, "reason": "Quote does not match evidence"}
         # Recheck against the retained extraction, not merely against a model string.
-        extraction = await self.store.get("extraction", evidence["extraction_id"])
+        extraction = await (_reads or self.store).get(
+            "extraction", evidence["extraction_id"]
+        )
+        if (
+            not extraction
+            or extraction.get("source_version_id") != evidence["source_version_id"]
+        ):
+            return {**result, "reason": "Stored evidence integrity check failed"}
         block = next(
             (
                 b
@@ -620,21 +799,34 @@ class EvidenceService:
             report = extraction.get("revalidation") or {}
             fresh_id = report.get("fresh_extraction_id")
             if evidence_id in report.get("evidence_ids", []) and fresh_id:
-                fresh = await self.store.get("extraction", fresh_id)
+                fresh = await (_reads or self.store).get("extraction", fresh_id)
                 revalidated = self._matches_fresh(evidence, fresh)
+        # Historical evidence may outlive its version. Absence is not a fresh
+        # verification, even when an older revalidation report still matches.
+        version = await (_reads or self.store).get(
+            "version", evidence["source_version_id"]
+        )
+        derived = (version or {}).get("origin") == "derived_snapshot" or evidence.get(
+            "evidence_kind"
+        ) == "derived_snapshot"
+        unverified = not version or (restored and not revalidated)
         return {
             **result,
-            "kind": "remote_text_snapshot"
+            "provenance": (version or {}).get("provenance"),
+            "independent_support": False if derived else None,
+            "kind": "derived_snapshot"
+            if derived
+            else "remote_text_snapshot"
             if evidence.get("evidence_kind") == "remote_text_snapshot"
             else "local_evidence",
             "source_version_id": evidence["source_version_id"],
             "source_title": evidence.get("source_title") or "",
             "locator": locator,
             "quote": quote,
-            "reference_validity": "unverified"
-            if restored and not revalidated
-            else "verified",
+            "reference_validity": "unverified" if unverified else "verified",
             "reason": "Restored archive evidence has not been verified by a fresh local extraction"
             if restored and not revalidated
+            else "Source version is unavailable; retained citation cannot be freshly verified"
+            if not version
             else None,
         }

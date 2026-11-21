@@ -1,0 +1,24 @@
+-- Auth-only tables are deliberately outside personal export/import kinds.
+DEFINE TABLE auth_session SCHEMAFULL;
+DEFINE FIELD session_id ON auth_session TYPE string;
+DEFINE FIELD device_name ON auth_session TYPE string;
+DEFINE FIELD created_at ON auth_session TYPE datetime VALUE <datetime>$value;
+DEFINE FIELD last_used_at ON auth_session TYPE datetime VALUE <datetime>$value;
+DEFINE FIELD expires_at ON auth_session TYPE datetime VALUE <datetime>$value;
+DEFINE FIELD revoked_at ON auth_session TYPE option<datetime> VALUE IF $value = NULL OR $value = NONE { NONE } ELSE { <datetime>$value };
+DEFINE FIELD boot_epoch ON auth_session TYPE string;
+DEFINE FIELD credential_epoch ON auth_session TYPE int;
+DEFINE FIELD generation ON auth_session TYPE int;
+DEFINE FIELD refresh_digest ON auth_session TYPE string;
+DEFINE INDEX auth_session_id ON auth_session FIELDS session_id UNIQUE;
+DEFINE INDEX auth_refresh_digest ON auth_session FIELDS refresh_digest UNIQUE;
+DEFINE TABLE auth_access SCHEMAFULL;
+DEFINE FIELD digest ON auth_access TYPE string;
+DEFINE FIELD session_id ON auth_access TYPE string;
+DEFINE FIELD issued_at ON auth_access TYPE datetime VALUE <datetime>$value;
+DEFINE FIELD expires_at ON auth_access TYPE datetime VALUE <datetime>$value;
+DEFINE INDEX auth_access_digest ON auth_access FIELDS digest UNIQUE;
+DEFINE INDEX auth_access_expiry ON auth_access FIELDS expires_at;
+DEFINE TABLE auth_session_guard SCHEMAFULL;
+DEFINE FIELD revision ON auth_session_guard TYPE int;
+CREATE auth_session_guard:singleton SET revision=0;

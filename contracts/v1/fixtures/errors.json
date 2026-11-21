@@ -1,0 +1,46 @@
+[
+  {
+    "body": {
+      "detail": "IDEMPOTENCY_CONFLICT"
+    },
+    "exception": "InvalidInputError",
+    "message": "IDEMPOTENCY_CONFLICT",
+    "status": 400
+  },
+  {
+    "body": {
+      "error": {
+        "code": "IDEMPOTENCY_CONFLICT",
+        "message": "Synthetic request key was reused."
+      }
+    },
+    "code": "IDEMPOTENCY_CONFLICT",
+    "exception": "BridgeError",
+    "message": "Synthetic request key was reused.",
+    "status": 409
+  },
+  {
+    "body": {
+      "error": {
+        "code": "CAPABILITY_UNAVAILABLE",
+        "message": "Synthetic capability is unverified."
+      }
+    },
+    "code": "CAPABILITY_UNAVAILABLE",
+    "exception": "BridgeError",
+    "message": "Synthetic capability is unverified.",
+    "status": 502
+  },
+  {
+    "body": {
+      "error": {
+        "code": "SCOPE_ISOLATION_UNAVAILABLE",
+        "message": "Synthetic source isolation is unavailable."
+      }
+    },
+    "code": "SCOPE_ISOLATION_UNAVAILABLE",
+    "exception": "BridgeError",
+    "message": "Synthetic source isolation is unavailable.",
+    "status": 422
+  }
+]

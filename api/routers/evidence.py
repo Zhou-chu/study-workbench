@@ -4,22 +4,53 @@ import asyncio
 import json
 from typing import Any, Literal
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, Query, UploadFile
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
+from api.evidence_indexing import EvidenceIndexingService, IndexRequest, PreviewRequest
 from api.evidence_maintenance import EvidenceMaintenanceService
+from api.evidence_reads import EvidenceReadContext
+from api.evidence_retrieval import EvidenceRetrievalService
 from api.evidence_service import EvidenceService
+from api.personal_contracts import (
+    RETRIEVAL_FIELDS,
+    EvidenceSearchRequest,
+    NoteConflictResponse,
+    NoteCreateRequest,
+    NoteRequiredResponse,
+    NoteUpdateRequest,
+    NoteWriteCapabilities,
+    PersonalNoteResponse,
+    PersonalTurnDispatchUnknownResponse,
+    PersonalTurnInvalidInputResponse,
+    RetrievalOptions,
+    SelectionResponse,
+    TurnSubmissionResponse,
+    WorkspaceResponse,
+)
 from api.personal_service import PersonalService, digest, now, submit_job
 from api.personal_store import get_store
+from api.personal_transport_contracts import TURN_EVENTS_RESPONSES, transport_responses
+from api.portable_limits import get_portable_limits
+from api.source_upload_limits import get_source_upload_max_bytes
+from api.workspace_view_contracts import ClientCapabilitiesV1, WorkspaceViewV1
+from api.workspace_view_projection import project_workspace_view
+from open_notebook.ai.evidence_embeddings import EmbeddingUnavailable
 from open_notebook.database.repository import repo_delete, repo_relate
+from open_notebook.domain.evidence_retrieval import (
+    EvidenceSearchResponse,
+    IndexPreview,
+    IndexReceipt,
+)
 from open_notebook.domain.notebook import Notebook, Source
 from open_notebook.exceptions import InvalidInputError, NotFoundError
 
 router = APIRouter(prefix="/personal", tags=["personal-evidence"])
 
 
-class TurnRequest(BaseModel):
+class TurnRequest(RetrievalOptions):
     notebook_id: str
     engine: Literal["notebooklm", "independent"]
     message: str = Field(min_length=1, max_length=50000)
@@ -31,13 +62,58 @@ class TurnRequest(BaseModel):
     model_id: str | None = None
     task: Literal["question", "outline"] = "question"
 
+    @model_validator(mode="after")
+    def validate_hybrid_scope(self):
+        if self.retrieval_mode == "hybrid" and (
+            self.engine != "independent"
+            or self.selection_origin != "local"
+            or self.remote_source_ids
+            or self.task != "question"
+        ):
+            raise ValueError(
+                "RETRIEVAL_MODE_INVALID: hybrid requires local independent questions"
+            )
+        return self
 
-@router.get("/notebooks/{notebook_id}/workspace")
+
+@router.get(
+    "/notebooks/{notebook_id}/workspace",
+    response_model=WorkspaceResponse,
+    response_model_exclude_unset=True,
+)
 async def workspace(notebook_id: str):
-    return await PersonalService().workspace(notebook_id)
+    # Preserve the pre-response-model FastAPI wire encoding (notably UTC +00:00).
+    return jsonable_encoder(await PersonalService().workspace(notebook_id))
 
 
-@router.patch("/notebooks/{notebook_id}/selection")
+@router.get(
+    "/notebooks/{notebook_id}/workspace-view",
+    response_model=WorkspaceViewV1,
+    response_model_exclude_unset=True,
+)
+async def workspace_view(notebook_id: str):
+    return project_workspace_view(
+        jsonable_encoder(await PersonalService().workspace(notebook_id))
+    )
+
+
+@router.get("/client-capabilities", response_model=ClientCapabilitiesV1)
+async def client_capabilities():
+    return {
+        "contract_version": "client-capabilities-v1",
+        "supported_contracts": ["workspace-view-v1"],
+        "limits": {
+            "source_upload_max_bytes": get_source_upload_max_bytes(),
+            "portable": get_portable_limits().public(),
+        },
+    }
+
+
+@router.patch(
+    "/notebooks/{notebook_id}/selection",
+    response_model=SelectionResponse,
+    response_model_exclude_unset=True,
+)
 async def selection(notebook_id: str, value: dict[str, Any]):
     await Notebook.get(notebook_id)
     return await PersonalService().save_selection(notebook_id, value)
@@ -55,11 +131,7 @@ async def upload(
     if not idempotency_key or len(idempotency_key) > 200:
         raise InvalidInputError("INVALID_IDEMPOTENCY_KEY")
     service = EvidenceService()
-    import os
-
-    size_limit = int(
-        float(os.getenv("STUDY_WORKBENCH_MAX_FILE_MB", "50")) * 1024 * 1024
-    )
+    size_limit = get_source_upload_max_bytes()
     data = await file.read(size_limit + 1)
     if len(data) > size_limit:
         raise InvalidInputError("FILE_TOO_LARGE")
@@ -107,7 +179,9 @@ async def upload(
                 mime_type=file.content_type,
                 filename=file.filename,
             )
-        except Exception:
+        except InvalidInputError:
+            # Only definite pre-write validation rejection permits cleanup.
+            # Metadata-write errors are outcome-unknown and retain this source.
             if created and source.id is not None:
                 await repo_delete(source.id)
             raise
@@ -164,25 +238,26 @@ async def version(
     extraction_id: str | None = None,
 ):
     service = EvidenceService()
-    value = await service.version(source_version_id)
+    reads = EvidenceReadContext(service.store)
+    value = await service.version(source_version_id, _reads=reads)
     extraction = value.pop("extraction", None)
     if evidence_id:
-        record = await service.evidence(evidence_id)
+        record = await service.evidence(evidence_id, _reads=reads)
         if record["source_version_id"] != source_version_id:
             raise InvalidInputError("EVIDENCE_VERSION_MISMATCH")
         if extraction_id and extraction_id != record["extraction_id"]:
             raise InvalidInputError("EVIDENCE_EXTRACTION_MISMATCH")
         extraction_id = record["extraction_id"]
     if extraction_id:
-        extraction = await service.store.get("extraction", extraction_id)
+        extraction = await reads.get("extraction", extraction_id)
         if not extraction or extraction["source_version_id"] != source_version_id:
             raise InvalidInputError("EXTRACTION_VERSION_MISMATCH")
     records = await service.list_evidence(
-        source_version_id, extraction_id=extraction_id
+        source_version_id, extraction_id=extraction_id, _reads=reads
     )
     for record in records:
         validation = await service.validate_citation(
-            {"evidence_id": record["evidence_id"]}, [source_version_id]
+            {"evidence_id": record["evidence_id"]}, [source_version_id], _reads=reads
         )
         record["reference_validity"] = validation["reference_validity"]
         record["reference_reason"] = validation.get("reason")
@@ -213,7 +288,14 @@ async def revalidate(source_version_id: str, request: RevalidationRequest):
     )
 
 
-@router.get("/source-versions/{source_version_id}/download")
+@router.get(
+    "/source-versions/{source_version_id}/download",
+    response_class=FileResponse,
+    responses=transport_responses(
+        ["application/pdf", "text/plain", "text/markdown"],
+        "Protected original bytes; inline stored title, no-store. MIME is allowlisted.",
+    ),
+)
 async def download(source_version_id: str):
     service = EvidenceService()
     version = await service.version(source_version_id)
@@ -243,28 +325,99 @@ async def evidence(evidence_id: str):
     }
 
 
-@router.post("/search")
-async def search(value: dict[str, Any]):
+@router.post(
+    "/search", response_model=EvidenceSearchResponse, response_model_exclude_unset=True
+)
+async def search(value: EvidenceSearchRequest):
+    if isinstance(value, dict):
+        value = EvidenceSearchRequest.model_validate(value)
+    if value.notebook_id is None and not (RETRIEVAL_FIELDS & value.model_fields_set):
+        return {
+            "hits": await EvidenceService().retrieve(
+                str(value.query), value.source_version_ids
+            )
+        }
+    if not value.notebook_id or not value.notebook_id.strip():
+        raise InvalidInputError("RETRIEVAL_NOTEBOOK_REQUIRED")
+    result = await EvidenceRetrievalService().retrieve(
+        value.query,
+        value.notebook_id,
+        value.source_version_ids,
+        limit=value.limit,
+        **value.retrieval_arguments(),
+    )
     return {
-        "hits": await EvidenceService().retrieve(
-            str(value.get("query", "")), value.get("source_version_ids", [])
-        )
+        "hits": result.hits,
+        "retrieval": result.model_dump(mode="json", exclude={"hits"}),
     }
 
 
-@router.post("/chats/{chat_session_id}/turns")
+@router.post(
+    "/chats/{chat_session_id}/turns",
+    response_model=TurnSubmissionResponse,
+    response_model_exclude_unset=True,
+    responses={
+        400: {
+            "model": PersonalTurnDispatchUnknownResponse
+            | PersonalTurnInvalidInputResponse,
+            "description": "Invalid input, or unchanged-queued dispatch ACK unknown. "
+            "WORKER_UNAVAILABLE retains its detail string and adds original parent "
+            "IDs with retry_safe:false. This does not prove queue rejection or "
+            "provider submission and does not authorize replay.",
+        }
+    },
+)
 async def turn(chat_session_id: str, request: TurnRequest):
+    request = request.model_copy(deep=True)
+    payload = request.dispatch_payload()
     await Notebook.get(request.notebook_id)
-    service = EvidenceService()
-    for identity in request.source_version_ids:
-        if (await service.version(identity))["notebook_id"] != request.notebook_id:
-            raise InvalidInputError("SOURCE_OUT_OF_SCOPE")
-    job = await PersonalService().submit_turn(chat_session_id, request.model_dump())
-    return {
+    personal = PersonalService()
+    job = await personal.turn_receipt(chat_session_id, payload)
+    if job is None:
+        if (
+            request.engine == "independent"
+            and request.selection_origin == "local"
+            and RETRIEVAL_FIELDS & request.model_fields_set
+        ):
+            retrieval = EvidenceRetrievalService()
+            await retrieval.repository.capture_scope(
+                request.notebook_id, request.source_version_ids
+            )
+            if request.retrieval_mode == "hybrid":
+                assert request.embedding_profile_id is not None  # request validated
+                try:
+                    profile = retrieval.embeddings.resolve_profile(
+                        request.embedding_profile_id
+                    )
+                except EmbeddingUnavailable:
+                    # Missing configuration remains an explicit worker-side fallback;
+                    # it never chooses another profile or authorizes provider work.
+                    pass
+                else:
+                    retrieval._disclosure(
+                        profile,
+                        request.disclosed_profile_fingerprint,
+                        request.destination_descriptor_version,
+                        request.acknowledge_query_processing,
+                    )
+        else:
+            service = EvidenceService()
+            for identity in request.source_version_ids:
+                # Legacy admission reads metadata only; active membership/readiness
+                # and extraction/epoch checks occur before worker content retrieval.
+                if (await service._version(identity))[
+                    "notebook_id"
+                ] != request.notebook_id:
+                    raise InvalidInputError("SOURCE_OUT_OF_SCOPE")
+        job = await personal.submit_turn(chat_session_id, payload)
+    response = {
         "job_id": job["job_id"],
         "turn_id": job["turn_id"],
         "state": job["state"],
     }
+    if "dispatch_receipt" in job:
+        response["dispatch_receipt"] = job["dispatch_receipt"]
+    return response
 
 
 @router.get("/chats/{chat_session_id}/turns")
@@ -275,7 +428,11 @@ async def turns(chat_session_id: str):
     )
 
 
-@router.get("/turns/{turn_id}/events")
+@router.get(
+    "/turns/{turn_id}/events",
+    response_class=StreamingResponse,
+    responses=TURN_EVENTS_RESPONSES,
+)
 async def turn_events(turn_id: str):
     async def events():
         previous = None
@@ -353,13 +510,50 @@ async def turn_events(turn_id: str):
     )
 
 
-@router.post("/notebooks/{notebook_id}/notes")
-async def create_note(notebook_id: str, value: dict[str, Any]):
+@router.post("/notebooks/{notebook_id}/notes", response_model=PersonalNoteResponse)
+async def create_note(notebook_id: str, value: NoteCreateRequest):
     await Notebook.get(notebook_id)
-    return await PersonalService().save_note(notebook_id, value)
+    return await PersonalService().save_note(notebook_id, value.model_dump())
 
 
-@router.patch("/notebooks/{notebook_id}/notes/{note_id}")
-async def update_note(notebook_id: str, note_id: str, value: dict[str, Any]):
+@router.patch(
+    "/notebooks/{notebook_id}/notes/{note_id}",
+    response_model=PersonalNoteResponse,
+    responses={
+        409: {"model": NoteConflictResponse},
+        428: {"model": NoteRequiredResponse},
+    },
+)
+async def update_note(notebook_id: str, note_id: str, value: NoteUpdateRequest):
     await Notebook.get(notebook_id)
-    return await PersonalService().save_note(notebook_id, value, note_id)
+    return await PersonalService().save_note(notebook_id, value.model_dump(), note_id)
+
+
+@router.get("/note-capabilities", response_model=NoteWriteCapabilities)
+async def note_capabilities():
+    from open_notebook.config import get_note_write_mode
+
+    return NoteWriteCapabilities(
+        expected_revision_required=get_note_write_mode() == "multiclient"
+    )
+
+
+@router.get("/notebooks/{notebook_id}/semantic-index")
+async def semantic_index_status(
+    notebook_id: str, source_version_ids: list[str] = Query(min_length=1, max_length=20)
+):
+    return await EvidenceIndexingService().status(notebook_id, source_version_ids)
+
+
+@router.post(
+    "/notebooks/{notebook_id}/semantic-index/preview", response_model=IndexPreview
+)
+async def semantic_index_preview(notebook_id: str, request: PreviewRequest):
+    return await EvidenceIndexingService().preview(
+        notebook_id, request.source_version_ids, request.profile_id
+    )
+
+
+@router.post("/notebooks/{notebook_id}/semantic-index", response_model=IndexReceipt)
+async def semantic_index_build(notebook_id: str, request: IndexRequest):
+    return await EvidenceIndexingService().submit(notebook_id, request)

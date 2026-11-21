@@ -94,7 +94,7 @@ export function useCreateCredential() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -128,7 +128,7 @@ export function useUpdateCredential() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -163,7 +163,7 @@ export function useDeleteCredential() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -198,7 +198,7 @@ export function useTestCredential() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('apiKeys.testFailed')),
+        description: t(getApiErrorKey(error, 'apiKeys.testFailed')),
         variant: 'destructive',
       })
     },
@@ -230,7 +230,7 @@ export function useDiscoverModels() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('apiKeys.syncFailed')),
+        description: t(getApiErrorKey(error, 'apiKeys.syncFailed')),
         variant: 'destructive',
       })
     },
@@ -272,7 +272,7 @@ export function useRegisterModels() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('apiKeys.syncFailed')),
+        description: t(getApiErrorKey(error, 'apiKeys.syncFailed')),
         variant: 'destructive',
       })
     },
@@ -325,7 +325,7 @@ export function useMigrateFromEnv() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },
@@ -378,7 +378,7 @@ export function useMigrateFromProviderConfig() {
     onError: (error: unknown) => {
       toast({
         title: t('common.error'),
-        description: getApiErrorKey(error, t('common.error')),
+        description: t(getApiErrorKey(error, 'common.error')),
         variant: 'destructive',
       })
     },

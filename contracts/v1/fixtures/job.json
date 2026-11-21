@@ -1,0 +1,40 @@
+{
+  "request": {
+    "engine": "independent",
+    "idempotency_key": "synthetic-turn-1",
+    "message": "Summarize the synthetic example.",
+    "model_id": null,
+    "notebook_id": "notebook:synthetic",
+    "remote_notebook_id": null,
+    "remote_source_ids": [],
+    "selection_origin": "local",
+    "source_version_ids": [],
+    "task": "question"
+  },
+  "response": {
+    "attempts": 0,
+    "chat_session_id": "chat:synthetic",
+    "created_at": "2026-01-01T00:00:00+00:00",
+    "idempotency_key": "synthetic-turn-1",
+    "job_id": "job_560b3e7ae92ec7eb7dbf3a18438d4a02d38bcaa6cf72a17b8c213fc1ff8d6400",
+    "notebook_id": "notebook:synthetic",
+    "operation": "chat",
+    "request_hash": "63080153bc9cf81df5d37faca2b6c7f2b076763a186e97d36b0dc2ad51e1c76d",
+    "request_snapshot": {
+      "engine": "independent",
+      "idempotency_key": "synthetic-turn-1",
+      "message": "Summarize the synthetic example.",
+      "model_id": null,
+      "notebook_id": "notebook:synthetic",
+      "remote_notebook_id": null,
+      "remote_source_ids": [],
+      "selection_origin": "local",
+      "source_version_ids": [],
+      "task": "question"
+    },
+    "state": "queued",
+    "submission_state": "not_submitted",
+    "turn_id": "turn_afc55daaffd20fe0cef41ea854df2f27988a32602691f77761b5358ae0b0010b",
+    "worker_job_id": "command:synthetic"
+  }
+}

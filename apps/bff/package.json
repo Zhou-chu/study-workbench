@@ -1,0 +1,29 @@
+{
+  "name": "@study/bff",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/server.d.ts",
+      "node": {
+        "import": "./dist/server.js"
+      },
+      "default": null
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "node --test scripts/*.test.mjs && vitest run --exclude=**/scripts/**",
+    "typecheck": "tsc --noEmit",
+    "build": "node scripts/build-manifest.mjs --build",
+    "lint": "eslint src/ test/",
+    "start": "node dist/cli.js",
+    "pretypecheck": "npm -w @study/contracts run build"
+  },
+  "dependencies": {
+    "@study/contracts": "0.1.0"
+  }
+}

@@ -1,0 +1,151 @@
+[
+  {
+    "job_id": "job_synthetic_queued",
+    "notebook_id": "notebook:synthetic",
+    "operation": "future_operation",
+    "state": "queued",
+    "submission_state": "not_submitted"
+  },
+  {
+    "job_id": "job_synthetic_running",
+    "notebook_id": "notebook:synthetic",
+    "operation": "chat",
+    "state": "running",
+    "submission_state": "not_submitted"
+  },
+  {
+    "job_id": "job_synthetic_waiting_remote",
+    "notebook_id": "notebook:synthetic",
+    "operation": "future_operation",
+    "state": "waiting_remote",
+    "submission_state": "not_submitted"
+  },
+  {
+    "job_id": "job_synthetic_succeeded",
+    "notebook_id": "notebook:synthetic",
+    "operation": "future_operation",
+    "state": "succeeded",
+    "submission_state": "not_submitted"
+  },
+  {
+    "job_id": "job_synthetic_failed",
+    "notebook_id": "notebook:synthetic",
+    "operation": "future_operation",
+    "state": "failed",
+    "submission_state": "not_submitted"
+  },
+  {
+    "job_id": "job_synthetic_needs_reauth",
+    "notebook_id": "notebook:synthetic",
+    "operation": "future_operation",
+    "state": "needs_reauth",
+    "submission_state": "not_submitted"
+  },
+  {
+    "job_id": "job_synthetic_submission_unknown",
+    "notebook_id": "notebook:synthetic",
+    "operation": "future_operation",
+    "state": "submission_unknown",
+    "submission_state": "unknown"
+  },
+  {
+    "job_id": "job_synthetic_cancelled_local",
+    "notebook_id": "notebook:synthetic",
+    "operation": "future_operation",
+    "state": "cancelled_local",
+    "submission_state": "not_submitted"
+  },
+  {
+    "job_id": "job_synthetic_future_state",
+    "notebook_id": "notebook:synthetic",
+    "operation": "future_operation",
+    "state": "future_state",
+    "submission_state": "not_submitted"
+  },
+  {
+    "attempts": 0,
+    "chat_session_id": "chat:synthetic",
+    "created_at": "2026-01-01T00:00:00+00:00",
+    "idempotency_key": "synthetic-turn-1",
+    "job_id": "job_560b3e7ae92ec7eb7dbf3a18438d4a02d38bcaa6cf72a17b8c213fc1ff8d6400",
+    "notebook_id": "notebook:synthetic",
+    "operation": "chat",
+    "request_hash": "63080153bc9cf81df5d37faca2b6c7f2b076763a186e97d36b0dc2ad51e1c76d",
+    "request_snapshot": {
+      "engine": "independent",
+      "idempotency_key": "synthetic-turn-1",
+      "message": "Summarize the synthetic example.",
+      "model_id": null,
+      "notebook_id": "notebook:synthetic",
+      "remote_notebook_id": null,
+      "remote_source_ids": [],
+      "selection_origin": "local",
+      "source_version_ids": [],
+      "task": "question"
+    },
+    "state": "queued",
+    "submission_state": "not_submitted",
+    "turn_id": "turn_afc55daaffd20fe0cef41ea854df2f27988a32602691f77761b5358ae0b0010b",
+    "worker_job_id": "command:synthetic",
+    "result": null,
+    "error": null,
+    "remote_task_id": null,
+    "extension": {
+      "provenance": {
+        "kind": "derived",
+        "independent_support": false
+      },
+      "empty": null
+    }
+  },
+  {
+    "job_id": "job_archive",
+    "notebook_id": "notebook:synthetic",
+    "state": "cancelled_local",
+    "restored_history": true,
+    "replay_allowed": false,
+    "historical_state": "waiting_remote",
+    "operation": null,
+    "submission_state": "future_submission",
+    "created_at": null,
+    "result": [
+      "historical",
+      {
+        "provenance": {
+          "kind": "web",
+          "source_url": null,
+          "historical_url_omitted": true
+        }
+      }
+    ],
+    "error": "historical string",
+    "attempts": "historical opaque"
+  },
+  {
+    "job_id": "job_minimal_archive",
+    "state": "cancelled_local",
+    "restored_history": true,
+    "replay_allowed": false,
+    "notebook_id": "notebook:synthetic"
+  },
+  {
+    "job_id": "job_unknown",
+    "notebook_id": "notebook:synthetic",
+    "state": "future_state",
+    "operation": "future_operation",
+    "submission_state": "future_submission",
+    "result": {
+      "opaque": [
+        null,
+        false,
+        2,
+        "x"
+      ]
+    },
+    "error": {
+      "code": "FUTURE",
+      "extra": true
+    },
+    "remote_may_continue": true
+  }
+]
