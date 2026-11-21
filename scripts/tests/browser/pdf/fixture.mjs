@@ -2,6 +2,16 @@ import { createServer } from 'node:http';
 import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join, resolve, relative } from 'node:path';
 import { createHash } from 'node:crypto';
+import { parseClientCapabilities } from '@study/contracts';
+
+const capabilities = parseClientCapabilities({ contract_version: 'client-capabilities-v1',
+  supported_contracts: ['workspace-view-v1'], limits: { source_upload_max_bytes: 50, portable: {
+  max_archive_bytes: 10, max_expanded_bytes: 20, max_entity_bytes: 10, max_manifest_bytes: 4,
+  max_request_bytes: 30, multipart_overhead_bytes: 10, max_entries: 2, max_compression_ratio: 5 } } });
+if (process.argv[2] === '--preflight') {
+  console.log('Synthetic capabilities accepted by the production decoder');
+  process.exit(0);
+}
 
 const [repository, artifact, sourceCommit, output] = process.argv.slice(2);
 if (!repository || !artifact || !/^[a-f0-9]{40}$/.test(sourceCommit ?? '') || !output)
@@ -35,6 +45,15 @@ const workspace = () => ({
   jobs: [], notes: [], turns: [], link: null, legacy_history: [],
 });
 const methods = [];
+const evidenceRoutes = new Set([
+  '/config', '/api/auth/status', '/api/personal/client-capabilities',
+  '/api/personal/notebooks/synthetic/workspace-view', '/api/personal/notebooks/synthetic/selection',
+  '/api/notebooks/synthetic', '/api/models/defaults', '/pdfjs/6.4.299/pdf.worker.min.mjs',
+  ...fixtures.flatMap(({ version }) => {
+    const path = '/api/personal/source-versions/' + version.source_version_id;
+    return [path, path + '/download'];
+  }),
+]);
 const summary = () => ({
   expectedSourceCommit: sourceCommit, artifactKind: 'verified-release-manifests',
   indexSha256: hash(index), artifact: manifest, fixtureBytes: fixtures.map(({ version, pages }) => ({
@@ -42,8 +61,8 @@ const summary = () => ({
   })), requests: methods, current: selection,
 });
 const record = (req, path, status, extra = undefined) => {
-  if (path.startsWith('/api/') || path === '/config' || path.endsWith('/pdf.worker.min.mjs')) {
-    methods.push({ method: req.method, path: status === 404 ? 'unlisted-fixture-route' : path, status, ...(extra ?? {}) });
+  if (evidenceRoutes.has(path)) {
+    methods.push({ method: req.method === 'GET' || req.method === 'PATCH' ? req.method : 'other', path, status, ...(extra ?? {}) });
     writeFileSync(output, JSON.stringify(summary(), null, 2) + '\n', { mode: 0o600 });
   }
 };
@@ -62,12 +81,10 @@ createServer(async (req, res) => {
     if (path === '/config') return send(200, { apiUrl: '', auth_mode: 'legacy_password', web_session_protocol: null,
       client_contracts: ['workspace-view-v1'], ui_transport_protocol: 1 });
     if (path === '/api/auth/status') return send(200, { auth_enabled: false });
-    if (path === '/api/personal/client-capabilities') return send(200, { contract_version: 'client-capabilities-v1',
-      supported_contracts: ['workspace-view-v1'], limits: { source_upload_max_bytes: 50, portable: {
-      max_archive_bytes: 10, max_expanded_bytes: 20, max_entity_bytes: 10, max_request_bytes: 30,
-      multipart_overhead_bytes: 10, max_entries: 2, max_compression_ratio: 5 } } });
+    if (path === '/api/personal/client-capabilities') return send(200, capabilities);
     if (path === '/api/personal/notebooks/synthetic/workspace-view') return send(200, workspace());
     if (path === '/api/notebooks/synthetic') return send(200, notebook);
+    if (path === '/api/models/defaults') return send(200, { default_chat_model: null });
     for (const { bytes, version } of fixtures) {
       const p = '/api/personal/source-versions/' + version.source_version_id;
       if (path === p) return send(200, { version, extraction: null, evidence: [] });

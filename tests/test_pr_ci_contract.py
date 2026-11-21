@@ -246,6 +246,8 @@ def test_synthetic_pdf_browser_workflow_is_read_only_and_fails_closed():
     assert "continue-on-error" not in text
     assert "--verify apps/web/dist" in text
     assert "prepare_tools.py" in text
+    assert "scripts/tests/browser/pdf/fixture.mjs --preflight" in text
+    assert "scripts/ci/pdf-browser" not in text
     by_action = {
         step["uses"].split("@")[0]: step for step in job["steps"] if "uses" in step
     }
@@ -258,6 +260,6 @@ def test_synthetic_pdf_browser_workflow_is_read_only_and_fails_closed():
         for step in by_action.values()
         for sha in [step["uses"].split("@")[1]]
     )
-    probe = (ROOT / "scripts/ci/pdf-browser/probe.mjs").read_text()
+    probe = (ROOT / "scripts/tests/browser/pdf/probe.mjs").read_text()
     assert "chromiumSandbox: true" in probe
     assert "--no-sandbox" not in probe + text

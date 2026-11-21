@@ -49,6 +49,7 @@ jobs:
         node apps/web/scripts/build-manifest.mjs --verify apps/web/dist
         test "$(node -p "require('./apps/web/dist/spa-artifact-manifest.json').source_commit")" = "$PR_SHA"
         test -z "$(git status --porcelain --untracked-files=all)"
+        node scripts/tests/browser/pdf/fixture.mjs --preflight
         git rev-parse HEAD^{tree} > "$RUNNER_TEMP/notebook-browser-tree.txt"
     - name: Install locked Chromium for Playwright
       env:
@@ -57,7 +58,7 @@ jobs:
         set -euo pipefail
         tooling="$RUNNER_TEMP/notebook-pdf-browser-tooling"
         mkdir "$tooling"
-        cp scripts/ci/pdf-browser/{package.json,package-lock.json,probe.mjs} "$tooling/"
+        cp scripts/tests/browser/pdf/{package.json,package-lock.json,probe.mjs} "$tooling/"
         npm ci --prefix "$tooling" --ignore-scripts --omit=optional
         node "$tooling/node_modules/playwright-core/cli.js" install --with-deps --no-shell chromium
     - name: Verify actual PDF canvas and independent question scope
@@ -75,11 +76,13 @@ jobs:
           result=$?
           if [[ -n "${pid:-}" ]]; then kill "$pid" 2>/dev/null || true; fi
           if (( result != 0 )) && [[ ! -s "$evidence/browser.json" ]]; then
-            printf '{"status":"fail","stage":"%s","sourceCommit":"%s"}\n' "$stage" "$PR_SHA" > "$evidence/browser.json"
+            timeout 1s node "$RUNNER_TEMP/notebook-pdf-browser-tooling/probe.mjs" \
+              --failure-witness "$out/fixture.json" "$stage" "$PR_SHA" > "$evidence/browser.json" ||
+              printf '{"status":"fail","stage":"%s","sourceCommit":"%s","requests":[]}\n' "$stage" "$PR_SHA" > "$evidence/browser.json"
           fi
         }
         trap cleanup EXIT
-        node scripts/ci/pdf-browser/fixture.mjs "$PWD" "$PWD/apps/web/dist" "$PR_SHA" "$out/fixture.json" > "$out/origin.txt" &
+        node scripts/tests/browser/pdf/fixture.mjs "$PWD" "$PWD/apps/web/dist" "$PR_SHA" "$out/fixture.json" > "$out/origin.txt" &
         pid=$!
         for attempt in {1..80}; do
           [[ -s "$out/origin.txt" ]] && break

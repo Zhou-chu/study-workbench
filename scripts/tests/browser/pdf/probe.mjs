@@ -1,10 +1,44 @@
 import assert from 'node:assert/strict';
+import { readFileSync, statSync } from 'node:fs';
 import { chromium } from 'playwright-core';
+const endpointLabels = new Map([
+  ['/config', 'runtime-config'],
+  ['/api/auth/status', 'auth-status'],
+  ['/api/personal/client-capabilities', 'capabilities'],
+  ['/api/personal/notebooks/synthetic/workspace-view', 'workspace'],
+  ['/api/personal/notebooks/synthetic/selection', 'selection'],
+  ['/api/personal/source-versions/version-a', 'detail-a'],
+  ['/api/personal/source-versions/version-a/download', 'download-a'],
+  ['/api/personal/source-versions/version-b', 'detail-b'],
+  ['/api/personal/source-versions/version-b/download', 'download-b'],
+  ['/pdfjs/6.4.299/pdf.worker.min.mjs', 'pdf-worker'],
+]);
+function failureReport(stage, sourceCommit, evidence) {
+  const rows = Array.isArray(evidence?.requests) ? evidence.requests.slice(-32) : [];
+  const requests = rows.flatMap(row => {
+    const route = endpointLabels.get(row?.path);
+    if (!route || !['GET', 'PATCH'].includes(row.method) ||
+        !Number.isInteger(row.status) || row.status < 100 || row.status > 599) return [];
+    return [{ route, method: row.method, status: row.status }];
+  });
+  return { status: 'fail', stage, sourceCommit: /^[a-f0-9]{40}$/.test(sourceCommit ?? '') ? sourceCommit : null, requests };
+}
+
+if (process.argv[2] === '--failure-witness') {
+  const [snapshot, reason, sha] = process.argv.slice(3);
+  let evidence;
+  try {
+    if (statSync(snapshot).size <= 64 * 1024) evidence = JSON.parse(readFileSync(snapshot, 'utf8'));
+  } catch { /* startup may not have created a complete snapshot */ }
+  const stage = reason === 'fixture-start' ? 'fixture-start' : 'probe-start-or-timeout';
+  console.log(JSON.stringify(failureReport(stage, sha, evidence)));
+  process.exit(0);
+}
 const [origin] = process.argv.slice(2);
 if (!/^http:\/\/127\.0\.0\.1:[1-9][0-9]{0,4}$/.test(origin ?? ''))
   throw new Error('Usage: node probe.mjs http://127.0.0.1:<fixture-port>');
 const evidenceUrl = origin + '/__fixture_evidence';
-const evidence = async () => (await fetch(evidenceUrl)).json();
+const evidence = async (signal) => (await fetch(evidenceUrl, { signal, redirect: 'error' })).json();
 let start, browser;
 let stage = 'fixture-manifest';
 try {
@@ -14,7 +48,7 @@ try {
   stage = 'chromium-start';
   browser = await chromium.launch({ executablePath: chromium.executablePath(), chromiumSandbox: true, headless: true });
   const reasons = { errors: [], rejectedOrigins: [] };
-  stage = 'select-source-a';
+  stage = 'navigate-workspace';
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'en-US', serviceWorkers: 'block' });
   await context.route('**/*', route => {
     const destination = new URL(route.request().url());
@@ -25,15 +59,22 @@ try {
   const page = await context.newPage();
   page.on('pageerror', error => reasons.errors.push(error.name));
   await page.goto(origin + '/notebooks/synthetic', { waitUntil: 'domcontentloaded' });
+  stage = 'open-sources-section';
+  await page.getByRole('navigation', { name: 'Workspace sections', exact: true })
+    .getByRole('button', { name: 'Sources', exact: true }).click();
+  stage = 'open-source-a-scope';
   const titleA = page.getByRole('button', { name: 'PDF fixture A', exact: true });
   const titleB = page.getByRole('button', { name: 'PDF fixture B', exact: true });
   const scope = titleA.locator('xpath=ancestor::li[1]').getByRole('button', { name: 'Current question scope' });
   await scope.click();
   const selection = page.getByRole('checkbox', { name: 'Select PDF fixture A · Version 1' });
+  stage = 'select-source-a';
   await selection.check();
+  stage = 'settle-source-a-scope';
   await waitEvidence(member => member.current.source_version_ids.join() === 'version-a');
+  await selection.and(page.locator(':enabled')).waitFor({ state: 'visible' });
   const witness = [];
-  function reader() { return page.getByRole('region', { name: 'Reader', exact: true }); }
+  function reader() { return page.getByRole('region', { name: 'Reader', exact: true }).and(page.locator('.reader-pane')); }
   async function assertRaster(num, total) {
     const r = reader();
     await r.getByText('/ ' + total, { exact: true }).waitFor({ state: 'visible' });
@@ -71,6 +112,7 @@ try {
     await reader().getByRole('button', { name: 'Next', exact: true }).click();
     await assertRaster(current, 3);
     await waitEvidence(member => member.current.reading?.source_version_id === 'version-a' && member.current.reading.page_index === current - 1);
+    await reader().getByRole('button', { name: 'Save reading position', exact: true }).waitFor({ state: 'hidden' });
   }
   assert.ok(await reader().getByRole('button', { name: 'Next', exact: true }).isDisabled());
   stage = 'raster-b-page-1';
@@ -92,7 +134,9 @@ try {
   assert.ok(result.requests.some(row => row.path.endsWith('/pdf.worker.min.mjs') && row.status === 200));
   console.log(JSON.stringify({ status: 'pass', chromium: browser.version(), raster: witness, fixture: result }, null, 2));
 } catch {
-  // Only a known stage escapes; automation errors may include local paths or markup.
-  console.log(JSON.stringify({ status: 'fail', stage, sourceCommit: start?.expectedSourceCommit ?? null }));
+  let lastEvidence;
+  try { lastEvidence = await evidence(AbortSignal.timeout(900)); } catch { /* preserve the probe failure */ }
+  // Only known stages, synthetic route labels and status codes escape.
+  console.log(JSON.stringify(failureReport(stage, start?.expectedSourceCommit, lastEvidence)));
   process.exitCode = 1;
 } finally { await browser?.close(); }
