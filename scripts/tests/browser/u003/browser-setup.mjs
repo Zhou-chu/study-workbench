@@ -104,15 +104,33 @@ export async function runModelSetup({ chromium, origin, modelOrigin, target, pas
       throw Error('Workspace did not settle');
     }
     await readWorkspace(w => w.notebook.id === created.id && w.notebook.name === name);
-    phase('upload-a-and-b');
+    phase('open-source-upload');
     await section('Sources').click();
-    await role(page, 'button', 'Add sources').click();
+    await role(role(page, 'region', 'Sources'), 'button', 'Add sources').click();
     const upload = role(page, 'dialog', 'Add sources');
-    await upload.getByLabel('Choose files', { exact: true }).setInputFiles(
-      [path.join(fixtures, labelA), path.join(fixtures, labelB)],
-    );
-    await (await enabled(page, role(upload, 'button', 'Upload'))).click();
+    phase('choose-source-files');
+    // setInputFiles does not wait for actionability; the real picker ignores choices
+    // before the authenticated upload capability and byte limit are known.
+    const pick = await enabled(page, upload.getByLabel('Choose files', { exact: true }));
+    await pick.setInputFiles([path.join(fixtures, labelA), path.join(fixtures, labelB)]);
+    phase('prepare-source-files');
+    for (const label of [labelA, labelB]) await upload.getByText(label, { exact: true }).waitFor();
+    const send = await enabled(page, role(upload, 'button', 'Upload'));
+    phase('submit-source-files');
+    const statuses = [];
+    const endpoint = origin + '/api/personal' + notebookPath + '/sources/upload';
+    await Promise.all([
+      page.waitForResponse(r => {
+        if (r.url() !== endpoint || r.request().method() !== 'POST') return false;
+        statuses.push(r.status());
+        return statuses.length === 2 || !r.ok();
+      }),
+      send.click().then(() => phase('source-upload-http')),
+    ]);
+    assert.deepEqual(statuses, [200, 200]);
+    phase('source-extraction-ready');
     const ids = await readWorkspace(sourceReceipt);
+    phase('close-source-upload');
     await role(upload, 'button', 'Close').click();
 
     phase('a-only-draft');
