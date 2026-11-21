@@ -45,7 +45,8 @@ jobs:
         uv sync --locked --dev --python 3.12
         npm ci
         .venv/bin/python scripts/ci/prepare_tools.py --node "$(node -p process.execPath)"
-        node --test scripts/tests/browser/u003/*.test.mjs
+        node --test scripts/tests/browser/u003/*.test.mjs \
+          apps/web/scripts/u003-browser-boundaries.test.mjs apps/web/scripts/u003-release-preflight.test.mjs
     - name: Build and verify exact Web and BFF artifacts
       run: |
         set -euo pipefail

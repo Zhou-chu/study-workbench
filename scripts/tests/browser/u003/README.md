@@ -50,3 +50,9 @@ static bytes and passes the original request to the verified BFF adapter.
 It does not prove nginx, desktop, deployed-runtime or external-model parity.
 Only stage labels and bounded true/false evidence are exported, after
 the launcher verifies its processes have stopped and ports are free.
+
+The hosted preflight command runs the socket/filesystem gateway integration
+alongside the pure Node tests in `apps/web/scripts/u003-browser-boundaries.test.mjs`
+and `apps/web/scripts/u003-release-preflight.test.mjs`. The latter use the existing
+Web scripts Node test partition and never launch a browser or server.
+Their placement does not change the production coverage scope.

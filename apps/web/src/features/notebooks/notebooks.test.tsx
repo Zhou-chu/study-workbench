@@ -557,3 +557,66 @@ it('offers local updated/name sorting without mutating source data or issuing wr
     expect(requests.every(r => r.method === 'GET')).toBe(true);
     expect(screen.getByRole('button', { name: 'New Notebook' })).toBeVisible();
 });
+
+it('keeps the newly opened workspace live when the dashboard read is canceled by navigation', async () => {
+    const { renderLibrary } = await import('../../test/library-harness');
+    const { sourceServer } = await import('../../test/source-harness');
+    let canceledDashboard = false;
+    let finishDashboardCancel: (() => void) | undefined;
+    let respondWorkspace: ((response: Response) => void) | undefined;
+    let canceledWorkspace = false;
+    const created = { ...notebookRows[0], id: 'notebook:fresh', name: 'Fresh study workspace' };
+    const pathname = '/notebooks/' + encodeURIComponent(created.id);
+    const workspace = { ...notebookWorkspace(created.id), notebook: { id: created.id, name: created.name } };
+    const requests = sourceServer(request => {
+        const path = new URL(request.url).pathname;
+        if (path === '/api/notebooks' && request.method === 'POST') return json(created);
+        if (path === '/api/recently-viewed') return new Promise<Response>((_resolve, reject) => {
+            // React Query's real dashboard observer owns the signal. Hold only the network
+            // rejection so the test orders it after the new workspace request has started.
+            request.signal.addEventListener('abort', () => {
+                canceledDashboard = true;
+                finishDashboardCancel = () => reject(new DOMException('The operation was aborted.', 'AbortError'));
+            }, { once: true });
+        });
+        if (path === '/api/notebooks' || path === '/api/models') return json([]);
+        return json({});
+    }, () => new Promise<Response>(resolve => { respondWorkspace = resolve; }));
+    const h = await renderLibrary('/notebooks');
+    await waitFor(() => expect(requests.some(r => new URL(r.url).pathname === '/api/recently-viewed')).toBe(true));
+    fireEvent.click((await screen.findAllByRole('button', { name: 'New Notebook' }))[0]!);
+    const dialog = await screen.findByRole('dialog', { name: 'Create New Notebook' });
+    fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: created.name } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'New' }));
+    await waitFor(() => expect(h.router.state.location.pathname).toBe(pathname));
+    await waitFor(() => expect(canceledDashboard && typeof respondWorkspace === 'function').toBe(true));
+
+    await act(async () => finishDashboardCancel!());
+    const bytes = new TextEncoder().encode(JSON.stringify(workspace));
+    const body = new ReadableStream<Uint8Array>({
+        pull(controller) { controller.enqueue(bytes); controller.close(); },
+        cancel() { canceledWorkspace = true; },
+    }, { highWaterMark: 0 });
+    await act(async () => respondWorkspace!(new Response(body, { headers: { 'content-type': 'application/json' } })));
+    const { ready, phase } = h.workbench.controller.getSnapshot();
+    expect({ ready, phase, canceledWorkspace }).toEqual({ ready: true, phase: 'authenticated', canceledWorkspace: false });
+    expect(await screen.findByRole('heading', { name: created.name, level: 1 })).toBeVisible();
+    expect(requests.filter(r => r.method === 'POST')).toHaveLength(1);
+});
+
+it('still closes workspace readiness on an uncanceled native network failure', async () => {
+    const { renderLibrary } = await import('../../test/library-harness');
+    const { sourceServer } = await import('../../test/source-harness');
+    let nativeReadSignal: AbortSignal | undefined;
+    sourceServer(undefined, request => {
+        nativeReadSignal = request.signal;
+        throw new TypeError('Failed to fetch');
+    });
+    const h = await renderLibrary('/notebooks/notebook%3Aalpha');
+    await waitFor(() => expect(h.workbench.controller.getSnapshot()).toMatchObject({
+        ready: false,
+        phase: 'unavailable',
+    }));
+    expect(nativeReadSignal?.aborted).toBe(false);
+    expect(readTurnContext()?.ready).toBe(false);
+});

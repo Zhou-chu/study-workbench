@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Keep the Notebook workspace connected when navigation cancels a previous page’s background request. An uncanceled connection failure still closes readiness.
+
 - Allow a first explicit source selection in a new, unlinked notebook. Nothing is selected or saved automatically, and unrecognized selection states remain unavailable.
 
 - Allow fresh Notebook installations to set a first chat model when the database reports the initial empty default; returning to the notebook keeps the question draft and selected sources.

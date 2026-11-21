@@ -814,7 +814,7 @@
         "apps/web/src/features/notebooks/NotebookPage.tsx"
       ],
       "reason": "Every case mounts a real RouterProvider, AppRoutes and AppProviders (tests additionally cover WorkbenchSession); even collection-only search, archive, refresh and sort consume app route/query collaboration rather than isolated component state. All test bytes remain unchanged.",
-      "sha256": "eea7592de3513d16b1f4d1d78e28d2be6f06afe8f66d03bf5537deb1851a002a"
+      "sha256": "7e649fe56f6ee8894b0473d5cc2712169ccd114beca2b883209b95efca9fb508"
     },
     {
       "path": "apps/web/src/features/notebooks/workspace-observation.test.tsx",
@@ -915,7 +915,7 @@
         "apps/web/src/features/settings/configuration-store.ts"
       ],
       "reason": "Direct configuration-store and projection assertions, synthetic-send adapter and locale-key checks; no navigation controller.",
-      "sha256": "ec1715134339c34e446bb4ed351754bea9f7662d5046ae01e6b26e3fa264cda2"
+      "sha256": "1e57c6364fb226a563c3cdf1b2e16e0fcf660d09ba3eaa7216f834c8128529cd"
     },
     {
       "path": "apps/web/src/features/settings/configuration-contracts-navigation.test.ts",
@@ -1057,7 +1057,7 @@
         "apps/web/src/features/settings/ModelsPage.tsx"
       ],
       "reason": "Real mounted notebook, Tools and inline model configuration routes preserve question and exact source scope; synthetic transport checks credential cancel/save/failure and explicit default save followed by refreshed Ask availability.",
-      "sha256": "71f16260978aad87574d3d69b4723dc607045fc78acc047f14dab85309cb1757"
+      "sha256": "6b66654aa0bbe5784205369d3949c1ddd7b2e8dddd4d5ed7f22899e6c0e93413"
     },
     {
       "path": "apps/web/src/features/settings/setup-navigation.test.tsx",
@@ -3261,6 +3261,33 @@
       ],
       "reason": "Actual raw/summary/execution files and production auditors with explicit inventory/Git adapter substitutes; validates evidence assembly, not a full repository measurement.",
       "sha256": "edfa850cf4a6d7a01f1ff91bcee0f169fb0d250ac5883217b778dd32d70fe068"
+    },
+    {
+      "path": "scripts/tests/browser/u003/browser-staging.test.mjs",
+      "layer": "tool-integration",
+      "targets": [
+        "scripts/tests/browser/u003/gateway.mjs"
+      ],
+      "reason": "Actual temporary files, IPv4 listener and native fetch exercise the fixture gateway, staged static bytes and request forwarding to a stand-in adapter.",
+      "sha256": "479711b474bda10ce9270a7f6826d13f13ab1f9dc4aab91ee13b974d548a6407"
+    },
+    {
+      "path": "apps/web/scripts/u003-browser-boundaries.test.mjs",
+      "layer": "unit",
+      "targets": [
+        "scripts/tests/browser/u003/browser-setup.mjs"
+      ],
+      "reason": "Direct, separate checks of fixed origin admission and source receipt projection; no browser, sockets, filesystem, or process execution.",
+      "sha256": "045bffb966f2c4298cb96e5db53b6a9bf6d90fd2a0915d2bbe1cbf12730e6e24"
+    },
+    {
+      "path": "apps/web/scripts/u003-release-preflight.test.mjs",
+      "layer": "unit",
+      "targets": [
+        "scripts/tests/browser/u003/release-preflight.mjs"
+      ],
+      "reason": "Direct per-case calls to inspectOrigin verify fixture wire admission. Every HTTP response is an in-memory synthetic Response; no sockets, filesystem, artifact build or browser.",
+      "sha256": "df1413de31eeedebf1c37f339d7aaab6641503023c00eff2cfd90db7ba12d915"
     },
     {
       "path": "scripts/tests/deployment/easypanel.test.ts",

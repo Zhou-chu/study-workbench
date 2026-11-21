@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { test } from 'node:test';
-import { inspectOrigin } from './release-preflight.mjs';
+import { inspectOrigin } from '../../../scripts/tests/browser/u003/release-preflight.mjs';
 
 const head = 'a'.repeat(40);
 const slot = 'artifact-fixture-01';

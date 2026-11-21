@@ -352,7 +352,9 @@ export function createSessionController(onRetire: (epoch: number) => void = () =
                 return response;
             }
             catch (error) {
-                if (!disposed && own === ticket && !(error instanceof RequestNotDispatchedError))
+                // A caller-owned signal (for example, a query's route unmount) is
+                // not evidence of lost connectivity or session authority.
+                if (!disposed && own === ticket && !request.signal?.aborted && !(error instanceof RequestNotDispatchedError))
                     fail(error, 'connection');
                 throw error;
             }

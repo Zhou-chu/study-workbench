@@ -5,7 +5,6 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import { browserBoundaries, sourceReceipt } from './browser-setup.mjs';
 import { createFixtureGateway, routeTarget, servingInventory } from './gateway.mjs';
 
 const slot = 'fixture-release-01';
@@ -19,26 +18,6 @@ const target = {
   staticFiles: [row('index.html', '<html/>'), row(app, 'app'), row(pdf, 'worker'),
     row('unexposed.txt', 'not registered')],
 };
-
-test('browser origin confinement rejects unsafe or shared ports and bypass targets', () => {
-  const allows = browserBoundaries('http://127.0.0.1:12000', 'http://127.0.0.1:12001');
-  for (const url of ['http://127.0.0.1:12000/api', 'blob:http://127.0.0.1:12000/read'])
-    assert.equal(allows(url), true);
-  for (const url of ['https://example.test/', 'http://127.0.0.1:12001/api/tags', 'file:///output'])
-    assert.equal(allows(url), false);
-  assert.throws(() => browserBoundaries('http://127.0.0.1:12000', 'http://127.0.0.1:12000'));
-  assert.throws(() => browserBoundaries('http://localhost:12000', 'http://127.0.0.1:12001'));
-});
-
-test('source evidence requires independently ready selected versions with originals', () => {
-  const version = key => ({ source_version_id: key, status: 'ready', original_status: 'available' });
-  const a = { title: 'fixture_a.pdf', versions: [version('a')] };
-  const b = { title: 'fixture_b.pdf', versions: [version('b')] };
-  assert.deepEqual(sourceReceipt({ sources: [b, a] }), { a: 'a', b: 'b' });
-  assert.equal(sourceReceipt({ sources: [a] }), null);
-  assert.equal(sourceReceipt({ sources: [a, { ...b, versions: [{ ...version('b'), status: 'extracting' }] }] }), null);
-  assert.equal(sourceReceipt({ sources: [a, { ...b, versions: [version('a')] }] }), null);
-});
 
 test('owned gateway serves verified bytes and preserves BFF request path/body without fabricating API', async t => {
   const dir = await mkdtemp(path.join(tmpdir(), 'nb-u003-gateway-test-'));
