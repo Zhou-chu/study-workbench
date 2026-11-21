@@ -360,7 +360,7 @@ export async function runModelSetup({ chromium, origin, modelOrigin, target, pas
     const leave = role(page, 'dialog', 'Leave this draft?');
     await role(leave, 'button', 'Leave without saving').click();
     await role(page, 'heading', 'Models').and(page.locator('h1')).waitFor();
-    const setChat = page.getByLabel(/^Chat Model/);
+    const setChat = role(page, 'combobox', 'Chat Model');
     await enabled(page, setChat);
     assert.equal(await setChat.inputValue(), '');
 
@@ -396,11 +396,34 @@ export async function runModelSetup({ chromium, origin, modelOrigin, target, pas
     } finally {
       setupWire.detach();
     }
-    phase('assign-default');
-    await setChat.selectOption({ label: model });
-    await confirm().click();
-    await confirm().waitFor({ state: 'hidden' });
-    assert.notEqual(await setChat.inputValue(), '');
+    phase('choose-default-model');
+    const option = role(setChat, 'option', model);
+    await option.waitFor({ state: 'attached' });
+    const modelId = await option.getAttribute('value');
+    assert.ok(modelId);
+    await setChat.selectOption({ value: modelId });
+    phase('confirm-default-model');
+    const [savedDefault] = await Promise.all([
+      page.waitForResponse(response => response.url() === origin + '/api/models/defaults' &&
+        response.request().method() === 'PUT'),
+      confirm().click(),
+    ]);
+    assert.equal(savedDefault.status(), 200);
+    assert.equal((await savedDefault.json()).default_chat_model, modelId);
+    phase('read-back-default-model');
+    const persisted = await page.request.get(origin + '/api/models/defaults', {
+      headers: { authorization: 'Bearer ' + password }, timeout: 10_000, maxRedirects: 0,
+    });
+    try {
+      assert.equal(persisted.status(), 200);
+      assert.equal((await persisted.json()).default_chat_model, modelId);
+    } finally {
+      await persisted.dispose();
+    }
+    // Confirmation closes before the write/metadata refresh. Wait for the
+    // exact server-backed option to be selected, not merely for the modal to hide.
+    await setChat.filter({ has: page.getByRole('option', { name: model, exact: true, selected: true }) }).waitFor();
+    assert.equal(await setChat.inputValue(), modelId);
 
     phase('return-original-draft');
     await role(page, 'link', 'Back').click();
