@@ -60,27 +60,51 @@ async function controlEvidence(locator) {
   }
 }
 
+const workspaceFailureClasses = new Map([
+  ['net::ERR_ABORTED', 'aborted'],
+  ['net::ERR_CONNECTION_RESET', 'connection-reset'],
+  ['net::ERR_CONNECTION_CLOSED', 'connection-closed'],
+  ['net::ERR_CONNECTION_REFUSED', 'connection-refused'],
+  ['net::ERR_CONTENT_LENGTH_MISMATCH', 'length-mismatch'],
+  ['net::ERR_CONTENT_DECODING_FAILED', 'decode'],
+  ['net::ERR_INCOMPLETE_CHUNKED_ENCODING', 'incomplete-chunks'],
+  ['net::ERR_EMPTY_RESPONSE', 'empty-response'],
+  ['net::ERR_NETWORK_CHANGED', 'network-changed'],
+  ['net::ERR_NO_BUFFER_SPACE', 'buffer-space'],
+  ['net::ERR_TIMED_OUT', 'network-timeout'],
+  ['net::ERR_FAILED', 'net-failed'],
+]);
+
 // Observe only browser-initiated GETs in this page. The diagnostic companion
 // page.request GET does not produce Page request/response events.
 function observeAppWorkspace(page, origin) {
-  const requests = [], responses = [], failed = [];
+  const requests = [], responses = [], failed = [], finished = [];
   function isWorkspace(request) {
     const url = new URL(request.url());
     return request.method() === 'GET' && url.origin === origin &&
       /^\/api\/personal\/notebooks\/[^/]+\/workspace-view$/.test(url.pathname);
   }
   function record(samples, item) {
-    samples.push(item);
+    samples.push({ item, at: performance.now() });
     if (samples.length > 3) samples.shift();
   }
   page.on('request', request => { if (isWorkspace(request)) record(requests, request); });
   page.on('requestfailed', request => { if (isWorkspace(request)) record(failed, request); });
+  page.on('requestfinished', request => { if (isWorkspace(request)) record(finished, request); });
   page.on('response', response => { if (isWorkspace(response.request())) record(responses, response); });
   return async (expectedUrl, expectedId, password) => {
-    const request = requests.at(-1);
-    const response = responses.at(-1);
+    const start = requests.at(-1);
+    const request = start?.item;
+    const headers = responses.findLast(sample => sample.item.request() === request);
+    const response = headers?.item;
+    const failure = failed.findLast(sample => sample.item === request);
+    const complete = finished.findLast(sample => sample.item === request);
+    // No wall-clock, raw failure string, header values or timing of unrelated requests.
+    const elapsed = sample => sample && start ? Math.min(15_000, Math.max(0, Math.round(sample.at - start.at))) : null;
+    const failureClass = failure ? workspaceFailureClasses.get(failure.item.failure()?.errorText) ?? 'other' : null;
     const result = {
-      requests: requests.length, failed: failed.length, responses: responses.length,
+      requests: requests.length, failed: failed.length, responses: responses.length, finished: finished.length,
+      failureClass, headersMs: elapsed(headers), failureMs: elapsed(failure), finishedMs: elapsed(complete),
       expectedUrl: request?.url() === expectedUrl,
       responseExpectedUrl: response?.url() === expectedUrl,
       responseStatus: response?.status() ?? 0,
