@@ -71,13 +71,22 @@ export async function runModelSetup({ chromium, origin, modelOrigin, target, pas
     await page.goto(origin + '/notebooks', { waitUntil: 'domcontentloaded' });
     await page.getByLabel('Password', { exact: true }).fill(password);
     await role(page, 'button', 'Sign in').click();
-    phase('create-notebook');
+    phase('open-create-notebook');
     await role(page, 'button', 'New Notebook').first().click();
-    const editor = page.getByRole('dialog');
+    const editor = role(page, 'dialog', 'Create New Notebook');
     await editor.getByLabel('Name', { exact: true }).fill(name);
-    await role(editor, 'button', 'Create').click();
-    await page.waitForURL(/\/notebooks\/[^/?#]+/);
-    const notebookPath = new URL(page.url()).pathname;
+    phase('submit-create-notebook');
+    const [creation] = await Promise.all([
+      page.waitForResponse(r => r.url() === origin + '/api/notebooks' && r.request().method() === 'POST'),
+      role(editor, 'button', 'New').click(),
+    ]);
+    assert.equal(creation.status(), 200);
+    const created = await creation.json();
+    assert.equal(created.name, name);
+    assert.match(created.id, /^notebook:.+/);
+    phase('open-created-workspace');
+    const notebookPath = '/notebooks/' + encodeURIComponent(created.id);
+    await page.waitForURL(origin + notebookPath);
     const section = title => role(role(page, 'navigation', 'Workspace sections'), 'button', title);
     async function readWorkspace(accept) {
       for (let attempt = 0; attempt < 60; attempt++) {
@@ -94,6 +103,7 @@ export async function runModelSetup({ chromium, origin, modelOrigin, target, pas
       }
       throw Error('Workspace did not settle');
     }
+    await readWorkspace(w => w.notebook.id === created.id && w.notebook.name === name);
     phase('upload-a-and-b');
     await section('Sources').click();
     await role(page, 'button', 'Add sources').click();
