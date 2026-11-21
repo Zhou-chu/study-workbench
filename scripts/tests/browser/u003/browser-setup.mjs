@@ -376,7 +376,7 @@ export async function runModelSetup({ chromium, origin, modelOrigin, target, pas
     try {
       await modelAction('open-ollama-config', role(page, 'button', 'Add Configuration: Ollama')).click();
       await modelAction('fill-ollama-name', settings.getByLabel('Name', { exact: true })).fill(connection);
-      await modelAction('enable-ollama-base-url', settings.getByLabel('Base URL', { exact: true })).selectOption('set');
+      await modelAction('enable-ollama-base-url', role(settings, 'combobox', 'Base URL')).selectOption('set');
       await modelAction('fill-ollama-base-url', settings.getByRole('textbox', { name: /: Base URL$/ })).fill(modelOrigin);
       await modelAction('save-ollama-config', role(settings, 'button', 'Save configuration')).click();
       await modelAction('confirm-ollama-config-saved', settings).waitFor({ state: 'hidden' });
