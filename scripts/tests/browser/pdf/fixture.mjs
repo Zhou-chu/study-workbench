@@ -2,14 +2,31 @@ import { createServer } from 'node:http';
 import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join, resolve, relative } from 'node:path';
 import { createHash } from 'node:crypto';
-import { parseClientCapabilities } from '@study/contracts';
+import { parseClientCapabilities, parseTurnView } from '@study/contracts';
 
 const capabilities = parseClientCapabilities({ contract_version: 'client-capabilities-v1',
   supported_contracts: ['workspace-view-v1'], limits: { source_upload_max_bytes: 50, portable: {
   max_archive_bytes: 10, max_expanded_bytes: 20, max_entity_bytes: 10, max_manifest_bytes: 4,
   max_request_bytes: 30, multipart_overhead_bytes: 10, max_entries: 2, max_compression_ratio: 5 } } });
+// This line is printed on physical page 3 of the committed A PDF.
+const quote = '实验 A 的标准温度为二十五摄氏度。';
+const locator = { page_index: 2, block_id: 'pdf-a-block-3', start_offset: 0, end_offset: Array.from(quote).length };
+const evidenceA = { evidence_id: 'pdf-a-evidence-3', source_version_id: 'version-a', extraction_id: 'pdf-a-extraction',
+  quote, locator, reference_validity: 'verified' };
+const completedTurn = parseTurnView({
+  turn_id: 'pdf-turn-1', notebook_id: 'synthetic', chat_session_id: 'v1_synthetic', engine: 'independent',
+  status: 'succeeded', message: 'What is the standard temperature in experiment A?',
+  answer: 'The standard temperature is 25 °C. [c1]',
+  citations: [{ citation_id: 'c1', kind: 'local_evidence', source_version_id: evidenceA.source_version_id,
+    evidence_id: evidenceA.evidence_id, source_title: 'PDF fixture A', quote, locator, reference_validity: 'verified' }],
+});
+const parsedCitation = completedTurn.citations?.[0];
+if (completedTurn.status !== 'succeeded' || parsedCitation?.projection_status ||
+    parsedCitation?.evidence_id !== evidenceA.evidence_id || parsedCitation?.source_version_id !== evidenceA.source_version_id ||
+    parsedCitation?.locator?.page_index !== locator.page_index) throw new Error('Synthetic citation failed production projection');
+const chatTurns = '/api/personal/chats/v1_synthetic/turns';
 if (process.argv[2] === '--preflight') {
-  console.log('Synthetic capabilities accepted by the production decoder');
+  console.log('Synthetic capabilities and completed citation accepted by production decoders');
   process.exit(0);
 }
 
@@ -48,7 +65,7 @@ const methods = [];
 const evidenceRoutes = new Set([
   '/config', '/api/auth/status', '/api/personal/client-capabilities',
   '/api/personal/notebooks/synthetic/workspace-view', '/api/personal/notebooks/synthetic/selection',
-  '/api/notebooks/synthetic', '/api/models/defaults', '/pdfjs/6.4.299/pdf.worker.min.mjs',
+  chatTurns, '/api/notebooks/synthetic', '/api/models/defaults', '/pdfjs/6.4.299/pdf.worker.min.mjs',
   ...fixtures.flatMap(({ version }) => {
     const path = '/api/personal/source-versions/' + version.source_version_id;
     return [path, path + '/download'];
@@ -68,7 +85,8 @@ const record = (req, path, status, extra = undefined) => {
 };
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.pdf': 'application/pdf', '.wasm': 'application/wasm', '.json': 'application/json', '.woff': 'font/woff', '.woff2': 'font/woff2' };
 createServer(async (req, res) => {
-  const path = new URL(req.url, 'http://127.0.0.1').pathname;
+  const requestUrl = new URL(req.url, 'http://127.0.0.1');
+  const path = requestUrl.pathname;
   const send = (status, body, type = 'application/json', extra) => {
     const bytes = type === 'application/json' ? Buffer.from(JSON.stringify(body)) : Buffer.from(body);
     res.writeHead(status, { 'content-type': type, 'content-length': bytes.length, 'x-content-type-options': 'nosniff', 'cache-control': 'no-store' });
@@ -84,10 +102,20 @@ createServer(async (req, res) => {
     if (path === '/api/personal/client-capabilities') return send(200, capabilities);
     if (path === '/api/personal/notebooks/synthetic/workspace-view') return send(200, workspace());
     if (path === '/api/notebooks/synthetic') return send(200, notebook);
+    if (path === chatTurns) return send(200, [completedTurn]);
     if (path === '/api/models/defaults') return send(200, { default_chat_model: null });
     for (const { bytes, version } of fixtures) {
       const p = '/api/personal/source-versions/' + version.source_version_id;
-      if (path === p) return send(200, { version, extraction: null, evidence: [] });
+      if (path === p) {
+        if (!requestUrl.search) return send(200, { version, extraction: null, evidence: [] });
+        if (version.source_version_id !== evidenceA.source_version_id ||
+            requestUrl.searchParams.size !== 1 || requestUrl.searchParams.get('evidence_id') !== evidenceA.evidence_id)
+          return send(404, {});
+        const extraction = { extraction_id: evidenceA.extraction_id, source_version_id: evidenceA.source_version_id,
+          status: 'ready', page_count: 3, text: quote, blocks: [{ block_id: locator.block_id, page_index: locator.page_index, text: quote }] };
+        return send(200, { version, extraction, evidence: [evidenceA] }, 'application/json',
+          { citationTarget: 'a-page-3' });
+      }
       if (path === p + '/download') return send(200, bytes, 'application/pdf', { sha256: version.sha256, bytes: bytes.length });
     }
     if (/^\/api\/(?:personal\/notebooks\/synthetic\/(?:turns|notes)|models|notebooks|recently-viewed)$/.test(path)) return send(200, []);

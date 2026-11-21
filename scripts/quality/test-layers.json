@@ -3553,8 +3553,8 @@
       "targets": [
         "open_notebook/utils/chunking.py"
       ],
-      "reason": "Three preserved literal-input extension/heuristic/combined detection classes, 21 cases; no tokenizer calls, file access or splitter construction.",
-      "sha256": "9dfcc941026c3bdcb2c580d3168ad3c920d9f5ae0bac8797b586d4ff94ba666e"
+      "reason": "Three preserved literal-input extension/heuristic/combined detection classes, 21 cases; no tokenizer calls, file access or splitter construction. Ordinary chunk limit recovery and internal dispatcher cases replace tokenizer and all splitter constructors; no file or resource reads.",
+      "sha256": "bfa806d67e477f179cbe37016fac00000e1be15b233f17620b64565686e3c805"
     },
     {
       "path": "tests/test_clear_description.py",

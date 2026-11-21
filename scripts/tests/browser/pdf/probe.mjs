@@ -6,6 +6,7 @@ const endpointLabels = new Map([
   ['/api/auth/status', 'auth-status'],
   ['/api/personal/client-capabilities', 'capabilities'],
   ['/api/personal/notebooks/synthetic/workspace-view', 'workspace'],
+  ['/api/personal/chats/v1_synthetic/turns', 'chat-history'],
   ['/api/personal/notebooks/synthetic/selection', 'selection'],
   ['/api/personal/source-versions/version-a', 'detail-a'],
   ['/api/personal/source-versions/version-a/download', 'download-a'],
@@ -49,7 +50,7 @@ try {
   browser = await chromium.launch({ executablePath: chromium.executablePath(), chromiumSandbox: true, headless: true });
   const reasons = { errors: [], rejectedOrigins: [] };
   stage = 'navigate-workspace';
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'en-US', serviceWorkers: 'block' });
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, locale: 'en-US', serviceWorkers: 'block' });
   await context.route('**/*', route => {
     const destination = new URL(route.request().url());
     if (destination.origin === origin || destination.protocol === 'blob:') return route.continue();
@@ -60,8 +61,9 @@ try {
   page.on('pageerror', error => reasons.errors.push(error.name));
   await page.goto(origin + '/notebooks/synthetic', { waitUntil: 'domcontentloaded' });
   stage = 'open-sources-section';
-  await page.getByRole('navigation', { name: 'Workspace sections', exact: true })
-    .getByRole('button', { name: 'Sources', exact: true }).click();
+  const section = name => page.getByRole('navigation', { name: 'Workspace sections', exact: true })
+    .getByRole('button', { name, exact: true });
+  await section('Sources').click();
   stage = 'open-source-a-scope';
   const titleA = page.getByRole('button', { name: 'PDF fixture A', exact: true });
   const titleB = page.getByRole('button', { name: 'PDF fixture B', exact: true });
@@ -75,13 +77,18 @@ try {
   await selection.and(page.locator(':enabled')).waitFor({ state: 'visible' });
   const witness = [];
   function reader() { return page.getByRole('region', { name: 'Reader', exact: true }).and(page.locator('.reader-pane')); }
-  async function assertRaster(num, total) {
+  async function assertRaster(num, total, actualSize = false) {
     const r = reader();
     await r.getByText('/ ' + total, { exact: true }).waitFor({ state: 'visible' });
     const input = r.getByRole('spinbutton');
     assert.equal(await input.inputValue(), String(num));
     assert.equal(await input.getAttribute('max'), String(total));
-    const canvas = r.locator('canvas[data-render-state="ready"][data-page-number="' + num + '"]');
+    let canvas = r.locator('canvas[data-render-state="ready"][data-page-number="' + num + '"]');
+    if (actualSize) {
+      await r.getByRole('button', { name: '100%', exact: true }).click();
+      // A uses a 595×842 PDF viewport. Fixed zoom and DPR make the comparisons independent of panel width.
+      canvas = canvas.and(r.locator('canvas[width="595"][height="842"]'));
+    }
     await canvas.waitFor({ state: 'visible' });
     const raster = await canvas.evaluate(async node => {
       const { width, height } = node;
@@ -94,7 +101,8 @@ try {
     });
     assert.ok(raster.width > 0 && raster.height > 0 && raster.inkPixels > 0);
     assert.equal(await r.locator('[data-pdf-fallback=true]').count(), 0);
-    witness.push({ page: num, physicalCount: total, ...raster });
+    if (!actualSize) witness.push({ page: num, physicalCount: total, ...raster });
+    return raster;
   }
   async function waitEvidence(check) {
     for (let attempt = 0; attempt < 80; attempt++) {
@@ -115,6 +123,8 @@ try {
     await reader().getByRole('button', { name: 'Save reading position', exact: true }).waitFor({ state: 'hidden' });
   }
   assert.ok(await reader().getByRole('button', { name: 'Next', exact: true }).isDisabled());
+  stage = 'actual-size-manual-a-page-3';
+  const manualA3 = await assertRaster(3, 3, true);
   stage = 'raster-b-page-1';
   await reader().getByRole('button', { name: 'Close', exact: true }).click();
   await titleB.click();
@@ -132,7 +142,50 @@ try {
   assert.equal(reasons.rejectedOrigins.length, 0);
   assert.equal(reasons.errors.length, 0);
   assert.ok(result.requests.some(row => row.path.endsWith('/pdf.worker.min.mjs') && row.status === 200));
-  console.log(JSON.stringify({ status: 'pass', chromium: browser.version(), raster: witness, fixture: result }, null, 2));
+  stage = 'select-b-only-for-citation';
+  await reader().getByRole('button', { name: 'Close', exact: true }).click();
+  await selection.uncheck();
+  await waitEvidence(member => member.current.source_version_ids.length === 0);
+  await selection.and(page.locator(':enabled')).waitFor({ state: 'visible' });
+  await titleB.locator('xpath=ancestor::li[1]').getByRole('button', { name: 'Current question scope' }).click();
+  const selectedB = page.getByRole('checkbox', { name: 'Select PDF fixture B · Version 1' });
+  await selectedB.check();
+  const beforeCitation = await waitEvidence(member => member.current.source_version_ids.join() === 'version-b');
+  await selectedB.and(page.locator(':enabled')).waitFor({ state: 'visible' });
+  assert.equal(await selection.isChecked(), false);
+  assert.equal(await selectedB.isChecked(), true);
+
+  stage = 'open-historical-answer-citation';
+  await section('Conversation').click();
+  const citation = page.getByRole('button', { name: 'c1 · PDF fixture A', exact: true });
+  await citation.waitFor({ state: 'visible' });
+  let citationWrites = 0;
+  const watch = request => { if (!['GET', 'HEAD'].includes(request.method())) citationWrites++; };
+  page.on('request', watch);
+  const priorRequests = beforeCitation.requests.length;
+  await citation.click();
+  stage = 'raster-citation-a-page-3';
+  await reader().getByRole('heading', { name: 'PDF fixture A', exact: true }).waitFor();
+  assert.equal(await reader().locator('blockquote').textContent(), '实验 A 的标准温度为二十五摄氏度。');
+  const citationA3 = await assertRaster(3, 3, true);
+  assert.deepEqual(citationA3, manualA3);
+  const during = await waitEvidence(member => member.requests.slice(priorRequests).some(row => row.citationTarget === 'a-page-3'));
+  assert.deepEqual(during.current, beforeCitation.current);
+
+  stage = 'verify-citation-did-not-write';
+  await reader().getByRole('button', { name: 'Close', exact: true }).click();
+  await reader().waitFor({ state: 'hidden' });
+  await citation.and(page.locator(':focus')).waitFor({ state: 'visible' });
+  const final = await evidence();
+  assert.equal(citationWrites, 0);
+  assert.deepEqual(final.current, beforeCitation.current);
+  const citationRequests = final.requests.slice(priorRequests);
+  assert.equal(citationRequests.some(row => row.method === 'PATCH'), false);
+  assert.equal(citationRequests.filter(row => row.citationTarget === 'a-page-3' && row.status === 200).length, 1);
+  assert.equal(citationRequests.filter(row => row.path.endsWith('/version-a/download') && row.status === 200).length, 1);
+  assert.equal(reasons.rejectedOrigins.length, 0);
+  assert.equal(reasons.errors.length, 0);
+  console.log(JSON.stringify({ status: 'pass', chromium: browser.version(), raster: witness, citation: { physicalPage: 3, manualFixedRaster: manualA3, fixedRaster: citationA3, scopeDuring: during.current.source_version_ids, writes: citationWrites }, fixture: final }, null, 2));
 } catch {
   let lastEvidence;
   try { lastEvidence = await evidence(AbortSignal.timeout(900)); } catch { /* preserve the probe failure */ }

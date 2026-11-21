@@ -1,5 +1,11 @@
-"""Literal-input content detection units; no tokenization or file reads."""
+"""Content detection and chunk orchestration without tokenizer, parser or file I/O."""
 
+from types import SimpleNamespace
+from unittest.mock import Mock
+
+import pytest
+
+from open_notebook.utils import chunking
 from open_notebook.utils.chunking import (
     ContentType,
     detect_content_type,
@@ -184,3 +190,139 @@ class TestDetectContentType:
         content_type = detect_content_type(html_text, "file.txt")
         # High confidence HTML should override .txt extension
         assert content_type == ContentType.HTML
+
+
+@pytest.mark.parametrize(
+    ("name", "value", "expected"),
+    [
+        ("OPEN_NOTEBOOK_CHUNK_SIZE", None, 400),
+        ("OPEN_NOTEBOOK_CHUNK_SIZE", "draft", 400),
+        ("OPEN_NOTEBOOK_CHUNK_SIZE", "60", 100),
+        ("OPEN_NOTEBOOK_CHUNK_SIZE", "1200", 1200),
+        ("OPEN_NOTEBOOK_CHUNK_SIZE", "9000", 9000),
+        ("OPEN_NOTEBOOK_CHUNK_OVERLAP", None, 60),
+        ("OPEN_NOTEBOOK_CHUNK_OVERLAP", "draft", 60),
+        ("OPEN_NOTEBOOK_CHUNK_OVERLAP", "-1", 0),
+        ("OPEN_NOTEBOOK_CHUNK_OVERLAP", "50", 50),
+        ("OPEN_NOTEBOOK_CHUNK_OVERLAP", "400", 60),
+        ("OPEN_NOTEBOOK_MIN_CHUNK_SIZE", None, 5),
+        ("OPEN_NOTEBOOK_MIN_CHUNK_SIZE", "draft", 5),
+        ("OPEN_NOTEBOOK_MIN_CHUNK_SIZE", "-1", 0),
+        ("OPEN_NOTEBOOK_MIN_CHUNK_SIZE", "8", 8),
+    ],
+)
+def test_chunk_configuration_recovers_from_invalid_editorial_limits(
+    monkeypatch, name, value, expected
+):
+    if value is None:
+        monkeypatch.delenv(name, raising=False)
+    else:
+        monkeypatch.setenv(name, value)
+
+    read_setting = {
+        "OPEN_NOTEBOOK_CHUNK_SIZE": chunking._get_chunk_size,
+        "OPEN_NOTEBOOK_CHUNK_OVERLAP": lambda: chunking._get_chunk_overlap(400),
+        "OPEN_NOTEBOOK_MIN_CHUNK_SIZE": chunking._get_min_chunk_size,
+    }
+    assert read_setting[name]() == expected
+
+
+@pytest.fixture
+def fake_splitters(monkeypatch):
+    for name, value in {
+        "CHUNK_SIZE": 12,
+        "CHUNK_OVERLAP": 2,
+        "MIN_CHUNK_SIZE": 4,
+    }.items():
+        monkeypatch.setattr(chunking, name, value)
+    token_count = Mock(side_effect=len)
+    html, markdown, plain = Mock(), Mock(), Mock()
+    monkeypatch.setattr(chunking, "token_count", token_count)
+    monkeypatch.setattr(chunking, "HTMLHeaderTextSplitter", html)
+    monkeypatch.setattr(chunking, "MarkdownHeaderTextSplitter", markdown)
+    monkeypatch.setattr(chunking, "RecursiveCharacterTextSplitter", plain)
+    return SimpleNamespace(
+        token_count=token_count, html=html, markdown=markdown, plain=plain
+    )
+
+
+@pytest.mark.parametrize(
+    ("text", "result"), [("  ", []), ("read notes", ["read notes"])]
+)
+def test_short_or_blank_note_does_not_construct_splitters(fake_splitters, text, result):
+    f = fake_splitters
+    assert chunking.chunk_text(text) == result
+    f.html.assert_not_called()
+    f.markdown.assert_not_called()
+    f.plain.assert_not_called()
+
+
+@pytest.mark.parametrize("content_type", [ContentType.HTML, ContentType.MARKDOWN])
+def test_structured_import_keeps_order_and_resplits_only_oversize_sections(
+    fake_splitters, content_type
+):
+    f = fake_splitters
+    first, oversized, last = (
+        "Chapter one",
+        "Full section exceeds the budget",
+        "Appendix",
+    )
+    is_html = content_type is ContentType.HTML
+    primary, other = (f.html, f.markdown) if is_html else (f.markdown, f.html)
+    primary.return_value.split_text.return_value = [
+        SimpleNamespace(page_content=first),
+        SimpleNamespace(page_content=oversized),
+        last,
+        SimpleNamespace(page_content="   "),
+        "x",
+    ]
+    f.plain.return_value.split_text.return_value = ["Part one", "Part two"]
+    document = "Structured lecture notes"
+
+    result = chunking.chunk_text(
+        document,
+        content_type=ContentType.HTML if is_html else None,
+        file_path=None if is_html else "lecture.md",
+    )
+
+    assert result == [first, "Part one", "Part two", last]
+    primary.return_value.split_text.assert_called_once_with(document)
+    other.assert_not_called()
+    f.plain.return_value.split_text.assert_called_once_with(oversized)
+    f.plain.assert_called_once_with(
+        chunk_size=12,
+        chunk_overlap=2,
+        length_function=f.token_count,
+        separators=["\n\n", "\n", ". ", ", ", " ", ""],
+    )
+    if is_html:
+        assert primary.call_args.kwargs["headers_to_split_on"][0] == ("h1", "Header 1")
+    else:
+        assert primary.call_args.kwargs["strip_headers"] is False
+        assert primary.call_args.kwargs["headers_to_split_on"][0] == ("#", "Header 1")
+
+
+@pytest.mark.parametrize(
+    ("chunks", "minimum", "expected"),
+    [
+        (["  a ", "bb", " "], 4, ["a", "bb"]),
+        (["  a "], 4, ["a"]),
+        (["  a ", "chapter"], 0, ["a", "chapter"]),
+        (["  a ", "chapter"], 4, ["chapter"]),
+        (["first", " second "], 4, ["first", "second"]),
+    ],
+)
+def test_plain_import_drops_trivial_fragments_without_losing_all_content(
+    monkeypatch,
+    fake_splitters,
+    chunks,
+    minimum,
+    expected,
+):
+    f = fake_splitters
+    monkeypatch.setattr(chunking, "MIN_CHUNK_SIZE", minimum)
+    f.plain.return_value.split_text.return_value = chunks
+    assert chunking.chunk_text("Complete plain note", ContentType.PLAIN) == expected
+    f.plain.return_value.split_text.assert_called_once_with("Complete plain note")
+    f.html.assert_not_called()
+    f.markdown.assert_not_called()
